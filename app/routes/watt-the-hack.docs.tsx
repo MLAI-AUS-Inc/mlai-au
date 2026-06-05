@@ -144,9 +144,10 @@ export default function DocsPage() {
                     icon={<ActivityIcon className="h-5 w-5 text-violet-600" />}
                     bgColor="bg-violet-50"
                   >
-                    Frequency Control Ancillary Services. You can reserve a portion of your battery's{" "}
-                    <strong>inverter capacity</strong> to provide stability to the broader grid, earning a steady revenue
-                    stream.
+                    Frequency Control Ancillary Services — a paid <strong>standby market</strong>. You bid{" "}
+                    <code>fcas_reserve_mw</code> = how much inverter capacity you keep on call for the grid, and get
+                    paid <strong>$40/MW per hour</strong> just for holding it ready, whether or not it&apos;s ever used.
+                    It&apos;s a promise, not a discharge — full mechanics in the FCAS explainer below.
                   </ComponentCard>
                 </div>
 
@@ -162,6 +163,66 @@ export default function DocsPage() {
                     only charge or discharge your battery at a maximum rate of 30 MW for that timestep. Managing this
                     trade-off is crucial to advanced optimization.
                   </p>
+                </div>
+
+                <div className="rounded-xl border border-violet-200/70 bg-violet-50/95 p-5">
+                  <h3 className="text-base font-bold text-violet-900">FCAS, explained — it&apos;s a bid, not a discharge</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-violet-900/90">
+                    <strong>What it is in real life:</strong> FCAS (Frequency Control Ancillary Services) is a real
+                    market run by AEMO, Australia&apos;s grid operator. The grid must stay at almost exactly{" "}
+                    <strong>50 Hz</strong>; when a large generator trips, fast assets like batteries are paid to inject
+                    or soak up power within <em>seconds</em> to catch the frequency. Crucially, they&apos;re paid mostly
+                    for being <em>on standby</em>, not for the energy they end up moving — the Hornsdale &quot;Tesla big
+                    battery&quot; in South Australia earns a large share of its income from FCAS, not from buying and
+                    selling energy. This scenario models that market.
+                  </p>
+                  <div className="mt-3 space-y-2 text-sm leading-relaxed text-violet-900/90">
+                    <p>
+                      <strong>In the game it&apos;s a pure bid.</strong> Each step you set{" "}
+                      <code>fcas_reserve_mw</code> = how many MW you <em>promise</em> to keep available for the grid.
+                      You move <strong>no energy</strong> and pay <strong>nothing</strong> to bid — you&apos;re just
+                      claiming &quot;I&apos;m holding this much in reserve.&quot;
+                    </p>
+                    <p>
+                      <strong>You&apos;re paid to hold it: $40 per MW per hour</strong>, whether or not it&apos;s ever
+                      called. Reserve 10 MW for an hour and you earn $400 for doing nothing but staying ready (per
+                      15-minute step that&apos;s $10/MW).
+                    </p>
+                    <p>
+                      <strong>It costs you inverter headroom.</strong> FCAS gets first claim on the inverter:{" "}
+                      <code>|battery_flow_mw| + fcas_reserve_mw ≤ inverter limit</code> (default 50 MW) — every MW you
+                      reserve is a MW you can&apos;t use for arbitrage that step. Changing your bid sharply between steps
+                      also costs a small ramp charge (~$500 per MW of change), so keep it steady.
+                    </p>
+                    <p>
+                      <strong>Dispatch events test your claim.</strong> Sometimes the grid actually calls your reserve —
+                      a <code>fcas_dispatch</code> event asks for a number of MW over a window. You&apos;re warned ahead
+                      of time: read <code>state["fcas_events_upcoming"]</code> (each entry has <code>at_step</code>,{" "}
+                      <code>end_step</code>, <code>magnitude_mw</code>). When called you must actually deliver from{" "}
+                      <strong>stored charge</strong>, so a reserve bid is only as good as the battery SOC backing it.
+                    </p>
+                  </div>
+                  <div className="mt-3 rounded-lg border-2 border-rose-300 bg-rose-50/85 p-3">
+                    <p className="text-[13px] font-extrabold uppercase tracking-wider text-rose-900">
+                      ⚠ Failing a dispatch is the harshest penalty in the game
+                    </p>
+                    <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] leading-relaxed text-rose-950/90">
+                      <li>
+                        <strong>Deliver</strong> the called MW (from your reserve + enough SOC) → a{" "}
+                        <strong>$200/MWh</strong> bonus.
+                      </li>
+                      <li>
+                        <strong>Fall short</strong> — you didn&apos;t reserve enough, or your battery is too empty to
+                        back it → <strong>$100,000 per MWh of shortfall</strong>. Example: bid 10 MW, get called for
+                        10 MW over one 15-minute step, deliver 0 → 10 MW × 0.25 h × $100,000 ={" "}
+                        <strong>$250,000</strong> in a single step.
+                      </li>
+                    </ul>
+                    <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
+                      So FCAS is reliable, near-free income — but only bid what you can truly back with charge when a
+                      dispatch lands, and keep some SOC in the tank ahead of the windows the engine warns you about.
+                    </p>
+                  </div>
                 </div>
               </section>
 

@@ -134,8 +134,9 @@ export const MECHANICS: Record<string, MechanicDef> = {
   fcas: {
     id: "fcas",
     label: "FCAS reserve",
-    short: "Passive income for held-available inverter capacity.",
-    long: "Reserve inverter capacity to back grid frequency. Pays $40.00/MW/h whether or not it's called. Trades against arbitrage: |battery_flow| + fcas_reserve ≤ inverter cap.",
+    short: "A paid standby bid — promise MW to the grid, get paid to stay ready.",
+    long:
+      "FCAS is a BID, not a discharge. Setting fcas_reserve_mw just promises to keep that many MW available for the grid — you move no energy and pay nothing to bid. You're paid $40/MW/h to hold it ready whether or not it's ever used. It claims the inverter first (|battery_flow| + fcas_reserve ≤ inverter cap), so it trades against arbitrage. When a dispatch event calls your reserve you must actually deliver from stored charge: deliver and earn a $200/MWh bonus; fall short and it's $100,000/MWh — so only bid what your SOC can back.",
     icon: ZapIcon,
     iconTint: "text-violet-700",
     iconBg: "bg-violet-50",
