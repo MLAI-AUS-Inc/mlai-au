@@ -223,7 +223,10 @@ function CostTile({
           side="bottom"
           align="start"
           sideOffset={8}
-          className="z-50 w-[280px] rounded-lg border border-line bg-white p-3 text-xs shadow-hero"
+          /* wth-sandbox: this content is portaled to <body>, outside the app
+             shell's .wth-sandbox scope, so without it `text-muted` falls back
+             to the near-white shadcn default and the rows go white-on-white. */
+          className="wth-sandbox z-50 w-[280px] rounded-lg border border-line bg-white p-3 text-xs shadow-hero"
         >
           <div className="mb-2 flex items-center justify-between gap-3 border-b border-line/70 pb-2">
             <span className="font-semibold text-ink">{tile.label}</span>
