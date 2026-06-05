@@ -263,6 +263,15 @@ export default function DocsPage() {
                     controller relative to the optimal solution, the closer you get to 100 points!
                   </ConstraintRow>
 
+                  <ConstraintRow title="Battery Wear" tone="warning">
+                    Cycling the battery isn&apos;t free. Every MWh you move through it — charging <em>or</em>{" "}
+                    discharging — costs <strong>$50/MWh</strong> in wear, so needless round-trips quietly eat your
+                    score. Sudden moves cost extra on top: a big step-to-step change in <code>battery_flow_mw</code>{" "}
+                    triggers a <strong>ramp charge that grows with the square of the change</strong> (≈ $1 × ΔMW², so a
+                    0 → 30 MW jump costs ~$900). Smooth, gradual dispatch is much cheaper than slamming the battery
+                    between extremes.
+                  </ConstraintRow>
+
                   <ConstraintRow title="Throughput Budget" tone="warning">
                     Batteries degrade. In some scenarios, you are given a total throughput budget (MWh). Every MWh you
                     charge or discharge permanently consumes this budget. Once depleted, you can no longer use the
@@ -399,6 +408,37 @@ export default function DocsPage() {
     }`}
                     </CodeBlock>
                   </div>
+                </div>
+
+                <div className="rounded-xl border border-sky-300 bg-sky-100 p-5">
+                  <h3 className="text-base font-bold text-sky-950">What if I return out-of-range values?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-sky-950">
+                    You don&apos;t need to pre-validate your numbers. The engine reads each value, treats it as a
+                    number, and <strong>clamps it to what&apos;s physically possible that step</strong> — it does not
+                    error or penalise you just for asking for too much:
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-sky-950">
+                    <li>
+                      <code>battery_flow_mw</code> → clamped to <strong>±the inverter limit</strong> (default 50 MW,
+                      minus any FCAS reserve), then further to what your <strong>state of charge</strong> can actually
+                      deliver or absorb. So <code>battery_flow_mw = 300</code> just becomes a ~50 MW full-power
+                      discharge — not an error.
+                    </li>
+                    <li><code>curtail_solar</code> → clamped to <strong>[0, current solar]</strong>.</li>
+                    <li><code>emergency_generator</code> → clamped to <strong>[0, its MW limit]</strong>.</li>
+                    <li>
+                      <code>fcas_reserve_mw</code> → clamped to <strong>[0, inverter limit]</strong> (and it shares the
+                      inverter with battery flow).
+                    </li>
+                    <li>Any key you omit defaults to <strong>0</strong>; a negative where only positive makes sense is clamped up to 0.</li>
+                  </ul>
+                  <p className="mt-2 text-sm leading-relaxed text-sky-950">
+                    <strong>So always return plain numbers.</strong> A value the engine can&apos;t convert to a number
+                    (<code>None</code> or non-numeric text) can fail the whole evaluation. And if your{" "}
+                    <code>step()</code> throws, or returns something that isn&apos;t a dict, that step is replaced with
+                    the <strong>zero action</strong> (do nothing) and logged as a controller error — one buggy step
+                    won&apos;t crash the run, but its intended action is lost.
+                  </p>
                 </div>
 
                 <div className="rounded-xl border border-blue-300 bg-blue-100 p-5">
