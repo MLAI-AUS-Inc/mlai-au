@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   ActivityIcon,
   BatteryFullIcon,
-  BuildingIcon,
+  Building2Icon,
   FuelIcon,
   SunIcon,
   ZapIcon,
@@ -598,7 +598,8 @@ function BatteryNode({
   const dispatchAbs = Math.min(cap, Math.abs(dispatch));
   const dispatchW = (dispatchAbs / cap) * INV_W;
 
-  const label = charging ? "Charging" : discharging ? "Discharging" : "Idle";
+  const status = charging ? "Charging" : discharging ? "Discharging" : "Idle";
+  const label = `VPP · ${status}`;
 
   // Layout: circle → SOC bar → inverter bar → SOC text → status text.
   const socBarY = y + ICON_R + 8;
@@ -754,7 +755,7 @@ function CityNode({
         strokeWidth={2.5}
       />
 
-      {/* Building icon at top of circle */}
+      {/* City skyline icon at top of circle */}
       <foreignObject
         x={x - 14}
         y={y - CITY_R + 10}
@@ -763,7 +764,7 @@ function CityNode({
         pointerEvents="none"
       >
         <div className="flex h-full w-full items-center justify-center text-ink">
-          <BuildingIcon className="h-5 w-5" />
+          <Building2Icon className="h-5 w-5" />
         </div>
       </foreignObject>
 
