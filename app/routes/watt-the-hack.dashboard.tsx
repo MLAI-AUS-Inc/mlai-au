@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Route } from "./+types/watt-the-hack.dashboard";
 import { Link, redirect, useLoaderData } from "react-router";
 import {
@@ -19,14 +19,11 @@ import {
   getGenericAnnouncements,
   getGenericCurrentTeam,
   getGenericHackathon,
-  getGenericResources,
-  getGenericSubmissions,
   WATT_THE_HACK_SLUG,
-  type GenericHackathonResource,
-  type GenericHackathonSubmission,
   type GenericHackathonTeam,
 } from "~/lib/generic-hackathon";
 import { wattClasses, wattImages } from "~/lib/watt-theme";
+import { relativeTime, type LeaderboardEntry } from "~/lib/watt-the-hack-leaderboard";
 import { wattTheHackSchedule } from "~/lib/watt-the-hack-schedule";
 import type { Hackathon } from "~/services/hackathon";
 
@@ -50,20 +47,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect("/platform/login?app=watt-the-hack&next=/watt-the-hack/dashboard");
   }
 
-  const [hackathon, announcements, team, submissions, resources] = await Promise.all([
+  const [hackathon, announcements, team] = await Promise.all([
     getGenericHackathon(env, request).catch(() => FALLBACK_HACKATHON),
     getGenericAnnouncements(env, request).catch(() => []),
     getGenericCurrentTeam(env, request).catch(() => null),
-    getGenericSubmissions(env, request).catch(() => []),
-    getGenericResources(env, request).catch(() => []),
   ]);
 
   return {
     hackathon,
     announcements,
     team,
-    latestSubmission: submissions[0] ?? null,
-    resources: resources.slice(0, 2),
   };
 }
 
@@ -132,85 +125,180 @@ function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
   );
 }
 
-function SubmissionPanel({ submission }: { submission: GenericHackathonSubmission | null }) {
+function HowToSubmitCard() {
+  return (
+    <Link
+      to="/watt-the-hack/docs"
+      className={`${wattClasses.panel} group relative block min-h-[112px] overflow-hidden px-6 py-5 transition hover:border-[#c9dbb8]`}
+    >
+      <img
+        src={wattImages.bottomScene}
+        alt=""
+        className="pointer-events-none absolute -bottom-7 -right-9 w-36 opacity-90"
+      />
+      <div className="relative flex items-center gap-5">
+        <span className={wattClasses.iconTile}>
+          <PaperAirplaneIcon className="h-7 w-7 stroke-[1.8]" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[#485244]">Submission</p>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xl font-black leading-tight text-[#121e16]">
+            How to submit
+            <ArrowRightIcon
+              className="h-4 w-4 stroke-[2.4] text-[#155420] transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </p>
+          <p className="mt-1 text-sm font-medium text-[#354031]">Steps for all three tracks</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+const STANDINGS_LIMIT = 3;
+
+function StandingsPanel() {
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/watt-the-hack/city-of-melbourne-advanced-leaderboard-data?limit=${STANDINGS_LIMIT}`,
+          { headers: { Accept: "application/json" } },
+        );
+        if (!res.ok) throw new Error(`Leaderboard service responded ${res.status}`);
+        const data = (await res.json()) as LeaderboardEntry[];
+        if (!Array.isArray(data)) throw new Error("Unexpected leaderboard response");
+        const top = [...data].sort((a, b) => a.rank - b.rank).slice(0, STANDINGS_LIMIT);
+        if (!cancelled) {
+          setEntries(top);
+          setPhase("ready");
+        }
+      } catch {
+        if (!cancelled) setPhase("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className={`${wattClasses.panel} px-6 py-5`}>
       <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-5">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full text-[#155420]">
-            <TrophyIcon className="h-9 w-9 fill-[#f0c742]/45 stroke-[1.8]" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-xl font-black leading-tight text-[#121e16]">Latest Submission</h2>
-            <p className="mt-1 truncate text-sm font-medium text-[#354031]">
-              {submission ? submission.title : "No project submitted yet."}
-            </p>
-          </div>
+        <div className="flex items-center gap-3">
+          <TrophyIcon className="h-7 w-7 text-[#155420]" aria-hidden="true" />
+          <h2 className="text-xl font-black leading-tight text-[#121e16]">Current Standings</h2>
         </div>
-        <Link to="/watt-the-hack/submissions" className={`${wattClasses.buttonPrimary} shrink-0 px-6`}>
-          Submit
+        <Link
+          to="/watt-the-hack/city-of-melbourne-advanced-leaderboard"
+          className="inline-flex shrink-0 items-center gap-2 text-sm font-black text-[#155420] hover:text-[#2f6f2c]"
+        >
+          View all
+          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
-      {submission && (
-        <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#64705f]">{submission.summary}</p>
+
+      {phase === "loading" ? (
+        <ul className="mt-4 space-y-2.5">
+          {Array.from({ length: STANDINGS_LIMIT }).map((_, i) => (
+            <li
+              key={i}
+              className="h-[58px] animate-pulse rounded-xl border border-[#e8dfcf] bg-[#efe6d4]/60"
+            />
+          ))}
+        </ul>
+      ) : phase === "error" ? (
+        <p className="mt-4 text-sm font-medium text-[#64705f]">
+          Couldn&apos;t load standings just now —{" "}
+          <Link
+            to="/watt-the-hack/city-of-melbourne-advanced-leaderboard"
+            className="font-black text-[#155420] hover:text-[#2f6f2c]"
+          >
+            open the leaderboard
+          </Link>
+          .
+        </p>
+      ) : entries.length === 0 ? (
+        <p className="mt-4 text-sm font-medium text-[#64705f]">
+          No standings yet — they&apos;ll appear once teams are scored.
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-2.5">
+          {entries.map((entry) => {
+            const score = Number.isFinite(entry.final_score) ? entry.final_score : 0;
+            return (
+              <li
+                key={entry.team_name}
+                className="flex items-center gap-4 rounded-xl border border-[#e8dfcf] bg-[rgba(255,254,250,0.88)] px-4 py-3"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e6efd7] text-sm font-black tabular-nums text-[#155420]">
+                  {entry.rank}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-black text-[#121e16]">{entry.team_name}</p>
+                  <p className="mt-0.5 truncate text-xs font-medium text-[#64705f]">
+                    {entry.scored_at ? `best run ${relativeTime(entry.scored_at)}` : "awaiting first score"}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-base font-black tabular-nums text-[#121e16]">{score.toFixed(2)}</p>
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[#64705f]">pts</p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
 }
 
-function ResourcesPanel({ resources }: { resources: GenericHackathonResource[] }) {
+const DOC_LINKS: { title: string; summary: string; to: string }[] = [
+  { title: "Overview & Submission Guide", summary: "Event overview and how to submit", to: "/watt-the-hack/docs" },
+  { title: "Pitching Track", summary: "Base44 pitching guide and judging", to: "/watt-the-hack/docs/base44-pitching" },
+  { title: "Advanced Track", summary: "City of Melbourne — Grid Guardian", to: "/watt-the-hack/docs/grid-guardian" },
+  { title: "Beginner Track", summary: "Amber Electric — Smart Home", to: "/watt-the-hack/docs/smart-home" },
+];
+
+function ResourcesPanel() {
   return (
-    <div className={`${wattClasses.panel} relative overflow-hidden px-6 py-5 sm:px-7`}>
-      <img
-        src={wattImages.bottomScene}
-        alt=""
-        className="pointer-events-none absolute -bottom-4 right-0 hidden w-[310px] opacity-95 sm:block"
-      />
-      <div className="relative flex items-center justify-between gap-4">
+    <div className={`${wattClasses.panel} px-6 py-5 sm:px-7`}>
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <BookOpenIcon className="h-8 w-8 text-[#155420]" aria-hidden="true" />
           <h2 className="text-xl font-black text-[#121e16]">Resources</h2>
         </div>
-        <Link to="/watt-the-hack/resources" className="inline-flex items-center gap-2 text-sm font-black text-[#155420] hover:text-[#2f6f2c]">
+        <Link to="/watt-the-hack/docs" className="inline-flex items-center gap-2 text-sm font-black text-[#155420] hover:text-[#2f6f2c]">
           View all
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
-      <div className="relative mt-5 grid gap-4 lg:grid-cols-2 lg:pr-44">
-
-        <Link to="/watt-the-hack/docs" className="block rounded-xl border border-[#e8dfcf] bg-[rgba(255,254,250,0.88)] p-4 transition hover:border-[#c9dbb8] hover:bg-[#fffefa]">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e6efd7] text-[#155420]">
-                <DocumentTextIcon className="h-6 w-6 stroke-[1.8]" aria-hidden="true" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-black text-[#121e16]">API Documentation</p>
-                <p className="mt-1 truncate text-xs font-medium text-[#354031]">Read the official python controller guide</p>
-              </div>
-            </div>
-            <ArrowTopRightOnSquareIcon className="h-5 w-5 shrink-0 text-[#64705f]" aria-hidden="true" />
-          </div>
-        </Link>
-
-        {resources.length > 0 ? resources.map((resource) => (
-          <Link key={resource.id} to="/watt-the-hack/resources" className="block rounded-xl border border-[#e8dfcf] bg-[rgba(255,254,250,0.88)] p-4 transition hover:border-[#c9dbb8] hover:bg-[#fffefa]">
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        {DOC_LINKS.map((doc) => (
+          <Link
+            key={doc.to}
+            to={doc.to}
+            className="block rounded-xl border border-[#e8dfcf] bg-[rgba(255,254,250,0.88)] p-4 transition hover:border-[#c9dbb8] hover:bg-[#fffefa]"
+          >
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e6efd7] text-[#155420]">
                   <DocumentTextIcon className="h-6 w-6 stroke-[1.8]" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-[#121e16]">{resource.title}</p>
-                  <p className="mt-1 truncate text-xs font-medium text-[#354031]">{resource.summary}</p>
+                  <p className="truncate text-sm font-black text-[#121e16]">{doc.title}</p>
+                  <p className="mt-1 truncate text-xs font-medium text-[#354031]">{doc.summary}</p>
                 </div>
               </div>
               <ArrowTopRightOnSquareIcon className="h-5 w-5 shrink-0 text-[#64705f]" aria-hidden="true" />
             </div>
           </Link>
-        )) : (
-          <p className="text-sm font-medium text-[#64705f]">Resources will appear here when they are published.</p>
-        )}
+        ))}
       </div>
     </div>
   );
@@ -294,7 +382,7 @@ function ScheduleSection() {
 }
 
 export default function WattTheHackDashboard() {
-  const { hackathon, announcements, team, latestSubmission, resources } = useLoaderData<typeof loader>();
+  const { hackathon, announcements, team } = useLoaderData<typeof loader>();
 
   return (
     <div className={wattClasses.page}>
@@ -342,23 +430,18 @@ export default function WattTheHackDashboard() {
             description={team ? "Your team is ready to build." : "You don't have any teammates yet."}
             icon={UserGroupIcon}
           />
-          <StatCard
-            label="Submission"
-            value={latestSubmission ? "Submitted" : "Not submitted"}
-            description={latestSubmission ? "Your prototype is in the queue." : "Submit your project prototype."}
-            icon={DocumentTextIcon}
-          />
+          <HowToSubmitCard />
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[1fr_1.08fr]">
           <Announcements announcements={announcements} variant="watt" />
           <div className="space-y-5">
             <TeamPanel team={team} />
-            <SubmissionPanel submission={latestSubmission} />
+            <StandingsPanel />
           </div>
         </div>
 
-        <ResourcesPanel resources={resources} />
+        <ResourcesPanel />
 
         <ScheduleSection />
       </div>
