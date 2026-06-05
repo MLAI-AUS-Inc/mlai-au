@@ -66,7 +66,6 @@ const TEMPLATE_DUCK_CURVE_SOURCE = `def controller(state):
         "battery_flow_mw":     battery_flow,
         "curtail_solar":       curtail,
         "emergency_generator": diesel,
-        "fcas_reserve_mw":     0.0,
     }
 `;
 
