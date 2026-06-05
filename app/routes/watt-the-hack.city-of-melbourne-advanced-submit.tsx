@@ -773,8 +773,6 @@ export default function WattTheHackSubmissionPortal() {
         <SubmissionConfirmModal
           scenarioId={scenarioId}
           scenarioLabel={SCENARIOS.find((s) => s.id === scenarioId)?.name ?? scenarioId}
-          remaining={scenarioRemaining}
-          cap={scenarioCap}
           isHeadline={isHeadline}
           onConfirm={() => void performSubmit()}
           onCancel={() => setConfirmOpen(false)}
@@ -847,31 +845,23 @@ function CooldownBanner({ remainingMs, totalMs }: { remainingMs: number; totalMs
 // ── Submission confirmation modal ────────────────────────────────────────
 //
 // Fires when the user clicks the "Submit to Evaluation Cluster" button. It
-// surfaces the per-scenario submission cap (Gauntlet = 1, others = 3) so
-// the team can't waste an attempt by mistake. For the Gauntlet, also calls
-// out the 3x leaderboard weighting — the cost of getting it wrong is
-// triple, so the modal copy is intentionally loud.
+// confirms the team is about to spend one of their submissions so they can't
+// waste an attempt by mistake. For the Gauntlet, also calls out the 3x
+// leaderboard weighting — the cost of getting it wrong is triple, so the
+// modal copy is intentionally loud.
 function SubmissionConfirmModal({
   scenarioId,
   scenarioLabel,
-  remaining,
-  cap,
   isHeadline,
   onConfirm,
   onCancel,
 }: {
   scenarioId: string;
   scenarioLabel: string;
-  remaining: number;
-  cap: number;
   isHeadline: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  // After this confirmed submission lands the server will count it; show
-  // the *post-submission* number so the user can see exactly what they're
-  // burning.
-  const remainingAfter = Math.max(0, remaining - 1);
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4"
@@ -903,8 +893,7 @@ function SubmissionConfirmModal({
           <p className="mt-1 text-sm font-bold text-[#354031]">{scenarioLabel}</p>
           <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-[#64705f]">Submissions</p>
           <p className="mt-1 text-sm font-bold text-[#354031]">
-            You have <span className="text-[#155420]">{remaining}</span> of {cap} left.
-            {" "}After this one, you will have <span className="text-[#155420]">{remainingAfter}</span> remaining.
+            This will use one of your submissions for this scenario.
           </p>
         </div>
 
@@ -939,7 +928,7 @@ function SubmissionConfirmModal({
             }
           >
             <ArrowUpTrayIcon className="h-4 w-4 stroke-[2.5]" />
-            {isHeadline ? "Send my Gauntlet attempt" : `Use 1 of ${cap} submissions`}
+            {isHeadline ? "Send my Gauntlet attempt" : "Use 1 submission"}
           </button>
         </div>
       </div>
