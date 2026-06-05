@@ -6,7 +6,6 @@ import {
   BookOpenIcon,
   BuildingOffice2Icon,
   ChevronDownIcon,
-  DocumentTextIcon,
   HomeIcon,
   HomeModernIcon,
   PresentationChartBarIcon,
@@ -52,8 +51,6 @@ export default function GenericHackathonAppLayout({ children, user, config, head
   }> = [
     { name: "Dashboard", href: `${config.basePath}/dashboard`, icon: HomeIcon },
     { name: "Profile & Team", href: `${config.basePath}/profile`, icon: UserGroupIcon },
-    { name: "Submissions", href: `${config.basePath}/submissions`, icon: DocumentTextIcon },
-    { name: "Resources", href: `${config.basePath}/resources`, icon: BookOpenIcon },
     ...(isWattTheme
       ? [
           { name: "Docs", href: `${config.basePath}/docs`, icon: BookOpenIcon, highlighted: true },
