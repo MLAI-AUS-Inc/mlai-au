@@ -6,6 +6,7 @@ import {
   buySmartHomeUpgrade,
   createWattUnitySession,
   deploySmartHome,
+  deploySmartHomeSwitches,
   getSmartHomeBlocks,
   requireValidWattTeam,
   type SmartHomeCatalog,
@@ -17,8 +18,10 @@ import {
 import { getEnv } from "~/lib/env.server";
 import { wattClasses } from "~/lib/watt-theme";
 import { SmartHomeControllerV2 } from "~/components/SmartHomeControllerV2";
+import { SmartHomeSwitchboard } from "~/components/SmartHomeSwitchboard";
 import { SmartHomeShop, type ShopFeedback } from "~/components/SmartHomeShop";
 import { SmartHomeStatusBar } from "~/components/SmartHomeStatusBar";
+import { progressionForDay } from "~/lib/smart-home-progression";
 import type { DeployFeedback } from "~/components/SmartHomeController";
 
 type StreamData = {
@@ -81,6 +84,24 @@ export async function action({ request, context }: Route.ActionArgs) {
   const intent = String(formData.get("intent") || "reconnect");
 
   if (intent === "deploy") {
+    // Stage-1 switchboard sends a {deviceId: on} map; later stages send a structured pipeline.
+    const switchesRaw = formData.get("switches");
+    if (typeof switchesRaw === "string" && switchesRaw) {
+      let switches: Record<string, boolean> = {};
+      try {
+        const parsed = JSON.parse(switchesRaw);
+        if (parsed && typeof parsed === "object") switches = parsed as Record<string, boolean>;
+      } catch {
+        /* keep empty */
+      }
+      try {
+        const result = await deploySmartHomeSwitches(env, request, switches);
+        return { kind: "deploy" as const, result, error: null as string | null };
+      } catch (error) {
+        return { kind: "deploy" as const, result: null, error: errorMessage(error, "Couldn't deploy to your Smart Home.") };
+      }
+    }
+
     let pipeline: SmartHomePipeline = { inputs: [], schedule: [], brain: [], actions: [], outputs: [], safety: [] };
     try {
       const parsed = JSON.parse(String(formData.get("pipeline") || "{}"));
@@ -185,10 +206,14 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
 
   const handleDeploy = (pipeline: SmartHomePipeline) =>
     deployFetcher.submit({ intent: "deploy", pipeline: JSON.stringify(pipeline) }, { method: "post" });
+  const handleSwitchDeploy = (switches: Record<string, boolean>) =>
+    deployFetcher.submit({ intent: "deploy", switches: JSON.stringify(switches) }, { method: "post" });
 
   // Poll the live game state for the goal/day/wallet status bar.
   const stateFetcher = useFetcher();
   const homeState = stateFetcher.data as SmartHomeState | undefined;
+  // Day-gated capability progression: a simple switchboard early, the full pipeline later.
+  const progression = useMemo(() => progressionForDay(homeState?.day ?? null), [homeState?.day]);
 
   // T5: live/offline badge driven by the published-observation freshness the backend reports
   // (live / stale / no_observation / missing_timestamp from observation_liveness).
@@ -382,11 +407,21 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
           </div>
         </section>
 
-        <SmartHomeControllerV2
-          onDeploy={handleDeploy}
-          isDeploying={isDeploying}
-          feedback={feedback}
-        />
+        {progression.switchboard ? (
+          <SmartHomeSwitchboard
+            onDeploy={handleSwitchDeploy}
+            isDeploying={isDeploying}
+            feedback={feedback}
+            upcoming={progression.upcoming}
+          />
+        ) : (
+          <SmartHomeControllerV2
+            onDeploy={handleDeploy}
+            isDeploying={isDeploying}
+            feedback={feedback}
+            progression={progression}
+          />
+        )}
 
         <SmartHomeShop shop={shop} onBuy={handleBuy} buyingId={buyingId} feedback={buyFeedback} />
       </div>
