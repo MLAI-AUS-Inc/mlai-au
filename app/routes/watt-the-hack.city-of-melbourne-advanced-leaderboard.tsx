@@ -10,6 +10,7 @@ import {
   TrophyIcon,
 } from "@heroicons/react/24/outline";
 import { wattClasses, wattImages } from "~/lib/watt-theme";
+import { relativeTime, type LeaderboardEntry } from "~/lib/watt-the-hack-leaderboard";
 
 const REFRESH_MS = 15000;
 
@@ -19,36 +20,11 @@ const CARD_H = 86;
 const GAP = 14;
 const STRIDE = CARD_H + GAP;
 
-interface LeaderboardEntry {
-  rank: number;
-  team_name: string;
-  final_score: number;
-  cost_score: number | null;
-  renewable_score: number | null;
-  stability_score: number | null;
-  reliability_score: number | null;
-  scored_at: string | null;
-}
-
 type Delta = number | "new" | "same";
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-function relativeTime(iso: string | null): string {
-  if (!iso) return "";
-  const t = Date.parse(iso.replace(" ", "T"));
-  if (Number.isNaN(t)) return "";
-  const secs = Math.max(0, Math.floor((Date.now() - t) / 1000));
-  if (secs < 60) return "just now";
-  const mins = Math.floor(secs / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
 }
 
 const MEDAL: Record<number, { ring: string; bar: string; label: string }> = {
