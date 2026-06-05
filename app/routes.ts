@@ -62,7 +62,12 @@ export default [
     route("team", "routes/watt-the-hack.team.tsx"),
     route("submissions", "routes/watt-the-hack.submissions.tsx"),
     route("resources", "routes/watt-the-hack.resources.tsx"),
-    route("docs", "routes/watt-the-hack.docs.tsx"),
+    route("docs", "routes/watt-the-hack.docs.tsx", [
+      index("routes/watt-the-hack.docs._index.tsx"),
+      route("base44-pitching", "routes/watt-the-hack.docs.base44-pitching.tsx"),
+      route("grid-guardian", "routes/watt-the-hack.docs.grid-guardian.tsx"),
+      route("smart-home", "routes/watt-the-hack.docs.smart-home.tsx"),
+    ]),
     route("base44-pitching", "routes/watt-the-hack.base44-pitching.tsx"),
     route("city-of-melbourne-advanced", "routes/watt-the-hack.city-of-melbourne-advanced.tsx"),
     route("city-of-melbourne-advanced-submit", "routes/watt-the-hack.city-of-melbourne-advanced-submit.tsx"),
