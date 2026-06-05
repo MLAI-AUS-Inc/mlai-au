@@ -53,8 +53,18 @@ export default function GenericHackathonAppLayout({ children, user, config, head
     { name: "Profile & Team", href: `${config.basePath}/profile`, icon: UserGroupIcon },
     ...(isWattTheme
       ? [
-          { name: "Docs", href: `${config.basePath}/docs`, icon: BookOpenIcon, highlighted: true },
-          { name: "Base44 (Pitching) Track", href: `${config.basePath}/base44-pitching`, icon: PresentationChartBarIcon },
+          {
+            name: "Docs",
+            icon: BookOpenIcon,
+            highlighted: true,
+            children: [
+              { name: "Overview", href: `${config.basePath}/docs` },
+              { name: "Base44 Pitching", href: `${config.basePath}/docs/base44-pitching` },
+              { name: "Grid Guardian", href: `${config.basePath}/docs/grid-guardian` },
+              { name: "Smart Home", href: `${config.basePath}/docs/smart-home` },
+            ],
+          },
+          { name: "Base44 (Pitching) Track", href: `${config.basePath}/docs/base44-pitching`, icon: PresentationChartBarIcon },
           {
             name: "City Of Melbourne (Advanced) Track",
             icon: BuildingOffice2Icon,
