@@ -505,10 +505,11 @@ export function getTemplatesForScenario(scenarioId: string | null): ControllerTe
 // Drives the inline "OPENAI_API_KEY is injected" hint in the portal so
 // participants stop trying to ship a .env file.
 export const LLM_SCENARIO_IDS = new Set<string>([
+  // Sandbox ids only — these are the ids the portal actually lets you pick.
+  // The hidden judging variants are mapped sandbox->judging server-side by the
+  // gateway, so this public frontend never needs to (and shouldn't) name them.
   "operators_mandate",
-  "operators_mandate_judging",
   "cybersecurity_sandbox",
-  "cybersecurity_judging",
   // The Gauntlet bundles the prose-driven mechanics from Operator's Mandate
   // and Cybersecurity, so it needs LLM egress too.
   "gauntlet",
