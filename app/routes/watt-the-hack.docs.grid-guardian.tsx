@@ -1034,8 +1034,9 @@ for k, v in sorted(result["cost_breakdown"].items(),
                 <div>
                   <h3 className="text-lg font-bold tracking-tight text-ink">How many alerts to expect</h3>
                   <p className="mt-1 text-sm text-muted">
-                    Counts for the scored (judging) run of each scenario. Budget your LLM calls against{" "}
-                    <strong>distinct alerts</strong> (what you handle when you dedupe), not the raw{" "}
+                    Counts for the scored (judging) run of the scenarios where an LLM actually helps — the earlier
+                    ones (Duck Curve, Frequency Frenzy, AI Grid Shock) don&apos;t need one. Budget your LLM calls
+                    against <strong>distinct alerts</strong> (what you handle when you dedupe), not the raw{" "}
                     <code>replan</code> firings.
                   </p>
                 </div>
@@ -1085,8 +1086,7 @@ for k, v in sorted(result["cost_breakdown"].items(),
                   <p className="mt-1 text-sm text-muted">
                     The Cybersecurity scenario and the Gauntlet attack your <em>inputs</em>. Some incidents are real and
                     must be contained; some are decoys you must <em>not</em> react to; some prose is bait designed to
-                    make you sabotage yourself. This is the section playtesters asked for most — here is exactly what to
-                    do.
+                    make you sabotage yourself.
                   </p>
                 </div>
 
@@ -1264,10 +1264,103 @@ class Strategy:
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight text-ink">Advanced: LLM-driven strategies</h2>
                   <p className="mt-1 text-sm text-muted">
-                    Scenarios that surface prose events (operator mandates, cyber briefs) reward reading the text with
-                    an LLM. The <code>Strategy</code> class lifecycle is built so you can do that without blowing the
-                    evaluation&apos;s time budget.
+                    The Operator&apos;s Mandate, Cybersecurity, and the Gauntlet hide their rules in plain-English
+                    briefs. To act on them you have to <em>read</em> the text — that&apos;s where an LLM helps. This is
+                    the part most people find confusing, so here it is from scratch.
                   </p>
+                </div>
+
+                <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+                  <h3 className="font-semibold text-ink">The one idea that makes it click</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    Your code is <strong>not</strong> restarted each step. The engine creates <strong>one</strong>{" "}
+                    instance of your <code>Strategy</code> class and keeps it for the whole run, calling{" "}
+                    <strong>three methods on that same object at three different times</strong>. Because it&apos;s one
+                    long-lived object, anything you save on <code>self</code> in one method is still there in the
+                    others. That is the whole trick: the <strong>slow thinking</strong> (an LLM call) happens in the
+                    methods that run rarely, saves its conclusions on <code>self</code>, and the <strong>fast loop</strong>{" "}
+                    just reads them.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight text-ink">The three methods, in plain English</h3>
+                  <p className="mt-1 text-sm text-muted">One object, three jobs, three very different frequencies.</p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <ComponentCard
+                    title="plan() — study once"
+                    icon={<InfoIcon className="h-5 w-5 text-sky-600" />}
+                    bgColor="bg-sky-50"
+                  >
+                    Runs <strong>one time</strong>, before step 0, with the opening state. Job: read the briefing and
+                    pick your overall game plan. <strong>An LLM call is fine here</strong> — it happens once.{" "}
+                    <em>Optional.</em>
+                  </ComponentCard>
+                  <ComponentCard
+                    title="replan() — react to news"
+                    icon={<BellAlertIcon className="h-5 w-5 text-amber-600" />}
+                    bgColor="bg-amber-50"
+                  >
+                    Runs <strong>while an alert is active</strong>. Job: turn a new brief into a concrete rule and save
+                    it on <code>self</code>. <strong>An LLM call is fine here if you dedupe</strong> (handle each alert
+                    id once). <em>Optional.</em>
+                  </ComponentCard>
+                  <ComponentCard
+                    title="step() — act fast"
+                    icon={<ZapIcon className="h-5 w-5 text-emerald-600" />}
+                    bgColor="bg-emerald-50"
+                  >
+                    Runs <strong>every 15 min — 288 times</strong>. Job: return this tick&apos;s dispatch using what you
+                    already prepared. <strong>Never call an LLM here.</strong> <em>Required.</em>
+                  </ComponentCard>
+                </div>
+
+                <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+                  <h3 className="font-semibold text-ink">When each one fires (one run, start to finish)</h3>
+                  <div className="mt-3">
+                    <CodeBlock>
+{`run starts
+│
+├─ plan(state)               ← ONCE   (optional LLM: read the briefing)
+│
+├─ step(state)   t = 0       ← every tick: fast, NO LLM
+├─ step(state)   t = 1
+│      ⋮
+│   🔔 a new alert appears around t = 30
+├─ replan(state, alerts)     ← fires because an alert is active
+│                               (optional LLM: parse it, save to self)
+├─ step(state)   t = 30      ← reads what replan just saved on self
+├─ step(state)   t = 31
+│      ⋮
+└─ step(state)   t = 287     ← run ends`}
+                    </CodeBlock>
+                  </div>
+                  <p className="mt-3 text-[13px] leading-relaxed text-muted">
+                    Two things beginners trip on: <code>replan</code> fires on <strong>every step an alert is
+                    active</strong> (not once per alert — hence dedupe, see Reacting to Events), and <code>step</code>{" "}
+                    runs every tick whether or not an alert is present.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-indigo-300 bg-indigo-50 p-5">
+                  <h3 className="text-base font-bold text-indigo-950">How the methods hand information to each other</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-indigo-900">
+                    Two channels — and as a beginner you mostly need the first:
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-indigo-900">
+                    <li>
+                      <strong><code>self.something</code> — your own notebook.</strong> Whatever you assign to{" "}
+                      <code>self</code> in <code>plan</code> / <code>replan</code> is readable in <code>step</code>. This
+                      is how an LLM&apos;s decision reaches the fast loop. Use it for almost everything.
+                    </li>
+                    <li>
+                      <strong><code>agent_plan</code> — a note to the <em>engine</em>.</strong> Only for the handful of
+                      keys the engine itself reads (<code>containment_ack</code>, <code>emergency_exemption</code>,{" "}
+                      <code>anomaly_ack</code>). Return it from any method; it persists and also shows up as{" "}
+                      <code>state[&quot;agent_plan&quot;]</code> (see Reacting to Events &amp; Cyber).
+                    </li>
+                  </ul>
                 </div>
 
                 <div className="rounded-xl border border-amber-300 bg-amber-100 p-5">
@@ -1308,34 +1401,75 @@ class Strategy:
                 </div>
 
                 <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
-                  <h3 className="font-semibold text-ink">The full Strategy lifecycle</h3>
+                  <h3 className="font-semibold text-ink">A full worked example — the three methods cooperating</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    The LLM &quot;thinks&quot; in <code>plan</code> and <code>replan</code> and writes its conclusions
+                    onto <code>self</code>; <code>step</code> just reads them and dispatches. Trace{" "}
+                    <code>self.stance</code> and <code>self.export_cap</code> through the three methods:
+                  </p>
                   <div className="mt-3">
                     <CodeBlock>
-{`class Strategy:
+{`class MyStrategy:                       # any class name works
+    # The engine builds this ONCE and reuses it for the whole run.
+
     def __init__(self):
-        # Persist anything across the run here.
-        self.policy = {}
-        self.seen = set()
+        # self.* is shared memory across plan / replan / step.
+        self.stance = "balanced"        # plan() will set this
+        self.export_cap = None          # replan() will set this from a brief
+        self.handled = set()            # alert ids already parsed (dedupe!)
 
-    def plan(self, initial_state):
-        # OPTIONAL. Called ONCE before step 0. Right place for a slow LLM call
-        # to read the briefing. The dict you return seeds state["agent_plan"].
-        return {"stance": "conserve"}
+    # ── ONCE, before t=0. A slow LLM call is fine here. ──────────────
+    def plan(self, state):
+        briefs = state.get("alerts", [])
+        # ask_llm_* are YOUR helpers that call OpenAI (see the OpenAI section).
+        self.stance = ask_llm_for_stance(briefs) or "balanced"   # save on self
+        return {}                        # nothing for the engine yet
 
+    # ── while an alert is active. DEDUPE, then (maybe) call the LLM. ──
     def replan(self, state, alerts):
-        # OPTIONAL. Called when alerts are active. DEDUPE first, then (maybe) call
-        # an LLM. The dict you return is MERGED into the persistent agent_plan.
-        new = [a for a in alerts if a["id"] not in self.seen]
-        for a in new:
-            self.seen.add(a["id"])
-        return {}    # e.g. {"export_cap": 22.0} parsed from a brief
+        for a in alerts:
+            if a["id"] in self.handled:  # already handled ->
+                continue                 #   do NO work (this is what saves you)
+            self.handled.add(a["id"])
+            cap = parse_export_cap_with_llm(a.get("description", ""))  # 22.0 or None
+            if cap is not None:
+                self.export_cap = cap    # save on self for step() to use
+        return {}                        # everything we need is on self
 
+    # ── EVERY 15 min (288x). Fast. NO LLM. Use what we prepared. ─────
     def step(self, state):
-        # REQUIRED. Called every 15 minutes. NO LLM here — read the cached plan.
-        plan = state.get("agent_plan", {})
-        return {"battery_flow_mw": 10.0}`}
+        demand, solar, soc = state["demand"], state["solar"], state["soc"]
+        net = demand - solar
+        flow = max(-50.0, min(50.0, net)) if soc > 0.1 else 0.0
+
+        if self.stance == "conserve":    # <- decided by the LLM in plan()
+            flow = min(flow, 0.0)        #    hold charge; don't discharge hard
+
+        curtail = 0.0
+        if self.export_cap is not None:  # <- parsed by the LLM in replan()
+            export = max(0.0, -(net - flow))
+            curtail = max(0.0, export - self.export_cap)
+
+        return {"battery_flow_mw": flow, "curtail_solar": curtail}`}
                     </CodeBlock>
                   </div>
+                  <p className="mt-3 text-[13px] leading-relaxed text-muted">
+                    <code>ask_llm_for_stance</code> and <code>parse_export_cap_with_llm</code> are functions{" "}
+                    <strong>you</strong> write that call the OpenAI API (see the{" "}
+                    <a href="#openai" className="font-semibold text-sky-700 underline">OpenAI section</a>). Make them
+                    fail soft: if the key is missing or the call errors, return a sensible default so a network blip
+                    never crashes the run.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-emerald-300 bg-emerald-100 p-5">
+                  <h3 className="text-base font-bold text-emerald-950">No LLM? You can still play.</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900">
+                    Nothing forces you to use an LLM. Swap the <code>*_with_llm</code> helpers for plain string
+                    matching / regex on <code>a[&quot;description&quot;]</code>, or skip <code>plan</code> and{" "}
+                    <code>replan</code> entirely and write a pure <code>step</code> controller. The LLM just makes the
+                    wordier briefs easier to parse — it&apos;s a tool, not a requirement.
+                  </p>
                 </div>
               </section>
 
@@ -1686,10 +1820,9 @@ function GauntletRow({ what, where }: { what: string; where: string }) {
   );
 }
 
+// Only the LLM/agentic scenarios — the earlier ones (Duck Curve, Frequency
+// Frenzy, AI Grid Shock) don't use an LLM, so there's no LLM-call budget to manage.
 const ALERT_BUDGET: { scenario: string; distinct: number; replans: string }[] = [
-  { scenario: "Duck Curve", distinct: 9, replans: "~86" },
-  { scenario: "Frequency Frenzy", distinct: 8, replans: "~60" },
-  { scenario: "AI Grid Shock", distinct: 36, replans: "~197" },
   { scenario: "The Operator's Mandate", distinct: 13, replans: "~73" },
   { scenario: "Cybersecurity", distinct: 11, replans: "~92" },
   { scenario: "The Gauntlet", distinct: 18, replans: "~119" },
