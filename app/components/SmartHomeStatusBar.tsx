@@ -1,9 +1,8 @@
 import type { SmartHomeState } from "~/lib/generic-hackathon";
 import { wattClasses } from "~/lib/watt-theme";
-
-// Display target only; the real campaign length is a Unity constant (CAMPAIGN_LENGTH_DAYS).
-// ~6.5h event (12:00–18:30) at the default ~11.7 min/day ≈ 33 days.
-const CAMPAIGN_DAYS = 33;
+// Shared with the controller's progression so "Day x / N" never drifts from Unity's
+// CAMPAIGN_LENGTH_DAYS (currently 46).
+import { CAMPAIGN_DAYS } from "~/lib/smart-home-progression";
 
 function round(value: number, dp = 0) {
   const f = 10 ** dp;

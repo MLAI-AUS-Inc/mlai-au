@@ -332,6 +332,17 @@ export async function deploySmartHome(
   return response.data as SmartHomeDeployResult;
 }
 
+/** Stage-1 switchboard deploy: a {deviceId: on} map -> direct set_lights commands. */
+export async function deploySmartHomeSwitches(
+  env: Env,
+  request: Request,
+  switches: Record<string, boolean>,
+): Promise<SmartHomeDeployResult> {
+  const client = createApiClient(env, request);
+  const response = await client.post("/api/v1/hackathons/watt/smart-home/deploy/", { switches });
+  return response.data as SmartHomeDeployResult;
+}
+
 export async function getSmartHomeState(env: Env, request: Request): Promise<SmartHomeState> {
   const client = createApiClient(env, request);
   const response = await client.get("/api/v1/hackathons/watt/smart-home/state/");

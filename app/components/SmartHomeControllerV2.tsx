@@ -47,12 +47,12 @@ import {
   PALETTE,
   compilePipeline,
   emptyPipeline,
-  isComplete,
   type BlockDef,
   type PlacedPipeline,
   type SlotDef,
   type SlotType,
 } from "~/lib/smart-home-pipeline";
+import { SLOT_UNLOCK_DAY, type Progression } from "~/lib/smart-home-progression";
 
 /**
  * v2.1 — game-board styling to match the draft.
@@ -376,10 +376,12 @@ export function SmartHomeControllerV2({
   onDeploy,
   isDeploying,
   feedback,
+  progression,
 }: {
   onDeploy: (pipeline: SmartHomePipeline) => void;
   isDeploying: boolean;
   feedback: DeployFeedback;
+  progression?: Progression;
 }) {
   const [cells, setCells] = useState<PlacedCells>(makeEmptyCells);
   const [activeBlock, setActiveBlock] = useState<BlockDef | null>(null);
@@ -389,7 +391,14 @@ export function SmartHomeControllerV2({
   // palette; false => it landed in a slot, so kill the animation and let it snap into place.
   const returnToPaletteRef = useRef(false);
 
-  const flow = PIPELINE.filter((slot) => slot.type !== "safety");
+  // Stage gating: only render the slots/blocks the team has unlocked (default: everything, so the
+  // component is unchanged when no progression is passed). Redefining `flow` cascades to the
+  // header counts, the board columns, the connectors and the living-pipeline animation.
+  const unlockedSlots = progression?.unlockedSlots ?? new Set<SlotType>(PIPELINE.map((s) => s.type));
+  const isSlotUnlocked = (t: SlotType) => unlockedSlots.has(t);
+  const safetyUnlocked = isSlotUnlocked("safety");
+
+  const flow = PIPELINE.filter((slot) => slot.type !== "safety" && isSlotUnlocked(slot.type));
   const safety = PIPELINE_BY_TYPE.safety;
 
   function handleDragStart(event: DragStartEvent) {
@@ -430,7 +439,8 @@ export function SmartHomeControllerV2({
     return placed;
   }, [cells]);
 
-  const complete = isComplete(pipeline);
+  // Only the unlocked required slots gate Deploy; locked slots are auto-defaulted server-side.
+  const complete = flow.every((slot) => pipeline[slot.type].length >= slot.min);
   const pipelinePayload = useMemo<SmartHomePipeline>(
     () => ({
       inputs: pipeline.input.map((b) => b.id),
@@ -532,21 +542,23 @@ export function SmartHomeControllerV2({
                 ))}
               </div>
 
-              {/* Safety & override */}
-              <div className="mt-4 rounded-[1rem] border border-dashed border-[#d8cfbd] bg-[#fbf6e9] p-4">
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className="h-6 w-6 shrink-0 text-[#64705f]" />
-                  <div className="flex-1">
-                    <div className="text-[12px] font-black uppercase tracking-[0.1em] text-[#64705f]">Safety &amp; Override (Optional)</div>
-                    <div className="text-xs font-medium text-[#8a8477]">Overrides can stop or limit actions.</div>
-                  </div>
-                  <div className="w-44">
-                    <div className="min-h-[3.5rem]">
-                      <SlotCell slot={safety} index={0} block={cells.safety[0]} activeType={activeType} onRemove={() => removeAt("safety", 0)} />
+              {/* Safety & override (unlocks with the full board) */}
+              {safetyUnlocked && (
+                <div className="mt-4 rounded-[1rem] border border-dashed border-[#d8cfbd] bg-[#fbf6e9] p-4">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="h-6 w-6 shrink-0 text-[#64705f]" />
+                    <div className="flex-1">
+                      <div className="text-[12px] font-black uppercase tracking-[0.1em] text-[#64705f]">Safety &amp; Override (Optional)</div>
+                      <div className="text-xs font-medium text-[#8a8477]">Overrides can stop or limit actions.</div>
+                    </div>
+                    <div className="w-44">
+                      <div className="min-h-[3.5rem]">
+                        <SlotCell slot={safety} index={0} block={cells.safety[0]} activeType={activeType} onRemove={() => removeAt("safety", 0)} />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Deploy bar */}
@@ -616,6 +628,18 @@ export function SmartHomeControllerV2({
               {PIPELINE.map((slot) => {
                 const isCollapsed = collapsed.has(slot.type);
                 const blocks = PALETTE.filter((b) => b.type === slot.type);
+                if (!isSlotUnlocked(slot.type)) {
+                  // Locked group: a greyed teaser so the player sees what's coming + when.
+                  return (
+                    <div key={slot.type} className="rounded-[0.8rem] border border-dashed border-[#d8cfbd] bg-[#f3eddc] px-3 py-2 opacity-80">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-[#c9b98f]" />
+                        <span className="text-[11px] font-black uppercase tracking-[0.1em] text-[#8a8477]">{slot.label}</span>
+                        <span className="ml-auto text-[10px] font-bold text-[#a89a78]">🔒 day {SLOT_UNLOCK_DAY[slot.type] ?? "?"}</span>
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <div key={slot.type}>
                     <button type="button" onClick={() => toggleGroup(slot.type)} className="flex w-full items-center gap-1.5">
