@@ -1090,9 +1090,11 @@ for k, v in sorted(result["cost_breakdown"].items(),
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight text-ink">Cyber &amp; Phishing Defense</h2>
                   <p className="mt-1 text-sm text-muted">
-                    The Cybersecurity scenario and the Gauntlet attack your <em>inputs</em>. Some incidents are real and
-                    must be contained; some are decoys you must <em>not</em> react to; some prose is bait designed to
-                    make you sabotage yourself.
+                    These scenarios attack your <em>inputs</em>. The <strong>Cybersecurity</strong> scenario runs{" "}
+                    <strong>anomaly windows</strong> you must detect and acknowledge; the <strong>Gauntlet</strong>{" "}
+                    escalates with a subscribable IDS signal plus real <em>and decoy</em> attack waves. Some incidents
+                    are real and must be contained; some are decoys you must <em>not</em> react to; some prose is bait
+                    designed to make you sabotage yourself.
                   </p>
                 </div>
 
@@ -1524,7 +1526,8 @@ class Strategy:
                         <GauntletRow what="Prose briefs → compliance windows (SOC floors, export caps)" where="Operator's Mandate" />
                         <GauntletRow what="An EPA diesel-ban window needing an exemption" where="Operator's Mandate" />
                         <GauntletRow what="A phishing / bait directive to ignore" where="Operator's Mandate" />
-                        <GauntletRow what="Real + decoy cyberattacks, IDS, sensor spoofing" where="Cybersecurity" />
+                        <GauntletRow what="Anomaly windows to detect + acknowledge" where="Cybersecurity" />
+                        <GauntletRow what="Subscribable IDS signal + real/decoy attack waves" where="new in the Gauntlet" />
                       </tbody>
                     </table>
                   </div>
