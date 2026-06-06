@@ -306,6 +306,9 @@ export interface SmartHomeState {
   score?: number | null;
   tariff_period?: string | null;
   weather_condition?: string | null;
+  // {device_id: on} snapshot derived from the live observation (keys match the switchboard
+  // SWITCH_DEVICES ids), so the Stage-1 switches can reflect the house's real state.
+  devices?: Record<string, boolean> | null;
   // Why the house is/ isn't live (from the backend's observation_liveness):
   // "live" | "stale" | "no_observation" | "missing_timestamp".
   live_reason?: string | null;

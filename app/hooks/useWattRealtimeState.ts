@@ -29,6 +29,39 @@ function num(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+// Derive a {switchboard device id: on} map from the live observation so the Stage-1 switches can
+// reflect the house's real state. Mirrors the backend SWITCH_DEVICE_COMMANDS on/off semantics
+// (battery "hold" == off, appliance "running" == on, thermostat comfort setpoint == on). Lights
+// come from obs.lights (published per room by the streamed game; absent until that build ships,
+// so those keys are simply omitted and the switch keeps its default).
+function devicesFromObservation(obs: any): Record<string, boolean> {
+  const devices: Record<string, boolean> = {};
+  if (!obs || typeof obs !== "object") return devices;
+  if (Array.isArray(obs.lights)) {
+    for (const entry of obs.lights) {
+      if (entry && typeof entry.room === "string") devices[entry.room] = Boolean(entry.on);
+    }
+  }
+  const setpoint = num(obs.thermostat_setpoint_c);
+  if (setpoint != null) devices.thermostat = setpoint >= 20;
+  if (obs.hot_water && typeof obs.hot_water.mode === "string") {
+    devices.hot_water = obs.hot_water.mode.toLowerCase() !== "off";
+  }
+  if (obs.ev && typeof obs.ev.charging_enabled === "boolean") {
+    devices.ev = obs.ev.charging_enabled;
+  }
+  if (obs.battery && typeof obs.battery.mode === "string") {
+    devices.battery = obs.battery.mode.toLowerCase() !== "hold";
+  }
+  if (obs.appliances && typeof obs.appliances === "object") {
+    for (const name of ["dishwasher", "washer", "dryer"] as const) {
+      const st = obs.appliances[name];
+      if (typeof st === "string") devices[name] = st.toLowerCase() === "running";
+    }
+  }
+  return devices;
+}
+
 // Merge the two RTDB nodes the streamed game publishes into the SmartHomeState the HUD renders.
 function mergeState(score: any, obs: any): SmartHomeState {
   // No score node yet = never played = zeros.
@@ -52,6 +85,7 @@ function mergeState(score: any, obs: any): SmartHomeState {
     score: num(score.score) ?? 0,
     tariff_period: typeof obs?.tariff?.period === "string" ? obs.tariff.period : null,
     weather_condition: typeof obs?.weather?.condition === "string" ? obs.weather.condition : null,
+    devices: devicesFromObservation(obs),
     published_age_ms: ageMs,
   };
 }
