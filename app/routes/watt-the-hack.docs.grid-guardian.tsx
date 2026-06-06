@@ -1116,6 +1116,74 @@ for k, v in sorted(result["cost_breakdown"].items(),
                   </ComponentCard>
                 </div>
 
+                <div className="overflow-hidden rounded-xl border border-cyan-300 bg-surface shadow-sm">
+                  <div className="border-b border-cyan-200 bg-cyan-50 px-4 py-2.5">
+                    <h3 className="font-mono text-sm font-semibold text-cyan-950">Cybersecurity scenario: anomaly windows + trust calibration</h3>
+                  </div>
+                  <div className="p-4">
+                    <p className="mb-3 text-sm leading-relaxed text-slate-700">
+                      In raw numbers a real step-change and a spoof look identical — the{" "}
+                      <strong>operator&apos;s prose</strong> is what tells you which channel to trust during each{" "}
+                      <code>anomaly</code> window:
+                    </p>
+                    <ul className="mb-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                      <li><strong>Real event</strong> → the live meter is honest; act on it.</li>
+                      <li><strong>Spoofed meter</strong> (&quot;a spike the forecast does not corroborate&quot;) → trust the <strong>forecast</strong>.</li>
+                      <li><strong>Poisoned forecast</strong> (&quot;the forecast feed may be compromised; the meter is honest&quot;) → trust the <strong>sensor</strong>.</li>
+                    </ul>
+                    <p className="mb-3 text-sm leading-relaxed text-slate-700">
+                      Acknowledge the window with <code>agent_plan["anomaly_ack"] = &lt;anomaly_id&gt;</code> while it is
+                      live, and dispatch on the value you chose to trust:
+                    </p>
+                    <CodeBlock>
+{`import re
+
+class Strategy:
+    def __init__(self):
+        self.windows = []        # anomaly windows parsed from the alert prose
+        self.seen = set()
+
+    def replan(self, state, alerts):
+        for a in alerts:
+            if a["id"] in self.seen:
+                continue
+            self.seen.add(a["id"])
+            text = (a.get("title", "") + " " + a.get("description", "")).lower()
+            if "anomaly" not in text:
+                continue
+            m = re.search(r"anom[-_][a-z0-9]+", text)   # the id to acknowledge
+            if "forecast" in text and "compromis" in text:
+                trust = "sensor"        # forecast poisoned -> believe the meter
+            elif "does not corroborate" in text or "spoof" in text:
+                trust = "forecast"      # meter spoofed -> believe the forecast
+            else:
+                trust = "sensor"        # neutral / real event -> the live meter
+            self.windows.append({"id": m.group(0) if m else a["id"], "trust": trust,
+                                 "start": a.get("at_step"), "end": a.get("end_step")})
+        return {}
+
+    def step(self, state):
+        t = int(state["time"])
+        sensor = state["demand"]
+        fc = (state.get("forecast", {}) or {}).get("demand") or [sensor]
+        agent_plan, demand = {}, sensor
+        for w in self.windows:
+            if w["start"] is not None and w["start"] <= t <= w["end"]:
+                agent_plan["anomaly_ack"] = w["id"]          # ack while the window is live
+                demand = fc[0] if w["trust"] == "forecast" else sensor
+        net = demand - state["solar"]
+        flow = max(-50.0, min(50.0, net)) if state["soc"] > 0.1 else 0.0
+        return {"battery_flow_mw": flow, "agent_plan": agent_plan}`}
+                    </CodeBlock>
+                  </div>
+                </div>
+
+                <p className="text-sm font-semibold text-muted">
+                  Everything below is the <strong>Gauntlet&apos;s</strong> escalation — a subscribable IDS signal and
+                  real/decoy attack waves with <code>containment_ack</code>. The standalone Cybersecurity scenario uses
+                  the anomaly mechanic above, <em>not</em> IDS.
+                </p>
+
                 <div className="rounded-xl border border-cyan-300 bg-cyan-50 p-5">
                   <h3 className="text-base font-bold text-cyan-950">Real vs decoy: the two IDS nodes must agree</h3>
                   <p className="mt-2 text-sm leading-relaxed text-cyan-900">
@@ -1211,6 +1279,62 @@ class Strategy:
             "agent_plan": agent_plan,       # containment_ack read from HERE
         }`}
                     </CodeBlock>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+                  <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
+                    <h3 className="font-mono text-sm font-semibold text-ink">Operator&apos;s Mandate: parse prose into compliance windows</h3>
+                  </div>
+                  <div className="p-4">
+                    <p className="mb-3 text-sm leading-relaxed text-slate-700">
+                      Each brief is a constraint in plain English — a reserve floor, an export cap — with a step window.
+                      Parse them once in <code>replan()</code>, enforce the active ones in <code>step()</code>. The traps
+                      this scenario is built around: <strong>fractional words</strong> (&quot;four-fifths of capacity&quot;),
+                      <strong> rescissions</strong> (&quot;the prior directive is RESCINDED&quot;), and{" "}
+                      <strong>life-safety overrides</strong> that win an overlap.
+                    </p>
+                    <CodeBlock>
+{`import re
+
+MIN_SOC = re.compile(r">=\\s*(\\d+)\\s*%.*?steps?\\s+(\\d+)\\s+through\\s+(\\d+)", re.I | re.S)
+EXPORT  = re.compile(r"export.{0,40}?(?:cap|limit|reduced).{0,80}?(\\d+)\\s*MW.*?steps?\\s+(\\d+)\\s+through\\s+(\\d+)", re.I | re.S)
+
+class Strategy:
+    def __init__(self):
+        self.rules, self.seen = [], set()
+
+    def replan(self, state, alerts):
+        for a in alerts:
+            if a["id"] in self.seen:
+                continue
+            self.seen.add(a["id"])
+            text = a.get("title", "") + "\\n" + a.get("description", "")
+            pr = 100 if "life-safety" in text.lower() else 50   # life-safety wins overlaps
+            m = MIN_SOC.search(text)
+            if m:
+                self.rules.append({"min_soc": int(m.group(1)) / 100,
+                    "start": int(m.group(2)), "end": int(m.group(3)), "pr": pr})
+            m = EXPORT.search(text)
+            if m:
+                self.rules.append({"max_export": float(m.group(1)),
+                    "start": int(m.group(2)), "end": int(m.group(3)), "pr": pr})
+        return {}
+
+    def step(self, state):
+        t = int(state["time"])
+        active = [c for c in self.rules if c["start"] <= t <= c["end"]]
+        if active:                                   # only the top-priority tier applies
+            top = max(c["pr"] for c in active)
+            active = [c for c in active if c["pr"] == top]
+        min_soc = max((c["min_soc"] for c in active if "min_soc" in c), default=None)
+        # ...then hold SOC >= min_soc and cap exports at max_export this step.
+        return {"battery_flow_mw": 0.0}`}
+                    </CodeBlock>
+                    <p className="mt-2 text-[13px] leading-relaxed text-slate-700">
+                      Regex catches the clean AEMO-style phrasings; the fractional-word and rescission cases are where an
+                      LLM parse pulls ahead — that cost gap is the lesson of this scenario.
+                    </p>
                   </div>
                 </div>
 
