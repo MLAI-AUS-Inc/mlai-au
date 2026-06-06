@@ -450,3 +450,5 @@
 - [x] Add a confirm step before template/reset/revert discards custom unsaved controller code
 - [x] Add Applied/Unsaved status, a Revert action, and per-scenario save messaging to the controller editor
 - [x] Cover controller-draft logic and store persistence with bun tests; run `bunx tsc -b`
+- [x] Enable the Watt The Hack card on `/hackathons` so it opens the login flow
+- [x] Run `bun run typecheck`
