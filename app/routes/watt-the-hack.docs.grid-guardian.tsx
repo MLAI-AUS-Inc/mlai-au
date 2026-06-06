@@ -433,6 +433,12 @@ points = clamp(points, 0, 150)`}
                       You must beat naive to put a point on the board.
                     </li>
                   </ul>
+                  <p className="mt-3 rounded-md bg-sky-100/70 px-3 py-2 text-sm font-medium text-sky-950">
+                    <strong>What to actually aim for:</strong> hitting <strong>100</strong> means you matched our
+                    strongest reference controller — that&apos;s an excellent score and the realistic target. The{" "}
+                    <strong>100–150</strong> band only opens up when you genuinely <em>beat</em> that reference, which is
+                    hard and uncommon — don&apos;t treat 150 as the expected result. A strong submission lands near 100.
+                  </p>
                 </div>
 
                 <div className="rounded-xl border border-amber-300 bg-amber-50 p-5">
