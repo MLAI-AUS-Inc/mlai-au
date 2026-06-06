@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BatteryCharging,
   Car,
@@ -77,16 +77,47 @@ export function SmartHomeSwitchboard({
   isDeploying,
   feedback,
   upcoming,
+  liveStates,
 }: {
   onDeploy: (switches: Record<string, boolean>) => void;
   isDeploying: boolean;
   feedback: DeployFeedback;
   upcoming: Upcoming[];
+  // {device id: on} from the live game. Switches the player hasn't flipped track this, so the
+  // board opens matching the house's real state.
+  liveStates?: Record<string, boolean> | null;
 }) {
   // Each device starts at its natural default (lights tend to be left on; appliances idle).
   const initial = () => Object.fromEntries(SWITCH_DEVICES.map((d) => [d.id, d.defaultOn]));
   const [on, setOn] = useState<Record<string, boolean>>(initial);
-  const toggle = (id: string) => setOn((prev) => ({ ...prev, [id]: !prev[id] }));
+  // Switches flipped since the last deploy hold their position; everything else tracks the live
+  // house state as it streams in.
+  const touched = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!liveStates) return;
+    setOn((prev) => {
+      const next = { ...prev };
+      for (const d of SWITCH_DEVICES) {
+        const value = liveStates[d.id];
+        if (typeof value === "boolean" && !touched.current.has(d.id)) next[d.id] = value;
+      }
+      return next;
+    });
+  }, [liveStates]);
+
+  const toggle = (id: string) => {
+    touched.current.add(id);
+    setOn((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+  const deploy = () => {
+    onDeploy(on);
+    touched.current = new Set(); // the deployed state is the new baseline the live feed re-confirms
+  };
+  const reset = () => {
+    touched.current = new Set();
+    setOn(initial());
+  };
 
   return (
     <section className={`${wattClasses.panel} p-6`}>
@@ -122,7 +153,7 @@ export function SmartHomeSwitchboard({
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => onDeploy(on)}
+          onClick={deploy}
           disabled={isDeploying}
           className={`${wattClasses.buttonPrimary} gap-2 px-6 py-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
         >
@@ -135,7 +166,7 @@ export function SmartHomeSwitchboard({
         )}
         <button
           type="button"
-          onClick={() => setOn(initial())}
+          onClick={reset}
           className="ml-auto inline-flex items-center gap-1.5 rounded-[0.65rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2 text-xs font-bold text-[#64705f] hover:bg-[#fbf6e9]"
         >
           <RotateCcw className="h-3.5 w-3.5" /> Reset

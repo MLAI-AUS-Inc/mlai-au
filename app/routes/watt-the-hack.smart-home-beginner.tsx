@@ -406,6 +406,7 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
             isDeploying={isDeploying}
             feedback={feedback}
             upcoming={progression.upcoming}
+            liveStates={homeState.live ? homeState.devices ?? null : null}
           />
         ) : (
           <SmartHomeControllerV2
