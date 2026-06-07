@@ -337,10 +337,10 @@ export default function WattTheHackLeaderboard() {
             <p className="text-sm font-black uppercase tracking-[0.28em] text-[#9fe870]">City of Melbourne Track</p>
             <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight text-white sm:text-5xl">
               <TrophyIcon className="h-8 w-8 text-[#f0c742] sm:h-10 sm:w-10" />
-              Current Standings
+              Final Standings
             </h1>
             <p className="mt-2 max-w-2xl text-lg text-white/90">
-              Live combined standings across all scored scenarios. Higher points mean a stronger,
+              Final combined standings across all scored scenarios. Higher points mean a stronger,
               cleaner, more reliable grid.
             </p>
           </div>
