@@ -1,7 +1,7 @@
 /**
  * Shared types/helpers for the Watt The Hack "City of Melbourne" leaderboard.
  *
- * Both the full Current Standings page
+ * Both the full Final Standings page
  * (`watt-the-hack.city-of-melbourne-advanced-leaderboard.tsx`) and the dashboard's
  * top-3 standings panel fetch the same same-origin proxy
  * (`/watt-the-hack/city-of-melbourne-advanced-leaderboard-data`) and render the same

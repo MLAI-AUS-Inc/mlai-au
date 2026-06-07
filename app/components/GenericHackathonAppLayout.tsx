@@ -71,7 +71,7 @@ export default function GenericHackathonAppLayout({ children, user, config, head
             children: [
               { name: "Sandbox", href: `${config.basePath}/city-of-melbourne-advanced` },
               { name: "Submission Portal", href: `${config.basePath}/city-of-melbourne-advanced-submit` },
-              { name: "Current Standings", href: `${config.basePath}/city-of-melbourne-advanced-leaderboard` }
+              { name: "Final Standings", href: `${config.basePath}/city-of-melbourne-advanced-leaderboard` }
             ]
           },
           { name: "Smart Home (Beginner) Track", href: `${config.basePath}/smart-home-beginner`, icon: HomeModernIcon },

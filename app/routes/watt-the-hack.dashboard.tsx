@@ -192,7 +192,7 @@ function StandingsPanel() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <TrophyIcon className="h-7 w-7 text-[#155420]" aria-hidden="true" />
-          <h2 className="text-xl font-black leading-tight text-[#121e16]">Current Standings</h2>
+          <h2 className="text-xl font-black leading-tight text-[#121e16]">Final Standings</h2>
         </div>
         <Link
           to="/watt-the-hack/city-of-melbourne-advanced-leaderboard"
