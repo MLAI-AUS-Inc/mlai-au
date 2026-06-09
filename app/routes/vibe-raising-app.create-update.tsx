@@ -3752,7 +3752,20 @@ export default function CreateUpdate() {
             {hasDraftTemplate ? <CheckCircleIcon className="h-5 w-5" /> : <SparklesIcon className="h-5 w-5" />}
         </div>
     );
-    const draftStickyBar = (() => {
+    const draftStickyBar: {
+        statusTitle: string;
+        statusDetail?: string;
+        primaryLabel: string;
+        onPrimary?: () => void;
+        primaryDisabled?: boolean;
+        primaryType?: "button" | "submit";
+        primaryForm?: string;
+        onBack?: () => void;
+        secondaryLabel?: string;
+        mobileSecondaryLabel?: string;
+        onSecondary?: () => void;
+        secondaryDisabled?: boolean;
+    } = (() => {
         if (!monthConfirmed) {
             return {
                 statusTitle: "Select month",
@@ -3792,6 +3805,7 @@ export default function CreateUpdate() {
             };
         }
 
+        const canRunAgain = !isManualOnlyDraftFlow && selectedInputSources.length > 0;
         return {
             statusTitle: isManualOnlyDraftFlow ? "Draft template ready" : "AI draft ready",
             statusDetail: selectedMetricOptions.length > 0
@@ -3803,6 +3817,12 @@ export default function CreateUpdate() {
             primaryType: "submit" as const,
             primaryForm: DRAFT_REVIEW_FORM_ID,
             primaryDisabled: isSubmitting,
+            secondaryLabel: canRunAgain ? "Run again" : undefined,
+            mobileSecondaryLabel: canRunAgain ? "Run again" : undefined,
+            onSecondary: canRunAgain
+                ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true })
+                : undefined,
+            secondaryDisabled: emailDraftActionBusy,
             onBack: () => setMonthConfirmed(false),
         };
     })();
@@ -5844,6 +5864,10 @@ export default function CreateUpdate() {
                 primaryDisabled={draftStickyBar.primaryDisabled}
                 primaryType={draftStickyBar.primaryType}
                 primaryForm={draftStickyBar.primaryForm}
+                secondaryLabel={draftStickyBar.secondaryLabel}
+                mobileSecondaryLabel={draftStickyBar.mobileSecondaryLabel}
+                onSecondary={draftStickyBar.onSecondary}
+                secondaryDisabled={draftStickyBar.secondaryDisabled}
             />
 
             {showStoryMaterialsSuggestion ? (
@@ -5946,9 +5970,9 @@ export default function CreateUpdate() {
                                     <ExclamationTriangleIcon className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-[var(--vr-color-text)]">Draft another update?</h2>
+                                    <h2 className="text-lg font-black text-[var(--vr-color-text)]">Replace this draft?</h2>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        You already have a monthly update for <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong>. Creating a new draft from these inputs can take up to 20 minutes. Previous dot points will not be overwritten; matching points will be refreshed and new points will be added.
+                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
                                     </p>
                                 </div>
                             </div>
