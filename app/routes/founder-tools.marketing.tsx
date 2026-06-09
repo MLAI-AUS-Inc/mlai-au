@@ -49,6 +49,7 @@ import {
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
 import { shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
+import { findRecoverableDiscoveryRun } from "~/lib/vibe-marketing-discovery-recovery";
 import {
   VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
   VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS,
@@ -550,14 +551,18 @@ export async function action({ request, context }: Route.ActionArgs) {
         requestedTopicCount: 4,
         requested_topic_count: 4,
       });
-      if (run.runId) {
-        throw redirect(
-          `/founder-tools/marketing/create?step=chooseArticle&researchRunId=${encodeURIComponent(run.runId)}`,
-        );
-      }
+      // Return the run instead of redirecting: the discovery job already runs
+      // detached on the backend, so we keep the user on the dashboard and let the
+      // custom-research fetcher drive the progress card + polling (same as content
+      // islands). This is what lets the research survive switching pages.
+      const runStatus = normalizeContentIslandDiscoveryStatus(run.status);
+      const runQueuedSuccessfully = Boolean(run.runId) && !isContentIslandDiscoveryFailedStatus(runStatus);
       return {
         intent,
-        error: run.error || run.errors?.[0] || "Research could not start. Please try again.",
+        runId: run.runId,
+        status: run.status,
+        error: runQueuedSuccessfully ? null : run.error || run.errors?.[0] || "Research could not start. Please try again.",
+        errors: runQueuedSuccessfully ? [] : run.errors,
       };
     }
 
@@ -2757,8 +2762,13 @@ type CompanyAvatarActionData = {
   error?: string | null;
 };
 
+// Represents an in-flight topic discovery run shown as a progress card on the
+// dashboard. `kind` distinguishes a content-island run (island icon + name) from a
+// free-form custom-topic research run (generic "your topic" label). Both are the
+// same backend `auto_discovery` workflow.
 type ContentIslandDiscoveryRunState = {
   runId: string;
+  kind?: "island" | "custom";
   islandSlug: string;
   islandName: string;
   iconKey: string;
@@ -3213,6 +3223,7 @@ function ReturningTopicPickerPage({
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
   const contentIslandDiscoveryFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "content-island-discovery" });
   const contentIslandRunStatusFetcher = useFetcher<VibeMarketingRunSummary>({ key: "content-island-discovery-status" });
+  const customResearchFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "custom-research" });
   const companyAvatarFetcher = useFetcher<CompanyAvatarActionData>({ key: "company-avatar" });
   const topicListRef = useRef<HTMLDivElement | null>(null);
   const pillarHelpRef = useRef<HTMLDivElement | null>(null);
@@ -3353,15 +3364,28 @@ function ReturningTopicPickerPage({
     : submittedContentIslandSlug || null;
   const articleSubmitting = pendingActions.isPending("start-article");
   const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
-  const customResearchPending = pendingActions.isPending("research-custom-topic");
+  const customResearchBusy =
+    customResearchFetcher.state !== "idle" ||
+    Boolean(contentIslandDiscoveryRun?.kind === "custom" && !contentIslandRunTerminal);
+  const submittedCustomResearchRun: ContentIslandDiscoveryRunState | null =
+    customResearchFetcher.state !== "idle"
+      ? {
+          runId: "custom-research-starting",
+          kind: "custom",
+          islandSlug: "",
+          islandName: "your topic",
+          iconKey: "default",
+          colorKey: "purple",
+        }
+      : null;
   const deleteDraftSubmitting = pendingActions.isPending("delete-draft");
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
-  const contentIslandProgressState = contentIslandDiscoveryRun ?? submittedContentIslandRun;
+  const contentIslandProgressState = contentIslandDiscoveryRun ?? submittedContentIslandRun ?? submittedCustomResearchRun;
   const contentIslandProgressRun = buildContentIslandDiscoveryRunSummary({
     run: contentIslandPolledRun,
     activeRun: contentIslandProgressState,
-    submitting: contentIslandDiscoveryFetcher.state !== "idle",
+    submitting: contentIslandDiscoveryFetcher.state !== "idle" || customResearchFetcher.state !== "idle",
     domain,
   });
   const contentIslandProgressLabel = contentIslandDiscoveryStepLabel(contentIslandPolledRun, contentIslandProgressState);
@@ -3453,6 +3477,25 @@ function ReturningTopicPickerPage({
       return;
     }
     setConfirmingContentIslandSlug(pillar.slug);
+  }
+
+  // Submit custom-topic research via a fetcher so the user stays on the dashboard.
+  // Capture the form values before switching to the "choose" tab (which unmounts the
+  // custom inputs) so FormData still reads them.
+  function handleCustomResearchSubmit() {
+    if (customResearchBusy) return;
+    const form = articleFormRef.current;
+    if (!form) return;
+    const formData = new FormData(form);
+    formData.set("intent", "research-custom-topic");
+    setConfirmingContentIslandSlug(null);
+    setActivePillarSlug(null);
+    setActiveTab("choose");
+    setVisibleCount(5);
+    setToast(null);
+    setContentIslandDiscoveryRun(null);
+    setContentIslandRefreshRunId(null);
+    customResearchFetcher.submit(formData, { method: "POST" });
   }
 
   function handleAddCustomPillar() {
@@ -3600,6 +3643,52 @@ function ReturningTopicPickerPage({
       colorKey: data.islandColorKey || pillar?.colorKey || "purple",
     });
   }, [bootstrap.topicPillars, contentIslandDiscoveryFetcher.data, contentIslandDiscoveryFetcher.state]);
+
+  // Custom-topic research: once the fetcher returns a runId, drive the same progress
+  // card + polling machinery as content islands (kind="custom" → generic label).
+  useEffect(() => {
+    const data = customResearchFetcher.data;
+    if (customResearchFetcher.state !== "idle" || !data || data.intent !== "research-custom-topic") return;
+    const startStatusFailed = isContentIslandDiscoveryFailedStatus(data.status);
+    if (!data.runId || (data.error && startStatusFailed)) {
+      setContentIslandDiscoveryRun(null);
+      setToast({ kind: "error", message: data.error || "Research could not start for that idea." });
+      return;
+    }
+    setContentIslandDiscoveryRun({
+      runId: data.runId,
+      kind: "custom",
+      islandSlug: "",
+      islandName: "your topic",
+      iconKey: "default",
+      colorKey: "purple",
+    });
+  }, [customResearchFetcher.data, customResearchFetcher.state]);
+
+  // Recover an in-flight discovery run after navigating away and back. The backend
+  // job keeps running detached, so re-attach the progress card + polling from
+  // bootstrap.latestRuns. Recovered runs use the generic "your topic" label since the
+  // bootstrap run summary does not carry island metadata; completed runs are skipped
+  // via the completed-run guard so this never re-seeds a finished run.
+  useEffect(() => {
+    if (contentIslandDiscoveryRun) return;
+    if (contentIslandDiscoveryFetcher.state !== "idle" || customResearchFetcher.state !== "idle") return;
+    const inflight = findRecoverableDiscoveryRun(bootstrap.latestRuns, completedContentIslandDiscoveryRuns.current);
+    if (!inflight) return;
+    setContentIslandDiscoveryRun({
+      runId: inflight.runId,
+      kind: "custom",
+      islandSlug: "",
+      islandName: "your topic",
+      iconKey: "default",
+      colorKey: "purple",
+    });
+  }, [
+    bootstrap.latestRuns,
+    contentIslandDiscoveryRun,
+    contentIslandDiscoveryFetcher.state,
+    customResearchFetcher.state,
+  ]);
 
   useEffect(() => {
     if (!contentIslandDiscoveryRun?.runId) return;
@@ -3769,7 +3858,20 @@ function ReturningTopicPickerPage({
       ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
         <div className="space-y-5">
-          <Form ref={articleFormRef} method="POST" className="space-y-5">
+          <Form
+            ref={articleFormRef}
+            method="POST"
+            className="space-y-5"
+            onSubmit={(event) => {
+              // The custom tab shares this form; route its submit (button click or
+              // Enter) through the fetcher so research stays on the dashboard. The
+              // choose tab's start-article submit proceeds normally.
+              if (activeTab === "custom") {
+                event.preventDefault();
+                handleCustomResearchSubmit();
+              }
+            }}
+          >
             {activeTab === "choose" ? (
               <input type="hidden" name="intent" value="start-article" />
             ) : null}
@@ -3859,9 +3961,15 @@ function ReturningTopicPickerPage({
                   <div className="mt-5">
                     <MarketingRunProgressCard
                       run={contentIslandProgressRun}
-                      title="Researching article ideas"
+                      title={contentIslandProgressState.kind === "custom" ? "Researching your topic" : "Researching article ideas"}
                       currentStepLabel={contentIslandProgressLabel}
-                      icon={<PillarIcon iconKey={contentIslandProgressState.iconKey} className="h-5 w-5" />}
+                      icon={
+                        contentIslandProgressState.kind === "custom" ? (
+                          <Sparkles className="h-5 w-5" />
+                        ) : (
+                          <PillarIcon iconKey={contentIslandProgressState.iconKey} className="h-5 w-5" />
+                        )
+                      }
                       theme={contentIslandProgressTheme}
                     />
                   </div>
@@ -3997,13 +4105,11 @@ function ReturningTopicPickerPage({
                   </p>
                   <button
                     type="submit"
-                    name="intent"
-                    value="research-custom-topic"
-                    disabled={isSubmitting}
+                    disabled={customResearchBusy}
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                   >
-                    {customResearchPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    {customResearchPending ? "Researching..." : "Research this topic"}
+                    {customResearchBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {customResearchBusy ? "Researching..." : "Research this topic"}
                   </button>
                 </div>
               </>
