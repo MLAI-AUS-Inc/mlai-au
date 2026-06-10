@@ -1,5 +1,6 @@
 import type { Route } from "./+types/watt-the-hack.city-of-melbourne-advanced-recent-submissions-data";
 import { getEnv } from "~/lib/env.server";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 
 /**
  * Same-origin proxy for the gateway's `/teams/{id}/submissions` endpoint.
@@ -49,6 +50,7 @@ function buildAdminRequest(
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const url = new URL(request.url);
   const teamId = url.searchParams.get("team_id") ?? "";
   // Refuse to forward arbitrary path components into the upstream URL.

@@ -2,8 +2,13 @@ import { redirect } from "react-router";
 import { createApiClient, getBaseUrl } from "~/lib/api";
 import type { Announcement } from "~/components/Announcements";
 import type { Hackathon } from "~/services/hackathon";
+import {
+  assertWattTheHackPublicAccessEnabled,
+  assertWattTheHackSlugEnabled,
+  WATT_THE_HACK_SLUG,
+} from "~/lib/watt-the-hack-access";
 
-export const WATT_THE_HACK_SLUG = "watt-the-hack";
+export { WATT_THE_HACK_SLUG };
 
 export interface GenericHackathonMember {
   id: number;
@@ -83,6 +88,7 @@ export interface WattUnitySession {
 }
 
 function appPath(slug: string, path: string) {
+  assertWattTheHackSlugEnabled(slug);
   return `/api/v1/hackathons/${slug}/app/${path}`;
 }
 
@@ -110,6 +116,7 @@ function asGenericTeam(data: unknown): GenericHackathonTeam | null {
 }
 
 export async function getGenericHackathon(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<Hackathon> {
+  assertWattTheHackSlugEnabled(slug);
   const client = createApiClient(env, request);
   const response = await client.get(`/api/v1/hackathons/${slug}/`);
   if (!response.data || Array.isArray(response.data) || typeof response.data.name !== "string") {
@@ -242,6 +249,7 @@ export async function getGenericResources(env: Env, request: Request, slug = WAT
 }
 
 export async function createWattUnitySession(env: Env, request: Request): Promise<WattUnitySession> {
+  assertWattTheHackPublicAccessEnabled();
   const client = createApiClient(env, request);
   const response = await client.post("/api/v1/hackathons/watt/unity-sessions/current/", {});
   const data = response.data as Partial<WattUnitySession>;
@@ -324,12 +332,14 @@ export interface WattParticipantAuth {
 }
 
 export async function getWattParticipantToken(env: Env, request: Request): Promise<WattParticipantAuth> {
+  assertWattTheHackPublicAccessEnabled();
   const client = createApiClient(env, request);
   const response = await client.post("/api/v1/hackathons/watt/firebase-token/", {});
   return response.data as WattParticipantAuth;
 }
 
 export async function getSmartHomeBlocks(env: Env, request: Request): Promise<SmartHomeCatalog> {
+  assertWattTheHackPublicAccessEnabled();
   const client = createApiClient(env, request);
   const response = await client.get("/api/v1/hackathons/watt/smart-home/blocks/");
   const data = (response.data ?? {}) as Partial<SmartHomeCatalog>;
@@ -344,6 +354,7 @@ export async function deploySmartHome(
   request: Request,
   pipeline: SmartHomePipeline,
 ): Promise<SmartHomeDeployResult> {
+  assertWattTheHackPublicAccessEnabled();
   const client = createApiClient(env, request);
   const response = await client.post("/api/v1/hackathons/watt/smart-home/deploy/", { pipeline });
   return response.data as SmartHomeDeployResult;
@@ -355,12 +366,14 @@ export async function deploySmartHomeSwitches(
   request: Request,
   switches: Record<string, boolean>,
 ): Promise<SmartHomeDeployResult> {
+  assertWattTheHackPublicAccessEnabled();
   const client = createApiClient(env, request);
   const response = await client.post("/api/v1/hackathons/watt/smart-home/deploy/", { switches });
   return response.data as SmartHomeDeployResult;
 }
 
 export async function getSmartHomeState(env: Env, request: Request): Promise<SmartHomeState> {
+  assertWattTheHackPublicAccessEnabled();
   const client = createApiClient(env, request);
   const response = await client.get("/api/v1/hackathons/watt/smart-home/state/");
   const data = (response.data ?? {}) as Partial<SmartHomeState>;
@@ -395,6 +408,7 @@ export interface SmartHomeBuyResult {
 }
 
 export async function getSmartHomeShop(env: Env, request: Request): Promise<SmartHomeShopState> {
+  assertWattTheHackPublicAccessEnabled();
   const client = createApiClient(env, request);
   const response = await client.get("/api/v1/hackathons/watt/smart-home/shop/");
   const data = (response.data ?? {}) as Partial<SmartHomeShopState>;
@@ -411,6 +425,7 @@ export async function buySmartHomeUpgrade(
   request: Request,
   itemId: string,
 ): Promise<SmartHomeBuyResult> {
+  assertWattTheHackPublicAccessEnabled();
   const client = createApiClient(env, request);
   const response = await client.post("/api/v1/hackathons/watt/smart-home/buy/", { item_id: itemId });
   return response.data as SmartHomeBuyResult;

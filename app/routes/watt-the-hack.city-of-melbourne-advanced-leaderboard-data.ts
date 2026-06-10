@@ -1,5 +1,6 @@
 import type { Route } from "./+types/watt-the-hack.city-of-melbourne-advanced-leaderboard-data";
 import { FINAL_LEADERBOARD } from "~/lib/watt-the-hack-leaderboard-final";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 
 /**
  * Final-standings endpoint (frozen snapshot).
@@ -15,6 +16,7 @@ import { FINAL_LEADERBOARD } from "~/lib/watt-the-hack-leaderboard-final";
  * resolveOverride IP-bypass fallback) and redeploy.
  */
 export async function loader({ request }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const reqUrl = new URL(request.url);
   const rawLimit = Number.parseInt(reqUrl.searchParams.get("limit") || "50", 10);
   const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50;

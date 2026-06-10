@@ -5,6 +5,7 @@ import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { getCurrentUser } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
 import { wattClasses } from "~/lib/watt-theme";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 
 const TOC = [
   { id: "brief", label: "Brief" },
@@ -344,6 +345,7 @@ const POLICIES = [
 ] as const;
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   let user = null;
   try {
@@ -851,5 +853,4 @@ function RubricRow({ label, text, tone }: { label: string; text: string; tone: "
     </div>
   );
 }
-
 

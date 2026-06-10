@@ -6,6 +6,7 @@ import type {
   SimulationState,
   StepResponse,
 } from "./types";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:8000";
 
@@ -14,6 +15,8 @@ const DEFAULT_BASE_URL = "http://127.0.0.1:8000";
 // - On mlai.au production, the sandbox proxies through the Vercel-hosted
 //   WTH frontend which has the FastAPI backend behind it.
 const baseUrl = (): string => {
+  assertWattTheHackPublicAccessEnabled();
+
   // Explicit override always wins (set in .dev.vars or Cloudflare dashboard)
   const configured = (typeof import.meta !== "undefined" && import.meta.env?.VITE_WTH_SANDBOX_API_URL) || "";
   if (configured) return configured;

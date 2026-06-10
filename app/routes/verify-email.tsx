@@ -3,6 +3,7 @@ import { useLoaderData } from "react-router";
 import { normalizeAuthNextForApp } from "~/lib/auth-return";
 import { getEnv } from "~/lib/env.server";
 import { verifyMagicLinkWithCookies } from "~/lib/auth";
+import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
 function getLoginHref(app: string | null, next: string): string {
     const params = new URLSearchParams();
@@ -20,6 +21,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const url = new URL(request.url);
     const token = url.searchParams.get("token");
     const app = url.searchParams.get("app");
+    assertWattTheHackAuthEnabled(app, url.searchParams.get("next"));
     const next = normalizeAuthNextForApp(app, url.searchParams.get("next"), { fallback: "/esafety/dashboard" });
     const loginHref = getLoginHref(app, next);
 

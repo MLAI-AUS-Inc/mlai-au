@@ -21,6 +21,7 @@ import type { Route } from "./+types/watt-the-hack.city-of-melbourne-advanced-su
 import { getEnv } from "~/lib/env.server";
 import { getGenericCurrentTeam } from "~/lib/generic-hackathon";
 import { wattClasses, wattImages } from "~/lib/watt-theme";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 import {
   LLM_SCENARIO_IDS,
   getTemplatesForScenario,
@@ -34,6 +35,7 @@ import {
 // Empty creds ⇒ the team isn't provisioned yet ⇒ the form shows an
 // "ask staff to enable the advanced track" notice instead of inputs.
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   const team = await getGenericCurrentTeam(env, request).catch(() => null);
   return {

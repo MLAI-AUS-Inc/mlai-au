@@ -1,5 +1,6 @@
 import { createApiClient } from "~/lib/api";
 import type { Announcement } from "~/components/Announcements";
+import { assertWattTheHackSlugEnabled } from "~/lib/watt-the-hack-access";
 
 export interface Hackathon {
     name: string;
@@ -43,12 +44,14 @@ export interface ThreadResponse {
 }
 
 export async function getHackathon(env: Env, request: Request, slug: string): Promise<Hackathon> {
+    assertWattTheHackSlugEnabled(slug);
     const client = createApiClient(env, request);
     const response = await client.get(`/api/v1/hackathons/${slug}/`);
     return response.data;
 }
 
 export async function getAnnouncements(env: Env, request: Request, slug: string): Promise<Announcement[]> {
+    assertWattTheHackSlugEnabled(slug);
     const client = createApiClient(env, request);
     const response = await client.get(`/api/v1/hackathons/${slug}/announcements/`);
     return response.data;
@@ -61,6 +64,7 @@ export async function getChannelMessages(
     limit?: number,
     cursor?: string,
 ): Promise<ChannelResponse> {
+    assertWattTheHackSlugEnabled(slug);
     const client = createApiClient(env, request);
     const params: Record<string, string | number> = {};
     if (limit) params.limit = limit;
@@ -75,6 +79,7 @@ export async function getThreadMessages(
     slug: string,
     threadTs: string,
 ): Promise<ThreadResponse> {
+    assertWattTheHackSlugEnabled(slug);
     const client = createApiClient(env, request);
     const response = await client.get(`/api/v1/hackathons/${slug}/channel/thread/${threadTs}/`);
     return response.data;

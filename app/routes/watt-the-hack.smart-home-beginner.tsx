@@ -23,6 +23,7 @@ import { SmartHomeStatusBar } from "~/components/SmartHomeStatusBar";
 import { useWattRealtimeState } from "~/hooks/useWattRealtimeState";
 import { progressionForDay } from "~/lib/smart-home-progression";
 import type { DeployFeedback } from "~/components/SmartHomeController";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 
 type StreamData = {
   session: WattUnitySession | null;
@@ -51,6 +52,7 @@ function formatClockMs(ms: number) {
 }
 
 async function loadSession(request: Request, context: Route.LoaderArgs["context"]): Promise<StreamData> {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   try {
     return { session: await createWattUnitySession(env, request), error: null };
@@ -60,6 +62,7 @@ async function loadSession(request: Request, context: Route.LoaderArgs["context"
 }
 
 async function loadCatalog(request: Request, context: Route.LoaderArgs["context"]): Promise<SmartHomeCatalog> {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   try {
     return await getSmartHomeBlocks(env, request);
@@ -69,6 +72,7 @@ async function loadCatalog(request: Request, context: Route.LoaderArgs["context"
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   // Gate the whole page (stream + controller + shop) behind a valid 2..6 member team.
   // Redirects to the profile/team page before any Unity stream session is minted.
   await requireValidWattTeam(getEnv(context), request);
@@ -79,6 +83,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   const formData = await request.formData();
   const intent = String(formData.get("intent") || "reconnect");
