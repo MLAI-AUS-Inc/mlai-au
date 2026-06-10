@@ -14,8 +14,10 @@ import {
   WATT_THE_HACK_SLUG,
 } from "~/lib/generic-hackathon";
 import { wattClasses } from "~/lib/watt-theme";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   let user = null;
   try {
@@ -36,6 +38,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   const formData = await request.formData();
   formData.delete("intent");

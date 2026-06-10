@@ -23,6 +23,7 @@ import {
   type GenericHackathonTeam,
 } from "~/lib/generic-hackathon";
 import { wattClasses } from "~/lib/watt-theme";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 import type { User } from "~/types/user";
 
 interface WattUser extends User {
@@ -54,6 +55,7 @@ const PERSONA_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   let user = null;
   try {
@@ -75,6 +77,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs): Promise<ActionResult | null> {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   const formData = await request.formData();
   const intent = formData.get("intent")?.toString();

@@ -1,6 +1,7 @@
 import type { Route } from "./+types/watt-the-hack.smart-home-beginner.firebase-token";
 import { getEnv } from "~/lib/env.server";
 import { getWattParticipantToken } from "~/lib/generic-hackathon";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 
 export interface WattRealtimeAuth {
   token: string | null;
@@ -13,6 +14,7 @@ export interface WattRealtimeAuth {
 // The smart-home page fetches this once on mount (raw `fetch`) to bootstrap a direct Firebase RTDB
 // subscription — so it returns an explicit JSON Response rather than a bare value.
 export async function loader({ request, context }: Route.LoaderArgs): Promise<Response> {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   let payload: WattRealtimeAuth = { token: null, classId: null, householdId: null };
   try {

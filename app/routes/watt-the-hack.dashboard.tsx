@@ -25,6 +25,7 @@ import {
 import { wattClasses, wattImages } from "~/lib/watt-theme";
 import { relativeTime, type LeaderboardEntry } from "~/lib/watt-the-hack-leaderboard";
 import { wattTheHackSchedule } from "~/lib/watt-the-hack-schedule";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 import type { Hackathon } from "~/services/hackathon";
 
 const FALLBACK_HACKATHON: Hackathon = {
@@ -36,6 +37,7 @@ const FALLBACK_HACKATHON: Hackathon = {
 };
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   let user = null;
   try {

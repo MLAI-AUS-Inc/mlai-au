@@ -452,3 +452,6 @@
 - [x] Cover controller-draft logic and store persistence with bun tests; run `bunx tsc -b`
 - [x] Enable the Watt The Hack card on `/hackathons` so it opens the login flow
 - [x] Run `bun run typecheck`
+- [x] Disable the Watt The Hack card on `/hackathons`
+- [x] Block Watt The Hack login, route, and endpoint access from the website
+- [x] Run `bun run typecheck`

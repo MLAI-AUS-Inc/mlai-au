@@ -16,28 +16,23 @@ export default function Hackathons() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12 max-w-5xl mx-auto">
-                    {/* Watt The Hack Card */}
-                    <a
-                        href="/platform/login?app=watt-the-hack&next=/watt-the-hack/dashboard"
-                        aria-label="Log in to Watt The Hack"
-                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition duration-200 hover:-translate-y-1 hover:shadow-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--brutalist-yellow)]"
+                    {/* Watt The Hack Card — Disabled */}
+                    <div
+                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
                     >
                         <img
                             src={WATT_THE_HACK_STATIC}
                             alt="Watt The Hack"
-                            className="absolute inset-0 h-full w-full object-cover object-center transition duration-300 group-hover:scale-105"
+                            className="absolute inset-0 h-full w-full object-cover object-center"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                         <div className="absolute bottom-0 left-0 right-0 z-10 p-6 text-white">
-                            <h3 className="text-2xl font-bold">Watt The Hack</h3>
+                            <h3 className="text-2xl font-bold">Watt The Hack (Coming Soon)</h3>
                             <p className="mt-2 text-sm text-gray-200">
                                 Build practical AI and software projects for a cleaner, smarter energy future.
                             </p>
-                            <span className="mt-4 inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-[var(--brutalist-black)] transition group-hover:bg-[var(--brutalist-yellow)]">
-                                Log in
-                            </span>
                         </div>
-                    </a>
+                    </div>
 
                     {/* Medhack: Frontiers Card — Disabled */}
                     <div

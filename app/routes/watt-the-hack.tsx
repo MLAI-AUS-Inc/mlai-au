@@ -5,11 +5,13 @@ import WattNotificationBell from "~/components/WattNotificationBell";
 import { getCurrentUser } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
 import { WATT_THE_HACK_SLUG } from "~/lib/generic-hackathon";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 import type { User } from "~/types/user";
 
 const BASE_PATH = "/watt-the-hack";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const env = getEnv(context);
   let user = null;
   try {

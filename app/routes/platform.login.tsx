@@ -7,6 +7,7 @@ import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import { normalizeAuthNextForApp } from "~/lib/auth-return";
+import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
@@ -16,7 +17,7 @@ export const meta: Route.MetaFunction = () => [
 
 function parseAuthApp(value: string | null): AuthAppName | null {
     if (value === "vibe-raising") return "founder-tools";
-    return value === "esafety" || value === "hospital" || value === "founder-tools" || value === "watt-the-hack"
+    return value === "esafety" || value === "hospital" || value === "founder-tools"
         ? value
         : null;
 }
@@ -91,6 +92,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const url = new URL(request.url);
     const appParam = url.searchParams.get("app");
+    assertWattTheHackAuthEnabled(appParam, url.searchParams.get("next"));
     const app = parseAuthApp(appParam);
     if (appParam && !app) {
         throw new Response("Not Found", { status: 404 });
@@ -116,6 +118,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent")?.toString() ?? "check";
     const appParam = formData.get("app")?.toString() ?? null;
+    assertWattTheHackAuthEnabled(appParam, formData.get("next")?.toString());
     const app = parseAuthApp(appParam) ?? undefined;
     if (appParam && !app) {
         return { error: "Unsupported app." };

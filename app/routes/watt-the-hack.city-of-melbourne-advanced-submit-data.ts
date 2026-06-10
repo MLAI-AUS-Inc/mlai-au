@@ -1,5 +1,6 @@
 import type { Route } from "./+types/watt-the-hack.city-of-melbourne-advanced-submit-data";
 import { getEnv } from "~/lib/env.server";
+import { assertWattTheHackPublicAccessEnabled } from "~/lib/watt-the-hack-access";
 
 /**
  * Server-side submission proxy (mirrors the leaderboard proxy).
@@ -63,6 +64,7 @@ function buildAdminRequest(
  * POST half below.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
+  assertWattTheHackPublicAccessEnabled();
   const url = new URL(request.url);
   const id = url.searchParams.get("id") ?? "";
   // `part` selects which sub-endpoint to proxy. New addition: `source` exposes
@@ -123,6 +125,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
+  assertWattTheHackPublicAccessEnabled();
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ detail: "Method not allowed" }), {
       status: 405,

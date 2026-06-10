@@ -1,5 +1,6 @@
 import { axiosInstance, API_URL, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
+import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
 export type AuthAppName = "esafety" | "hospital" | "founder-tools" | "vibe-raising" | "watt-the-hack";
 type GetCurrentUserOptions = {
@@ -10,6 +11,8 @@ function resolveAuthApp(body: {
     app?: AuthAppName;
     next?: string;
 }): AuthAppName {
+    assertWattTheHackAuthEnabled(body.app, body.next);
+
     if (body.app === "vibe-raising") {
         return "founder-tools";
     }
@@ -92,6 +95,7 @@ export async function verifyMagicLink(
     token: string,
     options?: { app?: string | null; next?: string | null },
 ) {
+    assertWattTheHackAuthEnabled(options?.app, options?.next);
     const client = getAxios(env);
     const response = await client.get(`/api/v1/auth/verify-magic-link/?${buildVerifyMagicLinkQuery(token, options)}`);
     return response.data;
@@ -102,6 +106,7 @@ export async function verifyMagicLinkWithCookies(
     token: string,
     options?: { app?: string | null; next?: string | null },
 ) {
+    assertWattTheHackAuthEnabled(options?.app, options?.next);
     const client = getAxios(env);
     const response = await client.get(`/api/v1/auth/verify-magic-link/?${buildVerifyMagicLinkQuery(token, options)}`);
     const setCookieHeaders = response.headers["set-cookie"] || [];

@@ -36,6 +36,7 @@ const livePreviewDisableHmr = ["1", "true", "yes", "on"].includes(
 );
 const inspectorPort =
   livePreviewDisableHmr || process.env.CLOUDFLARE_INSPECTOR_PORT === "false" ? false : undefined;
+const wattTheHackApiPathPattern = /^\/api\/v1\/hackathons\/(?:watt|watt-the-hack)(?:\/|$)/;
 const sharedOptimizeDepsInclude = [
   "@heroicons/react/20/solid",
   "@heroicons/react/24/solid",
@@ -67,6 +68,10 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         ws: true,
+        bypass(req) {
+          const pathname = new URL(req.url || "/", "http://localhost").pathname;
+          return wattTheHackApiPathPattern.test(pathname) ? req.url : undefined;
+        },
       },
     },
   },
