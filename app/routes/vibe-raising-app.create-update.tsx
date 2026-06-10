@@ -288,6 +288,15 @@ function getMonthlyUpdateIsoMonth(month: string, year: number | string) {
     return key ? `${key}-01` : "";
 }
 
+function monthYearFromIso(value?: string | null): { month: string; year: number } | null {
+    const match = /^(\d{4})-(\d{2})/.exec(String(value || "").trim());
+    if (!match) return null;
+    const year = Number(match[1]);
+    const option = VIBE_RAISING_MONTH_OPTIONS[Number(match[2]) - 1];
+    if (!option || !Number.isFinite(year)) return null;
+    return { month: option.name, year };
+}
+
 function isFutureMonthlyUpdate(month: string, year: number | string) {
     const monthIndex = VIBE_RAISING_MONTH_OPTIONS.findIndex((option) => option.name === month);
     const parsedYear = Number(year);
@@ -3286,6 +3295,18 @@ export default function CreateUpdate() {
 
         if (statusResponse.state === "queued" || statusResponse.state === "running") {
             startTransition(() => {
+                // Restore the drafting stage from the run status itself so the
+                // progress card renders even on a fresh page load (refresh
+                // recovery), where monthConfirmed / selectedDraftStage would
+                // otherwise still be at their defaults and hide it.
+                const parsedMonth = monthYearFromIso(statusResponse.targetMonth);
+                if (parsedMonth) {
+                    setSelectedMonth(parsedMonth.month);
+                    setSelectedYear(parsedMonth.year);
+                }
+                setMonthConfirmed(true);
+                setSelectedDraftStage("reporting");
+                setMetricsConfirmed(true);
                 setEmailDraftStatus(statusResponse);
                 setEmailDraftUiError(null);
             });
