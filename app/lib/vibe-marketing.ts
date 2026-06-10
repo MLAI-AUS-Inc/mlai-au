@@ -709,6 +709,10 @@ export function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic |
     prNumber: asNumber(payload.prNumber) ?? asNumber(payload.pr_number),
     publishStatus: asArticlePublishStatus(payload.publishStatus ?? payload.publish_status),
     liveUrl: asNullableString(payload.liveUrl) ?? asNullableString(payload.live_url),
+    runId:
+      asNullableString(payload.runId) ??
+      asNullableString(payload.run_id) ??
+      asNullableString(payload.source_run_id),
     writtenAt: asNullableString(payload.writtenAt) ?? asNullableString(payload.written_at),
   };
 }
@@ -1649,6 +1653,20 @@ export async function restoreVibeMarketingTopicFeedback(env: Env, request: Reque
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/topic-feedback/${encodeURIComponent(feedbackId)}/restore`, {});
   return normalizeTopicFeedback(response.data);
+}
+
+export async function discardVibeMarketingWrittenArticle(env: Env, request: Request, articleId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.post(
+    `${BASE_PATH}/written-articles/${encodeURIComponent(articleId)}/discard`,
+    {},
+  );
+  const payload = (response.data && typeof response.data === "object" ? response.data : {}) as Record<string, unknown>;
+  return {
+    discarded: Boolean(payload.discarded),
+    articleId: asNullableString(payload.articleId) ?? articleId,
+    cancelledRunIds: asStringList(payload.cancelledRunIds ?? payload.cancelled_run_ids),
+  };
 }
 
 export function startVibeMarketingAutofill(env: Env, request: Request, body: Record<string, unknown>) {
