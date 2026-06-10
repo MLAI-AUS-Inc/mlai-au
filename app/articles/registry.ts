@@ -73,6 +73,21 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/where-to-find-an-ai-and-machine-learning-meetup-in-melbourne': {
+        title: "Where to Find an AI and Machine Learning Meetup in Melbourne",
+        date: "2026-06-10",
+        description: "Meetup Melbourne guide for AI and machine learning events",
+        author: "Dr Sam Donegan",
+        authorKey: "default-author",
+        authors: ["default-author"],
+        category: "featured",
+        tags: [],
+        featured: true,
+        slug: "featured/where-to-find-an-ai-and-machine-learning-meetup-in-melbourne",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ad20d1a2-d614-4f8c-8606-c8fe1c800c8c.jpg?alt=media&token=b389c532-31e8-4367-8839-b8fb033fdc8f",
+        imageAlt: "Close-up candid of Melbourne AI meetup attendees discussing machine learning notes on a laptop at a local event",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
