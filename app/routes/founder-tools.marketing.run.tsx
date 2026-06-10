@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.run";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator, type ShouldRevalidateFunctionArgs } from "react-router";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -19,13 +19,27 @@ import { clsx } from "clsx";
 import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
-import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { getEnv } from "~/lib/env.server";
+import {
+  VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
+  createVibeMarketingClientRequestId,
+} from "~/lib/vibe-marketing-billing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
+import {
+  articleReviewApproveIntentForRun,
+  articleReviewApproveLabelForRun,
+  hasPublishHandoffEvidence,
+  isArticleReviewPreviewReady,
+  isPublishApprovalGate,
+  publishPreviewUrlForRun,
+  publishPrUrlForRun,
+  viewedWorkflowStepIdForRun,
+} from "~/lib/vibe-marketing-run-view";
+import { shouldSkipVibeMarketingRunRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import {
   connectVibeMarketingGithub,
   controlVibeMarketingRun,
@@ -42,6 +56,7 @@ import {
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
   updateVibeMarketingComponentComment,
+  canonicalizeTopicCandidates,
 } from "~/lib/vibe-marketing";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import type {
@@ -113,6 +128,17 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
 }
 
+function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(
+    bootstrap.checks.scaffold?.setupBlocked &&
+      !bootstrap.hasCompletedArticleFlow &&
+      !bootstrap.checks.scaffold?.generationReady &&
+      !bootstrap.checks.scaffold?.setupMerged &&
+      !bootstrap.articleSetupState?.generationReady &&
+      !bootstrap.articleSetupState?.setupMerged,
+  );
+}
+
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
@@ -144,6 +170,22 @@ function isFailedArticlePreview(preview: VibeMarketingRunSummary["livePreview"] 
   const platformStatus = String(preview?.platformStatus ?? "").trim().toLowerCase();
   if (LIVE_PREVIEW_ACTIVE_STATUSES.has(previewStatus) || LIVE_PREVIEW_ACTIVE_STATUSES.has(platformStatus)) return false;
   return Boolean(preview?.error || LIVE_PREVIEW_FAILURE_STATUSES.has(previewStatus) || LIVE_PREVIEW_FAILURE_STATUSES.has(platformStatus));
+}
+
+function previewUnavailableReason(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
+  const proof = preview?.proof && typeof preview.proof === "object" ? (preview.proof as Record<string, unknown>) : {};
+  return String(
+    preview?.previewUnavailableReason ??
+      proof.previewUnavailableReason ??
+      proof.preview_unavailable_reason ??
+      "",
+  )
+    .trim()
+    .toLowerCase();
+}
+
+function isContentOnlyNoRenderPreview(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
+  return previewUnavailableReason(preview) === "content_only_no_render_artifact";
 }
 
 function hasActiveLivePreview(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
@@ -226,6 +268,9 @@ function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
     return false;
   }
   const preview = run.livePreview;
+  if (isContentOnlyNoRenderPreview(preview)) {
+    return false;
+  }
   if (isFailedArticlePreview(preview)) {
     return false;
   }
@@ -272,7 +317,26 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       setupRun = null;
     }
   }
-  return { run, bootstrap, setupRun, githubRepos };
+  return {
+    run,
+    bootstrap,
+    setupRun,
+    githubRepos,
+    billingRequestIds: {
+      articleJob: createVibeMarketingClientRequestId("vibe-article-job", runId),
+    },
+  };
+}
+
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  // Switching the run-page sub-view (?setupStep=...) on the same run renders from
+  // data the loader already returned. Skipping revalidation there avoids re-running
+  // the heavy loader (bootstrap + full run + setup run + repos). Poll-driven
+  // revalidator.revalidate() and post-action revalidations are NOT skipped.
+  if (shouldSkipVibeMarketingRunRevalidation(args)) {
+    return false;
+  }
+  return args.defaultShouldRevalidate;
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
@@ -445,11 +509,11 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
-    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr"].includes(intent)) {
+    } else if (["approve", "deny", "resume", "restart", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
       const result = await controlVibeMarketingRun(env, request, controlRunId, intent, sourceRunId ? { sourceRunId } : {});
-      if (intent === "merge-setup-pr" && isArticleSystemSetupMerged(result)) {
+      if ((intent === "merge-setup-pr" || intent === "refresh-setup-pr-status") && isArticleSystemSetupMerged(result)) {
         throw redirect("/founder-tools/marketing?setupMerged=1");
       }
       if (result.runId && result.runId !== runId) {
@@ -461,12 +525,13 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       });
     } else if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
-      if (bootstrap.checks.scaffold?.setupBlocked) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
+      const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
       const selectedCandidate =
-        topicCandidateId && topicCandidateId !== "__custom__"
+        !isCustomTopic
           ? bootstrap.topicCandidates.find((candidate) => candidate.id === topicCandidateId) ?? null
           : null;
       const candidateTitle = stringFromForm(formData, "candidateTitle");
@@ -477,17 +542,20 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (!topic && !targetKeyword) {
         return { intent, error: "Choose a discovered topic or enter a custom title or keyword before generating an article." };
       }
+      const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const result = await startVibeMarketingArticle(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
         topic,
         targetKeyword,
         customTitle,
         selectedTitle: selectedCandidate?.title || candidateTitle,
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
-        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
-        deliveryModeConfirmed: true,
-        sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
+        deliveryMode: deliveryModeExplicit ? stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap) : undefined,
+        deliveryModeExplicit,
+        deliveryModeConfirmed: deliveryModeExplicit,
+        sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
       });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
     }
@@ -587,10 +655,10 @@ function topicCandidatesFromRun(run: { result?: Record<string, unknown>; runId: 
     );
     appendCandidateSource(rawCandidates, mapping.selected);
   }
-  return rawCandidates
+  const candidates = rawCandidates
     .map((raw, index): VibeMarketingTopicCandidate | null => {
       if (typeof raw === "string") {
-        return { id: String(index), keyword: raw, title: raw, sourceRunId: run.runId };
+        return { id: String(index), rawCandidateId: String(index), keyword: raw, title: raw, sourceRunId: run.runId };
       }
       if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
       const payload = raw as Record<string, unknown>;
@@ -611,6 +679,7 @@ function topicCandidatesFromRun(run: { result?: Record<string, unknown>; runId: 
       if (!keyword && !title) return null;
       return {
         id: asString(payload.id) || asString(payload.keyword_id) || String(index),
+        rawCandidateId: asString(payload.id) || asString(payload.keyword_id) || String(index),
         keyword: keyword || title,
         title: title || keyword,
         reason: asString(payload.reason) || asString(payload.selection_reason) || asString(payload.rationale),
@@ -629,6 +698,7 @@ function topicCandidatesFromRun(run: { result?: Record<string, unknown>; runId: 
       };
     })
     .filter((candidate): candidate is VibeMarketingTopicCandidate => candidate !== null);
+  return canonicalizeTopicCandidates(candidates, "topic");
 }
 
 function StepStatusDot({ status }: { status: string }) {
@@ -1060,8 +1130,6 @@ function ArticleSystemSetupPreviewPanel({
         </div>
       </div>
 
-      <ArticleSystemSurfaceSummary run={source} />
-
       {changedFiles.length ? (
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
           <p className="text-sm font-black text-gray-950">Planned setup files</p>
@@ -1178,7 +1246,7 @@ function ArticleSystemSetupPreviewPanel({
           <div>
             <p className="text-sm font-black text-amber-950">Manual merge required</p>
             <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
-              Merge the setup PR in GitHub, then the verification scan can confirm the articles directory before topic research unlocks.
+              Merge the setup PR in GitHub, then refresh merge status to unlock article generation.
             </p>
           </div>
           {prUrl ? (
@@ -1195,9 +1263,9 @@ function ArticleSystemSetupPreviewPanel({
       ) : setupCompleted ? (
         <div className="flex flex-col gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-emerald-950">Verifying merged articles directory</p>
+            <p className="text-sm font-black text-emerald-950">Articles setup is complete</p>
             <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">
-              The setup PR was merged. Article generation is available now while verification confirms the directory on the default branch.
+              Choose a topic to generate the next article.
             </p>
           </div>
           {rescanRunId ? (
@@ -2076,7 +2144,9 @@ function LiveArticlePreviewPanel({
   isActionPending?: (...keys: string[]) => boolean;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
-  const acceptArticleIntent = publishStep?.primaryAction?.intent ?? "promote-bundle";
+  const acceptArticleIntent = articleReviewApproveIntentForRun(run, publishStep?.primaryAction?.intent);
+  const acceptArticleLabel = articleReviewApproveLabelForRun(run);
+  const reviewApprovalReady = isArticleReviewPreviewReady(run);
 
   return (
     <section className="space-y-5">
@@ -2101,13 +2171,13 @@ function LiveArticlePreviewPanel({
             reviewState.latestBatch?.status !== "accepted" &&
             Boolean(reviewState.batchId);
           const canAcceptArticleForPublish = Boolean(
-            run.status === "completed" &&
-              run.contentPackage?.contentPackaged &&
+            (run.status === "completed" || reviewApprovalReady) &&
+              (run.contentPackage?.contentPackaged || reviewApprovalReady) &&
               reviewState.canRenderPreview &&
               reviewState.draftComments.length === 0 &&
               !canAcceptRevision &&
               !reviewState.hasPendingRevisionBatch &&
-              publishStep?.status === "ready" &&
+              (reviewApprovalReady || publishStep?.status === "ready") &&
               acceptArticleIntent,
           );
           const acceptArticlePending = isActionPending?.(acceptArticleIntent) ?? isSubmitting;
@@ -2125,7 +2195,7 @@ function LiveArticlePreviewPanel({
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                   >
                     {acceptArticlePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                    {acceptArticlePending ? "Continuing..." : "Accept article and continue"}
+                    {acceptArticlePending ? acceptArticleLabel.pending : acceptArticleLabel.idle}
                   </button>
                 </Form>
               ) : null}
@@ -2191,6 +2261,7 @@ function ArticlePreviewEmptyState({
   const hasManifest = Boolean(run.componentManifest);
   const hostedPreview = preview?.previewMode === "platform_deployment";
   const failed = isFailedArticlePreview(preview);
+  const contentOnlyNoRender = isContentOnlyNoRenderPreview(preview);
   const retryablePreviewCodes = new Set([
     "clone_auth_failed",
     "dev_server_startup_failed",
@@ -2205,15 +2276,18 @@ function ArticlePreviewEmptyState({
     "unsupported_runtime_for_v1",
   ]);
   const nativeRetryable = typeof nativePreviewFailure.retryable === "boolean" ? nativePreviewFailure.retryable : undefined;
-  const retryable = preview?.retryable !== false && nativeRetryable !== false ? true : retryablePreviewCodes.has(previewErrorCode);
+  const retryable = !contentOnlyNoRender && (preview?.retryable !== false && nativeRetryable !== false ? true : retryablePreviewCodes.has(previewErrorCode));
   const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
   const failedPhase = String(preview?.failedPhase || nativePreviewFailure.failedPhase || nativePreviewFailure.failed_phase || "").trim();
   const failedCommand = String(
     preview?.failedCommand || nativePreviewFailure.failedCommand || nativePreviewFailure.failed_command || "",
   ).trim();
   const displayError =
-    String(preview?.error || nativeError || "The article preview could not be prepared. Retry the preview when the generator is available.").trim();
+    contentOnlyNoRender
+      ? "Content-only article runs package markdown and metadata but do not produce repo file overrides for component live preview."
+      : String(preview?.error || nativeError || "The article preview could not be prepared. Retry the preview when the generator is available.").trim();
   const retryPreviewPending = isActionPending?.("start-live-preview") ?? isSubmitting;
+  const restartPreviewPending = isActionPending?.("restart") ?? isSubmitting;
   const diagnosticRows = [
     failedPhase ? ["Phase", failedPhase] : null,
     failedCommand ? ["Command", failedCommand] : null,
@@ -2229,7 +2303,7 @@ function ArticlePreviewEmptyState({
       "",
   ).trim();
 
-  if (failed) {
+  if (failed || contentOnlyNoRender) {
     return (
       <section className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -2266,7 +2340,20 @@ function ArticlePreviewEmptyState({
               ) : null}
             </div>
           </div>
-          {retryable ? (
+          {contentOnlyNoRender ? (
+            <Form method="POST">
+              <button
+                type="submit"
+                name="intent"
+                value="restart"
+                disabled={restartPreviewPending}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+              >
+                {restartPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                {restartPreviewPending ? "Regenerating..." : "Regenerate with exact preview"}
+              </button>
+            </Form>
+          ) : retryable ? (
             <Form method="POST">
               <input type="hidden" name="force" value="true" />
               <button
@@ -2379,6 +2466,7 @@ function ArticleSetupPublishDetail({
   const prCreateFailed = setupStatus === "setup_pr_create_failed";
   const approvePending = isActionPending?.("approve") ?? isSubmitting;
   const mergePending = isActionPending?.("merge-setup-pr") ?? isSubmitting;
+  const refreshMergePending = isActionPending?.("refresh-setup-pr-status") ?? isSubmitting;
   const enableDailyPending = isActionPending?.("enable-daily-automation") ?? isSubmitting;
   const runDailyPending = isActionPending?.("run-daily-discovery-now") ?? isSubmitting;
   const dailyCheck = bootstrap.checks.dailyAutomation as
@@ -2396,7 +2484,7 @@ function ArticleSetupPublishDetail({
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish setup PR</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish articles setup</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Review the setup PR, merge it after checks pass, then return to article generation while verification continues.
+              Review the setup PR and merge it after checks pass. Once merged, article generation unlocks without a repo re-scan.
             </p>
           </div>
           <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "needs_action" : "ready"} />
@@ -2441,22 +2529,34 @@ function ArticleSetupPublishDetail({
 
           <PublishFlowCard title="Merge to main" status={setupMerged ? "complete" : mergePending ? "running" : prUrl ? "ready" : "locked"} eyebrow={setupMerged ? "Merged" : checksStatus || mergeStatus || (prUrl ? "Ready" : "Waiting")}>
             {setupMerged ? (
-              <p className="text-sm font-semibold text-gray-600">The setup PR has been merged. You can generate articles while verification continues in the background.</p>
+              <p className="text-sm font-semibold text-gray-600">Articles setup is complete. Choose a topic to generate the next article.</p>
             ) : prUrl ? (
               <Form method="POST" className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  {mergeBlockedReason || "Checks must pass before the setup PR can be merged."}
+                  {mergeBlockedReason || "Merge the setup PR, then article generation unlocks."}
                 </p>
-                <button
-                  type="submit"
-                  name="intent"
-                  value="merge-setup-pr"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
-                >
-                  {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-                  {mergePending ? "Checking..." : "Check and merge"}
-                </button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="merge-setup-pr"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                    {mergePending ? "Checking..." : "Check and merge"}
+                  </button>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="refresh-setup-pr-status"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {refreshMergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                    {refreshMergePending ? "Refreshing..." : "I merged this in GitHub"}
+                  </button>
+                </div>
               </Form>
             ) : (
               <p className="text-sm font-semibold text-gray-500">Create the setup PR before merging to main.</p>
@@ -3278,6 +3378,7 @@ function ArticleWorkflowPrimaryAction({
   const publishUrl = publishPreviewUrlForRun(run) || publishPrUrlForRun(run);
   const buttonClass = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black shadow-sm transition disabled:opacity-50";
 
+  if (isArticleReviewPreviewReady(run)) return null;
   if (isPublishApprovalGate(run)) return null;
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
@@ -3449,28 +3550,9 @@ function setupRunIdForRun(run: VibeMarketingRunSummary) {
   return typeof setupRunId === "string" && setupRunId.trim() ? setupRunId.trim() : "";
 }
 
-function publishPrUrlForRun(run: VibeMarketingRunSummary) {
-  return run.prUrl?.trim() || stringResultValue(run, "pr_url", "prUrl", "pull_request_url", "pullRequestUrl", "draft_pr_url", "draftPrUrl");
-}
-
-function publishPreviewUrlForRun(run: VibeMarketingRunSummary) {
-  return run.previewUrl?.trim() || stringResultValue(run, "preview_url", "previewUrl", "article_url", "articleUrl", "url");
-}
-
 function prNumberFromPullUrl(url: string) {
   const match = url.match(/\/pull\/(\d+)/);
   return match?.[1] ?? "";
-}
-
-function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
-  return Boolean(
-    publishPrUrlForRun(run) ||
-      publishPreviewUrlForRun(run) ||
-      stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id", "promote_bundle_requested_at") ||
-      run.result?.["publish_handoff_pending"] === true ||
-      run.workflowProgress?.currentStepId === "publish" ||
-      run.workflowProgress?.currentStepId === "automation",
-  );
 }
 
 function deliveryModeForRun(run: VibeMarketingRunSummary, bootstrap: VibeMarketingBootstrap) {
@@ -3479,19 +3561,6 @@ function deliveryModeForRun(run: VibeMarketingRunSummary, bootstrap: VibeMarketi
     return runMode;
   }
   return effectiveArticleDeliveryMode(bootstrap);
-}
-
-function hasReviewTarget(run: VibeMarketingRunSummary) {
-  return Boolean(publishPreviewUrlForRun(run) || publishPrUrlForRun(run));
-}
-
-function isRunApprovalRequired(run: VibeMarketingRunSummary) {
-  return run.approvalState === "approval_required" || APPROVAL_GATE_STATUSES.has(run.status);
-}
-
-function isPublishApprovalGate(run: VibeMarketingRunSummary) {
-  const workflow = String(run.workflow ?? "");
-  return isArticleWorkflow(workflow) && isRunApprovalRequired(run) && hasReviewTarget(run);
 }
 
 function isSetupScanRun(run: VibeMarketingRunSummary) {
@@ -3512,25 +3581,6 @@ function setupWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
 function setupStepViewFromSearch(search: string): ArticleSetupStepView | null {
   const value = new URLSearchParams(search).get("setupStep");
   return value && SETUP_STEP_VIEW_VALUES.has(value) ? (value as ArticleSetupStepView) : null;
-}
-
-function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary, requestedSetupStep?: ArticleSetupStepView | null) {
-  const workflow = String(run.workflow ?? "");
-  if (DISCOVERY_WORKFLOWS.has(workflow)) {
-    return run.status === "awaiting_confirmation" ? "choose_topic" : "research";
-  }
-  if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
-  if (workflow === "article_system_setup") return requestedSetupStep ?? setupWorkflowStepIdForRun(run);
-  if (workflow === "website_baseline") return "baseline";
-  if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
-  if (isArticleWorkflow(workflow)) {
-    if (hasPublishHandoffEvidence(run)) return "publish";
-    if (POLLING_STATUSES.has(run.status)) return "generate";
-    if (run.componentManifest) return "review";
-    if (run.contentPackage?.contentPackaged) return "package";
-    return "generate";
-  }
-  return run.workflowProgress?.currentStepId ?? null;
 }
 
 function workflowProgressForRunPage(
@@ -3620,7 +3670,7 @@ function workflowProgressForRunPage(
 }
 
 export default function FounderToolsMarketingRun() {
-  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun, githubRepos } = useLoaderData<typeof loader>();
+  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const location = useLocation();
@@ -3660,7 +3710,7 @@ export default function FounderToolsMarketingRun() {
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const hasArticlePreview = hasReadyArticlePreview(run);
-  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
+  const setupBlocked = isArticleSystemSetupBlocked(bootstrap);
   const isDiscoveryConfirmation =
     ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(workflow) &&
     run.status === "awaiting_confirmation" &&
@@ -3679,7 +3729,7 @@ export default function FounderToolsMarketingRun() {
     [discoveryCandidates, selectedDiscoveryCandidateId],
   );
   const requestedSetupStep = isArticleSystemSetupRun ? setupStepViewFromSearch(location.search) : null;
-  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep);
+  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run));
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
@@ -3884,10 +3934,10 @@ export default function FounderToolsMarketingRun() {
               {discoveryCandidates.length > 0 && selectedDiscoveryCandidate ? (
                 <Form method="POST" className="mt-4 space-y-4">
                   <input type="hidden" name="intent" value="start-article" />
+                  <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
                   <input type="hidden" name="candidateTitle" value={selectedDiscoveryCandidate.title} />
                   <input type="hidden" name="candidateKeyword" value={selectedDiscoveryCandidate.keyword} />
                   <input type="hidden" name="sourceRunId" value={selectedDiscoveryCandidate.sourceRunId ?? run.runId} />
-                  <input type="hidden" name="deliveryMode" value={effectiveArticleDeliveryMode(bootstrap)} />
                   <input type="hidden" name="deliveryModeExplicit" value="false" />
                   <div className="grid gap-3">
                     {discoveryCandidates.slice(0, 5).map((candidate, index) => (
@@ -3908,7 +3958,7 @@ export default function FounderToolsMarketingRun() {
                       </div>
                       <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
                         {pendingActions.isPending("start-article") ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                        {pendingActions.isPending("start-article") ? "Starting article..." : "Generate draft article"}
+                        {pendingActions.isPending("start-article") ? "Starting article..." : `Generate draft article (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)`}
                       </button>
                     </div>
                   </div>

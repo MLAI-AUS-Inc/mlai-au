@@ -1,8 +1,11 @@
+import { isWattTheHackAuthRequest, isWattTheHackRoutePath } from "~/lib/watt-the-hack-access";
+
 export type AuthReturnAppName =
   | "esafety"
   | "hospital"
   | "founder-tools"
-  | "vibe-raising";
+  | "vibe-raising"
+  | "watt-the-hack";
 
 const LEGACY_FOUNDER_NEXT_PATHS: Record<string, string> = {
   "/vibe-raising": "/founder-tools",
@@ -25,6 +28,7 @@ function pathWithSearchAndHash(url: URL) {
 export function getDefaultAuthNext(app: AuthReturnAppName | string | null | undefined, fallback = "/hackathons"): string {
   if (app === "hospital") return "/hospital/app";
   if (app === "esafety") return "/esafety/dashboard";
+  if (app === "watt-the-hack") return fallback;
   if (isFounderToolsApp(app)) return "/founder-tools";
   return fallback;
 }
@@ -37,6 +41,7 @@ export function normalizeAuthNextForApp(
   const fallback = options.fallback ?? getDefaultAuthNext(app);
   const next = nextValue?.trim() || fallback;
 
+  if (isWattTheHackAuthRequest(app, next) || isWattTheHackRoutePath(next)) return fallback;
   if (!next.startsWith("/") || next.startsWith("//")) return fallback;
 
   if (!isFounderToolsApp(app)) return next;

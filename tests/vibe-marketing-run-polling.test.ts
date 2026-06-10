@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   isArticleSystemSetupTerminalRun,
   isArticleSystemSetupTerminalStatus,
+  repoScanProgressRefreshKey,
   shouldPollArticleSystemSetupRun,
   statusPollRefreshKey,
 } from "../app/lib/vibe-marketing-run-polling";
@@ -83,5 +84,42 @@ describe("vibe marketing run polling", () => {
         livePreview: { status: "building" },
       }),
     ).toBe(true);
+  });
+
+  test("includes scan progress changes in repo scan refresh keys", () => {
+    const first = repoScanProgressRefreshKey({
+      runId: "scan-1",
+      workflow: "repo_scan",
+      status: "running",
+      currentStep: "scan_structure",
+      updatedAt: "2026-05-29T22:45:00Z",
+      scanProgress: {
+        phaseKey: "generate_components",
+        phaseLabel: "Generating components",
+        phaseIndex: 8,
+        phaseCount: 9,
+        percent: 70,
+        message: "Completed 10 of 30 components",
+        updatedAt: "2026-05-29T22:45:00Z",
+      },
+    });
+    const second = repoScanProgressRefreshKey({
+      runId: "scan-1",
+      workflow: "repo_scan",
+      status: "running",
+      currentStep: "scan_structure",
+      updatedAt: "2026-05-29T22:45:00Z",
+      scanProgress: {
+        phaseKey: "generate_components",
+        phaseLabel: "Generating components",
+        phaseIndex: 8,
+        phaseCount: 9,
+        percent: 78,
+        message: "Completed 12 of 30 components",
+        updatedAt: "2026-05-29T22:46:00Z",
+      },
+    });
+
+    expect(second).not.toBe(first);
   });
 });

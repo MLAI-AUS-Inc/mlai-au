@@ -14,7 +14,8 @@
     "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare",
     "BACKEND_BASE_URL": "https://api.mlai.au",
     "VITE_GOOGLE_CLIENT_ID": "",
-    "VITE_ENABLE_FOUNDER_TOOLS_DISCOVER": "false"
+    "VITE_ENABLE_FOUNDER_TOOLS_DISCOVER": "false",
+    "WTH_ADMIN_URL": "https://eval.eliascorp.org"
   },
   "routes": [
     {

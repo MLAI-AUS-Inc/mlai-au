@@ -1,5 +1,6 @@
 const AI_HOSPITAL_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202025-11-25%20at%2011.24.04%E2%80%AFam.png?alt=media&token=b23e69c8-f0c7-4f76-8439-49ae8056c987";
 const ESAFETY_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
+const WATT_THE_HACK_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FChatGPT%20Image%20May%2021%2C%202026%2C%2010_48_11%20PM%20(1).png?alt=media&token=5e39b6e6-7b02-471c-866f-5d18aae506fe";
 
 export default function Hackathons() {
     return (
@@ -15,6 +16,24 @@ export default function Hackathons() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12 max-w-5xl mx-auto">
+                    {/* Watt The Hack Card — Disabled */}
+                    <div
+                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
+                    >
+                        <img
+                            src={WATT_THE_HACK_STATIC}
+                            alt="Watt The Hack"
+                            className="absolute inset-0 h-full w-full object-cover object-center"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 z-10 p-6 text-white">
+                            <h3 className="text-2xl font-bold">Watt The Hack (Coming Soon)</h3>
+                            <p className="mt-2 text-sm text-gray-200">
+                                Build practical AI and software projects for a cleaner, smarter energy future.
+                            </p>
+                        </div>
+                    </div>
+
                     {/* Medhack: Frontiers Card — Disabled */}
                     <div
                         className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
@@ -50,15 +69,6 @@ export default function Hackathons() {
                             </p>
                         </div>
                     </div>
-                </div>
-
-                <div className="mt-8 text-center">
-                    <a
-                        href="/medhack"
-                        className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-[var(--brutalist-black)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                    >
-                        MedHack information pack
-                    </a>
                 </div>
 
                 <div className="mx-auto mt-16 max-w-5xl">

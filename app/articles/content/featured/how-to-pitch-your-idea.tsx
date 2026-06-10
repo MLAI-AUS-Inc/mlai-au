@@ -23,8 +23,8 @@ const AUTHOR_AVATAR =
 export const DATE_PUBLISHED = '2025-06-01'
 export const DATE_MODIFIED = '2025-06-01'
 export const DESCRIPTION = "MLAI's guide to pitching your big idea. Learn how to communicate complex ideas effectively in a short timeframe."
-const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fsam.png?alt=media&token=dd8f33f3-cc74-43cd-8a0f-ebc2e6fb07c3'
-const HERO_IMAGE_ALT = 'Guide to pitching your big idea'
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1968fb96-80f9-49e4-95d6-42c5a359b4ce.jpg?alt=media&token=2884e0cc-4793-4155-a69c-0468133ece8b'
+const HERO_IMAGE_ALT = 'Laptop showing pitch deck charts on a desk with printed startup materials'
 export const FEATURED_FOCUS = 'startups'
 
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
@@ -255,7 +255,7 @@ export default function ArticleContent() {
         </ul>
       </div>
 
-      <QuoteBlock title="Action Step" variant="orange">
+      <QuoteBlock title="Action Step" variant="orange" className="my-8">
         <p>
           Draft your opening lines using the P-A-S template, ensuring it is directly relevant to your audience. Highlight your Problem, Agitation, and Solution points for clarity.
         </p>
@@ -309,7 +309,7 @@ export default function ArticleContent() {
         </ul>
       </div>
 
-      <QuoteBlock title="Pro Tip" variant="purple">
+      <QuoteBlock title="Pro Tip" variant="purple" className="my-8">
         <p>
           As you introduce the challenge, remember to make a strong first impression. This involves confident body language and engaging presentation skills. Key points to remember include:
         </p>
@@ -370,7 +370,7 @@ export default function ArticleContent() {
         </p>
       </div>
 
-      <QuoteBlock title="Action Step" variant="orange">
+      <QuoteBlock title="Action Step" variant="orange" className="my-8">
         <p>
           Draft a compelling value proposition for your solution. Here are some templates to guide you:
         </p>
@@ -387,7 +387,7 @@ export default function ArticleContent() {
         </ul>
       </QuoteBlock>
 
-      <QuoteBlock title="Pro Tip" variant="purple">
+      <QuoteBlock title="Pro Tip" variant="purple" className="my-8">
         <p>
           The way you present your value proposition can greatly influence its impact. To deliver it with conviction and energy:
         </p>
@@ -442,7 +442,7 @@ export default function ArticleContent() {
         </p>
       </div>
 
-      <QuoteBlock title="Action Step" variant="orange">
+      <QuoteBlock title="Action Step" variant="orange" className="my-8">
         <p>
           Create a structured presentation or deck for your idea. Feel free to use the example template provided above in the TLDR section! Whether using digital slides or a more hands-on approach, ensure your presentation is visually engaging and clearly outlines the key aspects of your innovation. Prepare a well-rehearsed script to accompany your visual aids, ensuring a smooth and informative presentation.
         </p>
@@ -488,13 +488,13 @@ export default function ArticleContent() {
         </p>
       </div>
 
-      <QuoteBlock title="Action Step" variant="orange">
+      <QuoteBlock title="Action Step" variant="orange" className="my-8">
         <p>
           Prepare a segment of your pitch dedicated to showcasing evidence. If using a slide deck, include slides that clearly present your data and testimonials. Practice delivering this information in an engaging and confident manner.
         </p>
       </QuoteBlock>
 
-      <QuoteBlock title="Pro Tip" variant="purple">
+      <QuoteBlock title="Pro Tip" variant="purple" className="my-8">
         <p>
           Watching successful pitches can provide valuable insights. For instance, TEDx talks on innovations often demonstrate how to effectively combine data with storytelling. Similarly, business shows like &quot;Shark Tank&quot; can offer lessons on persuasive presentation. Successful pitches often exhibit qualities such as credibility, relevance, and the ability to engage and inspire the audience.
         </p>
@@ -530,7 +530,7 @@ export default function ArticleContent() {
         </ul>
       </div>
 
-      <QuoteBlock title="Action Step" variant="orange">
+      <QuoteBlock title="Action Step" variant="orange" className="my-8">
         <p>
           Develop a CTA that is both memorable and actionable. It should be the natural culmination of your pitch, driving home the importance of your proposition and outlining the next steps.
         </p>

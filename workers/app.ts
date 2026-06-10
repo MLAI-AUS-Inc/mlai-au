@@ -1,4 +1,5 @@
 import { createRequestHandler } from "react-router";
+import { isWattTheHackEndpointPath } from "~/lib/watt-the-hack-access";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -57,7 +58,17 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
-    // 2. Redirect legacy paths (301)
+    // 2. Block disabled Watt The Hack API paths on the website domain.
+    if (isWattTheHackEndpointPath(url.pathname)) {
+      return new Response("Not Found", {
+        status: 404,
+        headers: {
+          "X-Robots-Tag": "noindex, nofollow",
+        },
+      });
+    }
+
+    // 3. Redirect legacy paths (301)
     const legacyTarget = LEGACY_REDIRECTS[url.pathname];
     if (legacyTarget) {
       url.pathname = legacyTarget;
@@ -65,7 +76,7 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
-    // 3. Strip tracking query parameters (301)
+    // 4. Strip tracking query parameters (301)
     let hasTrackingParams = false;
     for (const param of TRACKING_PARAMS) {
       if (url.searchParams.has(param)) {
@@ -77,7 +88,7 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
-    // 4. Let React Router handle /__manifest (needed for client-side navigation)
+    // 5. Let React Router handle /__manifest (needed for client-side navigation)
     //    but add noindex header to keep it out of search engines
     if (url.pathname === "/__manifest") {
       const response = await renderWithReactRouter(request, env, ctx);

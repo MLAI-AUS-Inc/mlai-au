@@ -25,6 +25,18 @@ export interface VibeMarketingStepState {
   completedAt?: string | null;
 }
 
+export interface VibeMarketingScanProgress {
+  phaseKey: string;
+  phaseLabel: string;
+  phaseIndex: number;
+  phaseCount: number;
+  percent: number;
+  message: string;
+  detail: Record<string, unknown>;
+  currentStep?: string | null;
+  updatedAt?: string | null;
+}
+
 export interface VibeMarketingRunSummary {
   runId: string;
   workflow: string;
@@ -42,6 +54,10 @@ export interface VibeMarketingRunSummary {
   warnings: string[];
   errors: string[];
   errorCode?: string | null;
+  blockingReason?: string | null;
+  blockingCode?: string | null;
+  cancelledRunIds?: string[];
+  protectedRunIds?: string[];
   artifacts: unknown[];
   previewUrl?: string | null;
   prUrl?: string | null;
@@ -51,6 +67,7 @@ export interface VibeMarketingRunSummary {
   componentManifest?: VibeMarketingComponentManifest | null;
   livePreview?: VibeMarketingLivePreview | null;
   componentFeedback?: VibeMarketingComponentFeedback | null;
+  scanProgress?: VibeMarketingScanProgress | null;
   workflowProgress?: VibeMarketingWorkflowProgress | null;
   publishChildStatus?: string | null;
   publishChildRecoverable?: boolean;
@@ -86,6 +103,7 @@ export interface VibeMarketingArticleSetupState {
   setupCurrentStep?: string | null;
   setupBlocked?: boolean;
   setupMerged?: boolean;
+  generationReady?: boolean;
   published?: boolean;
   routePath?: string | null;
   previewUrl?: string | null;
@@ -247,6 +265,7 @@ export interface VibeMarketingCheck {
   published?: boolean;
   setupBlocked?: boolean;
   setupMerged?: boolean;
+  generationReady?: boolean;
   setupRunId?: string | null;
   setupStatus?: string | null;
   rescanRunId?: string | null;
@@ -258,6 +277,7 @@ export interface VibeMarketingCheck {
 
 export interface VibeMarketingTopicCandidate {
   id: string;
+  rawCandidateId?: string | null;
   keyword: string;
   title: string;
   reason?: string | null;
@@ -419,6 +439,8 @@ export interface VibeMarketingLivePreview {
   renderMode?: string | null;
   renderConfidence?: string | null;
   fallbackReason?: string | null;
+  previewUnavailableReason?: string | null;
+  proof?: Record<string, unknown>;
   nativePreviewFailure?: Record<string, unknown>;
   visualFallback?: {
     cssSources?: string[];
@@ -639,6 +661,7 @@ export interface VibeMarketingBootstrap {
   googleBaselineConnection: VibeMarketingGoogleBaselineConnection;
   checks: Record<string, VibeMarketingCheck>;
   articleSetupState?: VibeMarketingArticleSetupState | null;
+  article_setup_state?: VibeMarketingArticleSetupState | null;
   latestRuns: VibeMarketingRunSummary[];
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];

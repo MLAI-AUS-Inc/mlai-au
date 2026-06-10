@@ -1,5 +1,5 @@
 import type { Route } from "./+types/platform.login";
-import { Form, Link, redirect, useActionData, useSearchParams, useSubmit } from "react-router";
+import { Form, Link, redirect, useActionData, useNavigation, useSearchParams, useSubmit } from "react-router";
 import { checkUser, createUser, getCurrentUser, sendMagicLink, type AuthAppName } from "~/lib/auth";
 import { useEffect, useState } from "react";
 import { GradientBackground } from "~/components/GradientBackground";
@@ -7,6 +7,7 @@ import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import { normalizeAuthNextForApp } from "~/lib/auth-return";
+import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
@@ -87,52 +88,11 @@ function getAuthErrorMessage(error: unknown, fallback: string, env?: Env) {
     return fallback;
 }
 
-function isLocalRequest(request: Request) {
-    const hostname = new URL(request.url).hostname;
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
-}
-
-function rewriteMagicLinkForRequestOrigin(magicLink: unknown, request: Request) {
-    if (typeof magicLink !== "string" || !magicLink.trim() || !isLocalRequest(request)) {
-        return magicLink;
-    }
-
-    try {
-        const requestUrl = new URL(request.url);
-        const rewritten = new URL(magicLink, requestUrl.origin);
-
-        if (
-            rewritten.pathname === "/verify-email" &&
-            rewritten.origin !== requestUrl.origin
-        ) {
-            rewritten.protocol = requestUrl.protocol;
-            rewritten.host = requestUrl.host;
-        }
-
-        return rewritten.toString();
-    } catch {
-        return magicLink;
-    }
-}
-
-function shouldWarnAboutLiveMagicEmail(result: Record<string, unknown>, request: Request) {
-    if (!isLocalRequest(request) || typeof result.magic_link !== "string") {
-        return false;
-    }
-
-    try {
-        const requestOrigin = new URL(request.url).origin;
-        const magicLinkOrigin = new URL(result.magic_link).origin;
-        return magicLinkOrigin !== requestOrigin && result.magic_link_sent !== false;
-    } catch {
-        return false;
-    }
-}
-
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const url = new URL(request.url);
     const appParam = url.searchParams.get("app");
+    assertWattTheHackAuthEnabled(appParam, url.searchParams.get("next"));
     const app = parseAuthApp(appParam);
     if (appParam && !app) {
         throw new Response("Not Found", { status: 404 });
@@ -158,6 +118,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent")?.toString() ?? "check";
     const appParam = formData.get("app")?.toString() ?? null;
+    assertWattTheHackAuthEnabled(appParam, formData.get("next")?.toString());
     const app = parseAuthApp(appParam) ?? undefined;
     if (appParam && !app) {
         return { error: "Unsupported app." };
@@ -183,11 +144,10 @@ export async function action({ request, context }: Route.ActionArgs) {
             });
             return {
                 sent: true,
+                sentAt: Date.now(),
                 email,
                 message: result.message,
-                magicLink: rewriteMagicLinkForRequestOrigin(result.magic_link, request),
                 magicLinkSent: result.magic_link_sent,
-                magicLinkEmailUsesLiveSite: shouldWarnAboutLiveMagicEmail(result, request),
             };
         } catch (error) {
             console.error("Failed to create account:", error);
@@ -205,11 +165,10 @@ export async function action({ request, context }: Route.ActionArgs) {
         const result = await sendMagicLink(env, { email, next, app });
         return {
             sent: true,
+            sentAt: Date.now(),
             email,
             message: result.message,
-            magicLink: rewriteMagicLinkForRequestOrigin(result.magic_link, request),
             magicLinkSent: result.magic_link_sent,
-            magicLinkEmailUsesLiveSite: shouldWarnAboutLiveMagicEmail(result, request),
         };
     } catch (error) {
         console.error("Failed to send magic link:", error);
@@ -225,9 +184,12 @@ export default function PlatformLogin() {
     const next = normalizeAuthNextForApp(app, searchParams.get("next"), { fallback: "/hackathons" });
     const error = searchParams.get("error");
     const submit = useSubmit();
+    const navigation = useNavigation();
 
     const [timeLeft, setTimeLeft] = useState(0);
     const [email, setEmail] = useState(data?.email || "");
+    const isSubmitting = navigation.state === "submitting";
+    const isResending = isSubmitting && data?.sent === true;
 
     useEffect(() => {
         if (data?.email) {
@@ -244,7 +206,7 @@ export default function PlatformLogin() {
         if (data?.sent) {
             setTimeLeft(30);
         }
-    }, [data?.sent]);
+    }, [data?.sent, data?.sentAt]);
 
     useEffect(() => {
         if (timeLeft > 0) {
@@ -267,6 +229,7 @@ export default function PlatformLogin() {
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
+        if (app === "watt-the-hack") return "Sign in to Watt The Hack";
         if (app === "founder-tools") return "Sign in to Founder Tools";
         return "Welcome!";
     };
@@ -274,6 +237,9 @@ export default function PlatformLogin() {
     const getSupportText = () => {
         if (app === "founder-tools") {
             return "Use your email to sign in to Founder Tools. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
+        }
+        if (app === "watt-the-hack") {
+            return "Use your email to sign in. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
         }
 
         return "Provide your email to create your account";
@@ -339,37 +305,19 @@ export default function PlatformLogin() {
                 )}
             >
                 <p>
-                    {data?.message || `Please click the link sent to your email: ${email}.`}
+                    {data?.message || "Account created. Check your email to sign in."}
                 </p>
-                {data?.magicLinkEmailUsesLiveSite && (
-                    <p className="mt-2 text-sm">
-                        Local testing note: the email sent by the deployed backend may open the live website.
-                        Use the local magic link below to continue on this localhost session.
-                    </p>
-                )}
-                {data?.magicLink && (
-                    <div className="mt-3">
-                        <a
-                            href={data.magicLink}
-                            className="font-semibold underline underline-offset-2 hover:opacity-80"
-                        >
-                            Open your local magic link
-                        </a>
-                    </div>
-                )}
-                {!data?.magicLink && (
-                    <p className="mt-2">Please click the link sent to your email: {email}.</p>
-                )}
+                <p className="mt-2">Please click the link we sent to {email} to sign in.</p>
             </div>
             <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500">Didn&apos;t get the email?</p>
                 <button
                     type="button"
                     onClick={handleResend}
-                    disabled={timeLeft > 0}
-                    className={`mt-2 text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500 ${timeLeft > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                    disabled={timeLeft > 0 || isResending}
+                    className={`mt-2 text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500 ${(timeLeft > 0 || isResending) ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                    {timeLeft > 0 ? `Please wait ${timeLeft}s` : "Resend Magic Link"}
+                    {isResending ? "Sending..." : timeLeft > 0 ? `Please wait ${timeLeft}s` : "Resend Magic Link"}
                 </button>
             </div>
         </div>
@@ -462,9 +410,10 @@ export default function PlatformLogin() {
                                         type="submit"
                                         name="intent"
                                         value={data?.userExists === false ? "create" : "check"}
+                                        disabled={isSubmitting}
                                         className="flex w-full justify-center rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                     >
-                                        {data?.userExists === false ? "Create new account" : "Send Email Link"}
+                                        {isSubmitting ? "Sending..." : data?.userExists === false ? "Create new account" : "Send Email Link"}
                                     </button>
                                 </div>
                             </Form>

@@ -1619,3 +1619,4 @@ export default function VibeRaisingHome() {
 
     return <FounderDashboard user={user} updates={updates} />;
 }
+

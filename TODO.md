@@ -1,3 +1,17 @@
+- [x] Add Watt The Hack track sidebar routes
+- [x] Add Watt The Hack track placeholder pages
+- [x] Run Watt The Hack track tab verification
+- [x] Lower Watt dashboard resource illustration to panel base
+- [x] Keep collapsed Watt sidebar illustration visible and enlarge collapsed logo
+- [x] Restyle Watt announcements as green accent panel
+- [x] Run Watt tweak verification
+- [x] Add supplied Watt The Hack resource pack to `/watt-the-hack/resources`
+- [x] Run Watt The Hack resources verification
+- [x] Update Watt The Hack theme image constants and shared visual tokens
+- [x] Add animated collapsed/expanded Watt The Hack sidebar treatment
+- [x] Rebuild Watt The Hack dashboard to match the reference layout
+- [x] Restyle Watt The Hack announcements/resources/cards with the reference surface treatment
+- [x] Run Watt The Hack verification checks
 - [x] Add QR-friendly DisplayLink setup tutorial page
 - [x] Register the DisplayLink tutorial route without adding a main-nav entry point
 - [x] Replace `/terms` and `/privacy` legal copy with the May 20 updated text
@@ -432,3 +446,12 @@
 - [x] Consolidate Vibe Raising publish handling so publish errors stay on-page instead of crashing
 - [x] Restore the publish confirmation popup before sending the reviewed update
 - [x] Disable publish-send in the popup and make local save the primary action
+- [x] Persist Watt The Hack controller code per scenario so switching scenarios (and refreshing) no longer loses work
+- [x] Add a confirm step before template/reset/revert discards custom unsaved controller code
+- [x] Add Applied/Unsaved status, a Revert action, and per-scenario save messaging to the controller editor
+- [x] Cover controller-draft logic and store persistence with bun tests; run `bunx tsc -b`
+- [x] Enable the Watt The Hack card on `/hackathons` so it opens the login flow
+- [x] Run `bun run typecheck`
+- [x] Disable the Watt The Hack card on `/hackathons`
+- [x] Block Watt The Hack login, route, and endpoint access from the website
+- [x] Run `bun run typecheck`

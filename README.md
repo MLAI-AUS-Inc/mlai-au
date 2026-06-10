@@ -1,109 +1,98 @@
-# MLAI Australia Website
+# Valley
 
-The official website for MLAI Australia - empowering the Australian AI community through events, networking, and resources.
+**Verified founder profiles. Monthly updates. Investor trust.**
 
-## Quick Start
+Valley is a mobile-first MVP that lets startup founders publish monthly updates with real metric data, earn a verified badge after three consistent updates, and get discovered by investors and VIC Gov grant programs.
 
-This website is built with React Router v7 and deployed on Cloudflare.
+---
 
-### Prerequisites
+## What this is
 
-- **Bun** (recommended) or Node.js
-- **Wrangler CLI** for deployment
+This is **v0.1 — built from scratch, mobile-first, no backend.**
 
-### Installation
+It lives inside the [MLAI](https://mlai.au) codebase and shares its design system, but Valley is its own product surface with its own routing, layout, and state. It draws on lessons from the earlier **Vibe Raising** platform — same founder audience, same verification logic — but cuts everything that wasn't core to the loop:
 
-1. **Install Bun** (if you don't have it):
-   ```bash
-   curl -fsSL https://bun.sh/install | bash
-   ```
+| Vibe Raising | Valley v0.1 |
+|---|---|
+| Auth + login flow | No auth — demo-first |
+| Server-side DB | localStorage (persists across refresh) |
+| Multiple integrations (Xero, Notion, Slack…) | Stripe + Google Analytics only |
+| Investor matching | Investor-facing profile view |
+| Full onboarding | Seed data, reset button |
 
-2. **Install dependencies**:
-   ```bash
-   bun install
-   ```
+---
 
-3. **Env Vars**
-  ```bash
-  cp .dev.vars.example .dev.vars
-  ```
-  If you only need the site shell running locally, the example values are enough.
-  Add real API keys later if you want live event data.
+## The core loop
 
-### Development
+```
+Dashboard → Connect data source → Draft update → Review → Publish
+```
 
-Start the development server:
+Three published updates with real metrics = **Verified** badge.
+
+---
+
+## Screens
+
+| Route | What it does |
+|---|---|
+| `/valley` | Dashboard — verification progress, data sources, past updates |
+| `/valley/update/new` | Draft — metric cards prefill from Stripe/GA, manual fallback, memo fields |
+| `/valley/update/review` | Investor-ready preview before publishing |
+| `/valley/update/published` | Confirmation + verification progress |
+| `/valley/profile` | Read-only investor-facing profile |
+
+---
+
+## Running it
+
 ```bash
 bun run dev
+# → localhost:5173/valley
 ```
 
-On Windows, you can also use:
-```powershell
-.\dev.bat
-```
+Hit **Reset demo** in the header to wipe state back to seed data.
 
-Your site will be available at `http://localhost:5173` with hot reloading enabled.
-Local dev stores Wrangler/Miniflare state under `.local/` in this repo so it does not depend on roaming-profile write access.
+---
 
-To preview Vibe Raising without a running backend, set `VITE_STUB_BACKEND=true` in `.env.local` or `.dev.vars`, then restart `bun run dev`. Backend stubs are ignored outside Vite development builds.
+## Stack
 
-### Environment Vars and Secrets
+- **React Router v7** (file-based routing)
+- **Tailwind CSS v4** (no component library — everything is hand-rolled)
+- **localStorage** — all state, no backend calls
+- **Bun** — package manager and dev server
 
-Variables and secrets live in:
+Fonts and palette match the MLAI brand guide: Inter, teal `#008080`, warm paper whites, orange accent.
 
-- `.dev.vars.example` - Example setup, do NOT put secrets in here, use example values
-- `.dev.vars` - your local dev variables, can contain secrets
-- Apple Passwords (MLAI Admin) includes a "Website Secrets .dev.vars" entry which can store secrets for development.
+---
 
-Run `bunx wrangler secret put <key>` to save a secret directly to the Worker production environment.
+## Verification logic (MVP)
 
-If you add a new `.dev.vars` entry, you'll need to regenerate types:
+A profile becomes **Verified** when:
 
-```bash
-bun run cf-typegen
-```
+1. Company setup is complete (ABN + core fields present in seed/state)
+2. At least **1 live data source** connected (Stripe or Google Analytics)
+3. **3 monthly updates** published with real metric data
 
-### Building & Deployment
+Verified = trust signal for investors + VIC Gov startup directory eligibility.
 
-1. **Build for production**:
-   ```bash
-   bun run build
-   ```
+---
 
-2. **Deploy to Cloudflare**:
-   ```bash
-   bun run deploy
-   ```
+## What's seeded
 
-   This builds the project and deploys it using Wrangler.
+The demo starts with Mira Halvorsen at **Loamly** (soil-health analytics, Melbourne, Pre-seed) and one published February 2026 update. Publish two more to unlock the badge.
 
-## Project Structure
+---
 
-- `/app/routes/` - Page routes and API endpoints
-- `/app/components/` - Reusable React components
-- `/public/` - Static assets
+## What's not here yet (post-MVP)
 
-## Key Features
+- Auth / magic link login
+- Real Stripe / GA OAuth
+- Investor matching by sector + stage
+- Additional data sources (Xero, bank feed)
+- AI-assisted drafting
+- Pitch deck upload
 
-- 🏠 Homepage with events and community info
-- 📅 Event calendar with Humanitix integration (`/events`)
-- 📝 Contact form (`/contact`)
-- 🤝 Sponsor information (`/sponsors`)
-- 🏆 Hackathon pages (`/hackathon`)
-- 🔗 Social media integration
-- 📱 Responsive design with TailwindCSS
+---
 
-## Development Notes
-
-- Uses React Router v7 with server-side rendering
-- API routes handle Humanitix integration for events
-- TypeScript throughout for type safety
-- Cloudflare Workers runtime compatible
-
-## Community
-
-- **Slack**: [Join our community](https://join.slack.com/t/mlai-aus/shared_invite/zt-36v55lk77-LbIvbAPH~9E83zEgXlXRSg)
-- **LinkedIn**: [Follow us](https://www.linkedin.com/company/mlai-aus-inc)
-- **Instagram**: [@mlai_aus](https://www.instagram.com/mlai_aus/)
-
-Built with ❤️ for the Australian AI community.
+Built on the [MLAI](https://mlai.au) platform · [mlai.au](https://mlai.au)

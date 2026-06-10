@@ -53,10 +53,45 @@ export default [
     route("profile", "routes/hospital.app.profile.tsx"),
   ]),
 
+  // Watt The Hack generic hackathon app routes
+  route("/watt-the-hack", "routes/watt-the-hack.tsx", [
+    index("routes/watt-the-hack._index.tsx"),
+    route("dashboard", "routes/watt-the-hack.dashboard.tsx"),
+    route("profile", "routes/watt-the-hack.profile.tsx"),
+    route("notifications", "routes/watt-the-hack.notifications.tsx"),
+    route("team", "routes/watt-the-hack.team.tsx"),
+    route("submissions", "routes/watt-the-hack.submissions.tsx"),
+    route("resources", "routes/watt-the-hack.resources.tsx"),
+    route("docs", "routes/watt-the-hack.docs.tsx", [
+      index("routes/watt-the-hack.docs._index.tsx"),
+      route("base44-pitching", "routes/watt-the-hack.docs.base44-pitching.tsx"),
+      route("grid-guardian", "routes/watt-the-hack.docs.grid-guardian.tsx"),
+      route("smart-home", "routes/watt-the-hack.docs.smart-home.tsx"),
+    ]),
+    route("base44-pitching", "routes/watt-the-hack.base44-pitching.tsx"),
+    route("city-of-melbourne-advanced", "routes/watt-the-hack.city-of-melbourne-advanced.tsx"),
+    route("city-of-melbourne-advanced-submit", "routes/watt-the-hack.city-of-melbourne-advanced-submit.tsx"),
+    route("city-of-melbourne-advanced-submit-data", "routes/watt-the-hack.city-of-melbourne-advanced-submit-data.ts"),
+    route("city-of-melbourne-advanced-leaderboard", "routes/watt-the-hack.city-of-melbourne-advanced-leaderboard.tsx"),
+    route("city-of-melbourne-advanced-leaderboard-data", "routes/watt-the-hack.city-of-melbourne-advanced-leaderboard-data.ts"),
+    route("city-of-melbourne-advanced-recent-submissions-data", "routes/watt-the-hack.city-of-melbourne-advanced-recent-submissions-data.ts"),
+    route("smart-home-beginner", "routes/watt-the-hack.smart-home-beginner.tsx"),
+    route("smart-home-beginner/state", "routes/watt-the-hack.smart-home-beginner.state.tsx"),
+    route("smart-home-beginner/firebase-token", "routes/watt-the-hack.smart-home-beginner.firebase-token.tsx"),
+    route("smart-home-beginner/shop", "routes/watt-the-hack.smart-home-beginner.shop.tsx"),
+  ]),
+
   // Hackathon pages
   route("/hackathon", "routes/article-link-cleanups.tsx", { id: "cleanup-hackathon-singular" }),
   route("/hackathons", "routes/hackathons.tsx"),
   route("/medhack", "routes/medhack.tsx"),
+
+  // Valley MVP demo (mobile-first, mocked, no auth)
+  route("/valley", "routes/valley._index.tsx"),
+  route("/valley/update/new", "routes/valley.update.new.tsx"),
+  route("/valley/update/review", "routes/valley.update.review.tsx"),
+  route("/valley/update/published", "routes/valley.update.published.tsx"),
+  route("/valley/profile", "routes/valley.profile.tsx"),
 
   // Misc
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),

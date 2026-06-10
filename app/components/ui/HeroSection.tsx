@@ -6,6 +6,8 @@ export interface HeroSectionProps {
     children?: ReactNode
     className?: string
     variant?: "yellow" | "beige" | "white"
+    headingSlot?: string;
+    descriptionSlot?: string;
 }
 
 /**
@@ -18,6 +20,8 @@ export default function HeroSection({
     children,
     className = "",
     variant = "yellow",
+  headingSlot,
+  descriptionSlot,
 }: HeroSectionProps) {
     const variantClasses: Record<string, string> = {
         yellow: "articles-hero",
@@ -30,11 +34,11 @@ export default function HeroSection({
             <section className={`${variantClasses[variant]} ${className}`.trim()}>
                 <div className="max-w-6xl mx-auto">
                     <div className="max-w-4xl">
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-zinc-900 tracking-tight">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-zinc-900 tracking-tight" data-cf-slot={headingSlot}>
                             {title}
                         </h1>
                         {description && (
-                            <p className="mt-4 text-base text-zinc-700">
+                            <p className="mt-4 text-base text-zinc-700" data-cf-slot={descriptionSlot}>
                                 {description}
                             </p>
                         )}

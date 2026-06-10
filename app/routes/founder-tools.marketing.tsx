@@ -38,6 +38,7 @@ import { clsx } from "clsx";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import AvatarModal from "~/components/AvatarModal";
+import GitHubMark from "~/components/GitHubMark";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
@@ -48,6 +49,18 @@ import {
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
 import { shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
+import { findRecoverableDiscoveryRun } from "~/lib/vibe-marketing-discovery-recovery";
+import {
+  VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
+  VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS,
+  createVibeMarketingClientRequestId,
+} from "~/lib/vibe-marketing-billing";
+import {
+  filterOptimisticallyDeletedDrafts,
+  hiddenDraftRunIdsAfterSubmit,
+  pruneHiddenDraftRunIds,
+  restoreHiddenDraftRunId,
+} from "~/lib/vibe-marketing-draft-delete";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   controlVibeMarketingRun,
@@ -142,7 +155,14 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
 }
 
 function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
-  return Boolean(bootstrap.checks.scaffold?.setupBlocked);
+  return Boolean(
+    bootstrap.checks.scaffold?.setupBlocked &&
+      !bootstrap.hasCompletedArticleFlow &&
+      !bootstrap.checks.scaffold?.generationReady &&
+      !bootstrap.checks.scaffold?.setupMerged &&
+      !bootstrap.articleSetupState?.generationReady &&
+      !bootstrap.articleSetupState?.setupMerged,
+  );
 }
 
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
@@ -270,11 +290,25 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 
   if (!vibeContext.appUser) {
-    return { bootstrap: emptyBootstrapFromProfile(vibeContext.profile), hasFounderCompany: false };
+    return {
+      bootstrap: emptyBootstrapFromProfile(vibeContext.profile),
+      hasFounderCompany: false,
+      billingRequestIds: {
+        articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
+        contentIslandTopics: createVibeMarketingClientRequestId("vibe-content-island-topics"),
+      },
+    };
   }
 
   const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
-  return { bootstrap, hasFounderCompany: true };
+  return {
+    bootstrap,
+    hasFounderCompany: true,
+    billingRequestIds: {
+      articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
+      contentIslandTopics: createVibeMarketingClientRequestId("vibe-content-island-topics"),
+    },
+  };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -452,7 +486,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-content-island-discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
       const contentIslandSlug = stringFromForm(formData, "contentIslandSlug");
       const pillar = bootstrap.topicPillars.find((item) => item.slug === contentIslandSlug);
@@ -464,6 +498,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ||
         pillar.name;
       const run = await startVibeMarketingDiscovery(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
         contentIslandSlug: pillar.slug,
         content_island_slug: pillar.slug,
         contentIslandName: pillar.name,
@@ -492,10 +528,48 @@ export async function action({ request, context }: Route.ActionArgs) {
       };
     }
 
+    if (intent === "research-custom-topic") {
+      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
+      }
+      const customTitle = stringFromForm(formData, "customTitle");
+      const targetKeyword = stringFromForm(formData, "targetKeyword");
+      const articleContext = stringFromForm(formData, "articleContext");
+      if (!customTitle && !targetKeyword) {
+        return { intent, error: "Add an article title/angle or a target keyword to research." };
+      }
+      const run = await startVibeMarketingDiscovery(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
+        customTopicTitle: customTitle,
+        custom_topic_title: customTitle,
+        customTopicKeyword: targetKeyword,
+        custom_topic_keyword: targetKeyword,
+        customTopicContext: articleContext,
+        custom_topic_context: articleContext,
+        requestedTopicCount: 4,
+        requested_topic_count: 4,
+      });
+      // Return the run instead of redirecting: the discovery job already runs
+      // detached on the backend, so we keep the user on the dashboard and let the
+      // custom-research fetcher drive the progress card + polling (same as content
+      // islands). This is what lets the research survive switching pages.
+      const runStatus = normalizeContentIslandDiscoveryStatus(run.status);
+      const runQueuedSuccessfully = Boolean(run.runId) && !isContentIslandDiscoveryFailedStatus(runStatus);
+      return {
+        intent,
+        runId: run.runId,
+        status: run.status,
+        error: runQueuedSuccessfully ? null : run.error || run.errors?.[0] || "Research could not start. Please try again.",
+        errors: runQueuedSuccessfully ? [] : run.errors,
+      };
+    }
+
     if (intent === "start-discovery" || intent === "discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
       const run = await startVibeMarketingDiscovery(env, request, {});
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
@@ -521,26 +595,32 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (!runId) {
         return { intent, error: "Choose a draft article to delete." };
       }
-      await controlVibeMarketingRun(env, request, runId, "cancel");
-      return { intent, runId };
+      const run = await controlVibeMarketingRun(env, request, runId, "cancel", { cancel_group: true });
+      return {
+        intent,
+        runId,
+        cancelledRunIds: run.cancelledRunIds ?? [],
+        protectedRunIds: run.protectedRunIds ?? [],
+      };
     }
 
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
+        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
+      const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
       const candidatePool = [
         ...bootstrap.topicCandidates,
         ...bootstrap.topicPillars.flatMap((pillar) => pillar.topicCandidates),
       ];
       const selectedCandidate =
-        topicCandidateId && topicCandidateId !== "__custom__"
+        !isCustomTopic
           ? candidatePool.find((candidate) => candidate.id === topicCandidateId) ?? null
           : null;
 
-      if (topicCandidateId && topicCandidateId !== "__custom__" && !selectedCandidate) {
+      if (!isCustomTopic && !selectedCandidate) {
         return { intent, error: "That topic is no longer available. Choose another topic or enter a custom one." };
       }
 
@@ -557,17 +637,20 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { intent, error: "Choose a topic or enter a custom article idea before generating." };
       }
 
+      const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const result = await startVibeMarketingArticle(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
         topic,
         targetKeyword,
         customTitle: customTitle || selectedCandidate?.title || "",
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
-        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
-        deliveryModeConfirmed: true,
-        sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
+        deliveryMode: deliveryModeExplicit ? stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap) : undefined,
+        deliveryModeExplicit,
+        deliveryModeConfirmed: deliveryModeExplicit,
+        sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
 
       if (result.runId) {
@@ -628,6 +711,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const responseErrors = readableBackendErrors(error, { fallback });
     return {
       intent,
+      ...(intent === "delete-draft" ? { runId: stringFromForm(formData, "runId") } : {}),
       error: readableBackendError(error, { fallback }),
       errors: responseErrors,
     };
@@ -639,6 +723,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
   if (actionIntent(args.actionResult) === "start-content-island-discovery") {
     return false;
+  }
+  if (actionIntent(args.actionResult) === "delete-draft") {
+    if (actionError(args.actionResult)) return false;
+    return actionStringList(args.actionResult, "protectedRunIds", "protected_run_ids").length > 0
+      ? args.defaultShouldRevalidate
+      : false;
   }
   return args.defaultShouldRevalidate;
 }
@@ -653,6 +743,30 @@ function actionIntent(data: unknown): string | null {
   if (!data || typeof data !== "object" || !("intent" in data)) return null;
   const intent = (data as { intent?: unknown }).intent;
   return typeof intent === "string" ? intent : null;
+}
+
+function actionString(data: unknown, key: string): string {
+  if (!data || typeof data !== "object" || !(key in data)) return "";
+  const value = (data as Record<string, unknown>)[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function actionStringList(data: unknown, ...keys: string[]): string[] {
+  if (!data || typeof data !== "object") return [];
+  const payload = data as Record<string, unknown>;
+  for (const key of keys) {
+    const value = payload[key];
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+    }
+    if (typeof value === "string") {
+      return value
+        .split(/[,\n]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
 }
 
 function numericValue(value: unknown): number | null {
@@ -738,6 +852,68 @@ function startupTags(bootstrap: VibeMarketingBootstrap) {
     .map((tag) => String(tag ?? "").trim())
     .filter(Boolean);
   return Array.from(new Set(tags)).slice(0, 3);
+}
+
+function objectRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function firstStringValue(source: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function normalizeDashboardDomain(value: string | null | undefined) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return url.hostname.replace(/\/+$/, "");
+  } catch {
+    return raw.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").split(/[/?#]/, 1)[0].replace(/\/+$/, "");
+  }
+}
+
+function normalizeArticleRoutePath(value: string) {
+  const raw = value.trim();
+  if (!raw) return "/articles";
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      return normalizeArticleRoutePath(new URL(raw).pathname || "/articles");
+    } catch {
+      return "/articles";
+    }
+  }
+  const withLeadingSlash = raw.startsWith("/") ? raw : `/${raw}`;
+  const normalized = withLeadingSlash.split(/[?#]/, 1)[0].replace(/\/+/g, "/");
+  return normalized.length > 1 ? normalized.replace(/\/+$/, "") : normalized;
+}
+
+function articleRoutePathForDashboard(bootstrap: VibeMarketingBootstrap) {
+  const articleSetupState = objectRecord(bootstrap.articleSetupState);
+  const pendingSetup = objectRecord(bootstrap.settings.pendingArticleSystemSetup);
+  const scaffoldArticleSystem = objectRecord(bootstrap.checks.scaffold?.articleSystem);
+  return normalizeArticleRoutePath(
+    firstStringValue(articleSetupState, "routePath", "route_path") ||
+      firstStringValue(pendingSetup, "routePath", "route_path") ||
+      firstStringValue(scaffoldArticleSystem, "route_path", "routePath") ||
+      "/articles",
+  );
+}
+
+function articleRouteDisplayForDashboard(bootstrap: VibeMarketingBootstrap, domain: string | null | undefined) {
+  const routePath = articleRoutePathForDashboard(bootstrap);
+  const host = normalizeDashboardDomain(domain);
+  return host ? `${host}${routePath}` : routePath;
+}
+
+function githubConnectHrefForDashboard(connected: boolean) {
+  const params = new URLSearchParams({ returnTo: "/founder-tools/marketing" });
+  if (connected) params.set("forceReconnect", "true");
+  return `/founder-tools/marketing/github-connect?${params.toString()}`;
 }
 
 function topicChips(bootstrap: VibeMarketingBootstrap) {
@@ -2319,7 +2495,7 @@ function TopicRow({
               : rowTheme?.idleButton ?? "bg-violet-50 text-violet-700 hover:bg-violet-100",
           )}
         >
-          {selected ? "Continue" : "Select"}
+          {selected ? `Continue (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)` : "Select"}
           {selected && submitting ? (
             <Loader2 className={clsx("h-4 w-4 animate-spin", rowTheme?.arrow ?? "text-violet-500")} />
           ) : (
@@ -2518,7 +2694,7 @@ function DraftDeleteConfirmationModal({
       <div className="w-full max-w-md rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl">
         <h2 id="draft-delete-confirmation-title" className="text-lg font-black text-slate-950">Delete draft article?</h2>
         <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-          This cancels the article run and removes generated content for &quot;{draft.title}&quot;.
+          This cancels this draft and related retry attempts for &quot;{draft.title}&quot;.
         </p>
         <label className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600">
           <input
@@ -2586,8 +2762,13 @@ type CompanyAvatarActionData = {
   error?: string | null;
 };
 
+// Represents an in-flight topic discovery run shown as a progress card on the
+// dashboard. `kind` distinguishes a content-island run (island icon + name) from a
+// free-form custom-topic research run (generic "your topic" label). Both are the
+// same backend `auto_discovery` workflow.
 type ContentIslandDiscoveryRunState = {
   runId: string;
+  kind?: "island" | "custom";
   islandSlug: string;
   islandName: string;
   iconKey: string;
@@ -2644,8 +2825,7 @@ function TopicDeclineRequest({
 const PILLAR_THEMES = {
   green: {
     iconWrap: "bg-emerald-500 text-white shadow-emerald-100",
-    button: "border-emerald-200 text-emerald-600 hover:bg-emerald-50",
-    arrow: "text-emerald-500",
+    solidButton: "border-emerald-500 bg-emerald-500 text-white shadow-emerald-100 hover:border-emerald-600 hover:bg-emerald-600",
     row: {
       focus: "focus:ring-emerald-100",
       selected: "border-emerald-300 bg-emerald-50/60",
@@ -2665,8 +2845,7 @@ const PILLAR_THEMES = {
   },
   purple: {
     iconWrap: "bg-violet-700 text-white shadow-violet-100",
-    button: "border-violet-200 text-violet-700 hover:bg-violet-50",
-    arrow: "text-violet-600",
+    solidButton: "border-violet-700 bg-violet-700 text-white shadow-violet-100 hover:border-violet-800 hover:bg-violet-800",
     row: {
       focus: "focus:ring-violet-100",
       selected: "border-violet-300 bg-violet-50/60",
@@ -2686,8 +2865,7 @@ const PILLAR_THEMES = {
   },
   blue: {
     iconWrap: "bg-blue-600 text-white shadow-blue-100",
-    button: "border-blue-200 text-blue-600 hover:bg-blue-50",
-    arrow: "text-blue-500",
+    solidButton: "border-blue-600 bg-blue-600 text-white shadow-blue-100 hover:border-blue-700 hover:bg-blue-700",
     row: {
       focus: "focus:ring-blue-100",
       selected: "border-blue-300 bg-blue-50/60",
@@ -2707,8 +2885,7 @@ const PILLAR_THEMES = {
   },
   orange: {
     iconWrap: "bg-orange-500 text-white shadow-orange-100",
-    button: "border-orange-200 text-orange-600 hover:bg-orange-50",
-    arrow: "text-orange-500",
+    solidButton: "border-orange-500 bg-orange-500 text-white shadow-orange-100 hover:border-orange-600 hover:bg-orange-600",
     row: {
       focus: "focus:ring-orange-100",
       selected: "border-orange-300 bg-orange-50/60",
@@ -2879,6 +3056,7 @@ function TopicPillarsSection({
   submitting,
   discoverySubmitting,
   generatingPillarSlug,
+  confirmingPillarSlug,
   activePillarSlug,
   customNotice,
   helpOpen,
@@ -2891,6 +3069,7 @@ function TopicPillarsSection({
   submitting: boolean;
   discoverySubmitting: boolean;
   generatingPillarSlug?: string | null;
+  confirmingPillarSlug?: string | null;
   activePillarSlug: string | null;
   customNotice: boolean;
   helpOpen: boolean;
@@ -2947,6 +3126,8 @@ function TopicPillarsSection({
         {visiblePillars.map((pillar) => {
           const theme = pillarTheme(pillar.colorKey);
           const active = pillar.slug === activePillarSlug;
+          const confirming = pillar.slug === confirmingPillarSlug;
+          const generatingThisPillar = generatingPillarSlug === pillar.slug;
           return (
             <article
               key={pillar.id || pillar.slug}
@@ -2968,19 +3149,19 @@ function TopicPillarsSection({
                 onClick={() => onGenerate(pillar)}
                 disabled={submitting || generating}
                 className={clsx(
-                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-white text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
-                  theme.button,
+                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
+                  theme.solidButton,
                 )}
               >
-                {generatingPillarSlug === pillar.slug ? (
+                {generatingThisPillar ? (
                   <>
-                    <Loader2 className={clsx("h-4 w-4 animate-spin", theme.arrow)} />
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
                     loading
                   </>
                 ) : (
                   <>
-                    Generate
-                    <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+                    {confirming ? `Generate (${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} pt)` : "Generate"}
+                    <ArrowRight className="h-4 w-4 text-white" />
                   </>
                 )}
               </button>
@@ -3024,21 +3205,25 @@ function TopicPillarsSection({
 
 function ReturningTopicPickerPage({
   bootstrap,
+  billingRequestIds,
   error,
   errorIntent,
   setupMergedNotice = false,
 }: {
   bootstrap: VibeMarketingBootstrap;
+  billingRequestIds: { articleJob: string; contentIslandTopics: string };
   error: string | null;
   errorIntent?: string | null;
   setupMergedNotice?: boolean;
 }) {
   const navigation = useNavigation();
+  const routeActionData = useActionData<typeof action>();
   const location = useLocation();
   const revalidator = useRevalidator();
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
   const contentIslandDiscoveryFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "content-island-discovery" });
   const contentIslandRunStatusFetcher = useFetcher<VibeMarketingRunSummary>({ key: "content-island-discovery-status" });
+  const customResearchFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "custom-research" });
   const companyAvatarFetcher = useFetcher<CompanyAvatarActionData>({ key: "company-avatar" });
   const topicListRef = useRef<HTMLDivElement | null>(null);
   const pillarHelpRef = useRef<HTMLDivElement | null>(null);
@@ -3051,6 +3236,7 @@ function ReturningTopicPickerPage({
   const [visibleCount, setVisibleCount] = useState(5);
   const [toast, setToast] = useState<TopicToast | null>(null);
   const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
+  const [confirmingContentIslandSlug, setConfirmingContentIslandSlug] = useState<string | null>(null);
   const [customPillarNotice, setCustomPillarNotice] = useState(false);
   const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
   const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<ContentIslandDiscoveryRunState | null>(null);
@@ -3061,6 +3247,7 @@ function ReturningTopicPickerPage({
   const completedContentIslandDiscoveryRuns = useRef<Set<string>>(new Set());
   const contentIslandRefreshStartCount = useRef(0);
   const companyAvatarPreviewObjectUrl = useRef<string | null>(null);
+  const handledDeleteActionRef = useRef<unknown>(null);
   const articleFormRef = useRef<HTMLFormElement>(null);
   const activePillar = useMemo(
     () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
@@ -3118,6 +3305,13 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
+  const githubConnected = Boolean(
+    githubReadyForPublishing ||
+      bootstrap.settings.githubConnectionState === "connected" ||
+      bootstrap.checks.github?.connectionState === "connected",
+  );
+  const githubConnectionHref = githubConnectHrefForDashboard(githubConnected);
+  const articleRouteDisplay = articleRouteDisplayForDashboard(bootstrap, domain);
   const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
   const companyAvatarUrl = companyAvatarPreviewUrl || savedCompanyAvatarUrl;
   const companyAvatarSaving = companyAvatarFetcher.state !== "idle";
@@ -3170,14 +3364,28 @@ function ReturningTopicPickerPage({
     : submittedContentIslandSlug || null;
   const articleSubmitting = pendingActions.isPending("start-article");
   const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
+  const customResearchBusy =
+    customResearchFetcher.state !== "idle" ||
+    Boolean(contentIslandDiscoveryRun?.kind === "custom" && !contentIslandRunTerminal);
+  const submittedCustomResearchRun: ContentIslandDiscoveryRunState | null =
+    customResearchFetcher.state !== "idle"
+      ? {
+          runId: "custom-research-starting",
+          kind: "custom",
+          islandSlug: "",
+          islandName: "your topic",
+          iconKey: "default",
+          colorKey: "purple",
+        }
+      : null;
   const deleteDraftSubmitting = pendingActions.isPending("delete-draft");
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
-  const contentIslandProgressState = contentIslandDiscoveryRun ?? submittedContentIslandRun;
+  const contentIslandProgressState = contentIslandDiscoveryRun ?? submittedContentIslandRun ?? submittedCustomResearchRun;
   const contentIslandProgressRun = buildContentIslandDiscoveryRunSummary({
     run: contentIslandPolledRun,
     activeRun: contentIslandProgressState,
-    submitting: contentIslandDiscoveryFetcher.state !== "idle",
+    submitting: contentIslandDiscoveryFetcher.state !== "idle" || customResearchFetcher.state !== "idle",
     domain,
   });
   const contentIslandProgressLabel = contentIslandDiscoveryStepLabel(contentIslandPolledRun, contentIslandProgressState);
@@ -3186,6 +3394,11 @@ function ReturningTopicPickerPage({
   const [draftDeleteRequest, setDraftDeleteRequest] = useState<{ runId: string; title: string } | null>(null);
   const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false);
   const [deletingDraftRunId, setDeletingDraftRunId] = useState<string | null>(null);
+  const [optimisticallyDeletedDraftRunIds, setOptimisticallyDeletedDraftRunIds] = useState<string[]>([]);
+  const visibleDraftArticles = useMemo(
+    () => filterOptimisticallyDeletedDrafts(bootstrap.draftArticles ?? [], optimisticallyDeletedDraftRunIds),
+    [bootstrap.draftArticles, optimisticallyDeletedDraftRunIds],
+  );
 
   const submitSelectedTopic = useCallback(() => {
     if (articleSubmitting || !selectedTopic) return;
@@ -3239,6 +3452,7 @@ function ReturningTopicPickerPage({
 
   function handleGenerateContentIslandIdeas(pillar: VibeMarketingTopicPillar) {
     if (contentIslandDiscoveryBusy) return;
+    setConfirmingContentIslandSlug(null);
     setActivePillarSlug(null);
     setActiveTab("choose");
     setVisibleCount(5);
@@ -3247,12 +3461,41 @@ function ReturningTopicPickerPage({
     setContentIslandRefreshRunId(null);
     const formData = new FormData();
     formData.set("intent", "start-content-island-discovery");
+    formData.set("clientRequestId", `${billingRequestIds.contentIslandTopics}:${pillar.slug}`);
     formData.set("contentIslandSlug", pillar.slug);
     formData.set("contentIslandName", pillar.name);
     formData.set("contentIslandKeyword", pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ?? pillar.name);
     formData.set("contentIslandIconKey", pillar.iconKey);
     formData.set("contentIslandColorKey", pillar.colorKey);
     contentIslandDiscoveryFetcher.submit(formData, { method: "POST" });
+  }
+
+  function handleContentIslandGenerateClick(pillar: VibeMarketingTopicPillar) {
+    if (contentIslandDiscoveryBusy) return;
+    if (confirmingContentIslandSlug === pillar.slug) {
+      handleGenerateContentIslandIdeas(pillar);
+      return;
+    }
+    setConfirmingContentIslandSlug(pillar.slug);
+  }
+
+  // Submit custom-topic research via a fetcher so the user stays on the dashboard.
+  // Capture the form values before switching to the "choose" tab (which unmounts the
+  // custom inputs) so FormData still reads them.
+  function handleCustomResearchSubmit() {
+    if (customResearchBusy) return;
+    const form = articleFormRef.current;
+    if (!form) return;
+    const formData = new FormData(form);
+    formData.set("intent", "research-custom-topic");
+    setConfirmingContentIslandSlug(null);
+    setActivePillarSlug(null);
+    setActiveTab("choose");
+    setVisibleCount(5);
+    setToast(null);
+    setContentIslandDiscoveryRun(null);
+    setContentIslandRefreshRunId(null);
+    customResearchFetcher.submit(formData, { method: "POST" });
   }
 
   function handleAddCustomPillar() {
@@ -3333,6 +3576,8 @@ function ReturningTopicPickerPage({
     if (String(navigation.formData?.get("intent") ?? "") !== "delete-draft") return;
     const runId = String(navigation.formData?.get("runId") ?? "").trim();
     setDeletingDraftRunId(runId || null);
+    setOptimisticallyDeletedDraftRunIds((current) => hiddenDraftRunIdsAfterSubmit(current, runId));
+    setDraftDeleteRequest((current) => (current?.runId === runId ? null : current));
   }, [navigation.formData, navigation.state]);
 
   useEffect(() => {
@@ -3341,10 +3586,44 @@ function ReturningTopicPickerPage({
   }, [deleteDraftSubmitting]);
 
   useEffect(() => {
+    setOptimisticallyDeletedDraftRunIds((current) => pruneHiddenDraftRunIds(current, bootstrap.draftArticles ?? []));
+  }, [bootstrap.draftArticles]);
+
+  useEffect(() => {
+    if (!routeActionData || handledDeleteActionRef.current === routeActionData) return;
+    if (actionIntent(routeActionData) !== "delete-draft") return;
+    handledDeleteActionRef.current = routeActionData;
+    pendingActions.clearPending();
+
+    const runId = actionString(routeActionData, "runId");
+    const deleteError = actionError(routeActionData);
+    if (deleteError) {
+      setOptimisticallyDeletedDraftRunIds((current) => restoreHiddenDraftRunId(current, runId));
+      setDeletingDraftRunId(null);
+      setToast({ kind: "error", message: deleteError });
+      return;
+    }
+
+    const protectedRunIds = actionStringList(routeActionData, "protectedRunIds", "protected_run_ids");
+    if (protectedRunIds.length) {
+      setOptimisticallyDeletedDraftRunIds((current) =>
+        protectedRunIds.reduce((next, protectedRunId) => restoreHiddenDraftRunId(next, protectedRunId), current),
+      );
+      setToast({
+        kind: "error",
+        message:
+          protectedRunIds.length === 1
+            ? "One related article attempt was not deleted because it already has publish evidence."
+            : `${protectedRunIds.length} related article attempts were not deleted because they already have publish evidence.`,
+      });
+    }
+  }, [pendingActions, routeActionData]);
+
+  useEffect(() => {
     if (!draftDeleteRequest) return;
-    const stillPresent = (bootstrap.draftArticles ?? []).some((draft) => draft.runId === draftDeleteRequest.runId);
+    const stillPresent = visibleDraftArticles.some((draft) => draft.runId === draftDeleteRequest.runId);
     if (!stillPresent) setDraftDeleteRequest(null);
-  }, [bootstrap.draftArticles, draftDeleteRequest]);
+  }, [draftDeleteRequest, visibleDraftArticles]);
 
   useEffect(() => {
     const data = contentIslandDiscoveryFetcher.data;
@@ -3364,6 +3643,52 @@ function ReturningTopicPickerPage({
       colorKey: data.islandColorKey || pillar?.colorKey || "purple",
     });
   }, [bootstrap.topicPillars, contentIslandDiscoveryFetcher.data, contentIslandDiscoveryFetcher.state]);
+
+  // Custom-topic research: once the fetcher returns a runId, drive the same progress
+  // card + polling machinery as content islands (kind="custom" → generic label).
+  useEffect(() => {
+    const data = customResearchFetcher.data;
+    if (customResearchFetcher.state !== "idle" || !data || data.intent !== "research-custom-topic") return;
+    const startStatusFailed = isContentIslandDiscoveryFailedStatus(data.status);
+    if (!data.runId || (data.error && startStatusFailed)) {
+      setContentIslandDiscoveryRun(null);
+      setToast({ kind: "error", message: data.error || "Research could not start for that idea." });
+      return;
+    }
+    setContentIslandDiscoveryRun({
+      runId: data.runId,
+      kind: "custom",
+      islandSlug: "",
+      islandName: "your topic",
+      iconKey: "default",
+      colorKey: "purple",
+    });
+  }, [customResearchFetcher.data, customResearchFetcher.state]);
+
+  // Recover an in-flight discovery run after navigating away and back. The backend
+  // job keeps running detached, so re-attach the progress card + polling from
+  // bootstrap.latestRuns. Recovered runs use the generic "your topic" label since the
+  // bootstrap run summary does not carry island metadata; completed runs are skipped
+  // via the completed-run guard so this never re-seeds a finished run.
+  useEffect(() => {
+    if (contentIslandDiscoveryRun) return;
+    if (contentIslandDiscoveryFetcher.state !== "idle" || customResearchFetcher.state !== "idle") return;
+    const inflight = findRecoverableDiscoveryRun(bootstrap.latestRuns, completedContentIslandDiscoveryRuns.current);
+    if (!inflight) return;
+    setContentIslandDiscoveryRun({
+      runId: inflight.runId,
+      kind: "custom",
+      islandSlug: "",
+      islandName: "your topic",
+      iconKey: "default",
+      colorKey: "purple",
+    });
+  }, [
+    bootstrap.latestRuns,
+    contentIslandDiscoveryRun,
+    contentIslandDiscoveryFetcher.state,
+    customResearchFetcher.state,
+  ]);
 
   useEffect(() => {
     if (!contentIslandDiscoveryRun?.runId) return;
@@ -3449,6 +3774,13 @@ function ReturningTopicPickerPage({
   }, [activePillarSlug, bootstrap.topicPillars]);
 
   useEffect(() => {
+    if (!confirmingContentIslandSlug) return;
+    if (!bootstrap.topicPillars.some((pillar) => pillar.slug === confirmingContentIslandSlug)) {
+      setConfirmingContentIslandSlug(null);
+    }
+  }, [confirmingContentIslandSlug, bootstrap.topicPillars]);
+
+  useEffect(() => {
     if (!topics.length) {
       setSelectedTopicId("");
       return;
@@ -3521,17 +3853,32 @@ function ReturningTopicPickerPage({
       {setupMergedNotice ? (
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-          <p>The articles directory was merged. You can generate an article now while verification finishes in the background.</p>
+          <p>Articles setup is complete. Choose a topic to generate the next article.</p>
         </div>
       ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
         <div className="space-y-5">
-          <Form ref={articleFormRef} method="POST" className="space-y-5">
-            <input type="hidden" name="intent" value="start-article" />
+          <Form
+            ref={articleFormRef}
+            method="POST"
+            className="space-y-5"
+            onSubmit={(event) => {
+              // The custom tab shares this form; route its submit (button click or
+              // Enter) through the fetcher so research stays on the dashboard. The
+              // choose tab's start-article submit proceeds normally.
+              if (activeTab === "custom") {
+                event.preventDefault();
+                handleCustomResearchSubmit();
+              }
+            }}
+          >
+            {activeTab === "choose" ? (
+              <input type="hidden" name="intent" value="start-article" />
+            ) : null}
+            <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
             <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
-            <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
             <input type="hidden" name="deliveryModeExplicit" value="false" />
-            <input type="hidden" name="sourceDiscoveryRunId" value={selectedTopic?.sourceRunId ?? ""} />
+            <input type="hidden" name="sourceDiscoveryRunId" value={activeTab === "choose" ? selectedTopic?.sourceRunId ?? "" : ""} />
             {activeTab === "choose" ? (
               <>
                 <input type="hidden" name="targetKeyword" value={selectedTopic?.keyword ?? ""} />
@@ -3614,9 +3961,15 @@ function ReturningTopicPickerPage({
                   <div className="mt-5">
                     <MarketingRunProgressCard
                       run={contentIslandProgressRun}
-                      title="Researching article ideas"
+                      title={contentIslandProgressState.kind === "custom" ? "Researching your topic" : "Researching article ideas"}
                       currentStepLabel={contentIslandProgressLabel}
-                      icon={<PillarIcon iconKey={contentIslandProgressState.iconKey} className="h-5 w-5" />}
+                      icon={
+                        contentIslandProgressState.kind === "custom" ? (
+                          <Sparkles className="h-5 w-5" />
+                        ) : (
+                          <PillarIcon iconKey={contentIslandProgressState.iconKey} className="h-5 w-5" />
+                        )
+                      }
                       theme={contentIslandProgressTheme}
                     />
                   </div>
@@ -3746,6 +4099,19 @@ function ReturningTopicPickerPage({
                     />
                   </FormField>
                 </div>
+                <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-semibold text-slate-500">
+                    We'll research the strongest keywords and titles for your idea, then let you pick one before writing.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={customResearchBusy}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {customResearchBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {customResearchBusy ? "Researching..." : "Research this topic"}
+                  </button>
+                </div>
               </>
             )}
           </section>
@@ -3757,11 +4123,12 @@ function ReturningTopicPickerPage({
             submitting={isSubmitting || contentIslandDiscoveryBusy}
             discoverySubmitting={discoverySubmitting}
             generatingPillarSlug={generatingPillarSlug}
+            confirmingPillarSlug={confirmingContentIslandSlug}
             activePillarSlug={activePillarSlug}
             customNotice={customPillarNotice}
             helpOpen={pillarHelpOpen}
             helpRef={pillarHelpRef}
-            onGenerate={handleGenerateContentIslandIdeas}
+            onGenerate={handleContentIslandGenerateClick}
             onAddCustomPillar={handleAddCustomPillar}
             onLearnMore={handleLearnMorePillars}
           />
@@ -3819,10 +4186,31 @@ function ReturningTopicPickerPage({
                 Manage
               </Link>
             </div>
+            <div className="mt-4 grid gap-3">
+              <a
+                href={githubConnectionHref}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
+              >
+                <GitHubMark className="h-5 w-5" />
+                {githubConnected ? "Manage GitHub" : "Connect GitHub"}
+              </a>
+              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-wide text-slate-400">Articles route</p>
+                  <p className="mt-1 break-all text-sm font-black text-slate-900">{articleRouteDisplay}</p>
+                </div>
+                <Link
+                  to="/founder-tools/marketing/create?step=articleSystem"
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  Edit route
+                </Link>
+              </div>
+            </div>
           </section>
 
           <DraftArticlesCard
-            drafts={bootstrap.draftArticles ?? []}
+            drafts={visibleDraftArticles}
             submitting={isSubmitting}
             deletingRunId={deleteDraftSubmitting ? deletingDraftRunId : null}
             skipDeleteConfirmation={skipDeleteConfirmation}
@@ -3905,7 +4293,7 @@ function ReturningTopicPickerPage({
 }
 
 export default function FounderToolsMarketing() {
-  const { bootstrap } = useLoaderData<typeof loader>();
+  const { bootstrap, billingRequestIds } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const location = useLocation();
   const error = actionError(actionData);
@@ -3916,7 +4304,13 @@ export default function FounderToolsMarketing() {
   return (
     <div className="min-h-screen bg-[#fbfaf8]">
       {shouldShowTopicPicker ? (
-        <ReturningTopicPickerPage bootstrap={bootstrap} error={error} errorIntent={errorIntent} setupMergedNotice={setupMergedNotice} />
+        <ReturningTopicPickerPage
+          bootstrap={bootstrap}
+          billingRequestIds={billingRequestIds}
+          error={error}
+          errorIntent={errorIntent}
+          setupMergedNotice={setupMergedNotice}
+        />
       ) : (
         <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} />
       )}
