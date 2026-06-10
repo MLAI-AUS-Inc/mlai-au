@@ -6104,8 +6104,6 @@ export default function CreateUpdate() {
                 </div>
             ) : null}
 
-            {showLegacyDraftFlow ? (
-            <>
             {showRegenerateConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
                     <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl ring-1 ring-black/5">
@@ -6145,6 +6143,8 @@ export default function CreateUpdate() {
                 </div>
             )}
 
+            {showLegacyDraftFlow ? (
+            <>
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
                 <input
