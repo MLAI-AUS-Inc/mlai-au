@@ -2507,14 +2507,72 @@ function TopicRow({
   );
 }
 
+function articlePublishStatusTone(article: VibeMarketingWrittenTopic) {
+  switch (article.publishStatus) {
+    case "live":
+      return {
+        label: "Live",
+        pill: "bg-emerald-50 text-emerald-600",
+        dot: "bg-emerald-500",
+        hint: "Verified on your website.",
+      };
+    case "merged":
+      return {
+        label: "Merged",
+        pill: "bg-sky-50 text-sky-700",
+        dot: "bg-sky-500",
+        hint: "The PR merged — waiting for the next site deploy.",
+      };
+    case "pr_open":
+      return {
+        label: "PR open",
+        pill: "bg-amber-50 text-amber-700",
+        dot: "bg-amber-500",
+        hint: "A pull request is waiting to be merged.",
+      };
+    case "pr_closed":
+      return {
+        label: "PR closed",
+        pill: "bg-red-50 text-red-700",
+        dot: "bg-red-500",
+        hint: "The pull request was closed without merging.",
+      };
+    default:
+      return {
+        label: "Not published",
+        pill: "bg-slate-100 text-slate-600",
+        dot: "bg-slate-400",
+        hint: "Written and packaged, but not on your website yet.",
+      };
+  }
+}
+
 function RecentArticleRow({ article }: { article: VibeMarketingWrittenTopic }) {
+  const tone = articlePublishStatusTone(article);
+  const href =
+    (article.publishStatus === "live" ? article.liveUrl : null) ?? article.prUrl ?? article.articleUrl ?? null;
+  const title = article.title || article.keyword;
   return (
-    <div className="grid grid-cols-[110px_minmax(0,1fr)_auto] items-center gap-4 border-t border-slate-100 py-4 first:border-t-0">
-      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-600">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        Published
+    <div className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 border-t border-slate-100 py-4 first:border-t-0">
+      <span
+        title={tone.hint}
+        className={clsx("inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black", tone.pill)}
+      >
+        <span className={clsx("h-1.5 w-1.5 rounded-full", tone.dot)} />
+        {tone.label}
       </span>
-      <p className="truncate text-sm font-black text-slate-950">{article.title || article.keyword}</p>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="truncate text-sm font-black text-slate-950 hover:underline"
+        >
+          {title}
+        </a>
+      ) : (
+        <p className="truncate text-sm font-black text-slate-950">{title}</p>
+      )}
       <p className="text-sm font-bold text-slate-500">{formatArticleDate(article.writtenAt)}</p>
     </div>
   );
