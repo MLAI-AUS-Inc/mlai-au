@@ -369,6 +369,7 @@ export interface VibeMarketingWrittenTopic {
   prNumber?: number | null;
   publishStatus?: VibeMarketingArticlePublishStatus | null;
   liveUrl?: string | null;
+  runId?: string | null;
   writtenAt?: string | null;
 }
 
