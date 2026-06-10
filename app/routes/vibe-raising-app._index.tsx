@@ -37,6 +37,7 @@ import {
     InformationCircleIcon,
     DocumentArrowUpIcon,
 } from "@heroicons/react/24/outline";
+import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 
@@ -879,6 +880,7 @@ function VRPreviewUpdateCard({
                                     {statusLabel}
                                 </span>
                             ) : null}
+                            <ActiveDraftRunChip />
                             {formattedDate ? (
                                 <span className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-gray-400 ring-1 ring-gray-200">
                                     {formattedDate}
@@ -893,6 +895,7 @@ function VRPreviewUpdateCard({
                                     {statusLabel}
                                 </span>
                             ) : null}
+                            <ActiveDraftRunChip />
                             <Link
                                 to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
@@ -1453,9 +1456,12 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                 </div>
                             </div>
                         ) : (
-                            <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
-                                No current update yet — create your first one above.
-                            </p>
+                            <div className="space-y-3">
+                                <ActiveDraftRunChip />
+                                <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
+                                    No current update yet — create your first one above.
+                                </p>
+                            </div>
                         )
                     ) : (
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
