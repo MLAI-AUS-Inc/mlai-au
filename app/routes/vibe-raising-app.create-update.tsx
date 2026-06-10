@@ -3933,6 +3933,8 @@ export default function CreateUpdate() {
         };
     })();
 
+    const canRunAgainDraft = selectedDraftStage === "reporting" && hasDraftTemplate && !isManualOnlyDraftFlow && selectedInputSources.length > 0;
+
     const handleRetryEmailDraft = () => {
         requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
     };
@@ -5966,6 +5968,10 @@ export default function CreateUpdate() {
                 mobileSecondaryLabel={selectedDraftStage === "reporting" && hasDraftTemplate ? (saveDraftFetcher.state !== "idle" ? "Saving" : draftSaved ? "Saved" : "Save draft") : undefined}
                 onSecondary={selectedDraftStage === "reporting" && hasDraftTemplate ? handlePersistDraft : undefined}
                 secondaryDisabled={saveDraftFetcher.state !== "idle" || isEmailDraftBusy || isVideoUploadBlocking}
+                tertiaryLabel={canRunAgainDraft ? "Run again" : undefined}
+                mobileTertiaryLabel={canRunAgainDraft ? "Run again" : undefined}
+                onTertiary={canRunAgainDraft ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true }) : undefined}
+                tertiaryDisabled={emailDraftActionBusy}
                 primaryLabel={draftStickyBar.primaryLabel}
                 onPrimary={draftStickyBar.onPrimary}
                 primaryDisabled={draftStickyBar.primaryDisabled}
@@ -6073,9 +6079,9 @@ export default function CreateUpdate() {
                                     <ExclamationTriangleIcon className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-[var(--vr-color-text)]">Draft another update?</h2>
+                                    <h2 className="text-lg font-black text-[var(--vr-color-text)]">Replace this draft?</h2>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        You already have a monthly update for <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong>. Creating a new draft from these inputs can take up to 20 minutes. Previous dot points will not be overwritten; matching points will be refreshed and new points will be added.
+                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
                                     </p>
                                 </div>
                             </div>
