@@ -16,6 +16,10 @@ type VibeRaisingStickyStepBarProps = {
     mobileSecondaryLabel?: string;
     onSecondary?: () => void;
     secondaryDisabled?: boolean;
+    tertiaryLabel?: string;
+    mobileTertiaryLabel?: string;
+    onTertiary?: () => void;
+    tertiaryDisabled?: boolean;
     primaryLabel: string;
     mobilePrimaryLabel?: string;
     onPrimary?: () => void;
@@ -39,6 +43,10 @@ export default function VibeRaisingStickyStepBar({
     mobileSecondaryLabel,
     onSecondary,
     secondaryDisabled = false,
+    tertiaryLabel,
+    mobileTertiaryLabel,
+    onTertiary,
+    tertiaryDisabled = false,
     primaryLabel,
     mobilePrimaryLabel,
     onPrimary,
@@ -48,6 +56,7 @@ export default function VibeRaisingStickyStepBar({
 }: VibeRaisingStickyStepBarProps) {
     const resolvedBackLabel = mobileBackLabel ?? backLabel;
     const resolvedSecondaryLabel = mobileSecondaryLabel ?? secondaryLabel;
+    const resolvedTertiaryLabel = mobileTertiaryLabel ?? tertiaryLabel;
     const resolvedPrimaryLabel = mobilePrimaryLabel ?? primaryLabel;
 
     return (
@@ -105,6 +114,20 @@ export default function VibeRaisingStickyStepBar({
                         >
                             <span className="sm:hidden">{resolvedSecondaryLabel}</span>
                             <span className="hidden sm:inline">{secondaryLabel}</span>
+                        </button>
+                    ) : null}
+                    {tertiaryLabel && onTertiary ? (
+                        <button
+                            type="button"
+                            onClick={onTertiary}
+                            disabled={tertiaryDisabled}
+                            className={[
+                                "inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-55",
+                                compactOnMobile ? "w-full sm:w-auto" : "w-full sm:w-auto",
+                            ].join(" ")}
+                        >
+                            <span className="sm:hidden">{resolvedTertiaryLabel}</span>
+                            <span className="hidden sm:inline">{tertiaryLabel}</span>
                         </button>
                     ) : null}
                     <button
