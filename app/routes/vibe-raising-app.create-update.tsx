@@ -4697,6 +4697,11 @@ export default function CreateUpdate() {
         const reviewDraftId = String(reviewData?.draftId || actionData?.update?.id || "").trim();
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
+        const canRegenerateDraftFromReview = !isManualOnlyDraftFlow && selectedInputSources.length > 0;
+        const handleRegenerateDraftFromReview = () => {
+            setDismissedFeedback(true);
+            requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
+        };
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
         const reviewPitchDeckUrl = String(reviewData?.pitchDeckUrl || "").trim();
@@ -5514,6 +5519,10 @@ export default function CreateUpdate() {
                     mobileSecondaryLabel={draftSaved ? "Draft saved" : "Save draft"}
                     onSecondary={handlePersistDraft}
                     secondaryDisabled={saveDraftFetcher.state !== "idle"}
+                    tertiaryLabel={canRegenerateDraftFromReview ? "Regenerate draft" : undefined}
+                    mobileTertiaryLabel={canRegenerateDraftFromReview ? "Regenerate" : undefined}
+                    onTertiary={canRegenerateDraftFromReview ? handleRegenerateDraftFromReview : undefined}
+                    tertiaryDisabled={emailDraftActionBusy || saveDraftFetcher.state !== "idle"}
                     primaryLabel="Publish update"
                     mobilePrimaryLabel="Publish"
                     onPrimary={() => setShowConfirmPopup(true)}
