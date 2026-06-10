@@ -2508,6 +2508,7 @@ export default function CreateUpdate() {
     const [pendingDraftRequest, setPendingDraftRequest] = useState<{
         forceRegenerate?: boolean;
         clearPersistedRun?: boolean;
+        inputSources?: VibeRaisingInputSourceKey[];
     } | null>(null);
     const currentCreatePeriod = getCurrentMonthlyUpdatePeriod();
     const createStepMonthOptions = getCreateStepMonthOptions();
@@ -2733,6 +2734,10 @@ export default function CreateUpdate() {
         return `${location.pathname}${query ? `?${query}` : ""}`;
     }, [location.pathname, location.search, selectedDraftInputSources]);
     const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
+    const connectedDraftInputSources = useMemo(
+        () => compactOptionalSources.filter(isConnectedInputSource).map((source) => source.key),
+        [compactOptionalSources],
+    );
 
     useEffect(() => {
         let cancelled = false;
@@ -3336,7 +3341,7 @@ export default function CreateUpdate() {
         });
     });
 
-    const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean }) => {
+    const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         setEmailDraftActionBusy(true);
         setEmailDraftUiError(null);
 
@@ -3348,7 +3353,7 @@ export default function CreateUpdate() {
                 backendBaseUrl,
                 {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
-                    inputSources: selectedInputSources,
+                    inputSources: options?.inputSources?.length ? options.inputSources : selectedInputSources,
                     targetMonth: targetMonthIso,
                     manualDocumentIds,
                     manualSummary,
@@ -3374,8 +3379,9 @@ export default function CreateUpdate() {
         }
     }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso]);
 
-    const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
-        if (selectedInputSources.length === 0) {
+    const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
+        const effectiveInputSources = options?.inputSources?.length ? options.inputSources : selectedInputSources;
+        if (effectiveInputSources.length === 0) {
             setEmailDraftUiError("Choose an optional connected source before generating a source-assisted draft.");
             return;
         }
@@ -3391,13 +3397,13 @@ export default function CreateUpdate() {
         setEmailDraftActionBusy(true);
         setEmailDraftUiError(null);
         try {
-            if (!selectedInputSources.includes("gmail")) {
-                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
+            if (!effectiveInputSources.includes("gmail")) {
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate, inputSources: effectiveInputSources });
                 return;
             }
             const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl);
             if (bootstrap.googleConnected) {
-                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate, inputSources: effectiveInputSources });
                 return;
             }
             setShowEmailWizard(true);
@@ -3419,24 +3425,37 @@ export default function CreateUpdate() {
         targetMonthIso,
     ]);
 
-    const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+    const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         if (request?.clearPersistedRun) {
             clearPersistedEmailDraftRun();
         }
-        void startDraftFromSelectedInputs({ forceRegenerate: request?.forceRegenerate });
+        void startDraftFromSelectedInputs({ forceRegenerate: request?.forceRegenerate, inputSources: request?.inputSources });
     }, [clearPersistedEmailDraftRun, startDraftFromSelectedInputs]);
 
-    const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+    const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
+        // Entry paths like "Edit" never pass ?inputs= and hide the source cards,
+        // so fall back to every connected source rather than refusing to run.
+        const fallbackInputSources =
+            !request?.inputSources?.length && selectedInputSources.length === 0 && connectedDraftInputSources.length > 0
+                ? connectedDraftInputSources
+                : undefined;
+        if (fallbackInputSources) {
+            setSelectedDraftInputSources(new Set(fallbackInputSources));
+        }
+        const enrichedRequest = {
+            ...request,
+            inputSources: request?.inputSources ?? fallbackInputSources,
+        };
         if (existingUpdateForSelectedMonth) {
             setPendingDraftRequest({
-                ...request,
+                ...enrichedRequest,
                 forceRegenerate: true,
             });
             setShowRegenerateConfirm(true);
             return;
         }
-        executeDraftRequest(request);
-    }, [executeDraftRequest, existingUpdateForSelectedMonth]);
+        executeDraftRequest(enrichedRequest);
+    }, [connectedDraftInputSources, executeDraftRequest, existingUpdateForSelectedMonth, selectedInputSources]);
 
     const handleGenerateSelectedMonthUpdate = useCallback(() => {
         if (isSelectedMonthInFuture) return;
@@ -3933,7 +3952,15 @@ export default function CreateUpdate() {
         };
     })();
 
-    const canRunAgainDraft = selectedDraftStage === "reporting" && hasDraftTemplate && !isManualOnlyDraftFlow && selectedInputSources.length > 0;
+    const regenerateSourcesAvailable = selectedInputSources.length > 0 || connectedDraftInputSources.length > 0;
+    const regenerateDialogSourceLabels = (
+        pendingDraftRequest?.inputSources?.length
+            ? pendingDraftRequest.inputSources
+            : selectedInputSources.length > 0
+                ? selectedInputSources
+                : connectedDraftInputSources
+    ).map((key) => INPUT_SOURCE_LABELS[key]).filter(Boolean);
+    const canRunAgainDraft = selectedDraftStage === "reporting" && hasDraftTemplate && regenerateSourcesAvailable;
 
     const handleRetryEmailDraft = () => {
         requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
@@ -4697,7 +4724,7 @@ export default function CreateUpdate() {
         const reviewDraftId = String(reviewData?.draftId || actionData?.update?.id || "").trim();
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
-        const canRegenerateDraftFromReview = !isManualOnlyDraftFlow && selectedInputSources.length > 0;
+        const canRegenerateDraftFromReview = regenerateSourcesAvailable;
         const handleRegenerateDraftFromReview = () => {
             setDismissedFeedback(true);
             requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
@@ -6090,7 +6117,7 @@ export default function CreateUpdate() {
                                 <div>
                                     <h2 className="text-lg font-black text-[var(--vr-color-text)]">Replace this draft?</h2>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
+                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data{regenerateDialogSourceLabels.length > 0 ? <> from <strong className="font-bold text-gray-900">{regenerateDialogSourceLabels.join(", ")}</strong></> : null}, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
                                     </p>
                                 </div>
                             </div>
