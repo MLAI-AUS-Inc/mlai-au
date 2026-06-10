@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-jobs-will-artificial-intelligence-replace-in-australia': {
+        title: "What Jobs Will Artificial Intelligence Replace in Australia?",
+        date: "2026-06-10",
+        description: "What jobs will artificial intelligence replace in Australia, and which roles are more likely to be augmented than removed.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-jobs-will-artificial-intelligence-replace-in-australia",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d4df182f-c37d-4a89-a0b8-3360cd482b42.jpg?alt=media&token=ebc0675f-4c19-4030-b8e2-f06f6bac08d1",
+        imageAlt: "Australian workers discussing AI tools on a laptop in a close-up candid office moment",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
