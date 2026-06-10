@@ -47,6 +47,7 @@ import {
 import { useDropzone } from 'react-dropzone';
 import { motion, useInView } from "motion/react";
 import { clsx } from "clsx";
+import { useActiveDraftRun } from "~/components/ActiveDraftRunStatus";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
@@ -2465,6 +2466,7 @@ export default function CreateUpdate() {
     const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
+    const { activeRun: sharedActiveDraftRun } = useActiveDraftRun();
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
     const goToConnectDataStep = useCallback(() => {
         const returnPath = `${location.pathname}${location.search || ""}`;
@@ -3361,6 +3363,18 @@ export default function CreateUpdate() {
             setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
         });
     });
+
+    useEffect(() => {
+        // The app shell already polls the active run; seed the wizard from it
+        // so arriving here (banner/chip click or navigation) lands straight on
+        // the progress view without waiting for this page's own recovery fetch.
+        if (!isClientMounted) return;
+        if (emailDraftStatus?.runId) return;
+        if (!sharedActiveDraftRun?.runId) return;
+        if (sharedActiveDraftRun.state !== "queued" && sharedActiveDraftRun.state !== "running") return;
+        void processEmailDraftStatus(sharedActiveDraftRun);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isClientMounted, sharedActiveDraftRun?.runId, emailDraftStatus?.runId]);
 
     const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         setEmailDraftActionBusy(true);
