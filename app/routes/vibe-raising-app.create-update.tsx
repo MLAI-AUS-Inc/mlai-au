@@ -3565,6 +3565,58 @@ export default function CreateUpdate() {
         }
     });
 
+    // useEffectEvent so the recovery cannot be cancelled mid-flight by state
+    // churn (restoring the run re-renders, which previously re-fired this
+    // effect via callback identities and left emailDraftActionBusy stuck true,
+    // disabling every draft action including cancel).
+    const runEmailDraftRecovery = useEffectEvent(async () => {
+        setEmailDraftActionBusy(true);
+        try {
+            const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
+            if (activeRun) {
+                await processEmailDraftStatus(activeRun);
+                return;
+            }
+
+            const persistedRun = readPersistedEmailDraftRun(emailDraftStorageKey);
+            if (persistedRun?.runId) {
+                try {
+                    const storedStatus = await getVibeRaisingStartupUpdateStatus(
+                        backendBaseUrl,
+                        persistedRun.runId,
+                    );
+                    await processEmailDraftStatus(storedStatus);
+                    return;
+                } catch {
+                    clearPersistedEmailDraftRun();
+                }
+            }
+
+            if (resumeEmailDrafting) {
+                await startOrResumeEmailDraft();
+                return;
+            }
+
+            try {
+                await hydrateCompletedEmailDraft();
+                return;
+            } catch (error) {
+                if ((error as { status?: number })?.status !== 404) {
+                    throw error;
+                }
+            }
+        } catch (error) {
+            startTransition(() => {
+                setEmailDraftUiError(getEmailDraftErrorMessage(error));
+            });
+        } finally {
+            setEmailDraftActionBusy(false);
+            if (resumeEmailDrafting) {
+                clearEmailDraftingParams();
+            }
+        }
+    });
+
     useEffect(() => {
         if (!isClientMounted) return;
 
@@ -3573,72 +3625,12 @@ export default function CreateUpdate() {
             return;
         }
         emailDraftRecoveryKeyRef.current = recoveryKey;
-
-        let cancelled = false;
-        void (async () => {
-            setEmailDraftActionBusy(true);
-            try {
-                const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
-                if (cancelled) return;
-                if (activeRun) {
-                    await processEmailDraftStatus(activeRun);
-                    return;
-                }
-
-                const persistedRun = readPersistedEmailDraftRun(emailDraftStorageKey);
-                if (persistedRun?.runId) {
-                    try {
-                        const storedStatus = await getVibeRaisingStartupUpdateStatus(
-                            backendBaseUrl,
-                            persistedRun.runId,
-                        );
-                        if (cancelled) return;
-                        await processEmailDraftStatus(storedStatus);
-                        return;
-                    } catch {
-                        clearPersistedEmailDraftRun();
-                    }
-                }
-
-                if (resumeEmailDrafting) {
-                    await startOrResumeEmailDraft();
-                    return;
-                }
-
-                try {
-                    await hydrateCompletedEmailDraft();
-                    return;
-                } catch (error) {
-                    if ((error as { status?: number })?.status !== 404) {
-                        throw error;
-                    }
-                }
-            } catch (error) {
-                if (!cancelled) {
-                    startTransition(() => {
-                        setEmailDraftUiError(getEmailDraftErrorMessage(error));
-                    });
-                }
-            } finally {
-                if (!cancelled) {
-                    setEmailDraftActionBusy(false);
-                    if (resumeEmailDrafting) {
-                        clearEmailDraftingParams();
-                    }
-                }
-            }
-        })();
-
-        return () => {
-            cancelled = true;
-        };
+        void runEmailDraftRecovery();
     }, [
         backendBaseUrl,
-        clearEmailDraftingParams,
         emailDraftStorageKey,
         isClientMounted,
         resumeEmailDrafting,
-        startOrResumeEmailDraft,
     ]);
 
     useEffect(() => {
@@ -5762,7 +5754,7 @@ export default function CreateUpdate() {
                                     onCancel={isEmailDraftBusy ? () => {
                                         void handleCancelEmailDraft();
                                     } : undefined}
-                                    cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                    cancelDisabled={emailDraftCancelBusy}
                                     isCancelling={emailDraftCancelBusy}
                                     manualFallbackMessage={canContinueDraftManually ? "You can keep editing the update below while the backend draft connection is unavailable." : null}
                                 />
@@ -6057,7 +6049,7 @@ export default function CreateUpdate() {
                     : isEmailDraftBusy
                         ? () => { void handleCancelEmailDraft(); }
                         : undefined}
-                tertiaryDisabled={canRunAgainDraft ? emailDraftActionBusy : emailDraftActionBusy || emailDraftCancelBusy}
+                tertiaryDisabled={canRunAgainDraft ? emailDraftActionBusy : emailDraftCancelBusy}
                 primaryLabel={draftStickyBar.primaryLabel}
                 onPrimary={draftStickyBar.onPrimary}
                 primaryDisabled={draftStickyBar.primaryDisabled}
@@ -6295,7 +6287,7 @@ export default function CreateUpdate() {
                                 onCancel={isEmailDraftBusy ? () => {
                                     void handleCancelEmailDraft();
                                 } : undefined}
-                                cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                cancelDisabled={emailDraftCancelBusy}
                                 isCancelling={emailDraftCancelBusy}
                             />
                         ) : (
