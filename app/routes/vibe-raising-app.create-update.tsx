@@ -47,6 +47,7 @@ import {
 import { useDropzone } from 'react-dropzone';
 import { motion, useInView } from "motion/react";
 import { clsx } from "clsx";
+import { useActiveDraftRun } from "~/components/ActiveDraftRunStatus";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
@@ -286,6 +287,15 @@ function getMonthlyUpdateKey(month: string, year: number | string) {
 function getMonthlyUpdateIsoMonth(month: string, year: number | string) {
     const key = getMonthlyUpdateKey(month, year);
     return key ? `${key}-01` : "";
+}
+
+function monthYearFromIso(value?: string | null): { month: string; year: number } | null {
+    const match = /^(\d{4})-(\d{2})/.exec(String(value || "").trim());
+    if (!match) return null;
+    const year = Number(match[1]);
+    const option = VIBE_RAISING_MONTH_OPTIONS[Number(match[2]) - 1];
+    if (!option || !Number.isFinite(year)) return null;
+    return { month: option.name, year };
 }
 
 function isFutureMonthlyUpdate(month: string, year: number | string) {
@@ -2456,6 +2466,7 @@ export default function CreateUpdate() {
     const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
+    const { activeRun: sharedActiveDraftRun, refreshActiveRun } = useActiveDraftRun();
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
     const goToConnectDataStep = useCallback(() => {
         const returnPath = `${location.pathname}${location.search || ""}`;
@@ -2508,6 +2519,7 @@ export default function CreateUpdate() {
     const [pendingDraftRequest, setPendingDraftRequest] = useState<{
         forceRegenerate?: boolean;
         clearPersistedRun?: boolean;
+        inputSources?: VibeRaisingInputSourceKey[];
     } | null>(null);
     const currentCreatePeriod = getCurrentMonthlyUpdatePeriod();
     const createStepMonthOptions = getCreateStepMonthOptions();
@@ -2733,6 +2745,10 @@ export default function CreateUpdate() {
         return `${location.pathname}${query ? `?${query}` : ""}`;
     }, [location.pathname, location.search, selectedDraftInputSources]);
     const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
+    const connectedDraftInputSources = useMemo(
+        () => compactOptionalSources.filter(isConnectedInputSource).map((source) => source.key),
+        [compactOptionalSources],
+    );
 
     useEffect(() => {
         let cancelled = false;
@@ -3281,6 +3297,24 @@ export default function CreateUpdate() {
 
         if (statusResponse.state === "queued" || statusResponse.state === "running") {
             startTransition(() => {
+                // Restore the drafting stage from the run status itself so the
+                // progress card renders even on a fresh page load (refresh
+                // recovery), where monthConfirmed / selectedDraftStage would
+                // otherwise still be at their defaults and hide it.
+                const parsedMonth = monthYearFromIso(statusResponse.targetMonth);
+                if (parsedMonth) {
+                    setSelectedMonth(parsedMonth.month);
+                    setSelectedYear(parsedMonth.year);
+                }
+                const runInputSources = (statusResponse.run?.inputSources || []).filter(
+                    (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
+                );
+                if (runInputSources.length > 0) {
+                    setSelectedDraftInputSources(new Set(runInputSources));
+                }
+                setMonthConfirmed(true);
+                setSelectedDraftStage("reporting");
+                setMetricsConfirmed(true);
                 setEmailDraftStatus(statusResponse);
                 setEmailDraftUiError(null);
             });
@@ -3336,7 +3370,19 @@ export default function CreateUpdate() {
         });
     });
 
-    const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean }) => {
+    useEffect(() => {
+        // The app shell already polls the active run; seed the wizard from it
+        // so arriving here (banner/chip click or navigation) lands straight on
+        // the progress view without waiting for this page's own recovery fetch.
+        if (!isClientMounted) return;
+        if (emailDraftStatus?.runId) return;
+        if (!sharedActiveDraftRun?.runId) return;
+        if (sharedActiveDraftRun.state !== "queued" && sharedActiveDraftRun.state !== "running") return;
+        void processEmailDraftStatus(sharedActiveDraftRun);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isClientMounted, sharedActiveDraftRun?.runId, emailDraftStatus?.runId]);
+
+    const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         setEmailDraftActionBusy(true);
         setEmailDraftUiError(null);
 
@@ -3348,7 +3394,7 @@ export default function CreateUpdate() {
                 backendBaseUrl,
                 {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
-                    inputSources: selectedInputSources,
+                    inputSources: options?.inputSources?.length ? options.inputSources : selectedInputSources,
                     targetMonth: targetMonthIso,
                     manualDocumentIds,
                     manualSummary,
@@ -3374,8 +3420,9 @@ export default function CreateUpdate() {
         }
     }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso]);
 
-    const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
-        if (selectedInputSources.length === 0) {
+    const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
+        const effectiveInputSources = options?.inputSources?.length ? options.inputSources : selectedInputSources;
+        if (effectiveInputSources.length === 0) {
             setEmailDraftUiError("Choose an optional connected source before generating a source-assisted draft.");
             return;
         }
@@ -3391,13 +3438,13 @@ export default function CreateUpdate() {
         setEmailDraftActionBusy(true);
         setEmailDraftUiError(null);
         try {
-            if (!selectedInputSources.includes("gmail")) {
-                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
+            if (!effectiveInputSources.includes("gmail")) {
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate, inputSources: effectiveInputSources });
                 return;
             }
             const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl);
             if (bootstrap.googleConnected) {
-                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate, inputSources: effectiveInputSources });
                 return;
             }
             setShowEmailWizard(true);
@@ -3419,24 +3466,37 @@ export default function CreateUpdate() {
         targetMonthIso,
     ]);
 
-    const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+    const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         if (request?.clearPersistedRun) {
             clearPersistedEmailDraftRun();
         }
-        void startDraftFromSelectedInputs({ forceRegenerate: request?.forceRegenerate });
+        void startDraftFromSelectedInputs({ forceRegenerate: request?.forceRegenerate, inputSources: request?.inputSources });
     }, [clearPersistedEmailDraftRun, startDraftFromSelectedInputs]);
 
-    const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+    const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
+        // Entry paths like "Edit" never pass ?inputs= and hide the source cards,
+        // so fall back to every connected source rather than refusing to run.
+        const fallbackInputSources =
+            !request?.inputSources?.length && selectedInputSources.length === 0 && connectedDraftInputSources.length > 0
+                ? connectedDraftInputSources
+                : undefined;
+        if (fallbackInputSources) {
+            setSelectedDraftInputSources(new Set(fallbackInputSources));
+        }
+        const enrichedRequest = {
+            ...request,
+            inputSources: request?.inputSources ?? fallbackInputSources,
+        };
         if (existingUpdateForSelectedMonth) {
             setPendingDraftRequest({
-                ...request,
+                ...enrichedRequest,
                 forceRegenerate: true,
             });
             setShowRegenerateConfirm(true);
             return;
         }
-        executeDraftRequest(request);
-    }, [executeDraftRequest, existingUpdateForSelectedMonth]);
+        executeDraftRequest(enrichedRequest);
+    }, [connectedDraftInputSources, executeDraftRequest, existingUpdateForSelectedMonth, selectedInputSources]);
 
     const handleGenerateSelectedMonthUpdate = useCallback(() => {
         if (isSelectedMonthInFuture) return;
@@ -3505,6 +3565,58 @@ export default function CreateUpdate() {
         }
     });
 
+    // useEffectEvent so the recovery cannot be cancelled mid-flight by state
+    // churn (restoring the run re-renders, which previously re-fired this
+    // effect via callback identities and left emailDraftActionBusy stuck true,
+    // disabling every draft action including cancel).
+    const runEmailDraftRecovery = useEffectEvent(async () => {
+        setEmailDraftActionBusy(true);
+        try {
+            const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
+            if (activeRun) {
+                await processEmailDraftStatus(activeRun);
+                return;
+            }
+
+            const persistedRun = readPersistedEmailDraftRun(emailDraftStorageKey);
+            if (persistedRun?.runId) {
+                try {
+                    const storedStatus = await getVibeRaisingStartupUpdateStatus(
+                        backendBaseUrl,
+                        persistedRun.runId,
+                    );
+                    await processEmailDraftStatus(storedStatus);
+                    return;
+                } catch {
+                    clearPersistedEmailDraftRun();
+                }
+            }
+
+            if (resumeEmailDrafting) {
+                await startOrResumeEmailDraft();
+                return;
+            }
+
+            try {
+                await hydrateCompletedEmailDraft();
+                return;
+            } catch (error) {
+                if ((error as { status?: number })?.status !== 404) {
+                    throw error;
+                }
+            }
+        } catch (error) {
+            startTransition(() => {
+                setEmailDraftUiError(getEmailDraftErrorMessage(error));
+            });
+        } finally {
+            setEmailDraftActionBusy(false);
+            if (resumeEmailDrafting) {
+                clearEmailDraftingParams();
+            }
+        }
+    });
+
     useEffect(() => {
         if (!isClientMounted) return;
 
@@ -3513,72 +3625,12 @@ export default function CreateUpdate() {
             return;
         }
         emailDraftRecoveryKeyRef.current = recoveryKey;
-
-        let cancelled = false;
-        void (async () => {
-            setEmailDraftActionBusy(true);
-            try {
-                const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
-                if (cancelled) return;
-                if (activeRun) {
-                    await processEmailDraftStatus(activeRun);
-                    return;
-                }
-
-                const persistedRun = readPersistedEmailDraftRun(emailDraftStorageKey);
-                if (persistedRun?.runId) {
-                    try {
-                        const storedStatus = await getVibeRaisingStartupUpdateStatus(
-                            backendBaseUrl,
-                            persistedRun.runId,
-                        );
-                        if (cancelled) return;
-                        await processEmailDraftStatus(storedStatus);
-                        return;
-                    } catch {
-                        clearPersistedEmailDraftRun();
-                    }
-                }
-
-                if (resumeEmailDrafting) {
-                    await startOrResumeEmailDraft();
-                    return;
-                }
-
-                try {
-                    await hydrateCompletedEmailDraft();
-                    return;
-                } catch (error) {
-                    if ((error as { status?: number })?.status !== 404) {
-                        throw error;
-                    }
-                }
-            } catch (error) {
-                if (!cancelled) {
-                    startTransition(() => {
-                        setEmailDraftUiError(getEmailDraftErrorMessage(error));
-                    });
-                }
-            } finally {
-                if (!cancelled) {
-                    setEmailDraftActionBusy(false);
-                    if (resumeEmailDrafting) {
-                        clearEmailDraftingParams();
-                    }
-                }
-            }
-        })();
-
-        return () => {
-            cancelled = true;
-        };
+        void runEmailDraftRecovery();
     }, [
         backendBaseUrl,
-        clearEmailDraftingParams,
         emailDraftStorageKey,
         isClientMounted,
         resumeEmailDrafting,
-        startOrResumeEmailDraft,
     ]);
 
     useEffect(() => {
@@ -3933,7 +3985,15 @@ export default function CreateUpdate() {
         };
     })();
 
-    const canRunAgainDraft = selectedDraftStage === "reporting" && hasDraftTemplate && !isManualOnlyDraftFlow && selectedInputSources.length > 0;
+    const regenerateSourcesAvailable = selectedInputSources.length > 0 || connectedDraftInputSources.length > 0;
+    const regenerateDialogSourceLabels = (
+        pendingDraftRequest?.inputSources?.length
+            ? pendingDraftRequest.inputSources
+            : selectedInputSources.length > 0
+                ? selectedInputSources
+                : connectedDraftInputSources
+    ).map((key) => INPUT_SOURCE_LABELS[key]).filter(Boolean);
+    const canRunAgainDraft = selectedDraftStage === "reporting" && hasDraftTemplate && regenerateSourcesAvailable;
 
     const handleRetryEmailDraft = () => {
         requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
@@ -3960,6 +4020,7 @@ export default function CreateUpdate() {
             if (cancelResponse.status === "completed" || cancelResponse.terminalState === "completed") {
                 emailDraftIgnoredRunIdRef.current = null;
                 await hydrateCompletedEmailDraft(cancelResponse.runId);
+                refreshActiveRun();
                 return;
             }
 
@@ -3967,6 +4028,9 @@ export default function CreateUpdate() {
                 clearPersistedEmailDraftRun();
                 setPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey);
                 resetEmailDraftUi();
+                // Clear the app-shell "drafting" banner right away instead of
+                // waiting for its next poll cycle.
+                refreshActiveRun();
                 return;
             }
 
@@ -3982,6 +4046,7 @@ export default function CreateUpdate() {
         backendBaseUrl,
         emailDraftForceRegenerateKey,
         emailDraftStatus?.runId,
+        refreshActiveRun,
     ]);
 
     const stopMediaStream = useCallback(() => {
@@ -4697,6 +4762,11 @@ export default function CreateUpdate() {
         const reviewDraftId = String(reviewData?.draftId || actionData?.update?.id || "").trim();
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
+        const canRegenerateDraftFromReview = regenerateSourcesAvailable;
+        const handleRegenerateDraftFromReview = () => {
+            setDismissedFeedback(true);
+            requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
+        };
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
         const reviewPitchDeckUrl = String(reviewData?.pitchDeckUrl || "").trim();
@@ -5514,6 +5584,10 @@ export default function CreateUpdate() {
                     mobileSecondaryLabel={draftSaved ? "Draft saved" : "Save draft"}
                     onSecondary={handlePersistDraft}
                     secondaryDisabled={saveDraftFetcher.state !== "idle"}
+                    tertiaryLabel={canRegenerateDraftFromReview ? "Regenerate draft" : undefined}
+                    mobileTertiaryLabel={canRegenerateDraftFromReview ? "Regenerate" : undefined}
+                    onTertiary={canRegenerateDraftFromReview ? handleRegenerateDraftFromReview : undefined}
+                    tertiaryDisabled={emailDraftActionBusy || saveDraftFetcher.state !== "idle"}
                     primaryLabel="Publish update"
                     mobilePrimaryLabel="Publish"
                     onPrimary={() => setShowConfirmPopup(true)}
@@ -5680,7 +5754,7 @@ export default function CreateUpdate() {
                                     onCancel={isEmailDraftBusy ? () => {
                                         void handleCancelEmailDraft();
                                     } : undefined}
-                                    cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                    cancelDisabled={emailDraftCancelBusy}
                                     isCancelling={emailDraftCancelBusy}
                                     manualFallbackMessage={canContinueDraftManually ? "You can keep editing the update below while the backend draft connection is unavailable." : null}
                                 />
@@ -5968,10 +6042,14 @@ export default function CreateUpdate() {
                 mobileSecondaryLabel={selectedDraftStage === "reporting" && hasDraftTemplate ? (saveDraftFetcher.state !== "idle" ? "Saving" : draftSaved ? "Saved" : "Save draft") : undefined}
                 onSecondary={selectedDraftStage === "reporting" && hasDraftTemplate ? handlePersistDraft : undefined}
                 secondaryDisabled={saveDraftFetcher.state !== "idle" || isEmailDraftBusy || isVideoUploadBlocking}
-                tertiaryLabel={canRunAgainDraft ? "Run again" : undefined}
-                mobileTertiaryLabel={canRunAgainDraft ? "Run again" : undefined}
-                onTertiary={canRunAgainDraft ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true }) : undefined}
-                tertiaryDisabled={emailDraftActionBusy}
+                tertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
+                mobileTertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
+                onTertiary={canRunAgainDraft
+                    ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true })
+                    : isEmailDraftBusy
+                        ? () => { void handleCancelEmailDraft(); }
+                        : undefined}
+                tertiaryDisabled={canRunAgainDraft ? emailDraftActionBusy : emailDraftCancelBusy}
                 primaryLabel={draftStickyBar.primaryLabel}
                 onPrimary={draftStickyBar.onPrimary}
                 primaryDisabled={draftStickyBar.primaryDisabled}
@@ -6068,8 +6146,6 @@ export default function CreateUpdate() {
                 </div>
             ) : null}
 
-            {showLegacyDraftFlow ? (
-            <>
             {showRegenerateConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
                     <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl ring-1 ring-black/5">
@@ -6081,7 +6157,7 @@ export default function CreateUpdate() {
                                 <div>
                                     <h2 className="text-lg font-black text-[var(--vr-color-text)]">Replace this draft?</h2>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
+                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data{regenerateDialogSourceLabels.length > 0 ? <> from <strong className="font-bold text-gray-900">{regenerateDialogSourceLabels.join(", ")}</strong></> : null}, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
                                     </p>
                                 </div>
                             </div>
@@ -6109,6 +6185,8 @@ export default function CreateUpdate() {
                 </div>
             )}
 
+            {showLegacyDraftFlow ? (
+            <>
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
                 <input
@@ -6209,7 +6287,7 @@ export default function CreateUpdate() {
                                 onCancel={isEmailDraftBusy ? () => {
                                     void handleCancelEmailDraft();
                                 } : undefined}
-                                cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                cancelDisabled={emailDraftCancelBusy}
                                 isCancelling={emailDraftCancelBusy}
                             />
                         ) : (

@@ -352,6 +352,13 @@ export interface VibeMarketingTopicFeedback {
   restoredAt?: string | null;
 }
 
+export type VibeMarketingArticlePublishStatus =
+  | "written"
+  | "pr_open"
+  | "pr_closed"
+  | "merged"
+  | "live";
+
 export interface VibeMarketingWrittenTopic {
   id?: string;
   title: string;
@@ -359,6 +366,10 @@ export interface VibeMarketingWrittenTopic {
   keyword: string;
   articleUrl?: string | null;
   prUrl?: string | null;
+  prNumber?: number | null;
+  publishStatus?: VibeMarketingArticlePublishStatus | null;
+  liveUrl?: string | null;
+  runId?: string | null;
   writtenAt?: string | null;
 }
 
@@ -439,6 +450,8 @@ export interface VibeMarketingLivePreview {
   renderMode?: string | null;
   renderConfidence?: string | null;
   fallbackReason?: string | null;
+  previewQuality?: string | null;
+  previewBanner?: string | null;
   previewUnavailableReason?: string | null;
   proof?: Record<string, unknown>;
   nativePreviewFailure?: Record<string, unknown>;

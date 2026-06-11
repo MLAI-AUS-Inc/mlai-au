@@ -1867,6 +1867,13 @@ function LivePreviewCommentInspectorPanel({
     } as NonNullable<VibeMarketingRunSummary["livePreview"]>;
   }, [previewUrlFallback, requiresExactPreview, run.livePreview]);
   const canRenderPreview = Boolean(preview?.available && preview.previewUrl);
+  const contentOnlyPreviewActive =
+    canRenderPreview &&
+    (String(preview?.previewQuality ?? "").trim().toLowerCase() === "content_only" ||
+      String(preview?.previewMode ?? "").trim().toLowerCase() === "content_only");
+  const contentOnlyPreviewBanner =
+    String(preview?.previewBanner ?? "").trim() ||
+    "Exact preview unavailable — showing a content-only preview of the article.";
   const [componentMeasurements, setComponentMeasurements] = useState<Record<string, InspectorComponentMeasurement>>({});
   const [pendingPin, setPendingPin] = useState<PendingCommentPin | null>(null);
   const [openCommentId, setOpenCommentId] = useState<string | null>(null);
@@ -2083,6 +2090,19 @@ function LivePreviewCommentInspectorPanel({
                   </span>
                 </div>
               </div>
+              {contentOnlyPreviewActive ? (
+                <div
+                  role="status"
+                  className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-900"
+                >
+                  <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                  <span>
+                    {contentOnlyPreviewBanner}
+                    {" "}
+                    You can still review and pin comments on the article content.
+                  </span>
+                </div>
+              ) : null}
               <div className="relative">
                 {legacyInspectorWarning ? (
                   <div className="absolute left-4 right-4 top-4 z-30 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 shadow-sm">

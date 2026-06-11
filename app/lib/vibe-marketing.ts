@@ -25,6 +25,7 @@ import type {
   VibeMarketingStartupProfile,
   VibeMarketingWebsiteBaseline,
   VibeMarketingGoogleBaselineConnection,
+  VibeMarketingArticlePublishStatus,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
   VibeMarketingTopicPillar,
@@ -680,7 +681,20 @@ function normalizeTopicFeedback(raw: unknown): VibeMarketingTopicFeedback | null
   };
 }
 
-function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic | null {
+const ARTICLE_PUBLISH_STATUSES: ReadonlySet<string> = new Set([
+  "written",
+  "pr_open",
+  "pr_closed",
+  "merged",
+  "live",
+]);
+
+function asArticlePublishStatus(value: unknown): VibeMarketingArticlePublishStatus | null {
+  const text = asNullableString(value)?.toLowerCase() ?? null;
+  return text && ARTICLE_PUBLISH_STATUSES.has(text) ? (text as VibeMarketingArticlePublishStatus) : null;
+}
+
+export function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic | null {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const title = asNullableString(payload.title);
   const keyword = asNullableString(payload.keyword) ?? asNullableString(payload.primary_keyword);
@@ -692,6 +706,13 @@ function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic | null {
     keyword: keyword ?? title ?? "",
     articleUrl: asNullableString(payload.articleUrl) ?? asNullableString(payload.article_url),
     prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
+    prNumber: asNumber(payload.prNumber) ?? asNumber(payload.pr_number),
+    publishStatus: asArticlePublishStatus(payload.publishStatus ?? payload.publish_status),
+    liveUrl: asNullableString(payload.liveUrl) ?? asNullableString(payload.live_url),
+    runId:
+      asNullableString(payload.runId) ??
+      asNullableString(payload.run_id) ??
+      asNullableString(payload.source_run_id),
     writtenAt: asNullableString(payload.writtenAt) ?? asNullableString(payload.written_at),
   };
 }
@@ -821,6 +842,8 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
     renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),
     fallbackReason: asNullableString(payload.fallbackReason) ?? asNullableString(payload.fallback_reason),
+    previewQuality: asNullableString(payload.previewQuality) ?? asNullableString(payload.preview_quality),
+    previewBanner: asNullableString(payload.previewBanner) ?? asNullableString(payload.preview_banner),
     previewUnavailableReason:
       asNullableString(payload.previewUnavailableReason) ??
       asNullableString(payload.preview_unavailable_reason) ??
@@ -1632,6 +1655,20 @@ export async function restoreVibeMarketingTopicFeedback(env: Env, request: Reque
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/topic-feedback/${encodeURIComponent(feedbackId)}/restore`, {});
   return normalizeTopicFeedback(response.data);
+}
+
+export async function discardVibeMarketingWrittenArticle(env: Env, request: Request, articleId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.post(
+    `${BASE_PATH}/written-articles/${encodeURIComponent(articleId)}/discard`,
+    {},
+  );
+  const payload = (response.data && typeof response.data === "object" ? response.data : {}) as Record<string, unknown>;
+  return {
+    discarded: Boolean(payload.discarded),
+    articleId: asNullableString(payload.articleId) ?? articleId,
+    cancelledRunIds: asStringList(payload.cancelledRunIds ?? payload.cancelled_run_ids),
+  };
 }
 
 export function startVibeMarketingAutofill(env: Env, request: Request, body: Record<string, unknown>) {

@@ -6,6 +6,10 @@ import {
   redirect,
   useLoaderData,
 } from "react-router";
+import {
+  ActiveDraftRunBanner,
+  ActiveDraftRunProvider,
+} from "~/components/ActiveDraftRunStatus";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
@@ -87,11 +91,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     user: vibeContext.authUser,
     profile: vibeContext.profile,
     appUser: vibeContext.appUser,
+    backendBaseUrl: String(env.BACKEND_BASE_URL || "https://api.mlai.au"),
   };
 }
 
 export default function VibeRaisingApp() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, backendBaseUrl } = useLoaderData<typeof loader>();
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -116,7 +121,10 @@ export default function VibeRaisingApp() {
       ) : null}
 
       <div className="vr-scope">
-        <Outlet context={{ triggerAnnouncement }} />
+        <ActiveDraftRunProvider backendBaseUrl={backendBaseUrl}>
+          <ActiveDraftRunBanner />
+          <Outlet context={{ triggerAnnouncement }} />
+        </ActiveDraftRunProvider>
       </div>
     </AuthenticatedLayout>
   );

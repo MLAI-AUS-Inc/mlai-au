@@ -61,9 +61,16 @@ import {
   pruneHiddenDraftRunIds,
   restoreHiddenDraftRunId,
 } from "~/lib/vibe-marketing-draft-delete";
+import {
+  filterDiscardedWrittenTopics,
+  hiddenArticleIdsAfterSubmit,
+  pruneHiddenArticleIds,
+  restoreHiddenArticleId,
+} from "~/lib/vibe-marketing-article-discard";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   controlVibeMarketingRun,
+  discardVibeMarketingWrittenArticle,
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
@@ -108,6 +115,7 @@ const FLOW_STEPS = [
   { label: "Drive more traffic & grow", icon: BarChart3 },
 ] as const;
 const DRAFT_DELETE_CONFIRMATION_STORAGE_KEY = "vibe-marketing:skip-draft-delete-confirmation";
+const ARTICLE_DISCARD_CONFIRMATION_STORAGE_KEY = "vibe-marketing:skip-article-discard-confirmation";
 const CONTENT_ISLAND_DISCOVERY_DONE_STATUSES = new Set(["awaiting_confirmation", "completed"]);
 const CONTENT_ISLAND_DISCOVERY_FAILED_STATUSES = new Set(["failed", "blocked", "denied", "cancelled", "canceled"]);
 
@@ -604,6 +612,27 @@ export async function action({ request, context }: Route.ActionArgs) {
       };
     }
 
+    if (intent === "discard-article") {
+      const articleId = stringFromForm(formData, "articleId");
+      if (!articleId) {
+        return { intent, error: "Choose an article to discard." };
+      }
+      try {
+        const result = await discardVibeMarketingWrittenArticle(env, request, articleId);
+        return {
+          intent,
+          articleId,
+          cancelledRunIds: result.cancelledRunIds ?? [],
+        };
+      } catch (error: any) {
+        // A 404 means another click (or tab) already discarded it — success.
+        if (error?.response?.status === 404) {
+          return { intent, articleId, alreadyDiscarded: true };
+        }
+        throw error;
+      }
+    }
+
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
       if (isArticleSystemSetupBlocked(bootstrap)) {
@@ -712,6 +741,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     return {
       intent,
       ...(intent === "delete-draft" ? { runId: stringFromForm(formData, "runId") } : {}),
+      ...(intent === "discard-article" ? { articleId: stringFromForm(formData, "articleId") } : {}),
       error: readableBackendError(error, { fallback }),
       errors: responseErrors,
     };
@@ -729,6 +759,11 @@ export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
     return actionStringList(args.actionResult, "protectedRunIds", "protected_run_ids").length > 0
       ? args.defaultShouldRevalidate
       : false;
+  }
+  if (actionIntent(args.actionResult) === "discard-article") {
+    // Unlike delete-draft, a successful discard must revalidate: the freed
+    // topic has to reappear in Popular Topics and writtenTopics reconcile.
+    return actionError(args.actionResult) ? false : args.defaultShouldRevalidate;
   }
   return args.defaultShouldRevalidate;
 }
@@ -2507,15 +2542,130 @@ function TopicRow({
   );
 }
 
-function RecentArticleRow({ article }: { article: VibeMarketingWrittenTopic }) {
+function articlePublishStatusTone(article: VibeMarketingWrittenTopic) {
+  switch (article.publishStatus) {
+    case "live":
+      return {
+        label: "Live",
+        pill: "bg-emerald-50 text-emerald-600",
+        dot: "bg-emerald-500",
+        hint: "Verified on your website.",
+      };
+    case "merged":
+      return {
+        label: "Merged",
+        pill: "bg-sky-50 text-sky-700",
+        dot: "bg-sky-500",
+        hint: "The PR merged — waiting for the next site deploy.",
+      };
+    case "pr_open":
+      return {
+        label: "PR open",
+        pill: "bg-amber-50 text-amber-700",
+        dot: "bg-amber-500",
+        hint: "A pull request is waiting to be merged.",
+      };
+    case "pr_closed":
+      return {
+        label: "PR closed",
+        pill: "bg-red-50 text-red-700",
+        dot: "bg-red-500",
+        hint: "The pull request was closed without merging.",
+      };
+    default:
+      return {
+        label: "Not published",
+        pill: "bg-slate-100 text-slate-600",
+        dot: "bg-slate-400",
+        hint: "Written and packaged, but not on your website yet.",
+      };
+  }
+}
+
+function RecentArticleRow({
+  article,
+  submitting,
+  discarding,
+  skipDiscardConfirmation,
+  onDiscardRequest,
+}: {
+  article: VibeMarketingWrittenTopic;
+  submitting: boolean;
+  discarding: boolean;
+  skipDiscardConfirmation: boolean;
+  onDiscardRequest: (request: { articleId: string; title: string }) => void;
+}) {
+  const tone = articlePublishStatusTone(article);
+  const href =
+    (article.publishStatus === "live" ? article.liveUrl : null) ?? article.prUrl ?? article.articleUrl ?? null;
+  const title = article.title || article.keyword;
+  const articleId = article.id ?? "";
+  // merged/live articles are on (or headed to) the site; discard is only for
+  // articles that never made it. pr_open must close its PR first.
+  const discardable = Boolean(articleId) && (article.publishStatus === "written" || article.publishStatus === "pr_closed");
+  const discardBlockedByPr = Boolean(articleId) && article.publishStatus === "pr_open";
   return (
-    <div className="grid grid-cols-[110px_minmax(0,1fr)_auto] items-center gap-4 border-t border-slate-100 py-4 first:border-t-0">
-      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-600">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        Published
+    <div className="grid grid-cols-[130px_minmax(0,1fr)_auto_auto] items-center gap-4 border-t border-slate-100 py-4 first:border-t-0">
+      <span
+        title={tone.hint}
+        className={clsx("inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black", tone.pill)}
+      >
+        <span className={clsx("h-1.5 w-1.5 rounded-full", tone.dot)} />
+        {tone.label}
       </span>
-      <p className="truncate text-sm font-black text-slate-950">{article.title || article.keyword}</p>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="truncate text-sm font-black text-slate-950 hover:underline"
+        >
+          {title}
+        </a>
+      ) : (
+        <p className="truncate text-sm font-black text-slate-950">{title}</p>
+      )}
       <p className="text-sm font-bold text-slate-500">{formatArticleDate(article.writtenAt)}</p>
+      <div className="flex items-center justify-end gap-1">
+        {article.runId ? (
+          <Link
+            to={`/founder-tools/marketing/runs/${encodeURIComponent(article.runId)}`}
+            title={`Edit & republish: ${title}`}
+            aria-label={`Edit & republish: ${title}`}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-700 focus:outline-none focus:ring-4 focus:ring-violet-100"
+          >
+            <PenLine className="h-4 w-4" />
+          </Link>
+        ) : null}
+        {discardable || discardBlockedByPr ? (
+          <Form method="POST">
+            <input type="hidden" name="intent" value="discard-article" />
+            <input type="hidden" name="articleId" value={articleId} />
+            <button
+              type="submit"
+              disabled={submitting || !discardable}
+              onClick={(event) => {
+                if (skipDiscardConfirmation) return;
+                event.preventDefault();
+                onDiscardRequest({ articleId, title });
+              }}
+              title={
+                discardBlockedByPr
+                  ? "Close the GitHub PR first, then discard."
+                  : `Discard & return topic: ${title}`
+              }
+              aria-label={
+                discardBlockedByPr
+                  ? "Discard unavailable while the GitHub PR is open"
+                  : `Discard & return topic: ${title}`
+              }
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {discarding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </button>
+          </Form>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -2729,6 +2879,68 @@ function DraftDeleteConfirmationModal({
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               {submitting ? "Deleting..." : "Delete draft"}
+            </button>
+          </Form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ArticleDiscardConfirmationModal({
+  request,
+  submitting,
+  onClose,
+  onRememberSkip,
+}: {
+  request: { articleId: string; title: string };
+  submitting: boolean;
+  onClose: () => void;
+  onRememberSkip: () => void;
+}) {
+  const [dontAskAgain, setDontAskAgain] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="article-discard-confirmation-title">
+      <div className="w-full max-w-md rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl">
+        <h2 id="article-discard-confirmation-title" className="text-lg font-black text-slate-950">Discard article and return topic?</h2>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+          This removes the generated article record for &quot;{request.title}&quot; and makes its topic
+          available to pick again. Nothing is changed on GitHub or your website.
+        </p>
+        <label className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600">
+          <input
+            type="checkbox"
+            checked={dontAskAgain}
+            onChange={(event) => setDontAskAgain(event.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-violet-700 focus:ring-violet-200"
+          />
+          Don&apos;t ask me again
+        </label>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={onClose}
+            className="inline-flex justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            Keep article
+          </button>
+          <Form
+            method="POST"
+            onSubmit={() => {
+              if (dontAskAgain) onRememberSkip();
+            }}
+          >
+            <input type="hidden" name="intent" value="discard-article" />
+            <input type="hidden" name="articleId" value={request.articleId} />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50 sm:w-auto"
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {submitting ? "Discarding..." : "Discard article"}
             </button>
           </Form>
         </div>
@@ -3248,6 +3460,7 @@ function ReturningTopicPickerPage({
   const contentIslandRefreshStartCount = useRef(0);
   const companyAvatarPreviewObjectUrl = useRef<string | null>(null);
   const handledDeleteActionRef = useRef<unknown>(null);
+  const handledDiscardActionRef = useRef<unknown>(null);
   const articleFormRef = useRef<HTMLFormElement>(null);
   const activePillar = useMemo(
     () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
@@ -3399,6 +3612,15 @@ function ReturningTopicPickerPage({
     () => filterOptimisticallyDeletedDrafts(bootstrap.draftArticles ?? [], optimisticallyDeletedDraftRunIds),
     [bootstrap.draftArticles, optimisticallyDeletedDraftRunIds],
   );
+  const discardArticleSubmitting = pendingActions.isPending("discard-article");
+  const [articleDiscardRequest, setArticleDiscardRequest] = useState<{ articleId: string; title: string } | null>(null);
+  const [skipArticleDiscardConfirmation, setSkipArticleDiscardConfirmation] = useState(false);
+  const [discardingArticleId, setDiscardingArticleId] = useState<string | null>(null);
+  const [optimisticallyDiscardedArticleIds, setOptimisticallyDiscardedArticleIds] = useState<string[]>([]);
+  const visibleWrittenTopics = useMemo(
+    () => filterDiscardedWrittenTopics(bootstrap.writtenTopics ?? [], optimisticallyDiscardedArticleIds),
+    [bootstrap.writtenTopics, optimisticallyDiscardedArticleIds],
+  );
 
   const submitSelectedTopic = useCallback(() => {
     if (articleSubmitting || !selectedTopic) return;
@@ -3418,6 +3640,15 @@ function ReturningTopicPickerPage({
       window.localStorage.setItem(DRAFT_DELETE_CONFIRMATION_STORAGE_KEY, "1");
     } catch {
       // Ignore storage failures. The current delete should still submit normally.
+    }
+  }, []);
+
+  const rememberSkipArticleDiscardConfirmation = useCallback(() => {
+    setSkipArticleDiscardConfirmation(true);
+    try {
+      window.localStorage.setItem(ARTICLE_DISCARD_CONFIRMATION_STORAGE_KEY, "1");
+    } catch {
+      // Ignore storage failures. The current discard should still submit normally.
     }
   }, []);
 
@@ -3572,6 +3803,14 @@ function ReturningTopicPickerPage({
   }, []);
 
   useEffect(() => {
+    try {
+      setSkipArticleDiscardConfirmation(window.localStorage.getItem(ARTICLE_DISCARD_CONFIRMATION_STORAGE_KEY) === "1");
+    } catch {
+      setSkipArticleDiscardConfirmation(false);
+    }
+  }, []);
+
+  useEffect(() => {
     if (navigation.state === "idle") return;
     if (String(navigation.formData?.get("intent") ?? "") !== "delete-draft") return;
     const runId = String(navigation.formData?.get("runId") ?? "").trim();
@@ -3624,6 +3863,45 @@ function ReturningTopicPickerPage({
     const stillPresent = visibleDraftArticles.some((draft) => draft.runId === draftDeleteRequest.runId);
     if (!stillPresent) setDraftDeleteRequest(null);
   }, [draftDeleteRequest, visibleDraftArticles]);
+
+  useEffect(() => {
+    if (navigation.state === "idle") return;
+    if (String(navigation.formData?.get("intent") ?? "") !== "discard-article") return;
+    const articleId = String(navigation.formData?.get("articleId") ?? "").trim();
+    setDiscardingArticleId(articleId || null);
+    setOptimisticallyDiscardedArticleIds((current) => hiddenArticleIdsAfterSubmit(current, articleId));
+    setArticleDiscardRequest((current) => (current?.articleId === articleId ? null : current));
+  }, [navigation.formData, navigation.state]);
+
+  useEffect(() => {
+    if (discardArticleSubmitting) return;
+    setDiscardingArticleId(null);
+  }, [discardArticleSubmitting]);
+
+  useEffect(() => {
+    setOptimisticallyDiscardedArticleIds((current) => pruneHiddenArticleIds(current, bootstrap.writtenTopics ?? []));
+  }, [bootstrap.writtenTopics]);
+
+  useEffect(() => {
+    if (!routeActionData || handledDiscardActionRef.current === routeActionData) return;
+    if (actionIntent(routeActionData) !== "discard-article") return;
+    handledDiscardActionRef.current = routeActionData;
+    pendingActions.clearPending();
+
+    const articleId = actionString(routeActionData, "articleId");
+    const discardError = actionError(routeActionData);
+    if (discardError) {
+      setOptimisticallyDiscardedArticleIds((current) => restoreHiddenArticleId(current, articleId));
+      setDiscardingArticleId(null);
+      setToast({ kind: "error", message: discardError });
+    }
+  }, [pendingActions, routeActionData]);
+
+  useEffect(() => {
+    if (!articleDiscardRequest) return;
+    const stillPresent = visibleWrittenTopics.some((topic) => topic.id === articleDiscardRequest.articleId);
+    if (!stillPresent) setArticleDiscardRequest(null);
+  }, [articleDiscardRequest, visibleWrittenTopics]);
 
   useEffect(() => {
     const data = contentIslandDiscoveryFetcher.data;
@@ -4226,9 +4504,16 @@ function ReturningTopicPickerPage({
               </Link>
             </div>
             <div className="mt-5">
-              {bootstrap.writtenTopics.length ? (
-                bootstrap.writtenTopics.slice(0, 3).map((article) => (
-                  <RecentArticleRow key={article.id ?? article.slug ?? article.title} article={article} />
+              {visibleWrittenTopics.length ? (
+                visibleWrittenTopics.slice(0, 3).map((article) => (
+                  <RecentArticleRow
+                    key={article.id ?? article.slug ?? article.title}
+                    article={article}
+                    submitting={discardArticleSubmitting}
+                    discarding={discardArticleSubmitting && discardingArticleId === (article.id ?? "")}
+                    skipDiscardConfirmation={skipArticleDiscardConfirmation}
+                    onDiscardRequest={setArticleDiscardRequest}
+                  />
                 ))
               ) : (
                 <div className="rounded-xl bg-slate-50 px-5 py-8 text-center">
@@ -4286,6 +4571,14 @@ function ReturningTopicPickerPage({
           submitting={deleteDraftSubmitting}
           onClose={() => setDraftDeleteRequest(null)}
           onRememberSkip={rememberSkipDeleteConfirmation}
+        />
+      ) : null}
+      {articleDiscardRequest ? (
+        <ArticleDiscardConfirmationModal
+          request={articleDiscardRequest}
+          submitting={discardArticleSubmitting}
+          onClose={() => setArticleDiscardRequest(null)}
+          onRememberSkip={rememberSkipArticleDiscardConfirmation}
         />
       ) : null}
     </div>
