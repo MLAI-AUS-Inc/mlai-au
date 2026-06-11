@@ -58,6 +58,23 @@ export default function VibeRaisingStickyStepBar({
     const resolvedSecondaryLabel = mobileSecondaryLabel ?? secondaryLabel;
     const resolvedTertiaryLabel = mobileTertiaryLabel ?? tertiaryLabel;
     const resolvedPrimaryLabel = mobilePrimaryLabel ?? primaryLabel;
+    const handlePrimaryClick = () => {
+        if (primaryLabel.toLowerCase().includes("publish")) {
+            const payload = {
+                primaryLabel,
+                mobilePrimaryLabel,
+                primaryDisabled,
+                primaryType,
+                primaryForm,
+                url: window.location.href,
+                timestamp: new Date().toISOString(),
+            };
+            console.error("[monthly-update:publish] sticky primary clicked", payload);
+            window.localStorage.setItem("monthly-update-publish-last-debug", JSON.stringify(payload));
+        }
+
+        onPrimary?.();
+    };
 
     return (
         <div className={["fixed inset-x-4 bottom-4 z-40 lg:left-24", className].filter(Boolean).join(" ")}>
@@ -133,7 +150,7 @@ export default function VibeRaisingStickyStepBar({
                     <button
                         type={primaryType}
                         form={primaryForm}
-                        onClick={primaryType === "button" ? onPrimary : undefined}
+                        onClick={primaryType === "button" ? handlePrimaryClick : undefined}
                         disabled={primaryDisabled}
                         className={[
                             "inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:-translate-y-0.5 hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0",

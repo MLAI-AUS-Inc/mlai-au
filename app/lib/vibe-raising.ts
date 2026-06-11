@@ -750,6 +750,8 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
     "Update";
   const id =
     asNullableString(payload.id) ??
+    asNullableString(payload.draftId) ??
+    asNullableString(payload.draft_id) ??
     asNullableString(payload.updateId) ??
     asNullableString(payload.update_id) ??
     monthLabel;
