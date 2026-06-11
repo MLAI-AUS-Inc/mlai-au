@@ -851,6 +851,11 @@ function MonthYearTabs({
                             isDateEditable ? "cursor-pointer" : "cursor-default opacity-70",
                         )}
                     >
+                        {!month.trim() ? (
+                            <option value="" disabled>
+                                Select month
+                            </option>
+                        ) : null}
                         {mobileMonthOptions.map((option) => (
                             <option key={option.month} value={option.month}>
                                 {option.month}
@@ -2630,14 +2635,15 @@ export default function CreateUpdate() {
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || currentCreatePeriod.month);
     const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || currentCreatePeriod.year);
     const [activePeriodKey, setActivePeriodKey] = useState("current");
+    const hasSelectedMonth = Boolean(selectedMonth.trim());
     const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
     const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
     const targetMonthIso = getMonthlyUpdateIsoMonth(selectedMonth, selectedYear);
-    const isSelectedMonthInFuture = isFutureMonthlyUpdate(selectedMonth, selectedYear);
+    const isSelectedMonthInFuture = hasSelectedMonth && isFutureMonthlyUpdate(selectedMonth, selectedYear);
     const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
         (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
     );
-    const selectedMonthLabel = `${selectedMonth} ${selectedYear}`;
+    const selectedMonthLabel = hasSelectedMonth ? `${selectedMonth} ${selectedYear}` : "Select a month";
     const catchUpMonthLabel = createStepMonthOptions[0]?.month || "May";
     const currentDraftMonthLabel = createStepMonthOptions[1]?.month || currentCreatePeriod.month;
     const monthSelectionCaption = `Select the month this update covers. ${catchUpMonthLabel} is available if you're catching up; ${currentDraftMonthLabel} is ready for your current draft.`;
@@ -2874,13 +2880,15 @@ export default function CreateUpdate() {
 
     useEffect(() => {
         if (isEdit) return;
+        if (showAllCreateStepMonths) return;
+        if (!selectedMonth.trim()) return;
         const isVisibleCreateStepMonth = createStepMonthOptions.some(
             (option) => option.month === selectedMonth && option.year === selectedYear,
         );
         if (isVisibleCreateStepMonth) return;
-        setSelectedMonth(currentCreatePeriod.month);
+        setSelectedMonth("");
         setSelectedYear(currentCreatePeriod.year);
-    }, [createStepMonthOptions, currentCreatePeriod.month, currentCreatePeriod.year, isEdit, selectedMonth, selectedYear]);
+    }, [createStepMonthOptions, currentCreatePeriod.year, isEdit, selectedMonth, selectedYear, showAllCreateStepMonths]);
 
     const dismissMetricCard = useCallback((metricKey: string) => {
         setAwakeMetricCards((previous) => {
@@ -3567,7 +3575,7 @@ export default function CreateUpdate() {
     }, [connectedDraftInputSources, executeDraftRequest, existingUpdateForSelectedMonth, selectedInputSources]);
 
     const handleGenerateSelectedMonthUpdate = useCallback(() => {
-        if (isSelectedMonthInFuture) return;
+        if (!hasSelectedMonth || isSelectedMonthInFuture) return;
         setMonthConfirmed(true);
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
@@ -3576,7 +3584,7 @@ export default function CreateUpdate() {
         setEmailDraftUiError(null);
         setEmailDraftPollingDegraded(false);
         setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
-    }, [isSelectedMonthInFuture]);
+    }, [hasSelectedMonth, isSelectedMonthInFuture]);
 
     const handleGenerateDraftFromEmailClick = useCallback(() => {
         requestDraftFromSelectedInputs();
@@ -3589,7 +3597,7 @@ export default function CreateUpdate() {
     const handleGenerateDraftCardTouchEnd = useCallback((event: React.TouchEvent<HTMLButtonElement>) => {
         const start = generateDraftSwipeStartRef.current;
         generateDraftSwipeStartRef.current = null;
-        if (!start || !isMobileTourViewport || isSelectedMonthInFuture || emailDraftActionBusy) return;
+        if (!start || !isMobileTourViewport || !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy) return;
 
         const touch = event.changedTouches[0];
         if (!touch) return;
@@ -3599,7 +3607,7 @@ export default function CreateUpdate() {
         if (deltaX >= 72 && deltaY <= 40) {
             handleGenerateSelectedMonthUpdate();
         }
-    }, [emailDraftActionBusy, handleGenerateSelectedMonthUpdate, isMobileTourViewport, isSelectedMonthInFuture]);
+    }, [emailDraftActionBusy, handleGenerateSelectedMonthUpdate, hasSelectedMonth, isMobileTourViewport, isSelectedMonthInFuture]);
 
     const handleConfirmRegenerateDraft = useCallback(() => {
         const request = pendingDraftRequest ?? {};
@@ -3640,6 +3648,12 @@ export default function CreateUpdate() {
     const runEmailDraftRecovery = useEffectEvent(async () => {
         setEmailDraftActionBusy(true);
         try {
+            if (!resumeEmailDrafting) {
+                clearPersistedEmailDraftRun();
+                resetEmailDraftUi();
+                return;
+            }
+
             const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
             if (activeRun) {
                 await processEmailDraftStatus(activeRun);
@@ -4005,7 +4019,7 @@ export default function CreateUpdate() {
                 statusDetail: selectedMonthLabel,
                 primaryLabel: "Start draft",
                 onPrimary: handleGenerateSelectedMonthUpdate,
-                primaryDisabled: isSelectedMonthInFuture || emailDraftActionBusy,
+                primaryDisabled: !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy,
             };
         }
 
@@ -5044,11 +5058,11 @@ export default function CreateUpdate() {
                             <div className="space-y-3">
                                 <button
                                     type="button"
-                                    onClick={handlePublishDebugClick}
-                                    disabled={isSubmitting}
-                                    className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-55 active:scale-95"
+                                    disabled
+                                    aria-disabled="true"
+                                    className="w-full cursor-not-allowed rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 shadow-sm"
                                 >
-                                    {isSubmitting ? "Publishing..." : "Publish update"}
+                                    Publish update coming soon
                                 </button>
                                 <button
                                     type="button"
@@ -5859,7 +5873,7 @@ export default function CreateUpdate() {
                                     </div>
                                     <button
                                         type="button"
-                                        disabled={isSelectedMonthInFuture || emailDraftActionBusy}
+                                        disabled={!hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy}
                                         onClick={() => {
                                             handleGenerateSelectedMonthUpdate();
                                         }}
@@ -5867,22 +5881,22 @@ export default function CreateUpdate() {
                                         onTouchEnd={handleGenerateDraftCardTouchEnd}
                                         className={clsx(
                                             "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 lg:col-span-1 lg:min-h-[132px]",
-                                            isSelectedMonthInFuture || emailDraftActionBusy
+                                            !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy
                                                 ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
                                                 : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
                                         )}
-                                        aria-label={`Start ${selectedMonthLabel} draft`}
+                                        aria-label={hasSelectedMonth ? `Start ${selectedMonthLabel} draft` : "Select a month before starting a draft"}
                                     >
                                         <div>
                                             <p className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
                                                 Step 1
                                             </p>
                                             <p className="mt-3 text-lg font-black">
-                                                Start draft
+                                                {hasSelectedMonth ? "Start draft" : "Select month first"}
                                             </p>
                                         </div>
                                         <span className="mt-5 flex items-center justify-between text-sm font-black">
-                                            <span>{selectedMonthLabel}</span>
+                                            <span>{hasSelectedMonth ? selectedMonthLabel : "Choose a month"}</span>
                                             {emailDraftActionBusy ? (
                                                 <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                             ) : (
