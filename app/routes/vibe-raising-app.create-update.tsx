@@ -2466,7 +2466,7 @@ export default function CreateUpdate() {
     const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
-    const { activeRun: sharedActiveDraftRun } = useActiveDraftRun();
+    const { activeRun: sharedActiveDraftRun, refreshActiveRun } = useActiveDraftRun();
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
     const goToConnectDataStep = useCallback(() => {
         const returnPath = `${location.pathname}${location.search || ""}`;
@@ -3306,6 +3306,12 @@ export default function CreateUpdate() {
                     setSelectedMonth(parsedMonth.month);
                     setSelectedYear(parsedMonth.year);
                 }
+                const runInputSources = (statusResponse.run?.inputSources || []).filter(
+                    (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
+                );
+                if (runInputSources.length > 0) {
+                    setSelectedDraftInputSources(new Set(runInputSources));
+                }
                 setMonthConfirmed(true);
                 setSelectedDraftStage("reporting");
                 setMetricsConfirmed(true);
@@ -4022,6 +4028,7 @@ export default function CreateUpdate() {
             if (cancelResponse.status === "completed" || cancelResponse.terminalState === "completed") {
                 emailDraftIgnoredRunIdRef.current = null;
                 await hydrateCompletedEmailDraft(cancelResponse.runId);
+                refreshActiveRun();
                 return;
             }
 
@@ -4029,6 +4036,9 @@ export default function CreateUpdate() {
                 clearPersistedEmailDraftRun();
                 setPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey);
                 resetEmailDraftUi();
+                // Clear the app-shell "drafting" banner right away instead of
+                // waiting for its next poll cycle.
+                refreshActiveRun();
                 return;
             }
 
@@ -4044,6 +4054,7 @@ export default function CreateUpdate() {
         backendBaseUrl,
         emailDraftForceRegenerateKey,
         emailDraftStatus?.runId,
+        refreshActiveRun,
     ]);
 
     const stopMediaStream = useCallback(() => {
@@ -6039,10 +6050,14 @@ export default function CreateUpdate() {
                 mobileSecondaryLabel={selectedDraftStage === "reporting" && hasDraftTemplate ? (saveDraftFetcher.state !== "idle" ? "Saving" : draftSaved ? "Saved" : "Save draft") : undefined}
                 onSecondary={selectedDraftStage === "reporting" && hasDraftTemplate ? handlePersistDraft : undefined}
                 secondaryDisabled={saveDraftFetcher.state !== "idle" || isEmailDraftBusy || isVideoUploadBlocking}
-                tertiaryLabel={canRunAgainDraft ? "Run again" : undefined}
-                mobileTertiaryLabel={canRunAgainDraft ? "Run again" : undefined}
-                onTertiary={canRunAgainDraft ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true }) : undefined}
-                tertiaryDisabled={emailDraftActionBusy}
+                tertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
+                mobileTertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
+                onTertiary={canRunAgainDraft
+                    ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true })
+                    : isEmailDraftBusy
+                        ? () => { void handleCancelEmailDraft(); }
+                        : undefined}
+                tertiaryDisabled={canRunAgainDraft ? emailDraftActionBusy : emailDraftActionBusy || emailDraftCancelBusy}
                 primaryLabel={draftStickyBar.primaryLabel}
                 onPrimary={draftStickyBar.onPrimary}
                 primaryDisabled={draftStickyBar.primaryDisabled}

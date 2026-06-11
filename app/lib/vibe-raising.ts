@@ -855,6 +855,7 @@ function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSum
       asNullableString(payload.targetMonth) ??
       asNullableString(payload.target_month) ??
       null,
+    inputSources: normalizeInputSourceKeyList(payload.inputSources ?? payload.input_sources),
     stepOrder: Array.isArray(payload.stepOrder ?? payload.step_order)
       ? ((payload.stepOrder ?? payload.step_order) as unknown[]).map((item: unknown) => String(item))
       : [],
@@ -1191,6 +1192,16 @@ function normalizeInputSourceStatus(value: unknown): VibeRaisingInputSourceStatu
   if (["coming_soon", "coming-soon"].includes(normalized)) return "coming_soon";
   if (["unavailable", "not_available", "not-available", "not_configured", "not-configured"].includes(normalized)) return "unavailable";
   return "not_connected";
+}
+
+function normalizeInputSourceKeyList(value: unknown): VibeRaisingInputSourceKey[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<VibeRaisingInputSourceKey>();
+  for (const item of value) {
+    const key = normalizeInputSourceProvider(item);
+    if (key) seen.add(key);
+  }
+  return Array.from(seen);
 }
 
 function normalizeInputSourceProvider(value: unknown): VibeRaisingInputSourceKey | null {
