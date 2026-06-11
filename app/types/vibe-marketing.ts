@@ -450,6 +450,8 @@ export interface VibeMarketingLivePreview {
   renderMode?: string | null;
   renderConfidence?: string | null;
   fallbackReason?: string | null;
+  previewQuality?: string | null;
+  previewBanner?: string | null;
   previewUnavailableReason?: string | null;
   proof?: Record<string, unknown>;
   nativePreviewFailure?: Record<string, unknown>;

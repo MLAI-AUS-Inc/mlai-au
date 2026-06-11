@@ -842,6 +842,8 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
     renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),
     fallbackReason: asNullableString(payload.fallbackReason) ?? asNullableString(payload.fallback_reason),
+    previewQuality: asNullableString(payload.previewQuality) ?? asNullableString(payload.preview_quality),
+    previewBanner: asNullableString(payload.previewBanner) ?? asNullableString(payload.preview_banner),
     previewUnavailableReason:
       asNullableString(payload.previewUnavailableReason) ??
       asNullableString(payload.preview_unavailable_reason) ??
