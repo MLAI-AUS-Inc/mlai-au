@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-do-ai-detectors-work-and-can-you-trust-them': {
+        title: "How Do AI Detectors Work, and Can You Trust Them?",
+        date: "2026-06-11",
+        description: "How do AI detectors work? Learn what they measure, why scores can be wrong, and how to use results responsibly.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-do-ai-detectors-work-and-can-you-trust-them",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-3a4c2769-c50a-4409-bf95-37757421c481.jpg?alt=media&token=4ad86392-c662-47d9-950d-295ae6b80744",
+        imageAlt: "Close-up of students reviewing an AI detector score on a laptop during a candid writing discussion",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
