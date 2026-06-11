@@ -13,7 +13,6 @@ const VALID_STATIC_ROUTES = new Set([
   "/events",
   "/hackathons",
   "/medhack",
-  "/members",
   "/platform/dashboard",
   "/platform/login",
   "/platform/logout",
