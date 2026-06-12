@@ -64,6 +64,28 @@ export interface VibeRaisingMetricSuggestion {
   reason?: string;
 }
 
+export type VibeRaisingMetricVisibility = "hidden" | "full" | "snippet";
+
+export interface VibeRaisingMetricDisplayConfig {
+  snippetMetricKeys: string[];
+  fullMetricKeys: string[];
+}
+
+export interface VibeRaisingMetricHistoryPoint {
+  month: string;
+  value: number;
+  valueText: string;
+}
+
+export interface VibeRaisingMetricHistorySeries {
+  metricKey: string;
+  label: string;
+  unit?: string | null;
+  points: VibeRaisingMetricHistoryPoint[];
+}
+
+export type VibeRaisingMetricHistory = Record<string, VibeRaisingMetricHistorySeries>;
+
 export interface VibeRaisingDraftedContent {
   month?: string;
   year?: number;
@@ -117,6 +139,7 @@ export interface VibeRaisingMonthlyUpdate {
   videoOriginalFilename?: string | null;
   metrics: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
+  displayConfig?: VibeRaisingMetricDisplayConfig | null;
   highlights: string;
   challenges: string;
   asks: string;

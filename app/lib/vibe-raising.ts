@@ -32,6 +32,10 @@ import type {
   VibeRaisingManualDocumentDownloadResponse,
   VibeRaisingManualDocumentUploadResponse,
   VibeRaisingManualDocumentUploadSessionResponse,
+  VibeRaisingMetricDisplayConfig,
+  VibeRaisingMetricHistory,
+  VibeRaisingMetricHistoryPoint,
+  VibeRaisingMetricHistorySeries,
   VibeRaisingMetricSuggestion,
   VibeRaisingMonthlyUpdate,
   VibeRaisingProfile,
@@ -726,6 +730,80 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
   };
 }
 
+function normalizeMetricKeyList(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const keys: string[] = [];
+  for (const item of raw) {
+    const key = typeof item === "string" ? item.trim() : "";
+    if (key && !keys.includes(key)) {
+      keys.push(key);
+    }
+  }
+  return keys;
+}
+
+export function normalizeDisplayConfig(raw: unknown): VibeRaisingMetricDisplayConfig | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+  const payload = raw as Record<string, unknown>;
+  const snippetMetricKeys = normalizeMetricKeyList(
+    payload.snippetMetricKeys ?? payload.snippet_metric_keys,
+  );
+  const fullMetricKeys = normalizeMetricKeyList(
+    payload.fullMetricKeys ?? payload.full_metric_keys,
+  );
+  for (const key of snippetMetricKeys) {
+    if (!fullMetricKeys.includes(key)) {
+      fullMetricKeys.push(key);
+    }
+  }
+  return { snippetMetricKeys, fullMetricKeys };
+}
+
+export function normalizeMetricHistory(raw: unknown): VibeRaisingMetricHistory {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+
+  const history: VibeRaisingMetricHistory = {};
+  for (const [rawKey, rawSeries] of Object.entries(raw as Record<string, unknown>)) {
+    if (!rawSeries || typeof rawSeries !== "object") continue;
+    const seriesPayload = rawSeries as Record<string, unknown>;
+    const metricKey =
+      asNullableString(seriesPayload.metricKey) ??
+      asNullableString(seriesPayload.metric_key) ??
+      rawKey;
+    if (!metricKey) continue;
+
+    const points: VibeRaisingMetricHistoryPoint[] = [];
+    const rawPoints = Array.isArray(seriesPayload.points) ? seriesPayload.points : [];
+    for (const rawPoint of rawPoints) {
+      if (!rawPoint || typeof rawPoint !== "object") continue;
+      const pointPayload = rawPoint as Record<string, unknown>;
+      const month = asNullableString(pointPayload.month);
+      const value = Number(pointPayload.value);
+      if (!month || !Number.isFinite(value)) continue;
+      points.push({
+        month,
+        value,
+        valueText:
+          asNullableString(pointPayload.valueText) ??
+          asNullableString(pointPayload.value_text) ??
+          String(pointPayload.value),
+      });
+    }
+    if (!points.length) continue;
+    points.sort((a, b) => a.month.localeCompare(b.month));
+
+    const series: VibeRaisingMetricHistorySeries = {
+      metricKey,
+      label: asNullableString(seriesPayload.label) ?? metricKey,
+      unit: asNullableString(seriesPayload.unit),
+      points,
+    };
+    history[metricKey] = series;
+  }
+  return history;
+}
+
 function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
   if (!raw || typeof raw !== "object") return null;
 
@@ -819,6 +897,7 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
     metricSuggestions: normalizeMetricSuggestions(
       payload.metricSuggestions ?? payload.metric_suggestions,
     ),
+    displayConfig: normalizeDisplayConfig(payload.displayConfig ?? payload.display_config),
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
@@ -1809,9 +1888,13 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     sourceUrl: "https://mlai.au/founder-tools/updates",
     metrics: {
       revenue: "250+ matches",
-      users: "10k+ professionals",
+      activeUsers: "10k+ professionals",
       mrr: "12 paying pilots",
       runway: "MAP cohort",
+    },
+    displayConfig: {
+      snippetMetricKeys: ["revenue", "activeUsers"],
+      fullMetricKeys: ["revenue", "activeUsers", "mrr", "runway"],
     },
     highlights:
       "Accepted into the Melbourne Accelerator Program (MAP), giving us a five-month runway of mentoring, ecosystem access, and Demo Day preparation.\nRolled out a simpler pricing model across Free, Solo, and Micro tiers, with early-bird discounts live until January 30.\nPilots are active with 3 support coordinators and 10 allied-health clinics, helping us pressure-test matching quality and workflow fit.",
@@ -1841,9 +1924,13 @@ const DEV_MONTHLY_DRAFTS_STUB: VibeRaisingMonthlyUpdate[] = [
     sourceUrl: "https://mlai.au/founder-tools/drafts",
     metrics: {
       revenue: "300+ matches",
-      users: "11k+ professionals",
+      activeUsers: "11k+ professionals",
       mrr: "14 paying pilots",
       runway: "MAP cohort",
+    },
+    displayConfig: {
+      snippetMetricKeys: ["revenue", "activeUsers"],
+      fullMetricKeys: ["revenue", "activeUsers", "mrr", "runway"],
     },
     highlights: "Drafted the May topline around MAP progress, pilot expansion, and marketplace match quality.",
     challenges: "Still refining the conversion benchmark story before publishing.",
@@ -1853,43 +1940,94 @@ const DEV_MONTHLY_DRAFTS_STUB: VibeRaisingMonthlyUpdate[] = [
   },
 ];
 
-export async function getVibeRaisingMonthlyUpdates(
+const DEV_METRIC_HISTORY_STUB: VibeRaisingMetricHistory = {
+  revenue: {
+    metricKey: "revenue",
+    label: "Revenue",
+    unit: "",
+    points: [
+      { month: "2025-08-01", value: 60, valueText: "60 matches" },
+      { month: "2025-09-01", value: 95, valueText: "95 matches" },
+      { month: "2025-10-01", value: 120, valueText: "120+ matches" },
+      { month: "2025-11-01", value: 150, valueText: "150+ matches" },
+      { month: "2025-12-01", value: 210, valueText: "210+ matches" },
+      { month: "2026-01-01", value: 250, valueText: "250+ matches" },
+    ],
+  },
+  activeUsers: {
+    metricKey: "activeUsers",
+    label: "Active Users",
+    unit: "",
+    points: [
+      { month: "2025-08-01", value: 4200, valueText: "4.2k professionals" },
+      { month: "2025-09-01", value: 5600, valueText: "5.6k professionals" },
+      { month: "2025-10-01", value: 7100, valueText: "7.1k professionals" },
+      { month: "2025-11-01", value: 8400, valueText: "8.4k professionals" },
+      { month: "2025-12-01", value: 9300, valueText: "9.3k professionals" },
+      { month: "2026-01-01", value: 10000, valueText: "10k+ professionals" },
+    ],
+  },
+};
+
+export interface VibeRaisingMonthlyUpdatesBundle {
+  updates: VibeRaisingMonthlyUpdate[];
+  metricHistory: VibeRaisingMetricHistory;
+}
+
+const DEV_MONTHLY_UPDATES_BUNDLE_STUB: VibeRaisingMonthlyUpdatesBundle = {
+  updates: DEV_MONTHLY_UPDATES_STUB,
+  metricHistory: DEV_METRIC_HISTORY_STUB,
+};
+
+export async function getVibeRaisingMonthlyUpdatesBundle(
   env: Env,
   request: Request,
-): Promise<VibeRaisingMonthlyUpdate[]> {
+): Promise<VibeRaisingMonthlyUpdatesBundle> {
   if (shouldUseDevBackendStub()) {
-    return DEV_MONTHLY_UPDATES_STUB;
+    return DEV_MONTHLY_UPDATES_BUNDLE_STUB;
   }
   const client = createApiClient(env, request);
 
   try {
     const response = await client.get(UPDATES_PATH);
     const updates: unknown[] = Array.isArray(response.data?.updates) ? response.data.updates : [];
-    return updates
-      .map(normalizeMonthlyUpdate)
-      .filter((value): value is VibeRaisingMonthlyUpdate => value !== null);
+    return {
+      updates: updates
+        .map(normalizeMonthlyUpdate)
+        .filter((value): value is VibeRaisingMonthlyUpdate => value !== null),
+      metricHistory: normalizeMetricHistory(
+        response.data?.metricHistory ?? response.data?.metric_history,
+      ),
+    };
   } catch (error: any) {
     if (error.response?.status === 404) {
-      return [];
+      return { updates: [], metricHistory: {} };
     }
 
     if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
       console.warn("No backend monthly update session in local dev; using update stubs.");
-      return DEV_MONTHLY_UPDATES_STUB;
+      return DEV_MONTHLY_UPDATES_BUNDLE_STUB;
     }
 
     if (shouldUseDevAuthBypass() && !error.response) {
       console.warn("Backend monthly update lookup failed before returning a response in local dev; using update stubs.");
-      return DEV_MONTHLY_UPDATES_STUB;
+      return DEV_MONTHLY_UPDATES_BUNDLE_STUB;
     }
 
     if (shouldUseDevBackendFallback(error)) {
       console.warn("Backend unavailable in local dev; using Vibe Raising monthly update stubs for preview.");
-      return DEV_MONTHLY_UPDATES_STUB;
+      return DEV_MONTHLY_UPDATES_BUNDLE_STUB;
     }
 
     throw error;
   }
+}
+
+export async function getVibeRaisingMonthlyUpdates(
+  env: Env,
+  request: Request,
+): Promise<VibeRaisingMonthlyUpdate[]> {
+  return (await getVibeRaisingMonthlyUpdatesBundle(env, request)).updates;
 }
 
 export async function getVibeRaisingDrafts(
@@ -1968,6 +2106,7 @@ export async function saveVibeRaisingMonthlyUpdate(
     next30Days: string;
     metrics: Record<string, string>;
     metricSuggestions?: VibeRaisingMetricSuggestion[];
+    displayConfig?: VibeRaisingMetricDisplayConfig | null;
     summary?: string | null;
     sourceUrl?: string | null;
     pitchDeckUrl?: string | null;
