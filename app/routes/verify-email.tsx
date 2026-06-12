@@ -5,6 +5,8 @@ import { getEnv } from "~/lib/env.server";
 import { verifyMagicLinkWithCookies } from "~/lib/auth";
 import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
+const PRODUCTION_BACKEND_BASE_URL = "https://api.mlai.au";
+
 function getLoginHref(app: string | null, next: string): string {
     const params = new URLSearchParams();
 
@@ -14,6 +16,55 @@ function getLoginHref(app: string | null, next: string): string {
 
     params.set("next", next);
     return `/platform/login?${params.toString()}`;
+}
+
+function isLocalhostRequest(request: Request) {
+    const hostname = new URL(request.url).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname.endsWith(".localhost");
+}
+
+function sanitizeCookieForLocalhost(cookie: string) {
+    return cookie
+        .split(";")
+        .map((part) => part.trim())
+        .filter((part) => {
+            const lower = part.toLowerCase();
+            return lower !== "secure" && !lower.startsWith("domain=");
+        })
+        .map((part) => {
+            if (part.toLowerCase().startsWith("samesite=")) {
+                return "SameSite=Lax";
+            }
+            return part;
+        })
+        .join("; ");
+}
+
+async function verifyTokenWithLocalhostFallback(
+    env: Env,
+    request: Request,
+    token: string,
+    options: { app?: string | null; next?: string | null },
+) {
+    try {
+        return await verifyMagicLinkWithCookies(env, token, options);
+    } catch (error: any) {
+        const configuredBackend = String(env.BACKEND_BASE_URL || "").trim();
+        const shouldRetryProduction =
+            isLocalhostRequest(request) &&
+            error.response?.status === 400 &&
+            configuredBackend.includes("localhost");
+
+        if (!shouldRetryProduction) {
+            throw error;
+        }
+
+        console.warn("Local magic-link verification failed; retrying production backend for emailed link.");
+        return verifyMagicLinkWithCookies(env, token, {
+            ...options,
+            backendBaseUrl: PRODUCTION_BACKEND_BASE_URL,
+        });
+    }
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -30,13 +81,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const { setCookieHeaders } = await verifyMagicLinkWithCookies(env, token, { app, next });
+        const shouldSanitizeCookies = isLocalhostRequest(request);
+        const { setCookieHeaders } = await verifyTokenWithLocalhostFallback(env, request, token, { app, next });
 
         // Forward Set-Cookie headers from the backend to the browser
         const headers = new Headers();
         if (Array.isArray(setCookieHeaders)) {
             for (const cookie of setCookieHeaders) {
-                headers.append("Set-Cookie", cookie);
+                headers.append("Set-Cookie", shouldSanitizeCookies ? sanitizeCookieForLocalhost(cookie) : cookie);
             }
         }
 

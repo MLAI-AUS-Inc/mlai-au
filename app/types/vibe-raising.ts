@@ -552,6 +552,7 @@ export interface VibeRaisingStartupUpdateRunSummary {
   status: string;
   currentStep?: string | null;
   targetMonth?: string | null;
+  inputSources?: VibeRaisingInputSourceKey[];
   stepOrder?: string[];
   stepStates?: Record<string, VibeRaisingStartupUpdateStepState>;
   createdAt?: string;

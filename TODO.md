@@ -12,6 +12,10 @@
 - [x] Rebuild Watt The Hack dashboard to match the reference layout
 - [x] Restyle Watt The Hack announcements/resources/cards with the reference surface treatment
 - [x] Run Watt The Hack verification checks
+- [x] Make Draft Update the first monthly update step with optional data connection
+- [x] Add compact optional data-source selection to the draft page
+- [x] Update create-update CTAs to start at the draft template
+- [x] Run `bun run typecheck`
 - [x] Add QR-friendly DisplayLink setup tutorial page
 - [x] Register the DisplayLink tutorial route without adding a main-nav entry point
 - [x] Replace `/terms` and `/privacy` legal copy with the May 20 updated text

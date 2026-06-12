@@ -13,6 +13,7 @@ import { getEnv } from "~/lib/env.server";
 import {
     ArrowRightIcon,
     ChartBarIcon,
+    EnvelopeIcon,
     PencilSquareIcon,
     SparklesIcon,
     HandThumbUpIcon,
@@ -36,7 +37,9 @@ import {
     ArrowTopRightOnSquareIcon,
     InformationCircleIcon,
     DocumentArrowUpIcon,
+    StarIcon,
 } from "@heroicons/react/24/outline";
+import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 
@@ -207,6 +210,118 @@ function EditableMetricCard({ label, value, icon: _Icon, active = true, editing,
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
+    );
+}
+
+const investorReachSeries = [
+    { month: "Mar 2024", value: 24, x: 0, y: 74 },
+    { month: "Apr 2024", value: 36, x: 20, y: 62 },
+    { month: "May 2024", value: 24, x: 40, y: 74 },
+    { month: "Jun 2024", value: 40, x: 60, y: 58 },
+    { month: "Jul 2024", value: 58, x: 80, y: 40 },
+    { month: "Aug 2024", value: 46, x: 100, y: 52 },
+];
+
+function InvestorReachOverview() {
+    const metricCards = [
+        { label: "Investors reached", value: "46", delta: "53%", icon: UserGroupIcon },
+        { label: "Opens", value: "18", delta: "38%", icon: EnvelopeIcon },
+        { label: "Profile views", value: "12", delta: "20%", icon: EyeIcon },
+        { label: "Interested investors", value: "5", delta: "67%", icon: StarIcon },
+    ];
+    const polylinePoints = investorReachSeries.map((point) => `${point.x},${point.y}`).join(" ");
+    const areaPoints = `0,100 ${polylinePoints} 100,100`;
+
+    return (
+        <section className="hidden rounded-[1.35rem] border border-[var(--vr-color-border)] bg-white p-6 shadow-sm sm:block">
+            <div className="mb-5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-black text-gray-950">Investor reach overview</h2>
+                    <InformationCircleIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                </div>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-4">
+                {metricCards.map((card) => {
+                    const Icon = card.icon;
+                    return (
+                        <div key={card.label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                            <div className="flex items-center gap-5">
+                                <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(0,128,128,0.10)] text-[var(--vr-color-primary)]">
+                                    <Icon className="h-7 w-7" aria-hidden="true" />
+                                </span>
+                                <div>
+                                    <p className="text-sm font-black text-slate-700">{card.label}</p>
+                                    <p className="mt-1 text-4xl font-black leading-none text-gray-950">{card.value}</p>
+                                    <p className="mt-2 text-sm font-semibold text-slate-500">
+                                        <span className="mr-1 text-[var(--vr-color-primary)]">▲ {card.delta}</span>
+                                        vs prior 6 months
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="mt-6">
+                <div className="mb-3 flex items-start justify-between gap-4">
+                    <div>
+                        <h3 className="text-base font-black text-gray-950">Investor reach over time</h3>
+                        <p className="mt-1 text-sm font-semibold text-slate-500">Unique investors reached each month</p>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-semibold text-slate-600">
+                        <span className="h-0.5 w-10 bg-[var(--vr-color-primary)]" aria-hidden="true" />
+                        Investors reached
+                    </div>
+                </div>
+                <div className="relative h-44 overflow-visible">
+                    <div className="absolute inset-x-0 top-2 grid h-[128px] grid-rows-4 text-xs font-semibold text-slate-500">
+                        {[80, 60, 40, 20, 0].map((label) => (
+                            <div key={label} className="relative border-t border-dashed border-slate-200">
+                                <span className="absolute -top-2 left-0 bg-white pr-2">{label}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <svg className="absolute left-8 right-0 top-2 h-[128px] w-[calc(100%-2rem)] overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                        <polygon points={areaPoints} fill="rgba(0,128,128,0.08)" />
+                        <polyline points={polylinePoints} fill="none" stroke="var(--vr-color-primary)" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+                    </svg>
+                    <div className="absolute left-8 right-0 top-2 h-[128px]" aria-hidden="true">
+                        {investorReachSeries.map((point) => (
+                            <span
+                                key={point.month}
+                                className="absolute h-2.5 w-2.5 rounded-full border-2 border-white bg-[var(--vr-color-primary)] shadow-sm"
+                                style={{
+                                    left: `${point.x}%`,
+                                    top: `${point.y}%`,
+                                    transform: "translate(-50%, -50%)",
+                                }}
+                            />
+                        ))}
+                    </div>
+                    <div className="absolute bottom-0 left-8 right-0 h-5 text-sm font-semibold text-slate-700">
+                        {investorReachSeries.map((point, index) => (
+                            <span
+                                key={point.month}
+                                className="absolute whitespace-nowrap"
+                                style={{
+                                    left: `${point.x}%`,
+                                    transform:
+                                        index === 0
+                                            ? "translateX(0)"
+                                            : index === investorReachSeries.length - 1
+                                                ? "translateX(-100%)"
+                                                : "translateX(-50%)",
+                                }}
+                            >
+                                {point.month}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
     );
 }
 
@@ -879,6 +994,7 @@ function VRPreviewUpdateCard({
                                     {statusLabel}
                                 </span>
                             ) : null}
+                            <ActiveDraftRunChip />
                             {formattedDate ? (
                                 <span className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-gray-400 ring-1 ring-gray-200">
                                     {formattedDate}
@@ -893,6 +1009,7 @@ function VRPreviewUpdateCard({
                                     {statusLabel}
                                 </span>
                             ) : null}
+                            <ActiveDraftRunChip />
                             <Link
                                 to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
@@ -1202,12 +1319,6 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     </div>
                     <div className="flex items-center gap-2.5 flex-wrap">
                         <Link
-                            to="/founder-tools/overview"
-                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
-                        >
-                            View Overview
-                        </Link>
-                        <Link
                             to="/founder-tools/drafts"
                             className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                         >
@@ -1224,8 +1335,86 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     </div>
                 </div>
 
+                <InvestorReachOverview />
+
                 <div
-                    className="rounded-[28px] border p-6 sm:p-8"
+                    className="hidden rounded-[28px] border p-8 sm:block"
+                    style={{
+                        borderColor: "var(--vr-color-border-md)",
+                        background: "linear-gradient(135deg, rgba(0,255,215,0.10), rgba(255,255,255,0.96))",
+                        boxShadow: "var(--vr-shadow-sm)",
+                    }}
+                >
+                    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.9fr)] lg:items-center">
+                        <div>
+                            <div className="inline-flex rounded-full bg-[rgba(0,128,128,0.10)] px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[var(--vr-color-primary-dark)]">
+                                Ready when you are
+                            </div>
+                            <h2 className="mt-7 text-4xl font-black tracking-tight text-gray-950 lg:text-5xl">
+                                No monthly update yet, {firstName}.
+                            </h2>
+                            <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
+                                Your workspace is ready. Start your first update to begin building momentum and track investor engagement over time.
+                            </p>
+                            <div className="mt-7 flex flex-wrap gap-5">
+                                <button
+                                    type="button"
+                                    onClick={() => triggerAnnouncement(() => navigate("/founder-tools/updates/create"))}
+                                    className="inline-flex min-w-56 items-center justify-center gap-3 rounded-xl bg-[var(--vr-color-primary)] px-7 py-4 font-black text-white shadow-lg shadow-[rgba(0,128,128,0.20)] transition hover:bg-[var(--vr-palette-black)]"
+                                >
+                                    Create Your First Update
+                                    <ArrowRightIcon className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="rounded-[24px] border bg-white/78 p-6 backdrop-blur-sm" style={{ borderColor: "var(--vr-color-border-md)" }}>
+                            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary-dark)]">
+                                What you'll unlock
+                            </p>
+                            <div className="mt-4 divide-y divide-gray-200">
+                                {[
+                                    {
+                                        icon: DocumentArrowUpIcon,
+                                        title: "Pick a month and start from the draft template.",
+                                        body: "Build your update quickly with our guided template.",
+                                    },
+                                    {
+                                        icon: UserGroupIcon,
+                                        title: "Share progress to build investor trust.",
+                                        body: "Keep investors informed and strengthen relationships.",
+                                    },
+                                    {
+                                        icon: ChartBarIcon,
+                                        title: "Track reach, opens, and engagement over time.",
+                                        body: "Measure impact and refine your updates each month.",
+                                    },
+                                ].map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                        <div className="flex items-start gap-5 py-4 first:pt-0 last:pb-0" key={item.title}>
+                                            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(0,128,128,0.10)] text-[var(--vr-color-primary)]">
+                                                <Icon className="h-6 w-6" aria-hidden="true" />
+                                            </span>
+                                            <div>
+                                                <h3 className="font-black text-gray-950">{item.title}</h3>
+                                                <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{item.body}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p className="hidden items-center justify-center gap-3 text-sm font-semibold text-slate-500 sm:flex">
+                    <LockClosedIcon className="h-5 w-5" aria-hidden="true" />
+                    No updates published yet. Your data will appear here after your first monthly update.
+                </p>
+
+                <div
+                    className="rounded-[28px] border p-6 sm:hidden"
                     style={{
                         borderColor: "var(--vr-color-border-md)",
                         background: "linear-gradient(135deg, rgba(0,255,215,0.08), rgba(255,255,255,0.95))",
@@ -1252,12 +1441,6 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                     Create Your First Update
                                     <ArrowRightIcon className="h-5 w-5" />
                                 </button>
-                                <Link
-                                    to="/founder-tools/overview"
-                                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-[var(--vr-color-text-strong)] shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white"
-                                >
-                                    Revisit Overview
-                                </Link>
                             </div>
                         </div>
 
@@ -1453,9 +1636,12 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                 </div>
                             </div>
                         ) : (
-                            <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
-                                No current update yet — create your first one above.
-                            </p>
+                            <div className="space-y-3">
+                                <ActiveDraftRunChip />
+                                <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
+                                    No current update yet — create your first one above.
+                                </p>
+                            </div>
                         )
                     ) : (
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">

@@ -43,10 +43,12 @@ import {
     InformationCircleIcon,
     LinkIcon,
     ArrowTopRightOnSquareIcon,
+    CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import { useDropzone } from 'react-dropzone';
 import { motion, useInView } from "motion/react";
 import { clsx } from "clsx";
+import { useActiveDraftRun } from "~/components/ActiveDraftRunStatus";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
@@ -107,6 +109,7 @@ const CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_create_update_mobile
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
 const PUBLISH_REVIEW_FORM_ID = "vibe-raising-publish-review-form";
+const BACKEND_DRAFT_ID_PATTERN = /^\d+$/;
 
 type CreateUpdateMobileTourStep = {
     key: string;
@@ -286,6 +289,15 @@ function getMonthlyUpdateKey(month: string, year: number | string) {
 function getMonthlyUpdateIsoMonth(month: string, year: number | string) {
     const key = getMonthlyUpdateKey(month, year);
     return key ? `${key}-01` : "";
+}
+
+function monthYearFromIso(value?: string | null): { month: string; year: number } | null {
+    const match = /^(\d{4})-(\d{2})/.exec(String(value || "").trim());
+    if (!match) return null;
+    const year = Number(match[1]);
+    const option = VIBE_RAISING_MONTH_OPTIONS[Number(match[2]) - 1];
+    if (!option || !Number.isFinite(year)) return null;
+    return { month: option.name, year };
 }
 
 function isFutureMonthlyUpdate(month: string, year: number | string) {
@@ -482,13 +494,33 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "publish") {
         const draftId = String(formData.get("draftId") || "").trim();
+        console.log("[monthly-update:publish-action] received publish request", JSON.stringify({
+            draftId,
+            month: savePayload.month,
+            year: savePayload.year,
+            formEntries: Object.fromEntries(formData),
+        }));
         try {
-            if (/^\d+$/.test(draftId)) {
+            if (BACKEND_DRAFT_ID_PATTERN.test(draftId)) {
                 await publishVibeRaisingMonthlyUpdate(env, request, draftId);
+                console.log("[monthly-update:publish-action] published draft by id", { draftId });
                 return redirect("/founder-tools/updates");
             }
 
             const drafts = await getVibeRaisingDrafts(env, request);
+            console.log("[monthly-update:publish-action] loaded drafts for fallback", JSON.stringify({
+                draftCount: drafts.length,
+                publishableDrafts: drafts
+                    .filter((draft) => draft.status === "ready" && draft.visibility !== "published")
+                    .map((draft) => ({
+                        id: draft.id,
+                        month: draft.month,
+                        monthName: draft.monthName,
+                        year: draft.year,
+                        status: draft.status,
+                        visibility: draft.visibility,
+                    })),
+            }));
             const formMonth = savePayload.month;
             const formYear = savePayload.year;
             const matchingDraft = drafts.find((draft) => (
@@ -496,16 +528,19 @@ export async function action({ request, context }: Route.ActionArgs) {
                 (!Number.isFinite(formYear) || !formYear || draft.year === formYear) &&
                 draft.status === "ready" &&
                 draft.visibility !== "published" &&
-                /^\d+$/.test(draft.id)
+                BACKEND_DRAFT_ID_PATTERN.test(draft.id)
             ));
             const fallbackDraft = matchingDraft ?? drafts.find((draft) => (
                 draft.status === "ready" &&
                 draft.visibility !== "published" &&
-                /^\d+$/.test(draft.id)
+                BACKEND_DRAFT_ID_PATTERN.test(draft.id)
             ));
 
             if (fallbackDraft) {
                 await publishVibeRaisingMonthlyUpdate(env, request, fallbackDraft.id);
+                console.log("[monthly-update:publish-action] published fallback draft", {
+                    draftId: fallbackDraft.id,
+                });
                 return redirect("/founder-tools/updates");
             }
 
@@ -513,10 +548,17 @@ export async function action({ request, context }: Route.ActionArgs) {
                 ...savePayload,
                 saveMode: "ready",
             });
-            if (savedUpdate?.id) {
+            if (savedUpdate?.id && BACKEND_DRAFT_ID_PATTERN.test(savedUpdate.id)) {
                 await publishVibeRaisingMonthlyUpdate(env, request, savedUpdate.id);
+                console.log("[monthly-update:publish-action] saved then published draft", {
+                    draftId: savedUpdate.id,
+                });
                 return redirect("/founder-tools/updates");
             }
+
+            console.warn("[monthly-update:publish-action] saved update did not include a backend draft id", JSON.stringify({
+                savedUpdate,
+            }));
         } catch (error) {
             console.warn("Unable to publish Vibe Raising monthly update.", (error as any)?.response?.data ?? error);
             return {
@@ -809,6 +851,11 @@ function MonthYearTabs({
                             isDateEditable ? "cursor-pointer" : "cursor-default opacity-70",
                         )}
                     >
+                        {!month.trim() ? (
+                            <option value="" disabled>
+                                Select month
+                            </option>
+                        ) : null}
                         {mobileMonthOptions.map((option) => (
                             <option key={option.month} value={option.month}>
                                 {option.month}
@@ -2456,6 +2503,7 @@ export default function CreateUpdate() {
     const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
+    const { activeRun: sharedActiveDraftRun, refreshActiveRun } = useActiveDraftRun();
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
     const goToConnectDataStep = useCallback(() => {
         const returnPath = `${location.pathname}${location.search || ""}`;
@@ -2505,9 +2553,11 @@ export default function CreateUpdate() {
     const [showStoryMaterialsSuggestion, setShowStoryMaterialsSuggestion] = useState(false);
     const [dismissedStoryMaterialsSuggestionKey, setDismissedStoryMaterialsSuggestionKey] = useState<string | null>(null);
     const [highlightMaterialsSection, setHighlightMaterialsSection] = useState(false);
+    const [showAllCreateStepMonths, setShowAllCreateStepMonths] = useState(false);
     const [pendingDraftRequest, setPendingDraftRequest] = useState<{
         forceRegenerate?: boolean;
         clearPersistedRun?: boolean;
+        inputSources?: VibeRaisingInputSourceKey[];
     } | null>(null);
     const currentCreatePeriod = getCurrentMonthlyUpdatePeriod();
     const createStepMonthOptions = getCreateStepMonthOptions();
@@ -2515,6 +2565,38 @@ export default function CreateUpdate() {
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
         if (actionData?.step === "feedback" || actionData?.step === "publish-error") setDismissedFeedback(false);
+    }, [actionData]);
+
+    useEffect(() => {
+        const navigationFormData = navigation.formData;
+        const navigationIntent = navigationFormData?.get("intent");
+        if (!navigationFormData || navigationIntent !== "publish") return;
+
+        const payload = {
+            state: navigation.state,
+            location: navigation.location
+                ? `${navigation.location.pathname}${navigation.location.search || ""}`
+                : null,
+            formEntries: Object.fromEntries(navigationFormData.entries()),
+            url: window.location.href,
+            timestamp: new Date().toISOString(),
+        };
+        console.error("[monthly-update:publish] router submit state", JSON.stringify(payload));
+        window.localStorage.setItem("monthly-update-publish-router-debug", JSON.stringify(payload));
+    }, [navigation.formData, navigation.location, navigation.state]);
+
+    useEffect(() => {
+        if (actionData?.step !== "publish-error") return;
+
+        const payload = {
+            step: actionData.step,
+            error: String((actionData as any).error || ""),
+            data: (actionData as any).data || null,
+            url: window.location.href,
+            timestamp: new Date().toISOString(),
+        };
+        console.error("[monthly-update:publish] action returned publish-error", JSON.stringify(payload));
+        window.localStorage.setItem("monthly-update-publish-action-debug", JSON.stringify(payload));
     }, [actionData]);
 
     useEffect(() => {
@@ -2553,14 +2635,18 @@ export default function CreateUpdate() {
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || currentCreatePeriod.month);
     const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || currentCreatePeriod.year);
     const [activePeriodKey, setActivePeriodKey] = useState("current");
+    const hasSelectedMonth = Boolean(selectedMonth.trim());
     const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
     const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
     const targetMonthIso = getMonthlyUpdateIsoMonth(selectedMonth, selectedYear);
-    const isSelectedMonthInFuture = isFutureMonthlyUpdate(selectedMonth, selectedYear);
+    const isSelectedMonthInFuture = hasSelectedMonth && isFutureMonthlyUpdate(selectedMonth, selectedYear);
     const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
         (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
     );
-    const selectedMonthLabel = `${selectedMonth} ${selectedYear}`;
+    const selectedMonthLabel = hasSelectedMonth ? `${selectedMonth} ${selectedYear}` : "Select a month";
+    const catchUpMonthLabel = createStepMonthOptions[0]?.month || "May";
+    const currentDraftMonthLabel = createStepMonthOptions[1]?.month || currentCreatePeriod.month;
+    const monthSelectionCaption = `Select the month this update covers. ${catchUpMonthLabel} is available if you're catching up; ${currentDraftMonthLabel} is ready for your current draft.`;
     
     const [metricValues, setMetricValues] = useState<Record<string, string>>(() => {
         const initial: Record<string, string> = {};
@@ -2733,6 +2819,10 @@ export default function CreateUpdate() {
         return `${location.pathname}${query ? `?${query}` : ""}`;
     }, [location.pathname, location.search, selectedDraftInputSources]);
     const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
+    const connectedDraftInputSources = useMemo(
+        () => compactOptionalSources.filter(isConnectedInputSource).map((source) => source.key),
+        [compactOptionalSources],
+    );
 
     useEffect(() => {
         let cancelled = false;
@@ -2790,13 +2880,15 @@ export default function CreateUpdate() {
 
     useEffect(() => {
         if (isEdit) return;
+        if (showAllCreateStepMonths) return;
+        if (!selectedMonth.trim()) return;
         const isVisibleCreateStepMonth = createStepMonthOptions.some(
             (option) => option.month === selectedMonth && option.year === selectedYear,
         );
         if (isVisibleCreateStepMonth) return;
-        setSelectedMonth(currentCreatePeriod.month);
+        setSelectedMonth("");
         setSelectedYear(currentCreatePeriod.year);
-    }, [createStepMonthOptions, currentCreatePeriod.month, currentCreatePeriod.year, isEdit, selectedMonth, selectedYear]);
+    }, [createStepMonthOptions, currentCreatePeriod.year, isEdit, selectedMonth, selectedYear, showAllCreateStepMonths]);
 
     const dismissMetricCard = useCallback((metricKey: string) => {
         setAwakeMetricCards((previous) => {
@@ -3281,6 +3373,24 @@ export default function CreateUpdate() {
 
         if (statusResponse.state === "queued" || statusResponse.state === "running") {
             startTransition(() => {
+                // Restore the drafting stage from the run status itself so the
+                // progress card renders even on a fresh page load (refresh
+                // recovery), where monthConfirmed / selectedDraftStage would
+                // otherwise still be at their defaults and hide it.
+                const parsedMonth = monthYearFromIso(statusResponse.targetMonth);
+                if (parsedMonth) {
+                    setSelectedMonth(parsedMonth.month);
+                    setSelectedYear(parsedMonth.year);
+                }
+                const runInputSources = (statusResponse.run?.inputSources || []).filter(
+                    (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
+                );
+                if (runInputSources.length > 0) {
+                    setSelectedDraftInputSources(new Set(runInputSources));
+                }
+                setMonthConfirmed(true);
+                setSelectedDraftStage("reporting");
+                setMetricsConfirmed(true);
                 setEmailDraftStatus(statusResponse);
                 setEmailDraftUiError(null);
             });
@@ -3336,7 +3446,19 @@ export default function CreateUpdate() {
         });
     });
 
-    const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean }) => {
+    useEffect(() => {
+        // The app shell already polls the active run; seed the wizard from it
+        // so arriving here (banner/chip click or navigation) lands straight on
+        // the progress view without waiting for this page's own recovery fetch.
+        if (!isClientMounted) return;
+        if (emailDraftStatus?.runId) return;
+        if (!sharedActiveDraftRun?.runId) return;
+        if (sharedActiveDraftRun.state !== "queued" && sharedActiveDraftRun.state !== "running") return;
+        void processEmailDraftStatus(sharedActiveDraftRun);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isClientMounted, sharedActiveDraftRun?.runId, emailDraftStatus?.runId]);
+
+    const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         setEmailDraftActionBusy(true);
         setEmailDraftUiError(null);
 
@@ -3348,7 +3470,7 @@ export default function CreateUpdate() {
                 backendBaseUrl,
                 {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
-                    inputSources: selectedInputSources,
+                    inputSources: options?.inputSources?.length ? options.inputSources : selectedInputSources,
                     targetMonth: targetMonthIso,
                     manualDocumentIds,
                     manualSummary,
@@ -3374,8 +3496,9 @@ export default function CreateUpdate() {
         }
     }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso]);
 
-    const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
-        if (selectedInputSources.length === 0) {
+    const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
+        const effectiveInputSources = options?.inputSources?.length ? options.inputSources : selectedInputSources;
+        if (effectiveInputSources.length === 0) {
             setEmailDraftUiError("Choose an optional connected source before generating a source-assisted draft.");
             return;
         }
@@ -3391,13 +3514,13 @@ export default function CreateUpdate() {
         setEmailDraftActionBusy(true);
         setEmailDraftUiError(null);
         try {
-            if (!selectedInputSources.includes("gmail")) {
-                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
+            if (!effectiveInputSources.includes("gmail")) {
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate, inputSources: effectiveInputSources });
                 return;
             }
             const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl);
             if (bootstrap.googleConnected) {
-                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate, inputSources: effectiveInputSources });
                 return;
             }
             setShowEmailWizard(true);
@@ -3419,27 +3542,40 @@ export default function CreateUpdate() {
         targetMonthIso,
     ]);
 
-    const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+    const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         if (request?.clearPersistedRun) {
             clearPersistedEmailDraftRun();
         }
-        void startDraftFromSelectedInputs({ forceRegenerate: request?.forceRegenerate });
+        void startDraftFromSelectedInputs({ forceRegenerate: request?.forceRegenerate, inputSources: request?.inputSources });
     }, [clearPersistedEmailDraftRun, startDraftFromSelectedInputs]);
 
-    const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+    const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
+        // Entry paths like "Edit" never pass ?inputs= and hide the source cards,
+        // so fall back to every connected source rather than refusing to run.
+        const fallbackInputSources =
+            !request?.inputSources?.length && selectedInputSources.length === 0 && connectedDraftInputSources.length > 0
+                ? connectedDraftInputSources
+                : undefined;
+        if (fallbackInputSources) {
+            setSelectedDraftInputSources(new Set(fallbackInputSources));
+        }
+        const enrichedRequest = {
+            ...request,
+            inputSources: request?.inputSources ?? fallbackInputSources,
+        };
         if (existingUpdateForSelectedMonth) {
             setPendingDraftRequest({
-                ...request,
+                ...enrichedRequest,
                 forceRegenerate: true,
             });
             setShowRegenerateConfirm(true);
             return;
         }
-        executeDraftRequest(request);
-    }, [executeDraftRequest, existingUpdateForSelectedMonth]);
+        executeDraftRequest(enrichedRequest);
+    }, [connectedDraftInputSources, executeDraftRequest, existingUpdateForSelectedMonth, selectedInputSources]);
 
     const handleGenerateSelectedMonthUpdate = useCallback(() => {
-        if (isSelectedMonthInFuture) return;
+        if (!hasSelectedMonth || isSelectedMonthInFuture) return;
         setMonthConfirmed(true);
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
@@ -3448,7 +3584,7 @@ export default function CreateUpdate() {
         setEmailDraftUiError(null);
         setEmailDraftPollingDegraded(false);
         setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
-    }, [isSelectedMonthInFuture]);
+    }, [hasSelectedMonth, isSelectedMonthInFuture]);
 
     const handleGenerateDraftFromEmailClick = useCallback(() => {
         requestDraftFromSelectedInputs();
@@ -3461,7 +3597,7 @@ export default function CreateUpdate() {
     const handleGenerateDraftCardTouchEnd = useCallback((event: React.TouchEvent<HTMLButtonElement>) => {
         const start = generateDraftSwipeStartRef.current;
         generateDraftSwipeStartRef.current = null;
-        if (!start || !isMobileTourViewport || isSelectedMonthInFuture || emailDraftActionBusy) return;
+        if (!start || !isMobileTourViewport || !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy) return;
 
         const touch = event.changedTouches[0];
         if (!touch) return;
@@ -3471,7 +3607,7 @@ export default function CreateUpdate() {
         if (deltaX >= 72 && deltaY <= 40) {
             handleGenerateSelectedMonthUpdate();
         }
-    }, [emailDraftActionBusy, handleGenerateSelectedMonthUpdate, isMobileTourViewport, isSelectedMonthInFuture]);
+    }, [emailDraftActionBusy, handleGenerateSelectedMonthUpdate, hasSelectedMonth, isMobileTourViewport, isSelectedMonthInFuture]);
 
     const handleConfirmRegenerateDraft = useCallback(() => {
         const request = pendingDraftRequest ?? {};
@@ -3505,6 +3641,64 @@ export default function CreateUpdate() {
         }
     });
 
+    // useEffectEvent so the recovery cannot be cancelled mid-flight by state
+    // churn (restoring the run re-renders, which previously re-fired this
+    // effect via callback identities and left emailDraftActionBusy stuck true,
+    // disabling every draft action including cancel).
+    const runEmailDraftRecovery = useEffectEvent(async () => {
+        setEmailDraftActionBusy(true);
+        try {
+            if (!resumeEmailDrafting) {
+                clearPersistedEmailDraftRun();
+                resetEmailDraftUi();
+                return;
+            }
+
+            const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
+            if (activeRun) {
+                await processEmailDraftStatus(activeRun);
+                return;
+            }
+
+            const persistedRun = readPersistedEmailDraftRun(emailDraftStorageKey);
+            if (persistedRun?.runId) {
+                try {
+                    const storedStatus = await getVibeRaisingStartupUpdateStatus(
+                        backendBaseUrl,
+                        persistedRun.runId,
+                    );
+                    await processEmailDraftStatus(storedStatus);
+                    return;
+                } catch {
+                    clearPersistedEmailDraftRun();
+                }
+            }
+
+            if (resumeEmailDrafting) {
+                await startOrResumeEmailDraft();
+                return;
+            }
+
+            try {
+                await hydrateCompletedEmailDraft();
+                return;
+            } catch (error) {
+                if ((error as { status?: number })?.status !== 404) {
+                    throw error;
+                }
+            }
+        } catch (error) {
+            startTransition(() => {
+                setEmailDraftUiError(getEmailDraftErrorMessage(error));
+            });
+        } finally {
+            setEmailDraftActionBusy(false);
+            if (resumeEmailDrafting) {
+                clearEmailDraftingParams();
+            }
+        }
+    });
+
     useEffect(() => {
         if (!isClientMounted) return;
 
@@ -3513,72 +3707,12 @@ export default function CreateUpdate() {
             return;
         }
         emailDraftRecoveryKeyRef.current = recoveryKey;
-
-        let cancelled = false;
-        void (async () => {
-            setEmailDraftActionBusy(true);
-            try {
-                const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
-                if (cancelled) return;
-                if (activeRun) {
-                    await processEmailDraftStatus(activeRun);
-                    return;
-                }
-
-                const persistedRun = readPersistedEmailDraftRun(emailDraftStorageKey);
-                if (persistedRun?.runId) {
-                    try {
-                        const storedStatus = await getVibeRaisingStartupUpdateStatus(
-                            backendBaseUrl,
-                            persistedRun.runId,
-                        );
-                        if (cancelled) return;
-                        await processEmailDraftStatus(storedStatus);
-                        return;
-                    } catch {
-                        clearPersistedEmailDraftRun();
-                    }
-                }
-
-                if (resumeEmailDrafting) {
-                    await startOrResumeEmailDraft();
-                    return;
-                }
-
-                try {
-                    await hydrateCompletedEmailDraft();
-                    return;
-                } catch (error) {
-                    if ((error as { status?: number })?.status !== 404) {
-                        throw error;
-                    }
-                }
-            } catch (error) {
-                if (!cancelled) {
-                    startTransition(() => {
-                        setEmailDraftUiError(getEmailDraftErrorMessage(error));
-                    });
-                }
-            } finally {
-                if (!cancelled) {
-                    setEmailDraftActionBusy(false);
-                    if (resumeEmailDrafting) {
-                        clearEmailDraftingParams();
-                    }
-                }
-            }
-        })();
-
-        return () => {
-            cancelled = true;
-        };
+        void runEmailDraftRecovery();
     }, [
         backendBaseUrl,
-        clearEmailDraftingParams,
         emailDraftStorageKey,
         isClientMounted,
         resumeEmailDrafting,
-        startOrResumeEmailDraft,
     ]);
 
     useEffect(() => {
@@ -3885,7 +4019,7 @@ export default function CreateUpdate() {
                 statusDetail: selectedMonthLabel,
                 primaryLabel: "Start draft",
                 onPrimary: handleGenerateSelectedMonthUpdate,
-                primaryDisabled: isSelectedMonthInFuture || emailDraftActionBusy,
+                primaryDisabled: !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy,
             };
         }
 
@@ -3933,7 +4067,15 @@ export default function CreateUpdate() {
         };
     })();
 
-    const canRunAgainDraft = selectedDraftStage === "reporting" && hasDraftTemplate && !isManualOnlyDraftFlow && selectedInputSources.length > 0;
+    const regenerateSourcesAvailable = selectedInputSources.length > 0 || connectedDraftInputSources.length > 0;
+    const regenerateDialogSourceLabels = (
+        pendingDraftRequest?.inputSources?.length
+            ? pendingDraftRequest.inputSources
+            : selectedInputSources.length > 0
+                ? selectedInputSources
+                : connectedDraftInputSources
+    ).map((key) => INPUT_SOURCE_LABELS[key]).filter(Boolean);
+    const canRunAgainDraft = selectedDraftStage === "reporting" && hasDraftTemplate && regenerateSourcesAvailable;
 
     const handleRetryEmailDraft = () => {
         requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
@@ -3960,6 +4102,7 @@ export default function CreateUpdate() {
             if (cancelResponse.status === "completed" || cancelResponse.terminalState === "completed") {
                 emailDraftIgnoredRunIdRef.current = null;
                 await hydrateCompletedEmailDraft(cancelResponse.runId);
+                refreshActiveRun();
                 return;
             }
 
@@ -3967,6 +4110,9 @@ export default function CreateUpdate() {
                 clearPersistedEmailDraftRun();
                 setPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey);
                 resetEmailDraftUi();
+                // Clear the app-shell "drafting" banner right away instead of
+                // waiting for its next poll cycle.
+                refreshActiveRun();
                 return;
             }
 
@@ -3982,6 +4128,7 @@ export default function CreateUpdate() {
         backendBaseUrl,
         emailDraftForceRegenerateKey,
         emailDraftStatus?.runId,
+        refreshActiveRun,
     ]);
 
     const stopMediaStream = useCallback(() => {
@@ -4694,10 +4841,11 @@ export default function CreateUpdate() {
         const { feedback, data } = actionData;
         const publishError = actionData.step === "publish-error" ? String((actionData as any).error || "") : "";
         const reviewData = data as any;
-        const reviewDraftId = String(reviewData?.draftId || actionData?.update?.id || "").trim();
+        const rawReviewDraftId = String(reviewData?.draftId || actionData?.update?.id || "").trim();
+        const reviewDraftId = BACKEND_DRAFT_ID_PATTERN.test(rawReviewDraftId) ? rawReviewDraftId : "";
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
-        const canRegenerateDraftFromReview = !isManualOnlyDraftFlow && selectedInputSources.length > 0;
+        const canRegenerateDraftFromReview = regenerateSourcesAvailable;
         const handleRegenerateDraftFromReview = () => {
             setDismissedFeedback(true);
             requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
@@ -4794,14 +4942,83 @@ export default function CreateUpdate() {
             }
         };
 
-        const handlePublishReviewedUpdate = () => {
+        const getPublishDebugPayload = () => {
             const publishForm = document.getElementById(PUBLISH_REVIEW_FORM_ID);
-            if (publishForm instanceof HTMLFormElement) {
-                submit(publishForm, { method: "post" });
+            const formEntries =
+                publishForm instanceof HTMLFormElement
+                    ? Object.fromEntries(new FormData(publishForm).entries())
+                    : null;
+
+            return {
+                rawReviewDraftId,
+                reviewDraftId,
+                reviewMonth,
+                reviewYear,
+                isSubmitting,
+                formEntries,
+                url: window.location.href,
+                timestamp: new Date().toISOString(),
+            };
+        };
+
+        const handlePublishPopupOpen = () => {
+            const payload = getPublishDebugPayload();
+            console.error("[monthly-update:publish] confirmation opened", payload);
+            window.localStorage.setItem("monthly-update-publish-confirmation-debug", JSON.stringify(payload));
+            setShowConfirmPopup(true);
+        };
+
+        const handlePublishDebugClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+            event.preventDefault();
+
+            const publishForm = document.getElementById(PUBLISH_REVIEW_FORM_ID);
+            const draftReviewForm = document.getElementById(DRAFT_REVIEW_FORM_ID);
+            const formData =
+                draftReviewForm instanceof HTMLFormElement
+                    ? new FormData(draftReviewForm)
+                    : publishForm instanceof HTMLFormElement
+                        ? new FormData(publishForm)
+                        : null;
+
+            if (formData) {
+                formData.set("intent", "publish");
+                formData.set("month", reviewMonth);
+                formData.set("year", String(reviewYear));
+                if (reviewDraftId) {
+                    formData.set("draftId", reviewDraftId);
+                } else {
+                    formData.delete("draftId");
+                }
+            }
+
+            const payload = {
+                ...getPublishDebugPayload(),
+                willSubmit: Boolean(formData),
+                submitSource: draftReviewForm instanceof HTMLFormElement ? DRAFT_REVIEW_FORM_ID : PUBLISH_REVIEW_FORM_ID,
+                submitEntries: formData ? Object.fromEntries(formData.entries()) : null,
+            };
+            console.error("[monthly-update:publish] popup button clicked", payload);
+            window.localStorage.setItem("monthly-update-publish-submit-debug", JSON.stringify(payload));
+
+            if (!formData) {
+                console.error("[monthly-update:publish] hidden publish form not found", {
+                    formId: PUBLISH_REVIEW_FORM_ID,
+                });
+                setShowConfirmPopup(true);
                 return;
             }
 
-            setShowConfirmPopup(true);
+            const actionPath = `${location.pathname}${location.search || ""}`;
+            console.error("[monthly-update:publish] invoking router submit", JSON.stringify({
+                actionPath,
+                formEntries: Object.fromEntries(formData.entries()),
+                timestamp: new Date().toISOString(),
+            }));
+            submit(formData, { method: "post", action: actionPath });
+            console.error("[monthly-update:publish] router submit invoked", JSON.stringify({
+                actionPath,
+                timestamp: new Date().toISOString(),
+            }));
         };
 
         return (
@@ -4814,8 +5031,14 @@ export default function CreateUpdate() {
                 </Form>
 
                 {showConfirmPopup ? (
-                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm">
-                        <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-8 text-center shadow-xl">
+                    <div
+                        className="fixed inset-0 z-[120] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm"
+                        onClick={() => setShowConfirmPopup(false)}
+                    >
+                        <div
+                            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-8 text-center shadow-xl"
+                            onClick={(event) => event.stopPropagation()}
+                        >
                             <MonthlyUpdateStepper
                                 activeStep="publish"
                                 disableMotion
@@ -4835,7 +5058,6 @@ export default function CreateUpdate() {
                             <div className="space-y-3">
                                 <button
                                     type="button"
-                                    onClick={handlePublishReviewedUpdate}
                                     disabled
                                     aria-disabled="true"
                                     className="w-full cursor-not-allowed rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 shadow-sm"
@@ -5525,7 +5747,7 @@ export default function CreateUpdate() {
                     tertiaryDisabled={emailDraftActionBusy || saveDraftFetcher.state !== "idle"}
                     primaryLabel="Publish update"
                     mobilePrimaryLabel="Publish"
-                    onPrimary={() => setShowConfirmPopup(true)}
+                    onPrimary={handlePublishPopupOpen}
                 />
 
                 {publishError ? (
@@ -5598,8 +5820,20 @@ export default function CreateUpdate() {
                         </button>
                     ) : (
                         <div ref={monthSelectorRef} className="space-y-3">
-                            <p className="px-1 text-sm font-black text-gray-950">Select month</p>
                             <div className="overflow-visible rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm transition-all sm:p-8 lg:p-10">
+                                <div className="mb-8 hidden items-start gap-5 sm:flex">
+                                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-3xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.20)]">
+                                        <CalendarDaysIcon className="h-7 w-7" aria-hidden="true" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h2 className="text-3xl font-black tracking-tight text-gray-950">
+                                            Select month
+                                        </h2>
+                                        <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-600">
+                                            {monthSelectionCaption}
+                                        </p>
+                                    </div>
+                                </div>
                                 <div className="grid gap-4 lg:grid-cols-4 lg:items-stretch">
                                     <div className="lg:col-span-3">
                                         <div className="rounded-3xl border border-gray-200 bg-[var(--vr-palette-paper)] p-4 shadow-sm sm:p-5">
@@ -5609,9 +5843,22 @@ export default function CreateUpdate() {
                                                 onMonthChange={setSelectedMonth}
                                                 onYearChange={setSelectedYear}
                                                 onPeriodChange={setActivePeriodKey}
-                                                monthChoices={!isEdit ? createStepMonthOptions : undefined}
+                                                monthChoices={!isEdit && !showAllCreateStepMonths ? createStepMonthOptions : undefined}
                                                 isDateEditable={!isEmailDraftBusy}
                                             />
+                                            {!isEdit && !showAllCreateStepMonths ? (
+                                                <div className="mt-5 hidden items-center gap-3 text-sm font-semibold text-[var(--vr-color-primary)] sm:flex">
+                                                    <CalendarDaysIcon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                                                    <span className="text-[var(--vr-color-primary)]">Need an older month?</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAllCreateStepMonths(true)}
+                                                        className="font-black underline underline-offset-4 transition hover:text-[var(--vr-palette-black)]"
+                                                    >
+                                                        View all months
+                                                    </button>
+                                                </div>
+                                            ) : null}
                                             {isSelectedMonthInFuture && (
                                                 <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
                                                     Future monthly updates can be generated once that month starts.
@@ -5626,7 +5873,7 @@ export default function CreateUpdate() {
                                     </div>
                                     <button
                                         type="button"
-                                        disabled={isSelectedMonthInFuture || emailDraftActionBusy}
+                                        disabled={!hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy}
                                         onClick={() => {
                                             handleGenerateSelectedMonthUpdate();
                                         }}
@@ -5634,22 +5881,22 @@ export default function CreateUpdate() {
                                         onTouchEnd={handleGenerateDraftCardTouchEnd}
                                         className={clsx(
                                             "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 lg:col-span-1 lg:min-h-[132px]",
-                                            isSelectedMonthInFuture || emailDraftActionBusy
+                                            !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy
                                                 ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
                                                 : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
                                         )}
-                                        aria-label={`Start ${selectedMonthLabel} draft`}
+                                        aria-label={hasSelectedMonth ? `Start ${selectedMonthLabel} draft` : "Select a month before starting a draft"}
                                     >
                                         <div>
                                             <p className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
                                                 Step 1
                                             </p>
                                             <p className="mt-3 text-lg font-black">
-                                                Start draft
+                                                {hasSelectedMonth ? "Start draft" : "Select month first"}
                                             </p>
                                         </div>
                                         <span className="mt-5 flex items-center justify-between text-sm font-black">
-                                            <span>{selectedMonthLabel}</span>
+                                            <span>{hasSelectedMonth ? selectedMonthLabel : "Choose a month"}</span>
                                             {emailDraftActionBusy ? (
                                                 <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                             ) : (
@@ -5689,7 +5936,7 @@ export default function CreateUpdate() {
                                     onCancel={isEmailDraftBusy ? () => {
                                         void handleCancelEmailDraft();
                                     } : undefined}
-                                    cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                    cancelDisabled={emailDraftCancelBusy}
                                     isCancelling={emailDraftCancelBusy}
                                     manualFallbackMessage={canContinueDraftManually ? "You can keep editing the update below while the backend draft connection is unavailable." : null}
                                 />
@@ -5977,10 +6224,14 @@ export default function CreateUpdate() {
                 mobileSecondaryLabel={selectedDraftStage === "reporting" && hasDraftTemplate ? (saveDraftFetcher.state !== "idle" ? "Saving" : draftSaved ? "Saved" : "Save draft") : undefined}
                 onSecondary={selectedDraftStage === "reporting" && hasDraftTemplate ? handlePersistDraft : undefined}
                 secondaryDisabled={saveDraftFetcher.state !== "idle" || isEmailDraftBusy || isVideoUploadBlocking}
-                tertiaryLabel={canRunAgainDraft ? "Run again" : undefined}
-                mobileTertiaryLabel={canRunAgainDraft ? "Run again" : undefined}
-                onTertiary={canRunAgainDraft ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true }) : undefined}
-                tertiaryDisabled={emailDraftActionBusy}
+                tertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
+                mobileTertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
+                onTertiary={canRunAgainDraft
+                    ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true })
+                    : isEmailDraftBusy
+                        ? () => { void handleCancelEmailDraft(); }
+                        : undefined}
+                tertiaryDisabled={canRunAgainDraft ? emailDraftActionBusy : emailDraftCancelBusy}
                 primaryLabel={draftStickyBar.primaryLabel}
                 onPrimary={draftStickyBar.onPrimary}
                 primaryDisabled={draftStickyBar.primaryDisabled}
@@ -6077,8 +6328,6 @@ export default function CreateUpdate() {
                 </div>
             ) : null}
 
-            {showLegacyDraftFlow ? (
-            <>
             {showRegenerateConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
                     <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl ring-1 ring-black/5">
@@ -6090,7 +6339,7 @@ export default function CreateUpdate() {
                                 <div>
                                     <h2 className="text-lg font-black text-[var(--vr-color-text)]">Replace this draft?</h2>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
+                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data{regenerateDialogSourceLabels.length > 0 ? <> from <strong className="font-bold text-gray-900">{regenerateDialogSourceLabels.join(", ")}</strong></> : null}, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
                                     </p>
                                 </div>
                             </div>
@@ -6118,6 +6367,8 @@ export default function CreateUpdate() {
                 </div>
             )}
 
+            {showLegacyDraftFlow ? (
+            <>
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
                 <input
@@ -6218,7 +6469,7 @@ export default function CreateUpdate() {
                                 onCancel={isEmailDraftBusy ? () => {
                                     void handleCancelEmailDraft();
                                 } : undefined}
-                                cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                cancelDisabled={emailDraftCancelBusy}
                                 isCancelling={emailDraftCancelBusy}
                             />
                         ) : (

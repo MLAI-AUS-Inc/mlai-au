@@ -34,8 +34,8 @@ function getBaseUrl(env: Env): string {
 }
 
 // Helper to create an axios instance for a specific request
-function getAxios(env: Env, request?: Request) {
-    const baseURL = getBaseUrl(env);
+function getAxios(env: Env, request?: Request, baseUrlOverride?: string) {
+    const baseURL = baseUrlOverride || getBaseUrl(env);
     const headers: Record<string, string> = {};
 
     if (request) {
@@ -104,10 +104,10 @@ export async function verifyMagicLink(
 export async function verifyMagicLinkWithCookies(
     env: Env,
     token: string,
-    options?: { app?: string | null; next?: string | null },
+    options?: { app?: string | null; next?: string | null; backendBaseUrl?: string | null },
 ) {
     assertWattTheHackAuthEnabled(options?.app, options?.next);
-    const client = getAxios(env);
+    const client = getAxios(env, undefined, options?.backendBaseUrl || undefined);
     const response = await client.get(`/api/v1/auth/verify-magic-link/?${buildVerifyMagicLinkQuery(token, options)}`);
     const setCookieHeaders = response.headers["set-cookie"] || [];
     return { data: response.data, setCookieHeaders };

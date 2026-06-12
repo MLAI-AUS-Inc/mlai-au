@@ -1,6 +1,7 @@
 import { Link, redirect, useLoaderData } from "react-router";
 import { formatDistanceToNow } from "date-fns";
 import type { Route } from "./+types/vibe-raising-app.drafts";
+import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
 import { getEnv } from "~/lib/env.server";
 import {
     getVibeRaisingDrafts,
@@ -86,6 +87,7 @@ export default function VibeRaisingDraftsPage() {
                     <div className="rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-4 py-4">
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Still in progress</p>
                         <p className="mt-2 text-2xl font-black text-gray-950">{inProgressDrafts}</p>
+                        <ActiveDraftRunChip className="mt-3" />
                     </div>
                 </div>
             </section>

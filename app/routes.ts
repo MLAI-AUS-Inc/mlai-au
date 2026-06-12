@@ -5,7 +5,6 @@ export default [
   route("/dashboard", "routes/dashboard.tsx"),
   route("/sponsors", "routes/sponsors.tsx"),
   route("/mlai-studio", "routes/mlai-studio.tsx"),
-  route("/members", "routes/members.tsx"),
   route("/events", "routes/events.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
@@ -115,7 +114,6 @@ export default [
   // Founder Tools App routes
   route("/founder-tools", "routes/vibe-raising-app.tsx", { id: "founder-tools-root" }, [
     index("routes/founder-tools.index.tsx"),
-    route("overview", "routes/vibe-raising-app.overview.tsx"),
     route("updates", "routes/vibe-raising-app._index.tsx"),
     route("drafts", "routes/vibe-raising-app.drafts.tsx"),
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),

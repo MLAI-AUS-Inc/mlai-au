@@ -61,7 +61,6 @@ const staticPages: SitemapEntry[] = [
     { path: "/hackathons", changefreq: "weekly", priority: 0.7 },
     { path: "/medhack", changefreq: "weekly", priority: 0.7 },
     { path: "/vibe-raising", changefreq: "monthly", priority: 0.7 },
-    { path: "/members", changefreq: "monthly", priority: 0.5 },
     { path: "/sponsors", changefreq: "monthly", priority: 0.5 },
     { path: "/mlai-studio", changefreq: "weekly", priority: 0.8 },
     { path: "/privacy", changefreq: "yearly", priority: 0.3 },
