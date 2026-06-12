@@ -462,3 +462,6 @@
 - [x] Add mlai-backend `mlai_studio` app: StudioApplication table, public upsert submit endpoint, Django admin registration
 - [x] Wire the MLAI Studio application form to the backend (lead capture after step 1, awaited final submit with inline error fallback)
 - [x] Verify MLAI Studio signups end-to-end locally (lead row → complete row, admin changelist) and run `bun run typecheck`
+- [x] Remove the MLAI Studio landing page top nav and integrate the page into the global sidebar + footer shell
+- [x] Replace the Sponsor sidebar tab with Studio and move the homepage Studio teaser after People to match
+- [x] Verify the integrated /mlai-studio layout and homepage tab order in the local browser, run `bun run typecheck`

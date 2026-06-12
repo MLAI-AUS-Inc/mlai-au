@@ -152,32 +152,6 @@ function Reveal({
   );
 }
 
-/* ---------- NAV ---------- */
-function Nav() {
-  return (
-    <nav className="nav">
-      <div className="wrap nav-inner">
-        <a href="#top" aria-label="MLAI Studio home" onClick={scrollToId("top")}>
-          <img className="nav-logo" src={asset("logo-wide-black.png")} alt="MLAI" />
-        </a>
-        <div className="nav-links">
-          <a className="nav-link" href="#why" onClick={scrollToId("why")}>Why join</a>
-          <a className="nav-link" href="#work" onClick={scrollToId("work")}>The work</a>
-          <a className="nav-link" href="#how" onClick={scrollToId("how")}>How it works</a>
-          <a className="nav-link" href="#fit" onClick={scrollToId("fit")}>Who fits</a>
-          <button
-            className="btn btn-orange"
-            style={{ fontSize: 14, padding: "11px 20px" }}
-            onClick={scrollToApply}
-          >
-            Apply to join
-          </button>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
 /* ---------- HERO ---------- */
 function Hero() {
   return (
@@ -488,31 +462,10 @@ function FinalCTA() {
   );
 }
 
-/* ---------- FOOTER ---------- */
-function Footer() {
-  return (
-    <footer className="footer">
-      <div className="wrap footer-inner">
-        <div>
-          <img src={asset("logo-wide-teal.png")} alt="MLAI" style={{ height: 40, marginBottom: 18 }} />
-          <p className="footer-tag">Australia's AI community, from Melbourne outward.</p>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <a className="link" href="https://mlai.au" style={{ fontSize: 18 }}>mlai.au →</a>
-          <p className="footer-tag" style={{ marginLeft: "auto", marginTop: 10 }}>
-            Come for the AI.<br />Stay for the community.
-          </p>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 /* ---------- PAGE ---------- */
 export default function MlaiStudio() {
   return (
     <div className="ms-scope">
-      <Nav />
       <Hero />
       <WhyJoin />
       <WhatBuild />
@@ -522,7 +475,6 @@ export default function MlaiStudio() {
       <ApplySection />
       <SocialProof />
       <FinalCTA />
-      <Footer />
     </div>
   );
 }

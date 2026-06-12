@@ -93,17 +93,13 @@ export default function Layout() {
     location.pathname === "/valley" ||
     location.pathname.startsWith("/valley/");
   const isWattTheHackApp = location.pathname.startsWith("/watt-the-hack");
-  // MLAI Studio is a standalone landing page with its own top nav, so it
-  // opts out of the global left sidebar / footer chrome.
-  const isMlaiStudio = location.pathname === "/mlai-studio";
   const isAppRoute =
     isEsafetyApp ||
     isHospitalApp ||
     isVibeRaisingLegacyApp ||
     isFounderToolsApp ||
     isValleyApp ||
-    isWattTheHackApp ||
-    isMlaiStudio;
+    isWattTheHackApp;
 
   return (
     <html lang="en" suppressHydrationWarning>

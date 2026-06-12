@@ -218,16 +218,6 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         <FounderTools />
       </section>
 
-      {/* ===== MLAI STUDIO SECTION ===== */}
-      {/* Teaser intro that links through to the full /mlai-studio landing page */}
-      <section id="mlai-studio">
-        {/* MLAI Studio section divider - Teal */}
-        <SectionDivider color="#00ffd7" />
-
-        {/* MLAI Studio teaser */}
-        <MlaiStudioTeaser />
-      </section>
-
       {/* ===== VOLUNTEER SECTION ===== */}
       {/* Starts at "We are proud to have worked with amazing people", ends at Articles */}
       <section id="people">
@@ -246,6 +236,16 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
 
         {/* Team section - moved here directly under testimonials */}
         <Team />
+      </section>
+
+      {/* ===== MLAI STUDIO SECTION ===== */}
+      {/* Teaser intro that links through to the full /mlai-studio landing page */}
+      <section id="mlai-studio">
+        {/* MLAI Studio section divider - Teal */}
+        <SectionDivider color="#00ffd7" />
+
+        {/* MLAI Studio teaser */}
+        <MlaiStudioTeaser />
       </section>
 
       {/* ===== ARTICLES SECTION ===== */}
