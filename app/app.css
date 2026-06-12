@@ -4,6 +4,7 @@
 @import "./styles/vibe-raising-tokens.css";
 @import "./styles/vibe-raising-components.css";
 @import "./styles/mlai-studio.css";
+@import "./styles/press-kit.css";
 
 @custom-variant dark (&:is(.dark *));
 
