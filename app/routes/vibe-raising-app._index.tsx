@@ -3,11 +3,13 @@ import { format } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
 import {
-    getVibeRaisingMonthlyUpdates,
+    getVibeRaisingMonthlyUpdatesBundle,
     getOptionalVibeRaisingContext,
     getVibeRaisingLoginHref,
 } from "~/lib/vibe-raising";
+import type { VibeRaisingMetricHistory } from "~/types/vibe-raising";
 import { isFounderToolsDiscoverEnabled } from "~/lib/founder-tools-preview";
+import VRUpdateSnippetCard from "~/components/vibe-raising/VRUpdateSnippetCard";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import {
@@ -56,17 +58,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     const user = vibeContext.appUser;
-    const updates = user.role === "founder"
-        ? (await getVibeRaisingMonthlyUpdates(env, request)).map((update, index) => ({
-            ...update,
-            isCurrent: index === 0,
-            score: null,
-            likes: 0,
-            comments: 0,
-            investorsSentTo: 0,
-            investorsViewed: 0,
-        }))
-        : [];
+    const updatesBundle = user.role === "founder"
+        ? await getVibeRaisingMonthlyUpdatesBundle(env, request)
+        : { updates: [], metricHistory: {} };
+    const metricHistory = updatesBundle.metricHistory;
+    const updates = updatesBundle.updates.map((update, index) => ({
+        ...update,
+        isCurrent: index === 0,
+        score: null,
+        likes: 0,
+        comments: 0,
+        investorsSentTo: 0,
+        investorsViewed: 0,
+    }));
 
     // Investor Mock Data
     const portfolioUpdates = [
@@ -86,7 +90,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
     ];
 
-    return { user, updates, portfolioUpdates };
+    return { user, updates, metricHistory, portfolioUpdates };
 }
 
 // ─── Auto-resize textarea hook ──────────────────────────────────
@@ -1280,7 +1284,7 @@ function VRPastUpdateRow({
 }
 
 // 1. Founder Dashboard View
-function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
+function FounderDashboard({ user, updates, metricHistory }: { user: any, updates: any[], metricHistory: VibeRaisingMetricHistory }) {
     const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
     const navigate = useNavigate();
     const showDiscover = isFounderToolsDiscoverEnabled();
@@ -1632,6 +1636,15 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         currentUpdate ? (
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
                                 <div className="min-w-0 flex-1">
+                                    <div className="mb-3 flex justify-end">
+                                        <Link
+                                            to={`/founder-tools/updates/${encodeURIComponent(currentUpdate.id)}`}
+                                            className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
+                                        >
+                                            View full update
+                                            <ArrowRightIcon className="h-3.5 w-3.5" />
+                                        </Link>
+                                    </div>
                                     <VRCurrentUpdateCard update={currentUpdate} user={user} />
                                 </div>
                             </div>
@@ -1646,12 +1659,13 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     ) : (
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
                             {pastUpdates.length > 0 ? (
-                                <div className="min-w-0 flex-1 space-y-4">
+                                <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2">
                                     {pastUpdates.map((u) => (
-                                        <VRPreviewUpdateCard
+                                        <VRUpdateSnippetCard
                                             key={`${user.activeCompanyId || "default"}-${u.id}`}
                                             update={u}
                                             user={user}
+                                            metricHistory={metricHistory}
                                             statusLabel="Sent"
                                         />
                                     ))}
@@ -1796,13 +1810,13 @@ export default function VibeRaisingHome() {
         return null;
     }
 
-    const { user, updates, portfolioUpdates } = data;
+    const { user, updates, metricHistory, portfolioUpdates } = data;
     if (!user) return null;
 
     if (user.role === 'investor') {
         return <InvestorDashboard portfolioUpdates={portfolioUpdates} />;
     }
 
-    return <FounderDashboard user={user} updates={updates} />;
+    return <FounderDashboard user={user} updates={updates} metricHistory={metricHistory} />;
 }
 
