@@ -455,3 +455,6 @@
 - [x] Disable the Watt The Hack card on `/hackathons`
 - [x] Block Watt The Hack login, route, and endpoint access from the website
 - [x] Run `bun run typecheck`
+- [x] Add mlai-backend `mlai_studio` app: StudioApplication table, public upsert submit endpoint, Django admin registration
+- [x] Wire the MLAI Studio application form to the backend (lead capture after step 1, awaited final submit with inline error fallback)
+- [x] Verify MLAI Studio signups end-to-end locally (lead row → complete row, admin changelist) and run `bun run typecheck`

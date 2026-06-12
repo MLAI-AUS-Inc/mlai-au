@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
+import { API_URL } from "~/lib/api";
+
 /* ============================================================
-   MLAI STUDIO — multi-step application form (UI only)
+   MLAI STUDIO — multi-step application form
    Ported from the Claude Design handoff (form.jsx). All behaviour
    is reproduced — 6 steps, per-step validation, draft restore,
    progressive lead capture, review + consent, success screen.
 
-   ⚠ NO BACKEND: applications are saved to the browser
-   (localStorage) and the network POST is left as a clearly-marked
-   hook (`persistLead`) for the team to wire up. See 🔌 below.
+   Applications POST to the mlai-backend StudioApplication table
+   (`sendLead`): a partial lead is captured after step 1 and the
+   full record on submit, upserted by the browser-generated lead
+   id. localStorage (`persistLead`) stays as an offline fallback.
 
    Styles live in app/styles/mlai-studio.css (scoped under
    `.ms-scope`); this renders inside the .ms-scope landing page.
@@ -100,15 +103,45 @@ function persistLead(id: string, fields: Partial<FormData>, stage: "lead" | "com
   } catch {
     /* storage unavailable — ignore */
   }
-  // 🔌 WIRE A REAL BACKEND HERE (Airtable / Formspree / Supabase / your API).
-  // Send BOTH the partial lead (stage:"lead") and the complete record
-  // (stage:"complete"); keep the localStorage write above as a fallback. e.g.:
-  //   fetch("/api/mlai-studio-lead", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify(rec),
-  //   }).catch(() => {});
   return rec;
+}
+
+/* Backend field names for the StudioApplication table (snake_case). */
+const FIELD_TO_API: Record<keyof FormData, string> = {
+  fullName: "full_name", email: "email", phone: "phone", location: "location",
+  legalWork: "legal_work", visa: "visa", linkedin: "linkedin", github: "github",
+  portfolio: "portfolio", skills: "skills", aiTools: "ai_tools",
+  availability: "availability", startDate: "start_date", rate: "rate",
+  skillsOther: "skills_other", aiToolsOther: "ai_tools_other",
+  availabilityOther: "availability_other", startDateOther: "start_date_other",
+  interestsOther: "interests_other", projects: "projects", interests: "interests",
+  anything: "anything_else", consent: "consent",
+};
+
+/* POST a lead/application to the backend, upserting on the lead id. Rejects
+   on network failure or a non-2xx response — callers decide whether that is
+   fatal (final submit) or best-effort (step-1 lead capture). */
+function sendLead(id: string, fields: Partial<FormData>, stage: "lead" | "complete") {
+  const payload: Record<string, unknown> = { client_ref: id, stage };
+  for (const [key, value] of Object.entries(fields)) {
+    const apiKey = FIELD_TO_API[key as keyof FormData];
+    if (apiKey) payload[apiKey] = value;
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  return fetch(`${API_URL}/api/v1/mlai-studio/applications/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    // Let a step-1 lead survive the user immediately navigating away.
+    keepalive: stage === "lead",
+    signal: controller.signal,
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error(`Lead submit failed: ${res.status}`);
+      return res;
+    })
+    .finally(() => clearTimeout(timer));
 }
 
 function Field({
@@ -176,6 +209,7 @@ export default function ApplicationForm() {
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [done, setDone] = useState(false);
   const [leadSaved, setLeadSaved] = useState(false);
   const [leadId, setLeadId] = useState("");
@@ -271,7 +305,11 @@ export default function ApplicationForm() {
     if (Object.keys(e).length) { setErrors(e); return; }
     // Save the lead the moment name/email/phone are captured — before drop-off.
     if (step === 0) {
-      persistLead(leadId, { fullName: data.fullName, email: data.email, phone: data.phone }, "lead");
+      const lead = { fullName: data.fullName, email: data.email, phone: data.phone };
+      persistLead(leadId, lead, "lead");
+      void sendLead(leadId, lead, "lead").catch(() => {
+        /* best-effort — the localStorage copy and the full submit cover it */
+      });
       setLeadSaved(true);
     }
     const target = Math.min(step + 1, LAST);
@@ -293,16 +331,24 @@ export default function ApplicationForm() {
     setStep(i);
   };
 
-  const submit = () => {
+  const submit = async () => {
     for (let i = 0; i <= LAST; i++) {
       const e = validateStep(i);
       if (Object.keys(e).length) { setStep(i); setErrors(e); return; }
     }
     setSubmitting(true);
+    setSubmitError("");
     persistLead(leadId, data, "complete");
+    try {
+      await sendLead(leadId, data, "complete");
+    } catch {
+      setSubmitting(false);
+      setSubmitError("We couldn't reach the server — your answers are saved in this browser. Please try again in a moment.");
+      return;
+    }
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-    // Simulated async submit — replace the timeout with the real request above.
-    setTimeout(() => { setSubmitting(false); setDone(true); }, 1300);
+    setSubmitting(false);
+    setDone(true);
   };
 
   if (done) {
@@ -369,6 +415,12 @@ export default function ApplicationForm() {
       {step === 3 && <StepSkills data={data} set={set} toggle={toggle} errors={errors} />}
       {step === 4 && <StepWork data={data} set={set} toggle={toggle} errors={errors} />}
       {step === 5 && <StepReview data={data} set={set} errors={errors} />}
+
+      {submitError && (
+        <div className="err-msg" role="alert" style={{ marginTop: 18, fontSize: 14 }}>
+          {submitError}
+        </div>
+      )}
 
       <div className="form-nav">
         {step > 0 ? <button className="btn btn-outline" onClick={back} type="button">← Back</button> : <span />}
