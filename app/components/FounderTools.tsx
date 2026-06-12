@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router";
 
 interface ToolCard {
   id: string;
@@ -8,6 +7,7 @@ interface ToolCard {
   icon: string;
   explanation: string;
   image?: string;
+  href?: string;
   rotation: string;
   zIndex: number;
 }
@@ -32,6 +32,7 @@ const tools: ToolCard[] = [
     explanation:
       "Got a site or product? Now get traction. Learn how to use AI to publish content, rank in search, and show up in answer engines so the right customers find you. Simple systems that compound while you keep building.",
     image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202026-01-17%20at%207.14.09%E2%80%AFPM.png?alt=media&token=9fae98ac-b534-47c9-8f99-a0aff50a2a5a",
+    href: "/founder-tools/marketing",
     rotation: "rotate-2",
     zIndex: 20,
   },
@@ -43,6 +44,7 @@ const tools: ToolCard[] = [
     explanation:
       "Investor networks take years to build. If you share consistent, authentic monthly updates, we'll warm-intro you to investors with a real track record in startups like yours, in Australia and overseas.",
     image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202026-01-17%20at%207.19.26%E2%80%AFPM.png?alt=media&token=560f5b25-a414-4967-8c5c-e942342a9031",
+    href: "/founder-tools/updates",
     rotation: "-rotate-2",
     zIndex: 30,
   },
@@ -75,6 +77,12 @@ export default function FounderTools() {
 
   // Handle card selection with transition tracking
   const handleCardSelect = (toolId: string) => {
+    const tool = tools.find((item) => item.id === toolId);
+    if (tool?.href) {
+      window.location.assign(tool.href);
+      return;
+    }
+
     if (toolId === selectedTool) return;
 
     // Track the previous selection for z-index during transition
@@ -92,6 +100,11 @@ export default function FounderTools() {
       setIsTransitioning(false);
       setPrevSelectedTool(null);
     }, 450); // Slightly longer than animation duration
+  };
+
+  const handleDesktopCardClick = (tool: ToolCard) => {
+    if (!tool.href) return;
+    window.location.assign(tool.href);
   };
 
   // Detect mobile viewport
@@ -257,12 +270,12 @@ export default function FounderTools() {
                     {/* Full content - only visible on selected card */}
                     {isSelected && (
                       <div className="absolute bottom-6 left-0 right-0 text-center px-4">
-                        <span
-                          className={`text-sm font-medium ${useDarkText ? "text-black/70" : "text-white/80"
-                            }`}
-                        >
-                          {tool.id === "raising" ? "Coming soon" : "See what's inside"}
-                        </span>
+                      <span
+                        className={`text-sm font-medium ${useDarkText ? "text-black/70" : "text-white/80"
+                          }`}
+                      >
+                          See what's inside
+                      </span>
                       </div>
                     )}
                   </div>
@@ -283,6 +296,16 @@ export default function FounderTools() {
                     key={tool.id}
                     onMouseEnter={() => handleMouseEnter(tool.id)}
                     onMouseLeave={handleMouseLeave}
+                    onClick={() => handleDesktopCardClick(tool)}
+                    role={tool.href ? "link" : undefined}
+                    tabIndex={tool.href ? 0 : undefined}
+                    onKeyDown={(event) => {
+                      if (!tool.href) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        window.location.assign(tool.href);
+                      }
+                    }}
                     className={`relative overflow-hidden rounded-3xl p-8 w-64 h-80 transition-all duration-300 cursor-pointer
                       ${tool.rotation}
                       ${isHovered ? "scale-110" : "hover:scale-105"}
@@ -321,7 +344,7 @@ export default function FounderTools() {
                         className={`text-sm font-medium ${useDarkText ? "text-black/70" : "text-white/80"
                           }`}
                       >
-                        {tool.id === "raising" ? "Coming soon" : "See what's inside"}
+                        See what's inside
                       </span>
                     </div>
                   </div>
@@ -362,20 +385,20 @@ export default function FounderTools() {
 
                   {/* Access Tools Button */}
                   <div className="text-center">
-                    {selectedToolData.id === "raising" ? (
-                      <Link
-                        to="/vibe-raising"
+                    {selectedToolData.href ? (
+                      <a
+                        href={selectedToolData.href}
                         className={`font-bold py-3 px-8 rounded-full text-base transition-all duration-300 hover:scale-105 active:scale-95 inline-block ${selectedToolData.bgColor === "#fefc22" || selectedToolData.bgColor === "#00ffd7"
                           ? "text-black"
                           : "text-white"
                           }`}
                         style={{
                           backgroundColor: selectedToolData.bgColor,
-                          boxShadow: `0 0 30px #bf8bff80, 0 4px 15px rgba(0, 0, 0, 0.3)`
+                          boxShadow: `0 0 30px ${selectedToolData.bgColor}60, 0 4px 15px rgba(0, 0, 0, 0.3)`
                         }}
                       >
                         Open {selectedToolData.title}
-                      </Link>
+                      </a>
                     ) : (
                       <button
                         className={`font-bold py-3 px-8 rounded-full text-base transition-all duration-300 ${selectedToolData.bgColor === "#fefc22" || selectedToolData.bgColor === "#00ffd7"
@@ -466,20 +489,20 @@ export default function FounderTools() {
                   {/* Access Tools Button */}
                   <div className="mt-8 text-center">
                     {hoveredToolData && (
-                      hoveredToolData.id === "raising" ? (
-                        <Link
-                          to="/vibe-raising"
+                      hoveredToolData.href ? (
+                        <a
+                          href={hoveredToolData.href}
                           className={`font-bold py-4 px-12 rounded-full text-lg transition-all duration-300 hover:scale-105 inline-block ${hoveredToolData.bgColor === "#fefc22" || hoveredToolData.bgColor === "#00ffd7"
                             ? "text-black"
                             : "text-white"
                             }`}
                           style={{
                             backgroundColor: hoveredToolData.bgColor,
-                            boxShadow: `0 0 40px #bf8bff80, 0 4px 20px rgba(0, 0, 0, 0.3)`
+                            boxShadow: `0 0 40px ${hoveredToolData.bgColor}60, 0 4px 20px rgba(0, 0, 0, 0.3)`
                           }}
                         >
                           Open {hoveredToolData.title}
-                        </Link>
+                        </a>
                       ) : (
                         <button
                           className={`font-bold py-4 px-12 rounded-full text-lg transition-all duration-300 ${hoveredToolData.bgColor === "#fefc22" || hoveredToolData.bgColor === "#00ffd7"
