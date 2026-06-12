@@ -62,6 +62,7 @@ const staticPages: SitemapEntry[] = [
     { path: "/medhack", changefreq: "weekly", priority: 0.7 },
     { path: "/vibe-raising", changefreq: "monthly", priority: 0.7 },
     { path: "/sponsors", changefreq: "monthly", priority: 0.5 },
+    { path: "/mlai-studio", changefreq: "weekly", priority: 0.8 },
     { path: "/privacy", changefreq: "yearly", priority: 0.3 },
     { path: "/terms", changefreq: "yearly", priority: 0.3 },
 ];

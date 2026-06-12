@@ -28,27 +28,34 @@ const navigation = [
   },
   {
     number: "4",
+    name: "MLAI Studio",
+    href: "/#mlai-studio",
+    sectionId: "mlai-studio", // MLAI Studio teaser section
+    color: "#00ffd7", // Teal — MLAI Studio's signature accent
+  },
+  {
+    number: "5",
     name: "People",
     href: "/#people",
     sectionId: "people", // Testimonials + Team section
     color: "#3537dc", // Blue
   },
   {
-    number: "5",
+    number: "6",
     name: "Sponsor",
     href: "/sponsors",
     // No sectionId - navigates to /sponsors page
     color: "#ff003d", // Crimson
   },
   {
-    number: "6",
+    number: "7",
     name: "Articles",
     href: "/#articles",
     sectionId: "articles", // Substack "Monthly updates" section
     color: "#fefc22", // Yellow
   },
   {
-    number: "7",
+    number: "8",
     name: "Login",
     href: "/hackathons",
     color: "#00ffd7", // Mint (external route - no section)

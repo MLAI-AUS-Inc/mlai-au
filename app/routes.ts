@@ -4,6 +4,7 @@ export default [
   index("routes/_index.tsx"),
   route("/dashboard", "routes/dashboard.tsx"),
   route("/sponsors", "routes/sponsors.tsx"),
+  route("/mlai-studio", "routes/mlai-studio.tsx"),
   route("/events", "routes/events.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
