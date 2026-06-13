@@ -147,6 +147,16 @@ export function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
   );
 }
 
+export function isPublishFlowSettled(run: VibeMarketingRunSummary) {
+  if (normalized(stringResultValue(run, "merge_status", "mergeStatus")) === "merged") return true;
+  if (publishPrUrlForRun(run)) return false;
+  const childStatus =
+    normalized(run.publishChildStatus ?? "") || normalized(stringResultValue(run, "publish_child_status", "publishChildStatus"));
+  const previewEvidence =
+    publishPreviewUrlForRun(run) || stringResultValue(run, "publish_child_preview_url", "publishChildPreviewUrl");
+  return childStatus === "completed" && Boolean(previewEvidence);
+}
+
 export function isPublishApprovalGate(run: VibeMarketingRunSummary) {
   return Boolean(
     isArticleWorkflow(run.workflow) &&
