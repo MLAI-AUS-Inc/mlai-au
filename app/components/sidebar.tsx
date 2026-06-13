@@ -38,7 +38,7 @@ const navigation = [
     name: "Studio",
     href: "/#mlai-studio",
     sectionId: "mlai-studio", // MLAI Studio teaser section
-    color: "#00ffd7", // Teal — MLAI Studio's signature accent
+    color: "#ff003d", // Crimson
   },
   {
     number: "6",

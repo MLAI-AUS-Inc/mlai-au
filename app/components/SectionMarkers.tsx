@@ -26,7 +26,7 @@ const sectionMarkers = [
     {
         sectionId: "mlai-studio",
         name: "Studio",
-        color: "#00ffd7", // Teal — MLAI Studio's signature accent
+        color: "#ff003d", // Crimson
     },
     {
         sectionId: "articles",

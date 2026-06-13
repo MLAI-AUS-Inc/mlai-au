@@ -465,3 +465,5 @@
 - [x] Remove the MLAI Studio landing page top nav and integrate the page into the global sidebar + footer shell
 - [x] Replace the Sponsor sidebar tab with Studio and move the homepage Studio teaser after People to match
 - [x] Verify the integrated /mlai-studio layout and homepage tab order in the local browser, run `bun run typecheck`
+- [x] Recolor the Studio sidebar tab, section marker, and homepage divider from teal back to crimson (#ff003d)
+- [x] Recolor the MLAI Studio teaser main accents (eyebrow, rotating word box, stats, CTA) from mint to crimson, leaving the sliding pill marquee untouched
