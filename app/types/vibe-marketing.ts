@@ -273,6 +273,46 @@ export interface VibeMarketingCheck {
   prUrl?: string | null;
   prNumber?: string | number | null;
   previewUrl?: string | null;
+  ready?: boolean;
+  enabled?: boolean;
+  channels?: VibeMarketingNotificationChannel[];
+  automation?: VibeMarketingResearchAutomation | null;
+}
+
+export type VibeMarketingNotificationChannelType = "slack" | "whatsapp" | "email";
+
+export type VibeMarketingNotificationConsentState = "pending" | "active" | "opted_out" | "revoked";
+
+export interface VibeMarketingNotificationChannelVerification {
+  expiresAt: string | null;
+  resendAvailableAt: string | null;
+  attemptsRemaining: number | null;
+}
+
+export interface VibeMarketingNotificationChannel {
+  id: string;
+  channelType: VibeMarketingNotificationChannelType;
+  routeId: string;
+  displayName: string;
+  consentState: VibeMarketingNotificationConsentState;
+  verifiedAt: string | null;
+  isPrimary: boolean;
+  pendingVerification: VibeMarketingNotificationChannelVerification | null;
+}
+
+export interface VibeMarketingResearchAutomation {
+  id: string;
+  status: "active" | "paused" | "disabled";
+  timezone: string;
+  frequencyPerDay: number;
+  localSendTimes: string[];
+  enabled: boolean;
+}
+
+export interface VibeMarketingNotificationChannelsPayload {
+  channels: VibeMarketingNotificationChannel[];
+  automation: VibeMarketingResearchAutomation | null;
+  dailyDiscoveryEnabled: boolean;
 }
 
 export interface VibeMarketingTopicCandidate {

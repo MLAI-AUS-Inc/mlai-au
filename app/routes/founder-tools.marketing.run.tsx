@@ -17,6 +17,7 @@ import {
 import { clsx } from "clsx";
 
 import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
+import DailyReminderChannels from "~/components/DailyReminderChannels";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
@@ -45,17 +46,21 @@ import {
   controlVibeMarketingRun,
   acceptVibeMarketingComponentRevision,
   addVibeMarketingComponentComment,
+  createNotificationChannel,
   deleteVibeMarketingComponentComment,
   getVibeMarketingBootstrap,
   getVibeMarketingGithubRepos,
   getVibeMarketingRun,
+  removeNotificationChannel,
   replayVibeMarketingDaily,
+  resendNotificationChannelCode,
   submitVibeMarketingArticleSystemComments,
   submitVibeMarketingComponentComments,
   startVibeMarketingScan,
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
   updateVibeMarketingComponentComment,
+  verifyNotificationChannelOtp,
   canonicalizeTopicCandidates,
 } from "~/lib/vibe-marketing";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
@@ -509,6 +514,21 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
+    } else if (intent === "connect-channel") {
+      const channelType = stringFromForm(formData, "channelType");
+      if (!channelType) return { intent, error: "Choose a notification channel to connect." };
+      await createNotificationChannel(env, request, {
+        channelType,
+        routeId: stringFromForm(formData, "routeId"),
+      });
+    } else if (intent === "verify-channel-otp") {
+      const code = stringFromForm(formData, "code");
+      if (!code) return { intent, error: "Enter the 6-digit code from WhatsApp." };
+      await verifyNotificationChannelOtp(env, request, stringFromForm(formData, "channelId"), code);
+    } else if (intent === "resend-channel-otp") {
+      await resendNotificationChannelCode(env, request, stringFromForm(formData, "channelId"));
+    } else if (intent === "remove-channel") {
+      await removeNotificationChannel(env, request, stringFromForm(formData, "channelId"));
     } else if (["approve", "deny", "resume", "restart", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
@@ -2495,6 +2515,11 @@ function ArticleSetupPublishDetail({
   const dailyEnabled = Boolean(bootstrap.settings.dailyDiscoveryEnabled || dailyCheck?.enabled || dailyCheck?.passed);
   const dailyReady = Boolean(dailyEnabled || setupMerged || dailyCheck?.ready || dailyCheck?.passed);
   const defaultTimezone = bootstrap.settings.defaultTimezone ?? "Australia/Melbourne";
+  const dailyChannels = dailyCheck?.channels ?? [];
+  const activeChannelLabels = dailyChannels
+    .filter((channel) => channel.consentState === "active")
+    .map((channel) => ({ slack: "Slack", email: "Email", whatsapp: "WhatsApp" })[channel.channelType])
+    .filter(Boolean);
 
   return (
     <div className="space-y-5">
@@ -2583,9 +2608,10 @@ function ArticleSetupPublishDetail({
             )}
           </PublishFlowCard>
 
-          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? "Enabled" : setupMerged ? "Ready" : "Merge first"}>
+          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? (activeChannelLabels.length ? `${activeChannelLabels.join(" + ")} enabled` : "Enabled") : setupMerged ? "Ready" : "Merge first"}>
             {setupMerged ? (
               <div className="space-y-3">
+                <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
                 <Form method="POST" className="space-y-3">
                   <label className="block">
                     <span className="text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
@@ -2706,6 +2732,11 @@ function PublishAndAutomateDetail({
   const dailyEnabled = Boolean(bootstrap.settings.dailyDiscoveryEnabled || dailyCheck?.enabled || dailyCheck?.passed);
   const dailyReady = Boolean(dailyEnabled || dailyCheck?.ready || dailyCheck?.passed);
   const defaultTimezone = bootstrap.settings.defaultTimezone ?? "Australia/Melbourne";
+  const dailyChannels = dailyCheck?.channels ?? [];
+  const activeChannelLabels = dailyChannels
+    .filter((channel) => channel.consentState === "active")
+    .map((channel) => ({ slack: "Slack", email: "Email", whatsapp: "WhatsApp" })[channel.channelType])
+    .filter(Boolean);
 
   return (
     <div className="space-y-5">
@@ -2716,7 +2747,7 @@ function PublishAndAutomateDetail({
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish publishing this article</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Create the publish PR, merge it after checks pass, then turn on Slack research prompts for the next article.
+              Create the publish PR, merge it after checks pass, then turn on daily research prompts (Slack, email or WhatsApp) for the next article.
             </p>
           </div>
           <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishStep?.status ?? "ready"} />
@@ -2867,9 +2898,18 @@ function PublishAndAutomateDetail({
           <PublishFlowCard
             title="Daily research reminder"
             status={dailyEnabled ? "complete" : dailyReady ? "ready" : "locked"}
-            eyebrow={dailyEnabled ? "Slack enabled" : dailyReady ? "Ready" : "Needs setup"}
+            eyebrow={
+              dailyEnabled
+                ? activeChannelLabels.length
+                  ? `${activeChannelLabels.join(" + ")} enabled`
+                  : "Enabled"
+                : dailyReady
+                  ? "Ready"
+                  : "Needs setup"
+            }
           >
             <div className="space-y-3">
+              <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
               <Form method="POST" className="space-y-3">
                 <label className="block">
                   <span className="mb-2 block text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
@@ -2887,7 +2927,7 @@ function PublishAndAutomateDetail({
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-500"
                 >
                   {enableDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : dailyEnabled ? <CheckCircleIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
-                  {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable Slack reminder"}
+                  {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable daily reminder"}
                 </button>
               </Form>
               <Form method="POST">
