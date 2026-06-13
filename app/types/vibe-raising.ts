@@ -266,6 +266,7 @@ export interface VibeRaisingInputSourceSummary {
   googlePermissionsUrl?: string | null;
   selectedChannelCount?: number;
   selectedProjectCount?: number;
+  selectedPropertyCount?: number;
   hasReportScope?: boolean;
   needsReportReconnect?: boolean;
   canRequestReportScopes?: boolean;
@@ -383,6 +384,24 @@ export interface VibeRaisingSlackChannel {
   isPrivate: boolean;
   selected: boolean;
   lastSyncedAt?: string | null;
+}
+
+export interface VibeRaisingGoogleAnalyticsProperty {
+  id?: number | string;
+  propertyId: string;
+  propertyDisplayName: string;
+  name?: string | null;
+  accountId?: string | null;
+  accountDisplayName?: string | null;
+  selected: boolean;
+  lastSyncedAt?: string | null;
+}
+
+export interface VibeRaisingGoogleAnalyticsPropertiesResponse {
+  accountLabel?: string | null;
+  properties: VibeRaisingGoogleAnalyticsProperty[];
+  nextCursor?: string | null;
+  warnings: string[];
 }
 
 export interface VibeRaisingSlackChannelsResponse {

@@ -18,6 +18,8 @@ import type {
   VibeRaisingGmailDisconnectResponse,
   VibeRaisingGmailMessagePreview,
   VibeRaisingGmailPreview,
+  VibeRaisingGoogleAnalyticsPropertiesResponse,
+  VibeRaisingGoogleAnalyticsProperty,
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
@@ -94,6 +96,8 @@ const SLACK_PREVIEW_PATH = "/api/v1/integrations/slack/preview";
 const LINEAR_PROJECTS_PATH = "/api/v1/integrations/linear/projects";
 const LINEAR_PROJECT_SELECTIONS_PATH = "/api/v1/integrations/linear/project-selections";
 const LINEAR_PREVIEW_PATH = "/api/v1/integrations/linear/preview";
+const GOOGLE_ANALYTICS_PROPERTIES_PATH = "/api/v1/integrations/google-analytics/properties";
+const GOOGLE_ANALYTICS_PROPERTY_SELECTIONS_PATH = "/api/v1/integrations/google-analytics/property-selections";
 
 const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisingInputSourceSummary, "selected" | "status">> = {
   gmail: {
@@ -1430,6 +1434,10 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       typeof connection.selectedProjectCount === "number" && Number.isFinite(connection.selectedProjectCount)
         ? connection.selectedProjectCount
         : Number(connection.selectedProjectCount ?? connection.selected_project_count ?? 0) || 0;
+    const selectedPropertyCount =
+      typeof connection.selectedPropertyCount === "number" && Number.isFinite(connection.selectedPropertyCount)
+        ? connection.selectedPropertyCount
+        : Number(connection.selectedPropertyCount ?? connection.selected_property_count ?? 0) || 0;
     const rawRequiredReportScopes = connection.requiredReportScopes ?? connection.required_report_scopes;
     const requiredReportScopes = Array.isArray(rawRequiredReportScopes)
       ? rawRequiredReportScopes.map((item) => String(item || "").trim()).filter(Boolean)
@@ -1448,6 +1456,7 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
         asNullableString(connection.google_permissions_url),
       selectedChannelCount,
       selectedProjectCount,
+      selectedPropertyCount,
       hasReportScope: asBoolean(connection.hasReportScope ?? connection.has_report_scope),
       needsReportReconnect: asBoolean(connection.needsReportReconnect ?? connection.needs_report_reconnect),
       canRequestReportScopes: asBoolean(connection.canRequestReportScopes ?? connection.can_request_report_scopes),
@@ -2550,7 +2559,7 @@ export async function getVibeRaisingInputSourcesStatus(
     );
     const summaries = normalizeInputSourceSummaries(response);
     const sources = (Object.keys(INPUT_SOURCE_DEFINITIONS) as VibeRaisingInputSourceKey[]).map((key) => (
-      summaries[key] ?? createInputSourceSummary(key, key === "google_analytics" ? "coming_soon" : "not_connected")
+      summaries[key] ?? createInputSourceSummary(key, "not_connected")
     ));
     return {
       sources,
@@ -2626,7 +2635,7 @@ export async function getVibeRaisingInputSourcesStatus(
   return { sources, financeUnavailable };
 }
 
-type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "google_analytics" | "manual_documents">;
+type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents">;
 
 const CONNECTOR_PROVIDER_SLUGS: Record<ConnectableVibeRaisingInputSourceKey, string> = {
   stripe: "stripe",
@@ -2636,6 +2645,7 @@ const CONNECTOR_PROVIDER_SLUGS: Record<ConnectableVibeRaisingInputSourceKey, str
   google_drive: "google-drive",
   slack: "slack",
   linear: "linear",
+  google_analytics: "google-analytics",
 };
 
 export function connectVibeRaisingInputSource(
@@ -3042,6 +3052,97 @@ export async function saveVibeRaisingSlackChannelSelections(
     channels: collectRawList(payload, ["selectedChannels", "selected_channels", "channels"])
       .map(normalizeSlackChannel)
       .filter((value): value is VibeRaisingSlackChannel => value !== null),
+    nextCursor: null,
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+function normalizeGoogleAnalyticsProperty(raw: unknown): VibeRaisingGoogleAnalyticsProperty | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = payload.id ?? payload.propertyId ?? payload.property_id;
+  const propertyId =
+    asNullableString(payload.propertyId) ??
+    asNullableString(payload.property_id) ??
+    asNullableString(payload.id);
+  if (!propertyId) return null;
+  const propertyDisplayName =
+    asNullableString(payload.propertyDisplayName) ??
+    asNullableString(payload.property_display_name) ??
+    asNullableString(payload.name) ??
+    propertyId;
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : propertyId,
+    propertyId,
+    propertyDisplayName,
+    name: asNullableString(payload.name) ?? propertyDisplayName,
+    accountId:
+      asNullableString(payload.accountId) ??
+      asNullableString(payload.account_id),
+    accountDisplayName:
+      asNullableString(payload.accountDisplayName) ??
+      asNullableString(payload.account_display_name),
+    selected: asBoolean(payload.selected),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+  };
+}
+
+export async function getVibeRaisingGoogleAnalyticsProperties(
+  backendBaseUrl: string,
+  options: { cursor?: string | null; limit?: number } = {},
+): Promise<VibeRaisingGoogleAnalyticsPropertiesResponse> {
+  const searchParams = new URLSearchParams();
+  if (options.cursor) searchParams.set("cursor", options.cursor);
+  if (typeof options.limit === "number") searchParams.set("limit", String(options.limit));
+  const path = searchParams.toString()
+    ? `${GOOGLE_ANALYTICS_PROPERTIES_PATH}?${searchParams.toString()}`
+    : GOOGLE_ANALYTICS_PROPERTIES_PATH;
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    path,
+    { method: "GET" },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    properties: collectRawList(payload, ["properties"])
+      .map(normalizeGoogleAnalyticsProperty)
+      .filter((value): value is VibeRaisingGoogleAnalyticsProperty => value !== null),
+    nextCursor:
+      asNullableString(payload.nextCursor) ??
+      asNullableString(payload.next_cursor),
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+export async function saveVibeRaisingGoogleAnalyticsPropertySelections(
+  backendBaseUrl: string,
+  propertyIds: string[],
+): Promise<VibeRaisingGoogleAnalyticsPropertiesResponse> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    GOOGLE_ANALYTICS_PROPERTY_SELECTIONS_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({ propertyIds }),
+    },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    properties: collectRawList(payload, ["selectedProperties", "selected_properties", "properties"])
+      .map(normalizeGoogleAnalyticsProperty)
+      .filter((value): value is VibeRaisingGoogleAnalyticsProperty => value !== null),
     nextCursor: null,
     warnings: Array.isArray(rawWarnings)
       ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
