@@ -2908,6 +2908,23 @@ export default function CreateUpdate() {
         };
     }, [backendBaseUrl]);
 
+    // On the edit/regenerate path (no ?inputs= deep link), pre-select the founder's
+    // connected sources once so the picker isn't empty and the generate button is enabled.
+    // Bails for create-new, for ?inputs= deep links, and once a selection already exists.
+    const didSeedEditSourcesRef = useRef(false);
+    useEffect(() => {
+        if (didSeedEditSourcesRef.current) return;
+        if (!isEdit || initialSelectedInputSources.length > 0) {
+            didSeedEditSourcesRef.current = true;
+            return;
+        }
+        if (connectedDraftInputSources.length === 0) return;
+        if (selectedDraftInputSources.size === 0) {
+            setSelectedDraftInputSources(new Set(connectedDraftInputSources));
+        }
+        didSeedEditSourcesRef.current = true;
+    }, [isEdit, initialSelectedInputSources, connectedDraftInputSources, selectedDraftInputSources]);
+
     const toggleDraftInputSource = useCallback((source: VibeRaisingInputSourceSummary) => {
         if (!isConnectedInputSource(source)) return;
         setSelectedDraftInputSources((previous) => {
@@ -4067,6 +4084,21 @@ export default function CreateUpdate() {
         }
     }, []);
 
+    // Regenerating an existing draft returns the user to the pristine GENERATE view
+    // (month + source picker + "Draft from X" button) so they can re-pick sources and
+    // re-run with the same generate button. Keep monthConfirmed + selectedDraftStage
+    // ("reporting") so the picker and generate button stay visible; clearing
+    // metricsConfirmed hides the populated template + "Save as Draft".
+    const handleReturnToGenerate = useCallback(() => {
+        setDismissedFeedback(true);
+        resetEmailDraftUi();
+        clearPersistedEmailDraftRun();
+        setMetricsConfirmed(false);
+        if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, []);
+
     const draftStickyStatusIcon = (
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
             {hasDraftTemplate ? <CheckCircleIcon className="h-5 w-5" /> : <SparklesIcon className="h-5 w-5" />}
@@ -4781,7 +4813,7 @@ export default function CreateUpdate() {
         </section>
     );
 
-    const optionalDataSourcesSection = !isEdit ? (
+    const optionalDataSourcesSection = (
         <section className="rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
@@ -4901,7 +4933,7 @@ export default function CreateUpdate() {
                 </div>
             </div>
         </section>
-    ) : null;
+    );
 
     const handlePersistDraft = useCallback(() => {
         const draftForm = document.getElementById(DRAFT_REVIEW_FORM_ID);
@@ -4921,10 +4953,7 @@ export default function CreateUpdate() {
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
         const canRegenerateDraftFromReview = regenerateSourcesAvailable;
-        const handleRegenerateDraftFromReview = () => {
-            setDismissedFeedback(true);
-            requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
-        };
+        const handleRegenerateDraftFromReview = handleReturnToGenerate;
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
         const reviewPitchDeckUrl = String(reviewData?.pitchDeckUrl || "").trim();
@@ -6309,7 +6338,7 @@ export default function CreateUpdate() {
                 tertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
                 mobileTertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
                 onTertiary={canRunAgainDraft
-                    ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true })
+                    ? handleReturnToGenerate
                     : isEmailDraftBusy
                         ? () => { void handleCancelEmailDraft(); }
                         : undefined}
