@@ -33,6 +33,9 @@ import type {
   VibeMarketingWorkflowAction,
   VibeMarketingWorkflowProgress,
   VibeMarketingWorkflowStep,
+  VibeMarketingNotificationChannel,
+  VibeMarketingNotificationChannelsPayload,
+  VibeMarketingResearchAutomation,
 } from "~/types/vibe-marketing";
 
 const BASE_PATH = "/api/v1/vibe-marketing";
@@ -1761,6 +1764,126 @@ export async function refreshVibeMarketingBaselineGoogle(env: Env, request: Requ
 
 export function replayVibeMarketingDaily(env: Env, request: Request, body: Record<string, unknown>) {
   return startMarketingRun(env, request, "daily/replay", body);
+}
+
+export function normalizeNotificationChannel(payload: unknown): VibeMarketingNotificationChannel | null {
+  if (!payload || typeof payload !== "object") return null;
+  const data = payload as Record<string, unknown>;
+  const pending =
+    data.pendingVerification && typeof data.pendingVerification === "object"
+      ? (data.pendingVerification as Record<string, unknown>)
+      : null;
+  return {
+    id: String(data.id ?? ""),
+    channelType: String(data.channelType ?? data.channel_type ?? "") as VibeMarketingNotificationChannel["channelType"],
+    routeId: String(data.routeId ?? data.route_id ?? ""),
+    displayName: String(data.displayName ?? data.display_name ?? ""),
+    consentState: String(
+      data.consentState ?? data.consent_state ?? "pending",
+    ) as VibeMarketingNotificationChannel["consentState"],
+    verifiedAt: asNullableString(data.verifiedAt ?? data.verified_at),
+    isPrimary: Boolean(data.isPrimary ?? data.is_primary),
+    pendingVerification: pending
+      ? {
+          expiresAt: asNullableString(pending.expiresAt),
+          resendAvailableAt: asNullableString(pending.resendAvailableAt),
+          attemptsRemaining: typeof pending.attemptsRemaining === "number" ? pending.attemptsRemaining : null,
+        }
+      : null,
+  };
+}
+
+export function normalizeResearchAutomation(payload: unknown): VibeMarketingResearchAutomation | null {
+  if (!payload || typeof payload !== "object") return null;
+  const data = payload as Record<string, unknown>;
+  return {
+    id: String(data.id ?? ""),
+    status: String(data.status ?? "paused") as VibeMarketingResearchAutomation["status"],
+    timezone: String(data.timezone ?? "Australia/Melbourne"),
+    frequencyPerDay: Number(data.frequencyPerDay ?? data.frequency_per_day ?? 1) || 1,
+    localSendTimes: Array.isArray(data.localSendTimes)
+      ? data.localSendTimes.map((item) => String(item))
+      : [],
+    enabled: Boolean(data.enabled ?? data.status === "active"),
+  };
+}
+
+function normalizeNotificationChannelsPayload(payload: unknown): VibeMarketingNotificationChannelsPayload {
+  const data = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+  const channels = Array.isArray(data.channels)
+    ? data.channels
+        .map(normalizeNotificationChannel)
+        .filter((channel): channel is VibeMarketingNotificationChannel => Boolean(channel))
+    : [];
+  return {
+    channels,
+    automation: normalizeResearchAutomation(data.automation),
+    dailyDiscoveryEnabled: Boolean(data.dailyDiscoveryEnabled ?? data.daily_discovery_enabled),
+  };
+}
+
+export async function getNotificationChannels(env: Env, request: Request) {
+  const client = createApiClient(env, request);
+  const response = await client.get(`${BASE_PATH}/notifications/channels`);
+  return normalizeNotificationChannelsPayload(response.data);
+}
+
+export async function createNotificationChannel(
+  env: Env,
+  request: Request,
+  body: { channelType: string; routeId?: string; displayName?: string },
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/notifications/channels`, body);
+  return {
+    channel: normalizeNotificationChannel(response.data?.channel),
+    status: asNullableString(response.data?.status) ?? "",
+  };
+}
+
+export async function verifyNotificationChannelOtp(env: Env, request: Request, channelId: string, code: string) {
+  const client = createApiClient(env, request);
+  const response = await client.post(
+    `${BASE_PATH}/notifications/channels/${encodeURIComponent(channelId)}/verify`,
+    { code },
+  );
+  return {
+    channel: normalizeNotificationChannel(response.data?.channel),
+    status: asNullableString(response.data?.status) ?? "",
+  };
+}
+
+export async function resendNotificationChannelCode(env: Env, request: Request, channelId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.post(
+    `${BASE_PATH}/notifications/channels/${encodeURIComponent(channelId)}/resend`,
+    {},
+  );
+  return {
+    channel: normalizeNotificationChannel(response.data?.channel),
+    status: asNullableString(response.data?.status) ?? "",
+  };
+}
+
+export async function removeNotificationChannel(env: Env, request: Request, channelId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.delete(
+    `${BASE_PATH}/notifications/channels/${encodeURIComponent(channelId)}`,
+  );
+  return {
+    channel: normalizeNotificationChannel(response.data?.channel),
+    automationPaused: Boolean(response.data?.automationPaused),
+  };
+}
+
+export async function saveResearchAutomation(
+  env: Env,
+  request: Request,
+  body: { timezone?: string; enabled?: boolean },
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/notifications/automation`, body);
+  return normalizeNotificationChannelsPayload(response.data);
 }
 
 export async function getVibeMarketingRun(
