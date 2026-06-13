@@ -241,8 +241,8 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
       {/* ===== MLAI STUDIO SECTION ===== */}
       {/* Teaser intro that links through to the full /mlai-studio landing page */}
       <section id="mlai-studio">
-        {/* MLAI Studio section divider - Teal */}
-        <SectionDivider color="#00ffd7" />
+        {/* MLAI Studio section divider - Crimson */}
+        <SectionDivider color="#ff003d" />
 
         {/* MLAI Studio teaser */}
         <MlaiStudioTeaser />

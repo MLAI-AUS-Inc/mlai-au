@@ -11,7 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
    rounded, flat, brand palette, Inter) and links to /mlai-studio.
 
    Animation/interaction:
-   - Headline word rotates inside a teal highlight box.
+   - Headline word rotates inside a crimson highlight box.
    - Two pill marquees scroll in opposite directions; hovering
      pauses the stream.
    - CTA glows with a gentle pulse.
@@ -107,10 +107,10 @@ export default function MlaiStudioTeaser() {
 
         {/* Header */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-[#00ffd7] text-sm uppercase tracking-widest mb-5">MLAI Studio</p>
+          <p className="text-[#ff003d] text-sm uppercase tracking-widest mb-5">MLAI Studio</p>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
             <span>Get paid to</span>
-            <span className="relative inline-flex items-center justify-center rounded-2xl bg-[#00ffd7] px-3 sm:px-4 py-1 text-gray-900 overflow-hidden align-middle">
+            <span className="relative inline-flex items-center justify-center rounded-2xl bg-[#ff003d] px-3 sm:px-4 py-1 text-white overflow-hidden align-middle">
               <span className="invisible" aria-hidden="true">integrate</span>
               <span className="absolute inset-0 flex items-center justify-center overflow-hidden">
                 <AnimatePresence mode="popLayout" initial={false}>
@@ -146,7 +146,7 @@ export default function MlaiStudioTeaser() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6 text-center">
             {STATS.map((s) => (
               <div key={s.n}>
-                <div className="text-4xl sm:text-5xl font-bold text-[#00ffd7] leading-none mb-2">{s.n}</div>
+                <div className="text-4xl sm:text-5xl font-bold text-[#ff003d] leading-none mb-2">{s.n}</div>
                 <div className="text-gray-400 text-sm sm:text-base max-w-[22ch] mx-auto">{s.l}</div>
               </div>
             ))}
@@ -159,16 +159,16 @@ export default function MlaiStudioTeaser() {
             className="inline-block rounded-full"
             animate={{
               boxShadow: [
-                "0 0 0px #00ffd700, 0 4px 20px rgba(0,0,0,0.3)",
-                "0 0 36px #00ffd790, 0 4px 20px rgba(0,0,0,0.3)",
-                "0 0 0px #00ffd700, 0 4px 20px rgba(0,0,0,0.3)",
+                "0 0 0px #ff003d00, 0 4px 20px rgba(0,0,0,0.3)",
+                "0 0 36px #ff003d90, 0 4px 20px rgba(0,0,0,0.3)",
+                "0 0 0px #ff003d00, 0 4px 20px rgba(0,0,0,0.3)",
               ],
             }}
             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
           >
             <Link
               to="/mlai-studio"
-              className="inline-block font-bold py-4 px-12 rounded-full text-lg text-black bg-[#00ffd7] transition-transform duration-300 hover:scale-105 active:scale-95"
+              className="inline-block font-bold py-4 px-12 rounded-full text-lg text-white bg-[#ff003d] transition-transform duration-300 hover:scale-105 active:scale-95"
             >
               Explore MLAI Studio →
             </Link>
