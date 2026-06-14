@@ -5,6 +5,7 @@ import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLoca
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
+  ArrowRightIcon,
   CheckCircleIcon,
   EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
@@ -532,10 +533,16 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       await removeNotificationChannel(env, request, stringFromForm(formData, "channelId"));
     } else if (["approve", "deny", "resume", "restart", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
+      const targetRunId = stringFromForm(formData, "targetRunId");
       const autoMerge =
         stringFromForm(formData, "autoMerge") === "true" &&
         ["approve", "promote-bundle", "publish-pr"].includes(intent);
-      const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
+      const controlRunId =
+        intent === "promote-bundle" || intent === "publish-pr"
+          ? sourceRunId || runId
+          : (intent === "resume" || intent === "restart") && targetRunId
+            ? targetRunId
+            : runId;
       const payload: Record<string, unknown> = {};
       if (sourceRunId) payload.sourceRunId = sourceRunId;
       if (autoMerge) payload.autoMerge = true;
@@ -2730,6 +2737,7 @@ function PublishAndAutomateDetail({
   const checksStatus = stringResultValue(run, "checks_status", "checksStatus");
   const promotePending = isActionPending?.("promote-bundle", "publish-pr") ?? isSubmitting;
   const mergePending = isActionPending?.("merge-publish-pr") ?? isSubmitting;
+  const resumePending = isActionPending?.("resume") ?? isSubmitting;
   const enableDailyPending = isActionPending?.("enable-daily-automation") ?? isSubmitting;
   const runDailyPending = isActionPending?.("run-daily-discovery-now") ?? isSubmitting;
   const mergeStatus = stringResultValue(run, "merge_status", "mergeStatus");
@@ -2750,6 +2758,16 @@ function PublishAndAutomateDetail({
       !publishedWithoutPr &&
       (publishChildStatus === "failed" || (publishChildRunId === run.runId && run.status === "failed")),
   );
+  // The article content lives on the run that has the component manifest — the
+  // current run if it has one, otherwise the source (parent) run. The failed
+  // publish child has no manifest, so this resolves to the parent.
+  const articleViewRunId = run.componentManifest ? run.runId : publishSourceRunId || run.runId;
+  const canViewArticle = Boolean(run.componentManifest || publishSourceRunId);
+  const viewArticleHref = `/founder-tools/marketing/runs/${encodeURIComponent(articleViewRunId)}?articleStep=review`;
+  // Resume targets the failed publish run. When viewing the article (parent),
+  // that's the child via targetRunId; when viewing the child itself, the
+  // current run (no targetRunId needed).
+  const resumePublishTargetRunId = publishChildRunId && publishChildRunId !== run.runId ? publishChildRunId : "";
   const dailyCheck = bootstrap.checks.dailyAutomation as
     | (VibeMarketingBootstrap["checks"][string] & { ready?: boolean; enabled?: boolean })
     | undefined;
@@ -2764,7 +2782,9 @@ function PublishAndAutomateDetail({
 
   return (
     <div className="space-y-5">
-      {publishChildMissingRemote ? null : <ArticleRunStageProgress run={run} variant="embedded" />}
+      {publishChildMissingRemote ? null : (
+        <ArticleRunStageProgress run={run} variant="embedded" reviewHref={canViewArticle ? viewArticleHref : undefined} />
+      )}
       <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -2773,6 +2793,15 @@ function PublishAndAutomateDetail({
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
               Publish the article — the PR merges to main automatically once checks pass — then turn on daily research prompts (Slack, email or WhatsApp) for the next article.
             </p>
+            {canViewArticle ? (
+              <Link
+                to={viewArticleHref}
+                className="mt-3 inline-flex items-center gap-1 text-sm font-black text-violet-700 transition hover:text-violet-900"
+              >
+                View article
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            ) : null}
           </div>
           <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishStep?.status ?? "ready"} />
         </div>
@@ -2940,16 +2969,32 @@ function PublishAndAutomateDetail({
             ) : publishChildFailed ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  The publish run failed before a PR was created. Open it to see the error details.
+                  {publishChildWaitReason ||
+                    "The publish run failed before a PR was created — a worker likely stalled mid-run. Resume to continue from where it stopped."}
                 </p>
-                {publishChildRunId && publishChildRunId !== run.runId ? (
-                  <a
-                    href={`/founder-tools/marketing/runs/${encodeURIComponent(publishChildRunId)}`}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
-                  >
-                    Open publish run
-                  </a>
-                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <Form method="POST">
+                    {resumePublishTargetRunId ? <input type="hidden" name="targetRunId" value={resumePublishTargetRunId} /> : null}
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="resume"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                    >
+                      <ArrowPathIcon className={clsx("h-4 w-4", resumePending && "animate-spin")} />
+                      {resumePending ? "Resuming..." : "Resume publish"}
+                    </button>
+                  </Form>
+                  {publishChildRunId && publishChildRunId !== run.runId ? (
+                    <a
+                      href={`/founder-tools/marketing/runs/${encodeURIComponent(publishChildRunId)}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                    >
+                      Open publish run
+                    </a>
+                  ) : null}
+                </div>
               </div>
             ) : publishChildRecoverable ? (
               <Form method="POST" className="space-y-3">
@@ -3777,6 +3822,11 @@ function setupStepViewFromSearch(search: string): ArticleSetupStepView | null {
   return value && SETUP_STEP_VIEW_VALUES.has(value) ? (value as ArticleSetupStepView) : null;
 }
 
+function articleStepViewFromSearch(search: string): "generate" | "review" | "publish" | null {
+  const value = new URLSearchParams(search).get("articleStep");
+  return value && SETUP_STEP_VIEW_VALUES.has(value) ? (value as "generate" | "review" | "publish") : null;
+}
+
 function workflowProgressForRunPage(
   run: VibeMarketingRunSummary,
   fallbackProgress: VibeMarketingWorkflowProgress | null | undefined,
@@ -3923,7 +3973,8 @@ export default function FounderToolsMarketingRun() {
     [discoveryCandidates, selectedDiscoveryCandidateId],
   );
   const requestedSetupStep = isArticleSystemSetupRun ? setupStepViewFromSearch(location.search) : null;
-  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run));
+  const requestedArticleStep = isArticleGenerationRun ? articleStepViewFromSearch(location.search) : null;
+  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run), requestedArticleStep);
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
