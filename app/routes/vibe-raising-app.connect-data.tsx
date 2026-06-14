@@ -25,6 +25,7 @@ import { getEnv } from "~/lib/env.server";
 import {
   bootstrapVibeRaisingStartupUpdate,
   connectVibeRaisingInputSource,
+  connectVibeRaisingLuma,
   disconnectVibeRaisingGmail,
   getVibeRaisingBankFeedPreview,
   getVibeRaisingGmailPreview,
@@ -69,10 +70,10 @@ import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 const DEFAULT_NEXT = "/founder-tools/updates/create";
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
-const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "google_analytics", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear"]);
+const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "google_analytics", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear", "luma"]);
 const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSourceKey>(["stripe"]);
 const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_analytics", "stripe", "linear", "notion"];
-const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", "slack", "bank_feed", "xero"];
+const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", "slack", "bank_feed", "xero", "luma"];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
 const LINEAR_PROJECT_PAGE_LIMIT = 100;
 const GOOGLE_ANALYTICS_PROPERTY_PAGE_LIMIT = 200;
@@ -283,10 +284,10 @@ function MobileDataSourcesTour({
   );
 }
 
-type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents">;
+type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents" | "luma">;
 
 function isOAuthSourceKey(key: VibeRaisingInputSourceKey): key is OAuthSourceKey {
-  return key !== "gmail" && key !== "manual_documents";
+  return key !== "gmail" && key !== "manual_documents" && key !== "luma";
 }
 
 function readStoredManualMaterials(): ManualMaterialsState {
@@ -374,6 +375,11 @@ const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; mobi
     description: "Pull project updates, active workstreams, and key tasks from Linear.",
     mobileDescription: "Pull project updates and key tasks.",
     connectedUse: "Projects, tasks, updates",
+  },
+  luma: {
+    description: "Track events run and registrations from your own Luma calendar over time.",
+    mobileDescription: "Track events run and registrations.",
+    connectedUse: "Events run, registrations",
   },
   manual_documents: {
     description: "Use uploaded founder documents as deterministic context.",
@@ -1611,6 +1617,14 @@ function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputS
     );
   }
 
+  if (sourceKey === "luma") {
+    return (
+      <div className={clsx("flex shrink-0 items-center justify-center bg-[#f6552d] font-black lowercase text-white shadow-sm transition-all duration-300", large ? "h-12 w-12 rounded-xl text-lg sm:h-16 sm:w-16 sm:rounded-2xl sm:text-2xl" : "h-10 w-10 rounded-xl text-sm")}>
+        lu
+      </div>
+    );
+  }
+
   return (
     <div className={clsx("flex shrink-0 items-center justify-center rounded-full bg-[#13b5ea] font-black uppercase text-white shadow-sm transition-all duration-300", large ? "h-12 w-12 text-sm sm:h-16 sm:w-16 sm:text-base" : "h-10 w-10 text-xs")}>
       xero
@@ -1986,6 +2000,10 @@ export default function ConnectData() {
   const [syncingSlack, setSyncingSlack] = useState(false);
   const [busyProvider, setBusyProvider] = useState<VibeRaisingInputSourceKey | null>(null);
   const [pendingConnectSource, setPendingConnectSource] = useState<VibeRaisingInputSourceSummary | null>(null);
+  const [showLumaModal, setShowLumaModal] = useState(false);
+  const [lumaApiKeyValue, setLumaApiKeyValue] = useState("");
+  const [lumaConnecting, setLumaConnecting] = useState(false);
+  const [lumaError, setLumaError] = useState<string | null>(null);
   const [showNoSourcesModal, setShowNoSourcesModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [gmailManagementSource, setGmailManagementSource] = useState<VibeRaisingInputSourceSummary | null>(null);
@@ -2564,7 +2582,44 @@ export default function ConnectData() {
     if (!FUNCTIONAL_SOURCES.has(source.key)) return;
     if (source.status === "connected" || source.status === "syncing" || source.status === "coming_soon") return;
     if (source.status === "unavailable" && !OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE.has(source.key)) return;
+    if (source.key === "luma") {
+      // Luma is linked by pasting an API key, not an OAuth redirect.
+      setStatusMessage(null);
+      setLumaApiKeyValue("");
+      setLumaError(null);
+      setShowLumaModal(true);
+      return;
+    }
     setPendingConnectSource(source);
+  };
+
+  const handleConnectLuma = async () => {
+    const apiKey = lumaApiKeyValue.trim();
+    if (!apiKey) {
+      setLumaError("Enter your Luma API key.");
+      return;
+    }
+    setLumaConnecting(true);
+    setLumaError(null);
+    try {
+      await connectVibeRaisingLuma(backendBaseUrl, apiKey);
+    } catch (error) {
+      setLumaError(error instanceof Error ? error.message : "We couldn't connect Luma. Check the key and try again.");
+      setLumaConnecting(false);
+      return;
+    }
+    setShowLumaModal(false);
+    setLumaApiKeyValue("");
+    setLumaConnecting(false);
+    await refreshStatuses();
+    setStatusMessage("Luma connected. Pulling in your events…");
+    try {
+      await syncVibeRaisingInputSources(backendBaseUrl, ["luma"]);
+      await refreshStatuses();
+      setStatusMessage("Luma events synced.");
+    } catch {
+      setStatusMessage("Luma connected, but we couldn't pull events yet. Try syncing again shortly.");
+    }
   };
 
   const confirmConnectSource = () => {
@@ -3635,6 +3690,83 @@ export default function ConnectData() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[var(--vr-palette-black)]"
               >
                 Connect {pendingConnectSource.label}
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showLumaModal ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
+            <div className="border-b border-gray-100 px-6 py-5">
+              <div className="flex items-start gap-4">
+                <SourceLogo sourceKey="luma" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]">
+                    Connect with an API key
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black text-gray-950">Connect Luma</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Paste your personal Luma API key. We use it to pull how many events you've run and total
+                    registrations into your tracked metrics. The key is stored encrypted and only you can see this data.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!lumaConnecting) setShowLumaModal(false);
+                  }}
+                  className="rounded-full p-2 text-slate-400 transition hover:bg-gray-50 hover:text-gray-700"
+                  aria-label="Cancel Luma connection"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <label htmlFor="luma-api-key" className="block text-sm font-extrabold text-gray-950">
+                Luma API key
+              </label>
+              <input
+                id="luma-api-key"
+                type="password"
+                autoComplete="off"
+                value={lumaApiKeyValue}
+                onChange={(event) => setLumaApiKeyValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !lumaConnecting) void handleConnectLuma();
+                }}
+                placeholder="secret-xxxxxxxxxxxxxxxxxxxx"
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-950 shadow-sm outline-none focus:border-[var(--vr-color-primary)] focus:ring-2 focus:ring-[rgba(0,128,128,0.18)]"
+              />
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Find this in Luma under Settings → API. Use the calendar that hosts the events you run.
+              </p>
+              {lumaError ? (
+                <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{lumaError}</p>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!lumaConnecting) setShowLumaModal(false);
+                }}
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-700 transition hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={lumaConnecting || !lumaApiKeyValue.trim()}
+                onClick={() => void handleConnectLuma()}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {lumaConnecting ? "Connecting…" : "Connect Luma"}
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>

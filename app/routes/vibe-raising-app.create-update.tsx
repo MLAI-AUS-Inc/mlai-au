@@ -98,6 +98,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
     google_drive: "Google Drive",
     slack: "Slack",
     linear: "Linear",
+    luma: "Luma",
     manual_documents: "Manual documents",
 };
 
