@@ -235,6 +235,7 @@ export type VibeRaisingInputSourceKey =
   | "google_drive"
   | "slack"
   | "linear"
+  | "luma"
   | "manual_documents";
 
 export type VibeRaisingInputSourceStatus =

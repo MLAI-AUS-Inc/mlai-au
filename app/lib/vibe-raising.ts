@@ -90,6 +90,7 @@ const XERO_PREVIEW_PATH = "/api/v1/integrations/financial/xero/preview";
 const GMAIL_PREVIEW_PATH = "/api/v1/integrations/gmail/preview";
 const GMAIL_CONNECTION_PATH = "/api/v1/integrations/gmail/connection";
 const INPUT_SOURCES_SYNC_PATH = "/api/v1/integrations/sources/sync";
+const LUMA_CONNECT_PATH = "/api/v1/integrations/luma/connect";
 const SLACK_CHANNELS_PATH = "/api/v1/integrations/slack/channels";
 const SLACK_CHANNEL_SELECTIONS_PATH = "/api/v1/integrations/slack/channel-selections";
 const SLACK_PREVIEW_PATH = "/api/v1/integrations/slack/preview";
@@ -144,6 +145,11 @@ const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisi
     key: "linear",
     label: "Linear",
     capabilities: ["context"],
+  },
+  luma: {
+    key: "luma",
+    label: "Luma",
+    capabilities: ["metrics"],
   },
   manual_documents: {
     key: "manual_documents",
@@ -2635,7 +2641,8 @@ export async function getVibeRaisingInputSourcesStatus(
   return { sources, financeUnavailable };
 }
 
-type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents">;
+// Luma is connected by pasting an API key (see connectVibeRaisingLuma), not via OAuth redirect.
+type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents" | "luma">;
 
 const CONNECTOR_PROVIDER_SLUGS: Record<ConnectableVibeRaisingInputSourceKey, string> = {
   stripe: "stripe",
@@ -2721,6 +2728,23 @@ export async function syncVibeRaisingInputSources(
     {
       method: "POST",
       body: providers?.length ? JSON.stringify({ providers }) : undefined,
+    },
+  );
+}
+
+// Luma has no OAuth flow — the founder pastes their personal API key, which the
+// backend validates and stores encrypted. Throws (with the backend's detail
+// message) when the key is missing or rejected.
+export async function connectVibeRaisingLuma(
+  backendBaseUrl: string,
+  apiKey: string,
+): Promise<Record<string, unknown>> {
+  return requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    LUMA_CONNECT_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({ apiKey }),
     },
   );
 }
