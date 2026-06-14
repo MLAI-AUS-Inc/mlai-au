@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-australian-founders-should-know-before-building-with-ai': {
+        title: "What Australian Founders Should Know Before Building With AI",
+        date: "2026-06-14",
+        description: "Australian founders can build AI with clearer risks by testing the problem, data, build path, trust requirements, and ecosystem feedback first.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-australian-founders-should-know-before-building-with-ai",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-054c3328-6686-4c08-a5a3-519e6cc04ed1.jpg?alt=media&token=83d1ce15-f844-44ab-bcfc-47548f69a49e",
+        imageAlt: "Australian founders reviewing AI prototype risks on a laptop during a candid startup meeting",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
