@@ -5,6 +5,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
+import { Link } from "react-router";
 
 import type { VibeMarketingRunSummary, VibeMarketingStepState } from "~/types/vibe-marketing";
 
@@ -37,6 +38,9 @@ interface StageView extends StageDefinition {
 interface ArticleRunStageProgressProps {
   run: VibeMarketingRunSummary;
   variant?: "standalone" | "embedded";
+  // When set, the "Ready for review" chip becomes a link to the article preview,
+  // letting the user jump back to review at any point in the flow.
+  reviewHref?: string | null;
 }
 
 const ARTICLE_PROGRESS_STAGES: StageDefinition[] = [
@@ -317,7 +321,7 @@ export function articleRunTechnicalProgressLabel(run: VibeMarketingRunSummary) {
   return `${completed} of ${total} checks complete`;
 }
 
-export default function ArticleRunStageProgress({ run, variant = "standalone" }: ArticleRunStageProgressProps) {
+export default function ArticleRunStageProgress({ run, variant = "standalone", reviewHref }: ArticleRunStageProgressProps) {
   const stages = deriveArticleProgressStages(run);
   const embedded = variant === "embedded";
   const activeStage =
@@ -354,26 +358,38 @@ export default function ArticleRunStageProgress({ run, variant = "standalone" }:
       </div>
 
       <div className={clsx("grid gap-2 sm:grid-cols-2 lg:grid-cols-5", !embedded && "mt-5")}>
-        {stages.map((stage) => (
-          <div
-            key={stage.id}
-            className={clsx(
-              "rounded-xl border px-3 py-3 transition",
-              stage.status === "running" && "shadow-sm ring-2 ring-violet-100",
-              stageStatusTone(stage.status),
-            )}
-          >
+        {stages.map((stage) => {
+          const chipClass = clsx(
+            "block rounded-xl border px-3 py-3 transition",
+            stage.status === "running" && "shadow-sm ring-2 ring-violet-100",
+            stageStatusTone(stage.status),
+          );
+          const chipInner = (
             <div className="flex items-center gap-3">
               <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/80">
                 <StageIcon status={stage.status} />
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-black text-gray-950">{stage.label}</p>
-                <p className="mt-0.5 text-xs font-black uppercase tracking-wide">{stageStatusLabel(stage.status)}</p>
+                <p className="mt-0.5 text-xs font-black uppercase tracking-wide">
+                  {stage.id === "review" && reviewHref ? "View article" : stageStatusLabel(stage.status)}
+                </p>
               </div>
             </div>
-          </div>
-        ))}
+          );
+          if (stage.id === "review" && reviewHref) {
+            return (
+              <Link key={stage.id} to={reviewHref} className={clsx(chipClass, "cursor-pointer hover:ring-2 hover:ring-violet-200")}>
+                {chipInner}
+              </Link>
+            );
+          }
+          return (
+            <div key={stage.id} className={chipClass}>
+              {chipInner}
+            </div>
+          );
+        })}
       </div>
 
       {run.errors.length > 0 ? (
