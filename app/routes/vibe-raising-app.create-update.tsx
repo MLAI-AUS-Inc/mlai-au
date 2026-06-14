@@ -2836,6 +2836,7 @@ export default function CreateUpdate() {
     const [emailDraftPollDelayMs, setEmailDraftPollDelayMs] = useState(EMAIL_DRAFT_POLL_INTERVAL_MS);
     const emailDraftRecoveryKeyRef = useRef<string | null>(null);
     const emailDraftIgnoredRunIdRef = useRef<string | null>(null);
+    const hydratedRunInputSourcesRef = useRef<string | null>(null);
     const pitchDeckLinkInputRef = useRef<HTMLInputElement | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -3462,7 +3463,12 @@ export default function CreateUpdate() {
                 const runInputSources = (statusResponse.run?.inputSources || []).filter(
                     (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
                 );
-                if (runInputSources.length > 0) {
+                // Hydrate the source picker from the run ONCE per run (refresh recovery).
+                // Re-applying on every 5s poll would clobber a user's manual source
+                // toggles (e.g. adding Google Analytics) while a draft is running.
+                const runId = statusResponse.runId ?? null;
+                if (runInputSources.length > 0 && runId && hydratedRunInputSourcesRef.current !== runId) {
+                    hydratedRunInputSourcesRef.current = runId;
                     setSelectedDraftInputSources(new Set(runInputSources));
                 }
                 setMonthConfirmed(true);
