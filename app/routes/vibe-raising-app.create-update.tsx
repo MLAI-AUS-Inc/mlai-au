@@ -269,6 +269,14 @@ function DraftSourceLogo({ sourceKey }: { sourceKey: VibeRaisingInputSourceKey }
         );
     }
 
+    if (sourceKey === "luma") {
+        return (
+            <span className={badgeClassName}>
+                <img src="/vibe-raising/logos/luma.webp" alt="" className={officialLogoClassName} />
+            </span>
+        );
+    }
+
     if (sourceKey === "google_drive") {
         return (
             <span className={badgeClassName}>

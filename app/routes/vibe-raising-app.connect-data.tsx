@@ -1619,8 +1619,8 @@ function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputS
 
   if (sourceKey === "luma") {
     return (
-      <div className={clsx("flex shrink-0 items-center justify-center bg-[#f6552d] font-black lowercase text-white shadow-sm transition-all duration-300", large ? "h-12 w-12 rounded-xl text-lg sm:h-16 sm:w-16 sm:rounded-2xl sm:text-2xl" : "h-10 w-10 rounded-xl text-sm")}>
-        lu
+      <div className={badgeClassName}>
+        <img src="/vibe-raising/logos/luma.webp" alt="" className={officialLogoClassName} />
       </div>
     );
   }
