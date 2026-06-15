@@ -3474,13 +3474,14 @@ export default function CreateUpdate() {
                 const runInputSources = (statusResponse.run?.inputSources || []).filter(
                     (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
                 );
-                // Hydrate the source picker from the run ONCE per run (refresh recovery).
-                // Re-applying on every 5s poll would clobber a user's manual source
-                // toggles (e.g. adding Google Analytics) while a draft is running.
+                // Hydrate the source picker from the run for refresh-recovery only —
+                // when the founder hasn't picked any sources yet. Never overwrite a
+                // live selection (e.g. a freshly-ticked Google Analytics) when a run
+                // starts, or the card flips to unchecked and drops out of the run.
                 const runId = statusResponse.runId ?? null;
                 if (runInputSources.length > 0 && runId && hydratedRunInputSourcesRef.current !== runId) {
                     hydratedRunInputSourcesRef.current = runId;
-                    setSelectedDraftInputSources(new Set(runInputSources));
+                    setSelectedDraftInputSources((previous) => (previous.size === 0 ? new Set(runInputSources) : previous));
                 }
                 setMonthConfirmed(true);
                 setSelectedDraftStage("reporting");
