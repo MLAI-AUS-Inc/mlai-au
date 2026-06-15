@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /__manifest
+Allow: /platform/login
 Disallow: /platform/
 Disallow: /hospital/
 Disallow: /esafety/

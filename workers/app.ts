@@ -24,6 +24,11 @@ const LEGACY_REDIRECTS: Record<string, string> = {
   "/codeofconduct": "/terms",
   "/support": "/contact",
   "/Support": "/contact",
+  // Consolidate duplicate Vibe Raising landing URLs onto the canonical /vibe-raising.
+  // Handled at the worker (before React Router) to avoid the trailing-slash route
+  // colliding with — and shadowing — the real /vibe-raising landing route.
+  "/vibe-raising/": "/vibe-raising",
+  "/vibe-raising-landing": "/vibe-raising",
 };
 
 function defaultCache(): Cache {
