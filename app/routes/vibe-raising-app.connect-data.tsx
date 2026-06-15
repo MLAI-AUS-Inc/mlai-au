@@ -33,6 +33,7 @@ import {
   getVibeRaisingInputSourcesStatus,
   getVibeRaisingLinearPreview,
   getVibeRaisingLinearProjects,
+  getVibeRaisingLumaEvents,
   listVibeRaisingManualDocuments,
   uploadVibeRaisingManualDocument,
   deleteVibeRaisingManualDocument,
@@ -43,6 +44,7 @@ import {
   requireVibeRaisingFounder,
   saveVibeRaisingGoogleAnalyticsPropertySelections,
   saveVibeRaisingLinearProjectSelections,
+  saveVibeRaisingLumaSelections,
   saveVibeRaisingSlackChannelSelections,
   syncVibeRaisingFinancialSources,
   syncVibeRaisingInputSources,
@@ -52,6 +54,9 @@ import type {
   VibeRaisingGmailPreview,
   VibeRaisingGoogleAnalyticsProperty,
   VibeRaisingGoogleAnalyticsPropertiesResponse,
+  VibeRaisingLumaEvent,
+  VibeRaisingLumaEventsResponse,
+  VibeRaisingLumaMetricOption,
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
@@ -77,6 +82,7 @@ const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", 
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
 const LINEAR_PROJECT_PAGE_LIMIT = 100;
 const GOOGLE_ANALYTICS_PROPERTY_PAGE_LIMIT = 200;
+const LUMA_EVENT_PAGE_LIMIT = 50;
 const DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_data_sources_mobile_tour_seen_v1";
 const DATA_PRIVACY_POINTS = [
   "Only you can see connected source data in your workspace",
@@ -1237,6 +1243,196 @@ function GoogleAnalyticsPreview({
   );
 }
 
+function mergeLumaEventsById(
+  previous: Record<string, VibeRaisingLumaEvent>,
+  events: VibeRaisingLumaEvent[],
+) {
+  if (events.length === 0) return previous;
+  const next = { ...previous };
+  events.forEach((event) => {
+    next[event.eventId] = { ...next[event.eventId], ...event };
+  });
+  return next;
+}
+
+function getSelectedLumaEventIds(events: VibeRaisingLumaEvent[]) {
+  return events.filter((event) => event.selected).map((event) => event.eventId);
+}
+
+function formatLumaEventDate(startAt: string | null | undefined): string {
+  if (!startAt) return "";
+  const parsed = new Date(startAt);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function LumaPreview({
+  events,
+  accountLabel,
+  loading,
+  error,
+  saving,
+  selectedEventIds,
+  selectedMetricKeys,
+  availableMetrics,
+  nextCursor,
+  loadingMore,
+  onToggleEvent,
+  onToggleMetric,
+  onLoadMore,
+  onSave,
+}: {
+  events: VibeRaisingLumaEvent[];
+  accountLabel: string | null;
+  loading: boolean;
+  error: string | null;
+  saving: boolean;
+  selectedEventIds: Set<string>;
+  selectedMetricKeys: Set<string>;
+  availableMetrics: VibeRaisingLumaMetricOption[];
+  nextCursor: string | null;
+  loadingMore: boolean;
+  onToggleEvent: (eventId: string) => void;
+  onToggleMetric: (metricKey: string) => void;
+  onLoadMore: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <section className="rounded-xl border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Luma events &amp; metrics</h2>
+          <p className="mt-2 text-sm text-slate-500">Choose which events to track and which metrics to pull from your Luma calendar.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {loading ? (
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-[var(--vr-color-primary)]">
+              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              Loading
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-lg bg-[var(--vr-color-primary)] px-3 py-2 text-xs font-extrabold text-white transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving ? "Saving" : "Save selection"}
+          </button>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="mt-5 rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">{error}</div>
+      ) : null}
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Luma account</p>
+          <p className="mt-2 truncate text-sm font-black text-gray-950">{accountLabel || "Connected Luma"}</p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected events</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{selectedEventIds.size === 0 ? "All" : selectedEventIds.size}</p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected metrics</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{selectedMetricKeys.size}</p>
+        </div>
+      </div>
+
+      {availableMetrics.length > 0 ? (
+        <div className="mt-5 rounded-lg border border-gray-100">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Metrics to track</p>
+            <p className="mt-1 text-xs font-bold text-slate-500">These build up in your tracked metrics over time.</p>
+          </div>
+          <ul className="grid gap-1 px-2 py-2 sm:grid-cols-2">
+            {availableMetrics.map((metric) => {
+              const selected = selectedMetricKeys.has(metric.key);
+              return (
+                <li key={metric.key}>
+                  <button
+                    type="button"
+                    onClick={() => onToggleMetric(metric.key)}
+                    className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-3 text-left font-semibold text-gray-800 transition hover:bg-[rgba(0,255,215,0.08)]"
+                  >
+                    <span
+                      className={clsx(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
+                        selected ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white" : "border-gray-300 bg-white text-transparent",
+                      )}
+                    >
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-black text-gray-950">{metric.label}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
+
+      {events.length > 0 ? (
+        <div className="mt-5 rounded-lg border border-gray-100">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Events</p>
+            <p className="mt-1 text-xs font-bold text-slate-500">
+              {selectedEventIds.size === 0 ? "All events are counted until you pick specific ones." : `${selectedEventIds.size} selected`}
+            </p>
+          </div>
+          <ul className="divide-y divide-gray-100 px-2 py-2">
+            {events.map((event) => {
+              const selected = selectedEventIds.has(event.eventId);
+              const dateLabel = formatLumaEventDate(event.startAt);
+              return (
+                <li key={event.eventId}>
+                  <button
+                    type="button"
+                    onClick={() => onToggleEvent(event.eventId)}
+                    className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-3 text-left font-semibold text-gray-800 transition hover:bg-[rgba(0,255,215,0.08)]"
+                  >
+                    <span
+                      className={clsx(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
+                        selected ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white" : "border-gray-300 bg-white text-transparent",
+                      )}
+                    >
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-black text-gray-950">{event.name}</span>
+                      {dateLabel ? <span className="mt-0.5 block truncate text-xs font-bold text-slate-500">{dateLabel}</span> : null}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {nextCursor ? (
+            <div className="border-t border-gray-100 p-2">
+              <button
+                type="button"
+                onClick={onLoadMore}
+                disabled={loadingMore}
+                className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <ArrowPathIcon className={clsx("h-4 w-4", loadingMore && "animate-spin")} />
+                {loadingMore ? "Loading events" : "Load more events"}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : !loading ? (
+        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
+          No past Luma events found yet. Once you've run an event, it'll show up here.
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function mergeLinearProjectsById(
   previous: Record<string, VibeRaisingLinearProject>,
   projects: VibeRaisingLinearProject[],
@@ -2034,6 +2230,16 @@ export default function ConnectData() {
   const [googleAnalyticsError, setGoogleAnalyticsError] = useState<string | null>(null);
   const [savingGoogleAnalyticsProperties, setSavingGoogleAnalyticsProperties] = useState(false);
   const [selectedGoogleAnalyticsPropertyIds, setSelectedGoogleAnalyticsPropertyIds] = useState<Set<string>>(new Set());
+  const [lumaEventsById, setLumaEventsById] = useState<Record<string, VibeRaisingLumaEvent>>({});
+  const [lumaEventsNextCursor, setLumaEventsNextCursor] = useState<string | null>(null);
+  const [loadingLumaEvents, setLoadingLumaEvents] = useState(false);
+  const [loadingMoreLumaEvents, setLoadingMoreLumaEvents] = useState(false);
+  const [lumaAccountLabel, setLumaAccountLabel] = useState<string | null>(null);
+  const [lumaEventsError, setLumaEventsError] = useState<string | null>(null);
+  const [savingLumaSelections, setSavingLumaSelections] = useState(false);
+  const [selectedLumaEventIds, setSelectedLumaEventIds] = useState<Set<string>>(new Set());
+  const [selectedLumaMetricKeys, setSelectedLumaMetricKeys] = useState<Set<string>>(new Set());
+  const [lumaAvailableMetrics, setLumaAvailableMetrics] = useState<VibeRaisingLumaMetricOption[]>([]);
   const [syncingLinear, setSyncingLinear] = useState(false);
   const [linearProjectsById, setLinearProjectsById] = useState<Record<string, VibeRaisingLinearProject>>({});
   const [linearProjectsNextCursor, setLinearProjectsNextCursor] = useState<string | null>(null);
@@ -2058,6 +2264,7 @@ export default function ConnectData() {
   const slackSelectionTouchedRef = useRef(false);
   const linearSelectionTouchedRef = useRef(false);
   const googleAnalyticsSelectionTouchedRef = useRef(false);
+  const lumaSelectionTouchedRef = useRef(false);
   const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
   const [showStickyBarOnMobile, setShowStickyBarOnMobile] = useState(false);
   const [mobileTourOpen, setMobileTourOpen] = useState(false);
@@ -2122,6 +2329,10 @@ export default function ConnectData() {
   const googleAnalyticsSource = sourceByKey.get("google_analytics");
   const shouldShowGoogleAnalyticsPreview =
     googleAnalyticsSource?.status === "connected" || googleAnalyticsSource?.status === "syncing" || googleAnalyticsSource?.status === "error";
+  const lumaSource = sourceByKey.get("luma");
+  const shouldShowLumaPreview =
+    lumaSource?.status === "connected" || lumaSource?.status === "syncing" || lumaSource?.status === "error";
+  const lumaEvents = useMemo(() => Object.values(lumaEventsById), [lumaEventsById]);
 
   const refreshStatuses = async () => {
     setLoadingStatus(true);
@@ -2576,6 +2787,62 @@ export default function ConnectData() {
     };
   }, [backendBaseUrl, shouldShowGoogleAnalyticsPreview, googleAnalyticsSource?.status]);
 
+  useEffect(() => {
+    if (!shouldShowLumaPreview) {
+      setLumaEventsById({});
+      setLumaEventsNextCursor(null);
+      setLumaAccountLabel(null);
+      setLumaEventsError(null);
+      setLoadingLumaEvents(false);
+      setLoadingMoreLumaEvents(false);
+      setSelectedLumaEventIds(new Set());
+      setSelectedLumaMetricKeys(new Set());
+      setLumaAvailableMetrics([]);
+      lumaSelectionTouchedRef.current = false;
+      return;
+    }
+
+    let cancelled = false;
+    lumaSelectionTouchedRef.current = false;
+    setLumaEventsById({});
+    setLumaEventsNextCursor(null);
+    setSelectedLumaEventIds(new Set());
+    setSelectedLumaMetricKeys(new Set());
+    setLoadingLumaEvents(true);
+    setLumaEventsError(null);
+    getVibeRaisingLumaEvents(backendBaseUrl, { limit: LUMA_EVENT_PAGE_LIMIT })
+      .then((payload: VibeRaisingLumaEventsResponse) => {
+        if (cancelled) return;
+        setLumaEventsById((previous) => mergeLumaEventsById(previous, payload.events));
+        setLumaEventsNextCursor(payload.nextCursor ?? null);
+        setLumaAccountLabel(payload.accountLabel ?? null);
+        setLumaAvailableMetrics(payload.availableMetrics);
+        if (!lumaSelectionTouchedRef.current) {
+          const selectedEventIds = getSelectedLumaEventIds(payload.events);
+          if (selectedEventIds.length > 0) {
+            setSelectedLumaEventIds((previous) => {
+              const nextSelected = new Set(previous);
+              selectedEventIds.forEach((eventId) => nextSelected.add(eventId));
+              return nextSelected;
+            });
+          }
+          setSelectedLumaMetricKeys(new Set(payload.selectedMetrics));
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setLumaEventsError(error instanceof Error ? error.message : "We couldn't load your Luma events.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLumaEvents(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowLumaPreview, lumaSource?.status, lumaSource?.lastSyncedAt]);
+
   const currentReturnPath = `${location.pathname}${location.search || ""}`;
 
   const requestConnectSource = (source: VibeRaisingInputSourceSummary) => {
@@ -2909,6 +3176,84 @@ export default function ConnectData() {
       setStatusMessage(error instanceof Error ? error.message : "We couldn't save Google Analytics property selection.");
     } finally {
       setSavingGoogleAnalyticsProperties(false);
+    }
+  };
+
+  const handleToggleLumaEvent = (eventId: string) => {
+    lumaSelectionTouchedRef.current = true;
+    setSelectedLumaEventIds((previous) => {
+      const nextSelected = new Set(previous);
+      if (nextSelected.has(eventId)) {
+        nextSelected.delete(eventId);
+      } else {
+        nextSelected.add(eventId);
+      }
+      return nextSelected;
+    });
+  };
+
+  const handleToggleLumaMetric = (metricKey: string) => {
+    lumaSelectionTouchedRef.current = true;
+    setSelectedLumaMetricKeys((previous) => {
+      const nextSelected = new Set(previous);
+      if (nextSelected.has(metricKey)) {
+        nextSelected.delete(metricKey);
+      } else {
+        nextSelected.add(metricKey);
+      }
+      return nextSelected;
+    });
+  };
+
+  const handleLoadMoreLumaEvents = async () => {
+    if (!lumaEventsNextCursor || loadingMoreLumaEvents) return;
+    setLoadingMoreLumaEvents(true);
+    setLumaEventsError(null);
+    try {
+      const payload = await getVibeRaisingLumaEvents(backendBaseUrl, {
+        cursor: lumaEventsNextCursor,
+        limit: LUMA_EVENT_PAGE_LIMIT,
+      });
+      setLumaEventsById((previous) => mergeLumaEventsById(previous, payload.events));
+      setLumaEventsNextCursor(payload.nextCursor ?? null);
+      if (!lumaSelectionTouchedRef.current) {
+        const selectedEventIds = getSelectedLumaEventIds(payload.events);
+        if (selectedEventIds.length > 0) {
+          setSelectedLumaEventIds((previous) => {
+            const nextSelected = new Set(previous);
+            selectedEventIds.forEach((eventId) => nextSelected.add(eventId));
+            return nextSelected;
+          });
+        }
+      }
+    } catch (error) {
+      setLumaEventsError(error instanceof Error ? error.message : "We couldn't load more Luma events.");
+    } finally {
+      setLoadingMoreLumaEvents(false);
+    }
+  };
+
+  const handleSaveLumaSelections = async () => {
+    setSavingLumaSelections(true);
+    setStatusMessage(null);
+    try {
+      await saveVibeRaisingLumaSelections(
+        backendBaseUrl,
+        Array.from(selectedLumaEventIds),
+        Array.from(selectedLumaMetricKeys),
+      );
+      setStatusMessage("Saved. Updating your Luma metrics…");
+      try {
+        await syncVibeRaisingInputSources(backendBaseUrl, ["luma"]);
+      } catch {
+        // Sync is best-effort; the selection is already saved.
+      }
+      await refreshStatuses();
+      setStatusMessage("Luma metrics updated.");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't save your Luma selection.");
+    } finally {
+      setSavingLumaSelections(false);
     }
   };
 
@@ -3453,6 +3798,25 @@ export default function ConnectData() {
           onToggleProperty={handleToggleGoogleAnalyticsProperty}
           onLoadMore={() => void handleLoadMoreGoogleAnalyticsProperties()}
           onSave={() => void handleSaveGoogleAnalyticsProperties()}
+        />
+      ) : null}
+
+      {shouldShowLumaPreview ? (
+        <LumaPreview
+          events={lumaEvents}
+          accountLabel={lumaAccountLabel ?? lumaSource?.accountLabel ?? null}
+          loading={loadingLumaEvents}
+          error={lumaEventsError}
+          saving={savingLumaSelections}
+          selectedEventIds={selectedLumaEventIds}
+          selectedMetricKeys={selectedLumaMetricKeys}
+          availableMetrics={lumaAvailableMetrics}
+          nextCursor={lumaEventsNextCursor}
+          loadingMore={loadingMoreLumaEvents}
+          onToggleEvent={handleToggleLumaEvent}
+          onToggleMetric={handleToggleLumaMetric}
+          onLoadMore={() => void handleLoadMoreLumaEvents()}
+          onSave={() => void handleSaveLumaSelections()}
         />
       ) : null}
 

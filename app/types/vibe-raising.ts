@@ -405,6 +405,29 @@ export interface VibeRaisingGoogleAnalyticsPropertiesResponse {
   warnings: string[];
 }
 
+export interface VibeRaisingLumaEvent {
+  id?: number | string;
+  eventId: string;
+  name: string;
+  eventUrl?: string | null;
+  startAt?: string | null;
+  selected: boolean;
+}
+
+export interface VibeRaisingLumaMetricOption {
+  key: string;
+  label: string;
+}
+
+export interface VibeRaisingLumaEventsResponse {
+  accountLabel?: string | null;
+  events: VibeRaisingLumaEvent[];
+  nextCursor?: string | null;
+  selectedMetrics: string[];
+  availableMetrics: VibeRaisingLumaMetricOption[];
+  warnings: string[];
+}
+
 export interface VibeRaisingSlackChannelsResponse {
   accountLabel?: string | null;
   teamId?: string | null;
