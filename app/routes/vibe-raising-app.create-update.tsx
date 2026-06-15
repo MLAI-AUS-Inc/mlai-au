@@ -85,6 +85,7 @@ const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
     "google_drive",
     "slack",
     "linear",
+    "luma",
     "manual_documents",
 ]);
 
@@ -105,6 +106,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
 const COMPACT_OPTIONAL_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
     "google_analytics",
     "stripe",
+    "luma",
     "linear",
     "notion",
     "google_drive",
@@ -2869,7 +2871,7 @@ export default function CreateUpdate() {
         const byKey = new Map(compactSources.map((source) => [source.key, source]));
         return COMPACT_OPTIONAL_SOURCE_KEYS
             .map((key) => byKey.get(key))
-            .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
+            .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source && isConnectedInputSource(source)));
     }, [compactSources]);
     const selectedConnectedSourceLabels = useMemo(
         () => compactOptionalSources
