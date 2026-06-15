@@ -1,11 +1,19 @@
 import type { Route } from "./+types/founder-tools.marketing.settings";
-import { Form, Link, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { Form, Link, redirect, useActionData, useLoaderData, useNavigation, useSearchParams } from "react-router";
 import { ArrowLeftIcon, ArrowPathIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 
+import DailyReminderChannels, { CHANNEL_INTENTS } from "~/components/DailyReminderChannels";
 import FounderStartupDetailsStep from "~/components/FounderStartupDetailsStep";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
-import { getVibeMarketingBootstrap, saveVibeMarketingSettings } from "~/lib/vibe-marketing";
+import {
+  createNotificationChannel,
+  getVibeMarketingBootstrap,
+  removeNotificationChannel,
+  resendNotificationChannelCode,
+  saveVibeMarketingSettings,
+  verifyNotificationChannelOtp,
+} from "~/lib/vibe-marketing";
 import {
   getActiveVibeRaisingCompany,
   requireVibeRaisingFounder,
@@ -46,6 +54,37 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { appUser } = await requireVibeRaisingFounder(env, request);
   const activeCompany = getActiveVibeRaisingCompany(appUser);
   const formData = await request.formData();
+
+  const intent = stringFromForm(formData, "intent");
+  if ((CHANNEL_INTENTS as readonly string[]).includes(intent)) {
+    try {
+      if (intent === "connect-channel") {
+        await createNotificationChannel(env, request, {
+          channelType: stringFromForm(formData, "channelType"),
+          routeId: stringFromForm(formData, "routeId"),
+        });
+      } else if (intent === "verify-channel-otp") {
+        const code = stringFromForm(formData, "code");
+        if (!code) return { intent, error: "Enter the 6-digit code from WhatsApp." };
+        await verifyNotificationChannelOtp(env, request, stringFromForm(formData, "channelId"), code);
+      } else if (intent === "resend-channel-otp") {
+        await resendNotificationChannelCode(env, request, stringFromForm(formData, "channelId"));
+      } else if (intent === "remove-channel") {
+        await removeNotificationChannel(env, request, stringFromForm(formData, "channelId"));
+      }
+    } catch (error: any) {
+      return {
+        intent,
+        error:
+          error?.data?.detail ??
+          error?.response?.data?.detail ??
+          error?.message ??
+          "That channel action could not be completed.",
+      };
+    }
+    return { intent };
+  }
+
   const { founderProfiles, founderNames } = founderNamesFromForm(formData);
 
   try {
@@ -101,11 +140,25 @@ export async function action({ request, context }: Route.ActionArgs) {
   throw redirect("/founder-tools/marketing");
 }
 
+const EMAIL_CHANNEL_BANNERS: Record<string, { tone: "success" | "error"; message: string }> = {
+  verified: { tone: "success", message: "Email channel verified. Daily research topics will be sent there." },
+  expired: { tone: "error", message: "That verification link has expired. Send a new one below." },
+  invalid: { tone: "error", message: "That verification link is no longer valid. Send a new one below." },
+};
+
 export default function FounderToolsMarketingSettings() {
   const { bootstrap } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
+  const [searchParams] = useSearchParams();
+  const emailChannelBanner = EMAIL_CHANNEL_BANNERS[searchParams.get("emailChannel") ?? ""] ?? null;
+  const dailyCheck = bootstrap.checks.dailyAutomation;
+  const channelError =
+    actionData && "intent" in actionData && actionData.error &&
+    (CHANNEL_INTENTS as readonly string[]).includes(String(actionData.intent))
+      ? actionData.error
+      : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -119,7 +172,19 @@ export default function FounderToolsMarketingSettings() {
         </div>
       </div>
 
-      {actionData?.error ? (
+      {emailChannelBanner ? (
+        <div
+          className={
+            emailChannelBanner.tone === "success"
+              ? "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"
+              : "rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800"
+          }
+        >
+          {emailChannelBanner.message}
+        </div>
+      ) : null}
+
+      {actionData?.error && !channelError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {actionData.error}
         </div>
@@ -179,6 +244,21 @@ export default function FounderToolsMarketingSettings() {
           Save settings
         </button>
       </Form>
+
+      <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-black text-gray-950">Daily reminder notifications</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Choose where the daily research topics are sent. Verified channels all receive the same message each morning.
+        </p>
+        <div className="mt-4 max-w-xl">
+          <DailyReminderChannels
+            channels={dailyCheck?.channels ?? []}
+            isSubmitting={isSubmitting}
+            error={channelError}
+            errorIntent={actionData && "intent" in actionData ? String(actionData.intent) : null}
+          />
+        </div>
+      </section>
     </div>
   );
 }

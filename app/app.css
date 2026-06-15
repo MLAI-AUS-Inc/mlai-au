@@ -3,6 +3,7 @@
 @import "tw-animate-css";
 @import "./styles/vibe-raising-tokens.css";
 @import "./styles/vibe-raising-components.css";
+@import "./styles/mlai-studio.css";
 
 @custom-variant dark (&:is(.dark *));
 

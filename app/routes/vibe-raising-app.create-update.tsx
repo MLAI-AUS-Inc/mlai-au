@@ -22,6 +22,13 @@ import {
 } from "~/lib/vibe-raising";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
+    VIBE_METRIC_KEYS,
+    VIBE_METRIC_OPTIONS,
+    VIBE_METRIC_OPTION_MAP,
+    hasDisplayableMetricValue,
+    type MetricOption,
+} from "~/lib/vibe-raising-metrics";
+import {
     XMarkIcon,
     SparklesIcon,
     ArrowPathIcon,
@@ -60,7 +67,9 @@ import type {
     VibeRaisingFounderProfile,
     VibeRaisingInputSourceSummary,
     VibeRaisingManualDocument,
+    VibeRaisingMetricDisplayConfig,
     VibeRaisingMetricSuggestion,
+    VibeRaisingMetricVisibility,
     VibeRaisingMonthlyUpdate,
     VibeRaisingStartupUpdateStatusResponse,
     VibeRaisingVideoCompressionMetadata,
@@ -89,6 +98,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
     google_drive: "Google Drive",
     slack: "Slack",
     linear: "Linear",
+    luma: "Luma",
     manual_documents: "Manual documents",
 };
 
@@ -259,6 +269,14 @@ function DraftSourceLogo({ sourceKey }: { sourceKey: VibeRaisingInputSourceKey }
         );
     }
 
+    if (sourceKey === "luma") {
+        return (
+            <span className={badgeClassName}>
+                <img src="/vibe-raising/logos/luma.webp" alt="" className={officialLogoClassName} />
+            </span>
+        );
+    }
+
     if (sourceKey === "google_drive") {
         return (
             <span className={badgeClassName}>
@@ -342,6 +360,29 @@ function getMonthlyUpdateStorageKey(update: VibeRaisingMonthlyUpdate) {
     return getMonthlyUpdateKey(parsed.month, parsed.year);
 }
 
+// Accepts either the object shape (loader data) or the JSON string echoed
+// back through the hidden form input on the feedback step.
+function parseDisplayConfigValue(raw: unknown): VibeRaisingMetricDisplayConfig | null {
+    if (!raw) return null;
+    if (typeof raw === "string") {
+        const text = raw.trim();
+        if (!text) return null;
+        try {
+            return parseDisplayConfigValue(JSON.parse(text));
+        } catch {
+            return null;
+        }
+    }
+    if (typeof raw !== "object" || Array.isArray(raw)) return null;
+    const candidate = raw as Record<string, unknown>;
+    const toKeys = (value: unknown) =>
+        Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+    return {
+        snippetMetricKeys: toKeys(candidate.snippetMetricKeys),
+        fullMetricKeys: toKeys(candidate.fullMetricKeys),
+    };
+}
+
 function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
     const parsedPeriod = parseVibeRaisingMonthYear(update.month);
     const metrics = update.metrics || {};
@@ -369,6 +410,7 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         next30Days: update.next30Days || "",
         metrics,
         metricSuggestions: update.metricSuggestions || [],
+        displayConfig: update.displayConfig || null,
         metricKeys: Object.keys(metrics).join(","),
         ...metrics,
     };
@@ -429,6 +471,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
             .filter(([, value]) => value.length > 0),
     );
     const metricSuggestions = metricSuggestionsFromKeys(selectedMetricKeys, metrics);
+    const displayConfig = parseDisplayConfigValue(formData.get("displayConfig"));
     const rawPitchDeckFileSizeBytes = Number(formData.get("pitchDeckFileSizeBytes") || 0);
     const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
     const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
@@ -462,6 +505,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         next30Days: String(formData.get("next30Days") || ""),
         metrics,
         metricSuggestions,
+        displayConfig,
     };
 }
 
@@ -653,50 +697,11 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 // ─── Metric Options ──────────────────────────────────────────────
-interface MetricOption {
-    key: string;
-    label: string;
-    placeholder: string;
-    prefix?: string;
-    icon: React.ReactNode;
-    info?: string;
-}
-
-const METRIC_OPTIONS: MetricOption[] = [
-    { key: "revenue", label: "Revenue (AUD)", placeholder: "50,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Your total income this month." },
-    { key: "activeUsers", label: "Active Users", placeholder: "1,500", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Unique users who engaged with your product this month." },
-    { key: "mrr", label: "MRR (AUD)", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Monthly recurring revenue from active subscriptions." },
-    { key: "burnRate", label: "Burn Rate (AUD)", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" />, info: "How much capital the company is spending per month." },
-    { key: "runway", label: "Runway", placeholder: "18 months", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Estimated time before the company needs more funding." },
-    { key: "monthlyCosts", label: "Costs (AUD)", placeholder: "25,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Total monthly costs from Xero Profit and Loss expense rows." },
-    { key: "invoiceRevenue", label: "Invoice Revenue", placeholder: "45,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice revenue from accounting data." },
-    { key: "cashCollected", label: "Cash Collected", placeholder: "42,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Cash received from accounting payments." },
-    { key: "revenueGrowthRate", label: "Revenue Growth", placeholder: "12%", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Month-on-month revenue or MRR growth when source data supports it." },
-    { key: "customerCount", label: "Customers", placeholder: "24", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Number of active or paying customers when source data supports it." },
-    { key: "churn", label: "Churn", placeholder: "2%", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Customer or revenue churn when source data supports it." },
-    { key: "invoiceCount", label: "Invoices", placeholder: "12", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice count or invoices sent this month." },
-    { key: "recurringInvoiceCount", label: "Recurring Invoices", placeholder: "6", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Active recurring invoice count from accounting data." },
-    { key: "websiteVisitors", label: "Website Visitors", placeholder: "1,200", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Visitors to the company website this month." },
-    { key: "waitlistSignups", label: "Waitlist Signups", placeholder: "85", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "People who joined the waitlist this month." },
-    { key: "demoRequests", label: "Demo Requests", placeholder: "14", icon: <ArrowRightIcon className="w-4 h-4 text-gray-400" />, info: "Inbound requests to see or try the product." },
-    { key: "customerInterviews", label: "Customer Interviews", placeholder: "10", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Potential or current customers interviewed this month." },
-    { key: "experimentsRun", label: "Experiments Run", placeholder: "4", icon: <LightBulbIcon className="w-4 h-4 text-gray-400" />, info: "Validation, growth, product, or pricing experiments completed." },
-    { key: "pilotCount", label: "Pilots", placeholder: "3", icon: <SparklesIcon className="w-4 h-4 text-gray-400" />, info: "Active pilots, design partners, or trials." },
-    { key: "qualifiedPipeline", label: "Qualified Pipeline", placeholder: "250,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Qualified sales pipeline with customer intent." },
-];
-
-const METRIC_OPTION_MAP = new Map(METRIC_OPTIONS.map((option) => [option.key, option]));
-const METRIC_FORM_KEYS = METRIC_OPTIONS.map((option) => option.key);
-
-function hasDisplayableMetricValue(value: unknown) {
-    if (value === null || value === undefined) return false;
-
-    const rawValue = String(value).trim();
-    if (!rawValue) return false;
-
-    const lowerValue = rawValue.toLowerCase();
-    return !["null", "undefined", "-", "—"].includes(lowerValue);
-}
+// Catalog lives in ~/lib/vibe-raising-metrics so the dashboard, article
+// page, and editor all share one source of truth.
+const METRIC_OPTIONS = VIBE_METRIC_OPTIONS;
+const METRIC_OPTION_MAP = VIBE_METRIC_OPTION_MAP;
+const METRIC_FORM_KEYS = VIBE_METRIC_KEYS;
 
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
     const keys = Object.keys(metrics || {}).filter((key) => hasDisplayableMetricValue(metrics?.[key]));
@@ -736,6 +741,53 @@ function metricSuggestionsFromKeys(keys: string[], metrics: Record<string, strin
 function metricOptionsFromKeys(keys: string[]) {
     const selected = new Set(keys.filter((key) => METRIC_OPTION_MAP.has(key)));
     return METRIC_OPTIONS.filter((option) => selected.has(option.key));
+}
+
+const METRIC_VISIBILITY_OPTIONS: { key: VibeRaisingMetricVisibility; label: string; title: string }[] = [
+    { key: "hidden", label: "Hide", title: "Not shown on the published update" },
+    { key: "full", label: "Full", title: "Shown on the full update only" },
+    { key: "snippet", label: "TLDR", title: "Shown on the TLDR snippet and the full update" },
+];
+
+// Three-way visibility control for a metric with a value: hidden, full
+// update only, or TLDR snippet + full update.
+function MetricVisibilityToggle({
+    value,
+    onChange,
+}: {
+    value: VibeRaisingMetricVisibility;
+    onChange: (value: VibeRaisingMetricVisibility) => void;
+}) {
+    return (
+        <div
+            className="mt-3 inline-flex rounded-lg border border-gray-200 bg-white p-0.5"
+            onClick={(event) => event.stopPropagation()}
+        >
+            {METRIC_VISIBILITY_OPTIONS.map((option) => (
+                <button
+                    key={option.key}
+                    type="button"
+                    title={option.title}
+                    aria-pressed={value === option.key}
+                    onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onChange(option.key);
+                    }}
+                    className={clsx(
+                        "rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wide transition",
+                        value === option.key
+                            ? option.key === "hidden"
+                                ? "bg-gray-200 text-gray-600"
+                                : "bg-[rgba(0,255,215,0.16)] text-[var(--vr-color-primary)]"
+                            : "text-gray-400 hover:text-gray-600",
+                    )}
+                >
+                    {option.label}
+                </button>
+            ))}
+        </div>
+    );
 }
 
 function MetricInfoBadge({ info }: { info?: string }) {
@@ -2667,6 +2719,23 @@ export default function CreateUpdate() {
         });
         return initial;
     });
+
+    // Per-metric snippet/full visibility. Seeded from the update being
+    // edited, else carried forward from the most recent prior update.
+    const [metricDisplayStates, setMetricDisplayStates] = useState<Record<string, VibeRaisingMetricVisibility>>(() => {
+        const seeded =
+            parseDisplayConfigValue(defaultData?.displayConfig) ||
+            existingMonthlyUpdates.find((update) => update.displayConfig)?.displayConfig ||
+            null;
+        if (!seeded) return {};
+        const states: Record<string, VibeRaisingMetricVisibility> = {};
+        seeded.fullMetricKeys.forEach((key) => { states[key] = "full"; });
+        seeded.snippetMetricKeys.forEach((key) => { states[key] = "snippet"; });
+        return states;
+    });
+    const setMetricDisplayState = useCallback((key: string, next: VibeRaisingMetricVisibility) => {
+        setMetricDisplayStates((previous) => ({ ...previous, [key]: next }));
+    }, []);
     const [compactSources, setCompactSources] = useState<VibeRaisingInputSourceSummary[]>([]);
     const [compactSourcesLoading, setCompactSourcesLoading] = useState(false);
     const [compactSourcesError, setCompactSourcesError] = useState<string | null>(null);
@@ -2776,6 +2845,7 @@ export default function CreateUpdate() {
     const [emailDraftPollDelayMs, setEmailDraftPollDelayMs] = useState(EMAIL_DRAFT_POLL_INTERVAL_MS);
     const emailDraftRecoveryKeyRef = useRef<string | null>(null);
     const emailDraftIgnoredRunIdRef = useRef<string | null>(null);
+    const hydratedRunInputSourcesRef = useRef<string | null>(null);
     const pitchDeckLinkInputRef = useRef<HTMLInputElement | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -2847,6 +2917,23 @@ export default function CreateUpdate() {
             cancelled = true;
         };
     }, [backendBaseUrl]);
+
+    // On the edit/regenerate path (no ?inputs= deep link), pre-select the founder's
+    // connected sources once so the picker isn't empty and the generate button is enabled.
+    // Bails for create-new, for ?inputs= deep links, and once a selection already exists.
+    const didSeedEditSourcesRef = useRef(false);
+    useEffect(() => {
+        if (didSeedEditSourcesRef.current) return;
+        if (!isEdit || initialSelectedInputSources.length > 0) {
+            didSeedEditSourcesRef.current = true;
+            return;
+        }
+        if (connectedDraftInputSources.length === 0) return;
+        if (selectedDraftInputSources.size === 0) {
+            setSelectedDraftInputSources(new Set(connectedDraftInputSources));
+        }
+        didSeedEditSourcesRef.current = true;
+    }, [isEdit, initialSelectedInputSources, connectedDraftInputSources, selectedDraftInputSources]);
 
     const toggleDraftInputSource = useCallback((source: VibeRaisingInputSourceSummary) => {
         if (!isConnectedInputSource(source)) return;
@@ -3385,7 +3472,12 @@ export default function CreateUpdate() {
                 const runInputSources = (statusResponse.run?.inputSources || []).filter(
                     (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
                 );
-                if (runInputSources.length > 0) {
+                // Hydrate the source picker from the run ONCE per run (refresh recovery).
+                // Re-applying on every 5s poll would clobber a user's manual source
+                // toggles (e.g. adding Google Analytics) while a draft is running.
+                const runId = statusResponse.runId ?? null;
+                if (runInputSources.length > 0 && runId && hydratedRunInputSourcesRef.current !== runId) {
+                    hydratedRunInputSourcesRef.current = runId;
                     setSelectedDraftInputSources(new Set(runInputSources));
                 }
                 setMonthConfirmed(true);
@@ -4007,6 +4099,21 @@ export default function CreateUpdate() {
         }
     }, []);
 
+    // Regenerating an existing draft returns the user to the pristine GENERATE view
+    // (month + source picker + "Draft from X" button) so they can re-pick sources and
+    // re-run with the same generate button. Keep monthConfirmed + selectedDraftStage
+    // ("reporting") so the picker and generate button stay visible; clearing
+    // metricsConfirmed hides the populated template + "Save as Draft".
+    const handleReturnToGenerate = useCallback(() => {
+        setDismissedFeedback(true);
+        resetEmailDraftUi();
+        clearPersistedEmailDraftRun();
+        setMetricsConfirmed(false);
+        if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, []);
+
     const draftStickyStatusIcon = (
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
             {hasDraftTemplate ? <CheckCircleIcon className="h-5 w-5" /> : <SparklesIcon className="h-5 w-5" />}
@@ -4297,6 +4404,21 @@ export default function CreateUpdate() {
         ...Array.from(selectedMetrics),
         ...Object.keys(metricValues),
     ])).filter((key) => METRIC_OPTION_MAP.has(key));
+    // Snippet/full selection for the update being saved, restricted to
+    // valued metrics in catalog order (snippet keys are a subset of full).
+    const displayConfigFormValue = useMemo(() => {
+        const valuedKeys = VIBE_METRIC_KEYS.filter(
+            (key) => String(metricValues[key] || "").trim().length > 0,
+        );
+        const hasExplicitStates = Object.keys(metricDisplayStates).length > 0;
+        const fullMetricKeys = valuedKeys.filter(
+            (key) => (metricDisplayStates[key] ?? "full") !== "hidden",
+        );
+        const snippetMetricKeys = hasExplicitStates
+            ? valuedKeys.filter((key) => metricDisplayStates[key] === "snippet")
+            : fullMetricKeys.slice(0, 4);
+        return JSON.stringify({ snippetMetricKeys, fullMetricKeys });
+    }, [metricValues, metricDisplayStates]);
     const activeHighlights = isViewingCurrentUpdate ? highlights : activePastCard?.highlights || "";
     const activeChallenges = isViewingCurrentUpdate ? challenges : activePastCard?.challenges || "";
     const activeAsks = isViewingCurrentUpdate ? asks : activePastCard?.asks || "";
@@ -4706,7 +4828,7 @@ export default function CreateUpdate() {
         </section>
     );
 
-    const optionalDataSourcesSection = !isEdit ? (
+    const optionalDataSourcesSection = (
         <section className="rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
@@ -4826,7 +4948,7 @@ export default function CreateUpdate() {
                 </div>
             </div>
         </section>
-    ) : null;
+    );
 
     const handlePersistDraft = useCallback(() => {
         const draftForm = document.getElementById(DRAFT_REVIEW_FORM_ID);
@@ -4846,10 +4968,7 @@ export default function CreateUpdate() {
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
         const canRegenerateDraftFromReview = regenerateSourcesAvailable;
-        const handleRegenerateDraftFromReview = () => {
-            setDismissedFeedback(true);
-            requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
-        };
+        const handleRegenerateDraftFromReview = handleReturnToGenerate;
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
         const reviewPitchDeckUrl = String(reviewData?.pitchDeckUrl || "").trim();
@@ -5997,6 +6116,7 @@ export default function CreateUpdate() {
                                 <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
+                                    <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
                                     <input type="hidden" name="summary" value={summary} />
                                     <input type="hidden" name="sourceUrl" value={sourceUrl} />
                                     <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
@@ -6104,6 +6224,12 @@ export default function CreateUpdate() {
                                                                 : "border-gray-200 text-gray-300 opacity-45 saturate-0 placeholder:text-gray-300 focus:border-[var(--vr-color-primary)] focus:opacity-100 focus:saturate-100",
                                                         )}
                                                     />
+                                                    {hasMetricValue ? (
+                                                        <MetricVisibilityToggle
+                                                            value={metricDisplayStates[metric.key] ?? "full"}
+                                                            onChange={(next) => setMetricDisplayState(metric.key, next)}
+                                                        />
+                                                    ) : null}
                                                 </label>
                                                     );
                                                 })()
@@ -6227,7 +6353,7 @@ export default function CreateUpdate() {
                 tertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
                 mobileTertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
                 onTertiary={canRunAgainDraft
-                    ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true })
+                    ? handleReturnToGenerate
                     : isEmailDraftBusy
                         ? () => { void handleCancelEmailDraft(); }
                         : undefined}
@@ -6376,6 +6502,7 @@ export default function CreateUpdate() {
                     name="metricKeys"
                     value={formMetricKeys.join(",")}
                 />
+                <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
                 <input type="hidden" name="summary" value={summary} />
                 <input type="hidden" name="sourceUrl" value={sourceUrl} />
                 <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
@@ -6765,6 +6892,12 @@ export default function CreateUpdate() {
                                                     "mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-tight tracking-wide",
                                                     active ? "text-gray-600" : "text-gray-400"
                                                 )}>{m.label}</p>
+                                                {isViewingCurrentUpdate && active && String(activeMetricValues[m.key] || "").trim() ? (
+                                                    <MetricVisibilityToggle
+                                                        value={metricDisplayStates[m.key] ?? "full"}
+                                                        onChange={(next) => setMetricDisplayState(m.key, next)}
+                                                    />
+                                                ) : null}
                                             </div>
                                         );
                                     })}

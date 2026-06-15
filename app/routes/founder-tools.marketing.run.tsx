@@ -5,6 +5,7 @@ import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLoca
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
+  ArrowRightIcon,
   CheckCircleIcon,
   EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
@@ -17,6 +18,7 @@ import {
 import { clsx } from "clsx";
 
 import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
+import DailyReminderChannels from "~/components/DailyReminderChannels";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
@@ -35,6 +37,7 @@ import {
   hasPublishHandoffEvidence,
   isArticleReviewPreviewReady,
   isPublishApprovalGate,
+  isPublishFlowSettled,
   publishPreviewUrlForRun,
   publishPrUrlForRun,
   viewedWorkflowStepIdForRun,
@@ -45,17 +48,21 @@ import {
   controlVibeMarketingRun,
   acceptVibeMarketingComponentRevision,
   addVibeMarketingComponentComment,
+  createNotificationChannel,
   deleteVibeMarketingComponentComment,
   getVibeMarketingBootstrap,
   getVibeMarketingGithubRepos,
   getVibeMarketingRun,
+  removeNotificationChannel,
   replayVibeMarketingDaily,
+  resendNotificationChannelCode,
   submitVibeMarketingArticleSystemComments,
   submitVibeMarketingComponentComments,
   startVibeMarketingScan,
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
   updateVibeMarketingComponentComment,
+  verifyNotificationChannelOtp,
   canonicalizeTopicCandidates,
 } from "~/lib/vibe-marketing";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
@@ -509,10 +516,37 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
+    } else if (intent === "connect-channel") {
+      const channelType = stringFromForm(formData, "channelType");
+      if (!channelType) return { intent, error: "Choose a notification channel to connect." };
+      await createNotificationChannel(env, request, {
+        channelType,
+        routeId: stringFromForm(formData, "routeId"),
+      });
+    } else if (intent === "verify-channel-otp") {
+      const code = stringFromForm(formData, "code");
+      if (!code) return { intent, error: "Enter the 6-digit code from WhatsApp." };
+      await verifyNotificationChannelOtp(env, request, stringFromForm(formData, "channelId"), code);
+    } else if (intent === "resend-channel-otp") {
+      await resendNotificationChannelCode(env, request, stringFromForm(formData, "channelId"));
+    } else if (intent === "remove-channel") {
+      await removeNotificationChannel(env, request, stringFromForm(formData, "channelId"));
     } else if (["approve", "deny", "resume", "restart", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
-      const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
-      const result = await controlVibeMarketingRun(env, request, controlRunId, intent, sourceRunId ? { sourceRunId } : {});
+      const targetRunId = stringFromForm(formData, "targetRunId");
+      const autoMerge =
+        stringFromForm(formData, "autoMerge") === "true" &&
+        ["approve", "promote-bundle", "publish-pr"].includes(intent);
+      const controlRunId =
+        intent === "promote-bundle" || intent === "publish-pr"
+          ? sourceRunId || runId
+          : (intent === "resume" || intent === "restart") && targetRunId
+            ? targetRunId
+            : runId;
+      const payload: Record<string, unknown> = {};
+      if (sourceRunId) payload.sourceRunId = sourceRunId;
+      if (autoMerge) payload.autoMerge = true;
+      const result = await controlVibeMarketingRun(env, request, controlRunId, intent, payload);
       if ((intent === "merge-setup-pr" || intent === "refresh-setup-pr-status") && isArticleSystemSetupMerged(result)) {
         throw redirect("/founder-tools/marketing?setupMerged=1");
       }
@@ -2207,6 +2241,7 @@ function LiveArticlePreviewPanel({
             <div className="flex flex-col gap-2 sm:flex-row">
               {canAcceptArticleForPublish ? (
                 <Form method="POST">
+                  <input type="hidden" name="autoMerge" value="true" />
                   <button
                     type="submit"
                     name="intent"
@@ -2495,6 +2530,11 @@ function ArticleSetupPublishDetail({
   const dailyEnabled = Boolean(bootstrap.settings.dailyDiscoveryEnabled || dailyCheck?.enabled || dailyCheck?.passed);
   const dailyReady = Boolean(dailyEnabled || setupMerged || dailyCheck?.ready || dailyCheck?.passed);
   const defaultTimezone = bootstrap.settings.defaultTimezone ?? "Australia/Melbourne";
+  const dailyChannels = dailyCheck?.channels ?? [];
+  const activeChannelLabels = dailyChannels
+    .filter((channel) => channel.consentState === "active")
+    .map((channel) => ({ slack: "Slack", email: "Email", whatsapp: "WhatsApp" })[channel.channelType])
+    .filter(Boolean);
 
   return (
     <div className="space-y-5">
@@ -2583,9 +2623,10 @@ function ArticleSetupPublishDetail({
             )}
           </PublishFlowCard>
 
-          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? "Enabled" : setupMerged ? "Ready" : "Merge first"}>
+          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? (activeChannelLabels.length ? `${activeChannelLabels.join(" + ")} enabled` : "Enabled") : setupMerged ? "Ready" : "Merge first"}>
             {setupMerged ? (
               <div className="space-y-3">
+                <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
                 <Form method="POST" className="space-y-3">
                   <label className="block">
                     <span className="text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
@@ -2696,68 +2737,225 @@ function PublishAndAutomateDetail({
   const checksStatus = stringResultValue(run, "checks_status", "checksStatus");
   const promotePending = isActionPending?.("promote-bundle", "publish-pr") ?? isSubmitting;
   const mergePending = isActionPending?.("merge-publish-pr") ?? isSubmitting;
+  const resumePending = isActionPending?.("resume") ?? isSubmitting;
   const enableDailyPending = isActionPending?.("enable-daily-automation") ?? isSubmitting;
   const runDailyPending = isActionPending?.("run-daily-discovery-now") ?? isSubmitting;
   const mergeStatus = stringResultValue(run, "merge_status", "mergeStatus");
   const isMerged = mergeStatus === "merged";
+  const mergeBlockedReason = stringResultValue(run, "merge_blocked_reason", "mergeBlockedReason");
+  const autoMergeState = stringResultValue(run, "publish_auto_merge_state", "publishAutoMergeState");
+  const autoMergeEnabled = run.result?.["publish_auto_merge"] === true;
+  const publishChildPreviewUrl = stringResultValue(run, "publish_child_preview_url", "publishChildPreviewUrl");
+  const publishedWithoutPr = Boolean(!prUrl && (previewUrl || publishChildPreviewUrl) && publishChildStatus === "completed");
+  const mergeBlocked = Boolean(
+    prUrl &&
+      !isMerged &&
+      (autoMergeState === "blocked" || ["failed", "failure", "error", "closed"].includes(checksStatus)),
+  );
+  const publishChildFailed = Boolean(
+    !prUrl &&
+      !isMerged &&
+      !publishedWithoutPr &&
+      (publishChildStatus === "failed" || (publishChildRunId === run.runId && run.status === "failed")),
+  );
+  // The article content lives on the run that has the component manifest — the
+  // current run if it has one, otherwise the source (parent) run. The failed
+  // publish child has no manifest, so this resolves to the parent.
+  const articleViewRunId = run.componentManifest ? run.runId : publishSourceRunId || run.runId;
+  const canViewArticle = Boolean(run.componentManifest || publishSourceRunId);
+  const viewArticleHref = `/founder-tools/marketing/runs/${encodeURIComponent(articleViewRunId)}?articleStep=review`;
+  // Resume targets the failed publish run. When viewing the article (parent),
+  // that's the child via targetRunId; when viewing the child itself, the
+  // current run (no targetRunId needed).
+  const resumePublishTargetRunId = publishChildRunId && publishChildRunId !== run.runId ? publishChildRunId : "";
   const dailyCheck = bootstrap.checks.dailyAutomation as
     | (VibeMarketingBootstrap["checks"][string] & { ready?: boolean; enabled?: boolean })
     | undefined;
   const dailyEnabled = Boolean(bootstrap.settings.dailyDiscoveryEnabled || dailyCheck?.enabled || dailyCheck?.passed);
   const dailyReady = Boolean(dailyEnabled || dailyCheck?.ready || dailyCheck?.passed);
   const defaultTimezone = bootstrap.settings.defaultTimezone ?? "Australia/Melbourne";
+  const dailyChannels = dailyCheck?.channels ?? [];
+  const activeChannelLabels = dailyChannels
+    .filter((channel) => channel.consentState === "active")
+    .map((channel) => ({ slack: "Slack", email: "Email", whatsapp: "WhatsApp" })[channel.channelType])
+    .filter(Boolean);
 
   return (
     <div className="space-y-5">
-      {publishChildMissingRemote ? null : <ArticleRunStageProgress run={run} variant="embedded" />}
+      {publishChildMissingRemote ? null : (
+        <ArticleRunStageProgress run={run} variant="embedded" reviewHref={canViewArticle ? viewArticleHref : undefined} />
+      )}
       <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish publishing this article</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Create the publish PR, merge it after checks pass, then turn on Slack research prompts for the next article.
+              Publish the article — the PR merges to main automatically once checks pass — then turn on daily research prompts (Slack, email or WhatsApp) for the next article.
             </p>
+            {canViewArticle ? (
+              <Link
+                to={viewArticleHref}
+                className="mt-3 inline-flex items-center gap-1 text-sm font-black text-violet-700 transition hover:text-violet-900"
+              >
+                View article
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            ) : null}
           </div>
           <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishStep?.status ?? "ready"} />
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <PublishFlowCard
-            title="Publish PR"
-            status={prUrl ? "complete" : publishPending ? "running" : "ready"}
+            title="Publish"
+            status={
+              isMerged || publishedWithoutPr
+                ? "complete"
+                : mergeBlocked || publishChildFailed
+                  ? "blocked"
+                  : prUrl || publishPending
+                    ? "running"
+                    : "ready"
+            }
             eyebrow={
-              prUrl
-                ? "PR ready"
-                : publishPending
-                  ? "Preparing PR"
-                  : publishChildRecoverable
-                    ? "Resume needed"
-                    : publishChildApprovalRequired
-                      ? "Review needed"
-                      : publishHandoffStale
-                        ? "Retry needed"
-                        : "Ready"
+              isMerged
+                ? "Merged"
+                : publishedWithoutPr
+                  ? "Published"
+                  : mergeBlocked
+                    ? "Merge blocked"
+                    : prUrl
+                      ? checksStatus
+                        ? `Checks ${checksStatus}`
+                        : "Waiting for checks"
+                      : publishPending
+                        ? "Creating PR"
+                        : publishChildFailed
+                          ? "Publish failed"
+                          : publishChildRecoverable
+                            ? "Resume needed"
+                            : publishChildApprovalRequired
+                              ? "Review needed"
+                              : publishHandoffStale
+                                ? "Retry needed"
+                                : "Ready"
             }
           >
-            {prUrl ? (
+            {isMerged ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  {prNumber ? `Pull request #${prNumber} is ready for review.` : "The publish pull request is ready for review."}
+                  {prNumber
+                    ? `Pull request #${prNumber} has been merged to main. The article deploys with the next site build.`
+                    : "The publish pull request has been merged to main. The article deploys with the next site build."}
                 </p>
+                {prUrl ? (
+                  <a
+                    href={prUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
+                  >
+                    Open merged PR
+                  </a>
+                ) : null}
+              </div>
+            ) : publishedWithoutPr ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">The article was published without a pull request.</p>
                 <a
-                  href={prUrl}
+                  href={previewUrl || publishChildPreviewUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
                 >
-                  Open PR
+                  Open published article
                 </a>
               </div>
+            ) : mergeBlocked ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {mergeBlockedReason || "The PR could not be merged automatically. Open it on GitHub to investigate, then retry."}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={prUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                  >
+                    Open PR
+                  </a>
+                  <Form method="POST">
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="merge-publish-pr"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50"
+                    >
+                      {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                      {mergePending ? "Checking..." : "Retry merge"}
+                    </button>
+                  </Form>
+                </div>
+              </div>
+            ) : prUrl && autoMergeEnabled ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {prNumber ? `Pull request #${prNumber} is open.` : "The publish pull request is open."} It merges to main
+                  automatically once GitHub checks pass. This page updates on its own.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-black text-gray-500"
+                  >
+                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                    Waiting for checks
+                  </button>
+                  <a
+                    href={prUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                  >
+                    Open PR
+                  </a>
+                </div>
+              </div>
+            ) : prUrl ? (
+              <Form method="POST" className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {prNumber ? `Pull request #${prNumber} is ready.` : "The publish pull request is ready."} The app checks
+                  GitHub status before merging. If checks are still pending or failing, it will leave the PR open.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="merge-publish-pr"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:bg-gray-100 disabled:text-gray-500"
+                  >
+                    {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                    {mergePending ? "Checking..." : "Check and merge"}
+                  </button>
+                  <a
+                    href={prUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                  >
+                    Open PR
+                  </a>
+                </div>
+              </Form>
             ) : publishPending ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  The publish handoff has started. This page will update when the PR is available.
+                  Creating the publish PR. Once checks pass it merges to main automatically — this page updates on its own.
                 </p>
                 <button
                   type="button"
@@ -2765,12 +2963,43 @@ function PublishAndAutomateDetail({
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-black text-gray-500"
                 >
                   <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                  Preparing PR
+                  Creating PR
                 </button>
+              </div>
+            ) : publishChildFailed ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {publishChildWaitReason ||
+                    "The publish run failed before a PR was created — a worker likely stalled mid-run. Resume to continue from where it stopped."}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Form method="POST">
+                    {resumePublishTargetRunId ? <input type="hidden" name="targetRunId" value={resumePublishTargetRunId} /> : null}
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="resume"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                    >
+                      <ArrowPathIcon className={clsx("h-4 w-4", resumePending && "animate-spin")} />
+                      {resumePending ? "Resuming..." : "Resume publish"}
+                    </button>
+                  </Form>
+                  {publishChildRunId && publishChildRunId !== run.runId ? (
+                    <a
+                      href={`/founder-tools/marketing/runs/${encodeURIComponent(publishChildRunId)}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                    >
+                      Open publish run
+                    </a>
+                  ) : null}
+                </div>
               </div>
             ) : publishChildRecoverable ? (
               <Form method="POST" className="space-y-3">
                 {publishSourceRunId ? <input type="hidden" name="sourceRunId" value={publishSourceRunId} /> : null}
+                <input type="hidden" name="autoMerge" value="true" />
                 <p className="text-sm font-semibold text-gray-600">
                   {publishChildMissingRemote
                     ? "The publish job was queued but did not start. Retry will safely recreate the same PR job."
@@ -2784,7 +3013,7 @@ function PublishAndAutomateDetail({
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                 >
                   <ArrowPathIcon className={clsx("h-4 w-4", promotePending && "animate-spin")} />
-                  {promotePending ? "Preparing PR..." : publishChildMissingRemote ? "Retry creating PR" : "Resume publish PR"}
+                  {promotePending ? "Publishing..." : publishChildMissingRemote ? "Retry publishing" : "Resume publishing"}
                 </button>
               </Form>
             ) : publishChildApprovalRequired ? (
@@ -2805,8 +3034,9 @@ function PublishAndAutomateDetail({
               </div>
             ) : publishHandoffStale ? (
               <Form method="POST" className="space-y-3">
+                <input type="hidden" name="autoMerge" value="true" />
                 <p className="text-sm font-semibold text-gray-600">
-                  The previous publish handoff did not produce a PR. Retry will safely reuse any existing publish run if one was created.
+                  The previous publish attempt did not produce a PR. Retry will safely reuse any existing publish run if one was created.
                 </p>
                 <button
                   type="submit"
@@ -2816,13 +3046,14 @@ function PublishAndAutomateDetail({
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                 >
                   <ArrowPathIcon className={clsx("h-4 w-4", promotePending && "animate-spin")} />
-                  {promotePending ? "Preparing PR..." : "Retry creating PR"}
+                  {promotePending ? "Publishing..." : "Retry publishing"}
                 </button>
               </Form>
             ) : (
               <Form method="POST" className="space-y-3">
+                <input type="hidden" name="autoMerge" value="true" />
                 <p className="text-sm font-semibold text-gray-600">
-                  Generate the website changes as a pull request before anything is merged.
+                  Create the publish PR; once GitHub checks pass it merges to main automatically.
                 </p>
                 <button
                   type="submit"
@@ -2832,33 +3063,7 @@ function PublishAndAutomateDetail({
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                 >
                   {promotePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                  {promotePending ? "Creating PR..." : "Create publish PR"}
-                </button>
-              </Form>
-            )}
-          </PublishFlowCard>
-
-          <PublishFlowCard
-            title="Merge to main"
-            status={isMerged ? "complete" : prUrl ? "ready" : "locked"}
-            eyebrow={isMerged ? "Merged" : checksStatus ? `Checks ${checksStatus}` : prUrl ? "Ready to check" : "Waiting for PR"}
-          >
-            {isMerged ? (
-              <p className="text-sm font-semibold text-gray-600">The publish pull request has been merged.</p>
-            ) : (
-              <Form method="POST" className="space-y-3">
-                <p className="text-sm font-semibold text-gray-600">
-                  The app checks GitHub status before merging. If checks are still pending or failing, it will leave the PR open.
-                </p>
-                <button
-                  type="submit"
-                  name="intent"
-                  value="merge-publish-pr"
-                  disabled={isSubmitting || !prUrl}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:bg-gray-100 disabled:text-gray-500"
-                >
-                  {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                  {mergePending ? "Checking..." : "Check and merge"}
+                  {promotePending ? "Publishing..." : "Publish article"}
                 </button>
               </Form>
             )}
@@ -2867,9 +3072,18 @@ function PublishAndAutomateDetail({
           <PublishFlowCard
             title="Daily research reminder"
             status={dailyEnabled ? "complete" : dailyReady ? "ready" : "locked"}
-            eyebrow={dailyEnabled ? "Slack enabled" : dailyReady ? "Ready" : "Needs setup"}
+            eyebrow={
+              dailyEnabled
+                ? activeChannelLabels.length
+                  ? `${activeChannelLabels.join(" + ")} enabled`
+                  : "Enabled"
+                : dailyReady
+                  ? "Ready"
+                  : "Needs setup"
+            }
           >
             <div className="space-y-3">
+              <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
               <Form method="POST" className="space-y-3">
                 <label className="block">
                   <span className="mb-2 block text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
@@ -2887,7 +3101,7 @@ function PublishAndAutomateDetail({
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-500"
                 >
                   {enableDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : dailyEnabled ? <CheckCircleIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
-                  {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable Slack reminder"}
+                  {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable daily reminder"}
                 </button>
               </Form>
               <Form method="POST">
@@ -2906,9 +3120,14 @@ function PublishAndAutomateDetail({
           </PublishFlowCard>
         </div>
 
-        {previewUrl ? (
+        {previewUrl || publishChildPreviewUrl ? (
           <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-            <a href={previewUrl} target="_blank" rel="noreferrer" className="text-sm font-black text-emerald-800 hover:text-emerald-950">
+            <a
+              href={previewUrl || publishChildPreviewUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-black text-emerald-800 hover:text-emerald-950"
+            >
               Open published preview
             </a>
           </div>
@@ -3603,6 +3822,11 @@ function setupStepViewFromSearch(search: string): ArticleSetupStepView | null {
   return value && SETUP_STEP_VIEW_VALUES.has(value) ? (value as ArticleSetupStepView) : null;
 }
 
+function articleStepViewFromSearch(search: string): "generate" | "review" | "publish" | null {
+  const value = new URLSearchParams(search).get("articleStep");
+  return value && SETUP_STEP_VIEW_VALUES.has(value) ? (value as "generate" | "review" | "publish") : null;
+}
+
 function workflowProgressForRunPage(
   run: VibeMarketingRunSummary,
   fallbackProgress: VibeMarketingWorkflowProgress | null | undefined,
@@ -3726,7 +3950,7 @@ export default function FounderToolsMarketingRun() {
     (POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
     setupPreviewActive ||
     hasPendingArticlePreview(run) ||
-    hasPublishHandoffEvidence(run);
+    (hasPublishHandoffEvidence(run) && !isPublishFlowSettled(run));
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const hasArticlePreview = hasReadyArticlePreview(run);
@@ -3749,7 +3973,8 @@ export default function FounderToolsMarketingRun() {
     [discoveryCandidates, selectedDiscoveryCandidateId],
   );
   const requestedSetupStep = isArticleSystemSetupRun ? setupStepViewFromSearch(location.search) : null;
-  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run));
+  const requestedArticleStep = isArticleGenerationRun ? articleStepViewFromSearch(location.search) : null;
+  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run), requestedArticleStep);
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";

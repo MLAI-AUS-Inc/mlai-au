@@ -50,6 +50,7 @@ const sharedOptimizeDepsInclude = [
   "gsap",
   "gsap/ScrollTrigger",
   "react-dropzone",
+  "recharts",
   "tailwind-merge",
 ];
 

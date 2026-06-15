@@ -14,6 +14,7 @@ import { LogoShooter, useLogoPreloader, LoadingOverlay } from "~/components/logo
 import { SPONSOR_LOGOS } from "~/components/logo-shooter/logoData";
 import { LogoMarquee } from "~/components/LogoMarquee";
 import FounderTools from "~/components/FounderTools";
+import MlaiStudioTeaser from "~/components/MlaiStudioTeaser";
 
 // Split logos into 3 rows for marquee animation
 const ROW_1_LOGOS = SPONSOR_LOGOS.slice(0, 13);
@@ -235,6 +236,16 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
 
         {/* Team section - moved here directly under testimonials */}
         <Team />
+      </section>
+
+      {/* ===== MLAI STUDIO SECTION ===== */}
+      {/* Teaser intro that links through to the full /mlai-studio landing page */}
+      <section id="mlai-studio">
+        {/* MLAI Studio section divider - Crimson */}
+        <SectionDivider color="#ff003d" />
+
+        {/* MLAI Studio teaser */}
+        <MlaiStudioTeaser />
       </section>
 
       {/* ===== ARTICLES SECTION ===== */}

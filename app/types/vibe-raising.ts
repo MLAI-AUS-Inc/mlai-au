@@ -64,6 +64,28 @@ export interface VibeRaisingMetricSuggestion {
   reason?: string;
 }
 
+export type VibeRaisingMetricVisibility = "hidden" | "full" | "snippet";
+
+export interface VibeRaisingMetricDisplayConfig {
+  snippetMetricKeys: string[];
+  fullMetricKeys: string[];
+}
+
+export interface VibeRaisingMetricHistoryPoint {
+  month: string;
+  value: number;
+  valueText: string;
+}
+
+export interface VibeRaisingMetricHistorySeries {
+  metricKey: string;
+  label: string;
+  unit?: string | null;
+  points: VibeRaisingMetricHistoryPoint[];
+}
+
+export type VibeRaisingMetricHistory = Record<string, VibeRaisingMetricHistorySeries>;
+
 export interface VibeRaisingDraftedContent {
   month?: string;
   year?: number;
@@ -117,6 +139,7 @@ export interface VibeRaisingMonthlyUpdate {
   videoOriginalFilename?: string | null;
   metrics: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
+  displayConfig?: VibeRaisingMetricDisplayConfig | null;
   highlights: string;
   challenges: string;
   asks: string;
@@ -212,6 +235,7 @@ export type VibeRaisingInputSourceKey =
   | "google_drive"
   | "slack"
   | "linear"
+  | "luma"
   | "manual_documents";
 
 export type VibeRaisingInputSourceStatus =
@@ -243,6 +267,7 @@ export interface VibeRaisingInputSourceSummary {
   googlePermissionsUrl?: string | null;
   selectedChannelCount?: number;
   selectedProjectCount?: number;
+  selectedPropertyCount?: number;
   hasReportScope?: boolean;
   needsReportReconnect?: boolean;
   canRequestReportScopes?: boolean;
@@ -360,6 +385,24 @@ export interface VibeRaisingSlackChannel {
   isPrivate: boolean;
   selected: boolean;
   lastSyncedAt?: string | null;
+}
+
+export interface VibeRaisingGoogleAnalyticsProperty {
+  id?: number | string;
+  propertyId: string;
+  propertyDisplayName: string;
+  name?: string | null;
+  accountId?: string | null;
+  accountDisplayName?: string | null;
+  selected: boolean;
+  lastSyncedAt?: string | null;
+}
+
+export interface VibeRaisingGoogleAnalyticsPropertiesResponse {
+  accountLabel?: string | null;
+  properties: VibeRaisingGoogleAnalyticsProperty[];
+  nextCursor?: string | null;
+  warnings: string[];
 }
 
 export interface VibeRaisingSlackChannelsResponse {

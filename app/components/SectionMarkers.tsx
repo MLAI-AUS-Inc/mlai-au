@@ -24,6 +24,11 @@ const sectionMarkers = [
         color: "#3537dc", // Blue
     },
     {
+        sectionId: "mlai-studio",
+        name: "Studio",
+        color: "#ff003d", // Crimson
+    },
+    {
         sectionId: "articles",
         name: "Articles",
         color: "#fefc22", // Yellow

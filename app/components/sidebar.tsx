@@ -35,9 +35,9 @@ const navigation = [
   },
   {
     number: "5",
-    name: "Sponsor",
-    href: "/sponsors",
-    // No sectionId - navigates to /sponsors page
+    name: "Studio",
+    href: "/#mlai-studio",
+    sectionId: "mlai-studio", // MLAI Studio teaser section
     color: "#ff003d", // Crimson
   },
   {

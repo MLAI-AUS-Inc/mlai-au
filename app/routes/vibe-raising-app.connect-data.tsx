@@ -25,9 +25,11 @@ import { getEnv } from "~/lib/env.server";
 import {
   bootstrapVibeRaisingStartupUpdate,
   connectVibeRaisingInputSource,
+  connectVibeRaisingLuma,
   disconnectVibeRaisingGmail,
   getVibeRaisingBankFeedPreview,
   getVibeRaisingGmailPreview,
+  getVibeRaisingGoogleAnalyticsProperties,
   getVibeRaisingInputSourcesStatus,
   getVibeRaisingLinearPreview,
   getVibeRaisingLinearProjects,
@@ -39,6 +41,7 @@ import {
   getVibeRaisingSlackPreview,
   getVibeRaisingXeroPreview,
   requireVibeRaisingFounder,
+  saveVibeRaisingGoogleAnalyticsPropertySelections,
   saveVibeRaisingLinearProjectSelections,
   saveVibeRaisingSlackChannelSelections,
   syncVibeRaisingFinancialSources,
@@ -47,6 +50,8 @@ import {
 import type {
   VibeRaisingBankFeedPreview,
   VibeRaisingGmailPreview,
+  VibeRaisingGoogleAnalyticsProperty,
+  VibeRaisingGoogleAnalyticsPropertiesResponse,
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
@@ -65,12 +70,13 @@ import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 const DEFAULT_NEXT = "/founder-tools/updates/create";
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
-const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear"]);
+const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "google_analytics", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear", "luma"]);
 const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSourceKey>(["stripe"]);
 const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_analytics", "stripe", "linear", "notion"];
-const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", "slack", "bank_feed", "xero"];
+const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", "slack", "bank_feed", "xero", "luma"];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
 const LINEAR_PROJECT_PAGE_LIMIT = 100;
+const GOOGLE_ANALYTICS_PROPERTY_PAGE_LIMIT = 200;
 const DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_data_sources_mobile_tour_seen_v1";
 const DATA_PRIVACY_POINTS = [
   "Only you can see connected source data in your workspace",
@@ -96,7 +102,7 @@ const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
     label: "Google Analytics",
     capabilities: ["metrics"],
     selected: false,
-    status: "coming_soon",
+    status: "not_connected",
   },
   {
     key: "stripe",
@@ -278,10 +284,10 @@ function MobileDataSourcesTour({
   );
 }
 
-type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "google_analytics" | "manual_documents">;
+type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents" | "luma">;
 
 function isOAuthSourceKey(key: VibeRaisingInputSourceKey): key is OAuthSourceKey {
-  return key !== "gmail" && key !== "manual_documents";
+  return key !== "gmail" && key !== "manual_documents" && key !== "luma";
 }
 
 function readStoredManualMaterials(): ManualMaterialsState {
@@ -369,6 +375,11 @@ const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; mobi
     description: "Pull project updates, active workstreams, and key tasks from Linear.",
     mobileDescription: "Pull project updates and key tasks.",
     connectedUse: "Projects, tasks, updates",
+  },
+  luma: {
+    description: "Track events run and registrations from your own Luma calendar over time.",
+    mobileDescription: "Track events run and registrations.",
+    connectedUse: "Events run, registrations",
   },
   manual_documents: {
     description: "Use uploaded founder documents as deterministic context.",
@@ -1087,6 +1098,145 @@ function SlackPreview({
   );
 }
 
+function mergeGoogleAnalyticsPropertiesById(
+  previous: Record<string, VibeRaisingGoogleAnalyticsProperty>,
+  properties: VibeRaisingGoogleAnalyticsProperty[],
+) {
+  if (properties.length === 0) return previous;
+  const next = { ...previous };
+  properties.forEach((property) => {
+    next[property.propertyId] = { ...next[property.propertyId], ...property };
+  });
+  return next;
+}
+
+function getSelectedGoogleAnalyticsPropertyIds(properties: VibeRaisingGoogleAnalyticsProperty[]) {
+  return properties.filter((property) => property.selected).map((property) => property.propertyId);
+}
+
+function GoogleAnalyticsPreview({
+  properties,
+  accountLabel,
+  loading,
+  error,
+  saving,
+  selectedPropertyIds,
+  nextCursor,
+  loadingMore,
+  onToggleProperty,
+  onLoadMore,
+  onSave,
+}: {
+  properties: VibeRaisingGoogleAnalyticsProperty[];
+  accountLabel: string | null;
+  loading: boolean;
+  error: string | null;
+  saving: boolean;
+  selectedPropertyIds: Set<string>;
+  nextCursor: string | null;
+  loadingMore: boolean;
+  onToggleProperty: (propertyId: string) => void;
+  onLoadMore: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <section className="rounded-xl border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Google Analytics properties</h2>
+          <p className="mt-2 text-sm text-slate-500">Choose which GA4 property feeds traffic and conversion metrics into this update.</p>
+        </div>
+        {loading ? (
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-[var(--vr-color-primary)]">
+            <ArrowPathIcon className="h-4 w-4 animate-spin" />
+            Loading
+          </span>
+        ) : null}
+      </div>
+
+      {error ? (
+        <div className="mt-5 rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">{error}</div>
+      ) : null}
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Google account</p>
+          <p className="mt-2 truncate text-sm font-black text-gray-950">{accountLabel || "Connected Google Analytics"}</p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected properties</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{selectedPropertyIds.size}</p>
+        </div>
+      </div>
+
+      {properties.length > 0 ? (
+        <div className="mt-5 rounded-lg border border-gray-100">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-black text-gray-950">Properties</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">{selectedPropertyIds.size} selected</p>
+            </div>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-lg bg-[var(--vr-color-primary)] px-3 py-2 text-xs font-extrabold text-white transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? "Saving" : "Save selection"}
+            </button>
+          </div>
+          <ul className="divide-y divide-gray-100 px-2 py-2">
+            {properties.map((property) => {
+              const selected = selectedPropertyIds.has(property.propertyId);
+              return (
+                <li key={property.propertyId}>
+                  <button
+                    type="button"
+                    onClick={() => onToggleProperty(property.propertyId)}
+                    className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-3 text-left font-semibold text-gray-800 transition hover:bg-[rgba(0,255,215,0.08)]"
+                  >
+                    <span
+                      className={clsx(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
+                        selected ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white" : "border-gray-300 bg-white text-transparent",
+                      )}
+                    >
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-black text-gray-950">{property.propertyDisplayName}</span>
+                      <span className="mt-0.5 block truncate text-xs font-bold text-slate-500">
+                        {[property.accountDisplayName, `Property ${property.propertyId}`].filter(Boolean).join(" · ")}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {nextCursor ? (
+            <div className="border-t border-gray-100 p-2">
+              <button
+                type="button"
+                onClick={onLoadMore}
+                disabled={loadingMore}
+                className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <ArrowPathIcon className={clsx("h-4 w-4", loadingMore && "animate-spin")} />
+                {loadingMore ? "Loading properties" : "Load more properties"}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : !loading ? (
+        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
+          Google Analytics is connected, but no GA4 properties were found for this Google account.
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function mergeLinearProjectsById(
   previous: Record<string, VibeRaisingLinearProject>,
   projects: VibeRaisingLinearProject[],
@@ -1467,6 +1617,14 @@ function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputS
     );
   }
 
+  if (sourceKey === "luma") {
+    return (
+      <div className={badgeClassName}>
+        <img src="/vibe-raising/logos/luma.webp" alt="" className={officialLogoClassName} />
+      </div>
+    );
+  }
+
   return (
     <div className={clsx("flex shrink-0 items-center justify-center rounded-full bg-[#13b5ea] font-black uppercase text-white shadow-sm transition-all duration-300", large ? "h-12 w-12 text-sm sm:h-16 sm:w-16 sm:text-base" : "h-10 w-10 text-xs")}>
       xero
@@ -1598,62 +1756,6 @@ function ConnectorCard({
               {busy ? "Connecting..." : canConnect ? "Connect" : statusLabel(source.status)}
             </button>
           )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function GoogleAnalyticsPlaceholderCard({ isMobileView = false }: { isMobileView?: boolean }) {
-  return (
-    <div
-      className="relative flex min-h-[112px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-3 shadow-sm outline-none sm:min-h-[220px] sm:rounded-2xl sm:p-4"
-      aria-label="Google Analytics source coming soon"
-    >
-      <div className="pointer-events-none flex flex-col gap-3">
-        <div className={clsx("flex gap-3", isMobileView ? "justify-center" : "items-start justify-between")}>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-gray-200 sm:h-16 sm:w-16 sm:rounded-2xl">
-            <img src="/vibe-raising/logos/google-analytics.svg" alt="" className="h-8 w-8 object-contain sm:h-10 sm:w-10" />
-          </div>
-        </div>
-        <h3 className={clsx("break-words text-base font-black leading-tight text-gray-950 sm:text-left sm:text-lg", isMobileView && "text-center")}>
-          Google Analytics
-        </h3>
-      </div>
-
-      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-2" : "pt-4 sm:pt-5")}>
-        {!isMobileView ? (
-          <p className="mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4">
-            Pull website traffic, acquisition, and top-page performance into your monthly update workflow.
-          </p>
-        ) : null}
-
-        {!isMobileView ? (
-          <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
-            {["Traffic", "Attribution"].map((capability) => (
-              <span
-                key={capability}
-                className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 sm:text-[10px]"
-              >
-                {capability}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <div className={clsx("mt-auto", isMobileView ? "pt-2" : "pt-3 sm:pt-4")}>
-          <button
-            type="button"
-            disabled
-            className="block w-full cursor-not-allowed rounded-lg bg-gray-100 px-3 py-2 text-center text-xs font-extrabold text-gray-400"
-          >
-            Coming soon
-          </button>
-          {!isMobileView ? (
-            <p className="mt-2 min-h-8 line-clamp-2 text-[10px] leading-4 text-slate-500 sm:min-h-[2.75rem] sm:text-[11px] sm:line-clamp-none">
-              Website traffic support is coming soon for founder updates.
-            </p>
-          ) : null}
         </div>
       </div>
     </div>
@@ -1898,6 +2000,10 @@ export default function ConnectData() {
   const [syncingSlack, setSyncingSlack] = useState(false);
   const [busyProvider, setBusyProvider] = useState<VibeRaisingInputSourceKey | null>(null);
   const [pendingConnectSource, setPendingConnectSource] = useState<VibeRaisingInputSourceSummary | null>(null);
+  const [showLumaModal, setShowLumaModal] = useState(false);
+  const [lumaApiKeyValue, setLumaApiKeyValue] = useState("");
+  const [lumaConnecting, setLumaConnecting] = useState(false);
+  const [lumaError, setLumaError] = useState<string | null>(null);
   const [showNoSourcesModal, setShowNoSourcesModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [gmailManagementSource, setGmailManagementSource] = useState<VibeRaisingInputSourceSummary | null>(null);
@@ -1920,6 +2026,14 @@ export default function ConnectData() {
   const [slackError, setSlackError] = useState<string | null>(null);
   const [savingSlackChannels, setSavingSlackChannels] = useState(false);
   const [selectedSlackChannelIds, setSelectedSlackChannelIds] = useState<Set<string>>(new Set());
+  const [googleAnalyticsPropertiesById, setGoogleAnalyticsPropertiesById] = useState<Record<string, VibeRaisingGoogleAnalyticsProperty>>({});
+  const [googleAnalyticsNextCursor, setGoogleAnalyticsNextCursor] = useState<string | null>(null);
+  const [loadingGoogleAnalyticsProperties, setLoadingGoogleAnalyticsProperties] = useState(false);
+  const [loadingMoreGoogleAnalyticsProperties, setLoadingMoreGoogleAnalyticsProperties] = useState(false);
+  const [googleAnalyticsAccountLabel, setGoogleAnalyticsAccountLabel] = useState<string | null>(null);
+  const [googleAnalyticsError, setGoogleAnalyticsError] = useState<string | null>(null);
+  const [savingGoogleAnalyticsProperties, setSavingGoogleAnalyticsProperties] = useState(false);
+  const [selectedGoogleAnalyticsPropertyIds, setSelectedGoogleAnalyticsPropertyIds] = useState<Set<string>>(new Set());
   const [syncingLinear, setSyncingLinear] = useState(false);
   const [linearProjectsById, setLinearProjectsById] = useState<Record<string, VibeRaisingLinearProject>>({});
   const [linearProjectsNextCursor, setLinearProjectsNextCursor] = useState<string | null>(null);
@@ -1943,6 +2057,7 @@ export default function ConnectData() {
   const defaultSelectionAppliedRef = useRef(false);
   const slackSelectionTouchedRef = useRef(false);
   const linearSelectionTouchedRef = useRef(false);
+  const googleAnalyticsSelectionTouchedRef = useRef(false);
   const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
   const [showStickyBarOnMobile, setShowStickyBarOnMobile] = useState(false);
   const [mobileTourOpen, setMobileTourOpen] = useState(false);
@@ -1985,6 +2100,7 @@ export default function ConnectData() {
   );
   const slackChannels = useMemo(() => Object.values(slackChannelsById), [slackChannelsById]);
   const linearProjects = useMemo(() => Object.values(linearProjectsById), [linearProjectsById]);
+  const googleAnalyticsProperties = useMemo(() => Object.values(googleAnalyticsPropertiesById), [googleAnalyticsPropertiesById]);
   const selectedManualDocumentIds = useMemo(() => new Set(manualMaterials.manualDocumentIds), [manualMaterials.manualDocumentIds]);
   const hasManualMaterials = Boolean(manualMaterials.manualDocumentIds.length > 0 || manualMaterials.summary.trim());
   const manualMaterialsSummary = hasManualMaterials
@@ -2003,6 +2119,9 @@ export default function ConnectData() {
   const shouldShowSlackPreview = slackSource?.status === "connected" || slackSource?.status === "syncing" || slackSource?.status === "error";
   const linearSource = sourceByKey.get("linear");
   const shouldShowLinearPreview = linearSource?.status === "connected" || linearSource?.status === "syncing" || linearSource?.status === "error";
+  const googleAnalyticsSource = sourceByKey.get("google_analytics");
+  const shouldShowGoogleAnalyticsPreview =
+    googleAnalyticsSource?.status === "connected" || googleAnalyticsSource?.status === "syncing" || googleAnalyticsSource?.status === "error";
 
   const refreshStatuses = async () => {
     setLoadingStatus(true);
@@ -2408,13 +2527,99 @@ export default function ConnectData() {
     };
   }, [backendBaseUrl, shouldShowLinearPreview, linearSource?.lastSyncedAt, linearSource?.status]);
 
+  useEffect(() => {
+    if (!shouldShowGoogleAnalyticsPreview) {
+      setGoogleAnalyticsPropertiesById({});
+      setGoogleAnalyticsNextCursor(null);
+      setGoogleAnalyticsAccountLabel(null);
+      setGoogleAnalyticsError(null);
+      setLoadingGoogleAnalyticsProperties(false);
+      setLoadingMoreGoogleAnalyticsProperties(false);
+      setSelectedGoogleAnalyticsPropertyIds(new Set());
+      googleAnalyticsSelectionTouchedRef.current = false;
+      return;
+    }
+
+    let cancelled = false;
+    googleAnalyticsSelectionTouchedRef.current = false;
+    setGoogleAnalyticsPropertiesById({});
+    setGoogleAnalyticsNextCursor(null);
+    setSelectedGoogleAnalyticsPropertyIds(new Set());
+    setLoadingGoogleAnalyticsProperties(true);
+    setGoogleAnalyticsError(null);
+    getVibeRaisingGoogleAnalyticsProperties(backendBaseUrl, { limit: GOOGLE_ANALYTICS_PROPERTY_PAGE_LIMIT })
+      .then((payload: VibeRaisingGoogleAnalyticsPropertiesResponse) => {
+        if (cancelled) return;
+        setGoogleAnalyticsPropertiesById((previous) => mergeGoogleAnalyticsPropertiesById(previous, payload.properties));
+        setGoogleAnalyticsNextCursor(payload.nextCursor ?? null);
+        setGoogleAnalyticsAccountLabel(payload.accountLabel ?? null);
+        const selectedPropertyIds = getSelectedGoogleAnalyticsPropertyIds(payload.properties);
+        if (!googleAnalyticsSelectionTouchedRef.current && selectedPropertyIds.length > 0) {
+          setSelectedGoogleAnalyticsPropertyIds((previous) => {
+            const nextSelected = new Set(previous);
+            selectedPropertyIds.forEach((propertyId) => nextSelected.add(propertyId));
+            return nextSelected;
+          });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setGoogleAnalyticsError(error instanceof Error ? error.message : "We couldn't load Google Analytics properties.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingGoogleAnalyticsProperties(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowGoogleAnalyticsPreview, googleAnalyticsSource?.status]);
+
   const currentReturnPath = `${location.pathname}${location.search || ""}`;
 
   const requestConnectSource = (source: VibeRaisingInputSourceSummary) => {
     if (!FUNCTIONAL_SOURCES.has(source.key)) return;
     if (source.status === "connected" || source.status === "syncing" || source.status === "coming_soon") return;
     if (source.status === "unavailable" && !OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE.has(source.key)) return;
+    if (source.key === "luma") {
+      // Luma is linked by pasting an API key, not an OAuth redirect.
+      setStatusMessage(null);
+      setLumaApiKeyValue("");
+      setLumaError(null);
+      setShowLumaModal(true);
+      return;
+    }
     setPendingConnectSource(source);
+  };
+
+  const handleConnectLuma = async () => {
+    const apiKey = lumaApiKeyValue.trim();
+    if (!apiKey) {
+      setLumaError("Enter your Luma API key.");
+      return;
+    }
+    setLumaConnecting(true);
+    setLumaError(null);
+    try {
+      await connectVibeRaisingLuma(backendBaseUrl, apiKey);
+    } catch (error) {
+      setLumaError(error instanceof Error ? error.message : "We couldn't connect Luma. Check the key and try again.");
+      setLumaConnecting(false);
+      return;
+    }
+    setShowLumaModal(false);
+    setLumaApiKeyValue("");
+    setLumaConnecting(false);
+    await refreshStatuses();
+    setStatusMessage("Luma connected. Pulling in your events…");
+    try {
+      await syncVibeRaisingInputSources(backendBaseUrl, ["luma"]);
+      await refreshStatuses();
+      setStatusMessage("Luma events synced.");
+    } catch {
+      setStatusMessage("Luma connected, but we couldn't pull events yet. Try syncing again shortly.");
+    }
   };
 
   const confirmConnectSource = () => {
@@ -2460,6 +2665,10 @@ export default function ConnectData() {
     }
     if (source.key === "linear" && selectedLinearProjectIds.size === 0 && !selectedSources.has("linear")) {
       setStatusMessage("Select at least one Linear project before using Linear in this update.");
+      return;
+    }
+    if (source.key === "google_analytics" && selectedGoogleAnalyticsPropertyIds.size === 0 && !selectedSources.has("google_analytics")) {
+      setStatusMessage("Select at least one Google Analytics property before using Google Analytics in this update.");
       return;
     }
 
@@ -2635,6 +2844,71 @@ export default function ConnectData() {
       setStatusMessage(error instanceof Error ? error.message : "We couldn't sync Slack.");
     } finally {
       setSyncingSlack(false);
+    }
+  };
+
+  const handleToggleGoogleAnalyticsProperty = (propertyId: string) => {
+    googleAnalyticsSelectionTouchedRef.current = true;
+    setSelectedGoogleAnalyticsPropertyIds((previous) => {
+      const nextSelected = new Set(previous);
+      if (nextSelected.has(propertyId)) {
+        nextSelected.delete(propertyId);
+      } else {
+        nextSelected.add(propertyId);
+      }
+      return nextSelected;
+    });
+  };
+
+  const handleLoadMoreGoogleAnalyticsProperties = async () => {
+    if (!googleAnalyticsNextCursor || loadingMoreGoogleAnalyticsProperties) return;
+    setLoadingMoreGoogleAnalyticsProperties(true);
+    setGoogleAnalyticsError(null);
+    try {
+      const payload = await getVibeRaisingGoogleAnalyticsProperties(backendBaseUrl, {
+        cursor: googleAnalyticsNextCursor,
+        limit: GOOGLE_ANALYTICS_PROPERTY_PAGE_LIMIT,
+      });
+      setGoogleAnalyticsPropertiesById((previous) => mergeGoogleAnalyticsPropertiesById(previous, payload.properties));
+      setGoogleAnalyticsNextCursor(payload.nextCursor ?? null);
+      const selectedPropertyIds = getSelectedGoogleAnalyticsPropertyIds(payload.properties);
+      if (!googleAnalyticsSelectionTouchedRef.current && selectedPropertyIds.length > 0) {
+        setSelectedGoogleAnalyticsPropertyIds((previous) => {
+          const nextSelected = new Set(previous);
+          selectedPropertyIds.forEach((propertyId) => nextSelected.add(propertyId));
+          return nextSelected;
+        });
+      }
+    } catch (error) {
+      setGoogleAnalyticsError(error instanceof Error ? error.message : "We couldn't load more Google Analytics properties.");
+    } finally {
+      setLoadingMoreGoogleAnalyticsProperties(false);
+    }
+  };
+
+  const handleSaveGoogleAnalyticsProperties = async () => {
+    setSavingGoogleAnalyticsProperties(true);
+    setStatusMessage(null);
+    try {
+      const selectionResponse = await saveVibeRaisingGoogleAnalyticsPropertySelections(
+        backendBaseUrl,
+        Array.from(selectedGoogleAnalyticsPropertyIds),
+      );
+      setGoogleAnalyticsPropertiesById((previous) => mergeGoogleAnalyticsPropertiesById(previous, selectionResponse.properties));
+      setSelectedSources((previous) => {
+        const nextSelected = new Set(previous);
+        if (selectedGoogleAnalyticsPropertyIds.size > 0) {
+          nextSelected.add("google_analytics");
+        } else {
+          nextSelected.delete("google_analytics");
+        }
+        return nextSelected;
+      });
+      await refreshStatuses();
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't save Google Analytics property selection.");
+    } finally {
+      setSavingGoogleAnalyticsProperties(false);
     }
   };
 
@@ -3166,6 +3440,22 @@ export default function ConnectData() {
         </div>
       </section>
 
+      {shouldShowGoogleAnalyticsPreview ? (
+        <GoogleAnalyticsPreview
+          properties={googleAnalyticsProperties}
+          accountLabel={googleAnalyticsAccountLabel ?? googleAnalyticsSource?.accountLabel ?? null}
+          loading={loadingGoogleAnalyticsProperties}
+          error={googleAnalyticsError}
+          saving={savingGoogleAnalyticsProperties}
+          selectedPropertyIds={selectedGoogleAnalyticsPropertyIds}
+          nextCursor={googleAnalyticsNextCursor}
+          loadingMore={loadingMoreGoogleAnalyticsProperties}
+          onToggleProperty={handleToggleGoogleAnalyticsProperty}
+          onLoadMore={() => void handleLoadMoreGoogleAnalyticsProperties()}
+          onSave={() => void handleSaveGoogleAnalyticsProperties()}
+        />
+      ) : null}
+
       {shouldShowSlackPreview ? (
         <SlackPreview
           channels={slackChannels}
@@ -3400,6 +3690,83 @@ export default function ConnectData() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[var(--vr-palette-black)]"
               >
                 Connect {pendingConnectSource.label}
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showLumaModal ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
+            <div className="border-b border-gray-100 px-6 py-5">
+              <div className="flex items-start gap-4">
+                <SourceLogo sourceKey="luma" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]">
+                    Connect with an API key
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black text-gray-950">Connect Luma</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Paste your personal Luma API key. We use it to pull how many events you've run and total
+                    registrations into your tracked metrics. The key is stored encrypted and only you can see this data.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!lumaConnecting) setShowLumaModal(false);
+                  }}
+                  className="rounded-full p-2 text-slate-400 transition hover:bg-gray-50 hover:text-gray-700"
+                  aria-label="Cancel Luma connection"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <label htmlFor="luma-api-key" className="block text-sm font-extrabold text-gray-950">
+                Luma API key
+              </label>
+              <input
+                id="luma-api-key"
+                type="password"
+                autoComplete="off"
+                value={lumaApiKeyValue}
+                onChange={(event) => setLumaApiKeyValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !lumaConnecting) void handleConnectLuma();
+                }}
+                placeholder="secret-xxxxxxxxxxxxxxxxxxxx"
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-950 shadow-sm outline-none focus:border-[var(--vr-color-primary)] focus:ring-2 focus:ring-[rgba(0,128,128,0.18)]"
+              />
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Find this in Luma under Settings → API. Use the calendar that hosts the events you run.
+              </p>
+              {lumaError ? (
+                <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{lumaError}</p>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!lumaConnecting) setShowLumaModal(false);
+                }}
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-700 transition hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={lumaConnecting || !lumaApiKeyValue.trim()}
+                onClick={() => void handleConnectLuma()}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {lumaConnecting ? "Connecting…" : "Connect Luma"}
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>

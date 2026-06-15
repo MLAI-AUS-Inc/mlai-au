@@ -459,3 +459,14 @@
 - [x] Disable the Watt The Hack card on `/hackathons`
 - [x] Block Watt The Hack login, route, and endpoint access from the website
 - [x] Run `bun run typecheck`
+- [x] Add mlai-backend `mlai_studio` app: StudioApplication table, public upsert submit endpoint, Django admin registration
+- [x] Wire the MLAI Studio application form to the backend (lead capture after step 1, awaited final submit with inline error fallback)
+- [x] Verify MLAI Studio signups end-to-end locally (lead row → complete row, admin changelist) and run `bun run typecheck`
+- [x] Remove the MLAI Studio landing page top nav and integrate the page into the global sidebar + footer shell
+- [x] Replace the Sponsor sidebar tab with Studio and move the homepage Studio teaser after People to match
+- [x] Verify the integrated /mlai-studio layout and homepage tab order in the local browser, run `bun run typecheck`
+- [x] Recolor the Studio sidebar tab, section marker, and homepage divider from teal back to crimson (#ff003d)
+- [x] Recolor the MLAI Studio teaser main accents (eyebrow, rotating word box, stats, CTA) from mint to crimson, leaving the sliding pill marquee untouched
+- [x] Replace the homepage FounderTools card deck with the MLAI Studio "Why join" fanned-deck animation (self-contained, ported under ft- classes)
+- [x] Repopulate the deck with the four Founder Tools tracks (Vibe Coding/Marketing/Raising/Coworking), matching the studio card style (flat colour + emoji + hover-reveal, no images/links)
+- [x] Verify the homepage deck (4 cards, studio fan/hover, descriptions fit) and that the studio page deck is unaffected; run `bun run typecheck`

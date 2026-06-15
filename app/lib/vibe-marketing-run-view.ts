@@ -34,6 +34,7 @@ const POLLING_STATUSES = new Set([
 const APPROVAL_GATE_STATUSES = new Set(["awaiting_approval", "approval_required"]);
 
 export type ArticleSetupStepViewForRun = "generate" | "review" | "publish";
+export type ArticleStepViewForRun = "generate" | "review" | "publish";
 
 function isArticleWorkflow(workflow: string | null | undefined) {
   return ARTICLE_WORKFLOWS.has(String(workflow ?? ""));
@@ -147,6 +148,16 @@ export function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
   );
 }
 
+export function isPublishFlowSettled(run: VibeMarketingRunSummary) {
+  if (normalized(stringResultValue(run, "merge_status", "mergeStatus")) === "merged") return true;
+  if (publishPrUrlForRun(run)) return false;
+  const childStatus =
+    normalized(run.publishChildStatus ?? "") || normalized(stringResultValue(run, "publish_child_status", "publishChildStatus"));
+  const previewEvidence =
+    publishPreviewUrlForRun(run) || stringResultValue(run, "publish_child_preview_url", "publishChildPreviewUrl");
+  return childStatus === "completed" && Boolean(previewEvidence);
+}
+
 export function isPublishApprovalGate(run: VibeMarketingRunSummary) {
   return Boolean(
     isArticleWorkflow(run.workflow) &&
@@ -170,6 +181,7 @@ export function viewedWorkflowStepIdForRun(
   run: VibeMarketingRunSummary,
   requestedSetupStep?: ArticleSetupStepViewForRun | null,
   setupWorkflowStepId?: string | null,
+  requestedArticleStep?: ArticleStepViewForRun | null,
 ) {
   const workflow = String(run.workflow ?? "");
   if (DISCOVERY_WORKFLOWS.has(workflow)) {
@@ -178,6 +190,9 @@ export function viewedWorkflowStepIdForRun(
   if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
   if (workflow === "article_system_setup") return requestedSetupStep ?? setupWorkflowStepId ?? "generate";
   if (workflow === "website_baseline") return "baseline";
+  // Explicit user override (e.g. ?articleStep=review) lets the user jump back to
+  // the article preview at any point, even after the run has moved to publish.
+  if (requestedArticleStep && ARTICLE_GENERATION_WORKFLOWS.has(workflow)) return requestedArticleStep;
   if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
   if (ARTICLE_GENERATION_WORKFLOWS.has(workflow)) {
     if (isArticleReviewPreviewReady(run)) return "review";

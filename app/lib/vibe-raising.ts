@@ -18,6 +18,8 @@ import type {
   VibeRaisingGmailDisconnectResponse,
   VibeRaisingGmailMessagePreview,
   VibeRaisingGmailPreview,
+  VibeRaisingGoogleAnalyticsPropertiesResponse,
+  VibeRaisingGoogleAnalyticsProperty,
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
@@ -32,6 +34,10 @@ import type {
   VibeRaisingManualDocumentDownloadResponse,
   VibeRaisingManualDocumentUploadResponse,
   VibeRaisingManualDocumentUploadSessionResponse,
+  VibeRaisingMetricDisplayConfig,
+  VibeRaisingMetricHistory,
+  VibeRaisingMetricHistoryPoint,
+  VibeRaisingMetricHistorySeries,
   VibeRaisingMetricSuggestion,
   VibeRaisingMonthlyUpdate,
   VibeRaisingProfile,
@@ -84,12 +90,15 @@ const XERO_PREVIEW_PATH = "/api/v1/integrations/financial/xero/preview";
 const GMAIL_PREVIEW_PATH = "/api/v1/integrations/gmail/preview";
 const GMAIL_CONNECTION_PATH = "/api/v1/integrations/gmail/connection";
 const INPUT_SOURCES_SYNC_PATH = "/api/v1/integrations/sources/sync";
+const LUMA_CONNECT_PATH = "/api/v1/integrations/luma/connect";
 const SLACK_CHANNELS_PATH = "/api/v1/integrations/slack/channels";
 const SLACK_CHANNEL_SELECTIONS_PATH = "/api/v1/integrations/slack/channel-selections";
 const SLACK_PREVIEW_PATH = "/api/v1/integrations/slack/preview";
 const LINEAR_PROJECTS_PATH = "/api/v1/integrations/linear/projects";
 const LINEAR_PROJECT_SELECTIONS_PATH = "/api/v1/integrations/linear/project-selections";
 const LINEAR_PREVIEW_PATH = "/api/v1/integrations/linear/preview";
+const GOOGLE_ANALYTICS_PROPERTIES_PATH = "/api/v1/integrations/google-analytics/properties";
+const GOOGLE_ANALYTICS_PROPERTY_SELECTIONS_PATH = "/api/v1/integrations/google-analytics/property-selections";
 
 const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisingInputSourceSummary, "selected" | "status">> = {
   gmail: {
@@ -136,6 +145,11 @@ const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisi
     key: "linear",
     label: "Linear",
     capabilities: ["context"],
+  },
+  luma: {
+    key: "luma",
+    label: "Luma",
+    capabilities: ["metrics"],
   },
   manual_documents: {
     key: "manual_documents",
@@ -726,6 +740,80 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
   };
 }
 
+function normalizeMetricKeyList(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const keys: string[] = [];
+  for (const item of raw) {
+    const key = typeof item === "string" ? item.trim() : "";
+    if (key && !keys.includes(key)) {
+      keys.push(key);
+    }
+  }
+  return keys;
+}
+
+export function normalizeDisplayConfig(raw: unknown): VibeRaisingMetricDisplayConfig | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+  const payload = raw as Record<string, unknown>;
+  const snippetMetricKeys = normalizeMetricKeyList(
+    payload.snippetMetricKeys ?? payload.snippet_metric_keys,
+  );
+  const fullMetricKeys = normalizeMetricKeyList(
+    payload.fullMetricKeys ?? payload.full_metric_keys,
+  );
+  for (const key of snippetMetricKeys) {
+    if (!fullMetricKeys.includes(key)) {
+      fullMetricKeys.push(key);
+    }
+  }
+  return { snippetMetricKeys, fullMetricKeys };
+}
+
+export function normalizeMetricHistory(raw: unknown): VibeRaisingMetricHistory {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+
+  const history: VibeRaisingMetricHistory = {};
+  for (const [rawKey, rawSeries] of Object.entries(raw as Record<string, unknown>)) {
+    if (!rawSeries || typeof rawSeries !== "object") continue;
+    const seriesPayload = rawSeries as Record<string, unknown>;
+    const metricKey =
+      asNullableString(seriesPayload.metricKey) ??
+      asNullableString(seriesPayload.metric_key) ??
+      rawKey;
+    if (!metricKey) continue;
+
+    const points: VibeRaisingMetricHistoryPoint[] = [];
+    const rawPoints = Array.isArray(seriesPayload.points) ? seriesPayload.points : [];
+    for (const rawPoint of rawPoints) {
+      if (!rawPoint || typeof rawPoint !== "object") continue;
+      const pointPayload = rawPoint as Record<string, unknown>;
+      const month = asNullableString(pointPayload.month);
+      const value = Number(pointPayload.value);
+      if (!month || !Number.isFinite(value)) continue;
+      points.push({
+        month,
+        value,
+        valueText:
+          asNullableString(pointPayload.valueText) ??
+          asNullableString(pointPayload.value_text) ??
+          String(pointPayload.value),
+      });
+    }
+    if (!points.length) continue;
+    points.sort((a, b) => a.month.localeCompare(b.month));
+
+    const series: VibeRaisingMetricHistorySeries = {
+      metricKey,
+      label: asNullableString(seriesPayload.label) ?? metricKey,
+      unit: asNullableString(seriesPayload.unit),
+      points,
+    };
+    history[metricKey] = series;
+  }
+  return history;
+}
+
 function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
   if (!raw || typeof raw !== "object") return null;
 
@@ -819,6 +907,7 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
     metricSuggestions: normalizeMetricSuggestions(
       payload.metricSuggestions ?? payload.metric_suggestions,
     ),
+    displayConfig: normalizeDisplayConfig(payload.displayConfig ?? payload.display_config),
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
@@ -1217,6 +1306,7 @@ function normalizeInputSourceProvider(value: unknown): VibeRaisingInputSourceKey
   if (normalized === "google_drive" || normalized === "drive") return "google_drive";
   if (normalized === "slack") return "slack";
   if (normalized === "linear") return "linear";
+  if (normalized === "luma") return "luma";
   if (normalized === "manual_documents" || normalized === "manual") return "manual_documents";
   return null;
 }
@@ -1351,6 +1441,10 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       typeof connection.selectedProjectCount === "number" && Number.isFinite(connection.selectedProjectCount)
         ? connection.selectedProjectCount
         : Number(connection.selectedProjectCount ?? connection.selected_project_count ?? 0) || 0;
+    const selectedPropertyCount =
+      typeof connection.selectedPropertyCount === "number" && Number.isFinite(connection.selectedPropertyCount)
+        ? connection.selectedPropertyCount
+        : Number(connection.selectedPropertyCount ?? connection.selected_property_count ?? 0) || 0;
     const rawRequiredReportScopes = connection.requiredReportScopes ?? connection.required_report_scopes;
     const requiredReportScopes = Array.isArray(rawRequiredReportScopes)
       ? rawRequiredReportScopes.map((item) => String(item || "").trim()).filter(Boolean)
@@ -1369,6 +1463,7 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
         asNullableString(connection.google_permissions_url),
       selectedChannelCount,
       selectedProjectCount,
+      selectedPropertyCount,
       hasReportScope: asBoolean(connection.hasReportScope ?? connection.has_report_scope),
       needsReportReconnect: asBoolean(connection.needsReportReconnect ?? connection.needs_report_reconnect),
       canRequestReportScopes: asBoolean(connection.canRequestReportScopes ?? connection.can_request_report_scopes),
@@ -1809,9 +1904,13 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     sourceUrl: "https://mlai.au/founder-tools/updates",
     metrics: {
       revenue: "250+ matches",
-      users: "10k+ professionals",
+      activeUsers: "10k+ professionals",
       mrr: "12 paying pilots",
       runway: "MAP cohort",
+    },
+    displayConfig: {
+      snippetMetricKeys: ["revenue", "activeUsers"],
+      fullMetricKeys: ["revenue", "activeUsers", "mrr", "runway"],
     },
     highlights:
       "Accepted into the Melbourne Accelerator Program (MAP), giving us a five-month runway of mentoring, ecosystem access, and Demo Day preparation.\nRolled out a simpler pricing model across Free, Solo, and Micro tiers, with early-bird discounts live until January 30.\nPilots are active with 3 support coordinators and 10 allied-health clinics, helping us pressure-test matching quality and workflow fit.",
@@ -1841,9 +1940,13 @@ const DEV_MONTHLY_DRAFTS_STUB: VibeRaisingMonthlyUpdate[] = [
     sourceUrl: "https://mlai.au/founder-tools/drafts",
     metrics: {
       revenue: "300+ matches",
-      users: "11k+ professionals",
+      activeUsers: "11k+ professionals",
       mrr: "14 paying pilots",
       runway: "MAP cohort",
+    },
+    displayConfig: {
+      snippetMetricKeys: ["revenue", "activeUsers"],
+      fullMetricKeys: ["revenue", "activeUsers", "mrr", "runway"],
     },
     highlights: "Drafted the May topline around MAP progress, pilot expansion, and marketplace match quality.",
     challenges: "Still refining the conversion benchmark story before publishing.",
@@ -1853,43 +1956,94 @@ const DEV_MONTHLY_DRAFTS_STUB: VibeRaisingMonthlyUpdate[] = [
   },
 ];
 
-export async function getVibeRaisingMonthlyUpdates(
+const DEV_METRIC_HISTORY_STUB: VibeRaisingMetricHistory = {
+  revenue: {
+    metricKey: "revenue",
+    label: "Revenue",
+    unit: "",
+    points: [
+      { month: "2025-08-01", value: 60, valueText: "60 matches" },
+      { month: "2025-09-01", value: 95, valueText: "95 matches" },
+      { month: "2025-10-01", value: 120, valueText: "120+ matches" },
+      { month: "2025-11-01", value: 150, valueText: "150+ matches" },
+      { month: "2025-12-01", value: 210, valueText: "210+ matches" },
+      { month: "2026-01-01", value: 250, valueText: "250+ matches" },
+    ],
+  },
+  activeUsers: {
+    metricKey: "activeUsers",
+    label: "Active Users",
+    unit: "",
+    points: [
+      { month: "2025-08-01", value: 4200, valueText: "4.2k professionals" },
+      { month: "2025-09-01", value: 5600, valueText: "5.6k professionals" },
+      { month: "2025-10-01", value: 7100, valueText: "7.1k professionals" },
+      { month: "2025-11-01", value: 8400, valueText: "8.4k professionals" },
+      { month: "2025-12-01", value: 9300, valueText: "9.3k professionals" },
+      { month: "2026-01-01", value: 10000, valueText: "10k+ professionals" },
+    ],
+  },
+};
+
+export interface VibeRaisingMonthlyUpdatesBundle {
+  updates: VibeRaisingMonthlyUpdate[];
+  metricHistory: VibeRaisingMetricHistory;
+}
+
+const DEV_MONTHLY_UPDATES_BUNDLE_STUB: VibeRaisingMonthlyUpdatesBundle = {
+  updates: DEV_MONTHLY_UPDATES_STUB,
+  metricHistory: DEV_METRIC_HISTORY_STUB,
+};
+
+export async function getVibeRaisingMonthlyUpdatesBundle(
   env: Env,
   request: Request,
-): Promise<VibeRaisingMonthlyUpdate[]> {
+): Promise<VibeRaisingMonthlyUpdatesBundle> {
   if (shouldUseDevBackendStub()) {
-    return DEV_MONTHLY_UPDATES_STUB;
+    return DEV_MONTHLY_UPDATES_BUNDLE_STUB;
   }
   const client = createApiClient(env, request);
 
   try {
     const response = await client.get(UPDATES_PATH);
     const updates: unknown[] = Array.isArray(response.data?.updates) ? response.data.updates : [];
-    return updates
-      .map(normalizeMonthlyUpdate)
-      .filter((value): value is VibeRaisingMonthlyUpdate => value !== null);
+    return {
+      updates: updates
+        .map(normalizeMonthlyUpdate)
+        .filter((value): value is VibeRaisingMonthlyUpdate => value !== null),
+      metricHistory: normalizeMetricHistory(
+        response.data?.metricHistory ?? response.data?.metric_history,
+      ),
+    };
   } catch (error: any) {
     if (error.response?.status === 404) {
-      return [];
+      return { updates: [], metricHistory: {} };
     }
 
     if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
       console.warn("No backend monthly update session in local dev; using update stubs.");
-      return DEV_MONTHLY_UPDATES_STUB;
+      return DEV_MONTHLY_UPDATES_BUNDLE_STUB;
     }
 
     if (shouldUseDevAuthBypass() && !error.response) {
       console.warn("Backend monthly update lookup failed before returning a response in local dev; using update stubs.");
-      return DEV_MONTHLY_UPDATES_STUB;
+      return DEV_MONTHLY_UPDATES_BUNDLE_STUB;
     }
 
     if (shouldUseDevBackendFallback(error)) {
       console.warn("Backend unavailable in local dev; using Vibe Raising monthly update stubs for preview.");
-      return DEV_MONTHLY_UPDATES_STUB;
+      return DEV_MONTHLY_UPDATES_BUNDLE_STUB;
     }
 
     throw error;
   }
+}
+
+export async function getVibeRaisingMonthlyUpdates(
+  env: Env,
+  request: Request,
+): Promise<VibeRaisingMonthlyUpdate[]> {
+  return (await getVibeRaisingMonthlyUpdatesBundle(env, request)).updates;
 }
 
 export async function getVibeRaisingDrafts(
@@ -1968,6 +2122,7 @@ export async function saveVibeRaisingMonthlyUpdate(
     next30Days: string;
     metrics: Record<string, string>;
     metricSuggestions?: VibeRaisingMetricSuggestion[];
+    displayConfig?: VibeRaisingMetricDisplayConfig | null;
     summary?: string | null;
     sourceUrl?: string | null;
     pitchDeckUrl?: string | null;
@@ -2411,7 +2566,7 @@ export async function getVibeRaisingInputSourcesStatus(
     );
     const summaries = normalizeInputSourceSummaries(response);
     const sources = (Object.keys(INPUT_SOURCE_DEFINITIONS) as VibeRaisingInputSourceKey[]).map((key) => (
-      summaries[key] ?? createInputSourceSummary(key, key === "google_analytics" ? "coming_soon" : "not_connected")
+      summaries[key] ?? createInputSourceSummary(key, "not_connected")
     ));
     return {
       sources,
@@ -2487,7 +2642,8 @@ export async function getVibeRaisingInputSourcesStatus(
   return { sources, financeUnavailable };
 }
 
-type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "google_analytics" | "manual_documents">;
+// Luma is connected by pasting an API key (see connectVibeRaisingLuma), not via OAuth redirect.
+type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents" | "luma">;
 
 const CONNECTOR_PROVIDER_SLUGS: Record<ConnectableVibeRaisingInputSourceKey, string> = {
   stripe: "stripe",
@@ -2497,6 +2653,7 @@ const CONNECTOR_PROVIDER_SLUGS: Record<ConnectableVibeRaisingInputSourceKey, str
   google_drive: "google-drive",
   slack: "slack",
   linear: "linear",
+  google_analytics: "google-analytics",
 };
 
 export function connectVibeRaisingInputSource(
@@ -2572,6 +2729,23 @@ export async function syncVibeRaisingInputSources(
     {
       method: "POST",
       body: providers?.length ? JSON.stringify({ providers }) : undefined,
+    },
+  );
+}
+
+// Luma has no OAuth flow — the founder pastes their personal API key, which the
+// backend validates and stores encrypted. Throws (with the backend's detail
+// message) when the key is missing or rejected.
+export async function connectVibeRaisingLuma(
+  backendBaseUrl: string,
+  apiKey: string,
+): Promise<Record<string, unknown>> {
+  return requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    LUMA_CONNECT_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({ apiKey }),
     },
   );
 }
@@ -2903,6 +3077,97 @@ export async function saveVibeRaisingSlackChannelSelections(
     channels: collectRawList(payload, ["selectedChannels", "selected_channels", "channels"])
       .map(normalizeSlackChannel)
       .filter((value): value is VibeRaisingSlackChannel => value !== null),
+    nextCursor: null,
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+function normalizeGoogleAnalyticsProperty(raw: unknown): VibeRaisingGoogleAnalyticsProperty | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = payload.id ?? payload.propertyId ?? payload.property_id;
+  const propertyId =
+    asNullableString(payload.propertyId) ??
+    asNullableString(payload.property_id) ??
+    asNullableString(payload.id);
+  if (!propertyId) return null;
+  const propertyDisplayName =
+    asNullableString(payload.propertyDisplayName) ??
+    asNullableString(payload.property_display_name) ??
+    asNullableString(payload.name) ??
+    propertyId;
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : propertyId,
+    propertyId,
+    propertyDisplayName,
+    name: asNullableString(payload.name) ?? propertyDisplayName,
+    accountId:
+      asNullableString(payload.accountId) ??
+      asNullableString(payload.account_id),
+    accountDisplayName:
+      asNullableString(payload.accountDisplayName) ??
+      asNullableString(payload.account_display_name),
+    selected: asBoolean(payload.selected),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+  };
+}
+
+export async function getVibeRaisingGoogleAnalyticsProperties(
+  backendBaseUrl: string,
+  options: { cursor?: string | null; limit?: number } = {},
+): Promise<VibeRaisingGoogleAnalyticsPropertiesResponse> {
+  const searchParams = new URLSearchParams();
+  if (options.cursor) searchParams.set("cursor", options.cursor);
+  if (typeof options.limit === "number") searchParams.set("limit", String(options.limit));
+  const path = searchParams.toString()
+    ? `${GOOGLE_ANALYTICS_PROPERTIES_PATH}?${searchParams.toString()}`
+    : GOOGLE_ANALYTICS_PROPERTIES_PATH;
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    path,
+    { method: "GET" },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    properties: collectRawList(payload, ["properties"])
+      .map(normalizeGoogleAnalyticsProperty)
+      .filter((value): value is VibeRaisingGoogleAnalyticsProperty => value !== null),
+    nextCursor:
+      asNullableString(payload.nextCursor) ??
+      asNullableString(payload.next_cursor),
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+export async function saveVibeRaisingGoogleAnalyticsPropertySelections(
+  backendBaseUrl: string,
+  propertyIds: string[],
+): Promise<VibeRaisingGoogleAnalyticsPropertiesResponse> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    GOOGLE_ANALYTICS_PROPERTY_SELECTIONS_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({ propertyIds }),
+    },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    properties: collectRawList(payload, ["selectedProperties", "selected_properties", "properties"])
+      .map(normalizeGoogleAnalyticsProperty)
+      .filter((value): value is VibeRaisingGoogleAnalyticsProperty => value !== null),
     nextCursor: null,
     warnings: Array.isArray(rawWarnings)
       ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
