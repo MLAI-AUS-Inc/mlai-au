@@ -3,7 +3,9 @@ import {
     ArrowPathIcon,
     ArrowRightIcon,
     BanknotesIcon,
+    CalendarDaysIcon,
     ChartBarIcon,
+    CheckCircleIcon,
     CurrencyDollarIcon,
     FireIcon,
     LightBulbIcon,
@@ -43,6 +45,10 @@ export const VIBE_METRIC_OPTIONS: MetricOption[] = [
     { key: "experimentsRun", label: "Experiments Run", placeholder: "4", icon: <LightBulbIcon className="w-4 h-4 text-gray-400" />, info: "Validation, growth, product, or pricing experiments completed." },
     { key: "pilotCount", label: "Pilots", placeholder: "3", icon: <SparklesIcon className="w-4 h-4 text-gray-400" />, info: "Active pilots, design partners, or trials." },
     { key: "qualifiedPipeline", label: "Qualified Pipeline", placeholder: "250,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Qualified sales pipeline with customer intent." },
+    { key: "eventsRun", label: "Events Run", placeholder: "8", icon: <CalendarDaysIcon className="w-4 h-4 text-gray-400" />, info: "Events you ran through Luma this month." },
+    { key: "eventRegistrations", label: "Event Registrations", placeholder: "350", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Total registrations across your Luma events this month." },
+    { key: "eventAttendees", label: "Checked-in Attendees", placeholder: "280", icon: <CheckCircleIcon className="w-4 h-4 text-gray-400" />, info: "People who checked in to your Luma events this month." },
+    { key: "eventCheckInRate", label: "Check-in Rate", placeholder: "80%", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Share of registrations who checked in to your Luma events." },
 ];
 
 export const VIBE_METRIC_OPTION_MAP = new Map(
