@@ -1306,6 +1306,7 @@ function normalizeInputSourceProvider(value: unknown): VibeRaisingInputSourceKey
   if (normalized === "google_drive" || normalized === "drive") return "google_drive";
   if (normalized === "slack") return "slack";
   if (normalized === "linear") return "linear";
+  if (normalized === "luma") return "luma";
   if (normalized === "manual_documents" || normalized === "manual") return "manual_documents";
   return null;
 }
