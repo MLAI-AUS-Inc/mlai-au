@@ -285,7 +285,7 @@ export default function ArticleContent() {
             title="Keep learning AI without the hype"
             body="Explore practical resources, events, and community pathways to build a grounded understanding of AI and how current systems are actually used."
             buttonText="Explore practical AI learning"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles"
           />
         </div>
       </div>

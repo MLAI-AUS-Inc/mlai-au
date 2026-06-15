@@ -285,7 +285,7 @@ export default function ArticleContent() {
             title="Explore practical AI learning paths"
             body="If you want to move from definitions to hands-on understanding, start with practical resources for beginners and builders working with real AI workflows."
             buttonText="See practical AI learning"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles"
           />
         </div>
       </div>

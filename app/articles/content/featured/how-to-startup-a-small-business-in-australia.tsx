@@ -282,7 +282,7 @@ export default function ArticleContent() {
             title="Get your startup checklist in order"
             body="Use a simple checklist to map your first steps: define the business, choose a structure, estimate costs, organise finances, and confirm registrations before launch."
             buttonText="View startup resources"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles"
           />
         </div>
       </div>

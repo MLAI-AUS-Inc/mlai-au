@@ -275,7 +275,7 @@ export default function ArticleContent() {
             title="Keep learning AI in practical terms"
             body="If you want a beginner-friendly next step, explore practical AI learning for beginners and builders. It is a simple way to keep building confidence after the basics in this article."
             buttonText="Explore practical AI learning"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles"
           />
         </div>
       </div>
