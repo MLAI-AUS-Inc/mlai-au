@@ -109,10 +109,7 @@ export default function MonthlyUpdateStepper({
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className={clsx("text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]", stepperBodyClassName)}>
-              Step {activeIndex + 1} of {MONTHLY_UPDATE_STEPS.length}
-            </p>
-            <p className={clsx("mt-1 text-base text-[var(--vr-color-text)]", stepperHeadingClassName)}>{active.title}</p>
+            <p className={clsx("text-base text-[var(--vr-color-text)]", stepperHeadingClassName)}>{active.title}</p>
           </div>
           <span className={clsx("rounded-full bg-[var(--vr-color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,128,128,0.14)]", stepperBodyClassName)}>
             {active.helper}
@@ -166,10 +163,7 @@ export default function MonthlyUpdateStepper({
           )}
         >
           <div className="min-w-0">
-            <p className={clsx("text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]", stepperBodyClassName)}>
-              Step {activeIndex + 1} of {MONTHLY_UPDATE_STEPS.length}
-            </p>
-            <h2 className={clsx("mt-1 truncate text-3xl text-[var(--vr-color-text)]", stepperHeadingClassName)}>
+            <h2 className={clsx("truncate text-3xl text-[var(--vr-color-text)]", stepperHeadingClassName)}>
               {active.title}
             </h2>
           </div>
@@ -282,10 +276,7 @@ export default function MonthlyUpdateStepper({
       <div className="sm:hidden">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className={clsx("text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]", stepperBodyClassName)}>
-              Step {activeIndex + 1} of {MONTHLY_UPDATE_STEPS.length}
-            </p>
-            <p className={clsx("mt-1 text-xl text-[var(--vr-color-text)]", stepperHeadingClassName)}>{active.title}</p>
+            <p className={clsx("text-xl text-[var(--vr-color-text)]", stepperHeadingClassName)}>{active.title}</p>
           </div>
           <span className={clsx("rounded-full bg-[var(--vr-color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,128,128,0.14)]", stepperBodyClassName)}>
             {active.helper}
@@ -325,10 +316,7 @@ export default function MonthlyUpdateStepper({
 
       <div className={clsx("hidden items-center justify-between gap-4 sm:flex", frameless ? "mb-8" : "mb-5")}>
         <div>
-          <p className={clsx("text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]", stepperBodyClassName)}>
-            Step {activeIndex + 1} of {MONTHLY_UPDATE_STEPS.length}
-          </p>
-          <p className={clsx("mt-1 text-sm font-bold text-[var(--vr-color-text-sub)]", stepperBodyClassName)}>Monthly update workflow</p>
+          <p className={clsx("text-sm font-bold text-[var(--vr-color-text-sub)]", stepperBodyClassName)}>Monthly update workflow</p>
         </div>
         <p className={clsx("text-lg text-[var(--vr-color-text)]", stepperHeadingClassName)}>{active.title}</p>
       </div>

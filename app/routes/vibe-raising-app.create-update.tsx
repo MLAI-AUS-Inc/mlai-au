@@ -704,6 +704,17 @@ export async function action({ request, context }: Route.ActionArgs) {
 const METRIC_OPTIONS = VIBE_METRIC_OPTIONS;
 const METRIC_OPTION_MAP = VIBE_METRIC_OPTION_MAP;
 const METRIC_FORM_KEYS = VIBE_METRIC_KEYS;
+const PRIMARY_DRAFT_METRIC_KEYS = ["revenue", "activeUsers", "revenueGrowthRate", "monthlyCosts"] as const;
+const PRIMARY_DRAFT_METRIC_KEY_SET = new Set<string>(PRIMARY_DRAFT_METRIC_KEYS);
+
+function orderDraftMetricOptions(options: MetricOption[]) {
+    const byKey = new Map(options.map((option) => [option.key, option]));
+    const primary = PRIMARY_DRAFT_METRIC_KEYS
+        .map((key) => byKey.get(key))
+        .filter((option): option is MetricOption => Boolean(option));
+    const optional = options.filter((option) => !PRIMARY_DRAFT_METRIC_KEY_SET.has(option.key));
+    return [...primary, ...optional];
+}
 
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
     const keys = Object.keys(metrics || {}).filter((key) => hasDisplayableMetricValue(metrics?.[key]));
@@ -743,53 +754,6 @@ function metricSuggestionsFromKeys(keys: string[], metrics: Record<string, strin
 function metricOptionsFromKeys(keys: string[]) {
     const selected = new Set(keys.filter((key) => METRIC_OPTION_MAP.has(key)));
     return METRIC_OPTIONS.filter((option) => selected.has(option.key));
-}
-
-const METRIC_VISIBILITY_OPTIONS: { key: VibeRaisingMetricVisibility; label: string; title: string }[] = [
-    { key: "hidden", label: "Hide", title: "Not shown on the published update" },
-    { key: "full", label: "Full", title: "Shown on the full update only" },
-    { key: "snippet", label: "TLDR", title: "Shown on the TLDR snippet and the full update" },
-];
-
-// Three-way visibility control for a metric with a value: hidden, full
-// update only, or TLDR snippet + full update.
-function MetricVisibilityToggle({
-    value,
-    onChange,
-}: {
-    value: VibeRaisingMetricVisibility;
-    onChange: (value: VibeRaisingMetricVisibility) => void;
-}) {
-    return (
-        <div
-            className="mt-3 inline-flex rounded-lg border border-gray-200 bg-white p-0.5"
-            onClick={(event) => event.stopPropagation()}
-        >
-            {METRIC_VISIBILITY_OPTIONS.map((option) => (
-                <button
-                    key={option.key}
-                    type="button"
-                    title={option.title}
-                    aria-pressed={value === option.key}
-                    onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onChange(option.key);
-                    }}
-                    className={clsx(
-                        "rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wide transition",
-                        value === option.key
-                            ? option.key === "hidden"
-                                ? "bg-gray-200 text-gray-600"
-                                : "bg-[rgba(0,255,215,0.16)] text-[var(--vr-color-primary)]"
-                            : "text-gray-400 hover:text-gray-600",
-                    )}
-                >
-                    {option.label}
-                </button>
-            ))}
-        </div>
-    );
 }
 
 function MetricInfoBadge({ info }: { info?: string }) {
@@ -1693,7 +1657,6 @@ interface SectionWithExampleProps {
     name: string;
     placeholder: string;
     rows?: number;
-    icon: any;
     defaultValue?: string;
     value?: string;
     onChange?: (value: string) => void;
@@ -1858,7 +1821,6 @@ function SectionWithExample({
     label,
     name,
     placeholder,
-    icon: Icon,
     value,
     onChange,
     enableMobileAdvance = false,
@@ -1925,17 +1887,14 @@ function SectionWithExample({
             whileTap={{ scale: 0.99 }}
         >
             <input type="hidden" name={name} value={value || ""} />
-            <header className="grid grid-cols-[2.75rem_1fr] gap-x-3 gap-y-1">
-                <span className="row-span-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)]">
-                    <Icon className="h-5 w-5" />
-                </span>
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-400">
+            <header className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-400 sm:hidden">
                     {questionMeta ? `${questionMeta.step} / 05 - ${questionMeta.eyebrow}` : label}
                 </p>
                 <h3 id={titleId} className="text-base font-black leading-snug text-gray-950 sm:text-lg">
                     {questionPrompt}
                 </h3>
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--vr-color-primary)]">{label}</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-[var(--vr-color-primary)] sm:hidden">{label}</p>
             </header>
 
             <ul className="mt-4 space-y-2" aria-labelledby={titleId}>
@@ -1954,10 +1913,10 @@ function SectionWithExample({
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-1.5 flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]"
+                                className="mt-1.5 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-300 transition hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]"
                                 aria-label={`Remove ${label} point ${i + 1}`}
                             >
-                                <XMarkIcon className="h-4 w-4" />
+                                Remove
                             </button>
                         )}
                     </li>
@@ -1970,7 +1929,6 @@ function SectionWithExample({
                     onClick={addItem}
                     className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[rgba(0,128,128,0.08)] px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.16)]"
                 >
-                    <span className="text-base leading-none" aria-hidden="true">+</span>
                     Add point
                 </button>
             </footer>
@@ -2008,14 +1966,14 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
                         className="flex-1 rounded-lg border border-[var(--vr-color-border)] bg-white px-3 py-1.5 text-xs leading-5 text-gray-900 shadow-sm placeholder:text-gray-300 placeholder:italic focus:border-[var(--vr-color-primary)] focus:ring-[var(--vr-color-primary)]"
                     />
                     {(items.length > 1 || item.trim().length > 0) && (
-                        <button type="button" onClick={() => remove(i)} className="mt-1 rounded-md p-1 px-2 text-gray-300 transition-all hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]">
-                            <XMarkIcon className="w-3.5 h-3.5" />
+                        <button type="button" onClick={() => remove(i)} className="mt-1 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-300 transition-all hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]">
+                            Remove
                         </button>
                     )}
                 </div>
             ))}
             <button type="button" onClick={add} className="mt-1 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[var(--vr-color-primary)] transition-all hover:bg-[rgba(0,255,215,0.12)]">
-                <span className="text-sm leading-none">+</span> Add point
+                Add point
             </button>
         </div>
     );
@@ -2113,8 +2071,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                     <div className="px-5 py-4 space-y-3 border-t border-gray-100">
                         {pm.highlights && (
                             <div>
-                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <SparklesIcon className="h-3 w-3 text-[var(--vr-palette-purple)]" />
+                                <h5 className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-900">
                                     Key Highlights
                                 </h5>
                                 <BulletList text={pm.highlights} className="text-xs text-gray-600" />
@@ -2122,8 +2079,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         )}
                         {pm.challenges && (
                             <div>
-                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <ExclamationCircleIcon className="h-3 w-3 text-[var(--vr-palette-orange)]" />
+                                <h5 className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-900">
                                     Challenges
                                 </h5>
                                 <BulletList text={pm.challenges} className="text-xs text-gray-600" />
@@ -2131,8 +2087,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         )}
                         {pm.learnings && (
                             <div>
-                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <LightBulbIcon className="h-3 w-3 text-[var(--vr-palette-yellow)]" />
+                                <h5 className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-900">
                                     Learnings
                                 </h5>
                                 <BulletList text={pm.learnings} className="text-xs text-gray-600" />
@@ -2140,8 +2095,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         )}
                         {pm.next30Days && (
                             <div>
-                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <ArrowRightIcon className="h-3 w-3 text-[var(--vr-palette-blue)]" />
+                                <h5 className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-900">
                                     Next 30 Days
                                 </h5>
                                 <BulletList text={pm.next30Days} className="text-xs text-gray-600" />
@@ -2149,8 +2103,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         )}
                         {pm.asks && (
                             <div>
-                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <QuestionMarkCircleIcon className="h-3 w-3 text-[var(--vr-palette-lavender)]" />
+                                <h5 className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-900">
                                     Ask from Investors
                                 </h5>
                                 <BulletList text={pm.asks} className="text-xs text-gray-600" />
@@ -2222,18 +2175,16 @@ function ReviewSummaryBlock({ summary, sourceUrl }: { summary?: string; sourceUr
 }
 
 function ReviewPreviewSection({
-    icon: Icon,
-    iconClassName,
     label,
     text,
 }: {
-    icon: any;
-    iconClassName: string;
     label: string;
     text?: string | null;
 }) {
     const normalizedText = String(text || "").trim();
-    const items = normalizedText.split(/(?<=\.)\s+/).filter((item) => item.trim());
+    const items = normalizedText.includes("\n")
+        ? normalizedText.split(/\n+/).filter((item) => item.trim())
+        : normalizedText.split(/(?<=\.)\s+/).filter((item) => item.trim());
     const [mobileExpanded, setMobileExpanded] = useState(false);
     const shouldClampOnMobile = items.length > 1;
     const visibleItems = mobileExpanded ? items : items.slice(0, 1);
@@ -2242,11 +2193,10 @@ function ReviewPreviewSection({
 
     return (
         <div>
-            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
-                <Icon className={clsx("h-3.5 w-3.5", iconClassName)} />
+            <h4 className="mb-3 [font-family:var(--vr-font-title)] text-base font-black uppercase tracking-normal text-gray-950 sm:text-lg">
                 {label}
             </h4>
-            <ul className="space-y-1 list-disc list-inside text-sm text-gray-700">
+            <ul className="list-outside list-disc space-y-2 pl-5 [font-family:var(--vr-font-body)] text-[15px] font-medium leading-7 text-gray-800 marker:text-[var(--vr-color-primary)] sm:text-base">
                 {visibleItems.map((item, index) => (
                     <li key={`${label}-${index}`}>{item.trim()}</li>
                 ))}
@@ -2493,12 +2443,6 @@ function CreateUpdateMobileTour({
                         className="pointer-events-none absolute rounded-[28px] border-2 border-[var(--vr-color-primary)] bg-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.58)] transition-all duration-200"
                         style={targetRect}
                     />
-                    <div
-                        className="pointer-events-none absolute rounded-full bg-[var(--vr-color-primary)] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg"
-                        style={{ left: targetRect.left, top: Math.max(targetRect.top - 34, 10) }}
-                    >
-                        Step {stepIndex + 1}
-                    </div>
                 </>
             ) : null}
 
@@ -2724,7 +2668,7 @@ export default function CreateUpdate() {
 
     // Per-metric snippet/full visibility. Seeded from the update being
     // edited, else carried forward from the most recent prior update.
-    const [metricDisplayStates, setMetricDisplayStates] = useState<Record<string, VibeRaisingMetricVisibility>>(() => {
+    const [metricDisplayStates] = useState<Record<string, VibeRaisingMetricVisibility>>(() => {
         const seeded =
             parseDisplayConfigValue(defaultData?.displayConfig) ||
             existingMonthlyUpdates.find((update) => update.displayConfig)?.displayConfig ||
@@ -2735,9 +2679,6 @@ export default function CreateUpdate() {
         seeded.snippetMetricKeys.forEach((key) => { states[key] = "snippet"; });
         return states;
     });
-    const setMetricDisplayState = useCallback((key: string, next: VibeRaisingMetricVisibility) => {
-        setMetricDisplayStates((previous) => ({ ...previous, [key]: next }));
-    }, []);
     const [compactSources, setCompactSources] = useState<VibeRaisingInputSourceSummary[]>([]);
     const [compactSourcesLoading, setCompactSourcesLoading] = useState(false);
     const [compactSourcesError, setCompactSourcesError] = useState<string | null>(null);
@@ -2756,11 +2697,12 @@ export default function CreateUpdate() {
     const selectedMetricOptions = Array.from(selectedMetrics)
         .map((key) => METRIC_OPTION_MAP.get(key))
         .filter((metric): metric is MetricOption => Boolean(metric));
-    const draftMetricOptions = selectedMetricOptions.length > 0
-        ? selectedMetricOptions
-        : METRIC_OPTIONS;
-    const mobileDraftMetricBatchSize = 6;
-    const [mobileVisibleDraftMetricCount, setMobileVisibleDraftMetricCount] = useState(mobileDraftMetricBatchSize);
+    const draftMetricOptions = orderDraftMetricOptions(METRIC_OPTIONS);
+    const draftMetricInitialCount = PRIMARY_DRAFT_METRIC_KEYS.length;
+    const collapsedHiddenDraftMetricCount = draftMetricOptions.filter(
+        (metric, index) => index >= draftMetricInitialCount && !String(metricValues[metric.key] || "").trim(),
+    ).length;
+    const [areDraftMetricsExpanded, setAreDraftMetricsExpanded] = useState(false);
     const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
     const [mobileTourOpen, setMobileTourOpen] = useState(false);
     const [mobileTourStepIndex, setMobileTourStepIndex] = useState(0);
@@ -2862,6 +2804,7 @@ export default function CreateUpdate() {
     const editorMonthKeyRef = useRef<string>(selectedMonthUpdateKey);
     const draftStepperRef = useRef<HTMLDivElement | null>(null);
     const monthSelectorRef = useRef<HTMLDivElement | null>(null);
+    const draftTemplateSectionRef = useRef<HTMLDivElement | null>(null);
     const draftStickyTriggerRef = useRef<HTMLDivElement | null>(null);
     const generateDraftSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const shouldDimMetricsTemplate = false;
@@ -3679,6 +3622,13 @@ export default function CreateUpdate() {
         setEmailDraftUiError(null);
         setEmailDraftPollingDegraded(false);
         setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+        if (typeof window !== "undefined") {
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => {
+                    draftTemplateSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                });
+            });
+        }
     }, [hasSelectedMonth, isSelectedMonthInFuture]);
 
     const handleGenerateDraftFromEmailClick = useCallback(() => {
@@ -4102,11 +4052,40 @@ export default function CreateUpdate() {
         }
     }, []);
 
+    const renderSelectedMonthSummaryCard = (className?: string) => (
+        <button
+            type="button"
+            onClick={returnToMonthSelection}
+            className={clsx(
+                "group w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)] sm:px-6 sm:py-4",
+                className,
+            )}
+            aria-label={`Selected update month: ${selectedMonthLabel}`}
+        >
+            <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)]" />
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                            Selected month
+                        </p>
+                        <p className="truncate text-base font-black text-gray-950">
+                            {selectedMonthLabel}
+                        </p>
+                    </div>
+                </div>
+                <span className="flex-shrink-0 rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition group-hover:bg-[var(--vr-color-primary)] group-hover:text-white">
+                    Edit
+                </span>
+            </div>
+        </button>
+    );
+
     // Regenerating an existing draft returns the user to the pristine GENERATE view
     // (month + source picker + "Draft from X" button) so they can re-pick sources and
     // re-run with the same generate button. Keep monthConfirmed + selectedDraftStage
     // ("reporting") so the picker and generate button stay visible; clearing
-    // metricsConfirmed hides the populated template + "Save as Draft".
+    // metricsConfirmed hides the populated template.
     const handleReturnToGenerate = useCallback(() => {
         setDismissedFeedback(true);
         resetEmailDraftUi();
@@ -4130,6 +4109,7 @@ export default function CreateUpdate() {
                 primaryLabel: "Start draft",
                 onPrimary: handleGenerateSelectedMonthUpdate,
                 primaryDisabled: !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy,
+                primaryType: "button" as const,
             };
         }
 
@@ -4154,7 +4134,7 @@ export default function CreateUpdate() {
             return {
                 statusTitle: "Continue manually",
                 statusDetail: "Backend drafting is unavailable right now. You can still edit this update and review it when ready.",
-                primaryLabel: isSubmitting ? "Reviewing..." : "Review draft",
+                primaryLabel: isSubmitting ? "Saving..." : "Save and review",
                 primaryType: "submit" as const,
                 primaryForm: DRAFT_REVIEW_FORM_ID,
                 primaryDisabled: isSubmitting,
@@ -4169,7 +4149,7 @@ export default function CreateUpdate() {
                 : isManualOnlyDraftFlow
                     ? undefined
                     : `AI drafted ${selectedMonthLabel}; core metrics are ready to edit below.`,
-            primaryLabel: isSubmitting ? "Reviewing..." : "Review draft",
+            primaryLabel: isSubmitting ? "Saving..." : "Save and review",
             primaryType: "submit" as const,
             primaryForm: DRAFT_REVIEW_FORM_ID,
             primaryDisabled: isSubmitting,
@@ -4185,8 +4165,6 @@ export default function CreateUpdate() {
                 ? selectedInputSources
                 : connectedDraftInputSources
     ).map((key) => INPUT_SOURCE_LABELS[key]).filter(Boolean);
-    const canRunAgainDraft = selectedDraftStage === "reporting" && hasDraftTemplate && regenerateSourcesAvailable;
-
     const handleRetryEmailDraft = () => {
         requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
     };
@@ -4619,7 +4597,7 @@ export default function CreateUpdate() {
         >
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-black text-gray-950">Add a deck or short founder walkthrough.</h2>
+                    <h2 className="text-xl font-black text-gray-950">Optional: add a deck or short founder walkthrough.</h2>
                 </div>
             </div>
             <div className="relative mt-6">
@@ -4835,12 +4813,9 @@ export default function CreateUpdate() {
         <section className="rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
-                        Optional step 2
-                    </p>
-                    <h2 className="mt-2 text-xl font-black text-gray-950">Connect data for AI drafting</h2>
+                    <h2 className="text-xl font-black text-gray-950">Connect data for AI drafting</h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                        The template below works without connected data. Select a connected source only if you want MLAI to generate a source-assisted first draft.
+                        The draft template works without connected data. Select a connected source only if you want MLAI to generate a source-assisted first draft.
                     </p>
                 </div>
                 <Link
@@ -4970,8 +4945,6 @@ export default function CreateUpdate() {
         const reviewDraftId = BACKEND_DRAFT_ID_PATTERN.test(rawReviewDraftId) ? rawReviewDraftId : "";
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
-        const canRegenerateDraftFromReview = regenerateSourcesAvailable;
-        const handleRegenerateDraftFromReview = handleReturnToGenerate;
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
         const reviewPitchDeckUrl = String(reviewData?.pitchDeckUrl || "").trim();
@@ -5216,35 +5189,25 @@ export default function CreateUpdate() {
                     "rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5",
                     isMobileTourViewport && mobileReviewHowItWorksSeen && "hidden sm:block",
                 )}>
-                    <div className="flex min-w-0 items-start gap-4">
-                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
-                            <SparklesIcon className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                            <h2 className="text-lg font-black text-gray-950">How it works</h2>
-                            <p className="mt-1 text-sm leading-6 text-slate-600">
-                                Review shows exactly what investors will see before you publish this monthly update.
-                            </p>
-                        </div>
+                    <div className="min-w-0">
+                        <h2 className="text-lg font-black text-gray-950">How it works</h2>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                            Review shows exactly what investors will see before you publish this monthly update.
+                        </p>
                     </div>
 
                     <div className="mt-4 border-t border-[var(--vr-color-border)] pt-4 sm:mt-6 sm:pt-6">
-                        <div className="flex min-w-0 items-start gap-4">
-                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(76,110,245,0.10)] text-[var(--vr-palette-blue)] shadow-sm ring-1 ring-[rgba(76,110,245,0.22)]">
-                                <UsersIcon className="h-5 w-5" />
-                            </div>
-                            <div className="min-w-0">
-                                <h3 className="text-lg font-black text-gray-950">Your audience</h3>
-                                <p className="mt-1 text-sm leading-6 text-slate-600">
-                                    We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{reviewAudienceCount} investors</strong> on Vibe Raising actively looking for updates matching your criteria.
-                                </p>
-                                <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
-                                    {reviewAudienceCriteria.map((criteria) => (
-                                        <span key={criteria} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-[rgba(76,110,245,0.08)] px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)]">
-                                            {criteria}
-                                        </span>
-                                    ))}
-                                </div>
+                        <div className="min-w-0">
+                            <h3 className="text-lg font-black text-gray-950">Your audience</h3>
+                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                                We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{reviewAudienceCount} investors</strong> on Vibe Raising actively looking for updates matching your criteria.
+                            </p>
+                            <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
+                                {reviewAudienceCriteria.map((criteria) => (
+                                    <span key={criteria} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-[rgba(76,110,245,0.08)] px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)]">
+                                        {criteria}
+                                    </span>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -5265,55 +5228,51 @@ export default function CreateUpdate() {
                                     <circle cx="400" cy="30" r="50" fill="white" />
                                     <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
                                 </svg>
-                                <div className="absolute inset-0 flex items-end px-4 pb-3 sm:px-6 sm:pb-4">
-                                    <div className="flex items-center gap-3">
+                                <div className="absolute inset-0 flex items-center px-4 sm:px-6">
+                                    <div className="flex min-w-0 items-center gap-3.5">
                                         {user.domain ? (
                                             <img
                                                 src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
                                                 alt=""
-                                                className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
+                                                className="h-12 w-12 rounded-xl border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
                                             />
                                         ) : (
-                                            <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-                                                <span className="text-sm font-bold text-white">{user.companyName.charAt(0)}</span>
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/30 bg-white/20 backdrop-blur-sm">
+                                                <span className="text-base font-bold text-white">{user.companyName.charAt(0)}</span>
                                             </div>
                                         )}
-                                        <div>
-                                            <p className="text-white font-bold text-sm drop-shadow-sm">{user.companyName}</p>
-                                            <p className="text-white/70 text-xs">Investor Update</p>
+                                        <div className="flex min-w-0 flex-col justify-center">
+                                            <p className="truncate [font-family:var(--vr-font-title)] text-3xl font-black uppercase leading-none tracking-normal text-white drop-shadow-sm sm:text-4xl">
+                                                {user.companyName}
+                                            </p>
+                                            <p className="mt-1 truncate [font-family:var(--vr-font-title)] text-sm font-black uppercase leading-none tracking-normal text-white/85 drop-shadow-sm sm:text-lg">
+                                                {reviewMonth} {reviewYear} Update
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Preview header */}
-                            <div className="border-b border-gray-100 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="min-w-0">
-                                        <h3 className="text-lg font-bold text-gray-900">
-                                            {reviewMonth} {reviewYear} Update
-                                        </h3>
-                                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                                            <StartupRegionBadge location={user.location} />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowReviewLinkedInPopup(true)}
-                                                className={clsx(
-                                                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black shadow-sm ring-1 transition",
-                                                    hasReviewLinkedIn
-                                                        ? "bg-[#0A66C2] text-white ring-[#0A66C2]/20 hover:bg-[#084f96]"
-                                                        : "bg-gray-100 text-gray-400 ring-gray-200 hover:bg-gray-200 hover:text-gray-600",
-                                                )}
-                                                aria-label={hasReviewLinkedIn ? "Edit founder LinkedIn" : "Add founder LinkedIn"}
-                                            >
-                                                LinkedIn
-                                                {hasReviewLinkedIn ? (
-                                                    <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
-                                                ) : null}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <span className="hidden text-xs text-gray-400 sm:block">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
+                            <div className="border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <StartupRegionBadge location={user.location} />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviewLinkedInPopup(true)}
+                                        className={clsx(
+                                            "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black shadow-sm ring-1 transition",
+                                            hasReviewLinkedIn
+                                                ? "bg-[#0A66C2] text-white ring-[#0A66C2]/20 hover:bg-[#084f96]"
+                                                : "bg-gray-100 text-gray-400 ring-gray-200 hover:bg-gray-200 hover:text-gray-600",
+                                        )}
+                                        aria-label={hasReviewLinkedIn ? "Edit founder LinkedIn" : "Add founder LinkedIn"}
+                                    >
+                                        LinkedIn
+                                        {hasReviewLinkedIn ? (
+                                            <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                        ) : null}
+                                    </button>
                                 </div>
                             </div>
 
@@ -5474,35 +5433,25 @@ export default function CreateUpdate() {
                             ) : null}
 
                             {/* Content sections */}
-                            <div className="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-5">
+                            <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
                                 <ReviewSummaryBlock summary={reviewSummary} sourceUrl={reviewSourceUrl} />
                                 <ReviewPreviewSection
-                                    icon={SparklesIcon}
-                                    iconClassName="text-[var(--vr-palette-purple)]"
                                     label="Key Highlights"
                                     text={(data as any)?.highlights}
                                 />
                                 <ReviewPreviewSection
-                                    icon={ExclamationCircleIcon}
-                                    iconClassName="text-[var(--vr-palette-orange)]"
                                     label="Challenges"
                                     text={(data as any)?.challenges}
                                 />
                                 <ReviewPreviewSection
-                                    icon={LightBulbIcon}
-                                    iconClassName="text-[var(--vr-palette-yellow)]"
                                     label="Learnings"
                                     text={(data as any)?.learnings}
                                 />
                                 <ReviewPreviewSection
-                                    icon={ArrowRightIcon}
-                                    iconClassName="text-[var(--vr-palette-blue)]"
                                     label="Next 30 Days"
                                     text={(data as any)?.next30Days}
                                 />
                                 <ReviewPreviewSection
-                                    icon={QuestionMarkCircleIcon}
-                                    iconClassName="text-[var(--vr-palette-lavender)]"
                                     label="Ask from Investors"
                                     text={(data as any)?.asks}
                                 />
@@ -5575,42 +5524,6 @@ export default function CreateUpdate() {
                             </p>
                         </div>
 
-                        {/* Your Audience Block */}
-                        {(() => {
-                            const d = data as any;
-                            const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
-
-                            const criteria = [];
-                            if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
-                            if (text.includes("health") || text.includes("medtech") || text.includes("medical")) criteria.push("MedTech");
-                            if (text.includes("agri") || text.includes("farm") || text.includes("agriculture")) criteria.push("AgTech");
-                            if (/\b(?:ai|ml)\b|\bmachine learning\b|\bartificial intelligence\b/.test(text)) criteria.push("AI/ML");
-                            if (text.includes("enterprise") || text.includes("b2b") || text.includes("fortune 500")) criteria.push("Enterprise");
-                            if (text.includes("fintech") || text.includes("finance") || text.includes("payment")) criteria.push("FinTech");
-                            if (text.includes("consumer") || text.includes("b2c")) criteria.push("Consumer Tech");
-                            if (criteria.length === 0) criteria.push("Sector Agnostic", "Early Stage");
-
-                            const count = 18 + (criteria.length * 14);
-
-                            return (
-                                <div className="mt-6 hidden rounded-xl border border-[rgba(76,110,245,0.22)] bg-[rgba(76,110,245,0.08)] p-5 shadow-sm sm:block">
-                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--vr-color-text)]">
-                                        <UsersIcon className="h-4 w-4 text-[var(--vr-palette-blue)]" />
-                                        Your Audience
-                                    </h3>
-                                    <p className="mb-3 text-sm text-[var(--vr-color-text-mid)]">
-                                        We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {criteria.map(c => (
-                                            <span key={c} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)] shadow-sm">
-                                                {c}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                                );
-                            })()}
                     </div>
 
                     {showReviewLinkedInPopup ? (
@@ -5848,25 +5761,10 @@ export default function CreateUpdate() {
                 </div>
 
                 <VibeRaisingStickyStepBar
-                    hideStatusOnMobile
-                    hideBackOnMobile
+                    hideStatus
                     compactOnMobile
-                    statusIcon={
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
-                            <CheckCircleIcon className="h-5 w-5" />
-                        </div>
-                    }
                     statusTitle={`Review ${reviewMonth} ${reviewYear} update`}
-                    statusDetail="Review is ready. Publish when the story feels right."
                     onBack={() => setDismissedFeedback(true)}
-                    secondaryLabel={draftSaved ? "Draft saved!" : "Save as draft"}
-                    mobileSecondaryLabel={draftSaved ? "Draft saved" : "Save draft"}
-                    onSecondary={handlePersistDraft}
-                    secondaryDisabled={saveDraftFetcher.state !== "idle"}
-                    tertiaryLabel={canRegenerateDraftFromReview ? "Regenerate draft" : undefined}
-                    mobileTertiaryLabel={canRegenerateDraftFromReview ? "Regenerate" : undefined}
-                    onTertiary={canRegenerateDraftFromReview ? handleRegenerateDraftFromReview : undefined}
-                    tertiaryDisabled={emailDraftActionBusy || saveDraftFetcher.state !== "idle"}
                     primaryLabel="Publish update"
                     mobilePrimaryLabel="Publish"
                     onPrimary={handlePublishPopupOpen}
@@ -5896,69 +5794,24 @@ export default function CreateUpdate() {
                         className="mt-8"
                     />
                 </div>
-
-                <div className="hidden rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm sm:block">
-                    <div className="flex min-w-0 items-start gap-4">
-                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
-                            <SparklesIcon className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                            <h2 className="text-lg font-black text-gray-950">How it works</h2>
-                            <p className="mt-1 text-sm leading-6 text-slate-600">
-                                Pick a month, start with the draft template, then connect data only if you want source-assisted drafting.
-                                <br />
-                                Early stage? No worries. Record a selfie video or short presentation to share your idea with investors.
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
+            {!monthConfirmed ? (
             <section>
                 <div className="space-y-4">
-                    {monthConfirmed ? (
-                        <button
-                            type="button"
-                            onClick={returnToMonthSelection}
-                            className="group w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)] sm:px-6 sm:py-4"
-                            aria-label={`Selected update month: ${selectedMonthLabel}`}
-                        >
-                            <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                                <div className="flex min-w-0 items-center gap-3">
-                                    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)]" />
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                                            Selected month
-                                        </p>
-                                        <p className="truncate text-base font-black text-gray-950">
-                                            {selectedMonthLabel}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className="flex-shrink-0 rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition group-hover:bg-[var(--vr-color-primary)] group-hover:text-white">
-                                    Edit
-                                </span>
-                            </div>
-                        </button>
-                    ) : (
                         <div ref={monthSelectorRef} className="space-y-3">
+                            <div className="hidden sm:block">
+                                <h2 className="text-3xl font-black tracking-tight text-gray-950">
+                                    Select month
+                                </h2>
+                            </div>
                             <div className="overflow-visible rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm transition-all sm:p-8 lg:p-10">
-                                <div className="mb-8 hidden items-start gap-5 sm:flex">
-                                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-3xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.20)]">
-                                        <CalendarDaysIcon className="h-7 w-7" aria-hidden="true" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <h2 className="text-3xl font-black tracking-tight text-gray-950">
-                                            Select month
-                                        </h2>
-                                        <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-600">
-                                            {monthSelectionCaption}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="grid gap-4 lg:grid-cols-4 lg:items-stretch">
-                                    <div className="lg:col-span-3">
+                                <div className="grid gap-4">
+                                    <div>
                                         <div className="rounded-3xl border border-gray-200 bg-[var(--vr-palette-paper)] p-4 shadow-sm sm:p-5">
+                                            <p className="mb-5 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base sm:leading-7">
+                                                {monthSelectionCaption}
+                                            </p>
                                             <MonthYearTabs
                                                 month={selectedMonth}
                                                 year={selectedYear}
@@ -5970,7 +5823,6 @@ export default function CreateUpdate() {
                                             />
                                             {!isEdit && !showAllCreateStepMonths ? (
                                                 <div className="mt-5 hidden items-center gap-3 text-sm font-semibold text-[var(--vr-color-primary)] sm:flex">
-                                                    <CalendarDaysIcon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                                                     <span className="text-[var(--vr-color-primary)]">Need an older month?</span>
                                                     <button
                                                         type="button"
@@ -6002,7 +5854,7 @@ export default function CreateUpdate() {
                                         onTouchStart={handleGenerateDraftCardTouchStart}
                                         onTouchEnd={handleGenerateDraftCardTouchEnd}
                                         className={clsx(
-                                            "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 lg:col-span-1 lg:min-h-[132px]",
+                                            "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 sm:hidden",
                                             !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy
                                                 ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
                                                 : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
@@ -6028,12 +5880,16 @@ export default function CreateUpdate() {
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                    </div>
                 </div>
             </section>
-
-            {monthConfirmed ? optionalDataSourcesSection : null}
+            ) : (
+                <section className="sm:hidden">
+                    <div className="space-y-4">
+                        {renderSelectedMonthSummaryCard()}
+                    </div>
+                </section>
+            )}
 
             <section
                 className={clsx(
@@ -6063,59 +5919,59 @@ export default function CreateUpdate() {
                                     manualFallbackMessage={canContinueDraftManually ? "You can keep editing the update below while the backend draft connection is unavailable." : null}
                                 />
                             ) : null}
-                            {!shouldShowEmailDraftProgress ? (
-                                <button
-                                    type="button"
-                                    disabled={emailDraftActionBusy || isSelectedMonthInFuture || selectedInputSources.length === 0}
-                                    onClick={() => {
-                                        void handleGenerateDraftFromEmailClick();
-                                    }}
-                                    className={clsx(
-                                        "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
-                                        canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
-                                            ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
-                                            : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
-                                    )}
-                                >
-                                    <div className="flex min-w-0 items-center gap-4">
-                                        <div className={clsx(
-                                            "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1",
-                                            hasNoSourceForAssistedDraft
-                                                ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
-                                                : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
-                                        )}>
-                                            {emailDraftActionBusy ? (
-                                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                            ) : (
-                                                <SparklesIcon className="h-5 w-5" />
-                                            )}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="text-base font-bold text-gray-950">
-                                                {emailDraftButtonTitle}
-                                            </p>
-                                            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                                                {emailDraftButtonDescription}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span className={clsx(
-                                        "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition group-hover:translate-x-1",
-                                        hasNoSourceForAssistedDraft
-                                            ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
-                                            : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
-                                    )}>
-                                        <ArrowRightIcon className={clsx(
-                                            "h-5 w-5",
-                                            hasNoSourceForAssistedDraft ? "text-gray-300" : "text-current",
-                                        )} />
-                                    </span>
-                                </button>
-                            ) : null}
                             {hasDraftTemplate ? (
                                 <>
-                                    {materialsSection}
-                                    <div className="space-y-6">
+                                    <div ref={draftTemplateSectionRef} className="scroll-mt-28 space-y-6 sm:mt-8 lg:mt-10">
+                                    {optionalDataSourcesSection}
+                                    {!shouldShowEmailDraftProgress ? (
+                                        <button
+                                            type="button"
+                                            disabled={emailDraftActionBusy || isSelectedMonthInFuture || selectedInputSources.length === 0}
+                                            onClick={() => {
+                                                void handleGenerateDraftFromEmailClick();
+                                            }}
+                                            className={clsx(
+                                                "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
+                                                canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
+                                                    ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
+                                                    : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
+                                            )}
+                                        >
+                                            <div className="flex min-w-0 items-center gap-4">
+                                                <div className={clsx(
+                                                    "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1",
+                                                    hasNoSourceForAssistedDraft
+                                                        ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
+                                                        : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
+                                                )}>
+                                                    {emailDraftActionBusy ? (
+                                                        <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                                                    ) : (
+                                                        <SparklesIcon className="h-5 w-5" />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-base font-bold text-gray-950">
+                                                        {emailDraftButtonTitle}
+                                                    </p>
+                                                    <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+                                                        {emailDraftButtonDescription}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className={clsx(
+                                                "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition group-hover:translate-x-1",
+                                                hasNoSourceForAssistedDraft
+                                                    ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
+                                                    : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
+                                            )}>
+                                                <ArrowRightIcon className={clsx(
+                                                    "h-5 w-5",
+                                                    hasNoSourceForAssistedDraft ? "text-gray-300" : "text-current",
+                                                )} />
+                                            </span>
+                                        </button>
+                                    ) : null}
                                 <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
@@ -6139,6 +5995,8 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="month" value={selectedMonth} />
                                     <input type="hidden" name="year" value={selectedYear} />
 
+                                    {renderSelectedMonthSummaryCard("hidden sm:block")}
+
                                     <div className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5">
                                         {shouldDimMetricsTemplate ? (
                                             <p className="text-xs font-medium tracking-[0.02em] text-gray-500">
@@ -6150,13 +6008,13 @@ export default function CreateUpdate() {
                                                 (() => {
                                                     const hasMetricValue = String(metricValues[metric.key] || "").trim().length > 0;
                                                     const isMetricCardAwake = !shouldDimMetricsTemplate || awakeMetricCards.has(metric.key) || hasMetricValue;
-                                                    const isHiddenOnMobile = metricIndex >= mobileVisibleDraftMetricCount;
+                                                    const isHiddenInDropdown = !areDraftMetricsExpanded && metricIndex >= draftMetricInitialCount && !hasMetricValue;
                                                     return (
                                                 <label
                                                     key={metric.key}
                                                     className={clsx(
                                                         "relative min-w-0 rounded-2xl border p-3 transition duration-200 sm:p-4",
-                                                        isHiddenOnMobile ? "hidden sm:block" : null,
+                                                        isHiddenInDropdown ? "hidden" : null,
                                                         isMetricCardAwake
                                                             ? "border-[rgba(0,128,128,0.12)] bg-[var(--vr-palette-paper)]"
                                                             : "cursor-pointer border-gray-200/80 bg-[rgba(247,246,242,0.65)] opacity-45 saturate-0",
@@ -6185,9 +6043,9 @@ export default function CreateUpdate() {
                                                             <XMarkIcon className="h-3.5 w-3.5" />
                                                         </button>
                                                     ) : null}
-                                                    <div className="flex items-start gap-2">
+                                                    <div className="flex items-center gap-2">
                                                         <span className={clsx(
-                                                            "mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition duration-200",
+                                                            "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition duration-200",
                                                             isMetricCardAwake ? "bg-[rgba(0,255,215,0.18)]" : "bg-white text-gray-500",
                                                         )}>
                                                             {metric.icon}
@@ -6227,29 +6085,25 @@ export default function CreateUpdate() {
                                                                 : "border-gray-200 text-gray-300 opacity-45 saturate-0 placeholder:text-gray-300 focus:border-[var(--vr-color-primary)] focus:opacity-100 focus:saturate-100",
                                                         )}
                                                     />
-                                                    {hasMetricValue ? (
-                                                        <MetricVisibilityToggle
-                                                            value={metricDisplayStates[metric.key] ?? "full"}
-                                                            onChange={(next) => setMetricDisplayState(metric.key, next)}
-                                                        />
-                                                    ) : null}
                                                 </label>
                                                     );
                                                 })()
                                         ))}
                                         </div>
-                                        {mobileVisibleDraftMetricCount < draftMetricOptions.length ? (
+                                        {draftMetricOptions.length > draftMetricInitialCount && (areDraftMetricsExpanded || collapsedHiddenDraftMetricCount > 0) ? (
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    setMobileVisibleDraftMetricCount((previous) =>
-                                                        Math.min(previous + mobileDraftMetricBatchSize, draftMetricOptions.length),
-                                                    );
-                                                }}
-                                                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[rgba(0,128,128,0.08)] px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.16)] sm:hidden"
+                                                onClick={() => setAreDraftMetricsExpanded((expanded) => !expanded)}
+                                                className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-2 text-sm font-black text-[var(--vr-color-primary)] shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.10)]"
+                                                aria-expanded={areDraftMetricsExpanded}
                                             >
-                                                <span className="text-base leading-none" aria-hidden="true">+</span>
-                                                Show more
+                                                {areDraftMetricsExpanded ? "Show less" : "More metrics"}
+                                                {!areDraftMetricsExpanded ? (
+                                                    <span className="rounded-full bg-[rgba(0,128,128,0.08)] px-2 py-0.5 text-xs text-[var(--vr-color-primary)]">
+                                                        {collapsedHiddenDraftMetricCount}
+                                                    </span>
+                                                ) : null}
+                                                <ChevronDownIcon className={clsx("h-4 w-4 transition-transform", areDraftMetricsExpanded && "rotate-180")} />
                                             </button>
                                         ) : null}
                                     </div>
@@ -6263,7 +6117,6 @@ export default function CreateUpdate() {
                                             enableMobileAdvance={isMobileTourViewport}
                                             mobileAdvanceTo="challenges"
                                             placeholder="What went well this month? Major wins, product launches, partnerships..."
-                                            icon={SparklesIcon}
                                         />
                                         <SectionWithExample
                                             label="Challenges"
@@ -6273,7 +6126,6 @@ export default function CreateUpdate() {
                                             enableMobileAdvance={isMobileTourViewport}
                                             mobileAdvanceTo="learnings"
                                             placeholder="What obstacles are you facing? Where do you need help?"
-                                            icon={ExclamationCircleIcon}
                                         />
                                         <SectionWithExample
                                             label="Learnings"
@@ -6283,7 +6135,6 @@ export default function CreateUpdate() {
                                             enableMobileAdvance={isMobileTourViewport}
                                             mobileAdvanceTo="next30Days"
                                             placeholder="What did you learn from customers, experiments, or execution this month?"
-                                            icon={LightBulbIcon}
                                         />
                                         <SectionWithExample
                                             label="Next 30 Days"
@@ -6293,7 +6144,6 @@ export default function CreateUpdate() {
                                             enableMobileAdvance={isMobileTourViewport}
                                             mobileAdvanceTo="asks"
                                             placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                                            icon={ArrowRightIcon}
                                         />
                                         <SectionWithExample
                                             label="Ask from Investors"
@@ -6302,11 +6152,11 @@ export default function CreateUpdate() {
                                             onChange={setAsks}
                                             enableMobileAdvance={isMobileTourViewport}
                                             placeholder="How can your investors help? Introductions, advice, specific expertise..."
-                                            icon={QuestionMarkCircleIcon}
                                         />
                                     </div>
 
                                 </Form>
+                                    {materialsSection}
                                     <div ref={draftStickyTriggerRef} aria-hidden className="h-1 w-full" />
                                     </div>
                                 </>
@@ -6339,6 +6189,7 @@ export default function CreateUpdate() {
             ) : null}
 
             <VibeRaisingStickyStepBar
+                key={monthConfirmed ? "draft-template-actions" : "select-month-actions"}
                 className={clsx(
                     !monthConfirmed && "hidden sm:block",
                     isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate && !showDraftStickyOnMobile && "hidden sm:block",
@@ -6349,18 +6200,10 @@ export default function CreateUpdate() {
                 statusTitle={draftStickyBar.statusTitle}
                 statusDetail={draftStickyBar.statusDetail}
                 onBack={draftStickyBar.onBack}
-                secondaryLabel={selectedDraftStage === "reporting" && hasDraftTemplate ? (saveDraftFetcher.state !== "idle" ? "Saving..." : draftSaved ? "Draft saved" : "Save as Draft") : undefined}
-                mobileSecondaryLabel={selectedDraftStage === "reporting" && hasDraftTemplate ? (saveDraftFetcher.state !== "idle" ? "Saving" : draftSaved ? "Saved" : "Save draft") : undefined}
-                onSecondary={selectedDraftStage === "reporting" && hasDraftTemplate ? handlePersistDraft : undefined}
-                secondaryDisabled={saveDraftFetcher.state !== "idle" || isEmailDraftBusy || isVideoUploadBlocking}
-                tertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
-                mobileTertiaryLabel={canRunAgainDraft ? "Run again" : isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
-                onTertiary={canRunAgainDraft
-                    ? handleReturnToGenerate
-                    : isEmailDraftBusy
-                        ? () => { void handleCancelEmailDraft(); }
-                        : undefined}
-                tertiaryDisabled={canRunAgainDraft ? emailDraftActionBusy : emailDraftCancelBusy}
+                tertiaryLabel={isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
+                mobileTertiaryLabel={isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
+                onTertiary={isEmailDraftBusy ? () => { void handleCancelEmailDraft(); } : undefined}
+                tertiaryDisabled={emailDraftCancelBusy}
                 primaryLabel={draftStickyBar.primaryLabel}
                 onPrimary={draftStickyBar.onPrimary}
                 primaryDisabled={draftStickyBar.primaryDisabled}
@@ -6522,10 +6365,6 @@ export default function CreateUpdate() {
                 <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
                 <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
                 <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
-
-                <section>
-                    {materialsSection}
-                </section>
 
                 <section>
                     <div className="flex items-end justify-between gap-4">
@@ -6895,12 +6734,6 @@ export default function CreateUpdate() {
                                                     "mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-tight tracking-wide",
                                                     active ? "text-gray-600" : "text-gray-400"
                                                 )}>{m.label}</p>
-                                                {isViewingCurrentUpdate && active && String(activeMetricValues[m.key] || "").trim() ? (
-                                                    <MetricVisibilityToggle
-                                                        value={metricDisplayStates[m.key] ?? "full"}
-                                                        onChange={(next) => setMetricDisplayState(m.key, next)}
-                                                    />
-                                                ) : null}
                                             </div>
                                         );
                                     })}
@@ -6918,7 +6751,6 @@ export default function CreateUpdate() {
                                     mobileAdvanceTo={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
                                     rows={3}
                                     placeholder="What went well this month? Major wins, product launches, partnerships..."
-                                    icon={SparklesIcon}
                                 />
 	                                <SectionWithExample
 	                                    label="Challenges"
@@ -6929,7 +6761,6 @@ export default function CreateUpdate() {
                                     mobileAdvanceTo={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
                                     rows={3}
                                     placeholder="What obstacles are you facing? Where do you need help?"
-                                    icon={ExclamationCircleIcon}
                                 />
 	                                <SectionWithExample
 	                                    label="Learnings"
@@ -6940,7 +6771,6 @@ export default function CreateUpdate() {
                                     mobileAdvanceTo={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
                                     rows={3}
                                     placeholder="What did you learn from customers, experiments, or execution this month?"
-                                    icon={LightBulbIcon}
                                 />
 	                                <SectionWithExample
 	                                    label="Next 30 Days"
@@ -6951,7 +6781,6 @@ export default function CreateUpdate() {
                                     mobileAdvanceTo={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
                                     rows={3}
                                     placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                                    icon={ArrowRightIcon}
                                 />
 	                                <SectionWithExample
 	                                    label="Ask from Investors"
@@ -6961,7 +6790,6 @@ export default function CreateUpdate() {
                                     enableMobileAdvance={isMobileTourViewport}
                                     rows={3}
                                     placeholder="How can your investors help? Introductions, advice, specific expertise..."
-                                    icon={QuestionMarkCircleIcon}
                                 />
                             </div>
                         </div>
@@ -7044,7 +6872,6 @@ export default function CreateUpdate() {
                                 value={highlights}
                                 onChange={setHighlights}
                                 placeholder="What went well this month? Major wins, product launches, partnerships..."
-                                icon={SparklesIcon}
                             />
                             <SectionWithExample
                                 label="Challenges"
@@ -7052,7 +6879,6 @@ export default function CreateUpdate() {
                                 value={challenges}
                                 onChange={setChallenges}
                                 placeholder="What obstacles are you facing? Where do you need help?"
-                                icon={ExclamationCircleIcon}
                             />
                             <SectionWithExample
                                 label="Learnings"
@@ -7060,7 +6886,6 @@ export default function CreateUpdate() {
                                 value={learnings}
                                 onChange={setLearnings}
                                 placeholder="What did you learn from customers, experiments, or execution this month?"
-                                icon={LightBulbIcon}
                             />
                             <SectionWithExample
                                 label="Next 30 Days"
@@ -7068,7 +6893,6 @@ export default function CreateUpdate() {
                                 value={next30Days}
                                 onChange={setNext30Days}
                                 placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                                icon={ArrowRightIcon}
                             />
                             <SectionWithExample
                                 label="Ask from Investors"
@@ -7076,7 +6900,6 @@ export default function CreateUpdate() {
                                 value={asks}
                                 onChange={setAsks}
                                 placeholder="How can your investors help? Introductions, advice, specific expertise..."
-                                icon={QuestionMarkCircleIcon}
                             />
                         </div>
                     </div>
@@ -7088,6 +6911,8 @@ export default function CreateUpdate() {
                     )}
                     </div>
                 </section>
+
+                {materialsSection}
             </Form>
 
             {isClientMounted ? (

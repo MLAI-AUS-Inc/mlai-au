@@ -164,6 +164,7 @@ export interface VibeMarketingAutofillProfileFields {
   location?: string | null;
   organizationKind?: string | null;
   stage?: string | null;
+  hasRevenue?: string | null;
   founderNames?: string | null;
   abn?: string | null;
   companyContext?: string | null;
@@ -246,6 +247,7 @@ export interface VibeMarketingStartupProfile {
   founderProfiles?: Array<{ name: string; linkedinUrl?: string | null }>;
   stage?: string | null;
   organizationKind?: string | null;
+  hasRevenue?: string | null;
   shortDescription?: string | null;
   problemSolved?: string | null;
   targetAudience?: string | null;

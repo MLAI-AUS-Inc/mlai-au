@@ -243,12 +243,6 @@ function MobileDataSourcesTour({
             className="pointer-events-none absolute rounded-[28px] border-2 border-[var(--vr-color-primary)] bg-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.58)] transition-all duration-200"
             style={targetRect}
           />
-          <div
-            className="pointer-events-none absolute rounded-full bg-[var(--vr-color-primary)] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg"
-            style={{ left: targetRect.left, top: Math.max(targetRect.top - 34, 10) }}
-          >
-            Step {stepIndex + 1}
-          </div>
         </>
       ) : null}
 

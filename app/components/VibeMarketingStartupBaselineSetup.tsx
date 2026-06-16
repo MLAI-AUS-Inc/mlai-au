@@ -63,6 +63,27 @@ const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running", "processing", "i
 const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "precondition_failed", "cancelled", "canceled", "denied", "error"]);
 const RESEARCH_DONE_STATUSES = new Set(["completed", ...RESEARCH_FAILED_STATUSES]);
 const MOBILE_STARTUP_SETUP_TUTORIAL_STORAGE_KEY = "vibe_marketing_startup_setup_mobile_tour_seen_v1";
+const MELBOURNE_LOCATION = "Melbourne, Victoria, Australia";
+const POPULAR_STARTUP_LOCATIONS = [
+  MELBOURNE_LOCATION,
+  "Sydney, New South Wales, Australia",
+  "Brisbane, Queensland, Australia",
+  "Perth, Western Australia, Australia",
+  "Adelaide, South Australia, Australia",
+  "Canberra, Australian Capital Territory, Australia",
+  "Gold Coast, Queensland, Australia",
+  "Newcastle, New South Wales, Australia",
+  "Geelong, Victoria, Australia",
+  "Hobart, Tasmania, Australia",
+  "Darwin, Northern Territory, Australia",
+  "Wollongong, New South Wales, Australia",
+  "Auckland, New Zealand",
+  "Singapore",
+  "San Francisco, California, USA",
+  "London, United Kingdom",
+] as const;
+const COMPANY_SETUP_STAGE_OPTIONS = STARTUP_STAGE_OPTIONS.filter((option) => !["Growth", "Not fundraising"].includes(option));
+const REVENUE_STATUS_OPTIONS = ["", "Yes", "No"] as const;
 
 const stableDateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -358,6 +379,7 @@ function autofillProfileFields(value: unknown) {
     location: profileFieldText(payload, "location"),
     organizationKind: profileFieldText(payload, "organizationKind", "organization_kind"),
     stage: profileFieldText(payload, "stage"),
+    hasRevenue: profileFieldText(payload, "hasRevenue", "has_revenue"),
     founderNames: profileFieldText(payload, "founderNames", "founder_names"),
     abn: profileFieldText(payload, "abn"),
     companyContext: profileFieldText(payload, "companyContext", "company_context"),
@@ -993,12 +1015,108 @@ function StepNumberBadge({ children }: { children: ReactNode }) {
   );
 }
 
+function LocationCombobox({
+  value,
+  onChange,
+  disabled,
+  required,
+  inputClassName,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  required?: boolean;
+  inputClassName: string;
+}) {
+  const listId = useId();
+  const [open, setOpen] = useState(false);
+  const query = value.trim().toLowerCase();
+  const filteredLocations = useMemo(() => {
+    const matches = query
+      ? POPULAR_STARTUP_LOCATIONS.filter((location) => location.toLowerCase().includes(query))
+      : [...POPULAR_STARTUP_LOCATIONS];
+
+    return matches.sort((a, b) => {
+      if (a === MELBOURNE_LOCATION) return -1;
+      if (b === MELBOURNE_LOCATION) return 1;
+      return 0;
+    });
+  }, [query]);
+
+  return (
+    <div className="relative">
+      <ControlIcon icon={MapPin} />
+      <input
+        name="location"
+        value={value}
+        onChange={(event) => {
+          onChange(event.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+        disabled={disabled}
+        required={required}
+        autoComplete="off"
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        placeholder="Start typing a city"
+        className={inputClassName}
+      />
+      {open && !disabled ? (
+        <div
+          id={listId}
+          role="listbox"
+          className="absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-xl border border-violet-100 bg-white py-2 shadow-xl shadow-violet-950/10"
+        >
+          {filteredLocations.length > 0 ? (
+            filteredLocations.map((location) => (
+              <button
+                key={location}
+                type="button"
+                role="option"
+                aria-selected={value === location}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  onChange(location);
+                  setOpen(false);
+                }}
+                className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm font-semibold text-gray-700 transition hover:bg-violet-50 hover:text-violet-800"
+              >
+                <span>{location}</span>
+              </button>
+            ))
+          ) : (
+            <p className="px-4 py-3 text-sm font-semibold text-gray-500">
+              No popular matches. You can keep your custom location.
+            </p>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function hasSetupText(value: string | null | undefined) {
   return Boolean(String(value ?? "").trim());
 }
 
 function isBasicsComplete(values: StartupSetupValues) {
   return hasSetupText(values.companyName) && hasSetupText(values.domain);
+}
+
+function isCompanySetupRequiredComplete(values: StartupSetupValues) {
+  return (
+    isBasicsComplete(values) &&
+    hasSetupText(values.abn) &&
+    hasSetupText(values.location) &&
+    hasSetupText(values.stage) &&
+    hasSetupText(values.organizationKind) &&
+    hasSetupText(values.hasRevenue) &&
+    hasSetupText(values.shortDescription)
+  );
 }
 
 function isCompanyDetailsComplete(values: StartupSetupValues) {
@@ -1021,6 +1139,7 @@ function applyAutofillToEmptyStartupFields(values: StartupSetupValues, autofill:
     founderNames: profileFields?.founderNames ?? undefined,
     stage: profileFields?.stage ?? undefined,
     organizationKind: profileFields?.organizationKind ?? undefined,
+    hasRevenue: profileFields?.hasRevenue ?? undefined,
     competitors: autofill.competitors?.join("\n"),
     seedKeywords: autofill.seedKeywords?.join(", "),
   };
@@ -1049,6 +1168,7 @@ function savedCompanyDetailLabels(values: StartupSetupValues) {
     hasSetupText(values.founderNames) ? "founders" : "",
     hasSetupText(values.stage) ? "stage" : "",
     hasSetupText(values.organizationKind) ? "organization type" : "",
+    hasSetupText(values.hasRevenue) ? "revenue status" : "",
     hasSetupText(values.seedKeywords) ? "keywords" : "",
     hasSetupText(values.competitors) ? "competitors" : "",
   ].filter(Boolean);
@@ -1769,6 +1889,7 @@ export default function VibeMarketingStartupBaselineSetup({
   setupDescription = "Share the basics so we can tailor research and setup to your business.",
   primaryActionLabel,
   showSecondaryAction,
+  advancedOpenByDefault = false,
   setupProgressPercent = 20,
   setupProgressLabel = "20% complete",
   showSetupProgress = true,
@@ -1807,7 +1928,8 @@ export default function VibeMarketingStartupBaselineSetup({
   const autofillPollStateRef = useRef(autofillRunFetcher.state);
   const baselinePollStateRef = useRef(baselineRunFetcher.state);
   const [startupValues, setStartupValues] = useState<StartupSetupValues>(startupDefaults);
-  const [profileExpanded, setProfileExpanded] = useState(() => defaultSectionExpanded(startupDefaults, isStartupProfileComplete, collapseCompletedSectionsByDefault));
+  const [profileExpanded, setProfileExpanded] = useState(() => advancedOpenByDefault || defaultSectionExpanded(startupDefaults, isStartupProfileComplete, collapseCompletedSectionsByDefault));
+  const [optionalStartupDetailsExpanded, setOptionalStartupDetailsExpanded] = useState(false);
   const [generatedCompanyContext, setGeneratedCompanyContext] = useState(() => String(bootstrap.settings.companyContext ?? ""));
   const [autofillRunId, setAutofillRunId] = useState<string | null>(null);
   const [appliedAutofillRunId, setAppliedAutofillRunId] = useState<string | null>(null);
@@ -1869,12 +1991,15 @@ export default function VibeMarketingStartupBaselineSetup({
     statusAgeMs: autofillStatusAgeMs,
     progressAgeMs: autofillProgressAgeMs,
   });
+  const embedded = variant === "workflow";
+  const companySetupWorkflow = embedded && !includeBaseline;
+  const hasAutofillMinimumFields = companySetupWorkflow ? isCompanySetupRequiredComplete(startupValues) : isBasicsComplete(startupValues);
   const researchLocked = autofillPending || (autofillPolling && !autofillUnavailable);
   const canStartAutofill =
-    Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) &&
+    hasAutofillMinimumFields &&
     !autofillPending &&
     (!autofillPolling || autofillUnavailable);
-  const canRetryAutofill = Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) && !autofillPending;
+  const canRetryAutofill = hasAutofillMinimumFields && !autofillPending;
   const canStartBaseline = Boolean((bootstrap.organization.domain || bootstrap.company.domain || startupValues.domain).trim()) && !baselinePending && !baselinePolling;
   const canRefreshGoogleBaseline = hasGoogleBaselineScopes && baselineHasSnapshot && !googleBaselinePending;
   const manualCompanyContext = companyContextFromSetup(startupValues);
@@ -1912,8 +2037,6 @@ export default function VibeMarketingStartupBaselineSetup({
     status: trafficStatus ?? trafficMetric?.status,
     message: googleTrafficMessage,
   };
-  const embedded = variant === "workflow";
-  const companySetupWorkflow = embedded && !includeBaseline;
   const shouldShowSecondaryAction = showSecondaryAction ?? true;
   const defaultPrimaryActionLabel = includeBaseline ? "Continue to GitHub setup" : embedded ? "Save and continue" : "Continue";
   const baselineActive = baselinePending || baselinePolling;
@@ -1933,9 +2056,13 @@ export default function VibeMarketingStartupBaselineSetup({
   const profileResearchRequiresExpandedSections = Boolean(
     autofillPending || autofillPolling || autofillStalled || autofillUnavailable || autofillStartHasImmediateError || autofillStartError || autofillRunFailed,
   );
-  const startupProfileComplete = isStartupProfileComplete(startupValues);
+  const startupProfileComplete = companySetupWorkflow ? isCompanySetupRequiredComplete(startupValues) : isStartupProfileComplete(startupValues);
   const profileContentExpanded =
-    !collapseCompletedSectionsByDefault || !startupProfileComplete || profileExpanded || profileResearchRequiresExpandedSections;
+    companySetupWorkflow ||
+    !collapseCompletedSectionsByDefault ||
+    !startupProfileComplete ||
+    profileExpanded ||
+    profileResearchRequiresExpandedSections;
   const normalizedSetupProgress =
     typeof setupProgressPercent === "number" && Number.isFinite(setupProgressPercent)
       ? Math.max(0, Math.min(100, setupProgressPercent))
@@ -1945,7 +2072,9 @@ export default function VibeMarketingStartupBaselineSetup({
       {
         key: "profile",
         title: "Start with the basics",
-        body: "Add your company name and website first. The rest can be refined after the essentials are in.",
+        body: companySetupWorkflow
+          ? "Add the required company details first. Extra details can be refined later."
+          : "Add your company name and website first. The rest can be refined after the essentials are in.",
         targetRef: mobileIntroRef,
       },
       {
@@ -1961,7 +2090,7 @@ export default function VibeMarketingStartupBaselineSetup({
         targetRef: mobileNextStepsRef,
       },
     ],
-    [],
+    [companySetupWorkflow],
   );
 
   const inputClass =
@@ -2032,7 +2161,8 @@ export default function VibeMarketingStartupBaselineSetup({
     if (activeCompanyKeyRef.current === activeCompanyKey) return;
     activeCompanyKeyRef.current = activeCompanyKey;
     setStartupValues(startupDefaults);
-    setProfileExpanded(defaultSectionExpanded(startupDefaults, isStartupProfileComplete, collapseCompletedSectionsByDefault));
+    setProfileExpanded(advancedOpenByDefault || defaultSectionExpanded(startupDefaults, isStartupProfileComplete, collapseCompletedSectionsByDefault));
+    setOptionalStartupDetailsExpanded(false);
     setGeneratedCompanyContext(String(bootstrap.settings.companyContext ?? ""));
     setAutofillRunId(null);
     setBaselineRunId(null);
@@ -2043,7 +2173,7 @@ export default function VibeMarketingStartupBaselineSetup({
     setAutofillLastPollAt(null);
     setAutofillProgressSignature("");
     googleAutoRefreshSubmittedRef.current = false;
-  }, [activeCompanyKey, bootstrap.settings.companyContext, collapseCompletedSectionsByDefault, startupDefaults, startupDefaultsSignature]);
+  }, [activeCompanyKey, advancedOpenByDefault, bootstrap.settings.companyContext, collapseCompletedSectionsByDefault, startupDefaults, startupDefaultsSignature]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 639px)");
@@ -2224,8 +2354,8 @@ export default function VibeMarketingStartupBaselineSetup({
       <div className={clsx("space-y-6", embedded ? "p-6 sm:p-8 lg:p-11" : "p-5 sm:p-6 lg:p-8")}>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(240px,520px)] lg:items-start">
           <div ref={mobileIntroRef}>
-            <p className="text-sm font-black uppercase tracking-[0.08em] text-violet-700">{setupEyebrow}</p>
-            <h2 className={clsx("mt-3 font-black tracking-normal text-gray-950", embedded ? "text-4xl leading-tight sm:text-5xl" : "text-3xl")}>{setupTitle}</h2>
+            {setupEyebrow ? <p className="text-sm font-black uppercase tracking-[0.08em] text-violet-700">{setupEyebrow}</p> : null}
+            <h2 className={clsx(setupEyebrow && "mt-3", "font-black tracking-normal text-gray-950", embedded ? "text-4xl leading-tight sm:text-5xl" : "text-3xl")}>{setupTitle}</h2>
             <p className={clsx("mt-4 max-w-3xl font-semibold text-gray-600", embedded ? "text-lg leading-8" : "text-sm leading-6")}>{setupDescription}</p>
             <button
               type="button"
@@ -2255,36 +2385,38 @@ export default function VibeMarketingStartupBaselineSetup({
               : "rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7",
             researchLocked && (embedded ? "opacity-90" : "bg-gray-50/80"),
           )}>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-start gap-5">
-                <StepNumberBadge>1</StepNumberBadge>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-2xl font-black tracking-normal text-gray-950">Startup profile</h3>
-                    {startupProfileComplete ? <CompletePill /> : null}
+            {!companySetupWorkflow ? (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-5">
+                  <StepNumberBadge>1</StepNumberBadge>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-2xl font-black tracking-normal text-gray-950">Startup profile</h3>
+                      {startupProfileComplete ? <CompletePill /> : null}
+                    </div>
+                    <p className="mt-2 text-base font-semibold leading-7 text-gray-600">
+                      <span className="sm:hidden">Add your core details once. AI uses them as source-of-truth without changing them.</span>
+                      <span className="hidden sm:inline">Add your company identity and business details once. AI research uses these answers without overwriting them.</span>
+                    </p>
                   </div>
-                  <p className="mt-2 text-base font-semibold leading-7 text-gray-600">
-                    <span className="sm:hidden">Add your core details once. AI uses them as source-of-truth without changing them.</span>
-                    <span className="hidden sm:inline">Add your company identity and business details once. AI research uses these answers without overwriting them.</span>
-                  </p>
                 </div>
+                {startupProfileComplete ? (
+                  <button
+                    type="button"
+                    onClick={() => setProfileExpanded((current) => !current)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                    aria-expanded={profileContentExpanded}
+                  >
+                    {profileContentExpanded ? "Collapse" : "Edit"}
+                    <ChevronDown className={clsx("h-4 w-4 transition", profileContentExpanded && "rotate-180")} />
+                  </button>
+                ) : null}
               </div>
-              {startupProfileComplete ? (
-                <button
-                  type="button"
-                  onClick={() => setProfileExpanded((current) => !current)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
-                  aria-expanded={profileContentExpanded}
-                >
-                  {profileContentExpanded ? "Collapse" : "Edit"}
-                  <ChevronDown className={clsx("h-4 w-4 transition", profileContentExpanded && "rotate-180")} />
-                </button>
-              ) : null}
-            </div>
+            ) : null}
 
-            {!profileContentExpanded ? <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">{startupProfileSummary(startupValues)}</p> : null}
+            {!companySetupWorkflow && !profileContentExpanded ? <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">{startupProfileSummary(startupValues)}</p> : null}
 
-            <div className={clsx("mt-7 border-t border-gray-200 pt-7", !profileContentExpanded && "hidden")}>
+            <div className={clsx(!companySetupWorkflow && "mt-7 border-t border-gray-200 pt-7", !profileContentExpanded && "hidden")}>
               <section className="overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-violet-50/70 p-5">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex gap-4">
@@ -2339,117 +2471,229 @@ export default function VibeMarketingStartupBaselineSetup({
                   </div>
                 </FormField>
 
-                <FormField label={companySetupWorkflow ? "LinkedIn" : "LinkedIn company page"} badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>
-                  <div className="relative">
-                    <ControlIcon icon={Link2} />
-                    <input
-                      name="companyLinkedInUrl"
-                      value={startupValues.companyLinkedInUrl}
-                      onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
-                      disabled={researchLocked}
-                      placeholder={companySetupWorkflow ? "https://www.linkedin.com/company/yourcompany" : "e.g. linkedin.com/company/acme-inc"}
-                      className={inputWithIconClass}
-                    />
-                  </div>
-                  {showLinkedInDisambiguationHint ? (
-                    <p className="mt-2 text-xs font-bold text-amber-700">
-                      A LinkedIn company URL helps us disambiguate names like {startupValues.companyName.trim()}.
-                    </p>
-                  ) : null}
-                </FormField>
-              </div>
+                {companySetupWorkflow ? (
+                  <>
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <FormField label="ABN" badge={<RequiredPill />}>
+                        <div className="relative">
+                          <ControlIcon icon={BadgeInfo} />
+                          <input
+                            name="abn"
+                            value={startupValues.abn}
+                            onChange={(event) => updateValue("abn", event.target.value)}
+                            disabled={researchLocked}
+                            required
+                            placeholder="Search ABN or business name"
+                            className={inputWithIconClass}
+                          />
+                        </div>
+                      </FormField>
 
-              <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                <FormField label="Startup location">
-                  <div className="relative">
-                    <ControlIcon icon={MapPin} />
-                    <input
-                      name="location"
-                      value={startupValues.location}
-                      onChange={(event) => updateValue("location", event.target.value)}
-                      disabled={researchLocked}
-                      placeholder="Melbourne, Australia"
-                      className={inputWithIconClass}
-                    />
-                  </div>
-                </FormField>
-                <FormField label="Founder names">
-                  <input
-                    name="founderNames"
-                    value={startupValues.founderNames}
-                    onChange={(event) => updateValue("founderNames", event.target.value)}
-                    disabled={researchLocked}
-                    placeholder="Sam Donegan, Alex Founder"
-                    className={`${inputClass} px-4`}
-                  />
-                </FormField>
-                <FormField label="Stage">
-                  <select
-                    name="stage"
-                    value={startupValues.stage}
-                    onChange={(event) => updateValue("stage", event.target.value)}
-                    disabled={researchLocked}
-                    className={`${inputClass} px-4`}
-                  >
-                    {STARTUP_STAGE_OPTIONS.map((option) => (
-                      <option key={option || "blank"} value={option}>
-                        {option || "Select stage"}
-                      </option>
-                    ))}
-                  </select>
-                </FormField>
-                <FormField label="Organization type">
-                  <select
-                    name="organizationKind"
-                    value={startupValues.organizationKind}
-                    onChange={(event) => updateValue("organizationKind", event.target.value)}
-                    disabled={researchLocked}
-                    className={`${inputClass} px-4`}
-                  >
-                    {ORGANIZATION_KIND_OPTIONS.map((option) => (
-                      <option key={option || "blank"} value={option}>
-                        {option || "Select type"}
-                      </option>
-                    ))}
-                  </select>
-                </FormField>
-              </div>
+                      <FormField label="Startup location" badge={<RequiredPill />}>
+                        <LocationCombobox
+                          value={startupValues.location}
+                          onChange={(nextLocation) => updateValue("location", nextLocation)}
+                          disabled={researchLocked}
+                          required
+                          inputClassName={inputWithIconClass}
+                        />
+                      </FormField>
+                    </div>
 
-              <div className="mt-7 grid gap-6 xl:grid-cols-2">
-                <CompanyDetailsPanel title="About your business" icon={FileText}>
-                  <div className="space-y-6">
-                    <FormField label="Short description">
+                    <FormField label="Do you have revenue?" badge={<RequiredPill />}>
+                      <select
+                        name="hasRevenue"
+                        value={startupValues.hasRevenue}
+                        onChange={(event) => updateValue("hasRevenue", event.target.value)}
+                        disabled={researchLocked}
+                        required
+                        className={`${inputClass} px-4`}
+                      >
+                        {REVENUE_STATUS_OPTIONS.map((option) => (
+                          <option key={option || "blank"} value={option}>
+                            {option || "Select answer"}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <FormField label="Stage" badge={<RequiredPill />}>
+                        <select
+                          name="stage"
+                          value={startupValues.stage}
+                          onChange={(event) => updateValue("stage", event.target.value)}
+                          disabled={researchLocked}
+                          required
+                          className={`${inputClass} px-4`}
+                        >
+                          {COMPANY_SETUP_STAGE_OPTIONS.map((option) => (
+                            <option key={option || "blank"} value={option}>
+                              {option || "Select stage"}
+                            </option>
+                          ))}
+                        </select>
+                      </FormField>
+                      <FormField label="Organization type" badge={<RequiredPill />}>
+                        <select
+                          name="organizationKind"
+                          value={startupValues.organizationKind}
+                          onChange={(event) => updateValue("organizationKind", event.target.value)}
+                          disabled={researchLocked}
+                          required
+                          className={`${inputClass} px-4`}
+                        >
+                          {ORGANIZATION_KIND_OPTIONS.map((option) => (
+                            <option key={option || "blank"} value={option}>
+                              {option || "Select type"}
+                            </option>
+                          ))}
+                        </select>
+                      </FormField>
+                    </div>
+
+                    <FormField label="Short description" badge={<RequiredPill />}>
                       <textarea
                         name="shortDescription"
                         value={startupValues.shortDescription}
                         onChange={(event) => updateValue("shortDescription", event.target.value)}
                         disabled={researchLocked}
-                        placeholder="e.g. We help SaaS companies automate customer onboarding..."
-                        rows={6}
+                        required
+                        placeholder="In 1-2 sentences, what does your startup do?"
+                        rows={4}
                         maxLength={600}
                         className={textareaClass}
                       />
                     </FormField>
-
-                    <div className="border-t border-gray-100 pt-6">
-                      <FormField label="What you do">
-                        <textarea
-                          name="problemSolved"
-                          value={startupValues.problemSolved}
-                          onChange={(event) => updateValue("problemSolved", event.target.value)}
-                          disabled={researchLocked}
-                          placeholder="e.g. SaaS teams waste time on manual processes..."
-                          rows={5}
-                          maxLength={400}
-                          className={textareaClass}
-                        />
-                      </FormField>
+                  </>
+                ) : (
+                  <FormField label="LinkedIn company page" badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>
+                    <div className="relative">
+                      <ControlIcon icon={Link2} />
+                      <input
+                        name="companyLinkedInUrl"
+                        value={startupValues.companyLinkedInUrl}
+                        onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="e.g. linkedin.com/company/acme-inc"
+                        className={inputWithIconClass}
+                      />
                     </div>
-                  </div>
-                </CompanyDetailsPanel>
+                    {showLinkedInDisambiguationHint ? (
+                      <p className="mt-2 text-xs font-bold text-amber-700">
+                        A LinkedIn company URL helps us disambiguate names like {startupValues.companyName.trim()}.
+                      </p>
+                    ) : null}
+                  </FormField>
+                )}
+              </div>
 
-                <CompanyDetailsPanel title="Key details" icon={Users}>
-                  <div className="space-y-6">
+              {companySetupWorkflow ? (
+                <button
+                  type="button"
+                  onClick={() => setOptionalStartupDetailsExpanded((current) => !current)}
+                  className="mt-6 flex w-full items-center justify-between gap-4 rounded-xl border border-violet-200 bg-white px-4 py-3 text-left text-sm font-black text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50 sm:text-base"
+                  aria-expanded={optionalStartupDetailsExpanded}
+                >
+                  <span>
+                    {optionalStartupDetailsExpanded ? "Hide extra profile details" : "Add optional profile details"}
+                  </span>
+                  <ChevronDown className={clsx("h-5 w-5 shrink-0 transition", optionalStartupDetailsExpanded && "rotate-180")} />
+                </button>
+              ) : null}
+
+              <div className={clsx(companySetupWorkflow && !optionalStartupDetailsExpanded && "hidden")}>
+                {companySetupWorkflow ? (
+                  <div className="mt-7">
+                    <FormField label="Company LinkedIn" badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>
+                      <div className="relative">
+                        <ControlIcon icon={Link2} />
+                        <input
+                          name="companyLinkedInUrl"
+                          value={startupValues.companyLinkedInUrl}
+                          onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
+                          disabled={researchLocked}
+                          placeholder="https://www.linkedin.com/company/yourcompany"
+                          className={inputWithIconClass}
+                        />
+                      </div>
+                    </FormField>
+                  </div>
+                ) : null}
+
+                {companySetupWorkflow ? (
+                  <div className="mt-7 space-y-5">
+                    <FormField label="Founder names">
+                      <input
+                        name="founderNames"
+                        value={startupValues.founderNames}
+                        onChange={(event) => updateValue("founderNames", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="Sam Donegan, Alex Founder"
+                        className={`${inputClass} px-4`}
+                      />
+                    </FormField>
+                  </div>
+                ) : (
+                  <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                    <FormField label="Startup location">
+                      <div className="relative">
+                        <ControlIcon icon={MapPin} />
+                        <input
+                          name="location"
+                          value={startupValues.location}
+                          onChange={(event) => updateValue("location", event.target.value)}
+                          disabled={researchLocked}
+                          placeholder="Melbourne, Australia"
+                          className={inputWithIconClass}
+                        />
+                      </div>
+                    </FormField>
+                    <FormField label="Founder names">
+                      <input
+                        name="founderNames"
+                        value={startupValues.founderNames}
+                        onChange={(event) => updateValue("founderNames", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="Sam Donegan, Alex Founder"
+                        className={`${inputClass} px-4`}
+                      />
+                    </FormField>
+                    <FormField label="Stage">
+                      <select
+                        name="stage"
+                        value={startupValues.stage}
+                        onChange={(event) => updateValue("stage", event.target.value)}
+                        disabled={researchLocked}
+                        className={`${inputClass} px-4`}
+                      >
+                        {STARTUP_STAGE_OPTIONS.map((option) => (
+                          <option key={option || "blank"} value={option}>
+                            {option || "Select stage"}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                    <FormField label="Organization type">
+                      <select
+                        name="organizationKind"
+                        value={startupValues.organizationKind}
+                        onChange={(event) => updateValue("organizationKind", event.target.value)}
+                        disabled={researchLocked}
+                        className={`${inputClass} px-4`}
+                      >
+                        {ORGANIZATION_KIND_OPTIONS.map((option) => (
+                          <option key={option || "blank"} value={option}>
+                            {option || "Select type"}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                  </div>
+                )}
+
+                {companySetupWorkflow ? (
+                  <div className="mt-7 space-y-6">
                     <FormField label="Target audience">
                       <div className="relative">
                         <ControlIcon icon={Users} />
@@ -2461,20 +2705,6 @@ export default function VibeMarketingStartupBaselineSetup({
                           placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
                           rows={3}
                           className={textareaWithIconClass}
-                        />
-                      </div>
-                    </FormField>
-
-                    <FormField label="ABN">
-                      <div className="relative max-w-md">
-                        <ControlIcon icon={BadgeInfo} />
-                        <input
-                          name="abn"
-                          value={startupValues.abn}
-                          onChange={(event) => updateValue("abn", event.target.value)}
-                          disabled={researchLocked}
-                          placeholder="Search ABN or business name"
-                          className={inputWithIconClass}
                         />
                       </div>
                     </FormField>
@@ -2502,7 +2732,97 @@ export default function VibeMarketingStartupBaselineSetup({
                       />
                     </div>
                   </div>
-                </CompanyDetailsPanel>
+                ) : (
+                  <div className="mt-7 grid gap-6 xl:grid-cols-2">
+                    <CompanyDetailsPanel title="About your business" icon={FileText}>
+                      <div className="space-y-6">
+                        <FormField label="Short description">
+                          <textarea
+                            name="shortDescription"
+                            value={startupValues.shortDescription}
+                            onChange={(event) => updateValue("shortDescription", event.target.value)}
+                            disabled={researchLocked}
+                            placeholder="e.g. We help SaaS companies automate customer onboarding..."
+                            rows={6}
+                            maxLength={600}
+                            className={textareaClass}
+                          />
+                        </FormField>
+
+                        <div className="border-t border-gray-100 pt-6">
+                          <FormField label="What you do">
+                            <textarea
+                              name="problemSolved"
+                              value={startupValues.problemSolved}
+                              onChange={(event) => updateValue("problemSolved", event.target.value)}
+                              disabled={researchLocked}
+                              placeholder="e.g. SaaS teams waste time on manual processes..."
+                              rows={5}
+                              maxLength={400}
+                              className={textareaClass}
+                            />
+                          </FormField>
+                        </div>
+                      </div>
+                    </CompanyDetailsPanel>
+
+                    <CompanyDetailsPanel title="Key details" icon={Users}>
+                      <div className="space-y-6">
+                        <FormField label="Target audience">
+                          <div className="relative">
+                            <ControlIcon icon={Users} />
+                            <textarea
+                              name="targetAudience"
+                              value={startupValues.targetAudience}
+                              onChange={(event) => updateValue("targetAudience", event.target.value)}
+                              disabled={researchLocked}
+                              placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
+                              rows={3}
+                              className={textareaWithIconClass}
+                            />
+                          </div>
+                        </FormField>
+
+                        <FormField label="ABN">
+                          <div className="relative max-w-md">
+                            <ControlIcon icon={BadgeInfo} />
+                            <input
+                              name="abn"
+                              value={startupValues.abn}
+                              onChange={(event) => updateValue("abn", event.target.value)}
+                              disabled={researchLocked}
+                              placeholder="Search ABN or business name"
+                              className={inputWithIconClass}
+                            />
+                          </div>
+                        </FormField>
+
+                        <div>
+                          <span className="mb-2 flex flex-wrap items-center gap-2 text-sm font-bold text-gray-700">Seed keywords</span>
+                          <ChipListInput
+                            name="seedKeywords"
+                            value={startupValues.seedKeywords}
+                            onChange={(value) => updateValue("seedKeywords", value)}
+                            disabled={researchLocked}
+                            placeholder="Add a keyword, then press Enter"
+                          />
+                        </div>
+
+                        <div>
+                          <span className="mb-2 flex flex-wrap items-center gap-2 text-sm font-bold text-gray-700">Competitors</span>
+                          <ChipListInput
+                            name="competitors"
+                            value={startupValues.competitors}
+                            onChange={(value) => updateValue("competitors", value)}
+                            disabled={researchLocked}
+                            placeholder="Add a competitor, then press Enter"
+                            separator="newline"
+                          />
+                        </div>
+                      </div>
+                    </CompanyDetailsPanel>
+                  </div>
+                )}
               </div>
 
               <button
@@ -2523,7 +2843,11 @@ export default function VibeMarketingStartupBaselineSetup({
               </button>
 
               {!canStartAutofill && !autofillPending && !autofillPolling ? (
-                <p className="mt-3 text-xs font-bold text-gray-500">Add a company name and website domain before researching with AI.</p>
+                <p className="mt-3 text-xs font-bold text-gray-500">
+                  {companySetupWorkflow
+                    ? "Add all required company details before researching with AI."
+                    : "Add a company name and website domain before researching with AI."}
+                </p>
               ) : null}
               <p className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-gray-500">
                 <ShieldCheck className="h-4 w-4" />
@@ -2911,13 +3235,15 @@ export default function VibeMarketingStartupBaselineSetup({
 
       <div className={clsx(
         "flex flex-col gap-4 border-t border-gray-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8",
-        companySetupWorkflow ? "bg-white" : "bg-gray-50/70",
+        companySetupWorkflow ? "justify-end bg-white sm:justify-end" : "bg-gray-50/70",
       )}>
-        <p className="flex items-center gap-3 text-sm font-bold text-gray-500">
-          {companySetupWorkflow ? null : <ShieldCheck className="h-5 w-5 text-gray-400" />}
-          {companySetupWorkflow ? "You can edit your profile anytime." : "Your data is secure and never shared."}
-        </p>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+        {!companySetupWorkflow ? (
+          <p className="flex items-center gap-3 text-sm font-bold text-gray-500">
+            <ShieldCheck className="h-5 w-5 text-gray-400" />
+            Your data is secure and never shared.
+          </p>
+        ) : null}
+        <div className={clsx("flex flex-col gap-3 sm:flex-row", companySetupWorkflow ? "w-auto self-end" : "w-full sm:w-auto")}>
           {shouldShowSecondaryAction ? (
             <button
               type="submit"
