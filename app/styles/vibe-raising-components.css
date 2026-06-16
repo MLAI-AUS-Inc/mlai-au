@@ -837,6 +837,10 @@
   margin: 0 auto;
 }
 
+.vr-scope .vr-hero-preview-shell-compact {
+  max-width: 410px;
+}
+
 .vr-scope .vr-hero-preview-window {
   border-radius: 24px;
   overflow: hidden;
@@ -909,6 +913,14 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.vr-scope .vr-hero-preview-shell-compact .vr-hero-preview-body {
+  padding-bottom: 20px;
+}
+
+.vr-scope .vr-hero-preview-shell-compact .vr-hero-preview-metrics {
+  margin-bottom: 14px;
 }
 
 .vr-scope .vr-hero-preview-actions {

@@ -36,12 +36,17 @@ const COMPANY_SETUP_FIELD_LABELS: Record<string, string> = {
   company_linkedin_url: "Company LinkedIn URL",
   organizationKind: "Organization type",
   organization_kind: "Organization type",
+  hasRevenue: "Revenue status",
+  has_revenue: "Revenue status",
   companyId: "Company",
   company_id: "Company",
   name: "Company name",
   domain: "Website domain",
   abn: "ABN",
   location: "Startup location",
+  stage: "Stage",
+  shortDescription: "Short description",
+  short_description: "Short description",
   non_field_errors: "Company details",
 };
 
@@ -80,7 +85,8 @@ function emptyBootstrap(profile: VibeRaisingProfile | null, company: VibeRaising
     startupProfile: {
       founderNames: [],
       stage: null,
-      organizationKind: null,
+      organizationKind: company?.organizationKind ?? null,
+      hasRevenue: company?.hasRevenue ?? null,
       notes: null,
       companyAliases: companyName ? [companyName] : [],
       domainAliases: domain ? [domain] : [],
@@ -214,6 +220,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         abn: stringFromForm(formData, "abn"),
         organizationKind: stringFromForm(formData, "organizationKind"),
         organization_kind: stringFromForm(formData, "organizationKind"),
+        hasRevenue: stringFromForm(formData, "hasRevenue"),
+        has_revenue: stringFromForm(formData, "hasRevenue"),
         shortDescription: stringFromForm(formData, "shortDescription"),
         short_description: stringFromForm(formData, "shortDescription"),
         problemSolved: stringFromForm(formData, "problemSolved"),
@@ -237,6 +245,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             founderNames: listFromForm(formData.get("founderNames")),
             stage: stringFromForm(formData, "stage"),
             organizationKind: stringFromForm(formData, "organizationKind"),
+            hasRevenue: stringFromForm(formData, "hasRevenue"),
             abn: stringFromForm(formData, "abn"),
           },
         },
@@ -253,11 +262,35 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const companyName = stringFromForm(formData, "companyName");
     const domain = stringFromForm(formData, "domain");
+    const abn = stringFromForm(formData, "abn");
+    const location = stringFromForm(formData, "location");
+    const stage = stringFromForm(formData, "stage");
+    const organizationKind = stringFromForm(formData, "organizationKind");
+    const hasRevenue = stringFromForm(formData, "hasRevenue");
+    const shortDescription = stringFromForm(formData, "shortDescription");
     if (!companyName) {
       return { intent, error: "Add your startup or company name before continuing." };
     }
     if (!domain) {
       return { intent, error: "Add your website domain before continuing." };
+    }
+    if (!abn) {
+      return { intent, error: "Add your ABN before continuing." };
+    }
+    if (!location) {
+      return { intent, error: "Add your startup location before continuing." };
+    }
+    if (!stage) {
+      return { intent, error: "Select your startup stage before continuing." };
+    }
+    if (!organizationKind) {
+      return { intent, error: "Select your organization type before continuing." };
+    }
+    if (!hasRevenue) {
+      return { intent, error: "Select whether you have revenue before continuing." };
+    }
+    if (!shortDescription) {
+      return { intent, error: "Add a short description before continuing." };
     }
 
     if (!vibeContext.profile) {
@@ -278,17 +311,18 @@ export async function action({ request, context }: Route.ActionArgs) {
       name: companyName,
       domain,
       companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
-      location: stringFromForm(formData, "location"),
-      abn: stringFromForm(formData, "abn"),
+      location,
+      abn,
       brandName: companyName,
       companyContext,
       competitors: listFromForm(formData.get("competitors")),
       seedKeywords: listFromForm(formData.get("seedKeywords")),
       founderNames,
       founderProfiles,
-      stage: stringFromForm(formData, "stage"),
-      organizationKind: stringFromForm(formData, "organizationKind"),
-      shortDescription: stringFromForm(formData, "shortDescription"),
+      stage,
+      organizationKind,
+      hasRevenue,
+      shortDescription,
       problemSolved: stringFromForm(formData, "problemSolved"),
       targetAudience: stringFromForm(formData, "targetAudience"),
       notes: stringFromForm(formData, "targetAudience"),
@@ -312,15 +346,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     };
   }
 
-  throw redirect("/founder-tools");
+  throw redirect("/founder-tools/updates");
 }
 
 export default function CompanySetup() {
   const { bootstrap, isAddingNew, isEditingExisting } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const error = actionData && typeof actionData === "object" && "error" in actionData ? String(actionData.error ?? "") : null;
-  const title = isAddingNew ? "Add a company" : isEditingExisting ? "Edit company setup" : "Set up your company";
-
   return (
     <div className="min-h-screen bg-[#f7f6f2] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -329,7 +361,7 @@ export default function CompanySetup() {
           error={error}
           variant="workflow"
           includeBaseline={false}
-          setupEyebrow={title === "Set up your company" ? "Company setup" : title}
+          setupEyebrow=""
           setupTitle="Tell us about your startup"
           setupDescription="This shared profile is used across Vibe Raising and Vibe Marketing."
           guidanceTitle="Shared profile"
@@ -340,7 +372,7 @@ export default function CompanySetup() {
             "Describe your customer and problem clearly",
             "You can edit these details later",
           ]}
-          primaryActionLabel={isAddingNew ? "Add company" : "Save and go to dashboard"}
+          primaryActionLabel="Save and go to Vibe Raising"
           showSecondaryAction={false}
           advancedOpenByDefault
           showSetupProgress={false}

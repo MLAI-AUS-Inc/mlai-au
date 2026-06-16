@@ -186,6 +186,17 @@ function asNullableString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function asRevenueStatus(value: unknown): string | null {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return value === 0 ? "No" : "Yes";
+  const text = asNullableString(value);
+  if (!text) return null;
+  const normalized = text.toLowerCase();
+  if (["yes", "true", "1"].includes(normalized)) return "Yes";
+  if (["no", "false", "0"].includes(normalized)) return "No";
+  return text;
+}
+
 function asBoolean(value: unknown): boolean {
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value !== 0;
@@ -289,6 +300,22 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     asNullableString(payload.startup_stage) ??
     asNullableString(startupProfile?.stage) ??
     asNullableString(startupProfileSnake?.stage);
+  const organizationKind =
+    asNullableString(payload.organizationKind) ??
+    asNullableString(payload.organization_kind) ??
+    asNullableString(startupProfile?.organizationKind) ??
+    asNullableString(startupProfile?.organization_kind) ??
+    asNullableString(startupProfileSnake?.organizationKind) ??
+    asNullableString(startupProfileSnake?.organization_kind);
+  const hasRevenue =
+    asRevenueStatus(
+      payload.hasRevenue ??
+        payload.has_revenue ??
+        startupProfile?.hasRevenue ??
+        startupProfile?.has_revenue ??
+        startupProfileSnake?.hasRevenue ??
+        startupProfileSnake?.has_revenue,
+    );
   const registered = Boolean(
     payload.registered ??
       payload.isRegistered ??
@@ -308,6 +335,8 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     founderProfiles,
     founderNames,
     stage,
+    organizationKind,
+    hasRevenue,
     registered,
   };
 }
@@ -1659,6 +1688,8 @@ export function buildVibeRaisingAppUser(
       activeCompany?.founderProfiles?.map((entry) => entry.name) ??
       [],
     stage: activeCompany?.stage ?? null,
+    organizationKind: activeCompany?.organizationKind ?? null,
+    hasRevenue: activeCompany?.hasRevenue ?? null,
     companyRegistered: activeCompany?.registered ?? false,
   };
 }
@@ -1862,6 +1893,7 @@ export async function saveVibeRaisingCompany(
     founderProfiles?: VibeRaisingFounderProfile[];
     stage?: string | null;
     organizationKind?: string | null;
+    hasRevenue?: string | null;
     shortDescription?: string | null;
     problemSolved?: string | null;
     targetAudience?: string | null;

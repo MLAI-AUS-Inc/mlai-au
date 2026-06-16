@@ -46,6 +46,17 @@ function asNullableString(value: unknown): string | null {
   return trimmed ? trimmed : null;
 }
 
+function asRevenueStatus(value: unknown): string | null {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return value === 0 ? "No" : "Yes";
+  const text = asNullableString(value);
+  if (!text) return null;
+  const normalized = text.toLowerCase();
+  if (["yes", "true", "1"].includes(normalized)) return "Yes";
+  if (["no", "false", "0"].includes(normalized)) return "No";
+  return text;
+}
+
 function asStringList(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.map((item) => String(item ?? "").trim()).filter(Boolean);
@@ -484,6 +495,7 @@ function normalizeStartupProfile(payload: Record<string, unknown>): VibeMarketin
       : [],
     stage: asNullableString(payload.stage),
     organizationKind: asNullableString(payload.organizationKind) ?? asNullableString(payload.organization_kind),
+    hasRevenue: asRevenueStatus(payload.hasRevenue ?? payload.has_revenue),
     shortDescription: asNullableString(payload.shortDescription) ?? asNullableString(payload.short_description),
     problemSolved: asNullableString(payload.problemSolved) ?? asNullableString(payload.problem_solved),
     targetAudience: asNullableString(payload.targetAudience) ?? asNullableString(payload.target_audience),

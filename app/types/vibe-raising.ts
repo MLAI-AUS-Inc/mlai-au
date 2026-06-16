@@ -18,6 +18,8 @@ export interface VibeRaisingCompany {
   founderProfiles?: VibeRaisingFounderProfile[];
   founderNames?: string[];
   stage?: string | null;
+  organizationKind?: string | null;
+  hasRevenue?: string | null;
   registered: boolean;
 }
 
@@ -44,6 +46,8 @@ export interface VibeRaisingAppUser {
   founderProfiles?: VibeRaisingFounderProfile[];
   founderNames?: string[];
   stage?: string | null;
+  organizationKind?: string | null;
+  hasRevenue?: string | null;
   companyRegistered: boolean;
 }
 

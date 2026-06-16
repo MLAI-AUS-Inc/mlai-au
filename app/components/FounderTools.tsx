@@ -14,6 +14,8 @@
    with the blurbs always shown.
    ============================================================ */
 
+import { Link } from "react-router";
+
 // Four founder tracks. Colours match the studio deck (orange / teal /
 // purple / yellow) and the sidebar palette.
 const TOOLS = [
@@ -34,6 +36,7 @@ const TOOLS = [
     icon: "🤝",
     t: "Vibe Raising",
     d: "Share authentic monthly updates and we'll warm-intro you to investors with a real track record in startups like yours.",
+    to: "/vibe-raising",
   },
   {
     c: "yellow",
@@ -50,7 +53,9 @@ const DECK_CSS = `
   padding: 30px 26px; display: flex; flex-direction: column; align-items: center; text-align: center;
   justify-content: space-between; transform-origin: bottom center; cursor: pointer;
   transition: transform .3s cubic-bezier(.2,.7,.2,1), filter .3s ease, box-shadow .3s ease;
+  text-decoration: none;
 }
+.ft-card:focus-visible { outline: 3px solid rgba(255,255,255,.9); outline-offset: 6px; }
 .ft-card:nth-child(1) { transform: rotate(-8deg) translateY(12px); z-index: 1; }
 .ft-card:nth-child(2) { transform: rotate(-3deg); z-index: 2; margin-left: -60px; }
 .ft-card:nth-child(3) { transform: rotate(3deg); z-index: 3; margin-left: -60px; }
@@ -113,18 +118,30 @@ export default function FounderTools() {
 
           {/* Fanned deck — hover a card to straighten it and reveal the blurb */}
           <div className="ft-deck">
-            {TOOLS.map((card) => (
-              <div key={card.t} className={`ft-card ft-${card.c}`}>
-                <div className="ft-top">
-                  <div className="ft-badge">{card.icon}</div>
+            {TOOLS.map((card) => {
+              const cardContent = (
+                <>
+                  <div className="ft-top">
+                    <div className="ft-badge">{card.icon}</div>
+                  </div>
+                  <h3 className="ft-title">{card.t}</h3>
+                  <div className="ft-slot">
+                    <span className="ft-hint">See what's inside →</span>
+                    <p className="ft-desc">{card.d}</p>
+                  </div>
+                </>
+              );
+
+              return card.to ? (
+                <Link key={card.t} to={card.to} className={`ft-card ft-${card.c}`} aria-label="Open Vibe Raising landing page">
+                  {cardContent}
+                </Link>
+              ) : (
+                <div key={card.t} className={`ft-card ft-${card.c}`}>
+                  {cardContent}
                 </div>
-                <h3 className="ft-title">{card.t}</h3>
-                <div className="ft-slot">
-                  <span className="ft-hint">See what's inside →</span>
-                  <p className="ft-desc">{card.d}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

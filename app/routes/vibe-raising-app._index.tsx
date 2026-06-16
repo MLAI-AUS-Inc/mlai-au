@@ -44,6 +44,7 @@ import {
 import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
+import { VibeRaisingHeroExampleUpdatePreview } from "~/components/VibeRaisingFounderOverview";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -218,12 +219,12 @@ function EditableMetricCard({ label, value, icon: _Icon, active = true, editing,
 }
 
 const investorReachSeries = [
-    { month: "Mar 2024", value: 24, x: 0, y: 74 },
-    { month: "Apr 2024", value: 36, x: 20, y: 62 },
-    { month: "May 2024", value: 24, x: 40, y: 74 },
-    { month: "Jun 2024", value: 40, x: 60, y: 58 },
-    { month: "Jul 2024", value: 58, x: 80, y: 40 },
-    { month: "Aug 2024", value: 46, x: 100, y: 52 },
+    { month: "Jan 2026", value: 24, x: 0, y: 74 },
+    { month: "Feb 2026", value: 36, x: 20, y: 62 },
+    { month: "Mar 2026", value: 24, x: 40, y: 74 },
+    { month: "Apr 2026", value: 40, x: 60, y: 58 },
+    { month: "May 2026", value: 58, x: 80, y: 40 },
+    { month: "Jun 2026", value: 46, x: 100, y: 52 },
 ];
 
 function InvestorReachOverview() {
@@ -237,91 +238,91 @@ function InvestorReachOverview() {
     const areaPoints = `0,100 ${polylinePoints} 100,100`;
 
     return (
-        <section className="hidden rounded-[1.35rem] border border-[var(--vr-color-border)] bg-white p-6 shadow-sm sm:block">
-            <div className="mb-5 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-black text-gray-950">Investor reach overview</h2>
-                    <InformationCircleIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                </div>
+        <section className="hidden space-y-4 sm:block">
+            <div className="flex items-center gap-2">
+                <h2 className="vr-text-page-title">Investor reach overview</h2>
+                <InformationCircleIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-4">
-                {metricCards.map((card) => {
-                    const Icon = card.icon;
-                    return (
-                        <div key={card.label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                            <div className="flex items-center gap-5">
-                                <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(0,128,128,0.10)] text-[var(--vr-color-primary)]">
-                                    <Icon className="h-7 w-7" aria-hidden="true" />
-                                </span>
-                                <div>
-                                    <p className="text-sm font-black text-slate-700">{card.label}</p>
-                                    <p className="mt-1 text-4xl font-black leading-none text-gray-950">{card.value}</p>
-                                    <p className="mt-2 text-sm font-semibold text-slate-500">
-                                        <span className="mr-1 text-[var(--vr-color-primary)]">▲ {card.delta}</span>
-                                        vs prior 6 months
-                                    </p>
+            <div className="rounded-[1.35rem] border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
+                <div className="grid gap-3 lg:grid-cols-4">
+                    {metricCards.map((card) => {
+                        const Icon = card.icon;
+                        return (
+                            <div key={card.label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                                <div className="flex items-center gap-5">
+                                    <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(0,128,128,0.10)] text-[var(--vr-color-primary)]">
+                                        <Icon className="h-7 w-7" aria-hidden="true" />
+                                    </span>
+                                    <div>
+                                        <p className="text-sm font-black text-slate-700">{card.label}</p>
+                                        <p className="mt-1 text-4xl font-black leading-none text-gray-950">{card.value}</p>
+                                        <p className="mt-2 text-sm font-semibold text-slate-500">
+                                            <span className="mr-1 text-[var(--vr-color-primary)]">▲ {card.delta}</span>
+                                            vs prior 6 months
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            <div className="mt-6">
-                <div className="mb-3 flex items-start justify-between gap-4">
-                    <div>
-                        <h3 className="text-base font-black text-gray-950">Investor reach over time</h3>
-                        <p className="mt-1 text-sm font-semibold text-slate-500">Unique investors reached each month</p>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm font-semibold text-slate-600">
-                        <span className="h-0.5 w-10 bg-[var(--vr-color-primary)]" aria-hidden="true" />
-                        Investors reached
-                    </div>
+                        );
+                    })}
                 </div>
-                <div className="relative h-44 overflow-visible">
-                    <div className="absolute inset-x-0 top-2 grid h-[128px] grid-rows-4 text-xs font-semibold text-slate-500">
-                        {[80, 60, 40, 20, 0].map((label) => (
-                            <div key={label} className="relative border-t border-dashed border-slate-200">
-                                <span className="absolute -top-2 left-0 bg-white pr-2">{label}</span>
-                            </div>
-                        ))}
+
+                <div className="mt-6">
+                    <div className="mb-3 flex items-start justify-between gap-4">
+                        <div>
+                            <h3 className="text-base font-black text-gray-950">Investor reach over time</h3>
+                            <p className="mt-1 text-sm font-semibold text-slate-500">Unique investors reached each month</p>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm font-semibold text-slate-600">
+                            <span className="h-0.5 w-10 bg-[var(--vr-color-primary)]" aria-hidden="true" />
+                            Investors reached
+                        </div>
                     </div>
-                    <svg className="absolute left-8 right-0 top-2 h-[128px] w-[calc(100%-2rem)] overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                        <polygon points={areaPoints} fill="rgba(0,128,128,0.08)" />
-                        <polyline points={polylinePoints} fill="none" stroke="var(--vr-color-primary)" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
-                    </svg>
-                    <div className="absolute left-8 right-0 top-2 h-[128px]" aria-hidden="true">
-                        {investorReachSeries.map((point) => (
-                            <span
-                                key={point.month}
-                                className="absolute h-2.5 w-2.5 rounded-full border-2 border-white bg-[var(--vr-color-primary)] shadow-sm"
-                                style={{
-                                    left: `${point.x}%`,
-                                    top: `${point.y}%`,
-                                    transform: "translate(-50%, -50%)",
-                                }}
-                            />
-                        ))}
-                    </div>
-                    <div className="absolute bottom-0 left-8 right-0 h-5 text-sm font-semibold text-slate-700">
-                        {investorReachSeries.map((point, index) => (
-                            <span
-                                key={point.month}
-                                className="absolute whitespace-nowrap"
-                                style={{
-                                    left: `${point.x}%`,
-                                    transform:
-                                        index === 0
-                                            ? "translateX(0)"
-                                            : index === investorReachSeries.length - 1
-                                                ? "translateX(-100%)"
-                                                : "translateX(-50%)",
-                                }}
-                            >
-                                {point.month}
-                            </span>
-                        ))}
+                    <div className="relative h-44 overflow-visible">
+                        <div className="absolute inset-x-0 top-2 grid h-[128px] grid-rows-4 text-xs font-semibold text-slate-500">
+                            {[80, 60, 40, 20, 0].map((label) => (
+                                <div key={label} className="relative border-t border-dashed border-slate-200">
+                                    <span className="absolute -top-2 left-0 bg-white pr-2">{label}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <svg className="absolute left-8 right-0 top-2 h-[128px] w-[calc(100%-2rem)] overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                            <polygon points={areaPoints} fill="rgba(0,128,128,0.08)" />
+                            <polyline points={polylinePoints} fill="none" stroke="var(--vr-color-primary)" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+                        </svg>
+                        <div className="absolute left-8 right-0 top-2 h-[128px]" aria-hidden="true">
+                            {investorReachSeries.map((point) => (
+                                <span
+                                    key={point.month}
+                                    className="absolute h-2.5 w-2.5 rounded-full border-2 border-white bg-[var(--vr-color-primary)] shadow-sm"
+                                    style={{
+                                        left: `${point.x}%`,
+                                        top: `${point.y}%`,
+                                        transform: "translate(-50%, -50%)",
+                                    }}
+                                />
+                            ))}
+                        </div>
+                        <div className="absolute bottom-0 left-8 right-0 h-5 text-sm font-semibold text-slate-700">
+                            {investorReachSeries.map((point, index) => (
+                                <span
+                                    key={point.month}
+                                    className="absolute whitespace-nowrap"
+                                    style={{
+                                        left: `${point.x}%`,
+                                        transform:
+                                            index === 0
+                                                ? "translateX(0)"
+                                                : index === investorReachSeries.length - 1
+                                                    ? "translateX(-100%)"
+                                                    : "translateX(-50%)",
+                                    }}
+                                >
+                                    {point.month}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -629,8 +630,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
 
                         {/* Highlights */}
                         <div>
-                            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                <SparklesIcon className="h-3.5 w-3.5 text-[var(--vr-palette-purple)]" />
+                            <h4 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
                                 Key Highlights
                             </h4>
                             {editing ? (
@@ -648,8 +648,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
 
                         {/* Challenges */}
                         <div>
-                            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                <ExclamationCircleIcon className="h-3.5 w-3.5 text-[var(--vr-palette-orange)]" />
+                            <h4 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
                                 Challenges
                             </h4>
                             {editing ? (
@@ -668,8 +667,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         {/* Learnings */}
                         {(editing || learnings) && (
                             <div>
-                                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                    <LightBulbIcon className="h-3.5 w-3.5 text-[var(--vr-palette-yellow)]" />
+                                <h4 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
                                     Learnings
                                 </h4>
                                 {editing ? (
@@ -689,8 +687,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         {/* Next 30 Days */}
                         {(editing || next30Days) && (
                             <div>
-                                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                    <CalendarIcon className="h-3.5 w-3.5 text-[var(--vr-palette-blue)]" />
+                                <h4 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
                                     Next 30 Days
                                 </h4>
                                 {editing ? (
@@ -709,8 +706,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
 
                         {/* Asks */}
                         <div>
-                            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                <QuestionMarkCircleIcon className="h-3.5 w-3.5 text-[var(--vr-palette-lavender)]" />
+                            <h4 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
                                 Ask from Investors
                             </h4>
                             {editing ? (
@@ -756,13 +752,9 @@ function VRAlertInfo({ title, body }: { title: string; body: string }) {
 }
 
 function VRUpdateSection({
-    icon: Icon,
-    iconColorVar,
     label,
     items,
 }: {
-    icon: any;
-    iconColorVar: string;
     label: string;
     items: string[];
 }) {
@@ -774,9 +766,6 @@ function VRUpdateSection({
     return (
         <div className="vr-us-block">
             <div className="vr-us-heading">
-                <span className="vr-us-heading-icon" style={{ color: `var(${iconColorVar})` }}>
-                    <Icon className="w-3.5 h-3.5" />
-                </span>
                 <span className="vr-us-heading-text">{label}</span>
             </div>
             <div className="vr-us-list">
@@ -801,13 +790,9 @@ function VRUpdateSection({
 }
 
 function VRPreviewUpdateSection({
-    icon: Icon,
-    iconClassName,
     label,
     text,
 }: {
-    icon: any;
-    iconClassName: string;
     label: string;
     text?: string | null;
 }) {
@@ -821,11 +806,10 @@ function VRPreviewUpdateSection({
 
     return (
         <div>
-            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
-                <Icon className={clsx("h-3.5 w-3.5", iconClassName)} />
+            <h4 className="mb-3 [font-family:var(--vr-font-title)] text-base font-black uppercase tracking-normal text-gray-950 sm:text-lg">
                 {label}
             </h4>
-            <ul className="space-y-1 list-disc list-inside text-sm text-gray-600">
+            <ul className="list-outside list-disc space-y-2 pl-5 [font-family:var(--vr-font-body)] text-[15px] font-medium leading-7 text-gray-800 marker:text-[var(--vr-color-primary)] sm:text-base">
                 {visibleItems.map((item, index) => (
                     <li key={`${label}-${index}`}>{item.trim()}</li>
                 ))}
@@ -932,10 +916,6 @@ function VRPreviewUpdateCard({
         : parseVibeRaisingMonthYear(update.month);
     const updateSummary = update.summary || "";
     const updateSourceUrl = update.sourceUrl || "";
-    const updateDate = new Date(update.date);
-    const formattedDate = Number.isNaN(updateDate.getTime())
-        ? ""
-        : format(updateDate, "MMMM d, yyyy");
     const metrics = METRIC_OPTIONS.filter((metric) => update.metrics?.[metric.key]);
     const companyName = user.companyName || "Company";
     const pitchDeckUrl = String(update.pitchDeckUrl || "").trim();
@@ -955,77 +935,47 @@ function VRPreviewUpdateCard({
                     <circle cx="400" cy="30" r="50" fill="white" />
                     <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
                 </svg>
-                <div className="absolute inset-0 flex items-end px-4 pb-3 sm:px-6 sm:pb-4">
-                    <div className="flex items-center gap-3">
+                <div className="absolute inset-0 flex items-center px-4 sm:px-6">
+                    <div className="flex min-w-0 items-center gap-3.5">
                         {user.domain ? (
                             <img
                                 src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
                                 alt=""
-                                className="h-10 w-10 rounded-lg border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
+                                className="h-12 w-12 rounded-xl border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
                             />
                         ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm">
-                                <span className="text-sm font-bold text-white">{companyName.charAt(0)}</span>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/30 bg-white/20 backdrop-blur-sm">
+                                <span className="text-base font-bold text-white">{companyName.charAt(0)}</span>
                             </div>
                         )}
-                        <div>
-                            <p className="text-sm font-bold text-white drop-shadow-sm">{companyName}</p>
-                            <p className="text-xs text-white/70">Investor Update</p>
+                        <div className="flex min-w-0 flex-col justify-center">
+                            <p className="truncate [font-family:var(--vr-font-title)] text-3xl font-black uppercase leading-none tracking-normal text-white drop-shadow-sm sm:text-4xl">
+                                {companyName}
+                            </p>
+                            <p className="mt-1 truncate [font-family:var(--vr-font-title)] text-sm font-black uppercase leading-none tracking-normal text-white/85 drop-shadow-sm sm:text-lg">
+                                {updatePeriod.month} {updatePeriod.year} Update
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="border-b border-gray-100 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                        <div className="flex items-start justify-between gap-3 sm:block">
-                            <h3 className="text-lg font-bold text-gray-900">
-                                {updatePeriod.month} {updatePeriod.year} Update
-                            </h3>
-                            <Link
-                                to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700 sm:hidden"
-                            >
-                                Edit
-                                <PencilSquareIcon className="h-3.5 w-3.5" />
-                            </Link>
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
-                            <StartupRegionBadge location={user.location} />
-                            {statusLabel ? (
-                                <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
-                                    {statusLabel}
-                                </span>
-                            ) : null}
-                            <ActiveDraftRunChip />
-                            {formattedDate ? (
-                                <span className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-gray-400 ring-1 ring-gray-200">
-                                    {formattedDate}
-                                </span>
-                            ) : null}
-                        </div>
-                        <div className="mt-2 hidden flex-wrap items-center gap-2 sm:flex">
-                            <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
-                            <StartupRegionBadge location={user.location} />
-                            {statusLabel ? (
-                                <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
-                                    {statusLabel}
-                                </span>
-                            ) : null}
-                            <ActiveDraftRunChip />
-                            <Link
-                                to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
-                            >
-                                Edit
-                                <PencilSquareIcon className="h-3.5 w-3.5" />
-                            </Link>
-                        </div>
-                    </div>
-                    {formattedDate ? (
-                        <span className="hidden text-xs text-gray-400 sm:block">{formattedDate}</span>
+            <div className="border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                    <StartupRegionBadge location={user.location} />
+                    {statusLabel ? (
+                        <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
+                            {statusLabel}
+                        </span>
                     ) : null}
+                    <ActiveDraftRunChip />
+                    <Link
+                        to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
+                    >
+                        Edit
+                        <PencilSquareIcon className="h-3.5 w-3.5" />
+                    </Link>
                 </div>
             </div>
 
@@ -1121,32 +1071,22 @@ function VRPreviewUpdateCard({
                 ) : null}
 
                 <VRPreviewUpdateSection
-                    icon={SparklesIcon}
-                    iconClassName="text-[var(--vr-palette-purple)]"
                     label="Key Highlights"
                     text={update.highlights}
                 />
                 <VRPreviewUpdateSection
-                    icon={ExclamationCircleIcon}
-                    iconClassName="text-[var(--vr-palette-orange)]"
                     label="Challenges"
                     text={update.challenges}
                 />
                 <VRPreviewUpdateSection
-                    icon={LightBulbIcon}
-                    iconClassName="text-[var(--vr-palette-yellow)]"
                     label="Learnings"
                     text={update.learnings}
                 />
                 <VRPreviewUpdateSection
-                    icon={ArrowRightIcon}
-                    iconClassName="text-[var(--vr-palette-blue)]"
                     label="Next 30 Days"
                     text={update.next30Days}
                 />
                 <VRPreviewUpdateSection
-                    icon={QuestionMarkCircleIcon}
-                    iconClassName="text-[var(--vr-palette-lavender)]"
                     label="Ask from Investors"
                     text={update.asks}
                 />
@@ -1231,32 +1171,22 @@ function VRPastUpdateRow({
                     </div>
 
                     <VRUpdateSection
-                        icon={SparklesIcon}
-                        iconColorVar="--vr-color-warning"
                         label="Key Highlights"
                         items={highlights}
                     />
                     <VRUpdateSection
-                        icon={ExclamationCircleIcon}
-                        iconColorVar="--vr-color-brand-orange"
                         label="Challenges"
                         items={challenges}
                     />
                     <VRUpdateSection
-                        icon={LightBulbIcon}
-                        iconColorVar="--vr-color-warning"
                         label="Learnings"
                         items={learnings}
                     />
                     <VRUpdateSection
-                        icon={CalendarIcon}
-                        iconColorVar="--vr-color-primary"
                         label="Next 30 Days"
                         items={next30Days}
                     />
                     <VRUpdateSection
-                        icon={QuestionMarkCircleIcon}
-                        iconColorVar="--vr-color-primary"
                         label="Ask from Investors"
                         items={asks}
                     />
@@ -1313,13 +1243,9 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
     if (!hasUpdates) {
         return (
             <div className="vr-scope mx-auto max-w-6xl space-y-8 pb-12">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
                         <h1 className="vr-text-page-title">Your Monthly Updates</h1>
-                        <p className="vr-text-body-small mt-1" style={{ color: "var(--vr-color-text-mid)" }}>
-                            Keep your update workspace ready, then jump into the overview page whenever you want the full founder pitch surface again.
-                        </p>
                     </div>
                     <div className="flex items-center gap-2.5 flex-wrap">
                         <Link
@@ -1328,18 +1254,8 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
                         >
                             My Drafts
                         </Link>
-                        <button
-                            type="button"
-                            onClick={() => triggerAnnouncement(() => navigate("/founder-tools/updates/create"))}
-                            className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
-                        >
-                            <PlusIcon className="w-4 h-4" />
-                            Create Update
-                        </button>
                     </div>
                 </div>
-
-                <InvestorReachOverview />
 
                 <div
                     className="hidden rounded-[28px] border p-8 sm:block"
@@ -1351,10 +1267,7 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
                 >
                     <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.9fr)] lg:items-center">
                         <div>
-                            <div className="inline-flex rounded-full bg-[rgba(0,128,128,0.10)] px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[var(--vr-color-primary-dark)]">
-                                Ready when you are
-                            </div>
-                            <h2 className="mt-7 text-4xl font-black tracking-tight text-gray-950 lg:text-5xl">
+                            <h2 className="text-4xl font-black tracking-tight text-gray-950 lg:text-5xl">
                                 No monthly update yet, {firstName}.
                             </h2>
                             <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
@@ -1372,42 +1285,8 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
                             </div>
                         </div>
 
-                        <div className="rounded-[24px] border bg-white/78 p-6 backdrop-blur-sm" style={{ borderColor: "var(--vr-color-border-md)" }}>
-                            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary-dark)]">
-                                What you'll unlock
-                            </p>
-                            <div className="mt-4 divide-y divide-gray-200">
-                                {[
-                                    {
-                                        icon: DocumentArrowUpIcon,
-                                        title: "Pick a month and start from the draft template.",
-                                        body: "Build your update quickly with our guided template.",
-                                    },
-                                    {
-                                        icon: UserGroupIcon,
-                                        title: "Share progress to build investor trust.",
-                                        body: "Keep investors informed and strengthen relationships.",
-                                    },
-                                    {
-                                        icon: ChartBarIcon,
-                                        title: "Track reach, opens, and engagement over time.",
-                                        body: "Measure impact and refine your updates each month.",
-                                    },
-                                ].map((item) => {
-                                    const Icon = item.icon;
-                                    return (
-                                        <div className="flex items-start gap-5 py-4 first:pt-0 last:pb-0" key={item.title}>
-                                            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(0,128,128,0.10)] text-[var(--vr-color-primary)]">
-                                                <Icon className="h-6 w-6" aria-hidden="true" />
-                                            </span>
-                                            <div>
-                                                <h3 className="font-black text-gray-950">{item.title}</h3>
-                                                <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{item.body}</p>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                        <div className="lg:justify-self-center">
+                            <VibeRaisingHeroExampleUpdatePreview compact />
                         </div>
                     </div>
                 </div>
@@ -1472,6 +1351,8 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
                         </div>
                     </div>
                 </div>
+
+                <InvestorReachOverview />
             </div>
         );
     }
@@ -1480,11 +1361,7 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
         <div className="vr-scope mx-auto max-w-6xl space-y-8 pb-12">
             <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                    <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
                     <h1 className="vr-text-page-title">Your Monthly Updates</h1>
-                    <p className="vr-text-body-small mt-1" style={{ color: "var(--vr-color-text-mid)" }}>
-                        Share progress with your investors. Ship fast, build trust from day one.
-                    </p>
                 </div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                     {showDiscover ? (

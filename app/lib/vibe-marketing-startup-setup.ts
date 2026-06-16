@@ -29,7 +29,8 @@ export type StartupSetupField =
   | "seedKeywords"
   | "founderNames"
   | "stage"
-  | "organizationKind";
+  | "organizationKind"
+  | "hasRevenue";
 
 export type StartupSetupValues = Record<StartupSetupField, string>;
 
@@ -89,6 +90,7 @@ export function startupSetupDefaultsFromBootstrap(bootstrap: VibeMarketingBootst
     founderNames: (startupProfile.founderNames ?? []).join(", "),
     stage: startupProfile.stage ?? "",
     organizationKind: startupProfile.organizationKind ?? "",
+    hasRevenue: startupProfile.hasRevenue ?? "",
   };
 }
 

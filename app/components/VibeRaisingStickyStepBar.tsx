@@ -4,6 +4,7 @@ import { ArrowRightIcon } from "@heroicons/react/24/outline";
 type VibeRaisingStickyStepBarProps = {
     className?: string;
     hideStatusOnMobile?: boolean;
+    hideStatus?: boolean;
     hideBackOnMobile?: boolean;
     compactOnMobile?: boolean;
     statusIcon?: ReactNode;
@@ -31,6 +32,7 @@ type VibeRaisingStickyStepBarProps = {
 export default function VibeRaisingStickyStepBar({
     className,
     hideStatusOnMobile = false,
+    hideStatus = false,
     hideBackOnMobile = false,
     compactOnMobile = false,
     statusIcon,
@@ -80,23 +82,26 @@ export default function VibeRaisingStickyStepBar({
         <div className={["fixed inset-x-4 bottom-4 z-40 lg:left-24", className].filter(Boolean).join(" ")}>
             <div
                 className={[
-                    "mx-auto flex max-w-6xl flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white/95 shadow-2xl shadow-black/10 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4",
+                    "mx-auto flex max-w-6xl flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white/95 shadow-2xl shadow-black/10 backdrop-blur sm:flex-row sm:items-center sm:px-5 sm:py-4",
+                    hideStatus ? "sm:justify-end" : "sm:justify-between",
                     compactOnMobile ? "gap-3 px-3 py-3" : "gap-4 px-4 py-4",
                 ].join(" ")}
             >
-                <div className={["flex min-w-0 items-center gap-3", hideStatusOnMobile ? "hidden sm:flex" : ""].filter(Boolean).join(" ")}>
-                    {statusIcon ? (
-                        <div className="flex flex-shrink-0 items-center justify-center">
-                            {statusIcon}
-                        </div>
-                    ) : null}
-                    <div className="min-w-0">
-                        <p className="text-sm font-black leading-tight text-gray-950 sm:truncate">{statusTitle}</p>
-                        {statusDetail ? (
-                            <p className="mt-0.5 text-xs font-semibold leading-tight text-slate-500 sm:truncate">{statusDetail}</p>
+                {!hideStatus ? (
+                    <div className={["flex min-w-0 items-center gap-3", hideStatusOnMobile ? "hidden sm:flex" : ""].filter(Boolean).join(" ")}>
+                        {statusIcon ? (
+                            <div className="flex flex-shrink-0 items-center justify-center">
+                                {statusIcon}
+                            </div>
                         ) : null}
+                        <div className="min-w-0">
+                            <p className="text-sm font-black leading-tight text-gray-950 sm:truncate">{statusTitle}</p>
+                            {statusDetail ? (
+                                <p className="mt-0.5 text-xs font-semibold leading-tight text-slate-500 sm:truncate">{statusDetail}</p>
+                            ) : null}
+                        </div>
                     </div>
-                </div>
+                ) : null}
 
                 <div
                     className={[

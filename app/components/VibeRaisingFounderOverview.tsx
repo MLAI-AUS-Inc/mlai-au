@@ -115,14 +115,14 @@ function HeroUpdateSection({
   );
 }
 
-function VibeRaisingHeroExampleUpdatePreview() {
+export function VibeRaisingHeroExampleUpdatePreview({ compact = false }: { compact?: boolean } = {}) {
   const highlights = limitPreviewItems(HERO_EXAMPLE_UPDATE.highlights, 2, 110);
   const challenges = limitPreviewItems(HERO_EXAMPLE_UPDATE.challenges, 1, 120);
   const next30Days = limitPreviewItems(HERO_EXAMPLE_UPDATE.next30Days, 1, 120);
   const asks = limitPreviewItems(HERO_EXAMPLE_UPDATE.asks, 1, 130);
 
   return (
-    <div className="vr-hero-preview-shell">
+    <div className={clsx("vr-hero-preview-shell", compact && "vr-hero-preview-shell-compact")}>
       <div className="vr-hero-preview-window vr-hero-preview-mobile">
         <div className="vr-hero-preview-topbar">
           <div className="vr-hero-preview-dots" aria-hidden="true">
@@ -247,41 +247,47 @@ function VibeRaisingHeroExampleUpdatePreview() {
               label="Key Highlights"
               items={highlights}
             />
-            <HeroUpdateSection
-              icon={ExclamationCircleIcon}
-              iconColorVar="--vr-color-brand-orange"
-              label="Challenges"
-              items={challenges}
-            />
-            <HeroUpdateSection
-              icon={CalendarIcon}
-              iconColorVar="--vr-color-primary"
-              label="Next 30 Days"
-              items={next30Days}
-            />
-            <HeroUpdateSection
-              icon={QuestionMarkCircleIcon}
-              iconColorVar="--vr-color-primary"
-              label="Ask from Investors"
-              items={asks}
-            />
+            {compact ? null : (
+              <>
+                <HeroUpdateSection
+                  icon={ExclamationCircleIcon}
+                  iconColorVar="--vr-color-brand-orange"
+                  label="Challenges"
+                  items={challenges}
+                />
+                <HeroUpdateSection
+                  icon={CalendarIcon}
+                  iconColorVar="--vr-color-primary"
+                  label="Next 30 Days"
+                  items={next30Days}
+                />
+                <HeroUpdateSection
+                  icon={QuestionMarkCircleIcon}
+                  iconColorVar="--vr-color-primary"
+                  label="Ask from Investors"
+                  items={asks}
+                />
+              </>
+            )}
           </div>
 
-          <div className="vr-ucf">
-            <div className="vr-ucf-left">
-              <div className="vr-ucf-avatar">MT</div>
-              <div>
-                <div className="vr-ucf-name">{HERO_EXAMPLE_USER.companyName}</div>
-                <div className="vr-ucf-company">Preview only · illustrative example</div>
+          {compact ? null : (
+            <div className="vr-ucf">
+              <div className="vr-ucf-left">
+                <div className="vr-ucf-avatar">MT</div>
+                <div>
+                  <div className="vr-ucf-name">{HERO_EXAMPLE_USER.companyName}</div>
+                  <div className="vr-ucf-company">Preview only · illustrative example</div>
+                </div>
+              </div>
+              <div className="vr-hero-preview-actions" aria-hidden="true">
+                <span className="vr-hero-preview-action is-secondary">Share Link</span>
+                <span className="vr-hero-preview-action is-primary">
+                  Resend to Unopened
+                </span>
               </div>
             </div>
-            <div className="vr-hero-preview-actions" aria-hidden="true">
-              <span className="vr-hero-preview-action is-secondary">Share Link</span>
-              <span className="vr-hero-preview-action is-primary">
-                Resend to Unopened
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

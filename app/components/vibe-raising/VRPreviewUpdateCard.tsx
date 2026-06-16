@@ -1,21 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { format } from "date-fns";
 import { clsx } from "clsx";
 import {
-    ArrowRightIcon,
     ArrowTopRightOnSquareIcon,
     DocumentArrowUpIcon,
-    ExclamationCircleIcon,
-    LightBulbIcon,
     LinkIcon,
     PencilSquareIcon,
-    QuestionMarkCircleIcon,
-    SparklesIcon,
 } from "@heroicons/react/24/outline";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
-import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
+import { parseVibeRaisingMonthYear } from "~/components/VibeRaisingDateTabs";
 import {
     VIBE_METRIC_OPTIONS,
     VIBE_METRIC_OPTION_MAP,
@@ -53,13 +47,9 @@ export function splitItems(text: string): string[] {
 }
 
 function VRPreviewUpdateSection({
-    icon: Icon,
-    iconClassName,
     label,
     text,
 }: {
-    icon: any;
-    iconClassName: string;
     label: string;
     text?: string | null;
 }) {
@@ -73,11 +63,10 @@ function VRPreviewUpdateSection({
 
     return (
         <div>
-            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
-                <Icon className={clsx("h-3.5 w-3.5", iconClassName)} />
+            <h4 className="mb-3 [font-family:var(--vr-font-title)] text-base font-black uppercase tracking-normal text-gray-950 sm:text-lg">
                 {label}
             </h4>
-            <ul className="space-y-1 list-disc list-inside text-sm text-gray-600">
+            <ul className="list-outside list-disc space-y-2 pl-5 [font-family:var(--vr-font-body)] text-[15px] font-medium leading-7 text-gray-800 marker:text-[var(--vr-color-primary)] sm:text-base">
                 {visibleItems.map((item, index) => (
                     <li key={`${label}-${index}`}>{item.trim()}</li>
                 ))}
@@ -186,10 +175,6 @@ export function VRPreviewUpdateCard({
         : parseVibeRaisingMonthYear(update.month);
     const updateSummary = update.summary || "";
     const updateSourceUrl = update.sourceUrl || "";
-    const updateDate = new Date(update.date);
-    const formattedDate = Number.isNaN(updateDate.getTime())
-        ? ""
-        : format(updateDate, "MMMM d, yyyy");
     const valuedMetricOptions = VIBE_METRIC_OPTIONS.filter((option) =>
         hasDisplayableMetricValue(update.metrics?.[option.key]),
     );
@@ -220,77 +205,47 @@ export function VRPreviewUpdateCard({
                     <circle cx="400" cy="30" r="50" fill="white" />
                     <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
                 </svg>
-                <div className="absolute inset-0 flex items-end px-4 pb-3 sm:px-6 sm:pb-4">
-                    <div className="flex items-center gap-3">
+                <div className="absolute inset-0 flex items-center px-4 sm:px-6">
+                    <div className="flex min-w-0 items-center gap-3.5">
                         {user.domain ? (
                             <img
                                 src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
                                 alt=""
-                                className="h-10 w-10 rounded-lg border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
+                                className="h-12 w-12 rounded-xl border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
                             />
                         ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm">
-                                <span className="text-sm font-bold text-white">{companyName.charAt(0)}</span>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/30 bg-white/20 backdrop-blur-sm">
+                                <span className="text-base font-bold text-white">{companyName.charAt(0)}</span>
                             </div>
                         )}
-                        <div>
-                            <p className="text-sm font-bold text-white drop-shadow-sm">{companyName}</p>
-                            <p className="text-xs text-white/70">Investor Update</p>
+                        <div className="flex min-w-0 flex-col justify-center">
+                            <p className="truncate [font-family:var(--vr-font-title)] text-3xl font-black uppercase leading-none tracking-normal text-white drop-shadow-sm sm:text-4xl">
+                                {companyName}
+                            </p>
+                            <p className="mt-1 truncate [font-family:var(--vr-font-title)] text-sm font-black uppercase leading-none tracking-normal text-white/85 drop-shadow-sm sm:text-lg">
+                                {updatePeriod.month} {updatePeriod.year} Update
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="border-b border-gray-100 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                        <div className="flex items-start justify-between gap-3 sm:block">
-                            <h3 className="text-lg font-bold text-gray-900">
-                                {updatePeriod.month} {updatePeriod.year} Update
-                            </h3>
-                            <Link
-                                to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700 sm:hidden"
-                            >
-                                Edit
-                                <PencilSquareIcon className="h-3.5 w-3.5" />
-                            </Link>
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
-                            <StartupRegionBadge location={user.location} />
-                            {statusLabel ? (
-                                <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
-                                    {statusLabel}
-                                </span>
-                            ) : null}
-                            <ActiveDraftRunChip />
-                            {formattedDate ? (
-                                <span className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-gray-400 ring-1 ring-gray-200">
-                                    {formattedDate}
-                                </span>
-                            ) : null}
-                        </div>
-                        <div className="mt-2 hidden flex-wrap items-center gap-2 sm:flex">
-                            <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
-                            <StartupRegionBadge location={user.location} />
-                            {statusLabel ? (
-                                <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
-                                    {statusLabel}
-                                </span>
-                            ) : null}
-                            <ActiveDraftRunChip />
-                            <Link
-                                to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
-                            >
-                                Edit
-                                <PencilSquareIcon className="h-3.5 w-3.5" />
-                            </Link>
-                        </div>
-                    </div>
-                    {formattedDate ? (
-                        <span className="hidden text-xs text-gray-400 sm:block">{formattedDate}</span>
+            <div className="border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                    <StartupRegionBadge location={user.location} />
+                    {statusLabel ? (
+                        <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
+                            {statusLabel}
+                        </span>
                     ) : null}
+                    <ActiveDraftRunChip />
+                    <Link
+                        to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
+                    >
+                        Edit
+                        <PencilSquareIcon className="h-3.5 w-3.5" />
+                    </Link>
                 </div>
             </div>
 
@@ -351,7 +306,7 @@ export function VRPreviewUpdateCard({
                 </div>
             ) : null}
 
-            <div className="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-5">
+            <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
                 {(updateSummary || updateSourceUrl) ? (
                     <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-4 py-3 sm:p-4">
                         {updateSummary ? (
@@ -392,32 +347,22 @@ export function VRPreviewUpdateCard({
                 ) : null}
 
                 <VRPreviewUpdateSection
-                    icon={SparklesIcon}
-                    iconClassName="text-[var(--vr-palette-purple)]"
                     label="Key Highlights"
                     text={update.highlights}
                 />
                 <VRPreviewUpdateSection
-                    icon={ExclamationCircleIcon}
-                    iconClassName="text-[var(--vr-palette-orange)]"
                     label="Challenges"
                     text={update.challenges}
                 />
                 <VRPreviewUpdateSection
-                    icon={LightBulbIcon}
-                    iconClassName="text-[var(--vr-palette-yellow)]"
                     label="Learnings"
                     text={update.learnings}
                 />
                 <VRPreviewUpdateSection
-                    icon={ArrowRightIcon}
-                    iconClassName="text-[var(--vr-palette-blue)]"
                     label="Next 30 Days"
                     text={update.next30Days}
                 />
                 <VRPreviewUpdateSection
-                    icon={QuestionMarkCircleIcon}
-                    iconClassName="text-[var(--vr-palette-lavender)]"
                     label="Ask from Investors"
                     text={update.asks}
                 />
