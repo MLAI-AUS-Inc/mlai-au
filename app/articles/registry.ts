@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-find-an-ai-or-tech-meetup-in-sydney': {
+        title: "How to Find an AI or Tech Meetup in Sydney",
+        date: "2026-06-16",
+        description: "Meetup in Sydney guide for AI and tech networking",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-find-an-ai-or-tech-meetup-in-sydney",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1895a285-e323-4223-9adc-d90980aa86a4.jpg?alt=media&token=715a3b01-0770-48ab-9a45-b1ca5b806495",
+        imageAlt: "Close-up of Sydney AI meetup attendees chatting over laptops and name badges in a candid networking moment",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
