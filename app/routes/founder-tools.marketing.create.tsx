@@ -641,10 +641,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "connect-github") {
       const githubRepo = stringFromForm(formData, "githubRepo");
       const forceReconnect = stringFromForm(formData, "forceReconnect") === "true";
+      const returnUrl = new URL(
+        "/founder-tools/marketing/create?step=articleSystem",
+        new URL(request.url).origin,
+      ).toString();
       const response = await connectVibeMarketingGithub(
         env,
         request,
         {
+          returnUrl,
+          return_url: returnUrl,
           ...(githubRepo && !forceReconnect ? { githubRepo, github_repo: githubRepo } : {}),
           ...(forceReconnect ? { forceReconnect: true, force_reconnect: true } : {}),
         },
@@ -980,6 +986,26 @@ export default function FounderToolsMarketingCreate() {
   const setupChildProgressAtRef = useRef(Date.now());
   const setupChildProgressSignatureRef = useRef("");
   const [pageVisible, setPageVisible] = useState(true);
+  // Returning from the GitHub App install, the backend appends
+  // `?github=connected&repo=...`. Kick off the repo scan automatically so the
+  // founder lands back on the article-system step with the scan already running.
+  // The start-scan action redirects to `?scanRunId=...`, which clears the
+  // `github` param so this never re-fires on refresh.
+  const autoScanFetcher = useFetcher();
+  const autoScanStartedRef = useRef(false);
+  const justConnectedGithub = searchParams.get("github") === "connected";
+  useEffect(() => {
+    if (autoScanStartedRef.current) return;
+    if (!justConnectedGithub) return;
+    const repo = (searchParams.get("repo") || "").trim() || bootstrap.settings.githubRepo || "";
+    if (!repo) return; // repo still needs selecting (multiple_repos / no_repo) — leave it to the UI
+    autoScanStartedRef.current = true;
+    const formData = new FormData();
+    formData.set("intent", "start-scan");
+    formData.set("githubRepo", repo);
+    formData.set("scanPurpose", "inventory");
+    autoScanFetcher.submit(formData, { method: "post" });
+  }, [justConnectedGithub, searchParams, bootstrap.settings.githubRepo, autoScanFetcher]);
   const articleSetupState = bootstrap.articleSetupState ?? null;
   const canonicalScanRun =
     findRunById(bootstrap.latestRuns, articleSetupState?.scanRunId) ??
