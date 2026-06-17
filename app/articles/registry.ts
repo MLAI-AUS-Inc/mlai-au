@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-a-business-incubator-for-first-time-ai-founders': {
+        title: "What Is a Business Incubator for First-Time AI Founders?",
+        date: "2026-06-17",
+        description: "What is a business incubator? A plain-English guide for first-time AI founders comparing fit, support, MVP planning, and application readiness.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-a-business-incubator-for-first-time-ai-founders",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-3b17cc17-dbc9-4cd9-bbbd-20155ff9b65b.jpg?alt=media&token=fa2ac397-4e95-4f49-a9a2-1a44d65dc328",
+        imageAlt: "First-time AI founders review an MVP plan with an incubator mentor at a cluttered startup",
+        hasContent: true,
+    },
     'featured/how-to-find-an-ai-and-tech-meetup-in-sydney': {
         title: "How to Find an AI and Tech Meetup in Sydney",
         date: "2026-06-16",
