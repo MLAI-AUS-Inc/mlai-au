@@ -649,7 +649,16 @@ export default function ArticleSystemConnectionPanel({
       (effectiveScanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId)),
   );
   const persistedSetupReady = Boolean(articleSetupState?.setupRunId || articleSetupState?.routePath);
-  const persistedSetupIsStale = Boolean(persistedSetupReady && (scanFailed || scanStale));
+  // A previously-FAILED setup attempt (e.g. preview_failed) is already surfaced by the
+  // scaffold status card with the real error + a retry action. It must NOT also be reported
+  // as a stale "saved location / the scan needs attention", which wrongly tells the user to
+  // re-scan — re-scanning can never fix a failed setup preview.
+  const persistedSetupFailed = Boolean(
+    articleSetupState?.error ||
+      SETUP_FAILED_STATUSES.has(normalizedStatus(articleSetupState?.setupStatus)) ||
+      SETUP_FAILED_STATUSES.has(normalizedStatus(articleSetupState?.setupRunStatus)),
+  );
+  const persistedSetupIsStale = Boolean(persistedSetupReady && !persistedSetupFailed && (scanFailed || scanStale));
   const scanStartPending = actionPending("start-scan");
   const retryScanPending = actionPending("retry-scan");
   const cancelScanPending = actionPending("cancel-scan");
