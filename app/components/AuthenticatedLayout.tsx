@@ -16,6 +16,7 @@ import {
 import { Link, useLocation, Form } from 'react-router';
 import { ImageWithFallback } from './ImageWithFallback';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
+import type { RooPointsBalance } from '~/lib/roo-points';
 import type { User } from '~/types/user';
 
 interface AuthenticatedLayoutProps {
@@ -23,6 +24,7 @@ interface AuthenticatedLayoutProps {
     user: User;
     navigation?: NavigationItem[];
     userNavigation?: { name: string; href: string }[];
+    rooPointsBalance?: RooPointsBalance | null;
     logoutAction?: string;
 }
 
@@ -34,12 +36,42 @@ const VIBE_RAISING_TOP_NAVIGATION = [
     { name: 'My Companies', href: '/founder-tools/companies' },
 ];
 const MLAI_LOGO_URL = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84";
+const ROO_POINTS_COIN_URL = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Robotics%20%26%20AI%20For%20Everyone%20(9)%20(1)%20(1).png?alt=media&token=a43ec994-1637-410c-b3ea-a39bb45f3cd3";
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
-export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation, logoutAction = "/platform/logout" }: AuthenticatedLayoutProps) {
+function formatRooPointsBalance(balance: number) {
+    return new Intl.NumberFormat("en-AU", { maximumFractionDigits: 0 }).format(balance);
+}
+
+function RooPointsBadge({ balance }: { balance: number }) {
+    const formattedBalance = formatRooPointsBalance(balance);
+
+    return (
+        <div
+            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-[rgba(15,23,42,0.12)] bg-white/85 px-2.5 text-[var(--vr-color-text)] shadow-sm"
+            aria-label={`${formattedBalance} Roo Points`}
+            title={`${formattedBalance} Roo Points`}
+        >
+            <ImageWithFallback
+                src={ROO_POINTS_COIN_URL}
+                fallbackSrc={MLAI_LOGO_URL}
+                alt="Roo Points"
+                width={28}
+                height={28}
+                className="h-7 w-7 shrink-0 rounded-full object-cover"
+            />
+            <span className="tabular-nums text-sm font-black leading-none">{formattedBalance}</span>
+            <span className="hidden text-xs font-black uppercase text-[var(--vr-color-text-sub)] xl:inline">
+                pts
+            </span>
+        </div>
+    );
+}
+
+export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation, rooPointsBalance, logoutAction = "/platform/logout" }: AuthenticatedLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const location = useLocation();
@@ -432,6 +464,9 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                 <div />
                             )}
                             <div className={classNames("ml-auto flex shrink-0 items-center gap-x-2 sm:gap-x-4 lg:gap-x-6", isFounderToolsApp && "hidden sm:flex")}>
+                                {isFounderToolsApp && rooPointsBalance ? (
+                                    <RooPointsBadge balance={rooPointsBalance.balance} />
+                                ) : null}
                                 <Menu as="div" className="relative">
                                     <Menu.Button className="-m-1.5 flex items-center p-1.5">
                                         <span className="sr-only">Open user menu</span>
