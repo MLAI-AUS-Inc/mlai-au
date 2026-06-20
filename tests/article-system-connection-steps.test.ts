@@ -100,7 +100,7 @@ describe("article system connection step states", () => {
     });
 
     expect(steps.buildSetup.status).toBe("active");
-    expect(articleSystemScaffoldActionLabel("publish_ready")).toBe("Finish setup PR");
+    expect(articleSystemScaffoldActionLabel("publish_ready")).toBe("Publish setup");
   });
 
   test("blocks the scaffold step when setup failed", () => {

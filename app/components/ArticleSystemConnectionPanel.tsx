@@ -922,17 +922,17 @@ export default function ArticleSystemConnectionPanel({
     },
     review_ready: {
       title: "Articles setup preview is ready",
-      body: "Review the setup preview and approve it before a setup PR is created.",
+      body: "Review the setup preview and approve it before it's published.",
       tone: "violet",
     },
     publish_ready: {
-      title: "Setup PR needs finishing",
-      body: "Finish the setup PR so the articles scaffold can be merged to the website.",
+      title: "Ready to publish",
+      body: "Publish the articles setup so it goes live on your website.",
       tone: "amber",
     },
     verifying: {
-      title: "Verifying merged articles scaffold",
-      body: "The merge is being checked before article generation unlocks.",
+      title: "Verifying published articles scaffold",
+      body: "Your published setup is being verified before article generation unlocks.",
       tone: "emerald",
     },
     ready: {
@@ -942,7 +942,7 @@ export default function ArticleSystemConnectionPanel({
     },
     legacy_ready: {
       title: "Articles scaffold check passed",
-      body: `Scaffold check passed for ${scaffoldRouteLabel}. No setup PR merge record was found.`,
+      body: `Scaffold check passed for ${scaffoldRouteLabel}. No publish record was found.`,
       tone: "emerald",
     },
     failed: {
@@ -965,8 +965,8 @@ export default function ArticleSystemConnectionPanel({
     ready_to_build: "Build the scaffold preview for review.",
     building: "Track build progress and open the preview when it is ready.",
     review_ready: "Inspect the preview and approve it when it looks right.",
-    publish_ready: "Create or merge the setup PR from the setup run.",
-    verifying: "Waiting for the merged scaffold to verify.",
+    publish_ready: "Publish the articles setup from the setup run.",
+    verifying: "Waiting for the published scaffold to verify.",
     ready: "The scaffold is ready. Continue to topic research.",
     legacy_ready: "The scaffold check has passed. Continue to topic research.",
     failed: "Open the setup build to review the failure.",
