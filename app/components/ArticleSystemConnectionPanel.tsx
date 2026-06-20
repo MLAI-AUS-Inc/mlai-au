@@ -1476,7 +1476,7 @@ export default function ArticleSystemConnectionPanel({
               <div>
                 <p className="text-sm font-black text-red-900">Reset articles setup</p>
                 <p className="mt-1 text-sm font-semibold leading-6 text-red-800">
-                  Clear the saved articles/blogs setup for this repository and start the setup flow again.
+                  Clear the saved articles setup for this repository and start the setup flow again.
                 </p>
               </div>
               <Form
