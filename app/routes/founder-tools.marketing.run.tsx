@@ -561,7 +561,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
+        return { intent, error: "Publish the articles setup before generating articles. If you've already published it, refresh status." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
@@ -1151,14 +1151,14 @@ function ArticleSystemSetupPreviewPanel({
         <div>
           <h2 className="text-lg font-black text-gray-950">Articles setup preview</h2>
           <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-            Review the drafted articles/blogs setup before a setup PR is created for the website repo.
+            Review the drafted articles/blogs setup before it's published to the website repo.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
             {repo ? <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{repo}</span> : null}
             {route ? <span className="rounded-full bg-violet-50 px-3 py-1 text-violet-700">{route}</span> : null}
             {prUrl ? (
               <a href={prUrl} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 hover:text-emerald-900">
-                Open PR
+                View changes
               </a>
             ) : null}
           </div>
@@ -1279,9 +1279,9 @@ function ArticleSystemSetupPreviewPanel({
       {manualMergeRequired ? (
         <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-amber-950">Manual merge required</p>
+            <p className="text-sm font-black text-amber-950">Publishing needs a quick manual step</p>
             <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
-              Merge the setup PR in GitHub, then refresh merge status to unlock article generation.
+              Open the changes in GitHub to finish publishing, then refresh status to unlock article generation.
             </p>
           </div>
           {prUrl ? (
@@ -1291,7 +1291,7 @@ function ArticleSystemSetupPreviewPanel({
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-amber-700"
             >
-              Open setup PR
+              View changes
             </a>
           ) : null}
         </div>
@@ -1414,7 +1414,7 @@ function ArticleSystemSetupPreviewUnavailable({
     (previewActive || actionRetryPending
     ? ""
     : isGithubAppWriteAccessError
-      ? "MLAI Tools can read this repository, but needs Contents: Read/Write and Pull requests: Read/Write to create the setup PR."
+      ? "MLAI Tools can read this repository, but needs Contents: Read/Write and Pull requests: Read/Write to publish the articles setup."
       : isNextAppRootLayoutMissing
         ? "Content Factory found a Next.js App Router project but could not confirm a root app/layout.* file from the latest repository context. Re-run the repository scan, then retry setup."
       : rawError || (terminalFailure ? "The articles setup build did not advance." : ""));
@@ -2537,94 +2537,119 @@ function ArticleSetupPublishDetail({
     .map((channel) => ({ slack: "Slack", email: "Email", whatsapp: "WhatsApp" })[channel.channelType])
     .filter(Boolean);
 
+  // Present the two underlying setup steps (create, then merge) as one friendly "Publish" action.
+  const publishPending = approvePending || mergePending;
+  const publishIntent = prUrl && !setupMerged ? "merge-setup-pr" : "approve";
+  const publishLabel = publishPending
+    ? "Publishing..."
+    : prCreateFailed || mergeBlockedReason
+      ? "Retry publish"
+      : "Publish";
+  // Keep the backend's git phrasing out of the UI when a publish can't finish automatically.
+  const blockedMessage =
+    mergeBlockedReason && /merge the setup pr/i.test(mergeBlockedReason)
+      ? "Publishing couldn't finish automatically — retry, or view changes to check the latest status."
+      : mergeBlockedReason;
+  const cardStatus = setupMerged
+    ? "complete"
+    : blockedMessage || prCreateFailed
+      ? "blocked"
+      : publishPending || prUrl
+        ? "running"
+        : "ready";
+  const cardEyebrow = setupMerged
+    ? "Published"
+    : blockedMessage
+      ? "Needs a retry"
+      : prCreateFailed
+        ? "Retry needed"
+        : prUrl
+          ? checksStatus
+            ? `Checks ${checksStatus}`
+            : "Publishing"
+          : "Ready";
+
   return (
     <div className="space-y-5">
       <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish setup PR</p>
+            <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish &amp; automate</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish articles setup</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Review the setup PR and merge it after checks pass. Once merged, article generation unlocks without a repo re-scan.
+              Publish the articles setup — it goes live with the next site build. Once it&apos;s published, article generation unlocks and you can turn on daily research reminders.
             </p>
           </div>
-          <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "needs_action" : "ready"} />
+          <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "running" : "ready"} />
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
-          <PublishFlowCard title="Setup PR" status={prUrl ? "complete" : prCreateFailed ? "needs_action" : "ready"} eyebrow={prUrl ? "PR ready" : prCreateFailed ? "Retry needed" : "Ready"}>
-            {prUrl ? (
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <PublishFlowCard title="Publish" status={cardStatus} eyebrow={cardEyebrow}>
+            {setupMerged ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  {prNumber ? `Pull request #${prNumber} is ready for final review.` : "The setup pull request is ready for final review."}
+                  Articles setup is published — article generation is unlocked. Choose a topic to generate your first article.
                 </p>
-                <a
-                  href={prUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
-                >
-                  Open PR
-                </a>
+                {prUrl ? (
+                  <a
+                    href={prUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                  >
+                    View changes
+                  </a>
+                ) : null}
               </div>
             ) : (
               <Form method="POST" className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  {prCreateFailed
-                    ? "Approval succeeded, but PR creation did not complete. Retry will recreate or reuse the setup PR."
-                    : "Create the setup PR from the approved preview."}
+                  {blockedMessage
+                    ? blockedMessage
+                    : prCreateFailed
+                      ? "Publishing didn't finish last time. Retry to publish the approved setup."
+                      : prUrl
+                        ? "Your setup is publishing. This page updates on its own once it's live."
+                        : "Publish the approved setup. It goes live with the next site build and unlocks article generation."}
                 </p>
-                <button
-                  type="submit"
-                  name="intent"
-                  value="approve"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                  {approvePending ? "Creating..." : prCreateFailed ? "Retry create PR" : "Create setup PR"}
-                </button>
-              </Form>
-            )}
-          </PublishFlowCard>
-
-          <PublishFlowCard title="Merge to main" status={setupMerged ? "complete" : mergePending ? "running" : prUrl ? "ready" : "locked"} eyebrow={setupMerged ? "Merged" : checksStatus || mergeStatus || (prUrl ? "Ready" : "Waiting")}>
-            {setupMerged ? (
-              <p className="text-sm font-semibold text-gray-600">Articles setup is complete. Choose a topic to generate the next article.</p>
-            ) : prUrl ? (
-              <Form method="POST" className="space-y-3">
-                <p className="text-sm font-semibold text-gray-600">
-                  {mergeBlockedReason || "Merge the setup PR, then article generation unlocks."}
-                </p>
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="submit"
                     name="intent"
-                    value="merge-setup-pr"
+                    value={publishIntent}
                     disabled={isSubmitting}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                   >
-                    {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-                    {mergePending ? "Checking..." : "Check and merge"}
+                    {publishPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                    {publishLabel}
                   </button>
+                  {prUrl ? (
+                    <a
+                      href={prUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                    >
+                      View changes
+                    </a>
+                  ) : null}
+                </div>
+                {prUrl ? (
                   <button
                     type="submit"
                     name="intent"
                     value="refresh-setup-pr-status"
                     disabled={isSubmitting}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+                    className="text-xs font-bold text-gray-400 underline-offset-2 transition hover:text-gray-600 hover:underline disabled:opacity-50"
                   >
-                    {refreshMergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                    {refreshMergePending ? "Refreshing..." : "I merged this in GitHub"}
+                    {refreshMergePending ? "Refreshing status..." : "Already published it yourself? Refresh status"}
                   </button>
-                </div>
+                ) : null}
               </Form>
-            ) : (
-              <p className="text-sm font-semibold text-gray-500">Create the setup PR before merging to main.</p>
             )}
           </PublishFlowCard>
 
-          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? (activeChannelLabels.length ? `${activeChannelLabels.join(" + ")} enabled` : "Enabled") : setupMerged ? "Ready" : "Merge first"}>
+          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? (activeChannelLabels.length ? `${activeChannelLabels.join(" + ")} enabled` : "Enabled") : setupMerged ? "Ready" : "Publish first"}>
             {setupMerged ? (
               <div className="space-y-3">
                 <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
@@ -2663,7 +2688,7 @@ function ArticleSetupPublishDetail({
                 </Form>
               </div>
             ) : (
-              <p className="text-sm font-semibold text-gray-500">Daily reminders unlock after the setup PR is merged.</p>
+              <p className="text-sm font-semibold text-gray-500">Daily reminders unlock once the articles setup is published.</p>
             )}
           </PublishFlowCard>
         </div>
@@ -3875,13 +3900,13 @@ function workflowProgressForRunPage(
         if (step.id === "package" || step.id === "publish") {
           return {
             ...step,
-            label: step.id === "publish" ? "Publish setup PR" : "Setup PR ready",
+            label: step.id === "publish" ? "Publish" : "Publish ready",
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}?setupStep=publish`,
             summary: setupComplete
-              ? "Merged setup PR is being verified on the default branch."
+              ? "Your published setup is being verified."
               : setupPrCreated
-                ? "Open the setup PR, merge it, then enable daily article reminders."
-                : "Approve the exact setup preview to create the setup pull request.",
+                ? "Publish the articles setup, then enable daily article reminders."
+                : "Publish the approved setup preview.",
             status: setupComplete ? "complete" : setupPrCreated || manualMergeRequired ? "needs_action" : "locked",
           };
         }
@@ -4165,7 +4190,7 @@ export default function FounderToolsMarketingRun() {
             />
           ) : undefined
         }
-        activeDetailLabel={isSetupPublishView ? "Publish setup PR" : isSetupGenerateView ? "Build setup page" : isSetupReviewView ? "Review setup preview" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
+        activeDetailLabel={isSetupPublishView ? "Publish" : isSetupGenerateView ? "Build setup page" : isSetupReviewView ? "Review setup preview" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
       />
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : null}

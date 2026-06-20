@@ -42,8 +42,8 @@ export function articleSystemScaffoldActionLabel(status: ArticleSystemScaffoldSt
   if (status === "ready_to_build") return "Build articles scaffold";
   if (status === "building") return "Open setup build";
   if (status === "review_ready") return "Review setup preview";
-  if (status === "publish_ready") return "Finish setup PR";
-  if (status === "verifying") return "Verifying merged scaffold...";
+  if (status === "publish_ready") return "Publish setup";
+  if (status === "verifying") return "Verifying published scaffold...";
   if (status === "ready" || status === "legacy_ready") return "Continue to topic research";
   if (status === "failed") return "Open setup build";
   return "Choose articles route first";
