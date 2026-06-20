@@ -399,6 +399,26 @@ export type VibeMarketingArticlePublishStatus =
   | "merged"
   | "live";
 
+// Which dashboard list an article belongs to. Mirrors the backend
+// article_bucket(): "published" once confirmed on origin's default branch (the
+// source of truth), otherwise still "publishing". A written article is never a
+// draft.
+export type VibeMarketingArticleBucket = "publishing" | "published";
+
+// A stuck/failed/in-flight publish attempt the publishStatus pill can't express
+// (the article stays "written" while its publish run is the one in trouble).
+export type VibeMarketingPublishAttemptState =
+  | "in_progress"
+  | "needs_approval"
+  | "stuck"
+  | "failed";
+
+export interface VibeMarketingPublishAttempt {
+  state: VibeMarketingPublishAttemptState;
+  reason?: string | null;
+  recoverable?: boolean | null;
+}
+
 export interface VibeMarketingWrittenTopic {
   id?: string;
   title: string;
@@ -409,6 +429,14 @@ export interface VibeMarketingWrittenTopic {
   prNumber?: number | null;
   publishStatus?: VibeMarketingArticlePublishStatus | null;
   liveUrl?: string | null;
+  // Authoritative publish facts (backend Phase 0). `bucket` gates which list the
+  // article shows in; `onMain` is the proven "it's on origin/main" fact,
+  // independent of the weaker sitemap `liveUrl`.
+  bucket?: VibeMarketingArticleBucket | null;
+  onMain?: boolean | null;
+  onMainAt?: string | null;
+  mergeCommitSha?: string | null;
+  publishAttempt?: VibeMarketingPublishAttempt | null;
   runId?: string | null;
   writtenAt?: string | null;
 }

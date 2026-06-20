@@ -25,7 +25,10 @@ import type {
   VibeMarketingStartupProfile,
   VibeMarketingWebsiteBaseline,
   VibeMarketingGoogleBaselineConnection,
+  VibeMarketingArticleBucket,
   VibeMarketingArticlePublishStatus,
+  VibeMarketingPublishAttempt,
+  VibeMarketingPublishAttemptState,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
   VibeMarketingTopicPillar,
@@ -697,11 +700,43 @@ function asArticlePublishStatus(value: unknown): VibeMarketingArticlePublishStat
   return text && ARTICLE_PUBLISH_STATUSES.has(text) ? (text as VibeMarketingArticlePublishStatus) : null;
 }
 
+function asArticleBucket(
+  value: unknown,
+  fallback: { onMain: boolean; publishStatus: VibeMarketingArticlePublishStatus | null },
+): VibeMarketingArticleBucket {
+  const text = asNullableString(value)?.toLowerCase() ?? null;
+  if (text === "published" || text === "publishing") return text;
+  // Derive the same way the backend's article_bucket() does, so older payloads
+  // (without an explicit bucket) still split correctly.
+  return fallback.onMain || fallback.publishStatus === "live" ? "published" : "publishing";
+}
+
+const PUBLISH_ATTEMPT_STATES: ReadonlySet<string> = new Set([
+  "in_progress",
+  "needs_approval",
+  "stuck",
+  "failed",
+]);
+
+function asPublishAttempt(value: unknown): VibeMarketingPublishAttempt | null {
+  const payload = value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const state = asNullableString(payload.state)?.toLowerCase() ?? null;
+  if (!state || !PUBLISH_ATTEMPT_STATES.has(state)) return null;
+  return {
+    state: state as VibeMarketingPublishAttemptState,
+    reason: asNullableString(payload.reason),
+    recoverable: asBoolean(payload.recoverable),
+  };
+}
+
 export function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic | null {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const title = asNullableString(payload.title);
   const keyword = asNullableString(payload.keyword) ?? asNullableString(payload.primary_keyword);
   if (!title && !keyword) return null;
+  const publishStatus = asArticlePublishStatus(payload.publishStatus ?? payload.publish_status);
+  const onMain = asBoolean(payload.onMain ?? payload.on_main);
   return {
     id: asNullableString(payload.id) ?? undefined,
     title: title ?? keyword ?? "Written article",
@@ -710,8 +745,13 @@ export function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic |
     articleUrl: asNullableString(payload.articleUrl) ?? asNullableString(payload.article_url),
     prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
     prNumber: asNumber(payload.prNumber) ?? asNumber(payload.pr_number),
-    publishStatus: asArticlePublishStatus(payload.publishStatus ?? payload.publish_status),
+    publishStatus,
     liveUrl: asNullableString(payload.liveUrl) ?? asNullableString(payload.live_url),
+    bucket: asArticleBucket(payload.bucket, { onMain, publishStatus }),
+    onMain,
+    onMainAt: asNullableString(payload.onMainAt) ?? asNullableString(payload.on_main_at),
+    mergeCommitSha: asNullableString(payload.mergeCommitSha) ?? asNullableString(payload.merge_commit_sha),
+    publishAttempt: asPublishAttempt(payload.publishAttempt ?? payload.publish_attempt),
     runId:
       asNullableString(payload.runId) ??
       asNullableString(payload.run_id) ??
