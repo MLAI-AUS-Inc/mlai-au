@@ -24,6 +24,7 @@ import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPa
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
+import { RooPointCost } from "~/components/RooPointCost";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { getEnv } from "~/lib/env.server";
 import {
@@ -4203,7 +4204,16 @@ export default function FounderToolsMarketingRun() {
                       </div>
                       <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
                         {pendingActions.isPending("start-article") ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                        {pendingActions.isPending("start-article") ? "Starting article..." : `Generate draft article (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)`}
+                        {pendingActions.isPending("start-article") ? (
+                          "Starting article..."
+                        ) : (
+                          <>
+                            <span>Generate draft article</span>
+                            <span aria-hidden="true">(</span>
+                            <RooPointCost points={-VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} />
+                            <span aria-hidden="true">)</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

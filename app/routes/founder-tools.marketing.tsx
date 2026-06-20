@@ -40,6 +40,7 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import AvatarModal from "~/components/AvatarModal";
 import GitHubMark from "~/components/GitHubMark";
+import { RooPointCost } from "~/components/RooPointCost";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
@@ -2531,7 +2532,14 @@ function TopicRow({
               : rowTheme?.idleButton ?? "bg-violet-50 text-violet-700 hover:bg-violet-100",
           )}
         >
-          {selected ? `Continue (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)` : "Select"}
+          {selected ? (
+            <>
+              <span>Continue</span>
+              <span aria-hidden="true">(</span>
+              <RooPointCost points={-VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} />
+              <span aria-hidden="true">)</span>
+            </>
+          ) : "Select"}
           {selected && submitting ? (
             <Loader2 className={clsx("h-4 w-4 animate-spin", rowTheme?.arrow ?? "text-violet-500")} />
           ) : (
@@ -3424,6 +3432,7 @@ function TopicPillarsSection({
                 type="button"
                 onClick={() => onGenerate(pillar)}
                 disabled={submitting || generating}
+                aria-label={confirming ? `Generate topic ideas for ${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point` : undefined}
                 className={clsx(
                   "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
                   theme.solidButton,
@@ -3436,8 +3445,17 @@ function TopicPillarsSection({
                   </>
                 ) : (
                   <>
-                    {confirming ? `Generate (${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} pt)` : "Generate"}
-                    <ArrowRight className="h-4 w-4 text-white" />
+                    {confirming ? (
+                      <>
+                        <RooPointCost points={-VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} />
+                        <span aria-hidden="true">?</span>
+                      </>
+                    ) : (
+                      <>
+                        Generate
+                        <ArrowRight className="h-4 w-4 text-white" />
+                      </>
+                    )}
                   </>
                 )}
               </button>
