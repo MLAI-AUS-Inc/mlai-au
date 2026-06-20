@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, Form } from 'react-router';
 import { ImageWithFallback } from './ImageWithFallback';
+import { ROO_POINTS_ANIMATED_GIF_URL, ROO_POINTS_COIN_URL } from '~/components/RooPointCost';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
 import type { RooPointsBalance } from '~/lib/roo-points';
 import type { User } from '~/types/user';
@@ -36,7 +37,6 @@ const VIBE_RAISING_TOP_NAVIGATION = [
     { name: 'My Companies', href: '/founder-tools/companies' },
 ];
 const MLAI_LOGO_URL = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84";
-const ROO_POINTS_COIN_URL = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Robotics%20%26%20AI%20For%20Everyone%20(9)%20(1)%20(1).png?alt=media&token=a43ec994-1637-410c-b3ea-a39bb45f3cd3";
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
@@ -48,25 +48,50 @@ function formatRooPointsBalance(balance: number) {
 
 function RooPointsBadge({ balance }: { balance: number }) {
     const formattedBalance = formatRooPointsBalance(balance);
+    const [isHovering, setIsHovering] = useState(false);
+    const [animationKey, setAnimationKey] = useState(0);
+    const animationSrc = isHovering
+        ? `${ROO_POINTS_ANIMATED_GIF_URL}${ROO_POINTS_ANIMATED_GIF_URL.includes("?") ? "&" : "?"}hover=${animationKey}`
+        : ROO_POINTS_COIN_URL;
+
+    const startAnimation = () => {
+        if (
+            typeof window !== "undefined" &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+            return;
+        }
+        setAnimationKey((current) => current + 1);
+        setIsHovering(true);
+    };
+
+    const stopAnimation = () => {
+        setIsHovering(false);
+    };
 
     return (
         <div
-            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-[rgba(15,23,42,0.12)] bg-white/85 px-2.5 text-[var(--vr-color-text)] shadow-sm"
+            role="img"
+            tabIndex={0}
+            onPointerEnter={startAnimation}
+            onPointerLeave={stopAnimation}
+            onFocus={startAnimation}
+            onBlur={stopAnimation}
+            className="inline-flex h-9 shrink-0 cursor-default select-none items-center gap-2 rounded-full border border-[rgba(15,23,42,0.12)] bg-white/85 px-2.5 text-[var(--vr-color-text)] shadow-sm transition hover:bg-white focus:outline-none focus:ring-4 focus:ring-violet-100"
             aria-label={`${formattedBalance} Roo Points`}
             title={`${formattedBalance} Roo Points`}
         >
             <ImageWithFallback
-                src={ROO_POINTS_COIN_URL}
+                src={animationSrc}
                 fallbackSrc={MLAI_LOGO_URL}
-                alt="Roo Points"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
                 width={28}
                 height={28}
-                className="h-7 w-7 shrink-0 rounded-full object-cover"
+                className="pointer-events-none h-7 w-7 shrink-0 rounded-full object-cover"
             />
-            <span className="tabular-nums text-sm font-black leading-none">{formattedBalance}</span>
-            <span className="hidden text-xs font-black uppercase text-[var(--vr-color-text-sub)] xl:inline">
-                pts
-            </span>
+            <span className="pointer-events-none tabular-nums text-sm font-black leading-none">{formattedBalance}</span>
         </div>
     );
 }
