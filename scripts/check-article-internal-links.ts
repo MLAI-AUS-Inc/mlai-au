@@ -8,6 +8,7 @@ const ROOT_RELATIVE_LINK_RE = /\b(?:buttonHref|href|to)\s*=\s*["'](\/[^"']*)["']
 const VALID_STATIC_ROUTES = new Set([
   "/",
   "/articles",
+  "/community",
   "/contact",
   "/dashboard",
   "/events",
