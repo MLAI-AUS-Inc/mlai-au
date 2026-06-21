@@ -41,9 +41,9 @@ const BASE_FOUNDER_NAVIGATION = [
     ],
   },
   { name: "Vibe Marketing", href: "/founder-tools/marketing", icon: MegaphoneIcon },
+  { name: "Upgrades", href: "/founder-tools/upgrades", icon: BoltIcon },
   { name: "Data Sources", href: "/founder-tools/data-sources", icon: CircleStackIcon },
   { name: "My Companies", href: "/founder-tools/companies", icon: BuildingOffice2Icon },
-  { name: "Top up Points", href: "/founder-tools/upgrade", icon: BoltIcon },
 ];
 
 const FOUNDER_USER_NAVIGATION = [
