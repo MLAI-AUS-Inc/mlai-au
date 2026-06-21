@@ -1,6 +1,6 @@
 import { Form } from "react-router";
 import { ArrowPathIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
-import { Check, Mail, MessageCircle, Slack } from "lucide-react";
+import { Check, Mail } from "lucide-react";
 import { clsx } from "clsx";
 
 import type {
@@ -19,6 +19,15 @@ const CHANNEL_LABELS: Record<VibeMarketingNotificationChannelType, string> = {
   slack: "Slack",
   email: "Email",
   whatsapp: "WhatsApp",
+};
+
+const WHATSAPP_LOGO_URL =
+  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Robotics%20%26%20AI%20For%20Everyone%20(10).png?alt=media&token=20386aff-4770-472f-839e-b6086868de41";
+
+const PUBLISH_CHANNEL_FALLBACK_DETAILS: Record<VibeMarketingNotificationChannelType, string> = {
+  slack: "Connected · #mlai-research",
+  email: "you@company.com · Verified",
+  whatsapp: "+61 400 000 000",
 };
 
 function pickChannel(
@@ -81,12 +90,22 @@ function activeChannelDetail(
   return route || "Connected";
 }
 
+function publishChannelDetail(
+  type: VibeMarketingNotificationChannelType,
+  channel: VibeMarketingNotificationChannel | null,
+  accountEmail?: string | null,
+) {
+  if (channel?.consentState === "active") return activeChannelDetail(type, channel);
+  if (type === "email" && accountEmail) return `${accountEmail} · Verified`;
+  return PUBLISH_CHANNEL_FALLBACK_DETAILS[type];
+}
+
 function ChannelIcon({ type }: { type: VibeMarketingNotificationChannelType }) {
   const iconClassName = "h-7 w-7";
   if (type === "slack") {
     return (
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-white shadow-sm">
-        <Slack className={clsx(iconClassName, "text-[#611f69]")} strokeWidth={2.4} />
+        <img src="/vibe-raising/logos/slack.png" alt="" className={clsx(iconClassName, "object-contain")} />
       </span>
     );
   }
@@ -99,7 +118,7 @@ function ChannelIcon({ type }: { type: VibeMarketingNotificationChannelType }) {
   }
   return (
     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-600 shadow-inner">
-      <MessageCircle className={iconClassName} strokeWidth={2.4} />
+      <img src={WHATSAPP_LOGO_URL} alt="" className={clsx(iconClassName, "object-contain")} />
     </span>
   );
 }
@@ -120,7 +139,7 @@ function ChannelRow({
   const isActive = channel?.consentState === "active";
   const isPending = channel?.consentState === "pending";
 
-  if (variant === "publish" && isActive && channel) {
+  if (variant === "publish") {
     return (
       <div className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
         <div className="flex min-w-0 items-center gap-3">
@@ -129,7 +148,7 @@ function ChannelRow({
             <p className="truncate text-base font-black leading-5 text-gray-950">{CHANNEL_LABELS[type]}</p>
             <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-5 text-slate-600">
               <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-              <span className="truncate">{activeChannelDetail(type, channel)}</span>
+              <span className="truncate">{publishChannelDetail(type, channel, accountEmail)}</span>
             </p>
           </div>
         </div>
@@ -141,21 +160,15 @@ function ChannelRow({
   }
 
   return (
-    <div
-      className={clsx(
-        "rounded-xl border border-gray-200 bg-white p-3",
-        variant === "publish" && "shadow-[0_1px_0_rgba(15,23,42,0.03)]",
-      )}
-    >
+    <div className="rounded-xl border border-gray-200 bg-white p-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          {variant === "publish" ? <ChannelIcon type={type} /> : null}
           <div className="min-w-0">
             <span className="block truncate text-sm font-black text-gray-900">{CHANNEL_LABELS[type]}</span>
             {channel ? <StateChip state={channel.consentState} /> : null}
           </div>
         </div>
-        {channel && isActive && variant !== "publish" ? <RemoveButton channelId={channel.id} disabled={isSubmitting} /> : null}
+        {channel && isActive ? <RemoveButton channelId={channel.id} disabled={isSubmitting} /> : null}
       </div>
 
       {isActive ? (
