@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/where-to-find-ai-events-in-melbourne': {
+        title: "Where to Find AI Events in Melbourne",
+        date: "2026-06-21",
+        description: "AI events Melbourne for meetups, hackathons, research hubs and enterprise conferences, with tips for choosing the right format.",
+        author: "Content Team",
+        slug: "featured/where-to-find-ai-events-in-melbourne",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-63ff824e-6618-4f4b-9b2b-bf426360399f.jpg?alt=media&token=bd28dfd2-ff9d-43bd-b416-dbacabf52574",
+        imageAlt: "Close-up candid of Melbourne AI meetup attendees discussing laptops and event badges at a tech venue",
+        hasContent: true,
+    },
     'featured/how-to-find-an-ai-and-tech-meetup-in-sydney': {
         title: "How to Find an AI and Tech Meetup in Sydney",
         date: "2026-06-16",

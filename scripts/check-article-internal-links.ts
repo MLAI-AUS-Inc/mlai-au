@@ -17,6 +17,7 @@ const VALID_STATIC_ROUTES = new Set([
   "/platform/login",
   "/platform/logout",
   "/privacy",
+  "/resources",
   "/roo",
   "/sponsors",
   "/terms",
