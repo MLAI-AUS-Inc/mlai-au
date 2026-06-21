@@ -1,5 +1,7 @@
 import { Form } from "react-router";
 import { ArrowPathIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { Check, Mail, MessageCircle, Slack } from "lucide-react";
+import { clsx } from "clsx";
 
 import type {
   VibeMarketingNotificationChannel,
@@ -69,28 +71,91 @@ function RemoveButton({ channelId, disabled }: { channelId: string; disabled: bo
   );
 }
 
+function activeChannelDetail(
+  type: VibeMarketingNotificationChannelType,
+  channel: VibeMarketingNotificationChannel,
+) {
+  const route = channel.displayName || channel.routeId;
+  if (type === "slack") return route ? `Connected · ${route}` : "Connected";
+  if (type === "email") return route ? `${route} · Verified` : "Verified";
+  return route || "Connected";
+}
+
+function ChannelIcon({ type }: { type: VibeMarketingNotificationChannelType }) {
+  const iconClassName = "h-7 w-7";
+  if (type === "slack") {
+    return (
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-white shadow-sm">
+        <Slack className={clsx(iconClassName, "text-[#611f69]")} strokeWidth={2.4} />
+      </span>
+    );
+  }
+  if (type === "email") {
+    return (
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700 shadow-inner">
+        <Mail className={iconClassName} strokeWidth={2.4} />
+      </span>
+    );
+  }
+  return (
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-600 shadow-inner">
+      <MessageCircle className={iconClassName} strokeWidth={2.4} />
+    </span>
+  );
+}
+
 function ChannelRow({
   type,
   channel,
   isSubmitting,
   accountEmail,
+  variant = "settings",
 }: {
   type: VibeMarketingNotificationChannelType;
   channel: VibeMarketingNotificationChannel | null;
   isSubmitting: boolean;
   accountEmail?: string | null;
+  variant?: "settings" | "publish";
 }) {
   const isActive = channel?.consentState === "active";
   const isPending = channel?.consentState === "pending";
 
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-black text-gray-900">{CHANNEL_LABELS[type]}</span>
-          {channel ? <StateChip state={channel.consentState} /> : null}
+  if (variant === "publish" && isActive && channel) {
+    return (
+      <div className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+        <div className="flex min-w-0 items-center gap-3">
+          <ChannelIcon type={type} />
+          <div className="min-w-0">
+            <p className="truncate text-base font-black leading-5 text-gray-950">{CHANNEL_LABELS[type]}</p>
+            <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-5 text-slate-600">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+              <span className="truncate">{activeChannelDetail(type, channel)}</span>
+            </p>
+          </div>
         </div>
-        {channel && isActive ? <RemoveButton channelId={channel.id} disabled={isSubmitting} /> : null}
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-600 text-white shadow-sm">
+          <Check className="h-4 w-4" strokeWidth={3} />
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={clsx(
+        "rounded-xl border border-gray-200 bg-white p-3",
+        variant === "publish" && "shadow-[0_1px_0_rgba(15,23,42,0.03)]",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {variant === "publish" ? <ChannelIcon type={type} /> : null}
+          <div className="min-w-0">
+            <span className="block truncate text-sm font-black text-gray-900">{CHANNEL_LABELS[type]}</span>
+            {channel ? <StateChip state={channel.consentState} /> : null}
+          </div>
+        </div>
+        {channel && isActive && variant !== "publish" ? <RemoveButton channelId={channel.id} disabled={isSubmitting} /> : null}
       </div>
 
       {isActive ? (
@@ -224,31 +289,34 @@ export default function DailyReminderChannels({
   accountEmail,
   error,
   errorIntent,
+  variant = "settings",
 }: {
   channels: VibeMarketingNotificationChannel[];
   isSubmitting: boolean;
   accountEmail?: string | null;
   error?: string | null;
   errorIntent?: string | null;
+  variant?: "settings" | "publish";
 }) {
   const channelError =
     error && errorIntent && (CHANNEL_INTENTS as readonly string[]).includes(errorIntent) ? error : null;
   return (
-    <div className="space-y-2">
+    <div className={clsx("space-y-2", variant === "publish" && "space-y-2.5")}>
       <p className="text-xs font-black uppercase tracking-wide text-gray-500">Notification channels</p>
       {channelError ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700">
           {channelError}
         </p>
       ) : null}
-      <ChannelRow type="slack" channel={pickChannel(channels, "slack")} isSubmitting={isSubmitting} />
+      <ChannelRow type="slack" channel={pickChannel(channels, "slack")} isSubmitting={isSubmitting} variant={variant} />
       <ChannelRow
         type="email"
         channel={pickChannel(channels, "email")}
         isSubmitting={isSubmitting}
         accountEmail={accountEmail}
+        variant={variant}
       />
-      <ChannelRow type="whatsapp" channel={pickChannel(channels, "whatsapp")} isSubmitting={isSubmitting} />
+      <ChannelRow type="whatsapp" channel={pickChannel(channels, "whatsapp")} isSubmitting={isSubmitting} variant={variant} />
     </div>
   );
 }
