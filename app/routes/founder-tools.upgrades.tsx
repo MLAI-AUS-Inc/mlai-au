@@ -87,12 +87,12 @@ const PACK_ARTWORK_LAYOUT: Record<TopupPackArtwork, PackArtworkLayout> = {
   },
   "small-stack": {
     stack: {
-      width: 164,
-      height: 156,
+      width: 136,
+      height: 130,
       style: {
-        bottom: 10,
-        left: 43,
-        width: 164,
+        bottom: 20,
+        left: 57,
+        width: 136,
       },
     },
   },
