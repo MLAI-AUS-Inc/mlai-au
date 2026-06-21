@@ -69,7 +69,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const env = getEnv(context);
   const client = createApiClient(env, request);
   try {
-    const response = await client.post("/api/v1/points/purchases/me/", {
+    const response = await client.post("/api/v1/points/me/purchases/", {
       pack_id: packId,
       purchase_from: { source: "web", surface: "founder-tools-upgrade" },
     });
