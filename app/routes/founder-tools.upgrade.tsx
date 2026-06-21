@@ -24,9 +24,9 @@ type TopupPack = {
 // Mirrors the backend ROO_TOPUP_PACKS as a resilient fallback if /packs/ is
 // unavailable. The loader prefers the live list so prices stay in sync.
 const FALLBACK_PACKS: TopupPack[] = [
-  { pack_id: "topup_5", points: 5, amount_cents: 1999, currency: "aud", label: "5 Top-up Roo Points" },
-  { pack_id: "topup_10", points: 10, amount_cents: 3699, currency: "aud", label: "10 Top-up Roo Points" },
-  { pack_id: "topup_25", points: 25, amount_cents: 6399, currency: "aud", label: "25 Top-up Roo Points" },
+  { pack_id: "topup_5", points: 10, amount_cents: 1999, currency: "aud", label: "10 Top-up Roo Points" },
+  { pack_id: "topup_10", points: 20, amount_cents: 3699, currency: "aud", label: "20 Top-up Roo Points" },
+  { pack_id: "topup_25", points: 50, amount_cents: 6399, currency: "aud", label: "50 Top-up Roo Points" },
 ];
 
 const POPULAR_PACK_ID = "topup_10";
