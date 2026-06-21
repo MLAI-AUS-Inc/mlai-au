@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
+        title: "Best Meetup Websites for AI and Startup Communities in Australia",
+        date: "2026-06-21",
+        description: "Meetup websites for AI and startup groups in Australia, including directories, event pages and community sites.",
+        author: "Content Team",
+        slug: "featured/best-meetup-websites-for-ai-and-startup-communities-in-australia",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-87c11072-ea89-4507-81ff-3443bb29bb11.jpg?alt=media&token=81f170c2-330b-4bdd-ae46-a5e5d535b24a",
+        imageAlt: "Close-up of Australian startup founders sharing AI meetup event pages on a laptop at a casual community gathering",
+    },
     'featured/where-to-find-ai-events-in-melbourne': {
         title: "Where to Find AI Events in Melbourne",
         date: "2026-06-21",
