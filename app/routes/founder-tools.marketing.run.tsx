@@ -6,9 +6,13 @@ import {
   ArrowLeftIcon,
   ArrowPathIcon,
   ArrowRightIcon,
+  CalendarDaysIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
+  ClockIcon,
   EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
+  GlobeAltIcon,
   LockClosedIcon,
   PaperAirplaneIcon,
   PlayIcon,
@@ -72,6 +76,7 @@ import type {
   VibeMarketingComponentCommentAnchor,
   VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackComment,
+  VibeMarketingNotificationChannel,
   VibeMarketingBootstrap,
   VibeMarketingGithubReposResponse,
   VibeMarketingRunSummary,
@@ -2697,6 +2702,105 @@ function ArticleSetupPublishDetail({
   );
 }
 
+function PublishDailyResearchReminderCard({
+  channels,
+  dailyEnabled,
+  dailyReady,
+  defaultTimezone,
+  enableDailyPending,
+  runDailyPending,
+  isSubmitting,
+}: {
+  channels: VibeMarketingNotificationChannel[];
+  dailyEnabled: boolean;
+  dailyReady: boolean;
+  defaultTimezone: string;
+  enableDailyPending: boolean;
+  runDailyPending: boolean;
+  isSubmitting: boolean;
+}) {
+  const statusLabel = dailyEnabled ? "Enabled" : dailyReady ? "Ready" : "Needs setup";
+
+  return (
+    <section className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
+      <div className="flex items-start gap-4">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-100 text-violet-700 shadow-inner">
+          <CalendarDaysIcon className="h-8 w-8" />
+        </span>
+        <div className="min-w-0 pt-1">
+          <h3 className="text-xl font-black leading-7 text-gray-950">Trigger article research daily</h3>
+          <p
+            className={clsx(
+              "mt-1 text-xs font-black uppercase tracking-wide",
+              dailyEnabled ? "text-emerald-700" : dailyReady ? "text-violet-700" : "text-gray-500",
+            )}
+          >
+            {statusLabel}
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-6 max-w-xl text-base font-semibold leading-6 text-slate-600">
+        Get a daily research prompt for the next article via your preferred channels.
+      </p>
+
+      <div className="mt-6">
+        <DailyReminderChannels channels={channels} isSubmitting={isSubmitting} variant="publish" />
+      </div>
+
+      <Form method="POST" className="mt-5 border-t border-gray-200 pt-4">
+        <label className="block">
+          <span className="text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
+          <div className="relative mt-2">
+            <GlobeAltIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <input
+              name="defaultTimezone"
+              defaultValue={defaultTimezone}
+              className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-12 pr-10 text-sm font-bold text-slate-700 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            />
+            <ChevronDownIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+          </div>
+        </label>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <button
+            type="submit"
+            name="intent"
+            value="enable-daily-automation"
+            disabled={isSubmitting || dailyEnabled || !dailyReady}
+            className={clsx(
+              "inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-sm transition disabled:cursor-not-allowed",
+              dailyEnabled
+                ? "border border-violet-200 bg-violet-50 text-violet-700"
+                : dailyReady
+                  ? "bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60"
+                  : "border border-gray-200 bg-gray-100 text-gray-500",
+            )}
+          >
+            {enableDailyPending ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <ClockIcon className="h-5 w-5" />}
+            {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable reminder"}
+          </button>
+          <button
+            type="submit"
+            name="intent"
+            value="run-daily-discovery-now"
+            disabled={isSubmitting || !dailyEnabled}
+            className={clsx(
+              "inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-sm transition disabled:cursor-not-allowed",
+              dailyEnabled
+                ? "bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60"
+                : "border border-gray-200 bg-gray-100 text-gray-500",
+            )}
+          >
+            {runDailyPending ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <PlayIcon className="h-5 w-5" />}
+            {runDailyPending ? "Starting..." : "Run today now"}
+          </button>
+        </div>
+      </Form>
+    </section>
+  );
+}
+
 function PublishAndAutomateDetail({
   run,
   bootstrap,
@@ -2801,17 +2905,13 @@ function PublishAndAutomateDetail({
   const dailyReady = Boolean(dailyEnabled || dailyCheck?.ready || dailyCheck?.passed);
   const defaultTimezone = bootstrap.settings.defaultTimezone ?? "Australia/Melbourne";
   const dailyChannels = dailyCheck?.channels ?? [];
-  const activeChannelLabels = dailyChannels
-    .filter((channel) => channel.consentState === "active")
-    .map((channel) => ({ slack: "Slack", email: "Email", whatsapp: "WhatsApp" })[channel.channelType])
-    .filter(Boolean);
 
   return (
     <div className="space-y-5">
       {publishChildMissingRemote ? null : (
         <ArticleRunStageProgress run={run} variant="embedded" reviewHref={canViewArticle ? viewArticleHref : undefined} />
       )}
-      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
@@ -2832,7 +2932,7 @@ function PublishAndAutomateDetail({
           <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishStep?.status ?? "ready"} />
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="mt-6 grid items-stretch gap-5 lg:grid-cols-2">
           <PublishFlowCard
             title="Publish"
             status={
@@ -3095,55 +3195,15 @@ function PublishAndAutomateDetail({
             )}
           </PublishFlowCard>
 
-          <PublishFlowCard
-            title="Daily research reminder"
-            status={dailyEnabled ? "complete" : dailyReady ? "ready" : "locked"}
-            eyebrow={
-              dailyEnabled
-                ? activeChannelLabels.length
-                  ? `${activeChannelLabels.join(" + ")} enabled`
-                  : "Enabled"
-                : dailyReady
-                  ? "Ready"
-                  : "Needs setup"
-            }
-          >
-            <div className="space-y-3">
-              <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
-              <Form method="POST" className="space-y-3">
-                <label className="block">
-                  <span className="mb-2 block text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
-                  <input
-                    name="defaultTimezone"
-                    defaultValue={defaultTimezone}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  name="intent"
-                  value="enable-daily-automation"
-                  disabled={isSubmitting || dailyEnabled || !dailyReady}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-500"
-                >
-                  {enableDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : dailyEnabled ? <CheckCircleIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
-                  {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable daily reminder"}
-                </button>
-              </Form>
-              <Form method="POST">
-                <button
-                  type="submit"
-                  name="intent"
-                  value="run-daily-discovery-now"
-                  disabled={isSubmitting || !dailyEnabled}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
-                >
-                  {runDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
-                  {runDailyPending ? "Starting..." : "Run today now"}
-                </button>
-              </Form>
-            </div>
-          </PublishFlowCard>
+          <PublishDailyResearchReminderCard
+            channels={dailyChannels}
+            dailyEnabled={dailyEnabled}
+            dailyReady={dailyReady}
+            defaultTimezone={defaultTimezone}
+            enableDailyPending={enableDailyPending}
+            runDailyPending={runDailyPending}
+            isSubmitting={isSubmitting}
+          />
         </div>
 
         {previewUrl || publishChildPreviewUrl ? (
@@ -3175,10 +3235,10 @@ function PublishFlowCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+    <section className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-black text-gray-950">{title}</h3>
+          <h3 className="text-xl font-black leading-7 text-gray-950">{title}</h3>
           <p className="mt-1 text-xs font-black uppercase tracking-wide text-gray-500">{eyebrow}</p>
         </div>
         <WorkflowStatusPill status={status} compact />
