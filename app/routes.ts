@@ -130,6 +130,7 @@ export default [
     route("marketing/settings", "routes/founder-tools.marketing.settings.tsx"),
     route("marketing/runs/:runId/status", "routes/founder-tools.marketing.run-status.tsx"),
     route("marketing/runs/:runId", "routes/founder-tools.marketing.run.tsx"),
+    route("upgrades", "routes/founder-tools.upgrades.tsx"),
   ]),
   route("/founder-tools/logout", "routes/vibe-raising-app.logout.tsx", { id: "founder-tools-logout" }),
   route("/vibe-raising/logout", "routes/vibe-raising-app.logout.tsx", { id: "vibe-raising-logout" }),
