@@ -306,9 +306,33 @@ function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
   return false;
 }
 
+function booleanFromUnknown(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes"].includes(normalized)) return true;
+    if (["false", "0", "no"].includes(normalized)) return false;
+  }
+  return null;
+}
+
+function accountEmailVerifiedFromAuthUser(authUser: Record<string, unknown>) {
+  const explicitVerified =
+    booleanFromUnknown(authUser.emailVerified) ??
+    booleanFromUnknown(authUser.email_verified) ??
+    booleanFromUnknown(authUser.isEmailVerified) ??
+    booleanFromUnknown(authUser.is_email_verified) ??
+    booleanFromUnknown(authUser.verifiedEmail) ??
+    booleanFromUnknown(authUser.verified_email);
+
+  if (explicitVerified !== null) return explicitVerified;
+
+  return booleanFromUnknown(authUser.isActive) ?? booleanFromUnknown(authUser.is_active) ?? true;
+}
+
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  await requireVibeRaisingFounder(env, request);
+  const { authUser, appUser } = await requireVibeRaisingFounder(env, request);
   const runId = params.runId ?? "";
   const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
   const run = await getVibeMarketingRun(env, request, runId);
@@ -335,6 +359,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     bootstrap,
     setupRun,
     githubRepos,
+    accountEmail: appUser.email || authUser.email || null,
+    accountEmailVerified: accountEmailVerifiedFromAuthUser(authUser as unknown as Record<string, unknown>),
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job", runId),
     },
@@ -2511,11 +2537,15 @@ function ArticleSetupPublishDetail({
   bootstrap,
   isSubmitting,
   isActionPending,
+  accountEmail,
+  accountEmailVerified,
 }: {
   run: VibeMarketingRunSummary;
   bootstrap: VibeMarketingBootstrap;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
+  accountEmail?: string | null;
+  accountEmailVerified?: boolean | null;
 }) {
   const prUrl = articleSystemSetupPrUrl(run);
   const prNumber = articleSystemSetupPrNumber(run);
@@ -2657,7 +2687,12 @@ function ArticleSetupPublishDetail({
           <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? (activeChannelLabels.length ? `${activeChannelLabels.join(" + ")} enabled` : "Enabled") : setupMerged ? "Ready" : "Publish first"}>
             {setupMerged ? (
               <div className="space-y-3">
-                <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
+                <DailyReminderChannels
+                  channels={dailyChannels}
+                  isSubmitting={isSubmitting}
+                  accountEmail={accountEmail}
+                  accountEmailVerified={accountEmailVerified}
+                />
                 <Form method="POST" className="space-y-3">
                   <label className="block">
                     <span className="text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
@@ -2710,6 +2745,8 @@ function PublishDailyResearchReminderCard({
   enableDailyPending,
   runDailyPending,
   isSubmitting,
+  accountEmail,
+  accountEmailVerified,
 }: {
   channels: VibeMarketingNotificationChannel[];
   dailyEnabled: boolean;
@@ -2718,6 +2755,8 @@ function PublishDailyResearchReminderCard({
   enableDailyPending: boolean;
   runDailyPending: boolean;
   isSubmitting: boolean;
+  accountEmail?: string | null;
+  accountEmailVerified?: boolean | null;
 }) {
   const statusLabel = dailyEnabled ? "Enabled" : dailyReady ? "Ready" : "Needs setup";
 
@@ -2745,7 +2784,13 @@ function PublishDailyResearchReminderCard({
       </p>
 
       <div className="mt-6">
-        <DailyReminderChannels channels={channels} isSubmitting={isSubmitting} variant="publish" />
+        <DailyReminderChannels
+          channels={channels}
+          isSubmitting={isSubmitting}
+          accountEmail={accountEmail}
+          accountEmailVerified={accountEmailVerified}
+          variant="publish"
+        />
       </div>
 
       <Form method="POST" className="mt-5 border-t border-gray-200 pt-4">
@@ -2806,11 +2851,15 @@ function PublishAndAutomateDetail({
   bootstrap,
   isSubmitting,
   isActionPending,
+  accountEmail,
+  accountEmailVerified,
 }: {
   run: VibeMarketingRunSummary;
   bootstrap: VibeMarketingBootstrap;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
+  accountEmail?: string | null;
+  accountEmailVerified?: boolean | null;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const automationStep = run.workflowProgress?.steps.find((step) => step.id === "automation");
@@ -3203,6 +3252,8 @@ function PublishAndAutomateDetail({
             enableDailyPending={enableDailyPending}
             runDailyPending={runDailyPending}
             isSubmitting={isSubmitting}
+            accountEmail={accountEmail}
+            accountEmailVerified={accountEmailVerified}
           />
         </div>
 
@@ -4000,7 +4051,15 @@ function workflowProgressForRunPage(
 }
 
 export default function FounderToolsMarketingRun() {
-  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
+  const {
+    run: loaderRun,
+    bootstrap,
+    setupRun: loaderSetupRun,
+    githubRepos,
+    accountEmail,
+    accountEmailVerified,
+    billingRequestIds,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const location = useLocation();
@@ -4227,7 +4286,14 @@ export default function FounderToolsMarketingRun() {
         primaryActionSlot={isArticleWorkflowRun && directPublishMode && !isPublishAutomateView ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
         activeDetailSlot={
           isSetupPublishView ? (
-            <ArticleSetupPublishDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
+            <ArticleSetupPublishDetail
+              run={run}
+              bootstrap={bootstrap}
+              isSubmitting={isSubmitting}
+              isActionPending={pendingActions.isPending}
+              accountEmail={accountEmail}
+              accountEmailVerified={accountEmailVerified}
+            />
           ) : isSetupGenerateView ? (
             <ArticleSetupGenerateDetail run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
           ) : isSetupReviewView ? (
@@ -4239,7 +4305,14 @@ export default function FounderToolsMarketingRun() {
               isActionPending={pendingActions.isPending}
             />
           ) : isArticleGenerationRun && isPublishAutomateView ? (
-            <PublishAndAutomateDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
+            <PublishAndAutomateDetail
+              run={run}
+              bootstrap={bootstrap}
+              isSubmitting={isSubmitting}
+              isActionPending={pendingActions.isPending}
+              accountEmail={accountEmail}
+              accountEmailVerified={accountEmailVerified}
+            />
           ) : isArticleGenerationRun ? (
             <ArticleGenerationReviewDetail
               run={run}
