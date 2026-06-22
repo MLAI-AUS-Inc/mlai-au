@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-a-startup-company-for-future-ai-founders': {
+        title: "What Is a Startup Company and How Do AI Founders Build One?",
+        date: "2026-06-22",
+        description: "What is a startup company? Basics for future AI founders.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-a-startup-company-for-future-ai-founders",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-f5ef4162-2450-433f-8a65-ae627e73c774.jpg?alt=media&token=3ede00b7-b718-4d2b-8bf2-0fc9ed8b430a",
+        imageAlt: "AI founders sketch startup ideas on a laptop during a candid close-up planning session",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
