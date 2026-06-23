@@ -50,6 +50,13 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
+    '/articles/featured/how-ai-founders-can-navigate-angel-investors-in-australia': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/how-to-find-an-ai-and-tech-meetup-in-sydney': {
         toc: true,
         howTo: false,
