@@ -1021,6 +1021,8 @@ export default function FounderToolsMarketingCreate() {
       : null;
   const [polledSetupScan, setPolledSetupScan] = useState<VibeMarketingRunSummary | null>(null);
   const [polledSetupChildRun, setPolledSetupChildRun] = useState<VibeMarketingRunSummary | null>(null);
+  // Run ids the backend reported gone (deleted/reset); never poll or render these again.
+  const goneSetupRunIdsRef = useRef<Set<string>>(new Set());
   const pendingArticleSystemScan =
     polledSetupScan?.runId === bootstrapPendingArticleSystemScan?.runId ? polledSetupScan : bootstrapPendingArticleSystemScan;
   const pendingArticleSystemSetupRunId =
@@ -1244,14 +1246,24 @@ export default function FounderToolsMarketingCreate() {
 
   useEffect(() => {
     if (setupChildStatusFetcher.state !== "idle") return;
-    if (!setupChildStatusFetcher.data?.runId || setupChildStatusFetcher.data.runId !== pendingArticleSystemSetupRunId) {
+    const data = setupChildStatusFetcher.data;
+    if (!data?.runId || data.runId !== pendingArticleSystemSetupRunId) {
       return;
     }
-    setPolledSetupChildRun(setupChildStatusFetcher.data);
+    if (data.gone) {
+      // The run was deleted (e.g. an article-setup reset). Record it so the poll loop
+      // below stops, and drop the polled run so the wizard doesn't render a dead setup.
+      goneSetupRunIdsRef.current.add(data.runId);
+      setPolledSetupChildRun(null);
+      return;
+    }
+    setPolledSetupChildRun(data);
   }, [pendingArticleSystemSetupRunId, setupChildStatusFetcher.data, setupChildStatusFetcher.state]);
 
   useEffect(() => {
     if (!pendingArticleSystemSetupRunId || setupChildStatusFetcher.state !== "idle") return;
+    // Never re-poll a run the backend reported gone (deleted/reset) — pre-fix, that 404 SSR-500'd the wizard.
+    if (goneSetupRunIdsRef.current.has(pendingArticleSystemSetupRunId)) return;
     if (!pageVisible) return;
     if (setupChildRun && isSetupProgressTerminal(setupChildRun)) return;
     const hasLoadedCurrentRun = setupChildStatusFetcher.data?.runId === pendingArticleSystemSetupRunId;

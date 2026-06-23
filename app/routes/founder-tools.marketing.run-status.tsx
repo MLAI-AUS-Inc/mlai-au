@@ -30,6 +30,33 @@ function shouldRefreshSetupLivePreview(run: VibeMarketingRunSummary) {
     ["queued", "pending", "starting", "building", "running"].includes(platformStatus);
 }
 
+function isRunNotFoundError(error: unknown): boolean {
+  const status =
+    (error as { response?: { status?: number } } | null)?.response?.status ??
+    (error as { status?: number } | null)?.status;
+  return status === 404;
+}
+
+// A deleted/reset run (e.g. after an article-setup reset) 404s on status polling while a
+// stale wizard session is still pinned to it. Return a terminal, explicitly-"gone" summary
+// so the poller stops instead of letting the 404 throw — an unhandled throw here SSR-500s
+// the whole marketing page while it polls the old run.
+function goneRunSummary(runId: string): VibeMarketingRunSummary {
+  return {
+    runId,
+    workflow: "article_system_setup",
+    domain: "",
+    status: "not_found",
+    gone: true,
+    stepOrder: [],
+    steps: [],
+    warnings: [],
+    errors: [],
+    artifacts: [],
+    diagnostics: {},
+  };
+}
+
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const runId = params.runId ?? "";
@@ -39,7 +66,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   }
 
   await requireVibeRaisingFounder(env, request);
-  let run = await getVibeMarketingRun(env, request, runId, null, "status");
+  let run = await getVibeMarketingRun(env, request, runId, null, "status").catch((error: unknown) => {
+    if (isRunNotFoundError(error)) return null;
+    throw error;
+  });
+  if (run === null) {
+    return Response.json(goneRunSummary(runId));
+  }
   if (shouldRefreshSetupLivePreview(run)) {
     try {
       run = await refreshVibeMarketingLivePreview(env, request, runId);
