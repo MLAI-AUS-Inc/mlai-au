@@ -5,6 +5,7 @@ export default [
   route("/dashboard", "routes/dashboard.tsx"),
   route("/sponsors", "routes/sponsors.tsx"),
   route("/mlai-studio", "routes/mlai-studio.tsx"),
+  route("/press-kit", "routes/press-kit.tsx"),
   route("/events", "routes/events.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
@@ -15,6 +16,7 @@ export default [
   route("/roo", "routes/roo.tsx"),
   route("/roo/topup/:purchaseId", "routes/roo.topup.$purchaseId.tsx"),
   route("/&", "routes/article-link-cleanups.tsx", { id: "cleanup-root-ampersand" }),
+  route("/$", "routes/article-link-cleanups.tsx", { id: "cleanup-root-dollar" }),
   route("/practical-ai-learning-beginners-builders", "routes/article-link-cleanups.tsx", { id: "cleanup-practical-ai-learning" }),
   route("/ai-startup-building-pitching", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-startup-building-pitching" }),
   route("/templates/startup-traction", "routes/article-link-cleanups.tsx", { id: "cleanup-startup-traction-template" }),
@@ -108,12 +110,11 @@ export default [
 
   // Vibe Raising public landing
   route("/vibe-raising", "routes/vibe-raising-landing.tsx"),
-  route("/vibe-raising/", "routes/vibe-raising-landing.tsx", { id: "vibe-raising-landing-trailing" }),
-  route("/vibe-raising-landing", "routes/vibe-raising-landing.tsx", { id: "legacy-vibe-raising-landing" }),
 
   // Founder Tools App routes
   route("/founder-tools", "routes/vibe-raising-app.tsx", { id: "founder-tools-root" }, [
     index("routes/founder-tools.index.tsx"),
+    route("upgrade", "routes/founder-tools.upgrade.tsx"),
     route("updates", "routes/vibe-raising-app._index.tsx"),
     route("drafts", "routes/vibe-raising-app.drafts.tsx"),
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
@@ -129,6 +130,7 @@ export default [
     route("marketing/settings", "routes/founder-tools.marketing.settings.tsx"),
     route("marketing/runs/:runId/status", "routes/founder-tools.marketing.run-status.tsx"),
     route("marketing/runs/:runId", "routes/founder-tools.marketing.run.tsx"),
+    route("upgrades", "routes/founder-tools.upgrades.tsx"),
   ]),
   route("/founder-tools/logout", "routes/vibe-raising-app.logout.tsx", { id: "founder-tools-logout" }),
   route("/vibe-raising/logout", "routes/vibe-raising-app.logout.tsx", { id: "vibe-raising-logout" }),

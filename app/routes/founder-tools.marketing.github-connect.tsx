@@ -68,8 +68,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const forceReconnect = boolFromSearch(url.searchParams.get("forceReconnect"));
   const githubRepo = String(url.searchParams.get("githubRepo") || "").trim();
 
+  // Absolute URL of the page to land back on after the GitHub App install. The
+  // backend embeds this in the OAuth state and redirects the browser here once
+  // the install completes (it re-validates the origin against mlai.au first).
+  const returnUrl = new URL(returnTo, url.origin).toString();
+
   try {
     const response = await connectVibeMarketingGithub(env, request, {
+      returnUrl,
+      return_url: returnUrl,
       ...(githubRepo && !forceReconnect ? { githubRepo, github_repo: githubRepo } : {}),
       ...(forceReconnect ? { forceReconnect: true, force_reconnect: true } : {}),
     });

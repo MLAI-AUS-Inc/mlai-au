@@ -277,7 +277,7 @@ export default function ArticleContent() {
             title="Explore more practical startup and AI guides"
             body="If you want clearer frameworks for reading startup trends and building in fast-moving markets, browse our practical resources for founders, operators, and community builders."
             buttonText="View practical guides"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles"
           />
         </div>
       </div>

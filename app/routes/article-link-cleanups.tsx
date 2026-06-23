@@ -3,6 +3,7 @@ import type { Route } from "./+types/article-link-cleanups";
 
 const ARTICLE_LINK_CLEANUPS: Record<string, string> = {
   "/&": "/",
+  "/$": "/",
   "/practical-ai-learning-beginners-builders": "/articles",
   "/ai-startup-building-pitching": "/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit",
   "/templates/startup-traction": "/articles/featured/go-to-market-for-startups",

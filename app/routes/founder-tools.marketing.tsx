@@ -21,6 +21,7 @@ import {
   PenLine,
   Plus,
   Rocket,
+  RotateCw,
   Save,
   Search,
   Send,
@@ -39,6 +40,7 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import AvatarModal from "~/components/AvatarModal";
 import GitHubMark from "~/components/GitHubMark";
+import { RooPointCost } from "~/components/RooPointCost";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
@@ -2530,7 +2532,14 @@ function TopicRow({
               : rowTheme?.idleButton ?? "bg-violet-50 text-violet-700 hover:bg-violet-100",
           )}
         >
-          {selected ? `Continue (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)` : "Select"}
+          {selected ? (
+            <>
+              <span>Continue</span>
+              <span aria-hidden="true">(</span>
+              <RooPointCost points={-VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} />
+              <span aria-hidden="true">)</span>
+            </>
+          ) : "Select"}
           {selected && submitting ? (
             <Loader2 className={clsx("h-4 w-4 animate-spin", rowTheme?.arrow ?? "text-violet-500")} />
           ) : (
@@ -2542,7 +2551,55 @@ function TopicRow({
   );
 }
 
+// Overlay tone for an in-flight publish attempt — surfaces stuck/failed/awaiting
+// states the publishStatus pill can't express. Returns null for states that map
+// cleanly to the normal pill.
+function publishAttemptTone(attempt: NonNullable<VibeMarketingWrittenTopic["publishAttempt"]>) {
+  switch (attempt.state) {
+    case "failed":
+      return {
+        label: "Publish failed",
+        pill: "bg-red-50 text-red-700",
+        dot: "bg-red-500",
+        hint: attempt.reason || "The publish didn’t open a PR. Open the run to retry.",
+      };
+    case "stuck":
+      return {
+        label: "Publish stalled",
+        pill: "bg-amber-50 text-amber-700",
+        dot: "bg-amber-500",
+        hint: attempt.reason || "The publish stalled before opening a PR. Open the run to retry.",
+      };
+    case "needs_approval":
+      return {
+        label: "Awaiting approval",
+        pill: "bg-amber-50 text-amber-700",
+        dot: "bg-amber-500",
+        hint: attempt.reason || "Open the run to approve and publish.",
+      };
+    case "in_progress":
+      return {
+        label: "Publishing…",
+        pill: "bg-violet-50 text-violet-700",
+        dot: "bg-violet-500",
+        hint: attempt.reason || "Publishing is in progress.",
+      };
+    default:
+      return null;
+  }
+}
+
 function articlePublishStatusTone(article: VibeMarketingWrittenTopic) {
+  // On origin/main is the authoritative "published" fact — surface it as Live
+  // even when the sitemap signal (publishStatus "live") hasn't caught up.
+  if (article.onMain) {
+    return {
+      label: "Live",
+      pill: "bg-emerald-50 text-emerald-600",
+      dot: "bg-emerald-500",
+      hint: "Verified on origin/main.",
+    };
+  }
   switch (article.publishStatus) {
     case "live":
       return {
@@ -2595,9 +2652,13 @@ function RecentArticleRow({
   skipDiscardConfirmation: boolean;
   onDiscardRequest: (request: { articleId: string; title: string }) => void;
 }) {
-  const tone = articlePublishStatusTone(article);
+  const attempt = article.publishAttempt ?? null;
+  const tone = (attempt ? publishAttemptTone(attempt) : null) ?? articlePublishStatusTone(article);
   const href =
-    (article.publishStatus === "live" ? article.liveUrl : null) ?? article.prUrl ?? article.articleUrl ?? null;
+    (article.onMain || article.publishStatus === "live" ? article.liveUrl : null) ??
+    article.prUrl ??
+    article.articleUrl ??
+    null;
   const title = article.title || article.keyword;
   const articleId = article.id ?? "";
   // merged/live articles are on (or headed to) the site; discard is only for
@@ -2627,6 +2688,17 @@ function RecentArticleRow({
       )}
       <p className="text-sm font-bold text-slate-500">{formatArticleDate(article.writtenAt)}</p>
       <div className="flex items-center justify-end gap-1">
+        {attempt?.recoverable && article.runId ? (
+          <Link
+            to={`/founder-tools/marketing/runs/${encodeURIComponent(article.runId)}`}
+            title={attempt.reason || "Open the run to retry publishing"}
+            aria-label={`Retry publishing: ${title}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-700 transition hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-100"
+          >
+            <RotateCw className="h-3.5 w-3.5" />
+            Retry
+          </Link>
+        ) : null}
         {article.runId ? (
           <Link
             to={`/founder-tools/marketing/runs/${encodeURIComponent(article.runId)}`}
@@ -3360,6 +3432,7 @@ function TopicPillarsSection({
                 type="button"
                 onClick={() => onGenerate(pillar)}
                 disabled={submitting || generating}
+                aria-label={confirming ? `Generate topic ideas for ${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point` : undefined}
                 className={clsx(
                   "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
                   theme.solidButton,
@@ -3372,8 +3445,17 @@ function TopicPillarsSection({
                   </>
                 ) : (
                   <>
-                    {confirming ? `Generate (${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} pt)` : "Generate"}
-                    <ArrowRight className="h-4 w-4 text-white" />
+                    {confirming ? (
+                      <>
+                        <RooPointCost points={-VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} />
+                        <span aria-hidden="true">?</span>
+                      </>
+                    ) : (
+                      <>
+                        Generate
+                        <ArrowRight className="h-4 w-4 text-white" />
+                      </>
+                    )}
                   </>
                 )}
               </button>
@@ -3621,6 +3703,46 @@ function ReturningTopicPickerPage({
     () => filterDiscardedWrittenTopics(bootstrap.writtenTopics ?? [], optimisticallyDiscardedArticleIds),
     [bootstrap.writtenTopics, optimisticallyDiscardedArticleIds],
   );
+  // Split by bucket: "Your recent articles" lists only what's confirmed on
+  // origin/main; everything still in flight (written / PR open / merged-and-
+  // deploying) gets its own "Publishing" section so it never silently vanishes.
+  const publishedArticles = useMemo(
+    () => visibleWrittenTopics.filter((article) => (article.bucket ?? "publishing") === "published"),
+    [visibleWrittenTopics],
+  );
+  const publishingArticles = useMemo(
+    () => visibleWrittenTopics.filter((article) => (article.bucket ?? "publishing") !== "published"),
+    [visibleWrittenTopics],
+  );
+  // Poll the dashboard while something is actively progressing server-side, so
+  // in-flight states (a publish run finishing, a PR merging, on-main
+  // verification) update without a manual refresh. Stuck/failed states need user
+  // action and don't auto-progress, so they never keep us polling.
+  const hasInFlightWork = useMemo(() => {
+    const activeDraft = visibleDraftArticles.some(
+      (draft) => draft.status === "queued" || draft.status === "running",
+    );
+    const inFlightArticle = publishingArticles.some(
+      (article) =>
+        article.publishAttempt?.state === "in_progress" ||
+        article.publishStatus === "pr_open" ||
+        article.publishStatus === "merged",
+    );
+    return activeDraft || inFlightArticle;
+  }, [visibleDraftArticles, publishingArticles]);
+  // Ref so the interval always sees the current revalidator without re-creating
+  // the timer on every state transition (idle -> loading -> idle).
+  const revalidatorRef = useRef(revalidator);
+  revalidatorRef.current = revalidator;
+  useEffect(() => {
+    if (!hasInFlightWork) return;
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      const current = revalidatorRef.current;
+      if (current.state === "idle") current.revalidate();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [hasInFlightWork]);
 
   const submitSelectedTopic = useCallback(() => {
     if (articleSubmitting || !selectedTopic) return;
@@ -4495,6 +4617,29 @@ function ReturningTopicPickerPage({
             onDeleteRequest={setDraftDeleteRequest}
           />
 
+          {publishingArticles.length ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div>
+                <h2 className="text-lg font-black text-slate-950">Publishing</h2>
+                <p className="mt-1 text-sm font-semibold text-slate-500">
+                  On their way to your site — in review, PR open, or merged and deploying. Each moves to recent articles once confirmed on main.
+                </p>
+              </div>
+              <div className="mt-5">
+                {publishingArticles.slice(0, 5).map((article) => (
+                  <RecentArticleRow
+                    key={article.id ?? article.slug ?? article.title}
+                    article={article}
+                    submitting={discardArticleSubmitting}
+                    discarding={discardArticleSubmitting && discardingArticleId === (article.id ?? "")}
+                    skipDiscardConfirmation={skipArticleDiscardConfirmation}
+                    onDiscardRequest={setArticleDiscardRequest}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-lg font-black text-slate-950">Your recent articles</h2>
@@ -4504,8 +4649,8 @@ function ReturningTopicPickerPage({
               </Link>
             </div>
             <div className="mt-5">
-              {visibleWrittenTopics.length ? (
-                visibleWrittenTopics.slice(0, 3).map((article) => (
+              {publishedArticles.length ? (
+                publishedArticles.slice(0, 3).map((article) => (
                   <RecentArticleRow
                     key={article.id ?? article.slug ?? article.title}
                     article={article}
@@ -4518,8 +4663,8 @@ function ReturningTopicPickerPage({
               ) : (
                 <div className="rounded-xl bg-slate-50 px-5 py-8 text-center">
                   <FileText className="mx-auto h-7 w-7 text-slate-400" />
-                  <p className="mt-3 text-sm font-black text-slate-950">No completed articles yet.</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">Your published article memory will appear here.</p>
+                  <p className="mt-3 text-sm font-black text-slate-950">No published articles yet.</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-500">Articles appear here once they’re confirmed live on origin/main.</p>
                 </div>
               )}
             </div>

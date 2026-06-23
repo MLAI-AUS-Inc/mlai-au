@@ -29,6 +29,34 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/where-to-find-ai-events-in-melbourne': {
+      toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/why-australian-startups-need-stronger-ai-communities': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-to-find-an-ai-and-tech-meetup-in-sydney': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/how-to-pitch-your-idea': {
         toc: true,
         howTo: false,

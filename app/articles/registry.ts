@@ -73,6 +73,44 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
+        title: "Best Meetup Websites for AI and Startup Communities in Australia",
+        date: "2026-06-21",
+        description: "Meetup websites for AI and startup groups in Australia, including directories, event pages and community sites.",
+        author: "Content Team",
+        slug: "featured/best-meetup-websites-for-ai-and-startup-communities-in-australia",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-87c11072-ea89-4507-81ff-3443bb29bb11.jpg?alt=media&token=81f170c2-330b-4bdd-ae46-a5e5d535b24a",
+        imageAlt: "Close-up of Australian startup founders sharing AI meetup event pages on a laptop at a casual community gathering",
+    },
+    'featured/where-to-find-ai-events-in-melbourne': {
+        title: "Where to Find AI Events in Melbourne",
+        date: "2026-06-21",
+        description: "AI events Melbourne for meetups, hackathons, research hubs and enterprise conferences, with tips for choosing the right format.",
+        author: "Content Team",
+        slug: "featured/where-to-find-ai-events-in-melbourne",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-63ff824e-6618-4f4b-9b2b-bf426360399f.jpg?alt=media&token=bd28dfd2-ff9d-43bd-b416-dbacabf52574",
+        imageAlt: "Close-up candid of Melbourne AI meetup attendees discussing laptops and event badges at a tech venue",
+    },
+    'featured/why-australian-startups-need-stronger-ai-communities': {
+        title: "Why Australian Startups Need Stronger AI Communities",
+        date: "2026-06-21",
+        description: "Australian startups grow faster when AI communities connect talent, validation, feedback and practical pathways from tools to trusted products.",
+        author: "Content Team",
+        slug: "featured/why-australian-startups-need-stronger-ai-communities",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-23950c23-bc67-4450-8674-8c111d188163.jpg?alt=media&token=ca641826-f54e-48e4-97c3-c4dabb3bffa5",
+        imageAlt: "Australian startup founders discussing AI tools and feedback in a close-up candid community meetup",
+        hasContent: true,
+    },
+    'featured/how-to-find-an-ai-and-tech-meetup-in-sydney': {
+        title: "How to Find an AI and Tech Meetup in Sydney",
+        date: "2026-06-16",
+        description: "Meetup in Sydney for AI, tech and startup networking.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-find-an-ai-and-tech-meetup-in-sydney",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-46210747-b902-4e9d-8ffa-f3df1058658b.jpg?alt=media&token=2ecc04f5-87e3-4795-aba4-d59f1905b8e5",
+        imageAlt: "Close-up candid of Sydney tech meetup attendees networking over laptops at an AI startup event",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",

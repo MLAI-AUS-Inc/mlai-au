@@ -85,6 +85,7 @@ const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
     "google_drive",
     "slack",
     "linear",
+    "luma",
     "manual_documents",
 ]);
 
@@ -105,6 +106,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
 const COMPACT_OPTIONAL_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
     "google_analytics",
     "stripe",
+    "luma",
     "linear",
     "notion",
     "google_drive",
@@ -2812,7 +2814,7 @@ export default function CreateUpdate() {
         const byKey = new Map(compactSources.map((source) => [source.key, source]));
         return COMPACT_OPTIONAL_SOURCE_KEYS
             .map((key) => byKey.get(key))
-            .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
+            .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source && isConnectedInputSource(source)));
     }, [compactSources]);
     const selectedConnectedSourceLabels = useMemo(
         () => compactOptionalSources
@@ -3415,13 +3417,14 @@ export default function CreateUpdate() {
                 const runInputSources = (statusResponse.run?.inputSources || []).filter(
                     (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
                 );
-                // Hydrate the source picker from the run ONCE per run (refresh recovery).
-                // Re-applying on every 5s poll would clobber a user's manual source
-                // toggles (e.g. adding Google Analytics) while a draft is running.
+                // Hydrate the source picker from the run for refresh-recovery only —
+                // when the founder hasn't picked any sources yet. Never overwrite a
+                // live selection (e.g. a freshly-ticked Google Analytics) when a run
+                // starts, or the card flips to unchecked and drops out of the run.
                 const runId = statusResponse.runId ?? null;
                 if (runInputSources.length > 0 && runId && hydratedRunInputSourcesRef.current !== runId) {
                     hydratedRunInputSourcesRef.current = runId;
-                    setSelectedDraftInputSources(new Set(runInputSources));
+                    setSelectedDraftInputSources((previous) => (previous.size === 0 ? new Set(runInputSources) : previous));
                 }
                 setMonthConfirmed(true);
                 setSelectedDraftStage("reporting");

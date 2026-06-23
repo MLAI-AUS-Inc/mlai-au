@@ -13,6 +13,7 @@ import {
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
+import { getCurrentRooPointsBalance } from "~/lib/roo-points";
 import {
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
@@ -24,6 +25,7 @@ import {
   DocumentTextIcon,
   BuildingOffice2Icon,
   MegaphoneIcon,
+  BoltIcon,
 } from "@heroicons/react/24/outline";
 
 const BASE_FOUNDER_NAVIGATION = [
@@ -39,6 +41,7 @@ const BASE_FOUNDER_NAVIGATION = [
     ],
   },
   { name: "Vibe Marketing", href: "/founder-tools/marketing", icon: MegaphoneIcon },
+  { name: "Upgrades", href: "/founder-tools/upgrades", icon: BoltIcon },
   { name: "Data Sources", href: "/founder-tools/data-sources", icon: CircleStackIcon },
   { name: "My Companies", href: "/founder-tools/companies", icon: BuildingOffice2Icon },
 ];
@@ -60,10 +63,23 @@ export const meta: Route.MetaFunction = () => [
 ];
 
 export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  if (shouldRefreshShellAfterAction(args.actionResult)) {
+    return true;
+  }
   if (shouldSkipVibeMarketingCreateRevalidation(args)) {
     return false;
   }
   return args.defaultShouldRevalidate;
+}
+
+function shouldRefreshShellAfterAction(actionResult: unknown) {
+  if (!actionResult || typeof actionResult !== "object") return false;
+  const payload = actionResult as Record<string, unknown>;
+  const intent = typeof payload.intent === "string" ? payload.intent : "";
+  if (intent !== "start-content-island-discovery") return false;
+  const error = typeof payload.error === "string" ? payload.error.trim() : "";
+  const runId = typeof payload.runId === "string" ? payload.runId.trim() : "";
+  return Boolean(runId && !error);
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -87,16 +103,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect("/founder-tools/company-setup");
   }
 
+  const rooPointsBalance = await getCurrentRooPointsBalance(env, request);
+
   return {
     user: vibeContext.authUser,
     profile: vibeContext.profile,
     appUser: vibeContext.appUser,
+    rooPointsBalance,
     backendBaseUrl: String(env.BACKEND_BASE_URL || "https://api.mlai.au"),
   };
 }
 
 export default function VibeRaisingApp() {
-  const { user, backendBaseUrl } = useLoaderData<typeof loader>();
+  const { user, backendBaseUrl, rooPointsBalance } = useLoaderData<typeof loader>();
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -111,6 +130,7 @@ export default function VibeRaisingApp() {
       user={user}
       navigation={BASE_FOUNDER_NAVIGATION}
       userNavigation={FOUNDER_USER_NAVIGATION}
+      rooPointsBalance={rooPointsBalance}
       logoutAction="/founder-tools/logout"
     >
       {showAnnouncement ? (

@@ -8,6 +8,7 @@ const ROOT_RELATIVE_LINK_RE = /\b(?:buttonHref|href|to)\s*=\s*["'](\/[^"']*)["']
 const VALID_STATIC_ROUTES = new Set([
   "/",
   "/articles",
+  "/community",
   "/contact",
   "/dashboard",
   "/events",
@@ -17,6 +18,7 @@ const VALID_STATIC_ROUTES = new Set([
   "/platform/login",
   "/platform/logout",
   "/privacy",
+  "/resources",
   "/roo",
   "/sponsors",
   "/terms",
@@ -43,8 +45,6 @@ const VALID_STATIC_ROUTES = new Set([
   "/vibe-raising/create-update",
   "/vibe-raising/discover",
   "/vibe-raising/logout",
-  "/ai-founder-community-pitching-ideas",
-  "/practical-ai-learning-beginners-builders",
 ]);
 
 const VALID_ARTICLE_ROUTES = new Set(

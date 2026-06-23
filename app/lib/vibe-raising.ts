@@ -20,6 +20,9 @@ import type {
   VibeRaisingGmailPreview,
   VibeRaisingGoogleAnalyticsPropertiesResponse,
   VibeRaisingGoogleAnalyticsProperty,
+  VibeRaisingLumaEvent,
+  VibeRaisingLumaEventsResponse,
+  VibeRaisingLumaMetricOption,
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
@@ -91,6 +94,8 @@ const GMAIL_PREVIEW_PATH = "/api/v1/integrations/gmail/preview";
 const GMAIL_CONNECTION_PATH = "/api/v1/integrations/gmail/connection";
 const INPUT_SOURCES_SYNC_PATH = "/api/v1/integrations/sources/sync";
 const LUMA_CONNECT_PATH = "/api/v1/integrations/luma/connect";
+const LUMA_EVENTS_PATH = "/api/v1/integrations/luma/events";
+const LUMA_SELECTIONS_PATH = "/api/v1/integrations/luma/selections";
 const SLACK_CHANNELS_PATH = "/api/v1/integrations/slack/channels";
 const SLACK_CHANNEL_SELECTIONS_PATH = "/api/v1/integrations/slack/channel-selections";
 const SLACK_PREVIEW_PATH = "/api/v1/integrations/slack/preview";
@@ -3205,6 +3210,92 @@ export async function saveVibeRaisingGoogleAnalyticsPropertySelections(
       ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
       : [],
   };
+}
+
+function normalizeLumaEvent(raw: unknown): VibeRaisingLumaEvent | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const eventId =
+    asNullableString(payload.eventId) ??
+    asNullableString(payload.event_id) ??
+    asNullableString(payload.id);
+  if (!eventId) return null;
+  const name =
+    asNullableString(payload.name) ??
+    asNullableString(payload.eventName) ??
+    asNullableString(payload.event_name) ??
+    eventId;
+  return {
+    id: eventId,
+    eventId,
+    name,
+    eventUrl: asNullableString(payload.eventUrl) ?? asNullableString(payload.event_url),
+    startAt: asNullableString(payload.startAt) ?? asNullableString(payload.start_at),
+    selected: asBoolean(payload.selected),
+  };
+}
+
+function normalizeLumaMetricOptions(raw: unknown): VibeRaisingLumaMetricOption[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const payload = item as Record<string, unknown>;
+      const key = asNullableString(payload.key);
+      if (!key) return null;
+      return { key, label: asNullableString(payload.label) ?? key };
+    })
+    .filter((value): value is VibeRaisingLumaMetricOption => value !== null);
+}
+
+function normalizeLumaEventsResponse(
+  payload: Record<string, unknown>,
+  eventKeys: string[],
+): VibeRaisingLumaEventsResponse {
+  const rawWarnings = payload.warnings;
+  const rawSelectedMetrics = payload.selectedMetrics ?? payload.selected_metrics;
+  return {
+    accountLabel: asNullableString(payload.accountLabel) ?? asNullableString(payload.account_label),
+    events: collectRawList(payload, eventKeys)
+      .map(normalizeLumaEvent)
+      .filter((value): value is VibeRaisingLumaEvent => value !== null),
+    nextCursor: asNullableString(payload.nextCursor) ?? asNullableString(payload.next_cursor),
+    selectedMetrics: Array.isArray(rawSelectedMetrics)
+      ? rawSelectedMetrics.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+    availableMetrics: normalizeLumaMetricOptions(payload.availableMetrics ?? payload.available_metrics),
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+export async function getVibeRaisingLumaEvents(
+  backendBaseUrl: string,
+  options: { cursor?: string | null; limit?: number } = {},
+): Promise<VibeRaisingLumaEventsResponse> {
+  const searchParams = new URLSearchParams();
+  if (options.cursor) searchParams.set("cursor", options.cursor);
+  if (typeof options.limit === "number") searchParams.set("limit", String(options.limit));
+  const path = searchParams.toString() ? `${LUMA_EVENTS_PATH}?${searchParams.toString()}` : LUMA_EVENTS_PATH;
+  const payload = await requestBrowserJson<Record<string, unknown>>(backendBaseUrl, path, { method: "GET" });
+  return normalizeLumaEventsResponse(payload, ["events"]);
+}
+
+export async function saveVibeRaisingLumaSelections(
+  backendBaseUrl: string,
+  eventIds: string[],
+  metrics: string[],
+): Promise<VibeRaisingLumaEventsResponse> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    LUMA_SELECTIONS_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({ eventIds, metrics }),
+    },
+  );
+  return normalizeLumaEventsResponse(payload, ["selectedEvents", "selected_events", "events"]);
 }
 
 function normalizeSlackMessagePreview(raw: unknown): VibeRaisingSlackMessagePreview | null {

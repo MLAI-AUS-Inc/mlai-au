@@ -15,7 +15,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, Form } from 'react-router';
 import { ImageWithFallback } from './ImageWithFallback';
+import { ROO_POINTS_ANIMATED_GIF_URL, ROO_POINTS_COIN_URL } from '~/components/RooPointCost';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
+import type { RooPointsBalance } from '~/lib/roo-points';
 import type { User } from '~/types/user';
 
 interface AuthenticatedLayoutProps {
@@ -23,6 +25,7 @@ interface AuthenticatedLayoutProps {
     user: User;
     navigation?: NavigationItem[];
     userNavigation?: { name: string; href: string }[];
+    rooPointsBalance?: RooPointsBalance | null;
     logoutAction?: string;
 }
 
@@ -39,7 +42,61 @@ function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
-export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation, logoutAction = "/platform/logout" }: AuthenticatedLayoutProps) {
+function formatRooPointsBalance(balance: number) {
+    return new Intl.NumberFormat("en-AU", { maximumFractionDigits: 0 }).format(balance);
+}
+
+function RooPointsBadge({ balance }: { balance: number }) {
+    const formattedBalance = formatRooPointsBalance(balance);
+    const [isHovering, setIsHovering] = useState(false);
+    const [animationKey, setAnimationKey] = useState(0);
+    const animationSrc = isHovering
+        ? `${ROO_POINTS_ANIMATED_GIF_URL}${ROO_POINTS_ANIMATED_GIF_URL.includes("?") ? "&" : "?"}hover=${animationKey}`
+        : ROO_POINTS_COIN_URL;
+
+    const startAnimation = () => {
+        if (
+            typeof window !== "undefined" &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+            return;
+        }
+        setAnimationKey((current) => current + 1);
+        setIsHovering(true);
+    };
+
+    const stopAnimation = () => {
+        setIsHovering(false);
+    };
+
+    return (
+        <div
+            role="img"
+            tabIndex={0}
+            onPointerEnter={startAnimation}
+            onPointerLeave={stopAnimation}
+            onFocus={startAnimation}
+            onBlur={stopAnimation}
+            className="inline-flex h-9 shrink-0 cursor-default select-none items-center gap-2 rounded-full border border-[rgba(15,23,42,0.12)] bg-white/85 px-2.5 text-[var(--vr-color-text)] shadow-sm transition hover:bg-white focus:outline-none focus:ring-4 focus:ring-violet-100"
+            aria-label={`${formattedBalance} Roo Points`}
+            title={`${formattedBalance} Roo Points`}
+        >
+            <ImageWithFallback
+                src={animationSrc}
+                fallbackSrc={MLAI_LOGO_URL}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                width={28}
+                height={28}
+                className="pointer-events-none h-7 w-7 shrink-0 rounded-full object-cover"
+            />
+            <span className="pointer-events-none tabular-nums text-sm font-black leading-none">{formattedBalance}</span>
+        </div>
+    );
+}
+
+export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation, rooPointsBalance, logoutAction = "/platform/logout" }: AuthenticatedLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const location = useLocation();
@@ -432,6 +489,9 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                 <div />
                             )}
                             <div className={classNames("ml-auto flex shrink-0 items-center gap-x-2 sm:gap-x-4 lg:gap-x-6", isFounderToolsApp && "hidden sm:flex")}>
+                                {isFounderToolsApp && rooPointsBalance ? (
+                                    <RooPointsBadge balance={rooPointsBalance.balance} />
+                                ) : null}
                                 <Menu as="div" className="relative">
                                     <Menu.Button className="-m-1.5 flex items-center p-1.5">
                                         <span className="sr-only">Open user menu</span>

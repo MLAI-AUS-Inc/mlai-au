@@ -22,7 +22,7 @@ export interface AuthorRegistryEntry {
 
 const authorRegistry = {
     samDonegan: {
-        personId: 'https://www.mlai.au/#sam-donegan',
+        personId: 'https://mlai.au/#sam-donegan',
         name: 'Dr Sam Donegan',
         honorificPrefix: 'Dr',
         credentials: 'MD, BBioMed',
@@ -30,7 +30,7 @@ const authorRegistry = {
         bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
         affiliation: {
             name: 'MLAI',
-            url: 'https://www.mlai.au/',
+            url: 'https://mlai.au/',
         },
         sameAs: [
             { label: 'LinkedIn', href: 'https://www.linkedin.com/in/samueldonegan' },
@@ -39,7 +39,7 @@ const authorRegistry = {
         avatarAlt: 'Dr Sam Donegan',
     },
     junKaiChang: {
-        personId: 'https://www.mlai.au/#jun-kai-chang',
+        personId: 'https://mlai.au/#jun-kai-chang',
         name: 'Jun Kai (Luc) Chang',
         role: 'AI Software Developer',
         bio: 'Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.',
@@ -55,13 +55,13 @@ const authorRegistry = {
         knowsAbout: ['Neural Networks', 'FPGA', 'Verilog', 'Machine Learning'],
     },
     juliaPonder: {
-        personId: 'https://www.mlai.au/#julia-ponder',
+        personId: 'https://mlai.au/#julia-ponder',
         name: 'Julia Ponder',
         role: 'Technical Writer',
         bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
         affiliation: {
             name: 'MLAI',
-            url: 'https://www.mlai.au/',
+            url: 'https://mlai.au/',
         },
         sameAs: [
             { label: 'LinkedIn', href: 'https://www.linkedin.com/in/julia-ponder-australia/' },
@@ -71,7 +71,7 @@ const authorRegistry = {
         knowsAbout: ['Technical Writing', 'Documentation', 'Product Testing'],
     },
     shivangShekhar: {
-        personId: 'https://www.mlai.au/#shivang-shekhar',
+        personId: 'https://mlai.au/#shivang-shekhar',
         name: 'Shivang Shekhar',
         role: 'Technical Writer',
         bio: 'Shivang graduated as a mechanical engineer with a masters in chemistry. Currently he is a final year master in AI student at Monash who is highly curious in keeping up to date on AI trends and Advancements',

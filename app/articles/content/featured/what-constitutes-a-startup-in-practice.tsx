@@ -281,7 +281,7 @@ export default function ArticleContent() {
             title="Need a clearer way to assess your venture?"
             body="Use the startup test in this article to check whether your idea is built for scalable growth, still facing product-market uncertainty, or better described as a small business."
             buttonText="Explore founder resources"
-            buttonHref="/ai-founder-community-pitching-ideas"
+            buttonHref="/articles"
           />
         </div>
       </div>

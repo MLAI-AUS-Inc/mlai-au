@@ -1,0 +1,203 @@
+/* ============================================================
+   MLAI PRESS KIT — Media & Brand Kit page
+   Ported from the Claude Design handoff (design_handoff_press_kit).
+   Brand: rounded · flat · borderless · zero-shadow · high-contrast.
+
+   IMPORTANT: Everything is scoped under `.pk-scope` so it only
+   applies on /press-kit and can never leak onto other routes.
+
+   Fonts: Oswald + Roboto load globally via app/root.tsx; Source
+   Serif 4 (quotes) loads via the press-kit route's `links` export.
+   ============================================================ */
+
+.pk-scope {
+  /* brand tokens */
+  --teal: #00ffd7;
+  --orange: #ff3c00;
+  --purple: #4b0db3;
+  --blue: #3637dc;
+  --red: #ff003d;
+  --yellow: #fefc22;
+  --ink: #1a1a1a;
+  --ink2: #2c2c2c;
+  --ink3: #4a4a4a;
+  --cream: #f5f0e6;
+  --cream2: #ebe4d4;
+  --cream-soft: #b8b2a4; /* secondary text on dark */
+
+  --fd: 'Oswald', 'Arial Narrow', sans-serif;
+  --fb: 'Roboto', system-ui, sans-serif;
+  --fq: 'Source Serif 4', Georgia, serif;
+
+  /* fixed production accents (Tweaks panel omitted) */
+  --pk-accent: var(--teal);
+  --pk-hot: var(--orange);
+
+  --radius: 22px;
+  --radius-lg: 32px;
+  --radius-sm: 12px;
+
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--fb);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.pk-scope * { box-sizing: border-box; }
+.pk-scope img { display: block; max-width: 100%; }
+.pk-scope a { color: inherit; }
+
+.pk-scope .disp {
+  font-family: var(--fd);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.9;
+  margin: 0;
+}
+
+/* ---------- shell ---------- */
+.pk-scope .pk-page { background: var(--cream); padding: 16px; }
+.pk-scope .pk-shell { max-width: 1240px; margin: 0 auto; }
+.pk-scope .pk-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+.pk-scope .pk-hero-box { border-radius: 36px; overflow: hidden; margin-bottom: 16px; }
+
+.pk-scope .pk-cols { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 16px; align-items: start; }
+.pk-scope .pk-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* sections are rounded panels */
+.pk-scope .pk-section { padding: clamp(28px, 3.2vw, 46px); border-radius: 32px; background: #fff; scroll-margin-top: 22px; }
+.pk-scope .pk-section.band-ink { background: var(--ink); }
+.pk-scope .pk-section .pk-wrap { max-width: none; margin: 0; padding: 0; }
+
+/* right-side JUMP TO rail */
+.pk-scope .pk-jumpto { position: sticky; top: 16px; background: #fff; border-radius: 28px; padding: 20px 14px; align-self: start; }
+.pk-scope .pk-jumpto .jt-kicker { font-family: var(--fb); font-weight: 800; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--purple); margin: 4px 12px 12px; }
+.pk-scope .pk-jumpto nav { display: flex; flex-direction: column; gap: 2px; }
+.pk-scope .pk-jumpto a { font-family: var(--fb); font-size: 15px; color: var(--ink3); text-decoration: none; padding: 9px 14px; border-radius: 999px; transition: background .12s ease, color .12s ease; }
+.pk-scope .pk-jumpto a:hover { color: var(--ink); background: var(--cream2); }
+.pk-scope .pk-jumpto a.active { background: var(--ink); color: #fff; font-weight: 600; }
+
+/* download CTA — replaces footer */
+.pk-scope .pk-dl-cta { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 34px 24px 20px; }
+.pk-scope .pk-dl-cta p { font-family: var(--fb); font-size: 16px; line-height: 1.5; color: var(--ink3); max-width: 46ch; margin: 0; }
+
+@media (max-width: 900px) {
+  .pk-scope .pk-cols { grid-template-columns: 1fr; }
+  .pk-scope .pk-jumpto { display: none; }
+}
+
+/* alternating band */
+.pk-scope .band-ink { background: var(--ink); color: var(--cream); }
+.pk-scope .band-ink .disp, .pk-scope .band-ink h1, .pk-scope .band-ink h2, .pk-scope .band-ink h3 { color: var(--cream); }
+
+/* ---------- eyebrow / section head ---------- */
+.pk-scope .eyebrow {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--fb); font-weight: 800; font-size: 13px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink3);
+}
+.pk-scope .band-ink .eyebrow { color: var(--teal); }
+
+.pk-scope .sec-head { margin: 14px 0 8px; }
+.pk-scope .sec-head .disp { font-size: clamp(34px, 5vw, 60px); }
+.pk-scope .sec-sub {
+  font-family: var(--fb); font-size: 17px; line-height: 1.55;
+  color: var(--ink3); max-width: 62ch; margin: 0;
+}
+.pk-scope .band-ink .sec-sub { color: var(--cream-soft); }
+
+/* ---------- buttons ---------- */
+.pk-scope .btn {
+  font-family: var(--fd); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em; font-size: 15px; line-height: 1;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 14px 24px; border-radius: 999px; border: none;
+  cursor: pointer; white-space: nowrap; text-decoration: none;
+  transition: transform .12s ease, filter .12s ease, background .12s ease;
+}
+.pk-scope .btn:hover { transform: translateY(-2px); }
+.pk-scope .btn:active { transform: scale(.96); filter: brightness(.9); }
+.pk-scope .btn--hot { background: var(--pk-hot); color: #fff; }
+.pk-scope .btn--accent { background: var(--pk-accent); color: var(--ink); }
+.pk-scope .btn--ink { background: var(--ink); color: var(--cream); }
+.pk-scope .btn--cream { background: var(--cream); color: var(--ink); }
+.pk-scope .btn--ghost { background: transparent; color: var(--ink); border: 2.5px solid var(--ink); }
+.pk-scope .band-ink .btn--ghost { color: var(--cream); border-color: var(--cream); }
+.pk-scope .btn--sm { padding: 9px 16px; font-size: 13px; }
+.pk-scope .btn--lg { padding: 17px 30px; font-size: 18px; }
+
+/* ---------- pills ---------- */
+.pk-scope .pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--fb); font-weight: 700; font-size: 12.5px;
+  letter-spacing: 0.02em; padding: 6px 14px; border-radius: 999px;
+}
+.pk-scope .pill--teal { background: var(--teal); color: var(--ink); }
+.pk-scope .pill--ink { background: var(--ink); color: var(--cream); }
+
+/* ---------- cards ---------- */
+.pk-scope .card { background: #fff; border-radius: var(--radius); padding: 28px; border: none; }
+.pk-scope .band-ink .card { background: var(--ink2); }
+
+/* ---------- quote type ---------- */
+.pk-scope .pk-quote {
+  font-family: var(--fq); font-style: italic; font-weight: 400;
+  line-height: 1.4; color: var(--ink);
+}
+
+/* ---------- toast ---------- */
+.pk-scope-toasts {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none;
+}
+.pk-scope-toasts .toast {
+  background: #1a1a1a; color: #f5f0e6;
+  font-family: 'Oswald', sans-serif; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.03em; font-size: 14px;
+  padding: 11px 20px; border-radius: 999px;
+  display: flex; align-items: center; gap: 9px;
+  animation: pk-toast-in .22s cubic-bezier(.2, 1.3, .4, 1);
+}
+.pk-scope-toasts .toast .dot { width: 9px; height: 9px; border-radius: 999px; background: #00ffd7; }
+@keyframes pk-toast-in { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
+
+/* ---------- grids ---------- */
+.pk-scope .grid { display: grid; gap: 18px; }
+.pk-scope .grid > * { min-width: 0; }
+.pk-scope .cols-2 { grid-template-columns: repeat(2, 1fr); }
+.pk-scope .cols-3 { grid-template-columns: repeat(3, 1fr); }
+.pk-scope .cols-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1000px) { .pk-scope .cols-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 860px) { .pk-scope .cols-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .pk-scope .cols-2, .pk-scope .cols-3, .pk-scope .cols-4 { grid-template-columns: 1fr; } }
+
+/* ---------- hero animations ---------- */
+@keyframes pk-roo-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+.pk-scope .roo-float { animation: pk-roo-float 5s ease-in-out infinite; }
+
+@keyframes pk-coin-blink {
+  0%, 100% { transform: scaleX(1); opacity: 1; }
+  50% { transform: scaleX(.7); opacity: .55; }
+}
+.pk-scope .coin-blink { display: inline-block; animation: pk-coin-blink 1.6s ease-in-out infinite; transform-origin: left center; }
+
+/* hero grid collapses on small screens (mascot above copy) */
+.pk-scope .pk-hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: center; }
+@media (max-width: 760px) {
+  .pk-scope .pk-hero-grid { grid-template-columns: 1fr; }
+  .pk-scope .pk-hero-mascot { width: min(56vw, 280px) !important; margin: 0 auto; }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .pk-scope .roo-float, .pk-scope .coin-blink { animation: none; }
+  .pk-scope .btn:hover { transform: none; }
+}

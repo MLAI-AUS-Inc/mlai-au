@@ -18,6 +18,7 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
+import { RooPointCost } from "~/components/RooPointCost";
 import {
   CustomTopicDecisionCard,
   TopicDecisionCard,
@@ -641,10 +642,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "connect-github") {
       const githubRepo = stringFromForm(formData, "githubRepo");
       const forceReconnect = stringFromForm(formData, "forceReconnect") === "true";
+      const returnUrl = new URL(
+        "/founder-tools/marketing/create?step=articleSystem",
+        new URL(request.url).origin,
+      ).toString();
       const response = await connectVibeMarketingGithub(
         env,
         request,
         {
+          returnUrl,
+          return_url: returnUrl,
           ...(githubRepo && !forceReconnect ? { githubRepo, github_repo: githubRepo } : {}),
           ...(forceReconnect ? { forceReconnect: true, force_reconnect: true } : {}),
         },
@@ -980,6 +987,26 @@ export default function FounderToolsMarketingCreate() {
   const setupChildProgressAtRef = useRef(Date.now());
   const setupChildProgressSignatureRef = useRef("");
   const [pageVisible, setPageVisible] = useState(true);
+  // Returning from the GitHub App install, the backend appends
+  // `?github=connected&repo=...`. Kick off the repo scan automatically so the
+  // founder lands back on the article-system step with the scan already running.
+  // The start-scan action redirects to `?scanRunId=...`, which clears the
+  // `github` param so this never re-fires on refresh.
+  const autoScanFetcher = useFetcher();
+  const autoScanStartedRef = useRef(false);
+  const justConnectedGithub = searchParams.get("github") === "connected";
+  useEffect(() => {
+    if (autoScanStartedRef.current) return;
+    if (!justConnectedGithub) return;
+    const repo = (searchParams.get("repo") || "").trim() || bootstrap.settings.githubRepo || "";
+    if (!repo) return; // repo still needs selecting (multiple_repos / no_repo) — leave it to the UI
+    autoScanStartedRef.current = true;
+    const formData = new FormData();
+    formData.set("intent", "start-scan");
+    formData.set("githubRepo", repo);
+    formData.set("scanPurpose", "inventory");
+    autoScanFetcher.submit(formData, { method: "post" });
+  }, [justConnectedGithub, searchParams, bootstrap.settings.githubRepo, autoScanFetcher]);
   const articleSetupState = bootstrap.articleSetupState ?? null;
   const canonicalScanRun =
     findRunById(bootstrap.latestRuns, articleSetupState?.scanRunId) ??
@@ -1613,7 +1640,16 @@ export default function FounderToolsMarketingCreate() {
                     </div>
                     <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
                       {articleStartPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
-                      {articleStartPending ? "Starting article..." : `Generate draft article (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)`}
+                      {articleStartPending ? (
+                        "Starting article..."
+                      ) : (
+                        <>
+                          <span>Generate draft article</span>
+                          <span aria-hidden="true">(</span>
+                          <RooPointCost points={-VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} />
+                          <span aria-hidden="true">)</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

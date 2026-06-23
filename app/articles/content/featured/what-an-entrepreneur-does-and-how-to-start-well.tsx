@@ -278,7 +278,7 @@ export default function ArticleContent() {
             title="Use practical startup resources"
             body="If you are moving from idea to action, use simple planning tools, startup checklists, and community support to test your offer, organise setup, and make the next steps clearer."
             buttonText="Explore founder resources"
-            buttonHref="/ai-founder-community-pitching-ideas"
+            buttonHref="/articles"
           />
         </div>
       </div>

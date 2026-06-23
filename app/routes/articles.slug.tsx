@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useMemo } from "react";
+import { redirect } from "react-router";
 import {
     getArticleBySlug,
     type ArticleWithSlug,
@@ -35,6 +36,13 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const slug = params["*"]; // Catch-all param
     if (!slug) {
         throw new Response("Not Found", { status: 404 });
+    }
+
+    // Defensive: legacy/external links sometimes point at the literal glob
+    // "/articles/*". Redirect that exact junk path to the index rather than
+    // 404ing. Kept narrow (exact "*") so genuinely missing articles still 404.
+    if (slug === "*") {
+        throw redirect("/articles", 301);
     }
 
     const article = getArticleBySlug(slug);

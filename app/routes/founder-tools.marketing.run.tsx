@@ -6,9 +6,13 @@ import {
   ArrowLeftIcon,
   ArrowPathIcon,
   ArrowRightIcon,
+  CalendarDaysIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
+  ClockIcon,
   EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
+  GlobeAltIcon,
   LockClosedIcon,
   PaperAirplaneIcon,
   PlayIcon,
@@ -24,6 +28,7 @@ import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPa
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
+import { RooPointCost } from "~/components/RooPointCost";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { getEnv } from "~/lib/env.server";
 import {
@@ -71,6 +76,7 @@ import type {
   VibeMarketingComponentCommentAnchor,
   VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackComment,
+  VibeMarketingNotificationChannel,
   VibeMarketingBootstrap,
   VibeMarketingGithubReposResponse,
   VibeMarketingRunSummary,
@@ -300,9 +306,33 @@ function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
   return false;
 }
 
+function booleanFromUnknown(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes"].includes(normalized)) return true;
+    if (["false", "0", "no"].includes(normalized)) return false;
+  }
+  return null;
+}
+
+function accountEmailVerifiedFromAuthUser(authUser: Record<string, unknown>) {
+  const explicitVerified =
+    booleanFromUnknown(authUser.emailVerified) ??
+    booleanFromUnknown(authUser.email_verified) ??
+    booleanFromUnknown(authUser.isEmailVerified) ??
+    booleanFromUnknown(authUser.is_email_verified) ??
+    booleanFromUnknown(authUser.verifiedEmail) ??
+    booleanFromUnknown(authUser.verified_email);
+
+  if (explicitVerified !== null) return explicitVerified;
+
+  return booleanFromUnknown(authUser.isActive) ?? booleanFromUnknown(authUser.is_active) ?? true;
+}
+
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  await requireVibeRaisingFounder(env, request);
+  const { authUser, appUser } = await requireVibeRaisingFounder(env, request);
   const runId = params.runId ?? "";
   const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
   const run = await getVibeMarketingRun(env, request, runId);
@@ -329,6 +359,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     bootstrap,
     setupRun,
     githubRepos,
+    accountEmail: appUser.email || authUser.email || null,
+    accountEmailVerified: accountEmailVerifiedFromAuthUser(authUser as unknown as Record<string, unknown>),
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job", runId),
     },
@@ -560,7 +592,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
+        return { intent, error: "Publish the articles setup before generating articles. If you've already published it, refresh status." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
@@ -1150,14 +1182,14 @@ function ArticleSystemSetupPreviewPanel({
         <div>
           <h2 className="text-lg font-black text-gray-950">Articles setup preview</h2>
           <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-            Review the drafted articles/blogs setup before a setup PR is created for the website repo.
+            Review the drafted articles/blogs setup before it's published to the website repo.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
             {repo ? <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{repo}</span> : null}
             {route ? <span className="rounded-full bg-violet-50 px-3 py-1 text-violet-700">{route}</span> : null}
             {prUrl ? (
               <a href={prUrl} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 hover:text-emerald-900">
-                Open PR
+                View changes
               </a>
             ) : null}
           </div>
@@ -1278,9 +1310,9 @@ function ArticleSystemSetupPreviewPanel({
       {manualMergeRequired ? (
         <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-amber-950">Manual merge required</p>
+            <p className="text-sm font-black text-amber-950">Publishing needs a quick manual step</p>
             <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
-              Merge the setup PR in GitHub, then refresh merge status to unlock article generation.
+              Open the changes in GitHub to finish publishing, then refresh status to unlock article generation.
             </p>
           </div>
           {prUrl ? (
@@ -1290,7 +1322,7 @@ function ArticleSystemSetupPreviewPanel({
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-amber-700"
             >
-              Open setup PR
+              View changes
             </a>
           ) : null}
         </div>
@@ -1413,7 +1445,7 @@ function ArticleSystemSetupPreviewUnavailable({
     (previewActive || actionRetryPending
     ? ""
     : isGithubAppWriteAccessError
-      ? "MLAI Tools can read this repository, but needs Contents: Read/Write and Pull requests: Read/Write to create the setup PR."
+      ? "MLAI Tools can read this repository, but needs Contents: Read/Write and Pull requests: Read/Write to publish the articles setup."
       : isNextAppRootLayoutMissing
         ? "Content Factory found a Next.js App Router project but could not confirm a root app/layout.* file from the latest repository context. Re-run the repository scan, then retry setup."
       : rawError || (terminalFailure ? "The articles setup build did not advance." : ""));
@@ -2505,11 +2537,15 @@ function ArticleSetupPublishDetail({
   bootstrap,
   isSubmitting,
   isActionPending,
+  accountEmail,
+  accountEmailVerified,
 }: {
   run: VibeMarketingRunSummary;
   bootstrap: VibeMarketingBootstrap;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
+  accountEmail?: string | null;
+  accountEmailVerified?: boolean | null;
 }) {
   const prUrl = articleSystemSetupPrUrl(run);
   const prNumber = articleSystemSetupPrNumber(run);
@@ -2536,97 +2572,127 @@ function ArticleSetupPublishDetail({
     .map((channel) => ({ slack: "Slack", email: "Email", whatsapp: "WhatsApp" })[channel.channelType])
     .filter(Boolean);
 
+  // Present the two underlying setup steps (create, then merge) as one friendly "Publish" action.
+  const publishPending = approvePending || mergePending;
+  const publishIntent = prUrl && !setupMerged ? "merge-setup-pr" : "approve";
+  const publishLabel = publishPending
+    ? "Publishing..."
+    : prCreateFailed || mergeBlockedReason
+      ? "Retry publish"
+      : "Publish";
+  // Keep the backend's git phrasing out of the UI when a publish can't finish automatically.
+  const blockedMessage =
+    mergeBlockedReason && /merge the setup pr/i.test(mergeBlockedReason)
+      ? "Publishing couldn't finish automatically — retry, or view changes to check the latest status."
+      : mergeBlockedReason;
+  const cardStatus = setupMerged
+    ? "complete"
+    : blockedMessage || prCreateFailed
+      ? "blocked"
+      : publishPending || prUrl
+        ? "running"
+        : "ready";
+  const cardEyebrow = setupMerged
+    ? "Published"
+    : blockedMessage
+      ? "Needs a retry"
+      : prCreateFailed
+        ? "Retry needed"
+        : prUrl
+          ? checksStatus
+            ? `Checks ${checksStatus}`
+            : "Publishing"
+          : "Ready";
+
   return (
     <div className="space-y-5">
       <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish setup PR</p>
+            <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish &amp; automate</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish articles setup</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Review the setup PR and merge it after checks pass. Once merged, article generation unlocks without a repo re-scan.
+              Publish the articles setup — it goes live with the next site build. Once it&apos;s published, article generation unlocks and you can turn on daily research reminders.
             </p>
           </div>
-          <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "needs_action" : "ready"} />
+          <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "running" : "ready"} />
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
-          <PublishFlowCard title="Setup PR" status={prUrl ? "complete" : prCreateFailed ? "needs_action" : "ready"} eyebrow={prUrl ? "PR ready" : prCreateFailed ? "Retry needed" : "Ready"}>
-            {prUrl ? (
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <PublishFlowCard title="Publish" status={cardStatus} eyebrow={cardEyebrow}>
+            {setupMerged ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  {prNumber ? `Pull request #${prNumber} is ready for final review.` : "The setup pull request is ready for final review."}
+                  Articles setup is published — article generation is unlocked. Choose a topic to generate your first article.
                 </p>
-                <a
-                  href={prUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
-                >
-                  Open PR
-                </a>
+                {prUrl ? (
+                  <a
+                    href={prUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                  >
+                    View changes
+                  </a>
+                ) : null}
               </div>
             ) : (
               <Form method="POST" className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  {prCreateFailed
-                    ? "Approval succeeded, but PR creation did not complete. Retry will recreate or reuse the setup PR."
-                    : "Create the setup PR from the approved preview."}
+                  {blockedMessage
+                    ? blockedMessage
+                    : prCreateFailed
+                      ? "Publishing didn't finish last time. Retry to publish the approved setup."
+                      : prUrl
+                        ? "Your setup is publishing. This page updates on its own once it's live."
+                        : "Publish the approved setup. It goes live with the next site build and unlocks article generation."}
                 </p>
-                <button
-                  type="submit"
-                  name="intent"
-                  value="approve"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                  {approvePending ? "Creating..." : prCreateFailed ? "Retry create PR" : "Create setup PR"}
-                </button>
-              </Form>
-            )}
-          </PublishFlowCard>
-
-          <PublishFlowCard title="Merge to main" status={setupMerged ? "complete" : mergePending ? "running" : prUrl ? "ready" : "locked"} eyebrow={setupMerged ? "Merged" : checksStatus || mergeStatus || (prUrl ? "Ready" : "Waiting")}>
-            {setupMerged ? (
-              <p className="text-sm font-semibold text-gray-600">Articles setup is complete. Choose a topic to generate the next article.</p>
-            ) : prUrl ? (
-              <Form method="POST" className="space-y-3">
-                <p className="text-sm font-semibold text-gray-600">
-                  {mergeBlockedReason || "Merge the setup PR, then article generation unlocks."}
-                </p>
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="submit"
                     name="intent"
-                    value="merge-setup-pr"
+                    value={publishIntent}
                     disabled={isSubmitting}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                   >
-                    {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-                    {mergePending ? "Checking..." : "Check and merge"}
+                    {publishPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                    {publishLabel}
                   </button>
+                  {prUrl ? (
+                    <a
+                      href={prUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                    >
+                      View changes
+                    </a>
+                  ) : null}
+                </div>
+                {prUrl ? (
                   <button
                     type="submit"
                     name="intent"
                     value="refresh-setup-pr-status"
                     disabled={isSubmitting}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+                    className="text-xs font-bold text-gray-400 underline-offset-2 transition hover:text-gray-600 hover:underline disabled:opacity-50"
                   >
-                    {refreshMergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                    {refreshMergePending ? "Refreshing..." : "I merged this in GitHub"}
+                    {refreshMergePending ? "Refreshing status..." : "Already published it yourself? Refresh status"}
                   </button>
-                </div>
+                ) : null}
               </Form>
-            ) : (
-              <p className="text-sm font-semibold text-gray-500">Create the setup PR before merging to main.</p>
             )}
           </PublishFlowCard>
 
-          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? (activeChannelLabels.length ? `${activeChannelLabels.join(" + ")} enabled` : "Enabled") : setupMerged ? "Ready" : "Merge first"}>
+          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? (activeChannelLabels.length ? `${activeChannelLabels.join(" + ")} enabled` : "Enabled") : setupMerged ? "Ready" : "Publish first"}>
             {setupMerged ? (
               <div className="space-y-3">
-                <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
+                <DailyReminderChannels
+                  channels={dailyChannels}
+                  isSubmitting={isSubmitting}
+                  accountEmail={accountEmail}
+                  accountEmailVerified={accountEmailVerified}
+                />
                 <Form method="POST" className="space-y-3">
                   <label className="block">
                     <span className="text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
@@ -2662,7 +2728,7 @@ function ArticleSetupPublishDetail({
                 </Form>
               </div>
             ) : (
-              <p className="text-sm font-semibold text-gray-500">Daily reminders unlock after the setup PR is merged.</p>
+              <p className="text-sm font-semibold text-gray-500">Daily reminders unlock once the articles setup is published.</p>
             )}
           </PublishFlowCard>
         </div>
@@ -2671,16 +2737,129 @@ function ArticleSetupPublishDetail({
   );
 }
 
+function PublishDailyResearchReminderCard({
+  channels,
+  dailyEnabled,
+  dailyReady,
+  defaultTimezone,
+  enableDailyPending,
+  runDailyPending,
+  isSubmitting,
+  accountEmail,
+  accountEmailVerified,
+}: {
+  channels: VibeMarketingNotificationChannel[];
+  dailyEnabled: boolean;
+  dailyReady: boolean;
+  defaultTimezone: string;
+  enableDailyPending: boolean;
+  runDailyPending: boolean;
+  isSubmitting: boolean;
+  accountEmail?: string | null;
+  accountEmailVerified?: boolean | null;
+}) {
+  const statusLabel = dailyEnabled ? "Enabled" : dailyReady ? "Ready" : "Needs setup";
+
+  return (
+    <section className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
+      <div className="flex items-start gap-4">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-100 text-violet-700 shadow-inner">
+          <CalendarDaysIcon className="h-8 w-8" />
+        </span>
+        <div className="min-w-0 pt-1">
+          <h3 className="text-xl font-black leading-7 text-gray-950">Trigger article research daily</h3>
+          <p
+            className={clsx(
+              "mt-1 text-xs font-black uppercase tracking-wide",
+              dailyEnabled ? "text-emerald-700" : dailyReady ? "text-violet-700" : "text-gray-500",
+            )}
+          >
+            {statusLabel}
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-6 max-w-xl text-base font-semibold leading-6 text-slate-600">
+        Get a daily research prompt for the next article via your preferred channels.
+      </p>
+
+      <div className="mt-6">
+        <DailyReminderChannels
+          channels={channels}
+          isSubmitting={isSubmitting}
+          accountEmail={accountEmail}
+          accountEmailVerified={accountEmailVerified}
+          variant="publish"
+        />
+      </div>
+
+      <Form method="POST" className="mt-5 border-t border-gray-200 pt-4">
+        <label className="block">
+          <span className="text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
+          <div className="relative mt-2">
+            <GlobeAltIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <input
+              name="defaultTimezone"
+              defaultValue={defaultTimezone}
+              className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-12 pr-10 text-sm font-bold text-slate-700 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            />
+            <ChevronDownIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+          </div>
+        </label>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <button
+            type="submit"
+            name="intent"
+            value="enable-daily-automation"
+            disabled={isSubmitting || dailyEnabled || !dailyReady}
+            className={clsx(
+              "inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-sm transition disabled:cursor-not-allowed",
+              dailyEnabled
+                ? "border border-violet-200 bg-violet-50 text-violet-700"
+                : dailyReady
+                  ? "bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60"
+                  : "border border-gray-200 bg-gray-100 text-gray-500",
+            )}
+          >
+            {enableDailyPending ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <ClockIcon className="h-5 w-5" />}
+            {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable reminder"}
+          </button>
+          <button
+            type="submit"
+            name="intent"
+            value="run-daily-discovery-now"
+            disabled={isSubmitting || !dailyEnabled}
+            className={clsx(
+              "inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-sm transition disabled:cursor-not-allowed",
+              dailyEnabled
+                ? "bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60"
+                : "border border-gray-200 bg-gray-100 text-gray-500",
+            )}
+          >
+            {runDailyPending ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <PlayIcon className="h-5 w-5" />}
+            {runDailyPending ? "Starting..." : "Run today now"}
+          </button>
+        </div>
+      </Form>
+    </section>
+  );
+}
+
 function PublishAndAutomateDetail({
   run,
   bootstrap,
   isSubmitting,
   isActionPending,
+  accountEmail,
+  accountEmailVerified,
 }: {
   run: VibeMarketingRunSummary;
   bootstrap: VibeMarketingBootstrap;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
+  accountEmail?: string | null;
+  accountEmailVerified?: boolean | null;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const automationStep = run.workflowProgress?.steps.find((step) => step.id === "automation");
@@ -2775,17 +2954,13 @@ function PublishAndAutomateDetail({
   const dailyReady = Boolean(dailyEnabled || dailyCheck?.ready || dailyCheck?.passed);
   const defaultTimezone = bootstrap.settings.defaultTimezone ?? "Australia/Melbourne";
   const dailyChannels = dailyCheck?.channels ?? [];
-  const activeChannelLabels = dailyChannels
-    .filter((channel) => channel.consentState === "active")
-    .map((channel) => ({ slack: "Slack", email: "Email", whatsapp: "WhatsApp" })[channel.channelType])
-    .filter(Boolean);
 
   return (
     <div className="space-y-5">
       {publishChildMissingRemote ? null : (
         <ArticleRunStageProgress run={run} variant="embedded" reviewHref={canViewArticle ? viewArticleHref : undefined} />
       )}
-      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
@@ -2806,7 +2981,7 @@ function PublishAndAutomateDetail({
           <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishStep?.status ?? "ready"} />
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="mt-6 grid items-stretch gap-5 lg:grid-cols-2">
           <PublishFlowCard
             title="Publish"
             status={
@@ -3069,55 +3244,17 @@ function PublishAndAutomateDetail({
             )}
           </PublishFlowCard>
 
-          <PublishFlowCard
-            title="Daily research reminder"
-            status={dailyEnabled ? "complete" : dailyReady ? "ready" : "locked"}
-            eyebrow={
-              dailyEnabled
-                ? activeChannelLabels.length
-                  ? `${activeChannelLabels.join(" + ")} enabled`
-                  : "Enabled"
-                : dailyReady
-                  ? "Ready"
-                  : "Needs setup"
-            }
-          >
-            <div className="space-y-3">
-              <DailyReminderChannels channels={dailyChannels} isSubmitting={isSubmitting} />
-              <Form method="POST" className="space-y-3">
-                <label className="block">
-                  <span className="mb-2 block text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
-                  <input
-                    name="defaultTimezone"
-                    defaultValue={defaultTimezone}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  name="intent"
-                  value="enable-daily-automation"
-                  disabled={isSubmitting || dailyEnabled || !dailyReady}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-500"
-                >
-                  {enableDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : dailyEnabled ? <CheckCircleIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
-                  {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable daily reminder"}
-                </button>
-              </Form>
-              <Form method="POST">
-                <button
-                  type="submit"
-                  name="intent"
-                  value="run-daily-discovery-now"
-                  disabled={isSubmitting || !dailyEnabled}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
-                >
-                  {runDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
-                  {runDailyPending ? "Starting..." : "Run today now"}
-                </button>
-              </Form>
-            </div>
-          </PublishFlowCard>
+          <PublishDailyResearchReminderCard
+            channels={dailyChannels}
+            dailyEnabled={dailyEnabled}
+            dailyReady={dailyReady}
+            defaultTimezone={defaultTimezone}
+            enableDailyPending={enableDailyPending}
+            runDailyPending={runDailyPending}
+            isSubmitting={isSubmitting}
+            accountEmail={accountEmail}
+            accountEmailVerified={accountEmailVerified}
+          />
         </div>
 
         {previewUrl || publishChildPreviewUrl ? (
@@ -3149,10 +3286,10 @@ function PublishFlowCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+    <section className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-black text-gray-950">{title}</h3>
+          <h3 className="text-xl font-black leading-7 text-gray-950">{title}</h3>
           <p className="mt-1 text-xs font-black uppercase tracking-wide text-gray-500">{eyebrow}</p>
         </div>
         <WorkflowStatusPill status={status} compact />
@@ -3874,13 +4011,13 @@ function workflowProgressForRunPage(
         if (step.id === "package" || step.id === "publish") {
           return {
             ...step,
-            label: step.id === "publish" ? "Publish setup PR" : "Setup PR ready",
+            label: step.id === "publish" ? "Publish" : "Publish ready",
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}?setupStep=publish`,
             summary: setupComplete
-              ? "Merged setup PR is being verified on the default branch."
+              ? "Your published setup is being verified."
               : setupPrCreated
-                ? "Open the setup PR, merge it, then enable daily article reminders."
-                : "Approve the exact setup preview to create the setup pull request.",
+                ? "Publish the articles setup, then enable daily article reminders."
+                : "Publish the approved setup preview.",
             status: setupComplete ? "complete" : setupPrCreated || manualMergeRequired ? "needs_action" : "locked",
           };
         }
@@ -3914,7 +4051,15 @@ function workflowProgressForRunPage(
 }
 
 export default function FounderToolsMarketingRun() {
-  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
+  const {
+    run: loaderRun,
+    bootstrap,
+    setupRun: loaderSetupRun,
+    githubRepos,
+    accountEmail,
+    accountEmailVerified,
+    billingRequestIds,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const location = useLocation();
@@ -4141,7 +4286,14 @@ export default function FounderToolsMarketingRun() {
         primaryActionSlot={isArticleWorkflowRun && directPublishMode && !isPublishAutomateView ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
         activeDetailSlot={
           isSetupPublishView ? (
-            <ArticleSetupPublishDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
+            <ArticleSetupPublishDetail
+              run={run}
+              bootstrap={bootstrap}
+              isSubmitting={isSubmitting}
+              isActionPending={pendingActions.isPending}
+              accountEmail={accountEmail}
+              accountEmailVerified={accountEmailVerified}
+            />
           ) : isSetupGenerateView ? (
             <ArticleSetupGenerateDetail run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
           ) : isSetupReviewView ? (
@@ -4153,7 +4305,14 @@ export default function FounderToolsMarketingRun() {
               isActionPending={pendingActions.isPending}
             />
           ) : isArticleGenerationRun && isPublishAutomateView ? (
-            <PublishAndAutomateDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
+            <PublishAndAutomateDetail
+              run={run}
+              bootstrap={bootstrap}
+              isSubmitting={isSubmitting}
+              isActionPending={pendingActions.isPending}
+              accountEmail={accountEmail}
+              accountEmailVerified={accountEmailVerified}
+            />
           ) : isArticleGenerationRun ? (
             <ArticleGenerationReviewDetail
               run={run}
@@ -4164,7 +4323,7 @@ export default function FounderToolsMarketingRun() {
             />
           ) : undefined
         }
-        activeDetailLabel={isSetupPublishView ? "Publish setup PR" : isSetupGenerateView ? "Build setup page" : isSetupReviewView ? "Review setup preview" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
+        activeDetailLabel={isSetupPublishView ? "Publish" : isSetupGenerateView ? "Build setup page" : isSetupReviewView ? "Review setup preview" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
       />
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : null}
@@ -4203,7 +4362,16 @@ export default function FounderToolsMarketingRun() {
                       </div>
                       <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
                         {pendingActions.isPending("start-article") ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                        {pendingActions.isPending("start-article") ? "Starting article..." : `Generate draft article (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)`}
+                        {pendingActions.isPending("start-article") ? (
+                          "Starting article..."
+                        ) : (
+                          <>
+                            <span>Generate draft article</span>
+                            <span aria-hidden="true">(</span>
+                            <RooPointCost points={-VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} />
+                            <span aria-hidden="true">)</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

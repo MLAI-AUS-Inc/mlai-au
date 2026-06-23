@@ -288,7 +288,7 @@ export default function ArticleContent() {
             title="Build practical AI literacy first"
             body="If you are sorting hype from reality, focus on how current AI systems work, where they help, and where they still need human oversight. Grounded AI knowledge is more useful than guessing about future AGI timelines."
             buttonText="Explore practical AI learning"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles"
           />
         </div>
       </div>
