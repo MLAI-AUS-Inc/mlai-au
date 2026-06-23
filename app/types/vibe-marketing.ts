@@ -75,6 +75,9 @@ export interface VibeMarketingRunSummary {
   stale?: boolean;
   staleReason?: string | null;
   retryAvailable?: boolean;
+  /** Set by the run-status loader when the run no longer exists (deleted/reset) so the
+   *  poller treats it as terminal instead of throwing on the 404. */
+  gone?: boolean;
   queueName?: string | null;
   queuedAt?: string | null;
   resumeGeneration?: number | null;
