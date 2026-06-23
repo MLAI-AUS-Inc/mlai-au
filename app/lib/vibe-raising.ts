@@ -2163,7 +2163,13 @@ function getVibeRaisingAdminEmails(env?: Env): Set<string> {
 }
 
 export function isVibeRaisingAdminUser(user: User | null | undefined, env?: Env): boolean {
-  if (user?.role === "admin" || Boolean(user?.is_superuser)) return true;
+  if (
+    Boolean(user?.is_vibe_raising_admin) ||
+    user?.role === "admin" ||
+    Boolean(user?.is_superuser)
+  ) {
+    return true;
+  }
   const email = String(user?.email || "").trim().toLowerCase();
   return Boolean(email && getVibeRaisingAdminEmails(env).has(email));
 }

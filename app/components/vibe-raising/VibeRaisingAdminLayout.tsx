@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
-import { Form, NavLink } from "react-router";
+import { Form, Link, NavLink } from "react-router";
 import {
+  ArrowLeftIcon,
   ArrowLeftOnRectangleIcon,
   CheckCircleIcon,
   DocumentTextIcon,
@@ -92,6 +93,19 @@ export default function VibeRaisingAdminLayout({
           ))}
         </nav>
 
+        <Link
+          to="/founder-tools/updates"
+          title={isExpanded ? undefined : "Back to founder tools"}
+          aria-label={isExpanded ? undefined : "Back to founder tools"}
+          className={classNames(
+            "mt-2 flex min-h-12 items-center overflow-hidden rounded-lg px-3 py-3 text-sm font-bold text-white/82 transition hover:bg-white/10 hover:text-white",
+            isExpanded ? "justify-start" : "justify-center",
+          )}
+        >
+          <ArrowLeftIcon className="h-5 w-5 flex-shrink-0" />
+          <span className={classNames("whitespace-nowrap transition-all duration-200", isExpanded ? "ml-3 w-auto opacity-100" : "ml-0 w-0 opacity-0")}>Back to founder tools</span>
+        </Link>
+
         <Form action="/founder-tools/logout" method="post">
           <button
             className={classNames(
@@ -125,6 +139,13 @@ export default function VibeRaisingAdminLayout({
           </div>
 
           <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="Admin navigation">
+            <Link
+              to="/founder-tools/updates"
+              className="inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-extrabold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Founder tools
+            </Link>
             {ADMIN_NAVIGATION.map((item) => (
               <NavLink
                 key={item.name}
