@@ -14,6 +14,8 @@ import {
     getVibeRaisingStartupUpdateDraftResults,
     getVibeRaisingStartupUpdateStatus,
     publishVibeRaisingMonthlyUpdate,
+    createVibeRaisingLocalPublishedUpdateCookie,
+    createVibeRaisingLocalDraftUpdateCookie,
     saveVibeRaisingCompany,
     runVibeRaisingStartupUpdate,
     saveVibeRaisingMonthlyUpdate,
@@ -602,6 +604,21 @@ export async function action({ request, context }: Route.ActionArgs) {
                 return redirect("/founder-tools/updates");
             }
 
+            if (savedUpdate?.id) {
+                const publishedUpdate = {
+                    ...savedUpdate,
+                    status: "ready",
+                    visibility: "published",
+                    publishedAt: new Date().toISOString(),
+                };
+                const cookie = createVibeRaisingLocalPublishedUpdateCookie(publishedUpdate);
+                console.log("[monthly-update:publish-action] using local published update fallback", {
+                    draftId: savedUpdate.id,
+                    hasCookie: Boolean(cookie),
+                });
+                return redirect("/founder-tools/updates", cookie ? { headers: { "Set-Cookie": cookie } } : undefined);
+            }
+
             console.warn("[monthly-update:publish-action] saved update did not include a backend draft id", JSON.stringify({
                 savedUpdate,
             }));
@@ -688,11 +705,15 @@ export async function action({ request, context }: Route.ActionArgs) {
             ...savePayload,
             saveMode: "draft",
         });
+        const cookie = update ? createVibeRaisingLocalDraftUpdateCookie(update) : null;
 
-        return {
-            step: "draft-saved",
-            update,
-        };
+        return Response.json(
+            {
+                step: "draft-saved",
+                update,
+            },
+            cookie ? { headers: { "Set-Cookie": cookie } } : undefined,
+        );
     }
 
     return null;
@@ -2118,7 +2139,10 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
 
 // ─── Bullet list helper ─────────────────────────────────────────────
 function BulletList({ text, className = "text-sm text-gray-700" }: { text: string; className?: string }) {
-    const items = text.split(/(?<=\.)\s+/).filter(s => s.trim());
+    const normalizedText = String(text || "").trim();
+    const items = normalizedText.includes("\n")
+        ? normalizedText.split(/\n+/).filter((item) => item.trim())
+        : normalizedText.split(/(?<=\.)\s+/).filter((item) => item.trim());
     return (
         <ul className={clsx("space-y-1 list-disc list-inside", className)}>
             {items.map((item, i) => (
@@ -2185,9 +2209,6 @@ function ReviewPreviewSection({
     const items = normalizedText.includes("\n")
         ? normalizedText.split(/\n+/).filter((item) => item.trim())
         : normalizedText.split(/(?<=\.)\s+/).filter((item) => item.trim());
-    const [mobileExpanded, setMobileExpanded] = useState(false);
-    const shouldClampOnMobile = items.length > 1;
-    const visibleItems = mobileExpanded ? items : items.slice(0, 1);
 
     if (!normalizedText) return null;
 
@@ -2197,19 +2218,10 @@ function ReviewPreviewSection({
                 {label}
             </h4>
             <ul className="list-outside list-disc space-y-2 pl-5 [font-family:var(--vr-font-body)] text-[15px] font-medium leading-7 text-gray-800 marker:text-[var(--vr-color-primary)] sm:text-base">
-                {visibleItems.map((item, index) => (
+                {items.map((item, index) => (
                     <li key={`${label}-${index}`}>{item.trim()}</li>
                 ))}
             </ul>
-            {shouldClampOnMobile ? (
-                <button
-                    type="button"
-                    onClick={() => setMobileExpanded((current) => !current)}
-                    className="mt-2 inline-flex text-xs font-bold text-[var(--vr-color-primary)] sm:hidden"
-                >
-                    {mobileExpanded ? "Show less" : `Show all ${items.length}`}
-                </button>
-            ) : null}
         </div>
     );
 }
@@ -2533,9 +2545,10 @@ export default function CreateUpdate() {
     const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>(defaultData?.videoUrl || "");
     const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
     const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
-    const [monthConfirmed, setMonthConfirmed] = useState(false);
-    const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(null);
-    const [metricsConfirmed, setMetricsConfirmed] = useState(false);
+    const shouldOpenDraftTemplate = Boolean(isEdit && existingData);
+    const [monthConfirmed, setMonthConfirmed] = useState(() => shouldOpenDraftTemplate);
+    const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(() => shouldOpenDraftTemplate ? "reporting" : null);
+    const [metricsConfirmed, setMetricsConfirmed] = useState(() => shouldOpenDraftTemplate);
     const [isRecordingPermissionPending, setIsRecordingPermissionPending] = useState(false);
     const [videoStoragePath, setVideoStoragePath] = useState<string>(defaultData?.videoStoragePath || "");
     const [videoContentType, setVideoContentType] = useState<string>(defaultData?.videoContentType || "");
@@ -4809,30 +4822,45 @@ export default function CreateUpdate() {
         </section>
     );
 
+    const connectedDataSummary = selectedConnectedSourceLabels.length > 0
+        ? selectedConnectedSourceLabels.join(", ")
+        : compactSourcesLoading
+            ? "Checking sources..."
+            : "Manual draft only";
+
     const optionalDataSourcesSection = (
-        <section className="rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                    <h2 className="text-xl font-black text-gray-950">Connect data for AI drafting</h2>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                        The draft template works without connected data. Select a connected source only if you want MLAI to generate a source-assisted first draft.
-                    </p>
+        <section className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:rounded-[2rem] sm:p-6">
+            <div className="flex min-w-0 items-center justify-between gap-3 sm:flex-col sm:items-stretch sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex min-w-0 items-center gap-3 sm:block">
+                    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)] sm:hidden" />
+                    <div className="min-w-0">
+                        <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
+                            <span className="sm:hidden">Connect data</span>
+                            <span className="hidden sm:inline">Connect data for AI drafting</span>
+                        </h2>
+                        <p className="mt-1 truncate text-base font-black leading-tight text-gray-950 sm:hidden">
+                            {connectedDataSummary}
+                        </p>
+                        <p className="mt-2 hidden max-w-2xl text-sm leading-6 text-slate-600 sm:block">
+                            The draft template works without connected data. Select a connected source only if you want MLAI to generate a source-assisted first draft.
+                        </p>
+                    </div>
                 </div>
                 <Link
                     to={manageConnectionsHref}
-                    className="inline-flex items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-4 py-3 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)]"
+                    className="inline-flex flex-shrink-0 items-center justify-center rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white sm:rounded-xl sm:border-[var(--vr-color-border)] sm:bg-[var(--vr-palette-paper)] sm:px-4 sm:py-3 sm:text-sm sm:font-extrabold sm:text-[var(--vr-color-text)] sm:hover:bg-[var(--vr-palette-paper)] sm:hover:text-[var(--vr-color-primary)]"
                 >
-                    Manage connections
+                    <span className="sm:hidden">Manage</span>
+                    <span className="hidden sm:inline">Manage connections</span>
                 </Link>
             </div>
-
             {compactSourcesError ? (
                 <p className="mt-4 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
                     {compactSourcesError}
                 </p>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-5 hidden flex-wrap gap-2 sm:flex">
                 {selectedConnectedSourceLabels.length > 0 ? (
                     selectedConnectedSourceLabels.map((label) => (
                         <span
@@ -4854,7 +4882,7 @@ export default function CreateUpdate() {
                 ) : null}
             </div>
 
-            <div className="mt-5">
+            <div className="mt-5 hidden sm:block">
                 <div className="grid grid-cols-3 gap-3 lg:grid-cols-8">
                 {compactOptionalSources.map((source) => {
                     const connected = isConnectedInputSource(source);
@@ -5931,15 +5959,16 @@ export default function CreateUpdate() {
                                                 void handleGenerateDraftFromEmailClick();
                                             }}
                                             className={clsx(
-                                                "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
+                                                "group flex w-full items-center justify-between gap-3 rounded-2xl border px-5 py-3 text-left shadow-sm transition disabled:cursor-not-allowed sm:gap-4 sm:p-5",
                                                 canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
                                                     ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
-                                                    : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
+                                                    : "cursor-not-allowed border-[var(--vr-color-border)] bg-white sm:border-[rgba(0,128,128,0.32)] sm:bg-[rgba(0,255,215,0.08)]",
                                             )}
                                         >
-                                            <div className="flex min-w-0 items-center gap-4">
+                                            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                                                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)] sm:hidden" />
                                                 <div className={clsx(
-                                                    "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1",
+                                                    "hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1 sm:flex",
                                                     hasNoSourceForAssistedDraft
                                                         ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
                                                         : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
@@ -5951,22 +5980,25 @@ export default function CreateUpdate() {
                                                     )}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-base font-bold text-gray-950">
-                                                        {emailDraftButtonTitle}
+                                                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-base sm:font-bold sm:normal-case sm:tracking-normal sm:text-gray-950">
+                                                        <span className="sm:hidden">AI drafting</span>
+                                                        <span className="hidden sm:inline">{emailDraftButtonTitle}</span>
                                                     </p>
-                                                    <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                                                        {emailDraftButtonDescription}
+                                                    <p className="mt-1 text-sm font-black leading-tight text-gray-950 sm:max-w-2xl sm:text-sm sm:font-medium sm:leading-6 sm:text-gray-600">
+                                                        <span className="sm:hidden">{emailDraftButtonTitle}</span>
+                                                        <span className="hidden sm:inline">{emailDraftButtonDescription}</span>
                                                     </p>
                                                 </div>
                                             </div>
                                             <span className={clsx(
-                                                "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition group-hover:translate-x-1",
+                                                "flex flex-shrink-0 items-center justify-center rounded-full border px-3 py-1 text-xs font-black transition sm:h-10 sm:w-10 sm:rounded-xl sm:px-0 sm:py-0 sm:group-hover:translate-x-1",
                                                 hasNoSourceForAssistedDraft
                                                     ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
                                                     : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
                                             )}>
+                                                <span className="sm:hidden">Draft</span>
                                                 <ArrowRightIcon className={clsx(
-                                                    "h-5 w-5",
+                                                    "hidden h-5 w-5 sm:block",
                                                     hasNoSourceForAssistedDraft ? "text-gray-300" : "text-current",
                                                 )} />
                                             </span>

@@ -2,6 +2,14 @@ import { Link, redirect, useLoaderData } from "react-router";
 import { formatDistanceToNow } from "date-fns";
 import type { Route } from "./+types/vibe-raising-app.drafts";
 import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
+import {
+    VIBE_METRIC_OPTIONS,
+    VIBE_METRIC_OPTION_MAP,
+    formatMetricDisplayValue,
+    hasDisplayableMetricValue,
+    metricCardLabel,
+    type MetricOption,
+} from "~/lib/vibe-raising-metrics";
 import { getEnv } from "~/lib/env.server";
 import {
     getVibeRaisingDrafts,
@@ -33,6 +41,48 @@ function getDraftStatusLabel(status?: string | null) {
         default:
             return "Draft in progress";
     }
+}
+
+function splitDraftItems(text?: string | null): string[] {
+    const normalized = String(text || "").trim();
+    if (!normalized) return [];
+
+    const parts = normalized.includes("\n")
+        ? normalized.split(/\n+/)
+        : normalized.split(/(?<=\.)\s+/);
+
+    return parts
+        .map((item) => item.trim().replace(/^[\s•\-*]+/, "").trim())
+        .filter(Boolean);
+}
+
+function getDraftMetricOptions(metrics?: Record<string, string>, fullMetricKeys?: string[] | null): MetricOption[] {
+    const values = metrics || {};
+    const configured = fullMetricKeys
+        ? fullMetricKeys
+            .map((key) => VIBE_METRIC_OPTION_MAP.get(key))
+            .filter((option): option is MetricOption => Boolean(option))
+        : [];
+    const seen = new Set(configured.map((option) => option.key));
+    const remaining = VIBE_METRIC_OPTIONS.filter((option) => !seen.has(option.key));
+
+    return [...configured, ...remaining].filter((option) => hasDisplayableMetricValue(values[option.key]));
+}
+
+function DraftSection({ label, text }: { label: string; text?: string | null }) {
+    const items = splitDraftItems(text);
+    if (items.length === 0) return null;
+
+    return (
+        <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
+            <ul className="mt-2 list-outside list-disc space-y-1.5 pl-5 text-sm font-medium leading-6 text-slate-700 marker:text-[var(--vr-color-primary)]">
+                {items.map((item, index) => (
+                    <li key={`${label}-${index}`}>{item}</li>
+                ))}
+            </ul>
+        </div>
+    );
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -125,6 +175,7 @@ export default function VibeRaisingDraftsPage() {
                     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                         {drafts.map((draft) => {
                             const isReady = draft.status === "ready";
+                            const metrics = getDraftMetricOptions(draft.metrics, draft.displayConfig?.fullMetricKeys ?? null);
                             return (
                                 <article
                                     key={draft.id}
@@ -154,9 +205,35 @@ export default function VibeRaisingDraftsPage() {
                                         </div>
                                     </div>
 
-                                    <p className="mt-4 text-sm leading-6 text-slate-600">
+                                    <p className="mt-4 whitespace-pre-line text-sm leading-6 text-slate-600">
                                         {getDraftSnippet(draft.summary, draft.highlights)}
                                     </p>
+
+                                    {metrics.length > 0 ? (
+                                        <div className="mt-5 grid grid-cols-2 gap-2">
+                                            {metrics.map((metric) => (
+                                                <div
+                                                    key={metric.key}
+                                                    className="rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-3 py-3"
+                                                >
+                                                    <p className="text-lg font-black leading-tight text-gray-950">
+                                                        {formatMetricDisplayValue(draft.metrics[metric.key])}
+                                                    </p>
+                                                    <p className="mt-1 text-[10px] font-black uppercase leading-tight tracking-[0.12em] text-slate-500">
+                                                        {metricCardLabel(metric)}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : null}
+
+                                    <div className="mt-5 space-y-4 rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4">
+                                        <DraftSection label="Key Highlights" text={draft.highlights} />
+                                        <DraftSection label="Challenges" text={draft.challenges} />
+                                        <DraftSection label="Learnings" text={draft.learnings} />
+                                        <DraftSection label="Next 30 Days" text={draft.next30Days} />
+                                        <DraftSection label="Ask from Investors" text={draft.asks} />
+                                    </div>
 
                                     <div className="mt-5 flex flex-wrap gap-3">
                                         <Link

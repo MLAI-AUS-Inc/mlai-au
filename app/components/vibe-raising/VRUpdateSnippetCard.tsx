@@ -8,6 +8,7 @@ import {
     VIBE_METRIC_OPTIONS,
     VIBE_METRIC_OPTION_MAP,
     hasDisplayableMetricValue,
+    formatMetricDisplayValue,
     metricCardLabel,
     type MetricOption,
 } from "~/lib/vibe-raising-metrics";
@@ -103,7 +104,7 @@ export default function VRUpdateSnippetCard({
                                 className="rounded-xl border border-[var(--vr-color-border)] bg-gray-50/60 px-3 py-2.5"
                             >
                                 <p className="truncate text-sm font-black leading-tight text-gray-900">
-                                    {update.metrics[metric.key]}
+                                    {formatMetricDisplayValue(update.metrics[metric.key])}
                                 </p>
                                 <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
                                     {metricCardLabel(metric)}

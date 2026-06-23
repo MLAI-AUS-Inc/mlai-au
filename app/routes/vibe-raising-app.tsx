@@ -17,6 +17,7 @@ import { getCurrentRooPointsBalance } from "~/lib/roo-points";
 import {
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
+  isVibeRaisingAdminUser,
 } from "~/lib/vibe-raising";
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import {
@@ -89,6 +90,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   if (!vibeContext.authUser) {
     throw redirect(getVibeRaisingLoginHref(request));
+  }
+
+  if (isVibeRaisingAdminUser(vibeContext.authUser, env)) {
+    throw redirect("/founder-tools/admin");
   }
 
   if (!vibeContext.appUser && !canAccessDuringCompanySetup(pathname)) {
