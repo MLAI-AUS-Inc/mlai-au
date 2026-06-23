@@ -118,6 +118,18 @@
 - [x] Match the Google Analytics placeholder logo border to the other grey inactive source cards
 - [x] Match the Google Analytics placeholder footer spacing to the other source cards
 - [x] Remove the backend-availability warning line from all Data Sources cards
+- [x] Flatten Vibe Raising company setup optional details and remove the What you do field
+- [x] Make company setup founder names full-width with stage and organization type on the next row
+- [x] Remove the top purple company setup heading
+- [x] Simplify optional profile details button copy and enlarge its label
+- [x] Remove the company setup Startup profile intro strip
+- [x] Rename company setup LinkedIn field and remove its helper caption
+- [x] Add required revenue, stage, and organization type dropdowns to company setup
+- [x] Move company setup revenue dropdown above the stage row
+- [x] Send company setup save button to Vibe Raising and align it bottom-right
+- [x] Put the empty monthly update card above the overview card
+- [x] Reduce monthly update dashboard header to the title only
+- [x] Align empty monthly update heading with My Drafts and remove duplicate top Create Update button
 - [x] Hide the extra Data Sources trust card on mobile so privacy guidance only appears in the one-time tutorial
 - [x] Rename unavailable Data Sources card labels from "Not available yet" to "Coming soon"
 - [x] Normalize Data Sources footer copy height so bottom actions align responsively across cards
@@ -206,6 +218,7 @@
 - [x] Keep TODO.md updated when multi-step changes, and update as steps are completed
 - [x] Rename the featured article slug/file to how-to-do-machine-learning
 - [x] Update article title/slug constants and registry metadata
+- [x] Hide the Vibe Raising draft helper card and move selected month above metrics
 - [x] Adjust SEO config path for the new slug
 - [x] Add a local dev wrapper that keeps Wrangler state inside the repo
 - [x] Update local startup docs and add the missing `.dev.vars.example`
@@ -467,6 +480,38 @@
 - [x] Verify the integrated /mlai-studio layout and homepage tab order in the local browser, run `bun run typecheck`
 - [x] Recolor the Studio sidebar tab, section marker, and homepage divider from teal back to crimson (#ff003d)
 - [x] Recolor the MLAI Studio teaser main accents (eyebrow, rotating word box, stats, CTA) from mint to crimson, leaving the sliding pill marquee untouched
+- [x] Remove numbered mint step headings across the Vibe Raising user flow
+- [x] Remove extra desktop/tablet investment memo headings while preserving mobile display
+- [x] Add desktop spacing before Vibe Raising metrics and collapse desktop metrics after two rows
+- [x] Make the homepage Vibe Raising card link to the Vibe Raising landing page
+- [x] Simplify Vibe Raising company setup to four required fields plus optional details expander
+- [x] Make company setup location required with searchable popular-location dropdown
+- [x] Replace the empty Vibe Raising dashboard unlock list with the MLAI sample update preview
+- [x] Move the Vibe Raising investor reach heading out of the card
+- [x] Shorten the empty dashboard sample update preview and remove its readiness label
+- [x] Update the placeholder investor reach chart months to Jan-Jun 2026
+- [x] Move the optional Vibe Raising deck and walkthrough upload section to the bottom of the draft flow
+- [x] Limit the Vibe Raising draft metrics to four core cards with optional metrics in a dropdown
+- [x] Remove metric card visibility status bars and align draft metric headings with icons
+- [x] Simplify the Vibe Raising draft sticky bar to Back and Save and review
+- [x] Rename the Vibe Raising metrics dropdown to More metrics
+- [x] Move Vibe Raising data connection under month selection and keep the template first after Start draft
+- [x] Clean up Vibe Raising month selection by moving the heading out of the card and hiding desktop calendar/start tiles
+- [x] Fix Vibe Raising Start draft sticky button so it opens the template instead of jumping to review
+- [x] Change expanded Vibe Raising metrics toggle to Show less without the count
+- [x] Keep filled optional metric cards visible when collapsing the Vibe Raising metrics grid
+- [x] Return the Vibe Raising data connection card to the update template page
+- [x] Move the Vibe Raising month selection caption back inside the month card
+- [x] Move Vibe Raising data connection above the update template
+- [x] Improve Vibe Raising review preview hierarchy and remove duplicate right-side date
+- [x] Hide Vibe Raising preview subtitle and enlarge the company-name lockup
+- [x] Remove decorative icons from Vibe Raising preview section headings
+- [x] Remove review helper-card icons from Vibe Raising
+- [x] Remove duplicate bottom audience block from Vibe Raising review
+- [x] Move Vibe Raising preview update title into the company header
+- [x] Simplify Vibe Raising review sticky bar to Back and Publish update
+- [x] Remove icons from Vibe Raising investment memo inputs
+- [x] Center Vibe Raising preview logo lockup and double company-name scale
 - [x] Replace the homepage FounderTools card deck with the MLAI Studio "Why join" fanned-deck animation (self-contained, ported under ft- classes)
 - [x] Repopulate the deck with the four Founder Tools tracks (Vibe Coding/Marketing/Raising/Coworking), matching the studio card style (flat colour + emoji + hover-reveal, no images/links)
 - [x] Verify the homepage deck (4 cards, studio fan/hover, descriptions fit) and that the studio page deck is unaffected; run `bun run typecheck`

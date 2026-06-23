@@ -62,6 +62,17 @@ export function metricCardLabel(option: MetricOption): string {
     return option.label.replace(/\s*\(AUD\)\s*$/i, "");
 }
 
+export function formatMetricDisplayValue(value: unknown): string {
+    const rawValue = String(value ?? "").trim();
+    if (!rawValue) return "";
+
+    const normalizedValue = rawValue.replace(/[−–—]/g, "-");
+    const match = normalizedValue.match(/[+-]?\d[\d,]*(?:\.\d+)?\s*(?:[kKmMbB])?\s*(?:%|\+)?/);
+    if (!match) return "";
+
+    return match[0].replace(/\s+/g, "");
+}
+
 export function hasDisplayableMetricValue(value: unknown): boolean {
     if (value === null || value === undefined) return false;
 
@@ -69,5 +80,7 @@ export function hasDisplayableMetricValue(value: unknown): boolean {
     if (!rawValue) return false;
 
     const lowerValue = rawValue.toLowerCase();
-    return !["null", "undefined", "-", "—"].includes(lowerValue);
+    if (["null", "undefined", "-", "—"].includes(lowerValue)) return false;
+
+    return Boolean(formatMetricDisplayValue(rawValue));
 }

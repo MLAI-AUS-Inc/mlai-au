@@ -14,11 +14,14 @@ import {
     VIBE_METRIC_OPTIONS,
     VIBE_METRIC_OPTION_MAP,
     hasDisplayableMetricValue,
+    formatMetricDisplayValue,
     metricCardLabel,
     type MetricOption,
 } from "~/lib/vibe-raising-metrics";
 
 export function MetricCard({ label, value, icon: _Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
+    const displayValue = formatMetricDisplayValue(value);
+
     return (
         <div className={clsx(
             "flex flex-col items-center justify-center rounded-xl border px-3 py-4 text-center",
@@ -29,7 +32,7 @@ export function MetricCard({ label, value, icon: _Icon, active = true }: { label
             <p className={clsx(
                 "text-base font-black leading-tight sm:text-[1.75rem]",
                 active ? "text-gray-900" : "text-gray-300"
-            )}>{active ? value : "—"}</p>
+            )}>{active ? displayValue : "—"}</p>
             <p className={clsx(
                 "mt-2 text-[11px] font-bold uppercase tracking-[0.12em]",
                 active ? "text-gray-600" : "text-gray-400"
@@ -40,10 +43,11 @@ export function MetricCard({ label, value, icon: _Icon, active = true }: { label
 
 // Split a text blob into bullet items on newlines or sentence boundaries.
 export function splitItems(text: string): string[] {
-    if (!text) return [];
-    return text.includes("\n")
-        ? text.split(/\n+/).filter(s => s.trim())
-        : text.split(/(?<=\.)\s+/).filter(s => s.trim());
+    const normalizedText = String(text || "").trim();
+    if (!normalizedText) return [];
+    return normalizedText.includes("\n")
+        ? normalizedText.split(/\n+/).filter((item) => item.trim())
+        : normalizedText.split(/(?<=\.)\s+/).filter((item) => item.trim());
 }
 
 function VRPreviewUpdateSection({
@@ -164,11 +168,13 @@ export function VRPreviewUpdateCard({
     user,
     statusLabel,
     trendsSlot,
+    showFounderActions = true,
 }: {
     update: any;
     user: any;
     statusLabel?: string;
     trendsSlot?: React.ReactNode;
+    showFounderActions?: boolean;
 }) {
     const updatePeriod = update.year
         ? { month: update.monthName || parseVibeRaisingMonthYear(update.month).month, year: update.year }
@@ -238,14 +244,18 @@ export function VRPreviewUpdateCard({
                             {statusLabel}
                         </span>
                     ) : null}
-                    <ActiveDraftRunChip />
-                    <Link
-                        to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
-                    >
-                        Edit
-                        <PencilSquareIcon className="h-3.5 w-3.5" />
-                    </Link>
+                    {showFounderActions ? (
+                        <>
+                            <ActiveDraftRunChip />
+                            <Link
+                                to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
+                            >
+                                Edit
+                                <PencilSquareIcon className="h-3.5 w-3.5" />
+                            </Link>
+                        </>
+                    ) : null}
                 </div>
             </div>
 

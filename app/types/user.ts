@@ -19,6 +19,8 @@ export interface User {
     email: string;
     role: UserRole;
     is_superuser: boolean;
+    /** PointsAdmin-backed flag from /api/v1/auth/me/; gates the Vibe Raising admin dashboard. */
+    is_vibe_raising_admin?: boolean;
     is_active: boolean;
     has_team: boolean;
     avatar_url: string | null;

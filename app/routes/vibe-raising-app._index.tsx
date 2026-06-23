@@ -108,9 +108,10 @@ function useAutoResize(value?: string) {
 
 // ─── Bullet list helper ──────────────────────────────────────────
 function BulletList({ text, className = "text-sm text-gray-600" }: { text: string; className?: string }) {
-    const items = text.includes("\n")
-        ? text.split(/\n+/).filter(s => s.trim())
-        : text.split(/(?<=\.)\s+/).filter(s => s.trim());
+    const normalizedText = String(text || "").trim();
+    const items = normalizedText.includes("\n")
+        ? normalizedText.split(/\n+/).filter((item) => item.trim())
+        : normalizedText.split(/(?<=\.)\s+/).filter((item) => item.trim());
     return (
         <ul className={clsx("space-y-1 list-disc list-inside", className)}>
             {items.map((item, i) => (
@@ -731,10 +732,11 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
 // ── Vibe Raising design-system components (scoped via .vr-scope on the page wrapper) ──
 // Split a text blob into bullet items on newlines or sentence boundaries.
 function splitItems(text: string): string[] {
-    if (!text) return [];
-    return text.includes("\n")
-        ? text.split(/\n+/).filter(s => s.trim())
-        : text.split(/(?<=\.)\s+/).filter(s => s.trim());
+    const normalizedText = String(text || "").trim();
+    if (!normalizedText) return [];
+    return normalizedText.includes("\n")
+        ? normalizedText.split(/\n+/).filter((item) => item.trim())
+        : normalizedText.split(/(?<=\.)\s+/).filter((item) => item.trim());
 }
 
 function VRAlertInfo({ title, body }: { title: string; body: string }) {
