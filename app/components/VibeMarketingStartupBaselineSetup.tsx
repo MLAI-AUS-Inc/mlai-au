@@ -132,6 +132,7 @@ type VibeMarketingStartupBaselineSetupProps = {
   setupProgressLabel?: string;
   showSetupProgress?: boolean;
   collapseCompletedSectionsByDefault?: boolean;
+  companySetupExtraFields?: ReactNode;
 };
 
 type MobileTutorialStep = {
@@ -1894,6 +1895,7 @@ export default function VibeMarketingStartupBaselineSetup({
   setupProgressLabel = "20% complete",
   showSetupProgress = true,
   collapseCompletedSectionsByDefault = true,
+  companySetupExtraFields,
 }: VibeMarketingStartupBaselineSetupProps) {
   const navigation = useNavigation();
   const location = useLocation();
@@ -2565,6 +2567,8 @@ export default function VibeMarketingStartupBaselineSetup({
                         className={textareaClass}
                       />
                     </FormField>
+
+                    {companySetupExtraFields}
                   </>
                 ) : (
                   <FormField label="LinkedIn company page" badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>

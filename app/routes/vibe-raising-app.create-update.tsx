@@ -62,6 +62,7 @@ import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
+import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS } from "~/components/VibeRaisingDateTabs";
 import type {
@@ -69,6 +70,7 @@ import type {
     VibeRaisingFounderProfile,
     VibeRaisingInputSourceSummary,
     VibeRaisingManualDocument,
+    VibeRaisingAudienceVisibility,
     VibeRaisingMetricDisplayConfig,
     VibeRaisingMetricSuggestion,
     VibeRaisingMetricVisibility,
@@ -392,6 +394,7 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
     const metrics = update.metrics || {};
     return {
         id: update.id,
+        audienceVisibility: update.audienceVisibility || "",
         month: update.monthName || parsedPeriod.month,
         year: update.year || parsedPeriod.year,
         summary: update.summary || "",
@@ -418,6 +421,13 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         metricKeys: Object.keys(metrics).join(","),
         ...metrics,
     };
+}
+
+function normalizeAudienceVisibilityValue(value: unknown): VibeRaisingAudienceVisibility {
+    const text = String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+    if (text === "community") return "community";
+    if (text === "investors" || text === "investor") return "investors";
+    return "just_me";
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -485,6 +495,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         .filter(Boolean);
 
     return {
+        audienceVisibility: normalizeAudienceVisibilityValue(formData.get("audienceVisibility")),
         month: String(formData.get("month") || "").trim(),
         year: Number(formData.get("year") || 0),
         summary: String(formData.get("summary") || "").trim() || null,
@@ -2631,6 +2642,9 @@ export default function CreateUpdate() {
         const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
         return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
     });
+    const [audienceVisibility, setAudienceVisibility] = useState<VibeRaisingAudienceVisibility>(
+        () => normalizeAudienceVisibilityValue(defaultData?.audienceVisibility || user.audienceVisibility),
+    );
     const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
     const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
     const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
@@ -5026,6 +5040,7 @@ export default function CreateUpdate() {
         const reviewMediaIsAudio = isAudioMedia(reviewVideoContentType, reviewVideoOriginalFilename || reviewVideoUrl);
         const reviewPitchDeckLabel = reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename || "Pitch deck file";
         const reviewVideoLabel = reviewVideoOriginalFilename || (reviewMediaIsAudio ? "Founder voice note" : "Founder walkthrough");
+        const reviewAudienceVisibility = normalizeAudienceVisibilityValue(reviewData?.audienceVisibility || audienceVisibility);
         const reviewAudienceText = [
             String(reviewData?.highlights || ""),
             String(reviewData?.challenges || ""),
@@ -5149,6 +5164,7 @@ export default function CreateUpdate() {
                 <Form id={PUBLISH_REVIEW_FORM_ID} method="POST" className="hidden">
                     <input type="hidden" name="intent" value="publish" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
+                    <input type="hidden" name="audienceVisibility" value={reviewAudienceVisibility} />
                     <input type="hidden" name="month" value={reviewMonth} />
                     <input type="hidden" name="year" value={reviewYear} />
                 </Form>
@@ -6008,6 +6024,7 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
                                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
+                                    <input type="hidden" name="audienceVisibility" value={audienceVisibility} />
                                     <input type="hidden" name="summary" value={summary} />
                                     <input type="hidden" name="sourceUrl" value={sourceUrl} />
                                     <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
@@ -6028,6 +6045,14 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="year" value={selectedYear} />
 
                                     {renderSelectedMonthSummaryCard("hidden sm:block")}
+
+                                    <VibeRaisingAudienceVisibilityField
+                                        name="draftAudienceVisibility"
+                                        value={audienceVisibility}
+                                        onChange={setAudienceVisibility}
+                                        title="Update visibility"
+                                        description="For this draft"
+                                    />
 
                                     <div className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5">
                                         {shouldDimMetricsTemplate ? (

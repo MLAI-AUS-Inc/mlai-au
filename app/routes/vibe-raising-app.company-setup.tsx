@@ -1,4 +1,5 @@
 import { redirect, useActionData, useLoaderData } from "react-router";
+import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError } from "~/lib/backend-error";
@@ -18,7 +19,11 @@ import {
   setVibeRaisingActiveCompany,
 } from "~/lib/vibe-raising";
 import type { VibeMarketingBootstrap } from "~/types/vibe-marketing";
-import type { VibeRaisingCompany, VibeRaisingProfile } from "~/types/vibe-raising";
+import type {
+  VibeRaisingAudienceVisibility,
+  VibeRaisingCompany,
+  VibeRaisingProfile,
+} from "~/types/vibe-raising";
 
 function listFromForm(value: FormDataEntryValue | null) {
   return String(value ?? "")
@@ -29,6 +34,13 @@ function listFromForm(value: FormDataEntryValue | null) {
 
 function stringFromForm(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function audienceVisibilityFromForm(formData: FormData): VibeRaisingAudienceVisibility {
+  const value = stringFromForm(formData, "audienceVisibility").toLowerCase();
+  if (value === "community") return "community";
+  if (value === "investors") return "investors";
+  return "just_me";
 }
 
 const COMPANY_SETUP_FIELD_LABELS: Record<string, string> = {
@@ -182,6 +194,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   return {
     bootstrap,
+    audienceVisibility: activeCompany?.audienceVisibility ?? "just_me",
     isAddingNew,
     isEditingExisting: Boolean(activeCompany && !isAddingNew && activeCompany.registered),
   };
@@ -268,6 +281,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const organizationKind = stringFromForm(formData, "organizationKind");
     const hasRevenue = stringFromForm(formData, "hasRevenue");
     const shortDescription = stringFromForm(formData, "shortDescription");
+    const audienceVisibility = audienceVisibilityFromForm(formData);
     if (!companyName) {
       return { intent, error: "Add your startup or company name before continuing." };
     }
@@ -322,6 +336,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       stage,
       organizationKind,
       hasRevenue,
+      audienceVisibility,
       shortDescription,
       problemSolved: stringFromForm(formData, "problemSolved"),
       targetAudience: stringFromForm(formData, "targetAudience"),
@@ -350,7 +365,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function CompanySetup() {
-  const { bootstrap, isAddingNew, isEditingExisting } = useLoaderData<typeof loader>();
+  const { bootstrap, audienceVisibility, isAddingNew, isEditingExisting } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const error = actionData && typeof actionData === "object" && "error" in actionData ? String(actionData.error ?? "") : null;
   return (
@@ -372,6 +387,14 @@ export default function CompanySetup() {
             "Describe your customer and problem clearly",
             "You can edit these details later",
           ]}
+          companySetupExtraFields={
+            <VibeRaisingAudienceVisibilityField
+              name="audienceVisibility"
+              defaultValue={audienceVisibility}
+              title="Update visibility"
+              description="Default for new drafts"
+            />
+          }
           primaryActionLabel="Save and go to Vibe Raising"
           showSecondaryAction={false}
           advancedOpenByDefault
