@@ -30,6 +30,7 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { RooPointCost } from "~/components/RooPointCost";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
+import { isApiNotFoundError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
 import {
   VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
@@ -335,7 +336,15 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { authUser, appUser } = await requireVibeRaisingFounder(env, request);
   const runId = params.runId ?? "";
   const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
-  const run = await getVibeMarketingRun(env, request, runId);
+  const run = await getVibeMarketingRun(env, request, runId).catch((error: unknown) => {
+    // A deleted/reset run (e.g. after an article-setup teardown) 404s here while a stale
+    // wizard session still links to it. Redirect to the wizard instead of letting the 404
+    // throw and SSR-500 the marketing page. (run-status.tsx handles the status-poll path.)
+    if (isApiNotFoundError(error)) {
+      throw redirect("/founder-tools/marketing");
+    }
+    throw error;
+  });
   let githubRepos: VibeMarketingGithubReposResponse = { status: "unavailable", repos: [], repositories: [] };
   const shouldLoadGithubRepos = ["repo_scan", "content_factory_scan"].includes(run.workflow) && !setupRunIdForRun(run);
   if (shouldLoadGithubRepos) {

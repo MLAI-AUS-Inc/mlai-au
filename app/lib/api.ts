@@ -37,6 +37,17 @@ export function shouldUseDevBackendFallback(error?: unknown) {
     );
 }
 
+// True when a backend call rejected with HTTP 404. Works across axios adapters — the
+// xhr/http/fetch adapters all populate `error.response.status`, and some thrown shapes
+// only carry a top-level `status`. SSR loaders use this to treat a deleted/reset run as
+// "gone" instead of letting the 404 throw and SSR-500 the whole page.
+export function isApiNotFoundError(error: unknown): boolean {
+    const status =
+        (error as { response?: { status?: number } } | null)?.response?.status ??
+        (error as { status?: number } | null)?.status;
+    return status === 404;
+}
+
 // Catch-all stub adapter for local development only. When
 // VITE_STUB_BACKEND=true, every API request short-circuits and returns a
 // fake empty response instead of hitting api.mlai.au.
