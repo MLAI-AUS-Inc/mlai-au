@@ -748,10 +748,20 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "reset-article-setup") {
       const githubRepo = stringFromForm(formData, "githubRepo");
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before resetting articles setup." };
-      await resetVibeMarketingArticleSetup(env, request, {
-        githubRepo,
-        github_repo: githubRepo,
-      });
+      try {
+        await resetVibeMarketingArticleSetup(env, request, {
+          githubRepo,
+          github_repo: githubRepo,
+        });
+      } catch (error) {
+        return {
+          intent,
+          error: readableBackendError(error, {
+            fallback:
+              "Couldn't reset the articles setup — the request timed out or failed before completing. Please try again.",
+          }),
+        };
+      }
       return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
