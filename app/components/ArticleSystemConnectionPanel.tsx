@@ -1481,6 +1481,14 @@ export default function ArticleSystemConnectionPanel({
               </div>
               <Form
                 method="POST"
+                // The panel renders on both the create route and the run route
+                // (founder-tools.marketing.run). A `<Form>` with no `action` posts to
+                // the *current* route's action — and the run route's action handles
+                // every article-system intent EXCEPT `reset-article-setup`, so on the
+                // run page the reset silently no-ops and never calls the backend. Pin
+                // the action to the create route, which owns the reset handler, so the
+                // reset works no matter which page the panel is shown on.
+                action="/founder-tools/marketing/create"
                 onSubmit={(event) => {
                   if (typeof window !== "undefined" && !window.confirm("Reset the saved articles setup for this repository?")) {
                     event.preventDefault();
