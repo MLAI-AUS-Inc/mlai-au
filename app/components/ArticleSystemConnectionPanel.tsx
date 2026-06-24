@@ -748,6 +748,17 @@ export default function ArticleSystemConnectionPanel({
         (setupBlocked && (scaffoldCheck?.rescanRunId || setupStatus === "completed"))),
   );
   const scaffoldPublishReady = Boolean(setupPrUrl || SETUP_PUBLISH_STATUSES.has(setupStatus));
+  // Gate the Build action on the scan's scaffold approvability. A scan that
+  // resolved the requested articles route as ambiguous/unmatched finishes with
+  // scaffoldStatus "not_needed" and no approveUrl, so /approve would 409 and the
+  // page would silently refresh. Defaults to approvable when the scan exposes no
+  // signal (older runs), so existing behaviour is unchanged.
+  const scanScaffoldStatus = normalizedStatus(articleSetupState?.scaffoldStatus);
+  const scanArticleSurfaceState = normalizedStatus(articleSetupState?.articleSurfaceState);
+  const setupApprovable =
+    Boolean(articleSetupState?.approveUrl) ||
+    (scanScaffoldStatus !== "not_needed" &&
+      !["ambiguous", "unmatched", "missing"].includes(scanArticleSurfaceState));
   const scaffoldStatus: ArticleSystemScaffoldStatus = !setupTargetReady && !selectedSurfaceUrl
     ? "not_ready"
     : scaffoldExplicitReady
@@ -778,6 +789,7 @@ export default function ArticleSystemConnectionPanel({
     persistedSetupIsStale: showSavedSetup && persistedSetupIsStale,
     selectedSurfaceUrl,
     scaffoldStatus,
+    setupApprovable,
     setupSurfaceUrl: displayedSurfaceUrl,
   });
 
@@ -951,7 +963,14 @@ export default function ArticleSystemConnectionPanel({
       tone: "red",
     },
   };
-  const scaffoldStatusContent = scaffoldStatusCopy[scaffoldStatus];
+  const scaffoldStatusContent =
+    scaffoldStatus === "ready_to_build" && !selectedSurfaceUrl && !setupApprovable
+      ? {
+          title: "Articles route needs confirming",
+          body: "The latest scan could not confirm the saved articles route in this repository. Re-scan, choose a different route, or create a new articles folder.",
+          tone: "amber" as const,
+        }
+      : scaffoldStatusCopy[scaffoldStatus];
   const scaffoldIconTone = {
     emerald: "bg-emerald-100 text-emerald-700",
     violet: "bg-violet-100 text-violet-700",
@@ -989,6 +1008,11 @@ export default function ArticleSystemConnectionPanel({
             {!savePending ? <ArrowRight className="h-4 w-4" /> : null}
           </button>
         </Form>
+      ) : !setupApprovable ? (
+        <div className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 sm:max-w-md">
+          The latest scan could not confirm the saved articles route. Re-scan, choose a
+          different route, or create a new articles folder before building the scaffold.
+        </div>
       ) : (
         <Form method="POST" className="w-full sm:w-auto">
           <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? currentScanRunId} />
