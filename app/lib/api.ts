@@ -96,10 +96,16 @@ const resolveApiBase = () => {
 
 export const API_URL = resolveApiBase();
 
+// Bound every backend call so a hung request surfaces an error instead of an
+// infinite spinner. Without this, a stuck server-side action (e.g. a reset whose
+// backend call never returns) leaves the UI "…ing" forever with no recovery.
+export const API_REQUEST_TIMEOUT_MS = 60_000;
+
 // ... existing code ...
 export const axiosInstance = axios.create({
     baseURL: API_URL,
     withCredentials: true,
+    timeout: API_REQUEST_TIMEOUT_MS,
 });
 applyDevStubAdapter(axiosInstance);
 
@@ -123,7 +129,8 @@ export function createApiClient(env: any, request?: Request) {
     const client = axios.create({
         baseURL,
         withCredentials: true,
-        headers
+        headers,
+        timeout: API_REQUEST_TIMEOUT_MS,
     });
     applyDevStubAdapter(client);
 
