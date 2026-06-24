@@ -1,6 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.run-status";
 import { redirect } from "react-router";
 
+import { isApiNotFoundError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
 import { getVibeMarketingRun, refreshVibeMarketingLivePreview } from "~/lib/vibe-marketing";
 import { shouldPollArticleSystemSetupRun } from "~/lib/vibe-marketing-run-polling";
@@ -28,13 +29,6 @@ function shouldRefreshSetupLivePreview(run: VibeMarketingRunSummary) {
   const platformStatus = String(run.livePreview?.platformStatus || "").trim().toLowerCase();
   return ["queued", "pending", "starting", "building", "running", "awaiting_approval", "approval_required"].includes(status) ||
     ["queued", "pending", "starting", "building", "running"].includes(platformStatus);
-}
-
-function isRunNotFoundError(error: unknown): boolean {
-  const status =
-    (error as { response?: { status?: number } } | null)?.response?.status ??
-    (error as { status?: number } | null)?.status;
-  return status === 404;
 }
 
 // A deleted/reset run (e.g. after an article-setup reset) 404s on status polling while a
@@ -67,7 +61,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   await requireVibeRaisingFounder(env, request);
   let run = await getVibeMarketingRun(env, request, runId, null, "status").catch((error: unknown) => {
-    if (isRunNotFoundError(error)) return null;
+    if (isApiNotFoundError(error)) return null;
     throw error;
   });
   if (run === null) {

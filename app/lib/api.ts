@@ -37,6 +37,17 @@ export function shouldUseDevBackendFallback(error?: unknown) {
     );
 }
 
+// True when a backend call rejected with HTTP 404. Works across axios adapters — the
+// xhr/http/fetch adapters all populate `error.response.status`, and some thrown shapes
+// only carry a top-level `status`. SSR loaders use this to treat a deleted/reset run as
+// "gone" instead of letting the 404 throw and SSR-500 the whole page.
+export function isApiNotFoundError(error: unknown): boolean {
+    const status =
+        (error as { response?: { status?: number } } | null)?.response?.status ??
+        (error as { status?: number } | null)?.status;
+    return status === 404;
+}
+
 // Catch-all stub adapter for local development only. When
 // VITE_STUB_BACKEND=true, every API request short-circuits and returns a
 // fake empty response instead of hitting api.mlai.au.
@@ -101,11 +112,20 @@ export const API_URL = resolveApiBase();
 // backend call never returns) leaves the UI "…ing" forever with no recovery.
 export const API_REQUEST_TIMEOUT_MS = 60_000;
 
+// Cloudflare Workers run with nodejs_compat, which makes axios fall back to the
+// Node http/https adapter — its outbound-POST handling hangs in the Workers
+// runtime (the request body never reaches the origin, so e.g. the article-setup
+// reset POST spins forever and the backend never logs it). Force the
+// Worker-native fetch adapter so SSR loaders AND actions work. The dev stub
+// adapter (applyDevStubAdapter) still overrides this in local development.
+const WORKER_SAFE_ADAPTER = "fetch" as const;
+
 // ... existing code ...
 export const axiosInstance = axios.create({
     baseURL: API_URL,
     withCredentials: true,
     timeout: API_REQUEST_TIMEOUT_MS,
+    adapter: WORKER_SAFE_ADAPTER,
 });
 applyDevStubAdapter(axiosInstance);
 
@@ -131,6 +151,7 @@ export function createApiClient(env: any, request?: Request) {
         withCredentials: true,
         headers,
         timeout: API_REQUEST_TIMEOUT_MS,
+        adapter: WORKER_SAFE_ADAPTER,
     });
     applyDevStubAdapter(client);
 
