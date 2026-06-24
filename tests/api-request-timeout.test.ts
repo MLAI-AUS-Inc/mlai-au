@@ -20,3 +20,18 @@ describe("api client request timeout", () => {
     expect(client.defaults.timeout).toBe(API_REQUEST_TIMEOUT_MS);
   });
 });
+
+// Root cause of the hung reset: under `nodejs_compat`, axios defaults to the Node
+// http adapter, whose outbound-POST handling hangs in the Cloudflare Worker
+// runtime (the request never reaches the origin). Forcing the fetch adapter makes
+// SSR loaders + actions use the Worker-native fetch.
+describe("api client uses the Worker-native fetch adapter", () => {
+  test("the shared axios instance uses the fetch adapter", () => {
+    expect(axiosInstance.defaults.adapter).toBe("fetch");
+  });
+
+  test("per-request SSR clients use the fetch adapter", () => {
+    const client = createApiClient({} as unknown as Record<string, unknown>);
+    expect(client.defaults.adapter).toBe("fetch");
+  });
+});
