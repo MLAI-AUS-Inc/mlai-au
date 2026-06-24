@@ -36,6 +36,11 @@ export type ArticleSystemConnectionStepInput = {
   selectedSurfaceUrl?: string | null;
   scaffoldStatus?: ArticleSystemScaffoldStatus;
   setupSurfaceUrl?: string | null;
+  // False when the latest scan resolved the requested articles route as
+  // ambiguous/unmatched (scaffold_status "not_needed", no approve_url), so there
+  // is no approvable scaffold and the Build action would 409. Undefined leaves
+  // the existing behaviour unchanged.
+  setupApprovable?: boolean;
 };
 
 export function articleSystemScaffoldActionLabel(status: ArticleSystemScaffoldStatus) {
@@ -191,6 +196,16 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
       defaultExpanded: true,
       disabled: false,
       unavailableReason: "",
+      ...staleSetupAttention,
+    };
+  } else if (input.scaffoldStatus === "ready_to_build" && input.setupApprovable === false) {
+    buildSetup = {
+      id: "buildSetup",
+      status: "blocked",
+      defaultExpanded: true,
+      disabled: false,
+      unavailableReason:
+        "The latest scan couldn't confirm this articles route, so there's nothing to build yet. Re-scan, pick a different route, or create a new articles folder.",
       ...staleSetupAttention,
     };
   } else {

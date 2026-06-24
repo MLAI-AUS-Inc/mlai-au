@@ -122,6 +122,13 @@ export interface VibeMarketingArticleSetupState {
   updatedAt?: string | null;
   articleSurfaceMode?: string | null;
   articleSurfaceHint?: Record<string, unknown> | null;
+  // Scaffold approvability from the latest scan, used to gate the "Build articles
+  // scaffold" action. When the scan resolved the requested route as
+  // ambiguous/unmatched it finishes with scaffoldStatus "not_needed" and no
+  // approveUrl — there is nothing to approve, so the Build action would 409.
+  scaffoldStatus?: string | null;
+  approveUrl?: string | null;
+  articleSurfaceState?: string | null;
 }
 
 export interface VibeMarketingAutofillSource {

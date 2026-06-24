@@ -66,6 +66,32 @@ describe("article system connection step states", () => {
     expect(articleSystemScaffoldActionLabel("ready_to_build")).toBe("Build articles scaffold");
   });
 
+  test("blocks the build step when the scan resolved the saved route as not approvable", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      currentScanRunId: "scan-not-approvable",
+      setupTargetReady: true,
+      scaffoldStatus: "ready_to_build",
+      setupApprovable: false,
+    });
+
+    expect(steps.buildSetup.status).toBe("blocked");
+    expect(steps.buildSetup.disabled).toBe(false);
+    expect(steps.buildSetup.unavailableReason).toContain("Re-scan");
+  });
+
+  test("keeps the build step active when the scan is approvable", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      currentScanRunId: "scan-approvable",
+      setupTargetReady: true,
+      scaffoldStatus: "ready_to_build",
+      setupApprovable: true,
+    });
+
+    expect(steps.buildSetup.status).toBe("active");
+  });
+
   test("marks the scaffold step complete when setup is explicitly ready", () => {
     for (const scaffoldStatus of ["ready", "legacy_ready"] as const) {
       const steps = articleSystemConnectionStepStates({
