@@ -51,67 +51,6 @@ export interface VibeRaisingAppUser {
   companyRegistered: boolean;
 }
 
-export interface VibeRaisingAdminStatCard {
-  key: string;
-  label: string;
-  value: string;
-  trendLabel?: string | null;
-  trendDirection?: "up" | "down" | "neutral" | string | null;
-}
-
-export interface VibeRaisingAdminTimePoint {
-  label: string;
-  value: number;
-  valueText?: string | null;
-}
-
-export interface VibeRaisingAdminBreakdownItem {
-  label: string;
-  value: number;
-  valueText?: string | null;
-  percentage?: number | null;
-  percentageText?: string | null;
-}
-
-export interface VibeRaisingAdminUpdateSummary {
-  id: string;
-  startupName: string;
-  startupAvatarUrl?: string | null;
-  updateMonth: string;
-  status: string;
-  lastUpdatedAt?: string | null;
-  founderName?: string | null;
-  actionLabel?: string | null;
-  companyId?: string | null;
-}
-
-export interface VibeRaisingAdminOverview {
-  stats: VibeRaisingAdminStatCard[];
-  updatesOverTime: VibeRaisingAdminTimePoint[];
-  updatesByStage: VibeRaisingAdminBreakdownItem[];
-  updatesByIndustry: VibeRaisingAdminBreakdownItem[];
-  recentUpdates: VibeRaisingAdminUpdateSummary[];
-  reviewCount: number;
-}
-
-export interface VibeRaisingAdminUpdatesListResponse {
-  updates: VibeRaisingAdminUpdateSummary[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
-
-export interface VibeRaisingAdminUpdateDetail {
-  summary: VibeRaisingAdminUpdateSummary;
-  update: VibeRaisingMonthlyUpdate | null;
-  company?: VibeRaisingCompany | null;
-  founder?: {
-    name?: string | null;
-    email?: string | null;
-  } | null;
-}
 export interface VibeRaisingPastMonthSummary {
   month: string;
   highlights: string;

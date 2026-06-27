@@ -111,13 +111,6 @@ export default [
   // Vibe Raising public landing
   route("/vibe-raising", "routes/vibe-raising-landing.tsx"),
 
-  // Vibe Raising Admin routes
-  route("/founder-tools/admin", "routes/vibe-raising-admin.tsx", { id: "vibe-raising-admin-root" }, [
-    index("routes/vibe-raising-admin._index.tsx"),
-    route("updates", "routes/vibe-raising-admin.updates.tsx"),
-    route("review", "routes/vibe-raising-admin.review.tsx"),
-    route("updates/:id", "routes/vibe-raising-admin.update-detail.tsx"),
-  ]),
   // Founder Tools App routes
   route("/founder-tools", "routes/vibe-raising-app.tsx", { id: "founder-tools-root" }, [
     index("routes/founder-tools.index.tsx"),
