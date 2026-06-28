@@ -289,6 +289,12 @@ export interface VibeMarketingCheck {
   enabled?: boolean;
   channels?: VibeMarketingNotificationChannel[];
   automation?: VibeMarketingResearchAutomation | null;
+  // Scaffold publish-target connection state (checks.scaffold).
+  scaffoldConnected?: boolean;
+  scaffoldBuiltUnlinked?: boolean;
+  scaffoldDisconnectedAt?: string | null;
+  defaultPublishTargetId?: string | null;
+  routePath?: string | null;
 }
 
 export type VibeMarketingNotificationChannelType = "slack" | "whatsapp" | "email";

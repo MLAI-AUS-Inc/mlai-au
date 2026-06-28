@@ -18,6 +18,7 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
+  Unlink,
   UserCheck,
 } from "lucide-react";
 
@@ -665,6 +666,13 @@ export default function ArticleSystemConnectionPanel({
   const resetArticleSetupPending = actionPending("reset-article-setup");
   const confirmSurfacePending = actionPending("confirm-article-surface");
   const createSurfacePending = actionPending("create-article-surface");
+  // Scaffold publish-target connection state (backend checks.scaffold).
+  const scaffoldConnected = Boolean(bootstrap.checks.scaffold?.scaffoldConnected);
+  const scaffoldBuiltUnlinked = Boolean(bootstrap.checks.scaffold?.scaffoldBuiltUnlinked);
+  const scaffoldDisconnectedAt = bootstrap.checks.scaffold?.scaffoldDisconnectedAt ?? null;
+  const scaffoldConnectionRoute = bootstrap.checks.scaffold?.routePath ?? null;
+  const acceptScaffoldPending = actionPending("accept-article-scaffold");
+  const disconnectScaffoldPending = actionPending("disconnect-article-scaffold");
   const [selectedChoiceId, setSelectedChoiceId] = useState("");
   const [manualArticleRoute, setManualArticleRoute] = useState("");
   const [manualRouteError, setManualRouteError] = useState("");
@@ -1484,6 +1492,65 @@ export default function ArticleSystemConnectionPanel({
               </div>
             </div>
           </div>
+
+          {scaffoldConnected || scaffoldBuiltUnlinked ? (
+            <div
+              className={clsx(
+                "mt-4 rounded-xl border p-4",
+                scaffoldConnected ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50",
+              )}
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span
+                    className={clsx(
+                      "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg",
+                      scaffoldConnected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700",
+                    )}
+                  >
+                    {scaffoldConnected ? <Link2 className="h-5 w-5" /> : <Unlink className="h-5 w-5" />}
+                  </span>
+                  <div className="min-w-0">
+                    <p
+                      className={clsx(
+                        "text-sm font-black",
+                        scaffoldConnected ? "text-emerald-900" : "text-amber-900",
+                      )}
+                    >
+                      {scaffoldConnected ? "Articles scaffold linked & accepted" : "Articles scaffold built — not linked yet"}
+                    </p>
+                    <p
+                      className={clsx(
+                        "mt-1 text-sm font-semibold leading-6",
+                        scaffoldConnected ? "text-emerald-800" : "text-amber-800",
+                      )}
+                    >
+                      {scaffoldConnected
+                        ? `New articles publish straight to this scaffold${scaffoldConnectionRoute ? ` (${scaffoldConnectionRoute})` : ""}.`
+                        : scaffoldDisconnectedAt
+                          ? "You unlinked this scaffold. Re-accept it to publish articles into it again."
+                          : "The scaffold is built in your repo but isn't linked as the publish target yet. Accept it to start publishing into it."}
+                    </p>
+                  </div>
+                </div>
+                {!scaffoldConnected ? (
+                  <Form method="POST" action="/founder-tools/marketing/create" className="flex-shrink-0">
+                    <input type="hidden" name="githubRepo" value={selectedRepo} />
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="accept-article-scaffold"
+                      disabled={acceptScaffoldPending || !selectedRepo}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                    >
+                      {acceptScaffoldPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                      {acceptScaffoldPending ? "Linking..." : "Accept & link scaffold"}
+                    </button>
+                  </Form>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </FlowStep>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
@@ -1494,43 +1561,89 @@ export default function ArticleSystemConnectionPanel({
           <div className="mt-4 flex-shrink-0 sm:mt-0">{scaffoldAction}</div>
         </div>
 
-        {setupTargetReady || scaffoldReady ? (
-          <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-black text-red-900">Reset articles setup</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-red-800">
-                  Clear the saved articles setup for this repository and start the setup flow again.
-                </p>
-              </div>
-              <Form
-                method="POST"
-                // The panel renders on both the create route and the run route
-                // (founder-tools.marketing.run). A `<Form>` with no `action` posts to
-                // the *current* route's action — and the run route's action handles
-                // every article-system intent EXCEPT `reset-article-setup`, so on the
-                // run page the reset silently no-ops and never calls the backend. Pin
-                // the action to the create route, which owns the reset handler, so the
-                // reset works no matter which page the panel is shown on.
-                action="/founder-tools/marketing/create"
-                onSubmit={(event) => {
-                  if (typeof window !== "undefined" && !window.confirm("Reset the saved articles setup for this repository?")) {
-                    event.preventDefault();
-                  }
-                }}
-              >
-                <input type="hidden" name="githubRepo" value={selectedRepo} />
-                <button
-                  type="submit"
-                  name="intent"
-                  value="reset-article-setup"
-                  disabled={resetArticleSetupPending || !selectedRepo}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+        {setupTargetReady || scaffoldReady || scaffoldConnected ? (
+          <div className="rounded-2xl border border-red-200 bg-white">
+            <div className="border-b border-red-100 px-4 py-3">
+              <p className="text-sm font-black text-red-900">Danger zone</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {/* Step 1 (least dangerous): unlink the publish target but keep the scaffold. */}
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-amber-900">Unlink scaffold page</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
+                    Stop publishing new articles into this scaffold. The scaffold stays in your repo — re-link it
+                    anytime with one click.
+                  </p>
+                </div>
+                <Form
+                  method="POST"
+                  action="/founder-tools/marketing/create"
+                  className="flex-shrink-0"
+                  onSubmit={(event) => {
+                    if (
+                      typeof window !== "undefined" &&
+                      !window.confirm("Unlink the articles scaffold? New articles won't publish into it until you re-link.")
+                    ) {
+                      event.preventDefault();
+                    }
+                  }}
                 >
-                  {resetArticleSetupPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                  {resetArticleSetupPending ? "Resetting..." : "Reset articles setup"}
-                </button>
-              </Form>
+                  <input type="hidden" name="githubRepo" value={selectedRepo} />
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="disconnect-article-scaffold"
+                    disabled={disconnectScaffoldPending || !scaffoldConnected}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-3 text-sm font-black text-amber-700 shadow-sm transition hover:bg-amber-50 disabled:opacity-50 sm:w-auto"
+                  >
+                    {disconnectScaffoldPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />}
+                    {disconnectScaffoldPending ? "Unlinking..." : "Unlink scaffold page"}
+                  </button>
+                </Form>
+              </div>
+
+              {/* Step 2 (most dangerous): full reset — only after the scaffold is unlinked. */}
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-red-900">Reset everything</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-red-800">
+                    {scaffoldConnected
+                      ? "Unlink the scaffold page first, then you can clear the saved setup and start over."
+                      : "Clear the saved articles setup for this repository and start the setup flow again."}
+                  </p>
+                </div>
+                <Form
+                  method="POST"
+                  // The panel renders on both the create route and the run route
+                  // (founder-tools.marketing.run). A `<Form>` with no `action` posts to
+                  // the *current* route's action — and the run route's action handles
+                  // every article-system intent EXCEPT `reset-article-setup`, so on the
+                  // run page the reset silently no-ops and never calls the backend. Pin
+                  // the action to the create route, which owns the reset handler, so the
+                  // reset works no matter which page the panel is shown on.
+                  action="/founder-tools/marketing/create"
+                  className="flex-shrink-0"
+                  onSubmit={(event) => {
+                    if (typeof window !== "undefined" && !window.confirm("Reset the saved articles setup for this repository?")) {
+                      event.preventDefault();
+                    }
+                  }}
+                >
+                  <input type="hidden" name="githubRepo" value={selectedRepo} />
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="reset-article-setup"
+                    disabled={resetArticleSetupPending || !selectedRepo || scaffoldConnected}
+                    title={scaffoldConnected ? "Unlink the scaffold page first" : undefined}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
+                  >
+                    {resetArticleSetupPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                    {resetArticleSetupPending ? "Resetting..." : "Reset everything"}
+                  </button>
+                </Form>
+              </div>
             </div>
           </div>
         ) : null}
