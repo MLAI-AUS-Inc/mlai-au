@@ -46,6 +46,8 @@ import {
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
   resetVibeMarketingArticleSetup,
+  acceptVibeMarketingArticleScaffold,
+  disconnectVibeMarketingArticleScaffold,
   saveVibeMarketingSettings,
   skipVibeMarketingBaseline,
   startVibeMarketingArticle,
@@ -741,6 +743,37 @@ export async function action({ request, context }: Route.ActionArgs) {
       });
       if (intent === "retry-scan" && result.runId) {
         return redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
+      }
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
+    }
+
+    if (intent === "accept-article-scaffold") {
+      const githubRepo = stringFromForm(formData, "githubRepo");
+      if (!githubRepo) return { intent, error: "Choose a GitHub repository before linking the articles scaffold." };
+      try {
+        await acceptVibeMarketingArticleScaffold(env, request, { githubRepo, github_repo: githubRepo });
+      } catch (error) {
+        return {
+          intent,
+          error: readableBackendError(error, {
+            fallback: "Couldn't link the articles scaffold — the request failed before completing. Please try again.",
+          }),
+        };
+      }
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
+    }
+
+    if (intent === "disconnect-article-scaffold") {
+      const githubRepo = stringFromForm(formData, "githubRepo");
+      try {
+        await disconnectVibeMarketingArticleScaffold(env, request, { githubRepo, github_repo: githubRepo });
+      } catch (error) {
+        return {
+          intent,
+          error: readableBackendError(error, {
+            fallback: "Couldn't unlink the articles scaffold — the request failed before completing. Please try again.",
+          }),
+        };
       }
       return redirect("/founder-tools/marketing/create?step=articleSystem");
     }

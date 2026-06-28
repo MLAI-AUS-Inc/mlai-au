@@ -1688,6 +1688,18 @@ export async function resetVibeMarketingArticleSetup(env: Env, request: Request,
   return response.data as Record<string, unknown>;
 }
 
+export async function acceptVibeMarketingArticleScaffold(env: Env, request: Request, body: Record<string, unknown>) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/article-setup/accept`, body);
+  return response.data as Record<string, unknown>;
+}
+
+export async function disconnectVibeMarketingArticleScaffold(env: Env, request: Request, body: Record<string, unknown>) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/article-setup/disconnect`, body);
+  return response.data as Record<string, unknown>;
+}
+
 export function startVibeMarketingDiscovery(env: Env, request: Request, body: Record<string, unknown>) {
   return startMarketingRun(env, request, "discovery", body);
 }
