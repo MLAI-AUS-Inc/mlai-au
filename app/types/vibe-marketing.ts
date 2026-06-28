@@ -239,6 +239,18 @@ export interface VibeMarketingOrganization {
   seedKeywords: string[];
 }
 
+export interface VibeMarketingAuthor {
+  id: string;
+  name: string;
+  role?: string | null;
+  credentials?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  avatarAlt?: string | null;
+  url?: string | null;
+  sameAs?: Array<{ label: string; href: string }>;
+}
+
 export interface VibeMarketingSettings {
   brandName?: string | null;
   companyContext?: string | null;
@@ -250,6 +262,8 @@ export interface VibeMarketingSettings {
   dailyDiscoveryPriority?: number | null;
   defaultTimezone?: string | null;
   githubConnectionState?: string | null;
+  authors?: VibeMarketingAuthor[];
+  defaultAuthorId?: string | null;
 }
 
 export interface VibeMarketingStartupProfile {
