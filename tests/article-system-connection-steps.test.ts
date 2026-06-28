@@ -203,4 +203,24 @@ describe("article system connection step states", () => {
     expect(steps.chooseLocation.status).toBe("complete");
     expect(steps.chooseLocation.defaultExpanded).toBe(true);
   });
+
+  test("treats steps 3 & 4 as complete confirmations when the scaffold is already linked", () => {
+    // Already-linked org running a fresh scan: scaffoldStatus is still "not_ready" and there is no
+    // setup target, but the durable publish target is connected — steps 3 & 4 must not lock.
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      scaffoldConnected: true,
+      currentScanRunId: "scan-1",
+      inventoryReady: true,
+      setupTargetReady: false,
+      scaffoldStatus: "not_ready",
+    });
+
+    expect(steps.chooseLocation.status).toBe("complete");
+    expect(steps.chooseLocation.disabled).toBe(false);
+    expect(steps.chooseLocation.defaultExpanded).toBe(true);
+    expect(steps.buildSetup.status).toBe("complete");
+    expect(steps.buildSetup.disabled).toBe(false);
+    expect(steps.buildSetup.defaultExpanded).toBe(true);
+  });
 });
