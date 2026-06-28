@@ -42,6 +42,8 @@ import {
     StarIcon,
 } from "@heroicons/react/24/outline";
 import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
+import { ImageWithFallback } from "~/components/ImageWithFallback";
+import { ROO_POINTS_COIN_URL, ROO_POINTS_FALLBACK_URL, RooPointCost } from "~/components/RooPointCost";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import { VibeRaisingHeroExampleUpdatePreview } from "~/components/VibeRaisingFounderOverview";
@@ -325,6 +327,56 @@ function InvestorReachOverview() {
                             ))}
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function RooPointsMomentumCard() {
+    return (
+        <section className="overflow-hidden rounded-[24px] border border-[rgba(0,128,128,0.16)] bg-white shadow-[0_16px_38px_rgba(15,23,42,0.08)]">
+            <div className="grid gap-4 p-5 sm:p-6 lg:grid-cols-[minmax(0,1.15fr)_220px] lg:items-center">
+                <div>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                        Roo Points
+                    </div>
+                    <h2 className="mt-3 text-2xl font-black tracking-tight text-gray-950 sm:text-[2rem]">
+                        Create a monthly update. Earn 20 points.
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
+                        Coworking is moving to <RooPointCost points={8} className="font-black text-gray-950" coinClassName="h-4.5 w-4.5" /> per day. If you complete a monthly update for the current month, your discounted rate stays at <RooPointCost points={4} className="font-black text-[var(--vr-color-primary)]" coinClassName="h-4.5 w-4.5" /> per day for that month.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2.5">
+                        <Link
+                            to="/founder-tools/updates/create"
+                            className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
+                        >
+                            Create monthly update
+                            <ArrowRightIcon className="h-3.5 w-3.5" />
+                        </Link>
+                        <Link
+                            to="/founder-tools/upgrades"
+                            className="inline-flex items-center gap-2 rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:text-gray-950"
+                        >
+                            See Roo Points
+                        </Link>
+                    </div>
+                </div>
+
+                <div className="relative mx-auto flex w-full max-w-[190px] items-center justify-center">
+                    <div className="absolute inset-5 rounded-full bg-[radial-gradient(circle,rgba(0,255,215,0.18),rgba(255,255,255,0))]" aria-hidden="true" />
+                    <div className="absolute left-5 top-5 h-2.5 w-2.5 rounded-full bg-[rgba(0,255,215,0.45)]" aria-hidden="true" />
+                    <div className="absolute bottom-8 right-6 h-2 w-2 rounded-full bg-[rgba(255,200,1,0.65)]" aria-hidden="true" />
+                    <ImageWithFallback
+                        src={ROO_POINTS_COIN_URL}
+                        fallbackSrc={ROO_POINTS_FALLBACK_URL}
+                        alt="Roo Points coin"
+                        draggable={false}
+                        width={220}
+                        height={220}
+                        className="relative z-10 h-24 w-24 rounded-full object-cover drop-shadow-[0_16px_24px_rgba(15,23,42,0.16)] transition duration-200 sm:h-30 sm:w-30"
+                    />
                 </div>
             </div>
         </section>
@@ -1354,6 +1406,8 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
                     </div>
                 </div>
 
+                <RooPointsMomentumCard />
+
                 <InvestorReachOverview />
             </div>
         );
@@ -1392,6 +1446,8 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
             </div>
 
             {/* Info alert — investor engagement signal */}
+            <RooPointsMomentumCard />
+
             <div className="hidden sm:block">
                 <VRAlertInfo
                     title="3 investors opened your last update"
