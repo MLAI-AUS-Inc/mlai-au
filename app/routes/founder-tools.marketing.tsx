@@ -16,6 +16,7 @@ import {
   ExternalLink,
   FileText,
   Flame,
+  Globe2,
   Loader2,
   MoreHorizontal,
   PenLine,
@@ -891,18 +892,6 @@ function startupTags(bootstrap: VibeMarketingBootstrap) {
   return Array.from(new Set(tags)).slice(0, 3);
 }
 
-function objectRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
-}
-
-function firstStringValue(source: Record<string, unknown>, ...keys: string[]) {
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return "";
-}
-
 function normalizeDashboardDomain(value: string | null | undefined) {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
@@ -912,39 +901,6 @@ function normalizeDashboardDomain(value: string | null | undefined) {
   } catch {
     return raw.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").split(/[/?#]/, 1)[0].replace(/\/+$/, "");
   }
-}
-
-function normalizeArticleRoutePath(value: string) {
-  const raw = value.trim();
-  if (!raw) return "/articles";
-  if (/^https?:\/\//i.test(raw)) {
-    try {
-      return normalizeArticleRoutePath(new URL(raw).pathname || "/articles");
-    } catch {
-      return "/articles";
-    }
-  }
-  const withLeadingSlash = raw.startsWith("/") ? raw : `/${raw}`;
-  const normalized = withLeadingSlash.split(/[?#]/, 1)[0].replace(/\/+/g, "/");
-  return normalized.length > 1 ? normalized.replace(/\/+$/, "") : normalized;
-}
-
-function articleRoutePathForDashboard(bootstrap: VibeMarketingBootstrap) {
-  const articleSetupState = objectRecord(bootstrap.articleSetupState);
-  const pendingSetup = objectRecord(bootstrap.settings.pendingArticleSystemSetup);
-  const scaffoldArticleSystem = objectRecord(bootstrap.checks.scaffold?.articleSystem);
-  return normalizeArticleRoutePath(
-    firstStringValue(articleSetupState, "routePath", "route_path") ||
-      firstStringValue(pendingSetup, "routePath", "route_path") ||
-      firstStringValue(scaffoldArticleSystem, "route_path", "routePath") ||
-      "/articles",
-  );
-}
-
-function articleRouteDisplayForDashboard(bootstrap: VibeMarketingBootstrap, domain: string | null | undefined) {
-  const routePath = articleRoutePathForDashboard(bootstrap);
-  const host = normalizeDashboardDomain(domain);
-  return host ? `${host}${routePath}` : routePath;
 }
 
 function githubConnectHrefForDashboard(connected: boolean) {
@@ -3606,7 +3562,7 @@ function ReturningTopicPickerPage({
       bootstrap.checks.github?.connectionState === "connected",
   );
   const githubConnectionHref = githubConnectHrefForDashboard(githubConnected);
-  const articleRouteDisplay = articleRouteDisplayForDashboard(bootstrap, domain);
+  const websiteDomainDisplay = normalizeDashboardDomain(domain) || "Add your domain";
   const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
   const companyAvatarUrl = companyAvatarPreviewUrl || savedCompanyAvatarUrl;
   const companyAvatarSaving = companyAvatarFetcher.state !== "idle";
@@ -4535,76 +4491,91 @@ function ReturningTopicPickerPage({
         </div>
 
         <aside className="space-y-5">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start justify-between gap-4">
-              <p className="text-sm font-black text-slate-500">Your startup</p>
-              <Link to="/founder-tools/marketing/create?step=startupDetails" className="inline-flex items-center gap-1 text-sm font-black text-violet-700">
-                <PenLine className="h-4 w-4" />
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+                <div className="group relative h-24 w-24 shrink-0">
+                  {companyAvatarUrl ? (
+                    <img
+                      src={companyAvatarUrl}
+                      alt={`${companyName} avatar`}
+                      className="h-24 w-24 rounded-full object-cover ring-1 ring-slate-200"
+                    />
+                  ) : (
+                    <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-950 text-3xl font-black text-white shadow-inner">
+                      {companyInitials(companyName)}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setCompanyAvatarModalOpen(true)}
+                    disabled={companyAvatarSaving}
+                    aria-label="Edit company avatar"
+                    className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {companyAvatarSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Camera className="h-6 w-6" />}
+                  </button>
+                </div>
+                <div className="min-w-0">
+                  <h2 className="break-words text-2xl font-black tracking-normal text-slate-950">{companyName}</h2>
+                  <p className="mt-2 break-words text-base font-bold leading-6 text-slate-500">
+                    {tags.length ? tags.join(" · ") : "Startup · SEO · Growth"}
+                  </p>
+                  {companyAvatarError ? <p className="mt-2 text-xs font-bold text-red-600">{companyAvatarError}</p> : null}
+                </div>
+              </div>
+              <Link
+                to="/founder-tools/marketing/create?step=startupDetails"
+                className="inline-flex shrink-0 items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                <PenLine className="h-5 w-5" />
                 Edit details
               </Link>
             </div>
-            <div className="mt-6 flex items-center gap-4">
-              <div className="group relative h-14 w-14 shrink-0">
-                {companyAvatarUrl ? (
-                  <img
-                    src={companyAvatarUrl}
-                    alt={`${companyName} avatar`}
-                    className="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200"
-                  />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-xl font-black text-white">
-                    {companyInitials(companyName)}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setCompanyAvatarModalOpen(true)}
-                  disabled={companyAvatarSaving}
-                  aria-label="Edit company avatar"
-                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {companyAvatarSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
-                </button>
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-black text-slate-950">{companyName}</p>
-                <p className="mt-1 text-sm font-bold text-slate-500">
-                  {tags.length ? tags.join(" · ") : "Startup · SEO · Growth"}
-                </p>
-                {companyAvatarError ? <p className="mt-1 text-xs font-bold text-red-600">{companyAvatarError}</p> : null}
-              </div>
-            </div>
-            <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-4">
-              <div className="flex min-w-0 items-center gap-4">
-                <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-600" />
-                <div className="min-w-0">
-                  <p className="text-sm font-black text-slate-950">Website connected</p>
-                  <p className="truncate text-sm font-semibold text-slate-500">{domain || "Add your domain"}</p>
-                </div>
-              </div>
-              <Link to="/founder-tools/marketing/settings" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50">
-                Manage
-              </Link>
-            </div>
-            <div className="mt-4 grid gap-3">
-              <a
-                href={githubConnectionHref}
-                className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
+
+            <div className="mt-8 space-y-5">
+              <Link
+                to="/founder-tools/marketing/settings"
+                aria-label="Manage website settings"
+                className="group flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 transition hover:border-slate-300 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
               >
-                <GitHubMark className="h-5 w-5" />
-                {githubConnected ? "Manage GitHub" : "Connect GitHub"}
-              </a>
-              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-wide text-slate-400">Articles route</p>
-                  <p className="mt-1 break-all text-sm font-black text-slate-900">{articleRouteDisplay}</p>
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                    <Globe2 className="h-8 w-8" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xl font-black text-slate-950">Website</span>
+                    <span className="mt-1 block truncate text-lg font-bold text-blue-600 group-hover:text-blue-700">
+                      {websiteDomainDisplay}
+                    </span>
+                  </span>
                 </div>
-                <Link
-                  to="/founder-tools/marketing/create?step=articleSystem"
-                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-100"
+                <span className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
+                  <CheckCircle2 className="h-5 w-5" />
+                  Connected
+                </span>
+              </Link>
+
+              <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-950 text-white shadow-inner">
+                    <GitHubMark className="h-9 w-9" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="break-words text-xl font-black text-slate-950">
+                      {githubConnected ? "GitHub connected" : "Connect GitHub"}
+                    </p>
+                    <p className="mt-1 break-words text-base font-bold leading-6 text-slate-500">
+                      {githubConnected ? "Connected to this website's GitHub account" : "Connect this website's GitHub account"}
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={githubConnectionHref}
+                  className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
                 >
-                  Edit route
-                </Link>
+                  {githubConnected ? "Manage" : "Connect"}
+                </a>
               </div>
             </div>
           </section>
