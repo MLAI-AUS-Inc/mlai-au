@@ -159,7 +159,7 @@ describe("article system connection panel", () => {
     expect(markup).toContain("Public route: /articles");
     expect(markup).toContain("Change location");
     expect(markup).toContain("Re-scan repository");
-    expect(markup).toContain("Reset articles setup");
+    expect(markup).toContain("Reset everything");
     expect(markup).toContain("value=\"reset-article-setup\"");
   });
 
@@ -175,7 +175,7 @@ describe("article system connection panel", () => {
       scanRun: null,
     });
 
-    expect(markup).toContain("Reset articles setup");
+    expect(markup).toContain("Reset everything");
     expect(markup).toContain("value=\"reset-article-setup\"");
     expect(markup).not.toContain(">Continue<");
     expect(markup).not.toContain("/founder-tools/marketing/create?step=research");
