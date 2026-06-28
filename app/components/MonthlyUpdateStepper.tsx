@@ -12,6 +12,7 @@ interface MonthlyUpdateStepperProps {
   expandOnHover?: boolean;
   frameless?: boolean;
   onStepClick?: (step: MonthlyUpdateStepKey) => void;
+  showHelpers?: boolean;
 }
 
 export const MONTHLY_UPDATE_STEPS: Array<{
@@ -53,6 +54,7 @@ export default function MonthlyUpdateStepper({
   expandOnHover = false,
   frameless = false,
   onStepClick,
+  showHelpers = true,
 }: MonthlyUpdateStepperProps) {
   const activeIndex = Math.max(0, MONTHLY_UPDATE_STEPS.findIndex((step) => step.key === activeStep));
   const active = MONTHLY_UPDATE_STEPS[activeIndex] ?? MONTHLY_UPDATE_STEPS[0];
@@ -243,15 +245,17 @@ export default function MonthlyUpdateStepper({
                       >
                         {step.title}
                       </p>
-                      <p
-                        className={clsx(
-                          "mt-1 truncate text-xs font-semibold",
-                          stepperBodyClassName,
-                          isActive ? "text-[var(--vr-color-primary)]" : isLocked ? "text-gray-400" : "text-[var(--vr-color-text-sub)]",
-                        )}
-                      >
-                        {step.helper}
-                      </p>
+                      {showHelpers ? (
+                        <p
+                          className={clsx(
+                            "mt-1 truncate text-xs font-semibold",
+                            stepperBodyClassName,
+                            isActive ? "text-[var(--vr-color-primary)]" : isLocked ? "text-gray-400" : "text-[var(--vr-color-text-sub)]",
+                          )}
+                        >
+                          {step.helper}
+                        </p>
+                      ) : null}
                     </button>
                   </div>
                 );

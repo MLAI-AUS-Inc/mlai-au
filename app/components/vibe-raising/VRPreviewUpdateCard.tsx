@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { clsx } from "clsx";
 import {
     ArrowTopRightOnSquareIcon,
+    ChevronDownIcon,
     DocumentArrowUpIcon,
     LinkIcon,
     PencilSquareIcon,
@@ -79,9 +80,10 @@ function VRPreviewUpdateSection({
                 <button
                     type="button"
                     onClick={() => setMobileExpanded((current) => !current)}
-                    className="mt-2 inline-flex text-xs font-bold text-[var(--vr-color-primary)] sm:hidden"
+                    className="mt-2 inline-flex cursor-pointer items-center gap-1 text-xs font-bold text-[var(--vr-color-primary)] sm:hidden"
                 >
                     {mobileExpanded ? "Show less" : `Show all ${items.length}`}
+                    <ChevronDownIcon className={clsx("h-3.5 w-3.5 transition-transform", mobileExpanded && "rotate-180")} />
                 </button>
             ) : null}
         </div>

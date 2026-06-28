@@ -34,7 +34,6 @@ type NavigationItem = { name: string; href: string; icon: any; exact?: boolean; 
 const VIBE_RAISING_TOP_NAVIGATION = [
     { name: 'My Update', href: '/founder-tools/updates' },
     { name: 'Data Sources', href: '/founder-tools/data-sources' },
-    { name: 'My Companies', href: '/founder-tools/companies' },
 ];
 const MLAI_LOGO_URL = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84";
 
