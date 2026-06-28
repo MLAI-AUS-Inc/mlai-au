@@ -40,7 +40,6 @@ import { clsx } from "clsx";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import AvatarModal from "~/components/AvatarModal";
-import GitHubMark from "~/components/GitHubMark";
 import { RooPointCost } from "~/components/RooPointCost";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
@@ -75,6 +74,7 @@ import {
   controlVibeMarketingRun,
   discardVibeMarketingWrittenArticle,
   getVibeMarketingBootstrap,
+  getVibeMarketingGithubRepos,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
   recordVibeMarketingTopicFeedback,
@@ -100,6 +100,7 @@ import type {
   VibeMarketingAutofillResult,
   VibeMarketingBootstrap,
   VibeMarketingDraftArticle,
+  VibeMarketingGithubReposResponse,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
@@ -163,6 +164,30 @@ function founderNamesFromForm(formData: FormData) {
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+function unavailableGithubRepos(): VibeMarketingGithubReposResponse {
+  return { status: "unavailable", repos: [], repositories: [] };
+}
+
+function dashboardGithubConnectionState(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
+  return String(
+    githubRepos.connectionState ??
+      githubRepos.connection_state ??
+      bootstrap.settings.githubConnectionState ??
+      githubRepos.status ??
+      "",
+  ).trim().toLowerCase();
+}
+
+function isDashboardGithubConnected(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
+  const state = dashboardGithubConnectionState(githubRepos, bootstrap);
+  return (
+    isGithubPublishingReady(bootstrap) ||
+    state === "connected" ||
+    state === "already_connected" ||
+    Boolean(githubRepos.repos?.length || githubRepos.repositories?.length)
+  );
 }
 
 function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
@@ -303,6 +328,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (!vibeContext.appUser) {
     return {
       bootstrap: emptyBootstrapFromProfile(vibeContext.profile),
+      githubRepos: unavailableGithubRepos(),
       hasFounderCompany: false,
       billingRequestIds: {
         articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
@@ -311,9 +337,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     };
   }
 
-  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+  const [bootstrap, githubRepos] = await Promise.all([
+    getVibeMarketingBootstrap(env, request, null, "summary"),
+    getVibeMarketingGithubRepos(env, request).catch(() => unavailableGithubRepos()),
+  ]);
   return {
     bootstrap,
+    githubRepos,
     hasFounderCompany: true,
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
@@ -3456,12 +3486,14 @@ function TopicPillarsSection({
 function ReturningTopicPickerPage({
   bootstrap,
   billingRequestIds,
+  githubRepos,
   error,
   errorIntent,
   setupMergedNotice = false,
 }: {
   bootstrap: VibeMarketingBootstrap;
   billingRequestIds: { articleJob: string; contentIslandTopics: string };
+  githubRepos: VibeMarketingGithubReposResponse;
   error: string | null;
   errorIntent?: string | null;
   setupMergedNotice?: boolean;
@@ -3545,7 +3577,6 @@ function ReturningTopicPickerPage({
   const [activeTab, setActiveTab] = useState<"choose" | "custom">(topics.length ? "choose" : "custom");
   const [selectedTopicId, setSelectedTopicId] = useState(topics[0]?.id ?? "");
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId) ?? null;
-  const githubReadyForPublishing = isGithubPublishingReady(bootstrap);
   const effectiveDeliveryMode = effectiveArticleDeliveryMode(bootstrap);
   const directPublishMode = effectiveDeliveryMode === "publish_code";
   const deliveryModeNote = directPublishMode
@@ -3556,11 +3587,7 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
-  const githubConnected = Boolean(
-    githubReadyForPublishing ||
-      bootstrap.settings.githubConnectionState === "connected" ||
-      bootstrap.checks.github?.connectionState === "connected",
-  );
+  const githubConnected = isDashboardGithubConnected(githubRepos, bootstrap);
   const githubConnectionHref = githubConnectHrefForDashboard(githubConnected);
   const websiteDomainDisplay = normalizeDashboardDomain(domain) || "Add your domain";
   const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
@@ -4533,13 +4560,13 @@ function ReturningTopicPickerPage({
               </Link>
             </div>
 
-            <div className="mt-8 space-y-5">
-              <Link
-                to="/founder-tools/marketing/settings"
-                aria-label="Manage website settings"
-                className="group flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 transition hover:border-slate-300 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex min-w-0 items-center gap-4">
+            <div className="mt-8">
+              <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <Link
+                  to="/founder-tools/marketing/settings"
+                  aria-label="Manage website settings"
+                  className="group flex min-w-0 items-center gap-4 rounded-xl transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-violet-100"
+                >
                   <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                     <Globe2 className="h-8 w-8" />
                   </span>
@@ -4549,33 +4576,20 @@ function ReturningTopicPickerPage({
                       {websiteDomainDisplay}
                     </span>
                   </span>
-                </div>
-                <span className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
-                  <CheckCircle2 className="h-5 w-5" />
-                  Connected
-                </span>
-              </Link>
-
-              <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-4">
-                  <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-950 text-white shadow-inner">
-                    <GitHubMark className="h-9 w-9" />
+                </Link>
+                {githubConnected ? (
+                  <span className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
+                    <CheckCircle2 className="h-5 w-5" />
+                    GitHub connected
                   </span>
-                  <div className="min-w-0">
-                    <p className="break-words text-xl font-black text-slate-950">
-                      {githubConnected ? "GitHub connected" : "Connect GitHub"}
-                    </p>
-                    <p className="mt-1 break-words text-base font-bold leading-6 text-slate-500">
-                      {githubConnected ? "Connected to this website's GitHub account" : "Connect this website's GitHub account"}
-                    </p>
-                  </div>
-                </div>
-                <a
-                  href={githubConnectionHref}
-                  className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-                >
-                  {githubConnected ? "Manage" : "Connect"}
-                </a>
+                ) : (
+                  <a
+                    href={githubConnectionHref}
+                    className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    Manage GitHub
+                  </a>
+                )}
               </div>
             </div>
           </section>
@@ -4702,7 +4716,7 @@ function ReturningTopicPickerPage({
 }
 
 export default function FounderToolsMarketing() {
-  const { bootstrap, billingRequestIds } = useLoaderData<typeof loader>();
+  const { bootstrap, billingRequestIds, githubRepos } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const location = useLocation();
   const error = actionError(actionData);
@@ -4716,6 +4730,7 @@ export default function FounderToolsMarketing() {
         <ReturningTopicPickerPage
           bootstrap={bootstrap}
           billingRequestIds={billingRequestIds}
+          githubRepos={githubRepos}
           error={error}
           errorIntent={errorIntent}
           setupMergedNotice={setupMergedNotice}
