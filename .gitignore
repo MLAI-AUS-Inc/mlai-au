@@ -1,5 +1,7 @@
 .DS_Store
-/node_modules/
+# No trailing slash: also ignores a `node_modules` *symlink* (a worktree dev
+# convenience), not just the directory — a committed symlink broke CI once.
+/node_modules
 *.tsbuildinfo
 
 # React Router
