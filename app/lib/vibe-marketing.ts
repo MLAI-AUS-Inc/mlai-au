@@ -324,6 +324,11 @@ function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupStat
     error: asNullableString(payload.error),
     source: source ?? undefined,
     updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+    // The scan's verdict on the chosen route. Carried through so the wizard can
+    // offer an ADOPT path for an already-existing page and gate the Build action.
+    scaffoldStatus: asNullableString(payload.scaffoldStatus) ?? asNullableString(payload.scaffold_status),
+    approveUrl: asNullableString(payload.approveUrl) ?? asNullableString(payload.approve_url),
+    articleSurfaceState: asNullableString(payload.articleSurfaceState) ?? asNullableString(payload.article_surface_state),
     articleSurfaceMode: asNullableString(payload.articleSurfaceMode) ?? asNullableString(payload.article_surface_mode),
     articleSurfaceHint:
       payload.articleSurfaceHint && typeof payload.articleSurfaceHint === "object"
