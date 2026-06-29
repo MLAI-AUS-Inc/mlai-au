@@ -309,6 +309,19 @@ export interface VibeMarketingCheck {
   scaffoldDisconnectedAt?: string | null;
   defaultPublishTargetId?: string | null;
   routePath?: string | null;
+  // Article-generation readiness rollup (backend compute_article_readiness):
+  // a human-readable reason the org can't generate yet, a machine code for it,
+  // and the individual readiness signals behind the verdict.
+  blockingReason?: string | null;
+  reasonCode?: string | null;
+  readinessProofs?: VibeMarketingReadinessProofs | null;
+}
+
+export interface VibeMarketingReadinessProofs {
+  articles_scaffolded?: boolean;
+  article_system_published?: boolean;
+  setup_merged?: boolean;
+  generation_history?: boolean;
 }
 
 export type VibeMarketingNotificationChannelType = "slack" | "whatsapp" | "email";
