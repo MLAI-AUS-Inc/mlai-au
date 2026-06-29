@@ -17,7 +17,6 @@ import { getCurrentRooPointsBalance } from "~/lib/roo-points";
 import {
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
-  isVibeRaisingAdminUser,
 } from "~/lib/vibe-raising";
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import {
@@ -27,7 +26,6 @@ import {
   BuildingOffice2Icon,
   MegaphoneIcon,
   BoltIcon,
-  ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 
 const BASE_FOUNDER_NAVIGATION = [
@@ -93,12 +91,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect(getVibeRaisingLoginHref(request));
   }
 
-  const isAdmin = isVibeRaisingAdminUser(vibeContext.authUser, env);
-
   if (!vibeContext.appUser && !canAccessDuringCompanySetup(pathname)) {
-    // Organisers (admins) without a founder profile belong in the admin
-    // dashboard rather than the founder company-setup flow.
-    throw redirect(isAdmin ? "/founder-tools/admin" : "/founder-tools/company-setup");
+    throw redirect("/founder-tools/company-setup");
   }
 
   if (
@@ -115,20 +109,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     user: vibeContext.authUser,
     profile: vibeContext.profile,
     appUser: vibeContext.appUser,
-    isAdmin,
     rooPointsBalance,
     backendBaseUrl: String(env.BACKEND_BASE_URL || "https://api.mlai.au"),
   };
 }
 
 export default function VibeRaisingApp() {
-  const { user, backendBaseUrl, rooPointsBalance, isAdmin } = useLoaderData<typeof loader>();
-  const navigation = isAdmin
-    ? [
-        ...BASE_FOUNDER_NAVIGATION,
-        { name: "Admin", href: "/founder-tools/admin", icon: ShieldCheckIcon },
-      ]
-    : BASE_FOUNDER_NAVIGATION;
+  const { user, backendBaseUrl, rooPointsBalance } = useLoaderData<typeof loader>();
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -141,7 +128,7 @@ export default function VibeRaisingApp() {
   return (
     <AuthenticatedLayout
       user={user}
-      navigation={navigation}
+      navigation={BASE_FOUNDER_NAVIGATION}
       userNavigation={FOUNDER_USER_NAVIGATION}
       rooPointsBalance={rooPointsBalance}
       logoutAction="/founder-tools/logout"

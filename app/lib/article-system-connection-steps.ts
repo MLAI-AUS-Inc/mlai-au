@@ -25,6 +25,10 @@ export type ArticleSystemConnectionStepState = {
 
 export type ArticleSystemConnectionStepInput = {
   connected: boolean;
+  // True when a durable scaffold publish target is registered (checks.scaffold.scaffoldConnected).
+  // Independent of the current scan/setup-run state: an already-linked org running a fresh scan is
+  // still "done", so steps 3 & 4 should read as complete confirmations rather than locked setup steps.
+  scaffoldConnected?: boolean;
   currentScanRunId?: string | null;
   scanLoading?: boolean;
   scanRunning?: boolean;
@@ -36,6 +40,11 @@ export type ArticleSystemConnectionStepInput = {
   selectedSurfaceUrl?: string | null;
   scaffoldStatus?: ArticleSystemScaffoldStatus;
   setupSurfaceUrl?: string | null;
+  // False when the latest scan resolved the requested articles route as
+  // ambiguous/unmatched (scaffold_status "not_needed", no approve_url), so there
+  // is no approvable scaffold and the Build action would 409. Undefined leaves
+  // the existing behaviour unchanged.
+  setupApprovable?: boolean;
 };
 
 export function articleSystemScaffoldActionLabel(status: ArticleSystemScaffoldStatus) {
@@ -124,7 +133,16 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
   }
 
   let chooseLocation: ArticleSystemConnectionStepState;
-  if (!input.connected) {
+  if (input.scaffoldConnected) {
+    // Already linked — the step just confirms the connection; nothing to choose or unlock.
+    chooseLocation = {
+      id: "chooseLocation",
+      status: "complete",
+      defaultExpanded: true,
+      disabled: false,
+      unavailableReason: "",
+    };
+  } else if (!input.connected) {
     chooseLocation = {
       id: "chooseLocation",
       status: "locked",
@@ -165,7 +183,18 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
   }
 
   let buildSetup: ArticleSystemConnectionStepState;
-  if (!input.connected || !hasSetupTarget || input.scaffoldStatus === "not_ready") {
+  if (input.scaffoldConnected) {
+    // Already linked & accepted — surface this as a complete confirmation regardless of the
+    // current scan/setup-run state (a fresh scan leaves scaffoldStatus "not_ready" but the
+    // durable publish target is still connected).
+    buildSetup = {
+      id: "buildSetup",
+      status: "complete",
+      defaultExpanded: true,
+      disabled: false,
+      unavailableReason: "",
+    };
+  } else if (!input.connected || !hasSetupTarget || input.scaffoldStatus === "not_ready") {
     buildSetup = {
       id: "buildSetup",
       status: "locked",
@@ -191,6 +220,16 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
       defaultExpanded: true,
       disabled: false,
       unavailableReason: "",
+      ...staleSetupAttention,
+    };
+  } else if (input.scaffoldStatus === "ready_to_build" && input.setupApprovable === false) {
+    buildSetup = {
+      id: "buildSetup",
+      status: "blocked",
+      defaultExpanded: true,
+      disabled: false,
+      unavailableReason:
+        "The latest scan couldn't confirm this articles route, so there's nothing to build yet. Re-scan, pick a different route, or create a new articles folder.",
       ...staleSetupAttention,
     };
   } else {

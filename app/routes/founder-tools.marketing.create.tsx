@@ -16,6 +16,7 @@ import { clsx } from "clsx";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
+import VibeMarketingAuthorsSetup from "~/components/VibeMarketingAuthorsSetup";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
 import { RooPointCost } from "~/components/RooPointCost";
@@ -46,6 +47,8 @@ import {
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
   resetVibeMarketingArticleSetup,
+  acceptVibeMarketingArticleScaffold,
+  disconnectVibeMarketingArticleScaffold,
   saveVibeMarketingSettings,
   skipVibeMarketingBaseline,
   startVibeMarketingArticle,
@@ -745,13 +748,54 @@ export async function action({ request, context }: Route.ActionArgs) {
       return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
+    if (intent === "accept-article-scaffold") {
+      const githubRepo = stringFromForm(formData, "githubRepo");
+      if (!githubRepo) return { intent, error: "Choose a GitHub repository before linking the articles scaffold." };
+      try {
+        await acceptVibeMarketingArticleScaffold(env, request, { githubRepo, github_repo: githubRepo });
+      } catch (error) {
+        return {
+          intent,
+          error: readableBackendError(error, {
+            fallback: "Couldn't link the articles scaffold — the request failed before completing. Please try again.",
+          }),
+        };
+      }
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
+    }
+
+    if (intent === "disconnect-article-scaffold") {
+      const githubRepo = stringFromForm(formData, "githubRepo");
+      try {
+        await disconnectVibeMarketingArticleScaffold(env, request, { githubRepo, github_repo: githubRepo });
+      } catch (error) {
+        return {
+          intent,
+          error: readableBackendError(error, {
+            fallback: "Couldn't unlink the articles scaffold — the request failed before completing. Please try again.",
+          }),
+        };
+      }
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
+    }
+
     if (intent === "reset-article-setup") {
       const githubRepo = stringFromForm(formData, "githubRepo");
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before resetting articles setup." };
-      await resetVibeMarketingArticleSetup(env, request, {
-        githubRepo,
-        github_repo: githubRepo,
-      });
+      try {
+        await resetVibeMarketingArticleSetup(env, request, {
+          githubRepo,
+          github_repo: githubRepo,
+        });
+      } catch (error) {
+        return {
+          intent,
+          error: readableBackendError(error, {
+            fallback:
+              "Couldn't reset the articles setup — the request timed out or failed before completing. Please try again.",
+          }),
+        };
+      }
       return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
@@ -839,9 +883,24 @@ export async function action({ request, context }: Route.ActionArgs) {
         deliveryModeExplicit,
         deliveryModeConfirmed: deliveryModeExplicit,
         sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
+        authorId: stringFromForm(formData, "authorId"),
       });
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       return redirect("/founder-tools/marketing/create?step=writeCheck");
+    }
+
+    if (intent === "save-authors") {
+      let authors: unknown = [];
+      try {
+        authors = JSON.parse(stringFromForm(formData, "authors") || "[]");
+      } catch {
+        authors = [];
+      }
+      await saveVibeMarketingSettings(env, request, {
+        authors,
+        defaultAuthorId: stringFromForm(formData, "defaultAuthorId"),
+      });
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "save-daily") {
@@ -1478,6 +1537,14 @@ export default function FounderToolsMarketingCreate() {
                 </Link>
               </div>
             ) : null}
+
+            {activeStep === "articleSystem" ? (
+              <VibeMarketingAuthorsSetup
+                authors={bootstrap.settings.authors ?? []}
+                defaultAuthorId={bootstrap.settings.defaultAuthorId ?? null}
+                isSubmitting={isSubmitting}
+              />
+            ) : null}
           </>
         ) : null}
 
@@ -1637,6 +1704,23 @@ export default function FounderToolsMarketingCreate() {
                       <textarea name="articleContext" rows={4} placeholder="Add any angle, product detail, proof point, or audience note." className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium leading-6 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
                     </label>
                   </>
+                ) : null}
+                {(bootstrap.settings.authors?.length ?? 0) > 0 ? (
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-bold text-gray-700">Author byline</span>
+                    <select
+                      name="authorId"
+                      defaultValue={bootstrap.settings.defaultAuthorId ?? bootstrap.settings.authors?.[0]?.id ?? ""}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                    >
+                      {bootstrap.settings.authors?.map((author) => (
+                        <option key={author.id} value={author.id}>
+                          {author.name}
+                          {author.role ? ` — ${author.role}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 ) : null}
                 <div className="sticky bottom-4 z-10 rounded-xl border border-violet-100 bg-violet-50/95 p-3 shadow-lg backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

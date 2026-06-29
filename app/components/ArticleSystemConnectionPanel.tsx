@@ -18,6 +18,7 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
+  Unlink,
   UserCheck,
 } from "lucide-react";
 
@@ -665,6 +666,13 @@ export default function ArticleSystemConnectionPanel({
   const resetArticleSetupPending = actionPending("reset-article-setup");
   const confirmSurfacePending = actionPending("confirm-article-surface");
   const createSurfacePending = actionPending("create-article-surface");
+  // Scaffold publish-target connection state (backend checks.scaffold).
+  const scaffoldConnected = Boolean(bootstrap.checks.scaffold?.scaffoldConnected);
+  const scaffoldBuiltUnlinked = Boolean(bootstrap.checks.scaffold?.scaffoldBuiltUnlinked);
+  const scaffoldDisconnectedAt = bootstrap.checks.scaffold?.scaffoldDisconnectedAt ?? null;
+  const scaffoldConnectionRoute = bootstrap.checks.scaffold?.routePath ?? null;
+  const acceptScaffoldPending = actionPending("accept-article-scaffold");
+  const disconnectScaffoldPending = actionPending("disconnect-article-scaffold");
   const [selectedChoiceId, setSelectedChoiceId] = useState("");
   const [manualArticleRoute, setManualArticleRoute] = useState("");
   const [manualRouteError, setManualRouteError] = useState("");
@@ -748,6 +756,17 @@ export default function ArticleSystemConnectionPanel({
         (setupBlocked && (scaffoldCheck?.rescanRunId || setupStatus === "completed"))),
   );
   const scaffoldPublishReady = Boolean(setupPrUrl || SETUP_PUBLISH_STATUSES.has(setupStatus));
+  // Gate the Build action on the scan's scaffold approvability. A scan that
+  // resolved the requested articles route as ambiguous/unmatched finishes with
+  // scaffoldStatus "not_needed" and no approveUrl, so /approve would 409 and the
+  // page would silently refresh. Defaults to approvable when the scan exposes no
+  // signal (older runs), so existing behaviour is unchanged.
+  const scanScaffoldStatus = normalizedStatus(articleSetupState?.scaffoldStatus);
+  const scanArticleSurfaceState = normalizedStatus(articleSetupState?.articleSurfaceState);
+  const setupApprovable =
+    Boolean(articleSetupState?.approveUrl) ||
+    (scanScaffoldStatus !== "not_needed" &&
+      !["ambiguous", "unmatched", "missing"].includes(scanArticleSurfaceState));
   const scaffoldStatus: ArticleSystemScaffoldStatus = !setupTargetReady && !selectedSurfaceUrl
     ? "not_ready"
     : scaffoldExplicitReady
@@ -768,6 +787,7 @@ export default function ArticleSystemConnectionPanel({
   const setupRunHref = setupRunId ? `/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}` : "";
   const stepStates = articleSystemConnectionStepStates({
     connected,
+    scaffoldConnected,
     currentScanRunId,
     scanLoading,
     scanRunning,
@@ -778,6 +798,7 @@ export default function ArticleSystemConnectionPanel({
     persistedSetupIsStale: showSavedSetup && persistedSetupIsStale,
     selectedSurfaceUrl,
     scaffoldStatus,
+    setupApprovable,
     setupSurfaceUrl: displayedSurfaceUrl,
   });
 
@@ -951,7 +972,14 @@ export default function ArticleSystemConnectionPanel({
       tone: "red",
     },
   };
-  const scaffoldStatusContent = scaffoldStatusCopy[scaffoldStatus];
+  const scaffoldStatusContent =
+    scaffoldStatus === "ready_to_build" && !selectedSurfaceUrl && !setupApprovable
+      ? {
+          title: "Articles route needs confirming",
+          body: "The latest scan could not confirm the saved articles route in this repository. Re-scan, choose a different route, or create a new articles folder.",
+          tone: "amber" as const,
+        }
+      : scaffoldStatusCopy[scaffoldStatus];
   const scaffoldIconTone = {
     emerald: "bg-emerald-100 text-emerald-700",
     violet: "bg-violet-100 text-violet-700",
@@ -989,6 +1017,11 @@ export default function ArticleSystemConnectionPanel({
             {!savePending ? <ArrowRight className="h-4 w-4" /> : null}
           </button>
         </Form>
+      ) : !setupApprovable ? (
+        <div className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 sm:max-w-md">
+          The latest scan could not confirm the saved articles route. Re-scan, choose a
+          different route, or create a new articles folder before building the scaffold.
+        </div>
       ) : (
         <Form method="POST" className="w-full sm:w-auto">
           <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? currentScanRunId} />
@@ -1218,13 +1251,7 @@ export default function ArticleSystemConnectionPanel({
             <>
               <MarketingRunProgressCard run={inventoryProgressRun} />
               {scanRunning || scanFailed || scanStale ? (
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <Link
-                    to={`/founder-tools/marketing/runs/${encodeURIComponent(inventoryProgressRun.runId)}`}
-                    className="inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
-                  >
-                    View scan run
-                  </Link>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                   <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
                     <input type="hidden" name="scanRunId" value={inventoryProgressRun.runId} />
                     {inventoryProgressRun.retryAvailable || inventoryProgressRun.stale ? (
@@ -1274,10 +1301,30 @@ export default function ArticleSystemConnectionPanel({
         <FlowStep
           number={3}
           title="Choose articles route"
-          description="Pick the route we found, paste a path manually, or create a new articles directory."
+          description={
+            scaffoldConnected
+              ? "Your articles scaffold is already linked — nothing to choose here."
+              : "Pick the route we found, paste a path manually, or create a new articles directory."
+          }
           stepState={stepStates.chooseLocation}
         >
-          {showSavedSetup && !inventoryReady ? (
+          {scaffoldConnected ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex gap-3">
+                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <CheckCircle2 className="h-6 w-6" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-emerald-900">Articles scaffold linked &amp; accepted</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">
+                    New articles publish automatically to your scaffold
+                    {scaffoldConnectionRoute ? ` at ${scaffoldConnectionRoute}` : ""}. To move it or build a new one,
+                    unlink it first in the danger zone below — that keeps your repo from collecting unused article code.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : showSavedSetup && !inventoryReady ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex gap-3">
@@ -1406,10 +1453,6 @@ export default function ArticleSystemConnectionPanel({
                 </details>
               ) : null}
 
-              <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
-                You can change this anytime later from your project settings.
-              </div>
-
               {selectedSurfaceUrl ? (
                 <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
@@ -1431,74 +1474,195 @@ export default function ArticleSystemConnectionPanel({
           description="Build the route scaffold, review the preview, and publish it before article generation."
           stepState={stepStates.buildSetup}
         >
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex gap-3">
-              <span className={clsx("flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl", scaffoldIconTone)}>
-                {scaffoldStatus === "ready" || scaffoldStatus === "legacy_ready" ? (
+          {scaffoldConnected ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex gap-3">
+                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
                   <CheckCircle2 className="h-6 w-6" />
-                ) : scaffoldStatus === "not_ready" ? (
-                  <LockKeyhole className="h-6 w-6" />
-                ) : (
-                  <FileText className="h-6 w-6" />
-                )}
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-black text-slate-950">{scaffoldStatusContent.title}</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{scaffoldStatusContent.body}</p>
-                {displayedSurfaceUrl ? (
-                  <p className="mt-1 break-all text-sm font-semibold text-slate-600">Public route: {displayedSurfaceUrl}</p>
-                ) : null}
-                {selectedFiles.length && selectedSurfaceUrl ? (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {selectedFiles.slice(0, 4).map((file) => (
-                      <span key={file} className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-500">
-                        {file}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-emerald-900">Articles scaffold linked &amp; accepted</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">
+                    Your scaffold is built and connected — new articles publish straight into it. Manage or unlink it in
+                    the danger zone below.
+                  </p>
+                  {scaffoldConnectionRoute ? (
+                    <p className="mt-1 break-all text-sm font-semibold text-emerald-800">Publishing at: {scaffoldConnectionRoute}</p>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
+          ) : scaffoldBuiltUnlinked ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                    <Unlink className="h-6 w-6" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-black text-amber-900">Articles scaffold built — not linked yet</p>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
+                      {scaffoldDisconnectedAt
+                        ? "You unlinked this scaffold. Re-link it to publish articles into it again."
+                        : "The scaffold is built in your repo but isn't linked as the publish target yet. Link it to start publishing into it."}
+                    </p>
+                  </div>
+                </div>
+                <Form method="POST" action="/founder-tools/marketing/create" className="flex-shrink-0">
+                  <input type="hidden" name="githubRepo" value={selectedRepo} />
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="accept-article-scaffold"
+                    disabled={acceptScaffoldPending || !selectedRepo}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                  >
+                    {acceptScaffoldPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                    {acceptScaffoldPending ? "Linking..." : "Accept & link scaffold"}
+                  </button>
+                </Form>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex gap-3">
+                <span className={clsx("flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl", scaffoldIconTone)}>
+                  {scaffoldStatus === "ready" || scaffoldStatus === "legacy_ready" ? (
+                    <CheckCircle2 className="h-6 w-6" />
+                  ) : scaffoldStatus === "not_ready" ? (
+                    <LockKeyhole className="h-6 w-6" />
+                  ) : (
+                    <FileText className="h-6 w-6" />
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-slate-950">{scaffoldStatusContent.title}</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{scaffoldStatusContent.body}</p>
+                  {displayedSurfaceUrl ? (
+                    <p className="mt-1 break-all text-sm font-semibold text-slate-600">Public route: {displayedSurfaceUrl}</p>
+                  ) : null}
+                  {selectedFiles.length && selectedSurfaceUrl ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedFiles.slice(0, 4).map((file) => (
+                        <span key={file} className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-500">
+                          {file}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          )}
         </FlowStep>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0">
             <p className="text-sm font-black text-slate-950">Next action</p>
-            <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{scaffoldActionHelp[scaffoldStatus]}</p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
+              {scaffoldConnected
+                ? `You're all set — articles publish to your linked scaffold${scaffoldConnectionRoute ? ` at ${scaffoldConnectionRoute}` : ""}.`
+                : scaffoldActionHelp[scaffoldStatus]}
+            </p>
           </div>
-          <div className="mt-4 flex-shrink-0 sm:mt-0">{scaffoldAction}</div>
+          <div className="mt-4 flex-shrink-0 sm:mt-0">
+            {scaffoldConnected ? (
+              <Link
+                to="/founder-tools/marketing/create?step=research"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
+              >
+                Continue to topic research
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              scaffoldAction
+            )}
+          </div>
         </div>
 
-        {setupTargetReady || scaffoldReady ? (
-          <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-black text-red-900">Reset articles setup</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-red-800">
-                  Clear the saved articles setup for this repository and start the setup flow again.
-                </p>
-              </div>
-              <Form
-                method="POST"
-                onSubmit={(event) => {
-                  if (typeof window !== "undefined" && !window.confirm("Reset the saved articles setup for this repository?")) {
-                    event.preventDefault();
-                  }
-                }}
-              >
-                <input type="hidden" name="githubRepo" value={selectedRepo} />
-                <button
-                  type="submit"
-                  name="intent"
-                  value="reset-article-setup"
-                  disabled={resetArticleSetupPending || !selectedRepo}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+        {setupTargetReady || scaffoldReady || scaffoldConnected ? (
+          <div className="rounded-2xl border border-red-200 bg-white">
+            <div className="border-b border-red-100 px-4 py-3">
+              <p className="text-sm font-black text-red-900">Danger zone</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {/* Step 1 (least dangerous): unlink the publish target but keep the scaffold. */}
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-amber-900">Unlink scaffold page</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
+                    Stop publishing new articles into this scaffold. The scaffold stays in your repo — re-link it
+                    anytime with one click.
+                  </p>
+                </div>
+                <Form
+                  method="POST"
+                  action="/founder-tools/marketing/create"
+                  className="flex-shrink-0"
+                  onSubmit={(event) => {
+                    if (
+                      typeof window !== "undefined" &&
+                      !window.confirm("Unlink the articles scaffold? New articles won't publish into it until you re-link.")
+                    ) {
+                      event.preventDefault();
+                    }
+                  }}
                 >
-                  {resetArticleSetupPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                  {resetArticleSetupPending ? "Resetting..." : "Reset articles setup"}
-                </button>
-              </Form>
+                  <input type="hidden" name="githubRepo" value={selectedRepo} />
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="disconnect-article-scaffold"
+                    disabled={disconnectScaffoldPending || !scaffoldConnected}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-3 text-sm font-black text-amber-700 shadow-sm transition hover:bg-amber-50 disabled:opacity-50 sm:w-auto"
+                  >
+                    {disconnectScaffoldPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />}
+                    {disconnectScaffoldPending ? "Unlinking..." : "Unlink scaffold page"}
+                  </button>
+                </Form>
+              </div>
+
+              {/* Step 2 (most dangerous): full reset — only after the scaffold is unlinked. */}
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-red-900">Reset everything</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-red-800">
+                    {scaffoldConnected
+                      ? "Unlink the scaffold page first, then you can clear the saved setup and start over."
+                      : "Clear the saved articles setup for this repository and start the setup flow again."}
+                  </p>
+                </div>
+                <Form
+                  method="POST"
+                  // The panel renders on both the create route and the run route
+                  // (founder-tools.marketing.run). A `<Form>` with no `action` posts to
+                  // the *current* route's action — and the run route's action handles
+                  // every article-system intent EXCEPT `reset-article-setup`, so on the
+                  // run page the reset silently no-ops and never calls the backend. Pin
+                  // the action to the create route, which owns the reset handler, so the
+                  // reset works no matter which page the panel is shown on.
+                  action="/founder-tools/marketing/create"
+                  className="flex-shrink-0"
+                  onSubmit={(event) => {
+                    if (typeof window !== "undefined" && !window.confirm("Reset the saved articles setup for this repository?")) {
+                      event.preventDefault();
+                    }
+                  }}
+                >
+                  <input type="hidden" name="githubRepo" value={selectedRepo} />
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="reset-article-setup"
+                    disabled={resetArticleSetupPending || !selectedRepo || scaffoldConnected}
+                    title={scaffoldConnected ? "Unlink the scaffold page first" : undefined}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
+                  >
+                    {resetArticleSetupPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                    {resetArticleSetupPending ? "Resetting..." : "Reset everything"}
+                  </button>
+                </Form>
+              </div>
             </div>
           </div>
         ) : null}

@@ -122,6 +122,13 @@ export interface VibeMarketingArticleSetupState {
   updatedAt?: string | null;
   articleSurfaceMode?: string | null;
   articleSurfaceHint?: Record<string, unknown> | null;
+  // Scaffold approvability from the latest scan, used to gate the "Build articles
+  // scaffold" action. When the scan resolved the requested route as
+  // ambiguous/unmatched it finishes with scaffoldStatus "not_needed" and no
+  // approveUrl — there is nothing to approve, so the Build action would 409.
+  scaffoldStatus?: string | null;
+  approveUrl?: string | null;
+  articleSurfaceState?: string | null;
 }
 
 export interface VibeMarketingAutofillSource {
@@ -232,6 +239,18 @@ export interface VibeMarketingOrganization {
   seedKeywords: string[];
 }
 
+export interface VibeMarketingAuthor {
+  id: string;
+  name: string;
+  role?: string | null;
+  credentials?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  avatarAlt?: string | null;
+  url?: string | null;
+  sameAs?: Array<{ label: string; href: string }>;
+}
+
 export interface VibeMarketingSettings {
   brandName?: string | null;
   companyContext?: string | null;
@@ -243,6 +262,8 @@ export interface VibeMarketingSettings {
   dailyDiscoveryPriority?: number | null;
   defaultTimezone?: string | null;
   githubConnectionState?: string | null;
+  authors?: VibeMarketingAuthor[];
+  defaultAuthorId?: string | null;
 }
 
 export interface VibeMarketingStartupProfile {
@@ -282,6 +303,12 @@ export interface VibeMarketingCheck {
   enabled?: boolean;
   channels?: VibeMarketingNotificationChannel[];
   automation?: VibeMarketingResearchAutomation | null;
+  // Scaffold publish-target connection state (checks.scaffold).
+  scaffoldConnected?: boolean;
+  scaffoldBuiltUnlinked?: boolean;
+  scaffoldDisconnectedAt?: string | null;
+  defaultPublishTargetId?: string | null;
+  routePath?: string | null;
 }
 
 export type VibeMarketingNotificationChannelType = "slack" | "whatsapp" | "email";

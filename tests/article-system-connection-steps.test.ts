@@ -66,6 +66,32 @@ describe("article system connection step states", () => {
     expect(articleSystemScaffoldActionLabel("ready_to_build")).toBe("Build articles scaffold");
   });
 
+  test("blocks the build step when the scan resolved the saved route as not approvable", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      currentScanRunId: "scan-not-approvable",
+      setupTargetReady: true,
+      scaffoldStatus: "ready_to_build",
+      setupApprovable: false,
+    });
+
+    expect(steps.buildSetup.status).toBe("blocked");
+    expect(steps.buildSetup.disabled).toBe(false);
+    expect(steps.buildSetup.unavailableReason).toContain("Re-scan");
+  });
+
+  test("keeps the build step active when the scan is approvable", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      currentScanRunId: "scan-approvable",
+      setupTargetReady: true,
+      scaffoldStatus: "ready_to_build",
+      setupApprovable: true,
+    });
+
+    expect(steps.buildSetup.status).toBe("active");
+  });
+
   test("marks the scaffold step complete when setup is explicitly ready", () => {
     for (const scaffoldStatus of ["ready", "legacy_ready"] as const) {
       const steps = articleSystemConnectionStepStates({
@@ -176,5 +202,25 @@ describe("article system connection step states", () => {
 
     expect(steps.chooseLocation.status).toBe("complete");
     expect(steps.chooseLocation.defaultExpanded).toBe(true);
+  });
+
+  test("treats steps 3 & 4 as complete confirmations when the scaffold is already linked", () => {
+    // Already-linked org running a fresh scan: scaffoldStatus is still "not_ready" and there is no
+    // setup target, but the durable publish target is connected — steps 3 & 4 must not lock.
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      scaffoldConnected: true,
+      currentScanRunId: "scan-1",
+      inventoryReady: true,
+      setupTargetReady: false,
+      scaffoldStatus: "not_ready",
+    });
+
+    expect(steps.chooseLocation.status).toBe("complete");
+    expect(steps.chooseLocation.disabled).toBe(false);
+    expect(steps.chooseLocation.defaultExpanded).toBe(true);
+    expect(steps.buildSetup.status).toBe("complete");
+    expect(steps.buildSetup.disabled).toBe(false);
+    expect(steps.buildSetup.defaultExpanded).toBe(true);
   });
 });

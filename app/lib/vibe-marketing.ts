@@ -3,6 +3,7 @@ import { readableBackendErrors } from "~/lib/backend-error";
 import { hasAcceptedAutofillRun } from "~/lib/vibe-marketing-autofill-state";
 import { blockingCodeFromPayload, blockingReasonFromPayload } from "~/lib/vibe-marketing-run-failures";
 import type {
+  VibeMarketingAuthor,
   VibeMarketingBootstrap,
   VibeMarketingArticleSetupState,
   VibeMarketingComponentFeedback,
@@ -71,6 +72,47 @@ function asStringList(value: unknown): string[] {
       .filter(Boolean);
   }
   return [];
+}
+
+function asSocialLinks(value: unknown): Array<{ label: string; href: string }> {
+  if (!Array.isArray(value)) return [];
+  const links: Array<{ label: string; href: string }> = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as Record<string, unknown>;
+    const href = asNullableString(record.href) ?? asNullableString(record.url);
+    if (!href) continue;
+    links.push({ label: asNullableString(record.label) ?? asNullableString(record.name) ?? "Profile", href });
+  }
+  return links;
+}
+
+function normalizeMarketingAuthors(value: unknown): VibeMarketingAuthor[] {
+  if (!Array.isArray(value)) return [];
+  const authors: VibeMarketingAuthor[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as Record<string, unknown>;
+    const name = asNullableString(record.name) ?? asNullableString(record.author);
+    if (!name) continue;
+    const id =
+      asNullableString(record.id) ??
+      asNullableString(record.personId) ??
+      name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") ??
+      "author";
+    authors.push({
+      id: id || "author",
+      name,
+      role: asNullableString(record.role) ?? asNullableString(record.authorTitle),
+      credentials: asNullableString(record.credentials),
+      bio: asNullableString(record.bio) ?? asNullableString(record.authorBio),
+      avatarUrl: asNullableString(record.avatarUrl) ?? asNullableString(record.avatar),
+      avatarAlt: asNullableString(record.avatarAlt),
+      url: asNullableString(record.url) ?? asNullableString(record.website),
+      sameAs: asSocialLinks(record.sameAs ?? record.same_as),
+    });
+  }
+  return authors;
 }
 
 function asNumber(value: unknown): number | null {
@@ -430,6 +472,9 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       githubConnectionState:
         asNullableString(settings.githubConnectionState) ??
         asNullableString(settings.github_connection_state),
+      authors: normalizeMarketingAuthors(settings.authors),
+      defaultAuthorId:
+        asNullableString(settings.defaultAuthorId) ?? asNullableString(settings.default_author_id),
     },
     startupProfile: normalizeStartupProfile(startupProfile),
     websiteBaseline: normalizeWebsiteBaseline(payload.websiteBaseline ?? payload.website_baseline),
@@ -1685,6 +1730,18 @@ export function startVibeMarketingArticleSystemSetup(env: Env, request: Request,
 export async function resetVibeMarketingArticleSetup(env: Env, request: Request, body: Record<string, unknown>) {
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/article-setup/reset`, body);
+  return response.data as Record<string, unknown>;
+}
+
+export async function acceptVibeMarketingArticleScaffold(env: Env, request: Request, body: Record<string, unknown>) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/article-setup/accept`, body);
+  return response.data as Record<string, unknown>;
+}
+
+export async function disconnectVibeMarketingArticleScaffold(env: Env, request: Request, body: Record<string, unknown>) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/article-setup/disconnect`, body);
   return response.data as Record<string, unknown>;
 }
 
