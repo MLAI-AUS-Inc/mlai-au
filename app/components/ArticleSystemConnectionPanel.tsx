@@ -746,6 +746,25 @@ export default function ArticleSystemConnectionPanel({
       articleSetupState?.setupMerged ||
       articleSetupState?.published,
   );
+  // Contract-health rollup from the backend (compute_article_readiness): the individual
+  // readiness signals + a plain-language reason the org can't generate yet, so the wizard
+  // explains WHICH step is missing instead of a generic "needs attention".
+  const readinessProofs = scaffoldCheck?.readinessProofs ?? null;
+  const readinessBlockingReason = scaffoldCheck?.blockingReason ?? null;
+  const readinessProofRows = readinessProofs
+    ? (
+        [
+          ["articles_scaffolded", "Articles scaffold built"],
+          ["article_system_published", "Publishing surface live"],
+          ["setup_merged", "Setup PR merged"],
+          ["generation_history", "Article generated before"],
+        ] as const
+      ).map(([key, label]) => ({
+        key,
+        label,
+        passed: Boolean(readinessProofs[key]),
+      }))
+    : [];
   const setupStatus = normalizedStatus(
     articleSetupState?.setupRunStatus ||
       articleSetupState?.setupStatus ||
@@ -1589,6 +1608,29 @@ export default function ArticleSystemConnectionPanel({
                   <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{scaffoldStatusContent.body}</p>
                   {displayedSurfaceUrl ? (
                     <p className="mt-1 break-all text-sm font-semibold text-slate-600">Public route: {displayedSurfaceUrl}</p>
+                  ) : null}
+                  {readinessProofRows.length ? (
+                    <div className="mt-3 border-t border-slate-200 pt-3">
+                      <p className="text-xs font-black uppercase tracking-wide text-slate-500">Contract health</p>
+                      <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                        {readinessProofRows.map((proof) => (
+                          <li key={proof.key} className="flex items-center gap-2 text-xs font-semibold">
+                            {proof.passed ? (
+                              <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                            ) : (
+                              <span className="h-3.5 w-3.5 flex-shrink-0 rounded-full border-2 border-slate-300" aria-hidden />
+                            )}
+                            <span className={clsx(proof.passed ? "text-slate-700" : "text-slate-400")}>{proof.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {readinessBlockingReason ? (
+                        <p className="mt-2 flex items-start gap-2 text-xs font-semibold leading-5 text-orange-700">
+                          <LockKeyhole className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{readinessBlockingReason}</span>
+                        </p>
+                      ) : null}
+                    </div>
                   ) : null}
                   {selectedFiles.length && selectedSurfaceUrl ? (
                     <div className="mt-2 flex flex-wrap gap-2">
