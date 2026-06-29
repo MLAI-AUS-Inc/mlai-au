@@ -434,11 +434,13 @@ function SurfaceChoiceCard({
   candidate,
   selected,
   bestMatch,
+  existing,
   onSelect,
 }: {
   candidate: SurfaceCandidate;
   selected: boolean;
   bestMatch: boolean;
+  existing?: boolean;
   onSelect: () => void;
 }) {
   const files = candidateFiles(candidate);
@@ -446,20 +448,38 @@ function SurfaceChoiceCard({
     <label
       className={clsx(
         "block cursor-pointer rounded-xl border p-4 transition",
-        selected ? "border-violet-400 bg-violet-50/50 shadow-sm" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
+        selected
+          ? "border-violet-400 bg-violet-50/50 shadow-sm"
+          : existing
+            ? "border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 hover:bg-emerald-50/70"
+            : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
       )}
     >
       <div className="flex gap-4">
         <input type="radio" checked={selected} onChange={onSelect} className="mt-4 h-5 w-5 border-slate-300 text-violet-600 focus:ring-violet-500" />
-        <span className="mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+        <span
+          className={clsx(
+            "mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl",
+            existing ? "bg-emerald-100 text-emerald-700" : "bg-violet-100 text-violet-700",
+          )}
+        >
           <SurfaceIcon candidate={candidate} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-black text-slate-950">{candidateLabel(candidate)}</p>
-            {bestMatch ? <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-700">Best match</span> : null}
+            {existing ? (
+              <span className="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-black text-emerald-700">Already in your repo · publish into it</span>
+            ) : bestMatch ? (
+              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-700">Best match</span>
+            ) : null}
           </div>
           <p className="mt-1 text-sm font-semibold text-slate-600">Public route: {candidate.route}</p>
+          {existing ? (
+            <p className="mt-1 text-xs font-bold leading-5 text-emerald-700">
+              We&apos;ll publish straight into this existing page — no rebuild, nothing overwritten.
+            </p>
+          ) : null}
           {files.length ? (
             <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-500">Files: {files.slice(0, 3).join(", ")}</p>
           ) : null}
@@ -763,8 +783,14 @@ export default function ArticleSystemConnectionPanel({
   // signal (older runs), so existing behaviour is unchanged.
   const scanScaffoldStatus = normalizedStatus(articleSetupState?.scaffoldStatus);
   const scanArticleSurfaceState = normalizedStatus(articleSetupState?.articleSurfaceState);
+  // The scan found a working articles page already committed in the repo at this
+  // route. That is NOT "unconfirmable" — it is an ADOPT opportunity (publish into
+  // the existing page, no rebuild). It reports scaffoldStatus "not_needed", which
+  // must not be mistaken for the ambiguous/unmatched dead-end below.
+  const surfaceExists = ["existing", "matched", "roo_scaffolded"].includes(scanArticleSurfaceState);
   const setupApprovable =
     Boolean(articleSetupState?.approveUrl) ||
+    surfaceExists ||
     (scanScaffoldStatus !== "not_needed" &&
       !["ambiguous", "unmatched", "missing"].includes(scanArticleSurfaceState));
   const scaffoldStatus: ArticleSystemScaffoldStatus = !setupTargetReady && !selectedSurfaceUrl
@@ -972,14 +998,23 @@ export default function ArticleSystemConnectionPanel({
       tone: "red",
     },
   };
+  // Adopting an existing page (the scan found a working articles surface and the
+  // user picked an existing detected route) publishes into it without rebuilding.
+  const isAdoptingExisting = surfaceExists && selectedMode === "existing";
   const scaffoldStatusContent =
-    scaffoldStatus === "ready_to_build" && !selectedSurfaceUrl && !setupApprovable
+    scaffoldStatus === "ready_to_build" && isAdoptingExisting
       ? {
-          title: "Articles route needs confirming",
-          body: "The latest scan could not confirm the saved articles route in this repository. Re-scan, choose a different route, or create a new articles folder.",
-          tone: "amber" as const,
+          title: "Use your existing articles page",
+          body: `We'll publish into the existing page at ${scaffoldRouteLabel} — no rebuild, nothing overwritten.`,
+          tone: "emerald" as const,
         }
-      : scaffoldStatusCopy[scaffoldStatus];
+      : scaffoldStatus === "ready_to_build" && !selectedSurfaceUrl && !setupApprovable
+        ? {
+            title: "Articles route needs confirming",
+            body: "The latest scan could not confirm the saved articles route in this repository. Re-scan, choose a different route, or create a new articles folder.",
+            tone: "amber" as const,
+          }
+        : scaffoldStatusCopy[scaffoldStatus];
   const scaffoldIconTone = {
     emerald: "bg-emerald-100 text-emerald-700",
     violet: "bg-violet-100 text-violet-700",
@@ -987,7 +1022,10 @@ export default function ArticleSystemConnectionPanel({
     red: "bg-red-100 text-red-700",
     slate: "bg-slate-100 text-slate-400",
   }[scaffoldStatusContent.tone];
-  const scaffoldActionLabel = articleSystemScaffoldActionLabel(scaffoldStatus);
+  const scaffoldActionLabel =
+    scaffoldStatus === "ready_to_build" && isAdoptingExisting
+      ? "Use existing page"
+      : articleSystemScaffoldActionLabel(scaffoldStatus);
   const scaffoldActionHelp: Record<ArticleSystemScaffoldStatus, string> = {
     not_ready: "Choose an articles route in step 3.",
     ready_to_build: "Build the scaffold preview for review.",
@@ -1379,6 +1417,16 @@ export default function ArticleSystemConnectionPanel({
                   <p className="mt-1">You can still paste the known public articles/blogs route below, or create a new articles directory.</p>
                 </div>
               ) : null}
+              {surfaceExists ? (
+                <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-900">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  <span>
+                    <span className="font-black">Your repo already has an articles page.</span> Select the highlighted route below to
+                    publish straight into it — we won&apos;t rebuild or overwrite it. Prefer a fresh start? Choose{" "}
+                    <span className="font-black">Create a new articles folder</span> to build one somewhere else.
+                  </span>
+                </div>
+              ) : null}
               {publicRouteCandidates.length ? (
                 publicRouteCandidates.map((candidate) => (
                   <SurfaceChoiceCard
@@ -1386,6 +1434,7 @@ export default function ArticleSystemConnectionPanel({
                     candidate={candidate}
                     selected={selectedChoiceId === candidate.key}
                     bestMatch={bestCandidateKey === candidate.key}
+                    existing={surfaceExists && bestCandidateKey === candidate.key}
                     onSelect={() => {
                       setManualRouteError("");
                       setSelectedChoiceId(candidate.key);
