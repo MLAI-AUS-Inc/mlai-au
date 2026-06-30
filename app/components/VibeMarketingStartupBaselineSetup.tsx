@@ -1109,9 +1109,10 @@ function isBasicsComplete(values: StartupSetupValues) {
 }
 
 function isCompanySetupRequiredComplete(values: StartupSetupValues) {
+  // ABN is intentionally NOT required — it verifies the company and unlocks perks, but
+  // must never block the founder from completing setup.
   return (
     isBasicsComplete(values) &&
-    hasSetupText(values.abn) &&
     hasSetupText(values.location) &&
     hasSetupText(values.stage) &&
     hasSetupText(values.organizationKind) &&
@@ -2478,8 +2479,7 @@ export default function VibeMarketingStartupBaselineSetup({
                     <div className="grid gap-5 md:grid-cols-2">
                       <FormField
                         label="ABN"
-                        badge={<RequiredPill />}
-                        help="Vibe Raising is for registered Australian companies (Pty Ltd / Ltd). We verify your ABN against the Australian Business Register and confirm the matching ACN."
+                        help="Optional. Add your ABN to verify your registered Australian company — it unlocks perks like the coworking discount. You can continue without it."
                       >
                         <div className="relative">
                           <ControlIcon icon={BadgeInfo} />
@@ -2488,7 +2488,6 @@ export default function VibeMarketingStartupBaselineSetup({
                             value={startupValues.abn}
                             onChange={(event) => updateValue("abn", event.target.value)}
                             disabled={researchLocked}
-                            required
                             placeholder="Search ABN or business name"
                             className={inputWithIconClass}
                           />
