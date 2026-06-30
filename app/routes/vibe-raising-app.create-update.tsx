@@ -4079,32 +4079,87 @@ export default function CreateUpdate() {
         }
     }, []);
 
+    const [isSelectedMonthEditorOpen, setIsSelectedMonthEditorOpen] = useState(false);
+    const [selectedMonthEditorMonth, setSelectedMonthEditorMonth] = useState(selectedMonth);
+    const [selectedMonthEditorYear, setSelectedMonthEditorYear] = useState(selectedYear);
+
+    const openSelectedMonthEditor = useCallback(() => {
+        setSelectedMonthEditorMonth(selectedMonth);
+        setSelectedMonthEditorYear(selectedYear);
+        setIsSelectedMonthEditorOpen(true);
+    }, [selectedMonth, selectedYear]);
+
+    const closeSelectedMonthEditor = useCallback(() => {
+        setIsSelectedMonthEditorOpen(false);
+    }, []);
+
+    const applySelectedMonthEditor = useCallback(() => {
+        setSelectedMonth(selectedMonthEditorMonth);
+        setSelectedYear(selectedMonthEditorYear);
+        setIsSelectedMonthEditorOpen(false);
+    }, [selectedMonthEditorMonth, selectedMonthEditorYear]);
+
     const renderSelectedMonthSummaryCard = (className?: string) => (
         <section
             className={clsx(
-                "flex min-h-[5.25rem] w-full items-center rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm sm:min-h-0 sm:px-6 sm:py-4",
+                "w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm sm:px-6 sm:py-4",
                 className,
             )}
             aria-label={`Selected update month: ${selectedMonthLabel}`}
         >
-            <div className="flex w-full min-w-0 flex-1 items-center justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                        Selected month
-                    </p>
-                    <p className="truncate text-base font-black text-gray-950">
-                        {selectedMonthLabel}
-                    </p>
+            {isSelectedMonthEditorOpen ? (
+                <div className="space-y-4">
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                            Selected month
+                        </p>
+                    </div>
+                    <MonthYearTabs
+                        month={selectedMonthEditorMonth}
+                        year={selectedMonthEditorYear}
+                        onMonthChange={setSelectedMonthEditorMonth}
+                        onYearChange={setSelectedMonthEditorYear}
+                        submitDateFields={false}
+                        isDateEditable={!isEmailDraftBusy}
+                    />
+                    <div className="flex items-center justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={closeSelectedMonthEditor}
+                            className="cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600 transition hover:border-gray-300 hover:text-gray-950 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={applySelectedMonthEditor}
+                            disabled={isEmailDraftBusy}
+                            className="cursor-pointer rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1.5 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            Apply
+                        </button>
+                    </div>
                 </div>
-                <button
-                    type="button"
-                    onClick={returnToMonthSelection}
-                    className="flex-shrink-0 cursor-pointer rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
-                    aria-label={`Edit selected update month: ${selectedMonthLabel}`}
-                >
-                    Edit
-                </button>
-            </div>
+            ) : (
+                <div className="flex min-h-[5.25rem] w-full min-w-0 flex-1 items-center justify-between gap-3 sm:min-h-0">
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                            Selected month
+                        </p>
+                        <p className="truncate text-base font-black text-gray-950">
+                            {selectedMonthLabel}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={openSelectedMonthEditor}
+                        className="flex-shrink-0 cursor-pointer rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
+                        aria-label={`Edit selected update month: ${selectedMonthLabel}`}
+                    >
+                        Edit
+                    </button>
+                </div>
+            )}
         </section>
     );
 
@@ -4649,25 +4704,26 @@ export default function CreateUpdate() {
                                             event.stopPropagation();
                                             openMaterialsPicker();
                                         }}
-                                        className="group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition hover:bg-[rgba(0,128,128,0.05)] focus:outline-none focus:ring-2 focus:ring-[var(--vr-color-primary)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left"
+                                        className="group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition hover:bg-[rgba(0,128,128,0.05)] focus:outline-none focus:ring-2 focus:ring-[var(--vr-color-primary)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
-                                            Pitch deck
-                                        </p>
-                                        <h3 className="mt-2 text-xl font-black text-gray-950">Upload deck</h3>
-                                        <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
-                                            <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
-                                            Upload file
-                                        </span>
-                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                                            Slides, bio, market story, traction.
-                                        </p>
-                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
-                                            PDF, PPT, or PPTX
-                                        </p>
-                                        <p className="mt-1 text-[11px] font-bold text-slate-400">
-                                            Up to {MAX_PITCH_DECK_UPLOAD_SIZE_MB} MB
-                                        </p>
+                                        <div className="mx-auto flex w-fit max-w-full flex-col items-center text-center">
+                                            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                                                Pitch deck
+                                            </p>
+                                            <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
+                                                <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
+                                                Upload file
+                                            </span>
+                                            <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                                                Slides, bio, market story, traction.
+                                            </p>
+                                            <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
+                                                PDF, PPT, or PPTX
+                                            </p>
+                                            <p className="mt-1 text-[11px] font-bold text-slate-400">
+                                                Up to {MAX_PITCH_DECK_UPLOAD_SIZE_MB} MB
+                                            </p>
+                                        </div>
                                     </button>
 
                                     <div className="h-px w-full bg-[var(--vr-color-border)] md:h-auto md:w-px" aria-hidden />
@@ -4684,26 +4740,28 @@ export default function CreateUpdate() {
                                             }
                                         }}
                                         className={clsx(
-                                            "group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--vr-palette-coral)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left",
+                                            "group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--vr-palette-coral)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60",
                                             isRecording ? "bg-[rgba(242,114,63,0.10)]" : "hover:bg-[rgba(242,114,63,0.06)]",
                                         )}
                                     >
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                            Walkthrough video
-                                        </p>
-                                        <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
-                                            <VideoCameraIcon className="h-4 w-4" aria-hidden="true" />
-                                            {isRecordingPermissionPending ? "Requesting access" : isRecording ? "Stop recording" : "Start recording"}
-                                        </span>
-                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                                            Useful when metrics are light.
-                                        </p>
-                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
-                                            MP4, MOV, WebM
-                                        </p>
-                                        <p className="mt-1 text-[11px] font-bold text-slate-400">
-                                            Up to {MAX_VIDEO_UPLOAD_SIZE_MB} MB
-                                        </p>
+                                        <div className="mx-auto flex w-fit max-w-full flex-col items-center text-center">
+                                            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
+                                                Walkthrough video
+                                            </p>
+                                            <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
+                                                <VideoCameraIcon className="h-4 w-4" aria-hidden="true" />
+                                                {isRecordingPermissionPending ? "Requesting access" : isRecording ? "Stop recording" : "Start recording"}
+                                            </span>
+                                            <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                                                Useful when metrics are light.
+                                            </p>
+                                            <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
+                                                MP4, MOV, WebM
+                                            </p>
+                                            <p className="mt-1 text-[11px] font-bold text-slate-400">
+                                                Up to {MAX_VIDEO_UPLOAD_SIZE_MB} MB
+                                            </p>
+                                        </div>
                                     </button>
                                 </div>
 
@@ -4840,11 +4898,11 @@ export default function CreateUpdate() {
         ? selectedConnectedSourceLabels.join(", ")
         : compactSourcesLoading
             ? "Checking sources..."
-            : "Manual draft only";
+            : "Not connected";
 
     const optionalDataSourcesSection = (
         <section className="flex min-h-[5.25rem] w-full items-center rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:min-h-0 sm:rounded-[2rem] sm:p-6">
-            <div className="flex w-full min-w-0 items-center justify-between gap-3 sm:flex-col sm:items-stretch sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex w-full min-w-0 items-center gap-3 sm:flex-col sm:items-stretch sm:gap-4">
                 <div className="flex min-w-0 items-center gap-3 sm:block">
                     <div className="min-w-0">
                         <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
@@ -4859,13 +4917,6 @@ export default function CreateUpdate() {
                         </p>
                     </div>
                 </div>
-                <Link
-                    to={manageConnectionsHref}
-                    className="inline-flex flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white sm:rounded-xl sm:border-[var(--vr-color-border)] sm:bg-[var(--vr-palette-paper)] sm:px-4 sm:py-3 sm:text-sm sm:font-extrabold sm:text-[var(--vr-color-text)] sm:hover:bg-[var(--vr-palette-paper)] sm:hover:text-[var(--vr-color-primary)]"
-                >
-                    <span className="sm:hidden">Manage</span>
-                    <span className="hidden sm:inline">Manage connections</span>
-                </Link>
             </div>
             {compactSourcesError ? (
                 <p className="mt-4 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
@@ -4883,12 +4934,8 @@ export default function CreateUpdate() {
                             Using {label}
                         </span>
                     ))
-                ) : (
-                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-gray-100">
-                        Manual draft only
-                    </span>
-                )}
-                {compactSourcesLoading ? (
+                ) : null}
+                {!selectedConnectedSourceLabels.length && compactSourcesLoading ? (
                     <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-gray-100">
                         Checking sources...
                     </span>
@@ -4951,7 +4998,7 @@ export default function CreateUpdate() {
                 })}
                     <Link
                         to={manageConnectionsHref}
-                        className="group relative flex min-w-0 cursor-pointer flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-3 text-center transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] sm:px-3 lg:hidden"
+                        className="group relative col-start-1 ml-auto flex w-full max-w-[7.5rem] min-w-0 cursor-pointer flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-3 text-center transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] sm:col-span-3 sm:w-28 sm:px-3 lg:col-start-7 lg:col-span-2 lg:ml-0 lg:min-w-[9.5rem] lg:max-w-[9.5rem] lg:justify-self-end"
                         aria-label="Open all source connections"
                     >
                         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
@@ -4961,8 +5008,9 @@ export default function CreateUpdate() {
                                 <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
                             </span>
                         </span>
-                        <span className="w-full truncate text-xs font-black text-gray-950">More</span>
-                        <span className="w-full truncate text-[11px] font-bold text-slate-400">Connections</span>
+                        <span className="w-full text-xs font-black leading-tight text-gray-950 lg:whitespace-nowrap">
+                            Data Sources
+                        </span>
                     </Link>
                 </div>
             </div>
@@ -5185,6 +5233,7 @@ export default function CreateUpdate() {
                                 expandOnHover
                                 frameless
                                 className="mb-6 text-left"
+                                showHelpers={false}
                             />
                             <h2 className="mb-2 text-2xl font-black tracking-tight text-gray-900">Ready to publish?</h2>
                             <p className="mb-6 text-sm leading-relaxed text-gray-600">
@@ -5888,6 +5937,13 @@ export default function CreateUpdate() {
                                             )}
                                         </div>
                                     </div>
+                                    <VibeRaisingAudienceVisibilityField
+                                        name="draftAudienceVisibility"
+                                        value={audienceVisibility}
+                                        onChange={setAudienceVisibility}
+                                        title="Update visibility"
+                                        description="For this draft"
+                                    />
                                     <button
                                         type="button"
                                         disabled={!hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy}
@@ -5926,13 +5982,7 @@ export default function CreateUpdate() {
                     </div>
                 </div>
             </section>
-            ) : (
-                <section className="sm:hidden">
-                    <div className="space-y-4">
-                        {renderSelectedMonthSummaryCard()}
-                    </div>
-                </section>
-            )}
+            ) : null}
 
             <section
                 className={clsx(
@@ -5977,14 +6027,14 @@ export default function CreateUpdate() {
                                                 "group flex min-h-[5.25rem] w-full items-center justify-between gap-3 rounded-2xl border px-5 py-3 text-left shadow-sm transition disabled:cursor-not-allowed sm:min-h-0 sm:gap-4 sm:p-5",
                                                 canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
                                                     ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
-                                                    : "cursor-not-allowed border-[var(--vr-color-border)] bg-white sm:border-[rgba(0,128,128,0.32)] sm:bg-[rgba(0,255,215,0.08)]",
+                                                    : "cursor-not-allowed border-violet-200 bg-gradient-to-r from-violet-50 via-white to-violet-50/70",
                                             )}
                                         >
                                             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                                                 <div className={clsx(
                                                     "hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1 sm:flex",
                                                     hasNoSourceForAssistedDraft
-                                                        ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
+                                                        ? "bg-violet-50 text-violet-700 ring-violet-200"
                                                         : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
                                                 )}>
                                                     {emailDraftActionBusy ? (
@@ -5994,20 +6044,26 @@ export default function CreateUpdate() {
                                                     )}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-base sm:font-bold sm:normal-case sm:tracking-normal sm:text-gray-950">
+                                                    <p className={clsx(
+                                                        "text-[11px] font-black uppercase tracking-[0.14em] sm:text-base sm:font-bold sm:normal-case sm:tracking-normal",
+                                                        hasNoSourceForAssistedDraft ? "text-violet-700 sm:text-violet-800" : "text-slate-500 sm:text-gray-950",
+                                                    )}>
                                                         <span className="sm:hidden">AI drafting</span>
                                                         <span className="hidden sm:inline">{emailDraftButtonTitle}</span>
                                                     </p>
-                                                    <p className="mt-1 text-sm font-black leading-tight text-gray-950 sm:max-w-2xl sm:text-sm sm:font-medium sm:leading-6 sm:text-gray-600">
+                                                    <p className={clsx(
+                                                        "mt-1 text-sm leading-tight sm:max-w-2xl sm:text-sm sm:leading-6",
+                                                        hasNoSourceForAssistedDraft ? "font-semibold text-violet-900 sm:text-gray-700" : "font-black text-gray-950 sm:font-medium sm:text-gray-600",
+                                                    )}>
                                                         <span className="sm:hidden">{emailDraftButtonTitle}</span>
                                                         <span className="hidden sm:inline">{emailDraftButtonDescription}</span>
                                                     </p>
                                                 </div>
                                             </div>
                                             <span className={clsx(
-                                                "flex flex-shrink-0 items-center justify-center rounded-full border px-3 py-1 text-xs font-black transition sm:h-10 sm:w-10 sm:rounded-xl sm:px-0 sm:py-0 sm:group-hover:translate-x-1",
+                                                "flex flex-shrink-0 items-center justify-center rounded-full border px-3 py-1 text-xs font-black transition sm:h-10 sm:w-10 sm:rounded-xl sm:px-0 sm:py-0",
                                                 hasNoSourceForAssistedDraft
-                                                    ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
+                                                    ? "border-violet-200 bg-violet-100 text-violet-400"
                                                     : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
                                             )}>
                                                 <span className="sm:hidden">Draft</span>
@@ -6018,6 +6074,7 @@ export default function CreateUpdate() {
                                             </span>
                                         </button>
                                     ) : null}
+                                    {renderSelectedMonthSummaryCard("sm:hidden")}
                                 <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
@@ -6043,14 +6100,6 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="year" value={selectedYear} />
 
                                     {renderSelectedMonthSummaryCard("hidden sm:block")}
-
-                                    <VibeRaisingAudienceVisibilityField
-                                        name="draftAudienceVisibility"
-                                        value={audienceVisibility}
-                                        onChange={setAudienceVisibility}
-                                        title="Update visibility"
-                                        description="For this draft"
-                                    />
 
                                     <div className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5">
                                         {shouldDimMetricsTemplate ? (
@@ -6507,14 +6556,14 @@ export default function CreateUpdate() {
                                     "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
                                     canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
                                         ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
-                                        : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
+                                        : "cursor-not-allowed border-violet-200 bg-gradient-to-r from-violet-50 via-white to-violet-50/70",
                                 )}
                             >
                                 <div className="flex min-w-0 items-center gap-4">
                                     <div className={clsx(
                                         "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1",
                                         hasNoSourceForAssistedDraft
-                                            ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
+                                            ? "bg-violet-50 text-violet-700 ring-violet-200"
                                             : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
                                     )}>
                                         {emailDraftActionBusy ? (
@@ -6524,18 +6573,24 @@ export default function CreateUpdate() {
                                         )}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-base font-bold text-gray-950">
+                                        <p className={clsx(
+                                            "text-base font-bold",
+                                            hasNoSourceForAssistedDraft ? "text-violet-800" : "text-gray-950",
+                                        )}>
                                             {emailDraftButtonTitle}
                                         </p>
-                                        <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+                                        <p className={clsx(
+                                            "mt-1 max-w-2xl text-sm leading-6",
+                                            hasNoSourceForAssistedDraft ? "font-semibold text-gray-700" : "text-gray-600",
+                                        )}>
                                             {emailDraftButtonDescription}
                                         </p>
                                     </div>
                                 </div>
                                 <span className={clsx(
-                                    "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition group-hover:translate-x-1",
+                                    "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition",
                                     hasNoSourceForAssistedDraft
-                                        ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
+                                        ? "border-violet-200 bg-violet-100 text-violet-400"
                                         : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
                                 )}>
                                     <ArrowRightIcon className={clsx(
