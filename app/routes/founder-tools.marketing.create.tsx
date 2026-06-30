@@ -469,7 +469,7 @@ function resolveActiveStep(
     requestedWorkflowStep?.status === "locked" &&
     !repoArticleAllowedStep &&
     !articleSystemSetupAllowedStep &&
-    !(contentOnlyAllowedStep && bootstrap.checks.baseline?.passed && !isGithubPublishingReady(bootstrap))
+    !(contentOnlyAllowedStep && !isGithubPublishingReady(bootstrap))
   ) {
     return requiredStep;
   }
@@ -1623,14 +1623,6 @@ export default function FounderToolsMarketingCreate() {
                       .
                     </div>
                   ) : null}
-              {!bootstrap.checks.baseline?.passed ? (
-                <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-                  Run or skip the website baseline before generating an article.
-                  <Link to="/founder-tools/marketing/create?step=baseline" className="ml-2 font-black text-amber-900 underline">
-                    Open baseline
-                  </Link>
-                </div>
-              ) : null}
               <Form method="POST" className="space-y-5">
                 <input type="hidden" name="intent" value="start-article" />
                 <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
@@ -1734,7 +1726,7 @@ export default function FounderToolsMarketingCreate() {
                       </div>
                       <p className="mt-1 max-w-2xl text-xs font-semibold leading-5 text-gray-500">{deliveryModeNote}</p>
                     </div>
-                    <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
+                    <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
                       {articleStartPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
                       {articleStartPending ? (
                         "Starting article..."
