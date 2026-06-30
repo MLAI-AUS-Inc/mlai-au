@@ -1562,8 +1562,10 @@ export type VibeMarketingLocationSuggestion = {
 
 export type VibeMarketingAbnSuggestion = {
   abn: string;
+  acn?: string;
   entityName?: string;
   businessName?: string;
+  entityTypeName?: string;
   status?: string;
   state?: string;
   postcode?: string;
@@ -1597,8 +1599,10 @@ function normalizeAbnSuggestion(raw: unknown): VibeMarketingAbnSuggestion | null
   if (!abn) return null;
   return {
     abn,
+    acn: asNullableString(payload.acn) ?? undefined,
     entityName: asNullableString(payload.entityName) ?? asNullableString(payload.entity_name) ?? undefined,
     businessName: asNullableString(payload.businessName) ?? asNullableString(payload.business_name) ?? undefined,
+    entityTypeName: asNullableString(payload.entityTypeName) ?? asNullableString(payload.entity_type_name) ?? undefined,
     status: asNullableString(payload.status) ?? undefined,
     state: asNullableString(payload.state) ?? undefined,
     postcode: asNullableString(payload.postcode) ?? undefined,

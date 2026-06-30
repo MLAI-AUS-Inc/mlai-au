@@ -55,6 +55,7 @@ const COMPANY_SETUP_FIELD_LABELS: Record<string, string> = {
   name: "Company name",
   domain: "Website domain",
   abn: "ABN",
+  acn: "ACN",
   location: "Startup location",
   stage: "Stage",
   shortDescription: "Short description",
@@ -327,6 +328,9 @@ export async function action({ request, context }: Route.ActionArgs) {
       companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
       location,
       abn,
+      // Optional manual ACN fallback; the backend cross-checks it against the ABN/ABR
+      // and otherwise derives the ACN itself, so an empty value is fine.
+      acn: stringFromForm(formData, "acn"),
       brandName: companyName,
       companyContext,
       competitors: listFromForm(formData.get("competitors")),

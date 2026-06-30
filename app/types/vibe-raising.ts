@@ -14,6 +14,9 @@ export interface VibeRaisingCompany {
   domain?: string | null;
   companyLinkedInUrl?: string | null;
   abn?: string | null;
+  acn?: string | null;
+  entityTypeName?: string | null;
+  abrVerifiedAt?: string | null;
   location?: string | null;
   avatarUrl?: string | null;
   founderProfiles?: VibeRaisingFounderProfile[];
