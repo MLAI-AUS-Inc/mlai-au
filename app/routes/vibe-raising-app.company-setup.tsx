@@ -289,9 +289,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (!domain) {
       return { intent, error: "Add your website domain before continuing." };
     }
-    if (!abn) {
-      return { intent, error: "Add your ABN before continuing." };
-    }
+    // ABN is optional — a valid one verifies the company (and unlocks perks like the
+    // coworking discount), but it never blocks setup.
     if (!location) {
       return { intent, error: "Add your startup location before continuing." };
     }

@@ -42,6 +42,7 @@ import {
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
+import AbnAutocomplete from "~/components/AbnAutocomplete";
 import type {
   VibeMarketingAutofillCompetitor,
   VibeMarketingAutofillResult,
@@ -1109,9 +1110,10 @@ function isBasicsComplete(values: StartupSetupValues) {
 }
 
 function isCompanySetupRequiredComplete(values: StartupSetupValues) {
+  // ABN is intentionally NOT required — it verifies the company and unlocks perks, but
+  // must never block the founder from completing setup.
   return (
     isBasicsComplete(values) &&
-    hasSetupText(values.abn) &&
     hasSetupText(values.location) &&
     hasSetupText(values.stage) &&
     hasSetupText(values.organizationKind) &&
@@ -2441,6 +2443,25 @@ export default function VibeMarketingStartupBaselineSetup({
               </section>
 
               <div className={clsx("mt-7", companySetupWorkflow ? "space-y-5" : "grid gap-5 lg:grid-cols-2")}>
+                {companySetupWorkflow ? (
+                  <FormField
+                    label="ABN"
+                    help="Optional. Search your ABN or business name to find your registered company and auto-fill your details — it unlocks perks like the coworking discount. You can continue without it."
+                  >
+                    <AbnAutocomplete
+                      value={startupValues.abn}
+                      onChange={(abn) => updateValue("abn", abn)}
+                      onSelect={(suggestion) => {
+                        const name = suggestion.entityName || suggestion.businessName;
+                        if (name) updateValue("companyName", name);
+                      }}
+                      disabled={researchLocked}
+                      inputClassName={inputWithIconClass}
+                      leadingIcon={<ControlIcon icon={BadgeInfo} />}
+                    />
+                  </FormField>
+                ) : null}
+
                 <FormField label="Company name" badge={<RequiredPill />} className={companySetupWorkflow ? "" : "lg:col-span-2"}>
                   <div className="relative">
                     <ControlIcon icon={Building2} />
@@ -2475,36 +2496,15 @@ export default function VibeMarketingStartupBaselineSetup({
 
                 {companySetupWorkflow ? (
                   <>
-                    <div className="grid gap-5 md:grid-cols-2">
-                      <FormField
-                        label="ABN"
-                        badge={<RequiredPill />}
-                        help="Vibe Raising is for registered Australian companies (Pty Ltd / Ltd). We verify your ABN against the Australian Business Register and confirm the matching ACN."
-                      >
-                        <div className="relative">
-                          <ControlIcon icon={BadgeInfo} />
-                          <input
-                            name="abn"
-                            value={startupValues.abn}
-                            onChange={(event) => updateValue("abn", event.target.value)}
-                            disabled={researchLocked}
-                            required
-                            placeholder="Search ABN or business name"
-                            className={inputWithIconClass}
-                          />
-                        </div>
-                      </FormField>
-
-                      <FormField label="Startup location" badge={<RequiredPill />}>
-                        <LocationCombobox
-                          value={startupValues.location}
-                          onChange={(nextLocation) => updateValue("location", nextLocation)}
-                          disabled={researchLocked}
-                          required
-                          inputClassName={inputWithIconClass}
-                        />
-                      </FormField>
-                    </div>
+                    <FormField label="Startup location" badge={<RequiredPill />}>
+                      <LocationCombobox
+                        value={startupValues.location}
+                        onChange={(nextLocation) => updateValue("location", nextLocation)}
+                        disabled={researchLocked}
+                        required
+                        inputClassName={inputWithIconClass}
+                      />
+                    </FormField>
 
                     <FormField label="Do you have revenue?" badge={<RequiredPill />}>
                       <select
