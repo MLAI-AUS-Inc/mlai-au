@@ -513,6 +513,17 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     };
 }
 
+// The backend blocks update creation for a company that isn't a verified registered
+// Australian company (HTTP 422, code ACN_REQUIRED). Send the founder back to company
+// setup to complete verification rather than dead-ending on the update form.
+function acnGateRedirect(error: unknown) {
+    const data = (error as any)?.response?.data ?? (error as any)?.data;
+    if (data && typeof data === "object" && data.code === "ACN_REQUIRED") {
+        return redirect(typeof data.redirect === "string" ? data.redirect : "/founder-tools/company-setup");
+    }
+    return null;
+}
+
 function extractVibeRaisingActionError(error: unknown, fallback: string) {
     const responseData = (error as any)?.response?.data;
     if (typeof responseData?.detail === "string" && responseData.detail.trim()) {
@@ -623,6 +634,8 @@ export async function action({ request, context }: Route.ActionArgs) {
                 savedUpdate,
             }));
         } catch (error) {
+            const gate = acnGateRedirect(error);
+            if (gate) return gate;
             console.warn("Unable to publish Vibe Raising monthly update.", (error as any)?.response?.data ?? error);
             return {
                 step: "publish-error",
@@ -654,6 +667,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         .filter(Boolean);
 
     if (activeCompany && formData.has("founderProfiles")) {
+        // This is an incidental founder-profile sync — it must not re-trigger the
+        // registration gate, so `registered` is intentionally omitted (sending it true
+        // would force a fresh ABR re-verification on every save).
         await saveVibeRaisingCompany(env, request, {
             companyId: activeCompany.id,
             name: activeCompany.name || appUser.companyName,
@@ -666,15 +682,21 @@ export async function action({ request, context }: Route.ActionArgs) {
                 : (activeCompany.founderNames ?? []),
             founderProfiles: founderProfilesForCompanySave,
             stage: activeCompany.stage ?? appUser.stage ?? null,
-            registered: activeCompany.registered ?? appUser.companyRegistered,
         });
     }
 
     if (intent === "review") {
-        const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
-            ...savePayload,
-            saveMode: "ready",
-        });
+        let savedUpdate;
+        try {
+            savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
+                ...savePayload,
+                saveMode: "ready",
+            });
+        } catch (error) {
+            const gate = acnGateRedirect(error);
+            if (gate) return gate;
+            throw error;
+        }
 
         // Mock AI analysis
         return {
@@ -701,10 +723,17 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "save-draft") {
-        const update = await saveVibeRaisingMonthlyUpdate(env, request, {
-            ...savePayload,
-            saveMode: "draft",
-        });
+        let update;
+        try {
+            update = await saveVibeRaisingMonthlyUpdate(env, request, {
+                ...savePayload,
+                saveMode: "draft",
+            });
+        } catch (error) {
+            const gate = acnGateRedirect(error);
+            if (gate) return gate;
+            throw error;
+        }
         const cookie = update ? createVibeRaisingLocalDraftUpdateCookie(update) : null;
 
         return Response.json(

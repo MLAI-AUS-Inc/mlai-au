@@ -264,6 +264,16 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     asNullableString(payload.abn) ??
     asNullableString(payload.companyAbn) ??
     asNullableString(payload.company_abn);
+  const acn =
+    asNullableString(payload.acn) ??
+    asNullableString(payload.companyAcn) ??
+    asNullableString(payload.company_acn);
+  const entityTypeName =
+    asNullableString(payload.entityTypeName) ??
+    asNullableString(payload.entity_type_name);
+  const abrVerifiedAt =
+    asNullableString(payload.abrVerifiedAt) ??
+    asNullableString(payload.abr_verified_at);
   const companyLinkedInUrl =
     asNullableString(payload.companyLinkedInUrl) ??
     asNullableString(payload.company_linkedin_url);
@@ -335,6 +345,9 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     domain,
     companyLinkedInUrl,
     abn,
+    acn,
+    entityTypeName,
+    abrVerifiedAt,
     location,
     avatarUrl,
     founderProfiles,
@@ -1892,6 +1905,7 @@ export async function saveVibeRaisingCompany(
     domain?: string | null;
     companyLinkedInUrl?: string | null;
     abn?: string | null;
+    acn?: string | null;
     location?: string | null;
     registered?: boolean;
     brandName?: string | null;

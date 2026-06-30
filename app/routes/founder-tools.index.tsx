@@ -55,11 +55,21 @@ export default function FounderToolsIndex() {
   const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
   if (!user) return null;
   const activeCompany = getActiveVibeRaisingCompany(user);
+  const isVerifiedCompany = Boolean(activeCompany?.abrVerifiedAt && activeCompany?.acn);
   const details = [
     { label: "Website", value: detailValue(activeCompany?.domain), icon: GlobeAltIcon },
     { label: "Location", value: detailValue(activeCompany?.location), icon: MapPinIcon },
     { label: "ABN", value: detailValue(activeCompany?.abn), icon: IdentificationIcon },
-    { label: "Status", value: activeCompany?.registered ? "Set up" : "Incomplete", icon: CheckBadgeIcon },
+    { label: "ACN", value: detailValue(activeCompany?.acn), icon: IdentificationIcon },
+    {
+      label: "Status",
+      value: isVerifiedCompany
+        ? "Verified registered company"
+        : activeCompany?.registered
+          ? "Set up"
+          : "Incomplete",
+      icon: CheckBadgeIcon,
+    },
   ];
   const productLinks = [
     {

@@ -162,7 +162,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                             }}
                                         >
                                             <CheckBadgeIcon className="w-3.5 h-3.5" />
-                                            Registered
+                                            {activeCompany.abrVerifiedAt && activeCompany.acn ? "Verified" : "Registered"}
                                         </span>
                                     )}
                                 </div>
@@ -191,11 +191,24 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                             </div>
                             <div>
                                 <div className="vr-company-info-label flex items-center gap-1.5">
+                                    <IdentificationIcon className="w-3 h-3" />
+                                    ACN
+                                </div>
+                                <div className="vr-company-info-value">
+                                    {activeCompany.acn || "—"}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="vr-company-info-label flex items-center gap-1.5">
                                     <CheckBadgeIcon className="w-3 h-3" />
                                     Status
                                 </div>
                                 <div className="vr-company-info-value">
-                                    {activeCompany.registered ? "Registered" : "Not yet registered"}
+                                    {activeCompany.abrVerifiedAt && activeCompany.acn
+                                        ? "Verified registered company"
+                                        : activeCompany.registered
+                                            ? "Registered"
+                                            : "Not yet registered"}
                                 </div>
                             </div>
                         </div>

@@ -2474,7 +2474,11 @@ export default function VibeMarketingStartupBaselineSetup({
                 {companySetupWorkflow ? (
                   <>
                     <div className="grid gap-5 md:grid-cols-2">
-                      <FormField label="ABN" badge={<RequiredPill />}>
+                      <FormField
+                        label="ABN"
+                        badge={<RequiredPill />}
+                        help="Vibe Raising is for registered Australian companies (Pty Ltd / Ltd). We verify your ABN against the Australian Business Register and confirm the matching ACN."
+                      >
                         <div className="relative">
                           <ControlIcon icon={BadgeInfo} />
                           <input
