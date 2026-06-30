@@ -62,6 +62,7 @@ import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
+import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS } from "~/components/VibeRaisingDateTabs";
 import type {
@@ -69,6 +70,7 @@ import type {
     VibeRaisingFounderProfile,
     VibeRaisingInputSourceSummary,
     VibeRaisingManualDocument,
+    VibeRaisingAudienceVisibility,
     VibeRaisingMetricDisplayConfig,
     VibeRaisingMetricSuggestion,
     VibeRaisingMetricVisibility,
@@ -392,6 +394,7 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
     const metrics = update.metrics || {};
     return {
         id: update.id,
+        audienceVisibility: update.audienceVisibility || "",
         month: update.monthName || parsedPeriod.month,
         year: update.year || parsedPeriod.year,
         summary: update.summary || "",
@@ -418,6 +421,13 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         metricKeys: Object.keys(metrics).join(","),
         ...metrics,
     };
+}
+
+function normalizeAudienceVisibilityValue(value: unknown): VibeRaisingAudienceVisibility {
+    const text = String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+    if (text === "community") return "community";
+    if (text === "investors" || text === "investor") return "investors";
+    return "just_me";
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -485,6 +495,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         .filter(Boolean);
 
     return {
+        audienceVisibility: normalizeAudienceVisibilityValue(formData.get("audienceVisibility")),
         month: String(formData.get("month") || "").trim(),
         year: Number(formData.get("year") || 0),
         summary: String(formData.get("summary") || "").trim() || null,
@@ -1993,7 +2004,7 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
                     )}
                 </div>
             ))}
-            <button type="button" onClick={add} className="mt-1 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[var(--vr-color-primary)] transition-all hover:bg-[rgba(0,255,215,0.12)]">
+            <button type="button" onClick={add} className="mt-1 flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[var(--vr-color-primary)] transition-all hover:bg-[rgba(0,255,215,0.12)]">
                 Add point
             </button>
         </div>
@@ -2631,6 +2642,9 @@ export default function CreateUpdate() {
         const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
         return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
     });
+    const [audienceVisibility, setAudienceVisibility] = useState<VibeRaisingAudienceVisibility>(
+        () => normalizeAudienceVisibilityValue(defaultData?.audienceVisibility || user.audienceVisibility),
+    );
     const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
     const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
     const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
@@ -4066,32 +4080,32 @@ export default function CreateUpdate() {
     }, []);
 
     const renderSelectedMonthSummaryCard = (className?: string) => (
-        <button
-            type="button"
-            onClick={returnToMonthSelection}
+        <section
             className={clsx(
-                "group w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)] sm:px-6 sm:py-4",
+                "flex min-h-[5.25rem] w-full items-center rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm sm:min-h-0 sm:px-6 sm:py-4",
                 className,
             )}
             aria-label={`Selected update month: ${selectedMonthLabel}`}
         >
-            <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)]" />
-                    <div className="min-w-0">
-                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                            Selected month
-                        </p>
-                        <p className="truncate text-base font-black text-gray-950">
-                            {selectedMonthLabel}
-                        </p>
-                    </div>
+            <div className="flex w-full min-w-0 flex-1 items-center justify-between gap-3">
+                <div className="min-w-0">
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                        Selected month
+                    </p>
+                    <p className="truncate text-base font-black text-gray-950">
+                        {selectedMonthLabel}
+                    </p>
                 </div>
-                <span className="flex-shrink-0 rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition group-hover:bg-[var(--vr-color-primary)] group-hover:text-white">
+                <button
+                    type="button"
+                    onClick={returnToMonthSelection}
+                    className="flex-shrink-0 cursor-pointer rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
+                    aria-label={`Edit selected update month: ${selectedMonthLabel}`}
+                >
                     Edit
-                </span>
+                </button>
             </div>
-        </button>
+        </section>
     );
 
     // Regenerating an existing draft returns the user to the pristine GENERATE view
@@ -4610,7 +4624,7 @@ export default function CreateUpdate() {
         >
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-black text-gray-950">Optional: add a deck or short founder walkthrough.</h2>
+                    <h2 className="text-xl font-black text-gray-950">Add a deck or short founder walkthrough.</h2>
                 </div>
             </div>
             <div className="relative mt-6">
@@ -4635,7 +4649,7 @@ export default function CreateUpdate() {
                                             event.stopPropagation();
                                             openMaterialsPicker();
                                         }}
-                                        className="group flex min-h-44 flex-col items-center rounded-2xl p-4 text-center transition hover:bg-[rgba(0,128,128,0.05)] focus:outline-none focus:ring-2 focus:ring-[var(--vr-color-primary)] active:scale-[0.99] disabled:opacity-60 md:items-start md:text-left"
+                                        className="group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition hover:bg-[rgba(0,128,128,0.05)] focus:outline-none focus:ring-2 focus:ring-[var(--vr-color-primary)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left"
                                     >
                                         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
                                             Pitch deck
@@ -4670,7 +4684,7 @@ export default function CreateUpdate() {
                                             }
                                         }}
                                         className={clsx(
-                                            "group flex min-h-44 flex-col items-center rounded-2xl p-4 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--vr-palette-coral)] active:scale-[0.99] disabled:opacity-60 md:items-start md:text-left",
+                                            "group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--vr-palette-coral)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left",
                                             isRecording ? "bg-[rgba(242,114,63,0.10)]" : "hover:bg-[rgba(242,114,63,0.06)]",
                                         )}
                                     >
@@ -4829,10 +4843,9 @@ export default function CreateUpdate() {
             : "Manual draft only";
 
     const optionalDataSourcesSection = (
-        <section className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:rounded-[2rem] sm:p-6">
-            <div className="flex min-w-0 items-center justify-between gap-3 sm:flex-col sm:items-stretch sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <section className="flex min-h-[5.25rem] w-full items-center rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:min-h-0 sm:rounded-[2rem] sm:p-6">
+            <div className="flex w-full min-w-0 items-center justify-between gap-3 sm:flex-col sm:items-stretch sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex min-w-0 items-center gap-3 sm:block">
-                    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)] sm:hidden" />
                     <div className="min-w-0">
                         <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
                             <span className="sm:hidden">Connect data</span>
@@ -4848,7 +4861,7 @@ export default function CreateUpdate() {
                 </div>
                 <Link
                     to={manageConnectionsHref}
-                    className="inline-flex flex-shrink-0 items-center justify-center rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white sm:rounded-xl sm:border-[var(--vr-color-border)] sm:bg-[var(--vr-palette-paper)] sm:px-4 sm:py-3 sm:text-sm sm:font-extrabold sm:text-[var(--vr-color-text)] sm:hover:bg-[var(--vr-palette-paper)] sm:hover:text-[var(--vr-color-primary)]"
+                    className="inline-flex flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white sm:rounded-xl sm:border-[var(--vr-color-border)] sm:bg-[var(--vr-palette-paper)] sm:px-4 sm:py-3 sm:text-sm sm:font-extrabold sm:text-[var(--vr-color-text)] sm:hover:bg-[var(--vr-palette-paper)] sm:hover:text-[var(--vr-color-primary)]"
                 >
                     <span className="sm:hidden">Manage</span>
                     <span className="hidden sm:inline">Manage connections</span>
@@ -4898,8 +4911,8 @@ export default function CreateUpdate() {
                                 source.key !== "google_analytics" && source.key !== "stripe" && "hidden lg:flex",
                                 connected
                                     ? selected
-                                        ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)]"
-                                        : "border-gray-200 bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)]"
+                                        ? "cursor-pointer border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)]"
+                                        : "cursor-pointer border-gray-200 bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)]"
                                     : "cursor-not-allowed border-gray-100 bg-gray-50 opacity-60",
                             )}
                             title={`${source.label}: ${compactSourceStatusLabel(source)}`}
@@ -4938,7 +4951,7 @@ export default function CreateUpdate() {
                 })}
                     <Link
                         to={manageConnectionsHref}
-                        className="group relative flex min-w-0 flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-3 text-center transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] sm:px-3 lg:hidden"
+                        className="group relative flex min-w-0 cursor-pointer flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-3 text-center transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] sm:px-3 lg:hidden"
                         aria-label="Open all source connections"
                     >
                         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
@@ -5026,6 +5039,7 @@ export default function CreateUpdate() {
         const reviewMediaIsAudio = isAudioMedia(reviewVideoContentType, reviewVideoOriginalFilename || reviewVideoUrl);
         const reviewPitchDeckLabel = reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename || "Pitch deck file";
         const reviewVideoLabel = reviewVideoOriginalFilename || (reviewMediaIsAudio ? "Founder voice note" : "Founder walkthrough");
+        const reviewAudienceVisibility = normalizeAudienceVisibilityValue(reviewData?.audienceVisibility || audienceVisibility);
         const reviewAudienceText = [
             String(reviewData?.highlights || ""),
             String(reviewData?.challenges || ""),
@@ -5149,6 +5163,7 @@ export default function CreateUpdate() {
                 <Form id={PUBLISH_REVIEW_FORM_ID} method="POST" className="hidden">
                     <input type="hidden" name="intent" value="publish" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
+                    <input type="hidden" name="audienceVisibility" value={reviewAudienceVisibility} />
                     <input type="hidden" name="month" value={reviewMonth} />
                     <input type="hidden" name="year" value={reviewYear} />
                 </Form>
@@ -5809,7 +5824,7 @@ export default function CreateUpdate() {
 
     // 3. Create/Edit Form View
     return (
-        <div className="mx-auto max-w-6xl space-y-10 pb-32">
+        <div className="mx-auto max-w-6xl space-y-4 pb-32 sm:space-y-10">
             <div className="space-y-4">
                 <div ref={draftStepperRef} className="hidden sm:block">
                     <MonthlyUpdateStepper
@@ -5949,7 +5964,7 @@ export default function CreateUpdate() {
                             ) : null}
                             {hasDraftTemplate ? (
                                 <>
-                                    <div ref={draftTemplateSectionRef} className="scroll-mt-28 space-y-6 sm:mt-8 lg:mt-10">
+                                    <div ref={draftTemplateSectionRef} className="scroll-mt-28 space-y-4 sm:mt-8 sm:space-y-6 lg:mt-10">
                                     {optionalDataSourcesSection}
                                     {!shouldShowEmailDraftProgress ? (
                                         <button
@@ -5959,14 +5974,13 @@ export default function CreateUpdate() {
                                                 void handleGenerateDraftFromEmailClick();
                                             }}
                                             className={clsx(
-                                                "group flex w-full items-center justify-between gap-3 rounded-2xl border px-5 py-3 text-left shadow-sm transition disabled:cursor-not-allowed sm:gap-4 sm:p-5",
+                                                "group flex min-h-[5.25rem] w-full items-center justify-between gap-3 rounded-2xl border px-5 py-3 text-left shadow-sm transition disabled:cursor-not-allowed sm:min-h-0 sm:gap-4 sm:p-5",
                                                 canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
                                                     ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
                                                     : "cursor-not-allowed border-[var(--vr-color-border)] bg-white sm:border-[rgba(0,128,128,0.32)] sm:bg-[rgba(0,255,215,0.08)]",
                                             )}
                                         >
                                             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                                                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)] sm:hidden" />
                                                 <div className={clsx(
                                                     "hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1 sm:flex",
                                                     hasNoSourceForAssistedDraft
@@ -6008,6 +6022,7 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
                                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
+                                    <input type="hidden" name="audienceVisibility" value={audienceVisibility} />
                                     <input type="hidden" name="summary" value={summary} />
                                     <input type="hidden" name="sourceUrl" value={sourceUrl} />
                                     <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
@@ -6029,6 +6044,14 @@ export default function CreateUpdate() {
 
                                     {renderSelectedMonthSummaryCard("hidden sm:block")}
 
+                                    <VibeRaisingAudienceVisibilityField
+                                        name="draftAudienceVisibility"
+                                        value={audienceVisibility}
+                                        onChange={setAudienceVisibility}
+                                        title="Update visibility"
+                                        description="For this draft"
+                                    />
+
                                     <div className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5">
                                         {shouldDimMetricsTemplate ? (
                                             <p className="text-xs font-medium tracking-[0.02em] text-gray-500">
@@ -6048,7 +6071,7 @@ export default function CreateUpdate() {
                                                         "relative min-w-0 rounded-2xl border p-3 transition duration-200 sm:p-4",
                                                         isHiddenInDropdown ? "hidden" : null,
                                                         isMetricCardAwake
-                                                            ? "border-[rgba(0,128,128,0.12)] bg-[var(--vr-palette-paper)]"
+                                                            ? "cursor-pointer border-[rgba(0,128,128,0.12)] bg-[var(--vr-palette-paper)]"
                                                             : "cursor-pointer border-gray-200/80 bg-[rgba(247,246,242,0.65)] opacity-45 saturate-0",
                                                     )}
                                                     onClick={(event) => {

@@ -4,6 +4,7 @@ import type { User } from "~/types/user";
 import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 import type {
+  VibeRaisingAudienceVisibility,
   VibeRaisingDraftResultsResponse,
   VibeRaisingAppUser,
   VibeRaisingBankFeedAccount,
@@ -171,6 +172,16 @@ type OptionalContext = {
 
 type VibeRaisingSaveMode = "draft" | "ready";
 
+function normalizeAudienceVisibility(value: unknown): VibeRaisingAudienceVisibility | null {
+  const text = asNullableString(value);
+  if (!text) return null;
+  const normalized = text.toLowerCase().replace(/[\s-]+/g, "_");
+  if (normalized === "just_me" || normalized === "private") return "just_me";
+  if (normalized === "community") return "community";
+  if (normalized === "investors" || normalized === "investor") return "investors";
+  return null;
+}
+
 export function isVibeRaisingProfileComplete(profile: VibeRaisingProfile): boolean {
   return profile.companies.length > 0;
 }
@@ -321,6 +332,19 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
         startupProfileSnake?.hasRevenue ??
         startupProfileSnake?.has_revenue,
     );
+  const audienceVisibility =
+    normalizeAudienceVisibility(
+      payload.audienceVisibility ??
+        payload.audience_visibility ??
+        payload.defaultAudienceVisibility ??
+        payload.default_audience_visibility ??
+        payload.visibilityPreference ??
+        payload.visibility_preference ??
+        startupProfile?.audienceVisibility ??
+        startupProfile?.audience_visibility ??
+        startupProfileSnake?.audienceVisibility ??
+        startupProfileSnake?.audience_visibility,
+    );
   const registered = Boolean(
     payload.registered ??
       payload.isRegistered ??
@@ -342,6 +366,7 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     stage,
     organizationKind,
     hasRevenue,
+    audienceVisibility,
     registered,
   };
 }
@@ -381,6 +406,13 @@ function normalizeProfile(raw: unknown): VibeRaisingProfile {
         founderProfiles: payload.founderProfiles ?? payload.founder_profiles,
         founderNames: payload.founderNames ?? payload.founder_names,
         stage: payload.stage ?? payload.startupStage ?? payload.startup_stage,
+        audienceVisibility:
+          payload.audienceVisibility ??
+          payload.audience_visibility ??
+          payload.defaultAudienceVisibility ??
+          payload.default_audience_visibility ??
+          payload.visibilityPreference ??
+          payload.visibility_preference,
         registered:
           payload.companyRegistered ??
           payload.company_registered ??
@@ -896,6 +928,13 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
       asNullableString(payload.visibility) ??
       asNullableString(payload.publishVisibility) ??
       asNullableString(payload.publish_visibility),
+    audienceVisibility:
+      normalizeAudienceVisibility(
+        payload.audienceVisibility ??
+          payload.audience_visibility ??
+          payload.visibilityPreference ??
+          payload.visibility_preference,
+      ),
     publishedAt:
       asNullableString(payload.publishedAt) ??
       asNullableString(payload.published_at),
@@ -1699,6 +1738,7 @@ export function buildVibeRaisingAppUser(
     stage: activeCompany?.stage ?? null,
     organizationKind: activeCompany?.organizationKind ?? null,
     hasRevenue: activeCompany?.hasRevenue ?? null,
+    audienceVisibility: activeCompany?.audienceVisibility ?? null,
     companyRegistered: activeCompany?.registered ?? false,
   };
 }
@@ -1903,6 +1943,7 @@ export async function saveVibeRaisingCompany(
     stage?: string | null;
     organizationKind?: string | null;
     hasRevenue?: string | null;
+    audienceVisibility?: VibeRaisingAudienceVisibility | null;
     shortDescription?: string | null;
     problemSolved?: string | null;
     targetAudience?: string | null;
@@ -1939,6 +1980,7 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     date: "2026-01-30T00:00:00.000Z",
     status: "ready",
     visibility: "published",
+    audienceVisibility: "investors",
     publishedAt: "2026-01-30T00:00:00.000Z",
     summary:
       "SupportSorted (SuSo) is an AI-powered referral and matching platform for disability support professionals, allied-health clinics, and care coordinators. We are seeing early product-market resonance, active pilots, and MAP accelerator backing while we focus this quarter on shipping and tightening the core matching loop.",
@@ -1976,6 +2018,7 @@ const DEV_MONTHLY_DRAFTS_STUB: VibeRaisingMonthlyUpdate[] = [
     date: "2026-05-02T00:00:00.000Z",
     status: "draft",
     visibility: "private",
+    audienceVisibility: "just_me",
     publishedAt: null,
     summary: "Saved privately while the founder refines MAP milestone progress, pilot signals, and investor asks.",
     sourceUrl: "https://mlai.au/founder-tools/drafts",
@@ -2268,6 +2311,7 @@ export async function saveVibeRaisingMonthlyUpdate(
     metrics: Record<string, string>;
     metricSuggestions?: VibeRaisingMetricSuggestion[];
     displayConfig?: VibeRaisingMetricDisplayConfig | null;
+    audienceVisibility?: VibeRaisingAudienceVisibility | null;
     summary?: string | null;
     sourceUrl?: string | null;
     pitchDeckUrl?: string | null;
@@ -2350,6 +2394,7 @@ export async function saveVibeRaisingMonthlyUpdate(
       const response = await client.post(UPDATES_PATH, {
         month: body.month,
         year: body.year,
+        audienceVisibility: body.audienceVisibility,
         highlights: body.highlights,
         challenges: body.challenges,
         asks: body.asks,
