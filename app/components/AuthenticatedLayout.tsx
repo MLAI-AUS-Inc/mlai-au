@@ -27,6 +27,7 @@ interface AuthenticatedLayoutProps {
     userNavigation?: { name: string; href: string }[];
     rooPointsBalance?: RooPointsBalance | null;
     logoutAction?: string;
+    companySwitcher?: React.ReactNode;
 }
 
 type NavigationItem = { name: string; href: string; icon: any; exact?: boolean; matchPaths?: string[] };
@@ -96,7 +97,7 @@ function RooPointsBadge({ balance }: { balance: number }) {
     );
 }
 
-export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation, rooPointsBalance, logoutAction = "/platform/logout" }: AuthenticatedLayoutProps) {
+export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation, rooPointsBalance, logoutAction = "/platform/logout", companySwitcher }: AuthenticatedLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const location = useLocation();
@@ -462,6 +463,8 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                 isFounderToolsApp ? "hidden bg-[var(--vr-color-border)] sm:block" : "bg-gray-900/10"
                             )}
                         />
+
+                        {companySwitcher}
 
                         <div className="flex flex-1 items-center justify-between gap-x-2 self-stretch sm:gap-x-4 lg:gap-x-6">
                             {showVibeRaisingTopNavigation ? (

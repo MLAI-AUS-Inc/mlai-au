@@ -88,9 +88,13 @@ import {
   uploadVibeMarketingCompanyAvatar,
 } from "~/lib/vibe-marketing";
 import {
+  companyDomainConflictFromError,
+  detectCompanyDomainConflict,
+  domainConflictFromActionData,
   getActiveVibeRaisingCompany,
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
+  resolveActiveCompanyId,
   saveVibeRaisingCompany,
   saveVibeRaisingProfile,
   setVibeRaisingActiveCompany,
@@ -338,7 +342,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 
   const [bootstrap, githubRepos] = await Promise.all([
-    getVibeMarketingBootstrap(env, request, null, "summary"),
+    getVibeMarketingBootstrap(env, request, resolveActiveCompanyId(vibeContext.appUser), "summary"),
     getVibeMarketingGithubRepos(env, request).catch(() => unavailableGithubRepos()),
   ]);
   return {
@@ -366,6 +370,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   const formData = await request.formData();
   const intent = stringFromForm(formData, "intent");
+  // Pin every read and mutation in this action to the company the page was
+  // rendered for, instead of the backend's mutable active_company.
+  const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
+  // "create-new" | "update-existing" — the user's answer to a domain-conflict
+  // prompt from a previous submit of the startup-details form.
+  const domainDecision = stringFromForm(formData, "domainDecision");
+  const createAsNew = domainDecision === "create-new";
 
   try {
     if (intent === "save-company-avatar") {
@@ -376,7 +387,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (!(avatar instanceof File) || avatar.size === 0) {
         return { intent, error: "Choose an avatar image before saving." };
       }
-      const bootstrap = await uploadVibeMarketingCompanyAvatar(env, request, avatar);
+      const bootstrap = await uploadVibeMarketingCompanyAvatar(env, request, avatar, activeCompanyId);
       return { intent, avatarUrl: bootstrap.company.avatarUrl ?? null };
     }
 
@@ -403,8 +414,13 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
 
       const activeCompany = vibeContext.appUser ? getActiveVibeRaisingCompany(vibeContext.appUser) : null;
+      if (!domainDecision) {
+        const conflict = detectCompanyDomainConflict(activeCompany, domain, intent);
+        if (conflict) return { intent, domainConflict: conflict };
+      }
       const companyId = await saveVibeRaisingCompany(env, request, {
-        companyId: activeCompany?.id ?? null,
+        companyId: createAsNew ? null : activeCompany?.id ?? null,
+        createNew: createAsNew,
         name,
         domain,
         companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
@@ -443,7 +459,16 @@ export async function action({ request, context }: Route.ActionArgs) {
         });
       }
 
+      if (!domainDecision) {
+        const activeCompany = vibeContext.appUser ? getActiveVibeRaisingCompany(vibeContext.appUser) : null;
+        const conflict = detectCompanyDomainConflict(activeCompany, stringFromForm(formData, "domain"), intent);
+        if (conflict) return { intent, domainConflict: conflict };
+      }
+
       const result = await startVibeMarketingAutofill(env, request, {
+        companyId: createAsNew ? null : activeCompanyId,
+        createNew: createAsNew || undefined,
+        confirmDomainChange: domainDecision === "update-existing" || undefined,
         companyName: stringFromForm(formData, "companyName"),
         company_name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
@@ -503,29 +528,30 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-baseline") {
-      const result = await startVibeMarketingBaseline(env, request, {});
+      const result = await startVibeMarketingBaseline(env, request, { companyId: activeCompanyId });
       return { intent, baselineRunId: result.runId, status: result.status };
     }
 
     if (intent === "refresh-baseline-google") {
-      const websiteBaseline = await refreshVibeMarketingBaselineGoogle(env, request, {});
+      const websiteBaseline = await refreshVibeMarketingBaselineGoogle(env, request, { companyId: activeCompanyId });
       return { intent, websiteBaseline };
     }
 
     if (intent === "skip-baseline") {
       await skipVibeMarketingBaseline(env, request, {
+        companyId: activeCompanyId,
         reason: stringFromForm(formData, "reason") || "Skipped during marketing setup",
       });
       return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "scan") {
-      const run = await startVibeMarketingScan(env, request, {});
+      const run = await startVibeMarketingScan(env, request, { companyId: activeCompanyId });
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
 
     if (intent === "start-content-island-discovery") {
-      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
@@ -539,6 +565,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ||
         pillar.name;
       const run = await startVibeMarketingDiscovery(env, request, {
+        companyId: activeCompanyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
         contentIslandSlug: pillar.slug,
@@ -570,7 +597,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "research-custom-topic") {
-      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
@@ -581,6 +608,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { intent, error: "Add an article title/angle or a target keyword to research." };
       }
       const run = await startVibeMarketingDiscovery(env, request, {
+        companyId: activeCompanyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
         customTopicTitle: customTitle,
@@ -608,11 +636,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-discovery" || intent === "discovery") {
-      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
-      const run = await startVibeMarketingDiscovery(env, request, {});
+      const run = await startVibeMarketingDiscovery(env, request, { companyId: activeCompanyId });
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
 
@@ -626,6 +654,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         request,
         runId,
         intent === "resume-draft" ? "resume" : "restart",
+        { companyId: activeCompanyId },
       );
       const nextRunId = run.runId || runId;
       throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(nextRunId)}`);
@@ -636,7 +665,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (!runId) {
         return { intent, error: "Choose a draft article to delete." };
       }
-      const run = await controlVibeMarketingRun(env, request, runId, "cancel", { cancel_group: true });
+      const run = await controlVibeMarketingRun(env, request, runId, "cancel", { cancel_group: true, companyId: activeCompanyId });
       return {
         intent,
         runId,
@@ -651,7 +680,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { intent, error: "Choose an article to discard." };
       }
       try {
-        const result = await discardVibeMarketingWrittenArticle(env, request, articleId);
+        const result = await discardVibeMarketingWrittenArticle(env, request, articleId, activeCompanyId);
         return {
           intent,
           articleId,
@@ -667,7 +696,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-article") {
-      const bootstrap = await getVibeMarketingBootstrap(env, request);
+      const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId);
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
       }
@@ -701,6 +730,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
       const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const result = await startVibeMarketingArticle(env, request, {
+        companyId: activeCompanyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
         topic,
@@ -735,6 +765,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
 
       const feedback = await recordVibeMarketingTopicFeedback(env, request, {
+        companyId: activeCompanyId,
         keyword,
         sessionId: stringFromForm(formData, "sourceDiscoveryRunId"),
         feedbackType: "declined",
@@ -756,16 +787,18 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { intent, error: "Choose a declined topic to restore." };
       }
 
-      const feedback = await restoreVibeMarketingTopicFeedback(env, request, feedbackId);
+      const feedback = await restoreVibeMarketingTopicFeedback(env, request, feedbackId, activeCompanyId);
       return { intent, topicFeedback: feedback };
     }
 
     if (intent === "daily-replay") {
-      const run = await replayVibeMarketingDaily(env, request, {});
+      const run = await replayVibeMarketingDaily(env, request, { companyId: activeCompanyId });
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
+    const conflict = companyDomainConflictFromError(error, intent);
+    if (conflict) return { intent, domainConflict: conflict };
     const fallback =
       intent === "start-autofill"
         ? "AI research could not start. Check the backend logs and try again."
@@ -4721,6 +4754,7 @@ export default function FounderToolsMarketing() {
   const location = useLocation();
   const error = actionError(actionData);
   const errorIntent = actionIntent(actionData);
+  const domainConflict = domainConflictFromActionData(actionData);
   const setupMergedNotice = new URLSearchParams(location.search).get("setupMerged") === "1";
   const shouldShowTopicPicker = shouldShowVibeMarketingTopicPicker(bootstrap);
 
@@ -4736,7 +4770,7 @@ export default function FounderToolsMarketing() {
           setupMergedNotice={setupMergedNotice}
         />
       ) : (
-        <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} />
+        <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} domainConflict={domainConflict} />
       )}
     </div>
   );

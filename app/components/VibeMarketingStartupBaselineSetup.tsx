@@ -42,6 +42,7 @@ import {
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
+import { domainConflictFromActionData, type CompanyDomainConflict } from "~/lib/vibe-raising";
 import AbnAutocomplete from "~/components/AbnAutocomplete";
 import type {
   VibeMarketingAutofillCompetitor,
@@ -116,6 +117,7 @@ type SetupVariant = "landing" | "workflow";
 type VibeMarketingStartupBaselineSetupProps = {
   bootstrap: VibeMarketingBootstrap;
   error?: string | null;
+  domainConflict?: CompanyDomainConflict | null;
   variant?: SetupVariant;
   focusSection?: "profile" | "baseline";
   autoRefreshGoogleBaseline?: boolean;
@@ -1883,6 +1885,7 @@ function ProfileResearchProgressCard({
 export default function VibeMarketingStartupBaselineSetup({
   bootstrap,
   error,
+  domainConflict = null,
   variant = "landing",
   focusSection = "profile",
   autoRefreshGoogleBaseline = false,
@@ -1907,6 +1910,7 @@ export default function VibeMarketingStartupBaselineSetup({
     status?: string;
     error?: string;
     errors?: string[];
+    domainConflict?: CompanyDomainConflict | null;
   }>();
   const autofillRunFetcher = useFetcher<VibeMarketingRunSummary>();
   const baselineStartFetcher = useFetcher<{ intent?: string; baselineRunId?: string | null; status?: string; error?: string }>();
@@ -1950,6 +1954,8 @@ export default function VibeMarketingStartupBaselineSetup({
   const [mobileTutorialChecked, setMobileTutorialChecked] = useState(false);
 
   const autofillStartData = autofillStartFetcher.data;
+  const activeDomainConflict =
+    domainConflictFromActionData(autofillStartFetcher.data) ?? domainConflict ?? null;
   const autofillRun = autofillRunFetcher.data as VibeMarketingRunSummary | undefined;
   const autofillStartStatus =
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
@@ -2110,7 +2116,7 @@ export default function VibeMarketingStartupBaselineSetup({
     setGeneratedCompanyContext("");
   };
 
-  const startAutofill = () => {
+  const startAutofill = (domainDecision?: "create-new" | "update-existing") => {
     const snapshot = { ...startupValues };
     const now = Date.now();
     setGeneratedCompanyContext("");
@@ -2125,6 +2131,7 @@ export default function VibeMarketingStartupBaselineSetup({
     formData.set("intent", "start-autofill");
     formData.set("companyContext", companyContextFromSetup(snapshot));
     formData.set("notes", snapshot.targetAudience);
+    if (domainDecision) formData.set("domainDecision", domainDecision);
     for (const [field, value] of Object.entries(snapshot)) {
       formData.set(field, value);
     }
@@ -2351,7 +2358,57 @@ export default function VibeMarketingStartupBaselineSetup({
     >
       <input type="hidden" name="intent" value="save-startup-details" />
       <input type="hidden" name="companyContext" value={companyContext} />
-      {error ? (
+      {activeDomainConflict ? (
+        <div className="border-b border-amber-200 bg-amber-50 px-6 py-4">
+          <p className="text-sm font-bold leading-6 text-amber-900">
+            This looks like a different company.{" "}
+            <span className="font-black">{activeDomainConflict.activeCompanyName || "Your current company"}</span> is set
+            up on <span className="font-black">{activeDomainConflict.activeCompanyDomain}</span>, but these details are
+            for <span className="font-black">{activeDomainConflict.submittedDomain}</span>. Adding it as a new company
+            keeps each startup's articles, updates and integrations separate.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {activeDomainConflict.sourceIntent === "start-autofill" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => startAutofill("create-new")}
+                  className="rounded-lg bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-black"
+                >
+                  Add as a new company
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startAutofill("update-existing")}
+                  className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-black text-amber-900 transition hover:bg-amber-100"
+                >
+                  Update {activeDomainConflict.activeCompanyName || "the existing company"} to this domain
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="submit"
+                  name="domainDecision"
+                  value="create-new"
+                  className="rounded-lg bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-black"
+                >
+                  Add as a new company
+                </button>
+                <button
+                  type="submit"
+                  name="domainDecision"
+                  value="update-existing"
+                  className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-black text-amber-900 transition hover:bg-amber-100"
+                >
+                  Update {activeDomainConflict.activeCompanyName || "the existing company"} to this domain
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+      {error && !activeDomainConflict ? (
         <div className="border-b border-rose-100 bg-rose-50 px-6 py-4 text-sm font-bold text-rose-700">{error}</div>
       ) : null}
 
@@ -2361,6 +2418,15 @@ export default function VibeMarketingStartupBaselineSetup({
             {setupEyebrow ? <p className="text-sm font-black uppercase tracking-[0.08em] text-violet-700">{setupEyebrow}</p> : null}
             <h2 className={clsx(setupEyebrow && "mt-3", "font-black tracking-normal text-gray-950", embedded ? "text-4xl leading-tight sm:text-5xl" : "text-3xl")}>{setupTitle}</h2>
             <p className={clsx("mt-4 max-w-3xl font-semibold text-gray-600", embedded ? "text-lg leading-8" : "text-sm leading-6")}>{setupDescription}</p>
+            {bootstrap.company.id && bootstrap.company.name ? (
+              <p className="mt-3 text-sm font-semibold text-gray-500">
+                You're editing <span className="font-black text-gray-800">{bootstrap.company.name}</span>. Setting up a
+                different startup?{" "}
+                <Link to="/founder-tools/company-setup?new=true" className="font-black text-violet-700 underline underline-offset-2">
+                  Register a new company
+                </Link>
+              </p>
+            ) : null}
             <button
               type="button"
               onClick={openMobileTutorial}
@@ -2835,7 +2901,7 @@ export default function VibeMarketingStartupBaselineSetup({
 
               <button
                 type="button"
-                onClick={startAutofill}
+                onClick={() => startAutofill()}
                 disabled={!canStartAutofill}
                 ref={mobileResearchButtonRef}
                 className="mt-7 flex w-full items-center justify-between gap-4 rounded-xl bg-[var(--vr-color-primary)] px-6 py-5 text-left text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50"
@@ -2873,7 +2939,7 @@ export default function VibeMarketingStartupBaselineSetup({
                   startError={autofillStartError}
                   stalled={autofillStalled}
                   unavailable={autofillUnavailable}
-                  onRetry={startAutofill}
+                  onRetry={() => startAutofill()}
                   retryDisabled={!canRetryAutofill}
                 />
               </div>

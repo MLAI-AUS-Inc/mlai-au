@@ -1724,6 +1724,100 @@ export function getActiveVibeRaisingCompany(
   return activeCompany ?? null;
 }
 
+/**
+ * Resolve the explicit company id to scope a per-request read or mutation to,
+ * mirroring the backend's active-company fallback (pinned active company, else
+ * first company). Passing this through requests keeps multi-startup founders
+ * isolated instead of relying on the backend's mutable server-side
+ * `active_company` state, which another tab may have switched.
+ */
+export function resolveActiveCompanyId(
+  profile: VibeRaisingProfile | VibeRaisingAppUser | null | undefined,
+): string | null {
+  if (!profile) return null;
+  return getActiveVibeRaisingCompany(profile)?.id ?? null;
+}
+
+export type CompanyDomainConflict = {
+  sourceIntent: string;
+  submittedDomain: string;
+  activeCompanyName: string;
+  activeCompanyDomain: string;
+};
+
+/**
+ * Loose client-side twin of the backend's normalize_company_domain — just
+ * enough to tell "same site, different spelling" apart from "different
+ * company". The backend 409 remains the authoritative backstop.
+ */
+export function normalizeCompanyDomainForCompare(value: string | null | undefined): string {
+  let raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "";
+  raw = raw.replace(/^[a-z][a-z0-9+.-]*:\/\//, "");
+  raw = raw.split("/")[0] ?? "";
+  raw = raw.split("?")[0] ?? "";
+  raw = raw.split("@").pop() ?? "";
+  raw = raw.split(":")[0] ?? "";
+  if (raw.startsWith("www.")) raw = raw.slice(4);
+  return raw;
+}
+
+/**
+ * A submitted domain that differs from the active company's is the signature
+ * of the destructive "onboard a second startup by overwriting the first" flow.
+ * Callers surface this as a prompt (add as new company vs update existing)
+ * instead of silently rewriting the active company.
+ */
+export function detectCompanyDomainConflict(
+  activeCompany: VibeRaisingCompany | null | undefined,
+  submittedDomain: string,
+  sourceIntent: string,
+): CompanyDomainConflict | null {
+  if (!activeCompany) return null;
+  const existing = normalizeCompanyDomainForCompare(activeCompany.domain);
+  const submitted = normalizeCompanyDomainForCompare(submittedDomain);
+  if (!existing || !submitted || existing === submitted) return null;
+  return {
+    sourceIntent,
+    submittedDomain: submitted,
+    activeCompanyName: activeCompany.name,
+    activeCompanyDomain: existing,
+  };
+}
+
+/** Map the backend's structured 409 (autofill domain-change guard) to a conflict. */
+export function companyDomainConflictFromError(
+  error: unknown,
+  sourceIntent: string,
+): CompanyDomainConflict | null {
+  const payload = error as {
+    data?: Record<string, unknown>;
+    response?: { data?: Record<string, unknown> };
+  } | null;
+  const data = payload?.response?.data ?? payload?.data;
+  if (!data || data.code !== "company_domain_change_requires_confirmation") return null;
+  return {
+    sourceIntent,
+    submittedDomain: String(data.submittedDomain ?? ""),
+    activeCompanyName: String(data.companyName ?? "your current company"),
+    activeCompanyDomain: String(data.existingDomain ?? ""),
+  };
+}
+
+export function domainConflictFromActionData(actionData: unknown): CompanyDomainConflict | null {
+  if (!actionData || typeof actionData !== "object") return null;
+  const conflict = (actionData as { domainConflict?: unknown }).domainConflict;
+  if (!conflict || typeof conflict !== "object") return null;
+  const payload = conflict as Record<string, unknown>;
+  if (!payload.submittedDomain || !payload.activeCompanyDomain) return null;
+  return {
+    sourceIntent: String(payload.sourceIntent ?? ""),
+    submittedDomain: String(payload.submittedDomain),
+    activeCompanyName: String(payload.activeCompanyName ?? "your current company"),
+    activeCompanyDomain: String(payload.activeCompanyDomain),
+  };
+}
+
 export function buildVibeRaisingAppUser(
   authUser: User,
   profile: VibeRaisingProfile,
@@ -1941,6 +2035,7 @@ export async function saveVibeRaisingCompany(
   request: Request,
   body: {
     companyId?: string | null;
+    createNew?: boolean;
     name: string;
     domain?: string | null;
     companyLinkedInUrl?: string | null;

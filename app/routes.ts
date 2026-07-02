@@ -123,6 +123,7 @@ export default [
     route("updates/:id", "routes/vibe-raising-app.update-detail.tsx"),
     route("discover", "routes/vibe-raising-app.investors.tsx"),
     route("companies", "routes/vibe-raising-app.companies.tsx"),
+    route("switch-company", "routes/founder-tools.switch-company.tsx"),
     route("marketing", "routes/founder-tools.marketing.tsx"),
     route("marketing/create", "routes/founder-tools.marketing.create.tsx"),
     route("marketing/github-connect", "routes/founder-tools.marketing.github-connect.tsx"),

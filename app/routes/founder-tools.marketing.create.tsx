@@ -60,8 +60,13 @@ import {
 } from "~/lib/vibe-marketing";
 import type { VibeMarketingArticleSetupState, VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 import {
+  companyDomainConflictFromError,
+  detectCompanyDomainConflict,
+  domainConflictFromActionData,
   getActiveVibeRaisingCompany,
+  getOptionalVibeRaisingContext,
   requireVibeRaisingFounder,
+  resolveActiveCompanyId,
   saveVibeRaisingCompany,
   setVibeRaisingActiveCompany,
 } from "~/lib/vibe-raising";
@@ -486,7 +491,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect(`${url.pathname}?${url.searchParams.toString()}`);
   }
 
-  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+  const vibeContext = await getOptionalVibeRaisingContext(env, request);
+  const bootstrap = await getVibeMarketingBootstrap(
+    env,
+    request,
+    resolveActiveCompanyId(vibeContext.appUser),
+    "summary",
+  );
   const requestedStep = normalizeStep(url.searchParams.get("step"), "startupDetails");
   if (isArticleSystemSetupBlocked(bootstrap) && ["research", "chooseArticle"].includes(requestedStep)) {
     url.searchParams.set("step", "articleSystem");
@@ -532,8 +543,13 @@ export async function action({ request, context }: Route.ActionArgs) {
   const env = getEnv(context);
   const { appUser } = await requireVibeRaisingFounder(env, request);
   const activeCompany = getActiveVibeRaisingCompany(appUser);
+  const activeCompanyId = activeCompany?.id ?? null;
   const formData = await request.formData();
   const intent = stringFromForm(formData, "intent");
+  // "create-new" | "update-existing" — the user's answer to a domain-conflict
+  // prompt from a previous submit of the startup-details form.
+  const domainDecision = stringFromForm(formData, "domainDecision");
+  const createAsNew = domainDecision === "create-new";
 
   try {
     if (intent === "save-startup-details") {
@@ -545,8 +561,13 @@ export async function action({ request, context }: Route.ActionArgs) {
           problemSolved: stringFromForm(formData, "problemSolved"),
           targetAudience: stringFromForm(formData, "targetAudience"),
         });
+      if (!domainDecision) {
+        const conflict = detectCompanyDomainConflict(activeCompany, stringFromForm(formData, "domain"), intent);
+        if (conflict) return { intent, domainConflict: conflict };
+      }
       const companyId = await saveVibeRaisingCompany(env, request, {
-        companyId: activeCompany?.id ?? null,
+        companyId: createAsNew ? null : activeCompany?.id ?? null,
+        createNew: createAsNew,
         name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
         companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
@@ -582,7 +603,14 @@ export async function action({ request, context }: Route.ActionArgs) {
           problemSolved: stringFromForm(formData, "problemSolved"),
           targetAudience: stringFromForm(formData, "targetAudience"),
         });
+      if (!domainDecision) {
+        const conflict = detectCompanyDomainConflict(activeCompany, stringFromForm(formData, "domain"), intent);
+        if (conflict) return { intent, domainConflict: conflict };
+      }
       const result = await startVibeMarketingAutofill(env, request, {
+        companyId: createAsNew ? null : activeCompanyId,
+        createNew: createAsNew || undefined,
+        confirmDomainChange: domainDecision === "update-existing" || undefined,
         companyName: stringFromForm(formData, "companyName"),
         company_name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
@@ -626,17 +654,18 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-baseline") {
-      const result = await startVibeMarketingBaseline(env, request, {});
+      const result = await startVibeMarketingBaseline(env, request, { companyId: activeCompanyId });
       return { intent, baselineRunId: result.runId, status: result.status, error: result.error };
     }
 
     if (intent === "refresh-baseline-google") {
-      const websiteBaseline = await refreshVibeMarketingBaselineGoogle(env, request, {});
+      const websiteBaseline = await refreshVibeMarketingBaselineGoogle(env, request, { companyId: activeCompanyId });
       return { intent, websiteBaseline };
     }
 
     if (intent === "skip-baseline") {
       await skipVibeMarketingBaseline(env, request, {
+        companyId: activeCompanyId,
         reason: stringFromForm(formData, "reason") || "Skipped during onboarding",
       });
       return redirect("/founder-tools/marketing/create?step=articleSystem");
@@ -683,6 +712,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-scan") {
       const scanPurpose = stringFromForm(formData, "scanPurpose") || "inventory";
       const result = await startVibeMarketingScan(env, request, {
+        companyId: activeCompanyId,
         githubRepo: stringFromForm(formData, "githubRepo"),
         github_repo: stringFromForm(formData, "githubRepo"),
         scanPurpose,
@@ -710,6 +740,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before continuing." };
       if (!articleSurfaceUrl) return { intent, error: "Choose or enter an article/blog route before continuing." };
       const result = await startVibeMarketingArticleSystemSetup(env, request, {
+        companyId: activeCompanyId,
         githubRepo,
         github_repo: githubRepo,
         scanPurpose: "setup",
@@ -739,6 +770,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { intent, error: "No repository scan was available to update." };
       }
       const result = await controlVibeMarketingRun(env, request, scanRunId, intent === "retry-scan" ? "resume" : "cancel", {
+        companyId: activeCompanyId,
         ...(intent === "cancel-scan" ? { cleanup: true } : {}),
         workflow: "repo_scan",
       });
@@ -752,7 +784,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       const githubRepo = stringFromForm(formData, "githubRepo");
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before linking the articles scaffold." };
       try {
-        await acceptVibeMarketingArticleScaffold(env, request, { githubRepo, github_repo: githubRepo });
+        await acceptVibeMarketingArticleScaffold(env, request, { companyId: activeCompanyId, githubRepo, github_repo: githubRepo });
       } catch (error) {
         return {
           intent,
@@ -767,7 +799,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "disconnect-article-scaffold") {
       const githubRepo = stringFromForm(formData, "githubRepo");
       try {
-        await disconnectVibeMarketingArticleScaffold(env, request, { githubRepo, github_repo: githubRepo });
+        await disconnectVibeMarketingArticleScaffold(env, request, { companyId: activeCompanyId, githubRepo, github_repo: githubRepo });
       } catch (error) {
         return {
           intent,
@@ -784,6 +816,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before resetting articles setup." };
       try {
         await resetVibeMarketingArticleSetup(env, request, {
+          companyId: activeCompanyId,
           githubRepo,
           github_repo: githubRepo,
         });
@@ -804,7 +837,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (!scanRunId) {
         return { intent, error: "Open the scan result before building the articles setup preview." };
       }
-      const result = await controlVibeMarketingRun(env, request, scanRunId, "approve", { workflow: "repo_scan" });
+      const result = await controlVibeMarketingRun(env, request, scanRunId, "approve", { workflow: "repo_scan", companyId: activeCompanyId });
       const setupRunId = setupRunIdForRun(result);
       if (setupRunId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
       return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(scanRunId)}`);
@@ -816,25 +849,26 @@ export async function action({ request, context }: Route.ActionArgs) {
       await controlVibeMarketingRun(env, request, setupRunId, "cancel", {
         cleanup: true,
         workflow: "article_system_setup",
+        companyId: activeCompanyId,
       });
       return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
     }
 
     if (intent === "start-discovery") {
-      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return {
           intent,
           error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status.",
         };
       }
-      const result = await startVibeMarketingDiscovery(env, request, {});
+      const result = await startVibeMarketingDiscovery(env, request, { companyId: activeCompanyId });
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       return redirect("/founder-tools/marketing/create?step=research");
     }
 
     if (intent === "start-article") {
-      const bootstrap = await getVibeMarketingBootstrap(env, request);
+      const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId);
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return {
           intent,
@@ -871,6 +905,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
       const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const result = await startVibeMarketingArticle(env, request, {
+        companyId: activeCompanyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
         topic,
@@ -897,6 +932,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         authors = [];
       }
       await saveVibeMarketingSettings(env, request, {
+        companyId: activeCompanyId,
         authors,
         defaultAuthorId: stringFromForm(formData, "defaultAuthorId"),
       });
@@ -905,6 +941,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "save-daily") {
       await saveVibeMarketingSettings(env, request, {
+        companyId: activeCompanyId,
         dailyDiscoveryEnabled: formData.get("dailyDiscoveryEnabled") === "on",
         defaultTimezone: stringFromForm(formData, "defaultTimezone"),
       });
@@ -912,11 +949,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "daily-replay") {
-      const result = await replayVibeMarketingDaily(env, request, {});
+      const result = await replayVibeMarketingDaily(env, request, { companyId: activeCompanyId });
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
+    const conflict = companyDomainConflictFromError(error, intent);
+    if (conflict) return { intent, domainConflict: conflict };
     const fallback =
       intent === "start-autofill"
         ? "AI research could not start. Check the backend logs and try again."
@@ -1026,6 +1065,7 @@ export default function FounderToolsMarketingCreate() {
   const actionData = useActionData<typeof action>();
   const latestActionIntent = actionDataIntent(actionData);
   const latestActionError = actionDataError(actionData);
+  const domainConflict = domainConflictFromActionData(actionData);
   const actionErrorStep = actionIntentStep(latestActionIntent);
   const isRepoArticleStep = activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem";
   const githubAuthError = searchParams.get("githubAuthError");
@@ -1504,6 +1544,7 @@ export default function FounderToolsMarketingCreate() {
           <VibeMarketingStartupBaselineSetup
             bootstrap={bootstrap}
             error={topActionError}
+            domainConflict={domainConflict}
             variant="workflow"
             focusSection={requestedStep === "baseline" ? "baseline" : "profile"}
             autoRefreshGoogleBaseline={shouldRefreshGoogleBaseline}
