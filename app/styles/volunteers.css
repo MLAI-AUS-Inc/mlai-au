@@ -1,0 +1,106 @@
+/* ============================================================
+   MLAI VOLUNTEERS — /volunteers page
+   Ported from the Claude Design handoff. Brand: rounded · flat ·
+   borderless · zero-shadow. Everything scoped under `.vol-scope`
+   so it can never leak onto other routes.
+
+   Oswald + Roboto load globally via app/root.tsx; Source Serif 4
+   (one pull-quote) loads via the route's `links` export.
+   ============================================================ */
+
+.vol-scope {
+  --cream: #f5f0e6;
+  --ink: #1a1a1a;
+  --ink2: #2c2c2c;
+  --teal: #00ffd7;
+  --orange: #ff3c00;
+  --red: #ff003d;
+  --purple: #4b0db3;
+  --blue: #3637dc;
+  --yellow: #fefc22;
+  --fd: 'Oswald', 'Arial Narrow', sans-serif;
+  --fb: 'Roboto', system-ui, sans-serif;
+  --fq: 'Source Serif 4', Georgia, serif;
+
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--fb);
+  -webkit-font-smoothing: antialiased;
+}
+.vol-scope * { box-sizing: border-box; }
+.vol-scope ::selection { background: var(--yellow); color: var(--ink); }
+.vol-scope a { color: inherit; text-decoration: none; }
+.vol-scope .vol-disp { font-family: var(--fd); font-weight: 700; text-transform: uppercase; letter-spacing: -0.01em; }
+
+.vol-main { max-width: 1240px; margin: 0 auto; padding: 20px 28px 0; }
+
+/* buttons — springy lift on hover, press-down on active (flat, no shadow) */
+.vol-btn {
+  display: inline-flex; align-items: center; gap: 10px; cursor: pointer; border: none;
+  font-family: var(--fb); font-weight: 700; border-radius: 999px; text-decoration: none;
+  transition: transform .34s cubic-bezier(.34, 1.56, .64, 1), filter .2s ease;
+}
+.vol-btn:hover { transform: translateY(-4px) scale(1.035); filter: brightness(1.06); }
+.vol-btn:active { transform: translateY(1px) scale(.95); filter: brightness(.9); }
+.vol-btn--big:hover { transform: translateY(-4px) scale(1.04); filter: brightness(1.15); }
+
+/* floating hero cards */
+@keyframes vol-floatA { 0%, 100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(-6deg) translateY(-12px); } }
+@keyframes vol-floatB { 0%, 100% { transform: rotate(7deg) translateY(0); } 50% { transform: rotate(7deg) translateY(10px); } }
+@keyframes vol-floatC { 0%, 100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(-3deg) translateY(-8px); } }
+.vol-floatA { animation: vol-floatA 6s ease-in-out infinite; }
+.vol-floatB { animation: vol-floatB 7s ease-in-out infinite; }
+.vol-floatC { animation: vol-floatC 6.5s ease-in-out infinite; }
+
+/* two-column body + sticky sidebar */
+.vol-body { display: flex; gap: 28px; align-items: flex-start; margin-top: 20px; }
+.vol-col { flex: 1; min-width: 0; }
+.vol-aside { position: sticky; top: 20px; flex: none; width: 248px; background: #fff; border-radius: 26px; padding: 26px 18px; }
+.vol-jump a { display: block; padding: 13px 18px; border-radius: 999px; font-weight: 600; font-size: 16px; transition: background .14s, color .14s; }
+.vol-jump a.active { background: var(--ink); color: #fff; }
+.vol-jump a:not(.active):hover { background: var(--cream); }
+
+/* estimator toggle rows */
+.vol-est-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  text-align: left; border: none; cursor: pointer; padding: 14px 18px; border-radius: 14px;
+  font-family: var(--fb); font-weight: 600; font-size: 15px; transition: transform .1s ease, background .12s ease;
+}
+.vol-est-row:active { transform: scale(.985); }
+
+/* faq */
+.vol-faq-q {
+  width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 22px 26px; font-family: var(--fb); font-weight: 700; font-size: 18px; color: var(--ink);
+}
+.vol-faq-chev { flex: none; font-size: 20px; transition: transform .15s ease; }
+
+/* grids */
+.vol-g2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.vol-g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.vol-g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.vol-stat4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.vol-earn-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1000px) {
+  .vol-aside { display: none; }
+  .vol-body { display: block; }
+  .vol-g4, .vol-stat4 { grid-template-columns: repeat(2, 1fr); }
+  .vol-earn-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .vol-hero-cards { display: none !important; }
+  .vol-hero { padding: 44px 28px 48px !important; min-height: 0 !important; }
+  .vol-hero h1 { font-size: 52px !important; }
+  .vol-panel { padding: 36px 26px 40px !important; }
+  .vol-g2, .vol-g3, .vol-g4, .vol-stat4 { grid-template-columns: 1fr; }
+  .vol-final h2 { font-size: 42px !important; }
+}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .vol-floatA, .vol-floatB, .vol-floatC { animation: none; }
+  .vol-btn:hover { transform: none; }
+}
