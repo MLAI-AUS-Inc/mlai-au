@@ -15,6 +15,8 @@ import {
   verifyNotificationChannelOtp,
 } from "~/lib/vibe-marketing";
 import {
+  companyDomainConflictFromError,
+  domainConflictFromActionData,
   getActiveVibeRaisingCompany,
   requireVibeRaisingFounder,
   resolveActiveCompanyId,
@@ -89,10 +91,15 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   const { founderProfiles, founderNames } = founderNamesFromForm(formData);
+  // Set by the inline confirm banner after a company_domain_change_moves_data
+  // 409: the founder has acknowledged that moving domains strands the old
+  // organization's data.
+  const confirmDomainChange = stringFromForm(formData, "confirmDomainChange") === "true";
 
   try {
     await saveVibeRaisingCompany(env, request, {
       companyId: activeCompany?.id ?? null,
+      confirmDomainChange: confirmDomainChange || undefined,
       name: stringFromForm(formData, "companyName"),
       domain: stringFromForm(formData, "domain"),
       companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
@@ -117,6 +124,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     });
     await saveVibeMarketingSettings(env, request, {
       companyId: activeCompany?.id ?? null,
+      confirmDomainChange: confirmDomainChange || undefined,
       domain: stringFromForm(formData, "domain"),
       companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
       company_linkedin_url: stringFromForm(formData, "companyLinkedInUrl"),
@@ -132,6 +140,8 @@ export async function action({ request, context }: Route.ActionArgs) {
       defaultTimezone: stringFromForm(formData, "defaultTimezone"),
     });
   } catch (error: any) {
+    const domainConflict = companyDomainConflictFromError(error, "save-settings");
+    if (domainConflict) return { domainConflict };
     return {
       error:
         error?.data?.detail ??
@@ -163,6 +173,7 @@ export default function FounderToolsMarketingSettings() {
     (CHANNEL_INTENTS as readonly string[]).includes(String(actionData.intent))
       ? actionData.error
       : null;
+  const domainConflict = domainConflictFromActionData(actionData);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -188,13 +199,29 @@ export default function FounderToolsMarketingSettings() {
         </div>
       ) : null}
 
-      {actionData?.error && !channelError ? (
+      {actionData && "error" in actionData && actionData.error && !channelError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {actionData.error}
         </div>
       ) : null}
 
       <Form method="POST" className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        {domainConflict ? (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-sm font-bold leading-6 text-amber-900">
+              {domainConflict.detail ||
+                `Moving ${domainConflict.activeCompanyName || "this company"} from ${domainConflict.activeCompanyDomain} to ${domainConflict.submittedDomain} disconnects its existing integrations, article runs and updates.`}
+            </p>
+            <button
+              type="submit"
+              name="confirmDomainChange"
+              value="true"
+              className="mt-3 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-black text-amber-900 transition hover:bg-amber-100"
+            >
+              Move to {domainConflict.submittedDomain} anyway
+            </button>
+          </div>
+        ) : null}
         <FounderStartupDetailsStep
           defaults={{
             companyName: bootstrap.company.name,

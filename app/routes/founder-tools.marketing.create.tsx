@@ -568,6 +568,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       const companyId = await saveVibeRaisingCompany(env, request, {
         companyId: createAsNew ? null : activeCompany?.id ?? null,
         createNew: createAsNew,
+        confirmDomainChange: domainDecision === "update-existing" || undefined,
         name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
         companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),

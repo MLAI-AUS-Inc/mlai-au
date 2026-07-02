@@ -2360,13 +2360,20 @@ export default function VibeMarketingStartupBaselineSetup({
       <input type="hidden" name="companyContext" value={companyContext} />
       {activeDomainConflict ? (
         <div className="border-b border-amber-200 bg-amber-50 px-6 py-4">
-          <p className="text-sm font-bold leading-6 text-amber-900">
-            This looks like a different company.{" "}
-            <span className="font-black">{activeDomainConflict.activeCompanyName || "Your current company"}</span> is set
-            up on <span className="font-black">{activeDomainConflict.activeCompanyDomain}</span>, but these details are
-            for <span className="font-black">{activeDomainConflict.submittedDomain}</span>. Adding it as a new company
-            keeps each startup's articles, updates and integrations separate.
-          </p>
+          {activeDomainConflict.kind === "moves_data" ? (
+            <p className="text-sm font-bold leading-6 text-amber-900">
+              {activeDomainConflict.detail ||
+                `Moving ${activeDomainConflict.activeCompanyName || "your current company"} from ${activeDomainConflict.activeCompanyDomain} to ${activeDomainConflict.submittedDomain} disconnects its existing integrations, article runs and updates.`}
+            </p>
+          ) : (
+            <p className="text-sm font-bold leading-6 text-amber-900">
+              This looks like a different company.{" "}
+              <span className="font-black">{activeDomainConflict.activeCompanyName || "Your current company"}</span> is set
+              up on <span className="font-black">{activeDomainConflict.activeCompanyDomain}</span>, but these details are
+              for <span className="font-black">{activeDomainConflict.submittedDomain}</span>. Adding it as a new company
+              keeps each startup's articles, updates and integrations separate.
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
             {activeDomainConflict.sourceIntent === "start-autofill" ? (
               <>
@@ -2382,7 +2389,9 @@ export default function VibeMarketingStartupBaselineSetup({
                   onClick={() => startAutofill("update-existing")}
                   className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-black text-amber-900 transition hover:bg-amber-100"
                 >
-                  Update {activeDomainConflict.activeCompanyName || "the existing company"} to this domain
+                  {activeDomainConflict.kind === "moves_data"
+                    ? `Move ${activeDomainConflict.activeCompanyName || "the existing company"} to this domain anyway`
+                    : `Update ${activeDomainConflict.activeCompanyName || "the existing company"} to this domain`}
                 </button>
               </>
             ) : (
@@ -2401,7 +2410,9 @@ export default function VibeMarketingStartupBaselineSetup({
                   value="update-existing"
                   className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-black text-amber-900 transition hover:bg-amber-100"
                 >
-                  Update {activeDomainConflict.activeCompanyName || "the existing company"} to this domain
+                  {activeDomainConflict.kind === "moves_data"
+                    ? `Move ${activeDomainConflict.activeCompanyName || "the existing company"} to this domain anyway`
+                    : `Update ${activeDomainConflict.activeCompanyName || "the existing company"} to this domain`}
                 </button>
               </>
             )}
