@@ -30,6 +30,7 @@ import type {
   VibeMarketingArticlePublishStatus,
   VibeMarketingPublishAttempt,
   VibeMarketingPublishAttemptState,
+  VibeMarketingLearnedRule,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
   VibeMarketingTopicPillar,
@@ -746,6 +747,50 @@ function normalizeTopicFeedback(raw: unknown): VibeMarketingTopicFeedback | null
     restoredAt:
       asNullableString(payload.restoredAt) ??
       asNullableString(payload.restored_at),
+  };
+}
+
+function normalizeLearnedRule(raw: unknown): VibeMarketingLearnedRule | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const id = asNullableString(payload.id);
+  const rule = asNullableString(payload.rule);
+  if (!id || !rule) return null;
+  return {
+    id,
+    rule,
+    scope:
+      asNullableString(payload.scope) ??
+      "durable_preference",
+    status:
+      asNullableString(payload.status) ??
+      asNullableString(payload.promotion_state) ??
+      "promoted",
+    componentId:
+      asNullableString(payload.componentId) ??
+      asNullableString(payload.component_id),
+    componentType:
+      asNullableString(payload.componentType) ??
+      asNullableString(payload.component_type),
+    componentLabel:
+      asNullableString(payload.componentLabel) ??
+      asNullableString(payload.component_label),
+    sourceComment:
+      asNullableString(payload.sourceComment) ??
+      asNullableString(payload.source_comment),
+    specAmendment:
+      asNullableString(payload.specAmendment) ??
+      asNullableString(payload.spec_amendment),
+    appliesToComponentTypes: asStringList(
+      payload.appliesToComponentTypes ?? payload.applies_to_component_types,
+    ),
+    foldedToSpec: asBoolean(payload.foldedToSpec ?? payload.folded_to_spec),
+    createdAt:
+      asNullableString(payload.createdAt) ??
+      asNullableString(payload.created_at),
+    updatedAt:
+      asNullableString(payload.updatedAt) ??
+      asNullableString(payload.updated_at),
   };
 }
 
@@ -1790,6 +1835,43 @@ export async function restoreVibeMarketingTopicFeedback(
     companyId ? { companyId } : {},
   );
   return normalizeTopicFeedback(response.data);
+}
+
+export async function getVibeMarketingLearnedRules(
+  env: Env,
+  request: Request,
+  companyId?: string | null,
+  includeArchived = false,
+) {
+  const client = createApiClient(env, request);
+  const params = new URLSearchParams();
+  if (companyId) params.set("company_id", companyId);
+  if (includeArchived) params.set("include_archived", "1");
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const response = await client.get(`${BASE_PATH}/learned-rules/${query}`);
+  const rawRules = (response.data as { rules?: unknown } | null)?.rules;
+  return Array.isArray(rawRules)
+    ? rawRules
+        .map(normalizeLearnedRule)
+        .filter((rule): rule is VibeMarketingLearnedRule => Boolean(rule))
+    : [];
+}
+
+export async function retractVibeMarketingLearnedRule(
+  env: Env,
+  request: Request,
+  ruleId: string,
+  companyId?: string | null,
+) {
+  const client = createApiClient(env, request);
+  const params = new URLSearchParams();
+  if (companyId) params.set("company_id", companyId);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const response = await client.delete(
+    `${BASE_PATH}/learned-rules/${encodeURIComponent(ruleId)}/${query}`,
+  );
+  const rawRule = (response.data as { rule?: unknown } | null)?.rule ?? response.data;
+  return normalizeLearnedRule(rawRule);
 }
 
 export async function discardVibeMarketingWrittenArticle(

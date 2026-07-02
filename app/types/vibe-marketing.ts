@@ -437,6 +437,28 @@ export interface VibeMarketingTopicFeedback {
   restoredAt?: string | null;
 }
 
+/**
+ * A durable editorial preference the content factory learned from a founder's
+ * accepted article-revision comments. `scope` is "durable_preference" (feeds every
+ * future article) or "one_off"; `status` is candidate/promoted/archived. Promoted rules
+ * with component targets get `foldedToSpec` once merged into the article-kit specs.
+ */
+export interface VibeMarketingLearnedRule {
+  id: string;
+  rule: string;
+  scope: string;
+  status: string;
+  componentId?: string | null;
+  componentType?: string | null;
+  componentLabel?: string | null;
+  sourceComment?: string | null;
+  specAmendment?: string | null;
+  appliesToComponentTypes: string[];
+  foldedToSpec: boolean;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
 export type VibeMarketingArticlePublishStatus =
   | "written"
   | "pr_open"

@@ -4,13 +4,16 @@ import { ArrowLeftIcon, ArrowPathIcon, CheckCircleIcon } from "@heroicons/react/
 
 import DailyReminderChannels, { CHANNEL_INTENTS } from "~/components/DailyReminderChannels";
 import FounderStartupDetailsStep from "~/components/FounderStartupDetailsStep";
+import LearnedEditorialRules, { LEARNED_RULE_INTENTS } from "~/components/LearnedEditorialRules";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
   createNotificationChannel,
   getVibeMarketingBootstrap,
+  getVibeMarketingLearnedRules,
   removeNotificationChannel,
   resendNotificationChannelCode,
+  retractVibeMarketingLearnedRule,
   saveVibeMarketingSettings,
   verifyNotificationChannelOtp,
 } from "~/lib/vibe-marketing";
@@ -49,9 +52,13 @@ function founderNamesFromForm(formData: FormData) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const { appUser } = await requireVibeRaisingFounder(env, request);
-  return {
-    bootstrap: await getVibeMarketingBootstrap(env, request, resolveActiveCompanyId(appUser)),
-  };
+  const companyId = resolveActiveCompanyId(appUser);
+  const [bootstrap, learnedRules] = await Promise.all([
+    getVibeMarketingBootstrap(env, request, companyId),
+    // Never let a learned-rules fetch failure take down the whole settings page.
+    getVibeMarketingLearnedRules(env, request, companyId).catch(() => []),
+  ]);
+  return { bootstrap, learnedRules };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -85,6 +92,29 @@ export async function action({ request, context }: Route.ActionArgs) {
           error?.response?.data?.detail ??
           error?.message ??
           "That channel action could not be completed.",
+      };
+    }
+    return { intent };
+  }
+
+  if ((LEARNED_RULE_INTENTS as readonly string[]).includes(intent)) {
+    try {
+      if (intent === "retract-learned-rule") {
+        await retractVibeMarketingLearnedRule(
+          env,
+          request,
+          stringFromForm(formData, "ruleId"),
+          activeCompany?.id ?? null,
+        );
+      }
+    } catch (error: any) {
+      return {
+        intent,
+        error:
+          error?.data?.detail ??
+          error?.response?.data?.detail ??
+          error?.message ??
+          "That rule could not be retracted.",
       };
     }
     return { intent };
@@ -161,7 +191,7 @@ const EMAIL_CHANNEL_BANNERS: Record<string, { tone: "success" | "error"; message
 };
 
 export default function FounderToolsMarketingSettings() {
-  const { bootstrap } = useLoaderData<typeof loader>();
+  const { bootstrap, learnedRules } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -171,6 +201,11 @@ export default function FounderToolsMarketingSettings() {
   const channelError =
     actionData && "intent" in actionData && actionData.error &&
     (CHANNEL_INTENTS as readonly string[]).includes(String(actionData.intent))
+      ? actionData.error
+      : null;
+  const learnedRuleError =
+    actionData && "intent" in actionData && actionData.error &&
+    (LEARNED_RULE_INTENTS as readonly string[]).includes(String(actionData.intent))
       ? actionData.error
       : null;
   const domainConflict = domainConflictFromActionData(actionData);
@@ -199,7 +234,7 @@ export default function FounderToolsMarketingSettings() {
         </div>
       ) : null}
 
-      {actionData && "error" in actionData && actionData.error && !channelError ? (
+      {actionData && "error" in actionData && actionData.error && !channelError && !learnedRuleError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {actionData.error}
         </div>
@@ -287,6 +322,21 @@ export default function FounderToolsMarketingSettings() {
             isSubmitting={isSubmitting}
             error={channelError}
             errorIntent={actionData && "intent" in actionData ? String(actionData.intent) : null}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-black text-gray-950">Learned editorial rules</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Preferences the content factory picked up from the article revisions you accepted. Every
+          future article applies these automatically — retract any you no longer want.
+        </p>
+        <div className="mt-4">
+          <LearnedEditorialRules
+            rules={learnedRules}
+            isSubmitting={isSubmitting}
+            error={learnedRuleError}
           />
         </div>
       </section>
