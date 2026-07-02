@@ -6,6 +6,7 @@ import {
     getVibeRaisingMonthlyUpdatesBundle,
     getOptionalVibeRaisingContext,
     getVibeRaisingLoginHref,
+    resolveActiveCompanyId,
 } from "~/lib/vibe-raising";
 import type { VibeRaisingMetricHistory } from "~/types/vibe-raising";
 import { isFounderToolsDiscoverEnabled } from "~/lib/founder-tools-preview";
@@ -62,7 +63,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const user = vibeContext.appUser;
     const updatesBundle = user.role === "founder"
-        ? await getVibeRaisingMonthlyUpdatesBundle(env, request)
+        ? await getVibeRaisingMonthlyUpdatesBundle(env, request, resolveActiveCompanyId(user))
         : { updates: [], metricHistory: {} };
     const metricHistory = updatesBundle.metricHistory;
     const updates = updatesBundle.updates.map((update, index) => ({

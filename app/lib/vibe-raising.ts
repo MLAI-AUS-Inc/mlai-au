@@ -1295,6 +1295,25 @@ function readableBrowserError(data: unknown, status: number): string {
   return `Request failed with status ${status}`;
 }
 
+// Which company this tab's browser-side API calls target. Set from loader data
+// by the founder-tools shell, so a company switch in ANOTHER tab (which
+// mutates the backend's shared active_company) can't redirect this tab's
+// previews, selections, uploads and email-draft calls to the wrong startup.
+// Client-only: never set during SSR, where module scope is shared across
+// requests.
+let browserCompanyScopeId: string | null = null;
+
+export function setVibeRaisingBrowserCompanyScope(companyId: string | null) {
+  if (typeof window === "undefined") return;
+  browserCompanyScopeId = companyId;
+}
+
+function withBrowserCompanyScope(path: string): string {
+  if (typeof window === "undefined" || !browserCompanyScopeId) return path;
+  if (path.includes("company_id=") || path.includes("companyId=")) return path;
+  return `${path}${path.includes("?") ? "&" : "?"}company_id=${encodeURIComponent(browserCompanyScopeId)}`;
+}
+
 async function requestBrowserJson<T>(
   backendBaseUrl: string,
   path: string,
@@ -1314,7 +1333,7 @@ async function requestBrowserJson<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const targetUrl = buildAbsoluteBackendUrl(backendBaseUrl, path);
+  const targetUrl = buildAbsoluteBackendUrl(backendBaseUrl, withBrowserCompanyScope(path));
   let response: Response;
   try {
     response = await fetch(targetUrl, {
@@ -2292,6 +2311,7 @@ const DEV_MONTHLY_UPDATES_BUNDLE_STUB: VibeRaisingMonthlyUpdatesBundle = {
 export async function getVibeRaisingMonthlyUpdatesBundle(
   env: Env,
   request: Request,
+  companyId?: string | null,
 ): Promise<VibeRaisingMonthlyUpdatesBundle> {
   if (shouldUseDevBackendStub()) {
     return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
@@ -2299,7 +2319,9 @@ export async function getVibeRaisingMonthlyUpdatesBundle(
   const client = createApiClient(env, request);
 
   try {
-    const response = await client.get(UPDATES_PATH);
+    const response = await client.get(
+      companyId ? `${UPDATES_PATH}?company_id=${encodeURIComponent(companyId)}` : UPDATES_PATH,
+    );
     const updates: unknown[] = Array.isArray(response.data?.updates) ? response.data.updates : [];
     return mergeLocalPublishedUpdate({
       updates: updates
@@ -2336,13 +2358,15 @@ export async function getVibeRaisingMonthlyUpdatesBundle(
 export async function getVibeRaisingMonthlyUpdates(
   env: Env,
   request: Request,
+  companyId?: string | null,
 ): Promise<VibeRaisingMonthlyUpdate[]> {
-  return (await getVibeRaisingMonthlyUpdatesBundle(env, request)).updates;
+  return (await getVibeRaisingMonthlyUpdatesBundle(env, request, companyId)).updates;
 }
 
 export async function getVibeRaisingDrafts(
   env: Env,
   request: Request,
+  companyId?: string | null,
 ): Promise<VibeRaisingMonthlyUpdate[]> {
   if (shouldUseDevBackendStub()) {
     return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
@@ -2350,7 +2374,9 @@ export async function getVibeRaisingDrafts(
 
   const client = createApiClient(env, request);
   try {
-    const response = await client.get(DRAFTS_PATH);
+    const response = await client.get(
+      companyId ? `${DRAFTS_PATH}?company_id=${encodeURIComponent(companyId)}` : DRAFTS_PATH,
+    );
     const drafts: unknown[] = Array.isArray(response.data?.drafts) ? response.data.drafts : [];
     return mergeLocalDraftUpdate(
       drafts
@@ -2386,10 +2412,11 @@ export async function getVibeRaisingMonthlyUpdateById(
   env: Env,
   request: Request,
   updateId: string,
+  companyId?: string | null,
 ): Promise<VibeRaisingMonthlyUpdate | null> {
   const [draftsResult, updatesResult] = await Promise.allSettled([
-    getVibeRaisingDrafts(env, request),
-    getVibeRaisingMonthlyUpdates(env, request),
+    getVibeRaisingDrafts(env, request, companyId),
+    getVibeRaisingMonthlyUpdates(env, request, companyId),
   ]);
   const drafts = draftsResult.status === "fulfilled" ? draftsResult.value : [];
   const updates = updatesResult.status === "fulfilled" ? updatesResult.value : [];
@@ -2410,6 +2437,7 @@ export async function saveVibeRaisingMonthlyUpdate(
   env: Env,
   request: Request,
   body: {
+    companyId?: string | null;
     month: string;
     year: number;
     highlights: string;

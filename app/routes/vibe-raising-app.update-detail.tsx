@@ -6,6 +6,7 @@ import {
     getOptionalVibeRaisingContext,
     getVibeRaisingLoginHref,
     getVibeRaisingMonthlyUpdatesBundle,
+    resolveActiveCompanyId,
 } from "~/lib/vibe-raising";
 import VRPreviewUpdateCard from "~/components/vibe-raising/VRPreviewUpdateCard";
 import TrendsSection from "~/components/vibe-raising/TrendsSection";
@@ -22,7 +23,7 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
         throw redirect("/founder-tools/updates");
     }
 
-    const { updates, metricHistory } = await getVibeRaisingMonthlyUpdatesBundle(env, request);
+    const { updates, metricHistory } = await getVibeRaisingMonthlyUpdatesBundle(env, request, resolveActiveCompanyId(vibeContext.appUser));
     const update = updates.find((item) => String(item.id) === String(params.id));
     if (!update) {
         throw new Response("Update not found", { status: 404 });
