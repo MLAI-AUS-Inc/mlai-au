@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/sydney-startups-are-building-australia-s-ai-builder-community': {
+        title: "Sydney Startups Are Building Australia\u2019s AI Builder Community",
+        date: "2026-07-02",
+        description: "Sydney startups are becoming more practical as AI builders use communities, university founder programs, residencies and directories to turn ideas into ventures.",
+        author: "Dr Sam Donegan",
+        slug: "featured/sydney-startups-are-building-australia-s-ai-builder-community",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-48b39127-eeae-4207-8bd9-cb9f85375641.jpg?alt=media&token=05692384-1320-49b8-b94e-9595b5111e70",
+        imageAlt: "Sydney AI startup founders collaborating at a close-up community meetup with laptops and notes",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
