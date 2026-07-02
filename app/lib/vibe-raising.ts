@@ -1762,6 +1762,14 @@ export type CompanyDomainConflict = {
   submittedDomain: string;
   activeCompanyName: string;
   activeCompanyDomain: string;
+  /**
+   * "different_company": the submitted domain looks like another startup —
+   * offer add-as-new vs update. "moves_data": the backend refused a domain
+   * change because re-pointing the company would strand its organization's
+   * data (connections/runs/updates) until explicitly confirmed.
+   */
+  kind: "different_company" | "moves_data";
+  detail?: string | null;
 };
 
 /**
@@ -1801,6 +1809,7 @@ export function detectCompanyDomainConflict(
     submittedDomain: submitted,
     activeCompanyName: activeCompany.name,
     activeCompanyDomain: existing,
+    kind: "different_company",
   };
 }
 
@@ -1814,13 +1823,28 @@ export function companyDomainConflictFromError(
     response?: { data?: Record<string, unknown> };
   } | null;
   const data = payload?.response?.data ?? payload?.data;
-  if (!data || data.code !== "company_domain_change_requires_confirmation") return null;
-  return {
-    sourceIntent,
-    submittedDomain: String(data.submittedDomain ?? ""),
-    activeCompanyName: String(data.companyName ?? "your current company"),
-    activeCompanyDomain: String(data.existingDomain ?? ""),
-  };
+  if (!data) return null;
+  if (data.code === "company_domain_change_requires_confirmation") {
+    return {
+      sourceIntent,
+      submittedDomain: String(data.submittedDomain ?? ""),
+      activeCompanyName: String(data.companyName ?? "your current company"),
+      activeCompanyDomain: String(data.existingDomain ?? ""),
+      kind: "different_company",
+      detail: typeof data.detail === "string" ? data.detail : null,
+    };
+  }
+  if (data.code === "company_domain_change_moves_data") {
+    return {
+      sourceIntent,
+      submittedDomain: String(data.newDomain ?? ""),
+      activeCompanyName: String(data.companyName ?? "your current company"),
+      activeCompanyDomain: String(data.currentDomain ?? ""),
+      kind: "moves_data",
+      detail: typeof data.detail === "string" ? data.detail : null,
+    };
+  }
+  return null;
 }
 
 export function domainConflictFromActionData(actionData: unknown): CompanyDomainConflict | null {
@@ -1834,6 +1858,8 @@ export function domainConflictFromActionData(actionData: unknown): CompanyDomain
     submittedDomain: String(payload.submittedDomain),
     activeCompanyName: String(payload.activeCompanyName ?? "your current company"),
     activeCompanyDomain: String(payload.activeCompanyDomain),
+    kind: payload.kind === "moves_data" ? "moves_data" : "different_company",
+    detail: typeof payload.detail === "string" ? payload.detail : null,
   };
 }
 
@@ -2055,6 +2081,7 @@ export async function saveVibeRaisingCompany(
   body: {
     companyId?: string | null;
     createNew?: boolean;
+    confirmDomainChange?: boolean;
     name: string;
     domain?: string | null;
     companyLinkedInUrl?: string | null;
