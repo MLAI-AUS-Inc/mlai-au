@@ -5,7 +5,7 @@ import { isApiNotFoundError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
 import { getVibeMarketingRun, refreshVibeMarketingLivePreview } from "~/lib/vibe-marketing";
 import { shouldPollArticleSystemSetupRun } from "~/lib/vibe-marketing-run-polling";
-import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
+import { requireVibeRaisingFounder, resolveActiveCompanyId } from "~/lib/vibe-raising";
 import type { VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
 const TERMINAL_ATTENTION_STATUSES = new Set(["blocked", "blocked_verification", "failed", "cancelled", "canceled"]);
@@ -59,8 +59,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     throw redirect(runId ? `/founder-tools/marketing/runs/${encodeURIComponent(runId)}` : "/founder-tools/marketing");
   }
 
-  await requireVibeRaisingFounder(env, request);
-  let run = await getVibeMarketingRun(env, request, runId, null, "status").catch((error: unknown) => {
+  const { appUser } = await requireVibeRaisingFounder(env, request);
+  let run = await getVibeMarketingRun(env, request, runId, resolveActiveCompanyId(appUser), "status").catch((error: unknown) => {
     if (isApiNotFoundError(error)) return null;
     throw error;
   });

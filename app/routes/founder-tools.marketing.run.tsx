@@ -71,7 +71,7 @@ import {
   verifyNotificationChannelOtp,
   canonicalizeTopicCandidates,
 } from "~/lib/vibe-marketing";
-import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
+import { requireVibeRaisingFounder, resolveActiveCompanyId } from "~/lib/vibe-raising";
 import type {
   VibeMarketingComponentManifestItem,
   VibeMarketingComponentCommentAnchor,
@@ -334,9 +334,10 @@ function accountEmailVerifiedFromAuthUser(authUser: Record<string, unknown>) {
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const { authUser, appUser } = await requireVibeRaisingFounder(env, request);
+  const companyId = resolveActiveCompanyId(appUser);
   const runId = params.runId ?? "";
-  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
-  const run = await getVibeMarketingRun(env, request, runId).catch((error: unknown) => {
+  const bootstrap = await getVibeMarketingBootstrap(env, request, companyId, "summary");
+  const run = await getVibeMarketingRun(env, request, runId, companyId).catch((error: unknown) => {
     // A deleted/reset run (e.g. after an article-setup teardown) 404s here while a stale
     // wizard session still links to it. Redirect to the wizard instead of letting the 404
     // throw and SSR-500 the marketing page. (run-status.tsx handles the status-poll path.)
@@ -358,7 +359,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   let setupRun: VibeMarketingRunSummary | null = null;
   if (setupRunId && setupRunId !== run.runId) {
     try {
-      setupRun = await getVibeMarketingRun(env, request, setupRunId);
+      setupRun = await getVibeMarketingRun(env, request, setupRunId, companyId);
     } catch {
       setupRun = null;
     }
@@ -389,7 +390,8 @@ export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const env = getEnv(context);
-  await requireVibeRaisingFounder(env, request);
+  const { appUser } = await requireVibeRaisingFounder(env, request);
+  const companyId = resolveActiveCompanyId(appUser);
   const runId = params.runId ?? "";
   const formData = await request.formData();
   const intent = String(formData.get("intent") ?? "");
@@ -476,7 +478,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === CANCEL_SETUP_BUILD_INTENT) {
       let setupRunId = stringFromForm(formData, "setupRunId");
       if (!setupRunId) {
-        const currentRun = await getVibeMarketingRun(env, request, runId);
+        const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
         if (currentRun.workflow === "article_system_setup") setupRunId = runId;
       }
       if (!setupRunId) return { intent, error: "No setup build was available to cancel." };
@@ -497,6 +499,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (scanPurpose !== "inventory" && !articleSurfaceUrl) return { intent, error: "Enter the articles or blog URL before scanning." };
       const autoSetupPreview = scanPurpose === "setup";
       const result = await startVibeMarketingScan(env, request, {
+        companyId,
         githubRepo,
         github_repo: githubRepo,
         scanPurpose,
@@ -526,6 +529,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before continuing." };
       if (!articleSurfaceUrl) return { intent, error: "Choose or enter an article/blog route before continuing." };
       const result = await startVibeMarketingScan(env, request, {
+        companyId,
         githubRepo,
         github_repo: githubRepo,
         scanPurpose: "setup",
@@ -553,7 +557,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         defaultTimezone: stringFromForm(formData, "defaultTimezone"),
       });
     } else if (intent === "run-daily-discovery-now") {
-      const result = await replayVibeMarketingDaily(env, request, {});
+      const result = await replayVibeMarketingDaily(env, request, { companyId });
       if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
@@ -584,7 +588,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
           : (intent === "resume" || intent === "restart") && targetRunId
             ? targetRunId
             : runId;
-      const payload: Record<string, unknown> = {};
+      const payload: Record<string, unknown> = { companyId };
       if (sourceRunId) payload.sourceRunId = sourceRunId;
       if (autoMerge) payload.autoMerge = true;
       const result = await controlVibeMarketingRun(env, request, controlRunId, intent, payload);
@@ -599,7 +603,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         deliveryMode: String(formData.get("deliveryMode") ?? ""),
       });
     } else if (intent === "start-article") {
-      const bootstrap = await getVibeMarketingBootstrap(env, request);
+      const bootstrap = await getVibeMarketingBootstrap(env, request, companyId);
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return { intent, error: "Publish the articles setup before generating articles. If you've already published it, refresh status." };
       }
@@ -619,6 +623,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       }
       const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const result = await startVibeMarketingArticle(env, request, {
+        companyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
         topic,

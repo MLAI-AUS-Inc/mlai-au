@@ -187,7 +187,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   let bootstrap = emptyBootstrap(vibeContext.profile, activeCompany);
   if (activeCompany && !isAddingNew) {
     try {
-      bootstrap = await getVibeMarketingBootstrap(env, request);
+      bootstrap = await getVibeMarketingBootstrap(env, request, activeCompany.id);
     } catch {
       bootstrap = emptyBootstrap(vibeContext.profile, activeCompany);
     }

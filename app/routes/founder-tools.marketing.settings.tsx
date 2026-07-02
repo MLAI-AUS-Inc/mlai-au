@@ -17,6 +17,7 @@ import {
 import {
   getActiveVibeRaisingCompany,
   requireVibeRaisingFounder,
+  resolveActiveCompanyId,
   saveVibeRaisingCompany,
 } from "~/lib/vibe-raising";
 
@@ -45,8 +46,10 @@ function founderNamesFromForm(formData: FormData) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  await requireVibeRaisingFounder(env, request);
-  return { bootstrap: await getVibeMarketingBootstrap(env, request) };
+  const { appUser } = await requireVibeRaisingFounder(env, request);
+  return {
+    bootstrap: await getVibeMarketingBootstrap(env, request, resolveActiveCompanyId(appUser)),
+  };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -113,6 +116,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       registered: true,
     });
     await saveVibeMarketingSettings(env, request, {
+      companyId: activeCompany?.id ?? null,
       domain: stringFromForm(formData, "domain"),
       companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
       company_linkedin_url: stringFromForm(formData, "companyLinkedInUrl"),

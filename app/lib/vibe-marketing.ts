@@ -1543,10 +1543,16 @@ export async function saveVibeMarketingSettings(env: Env, request: Request, body
   return normalizeBootstrap(response.data);
 }
 
-export async function uploadVibeMarketingCompanyAvatar(env: Env, request: Request, file: File) {
+export async function uploadVibeMarketingCompanyAvatar(
+  env: Env,
+  request: Request,
+  file: File,
+  companyId?: string | null,
+) {
   const client = createApiClient(env, request);
   const formData = new FormData();
   formData.set("avatar", file);
+  if (companyId) formData.set("company_id", companyId);
   const response = await client.post(`${BASE_PATH}/company/avatar/`, formData);
   return normalizeBootstrap(response.data);
 }
@@ -1772,17 +1778,30 @@ export async function recordVibeMarketingTopicFeedback(
   return normalizeTopicFeedback(response.data);
 }
 
-export async function restoreVibeMarketingTopicFeedback(env: Env, request: Request, feedbackId: string) {
+export async function restoreVibeMarketingTopicFeedback(
+  env: Env,
+  request: Request,
+  feedbackId: string,
+  companyId?: string | null,
+) {
   const client = createApiClient(env, request);
-  const response = await client.post(`${BASE_PATH}/topic-feedback/${encodeURIComponent(feedbackId)}/restore`, {});
+  const response = await client.post(
+    `${BASE_PATH}/topic-feedback/${encodeURIComponent(feedbackId)}/restore`,
+    companyId ? { companyId } : {},
+  );
   return normalizeTopicFeedback(response.data);
 }
 
-export async function discardVibeMarketingWrittenArticle(env: Env, request: Request, articleId: string) {
+export async function discardVibeMarketingWrittenArticle(
+  env: Env,
+  request: Request,
+  articleId: string,
+  companyId?: string | null,
+) {
   const client = createApiClient(env, request);
   const response = await client.post(
     `${BASE_PATH}/written-articles/${encodeURIComponent(articleId)}/discard`,
-    {},
+    companyId ? { companyId } : {},
   );
   const payload = (response.data && typeof response.data === "object" ? response.data : {}) as Record<string, unknown>;
   return {

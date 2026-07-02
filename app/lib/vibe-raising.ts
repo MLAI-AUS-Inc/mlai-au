@@ -1724,6 +1724,20 @@ export function getActiveVibeRaisingCompany(
   return activeCompany ?? null;
 }
 
+/**
+ * Resolve the explicit company id to scope a per-request read or mutation to,
+ * mirroring the backend's active-company fallback (pinned active company, else
+ * first company). Passing this through requests keeps multi-startup founders
+ * isolated instead of relying on the backend's mutable server-side
+ * `active_company` state, which another tab may have switched.
+ */
+export function resolveActiveCompanyId(
+  profile: VibeRaisingProfile | VibeRaisingAppUser | null | undefined,
+): string | null {
+  if (!profile) return null;
+  return getActiveVibeRaisingCompany(profile)?.id ?? null;
+}
+
 export function buildVibeRaisingAppUser(
   authUser: User,
   profile: VibeRaisingProfile,
