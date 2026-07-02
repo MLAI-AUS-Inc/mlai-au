@@ -11,6 +11,7 @@ import {
   ActiveDraftRunProvider,
 } from "~/components/ActiveDraftRunStatus";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
+import CompanySwitcher from "~/components/CompanySwitcher";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
 import { getCurrentRooPointsBalance } from "~/lib/roo-points";
@@ -115,7 +116,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function VibeRaisingApp() {
-  const { user, backendBaseUrl, rooPointsBalance } = useLoaderData<typeof loader>();
+  const { user, appUser, backendBaseUrl, rooPointsBalance } = useLoaderData<typeof loader>();
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -125,6 +126,11 @@ export default function VibeRaisingApp() {
     setShowAnnouncement(true);
   };
 
+  const companySwitcher =
+    appUser && appUser.companies.length > 0 ? (
+      <CompanySwitcher companies={appUser.companies} activeCompanyId={appUser.activeCompanyId ?? null} />
+    ) : undefined;
+
   return (
     <AuthenticatedLayout
       user={user}
@@ -132,6 +138,7 @@ export default function VibeRaisingApp() {
       userNavigation={FOUNDER_USER_NAVIGATION}
       rooPointsBalance={rooPointsBalance}
       logoutAction="/founder-tools/logout"
+      companySwitcher={companySwitcher}
     >
       {showAnnouncement ? (
         <VibeRaisingIntroPopup
