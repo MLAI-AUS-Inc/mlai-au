@@ -16,10 +16,9 @@ export default function CTA() {
         </p>
         <div className="mt-6 sm:mt-10 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
           <CTAButton
-            href="https://docs.google.com/forms/d/e/1FAIpQLSclIpU9So5QoX0Py-wKMjzE6F5amk7u_kMFrcm4tf2GQQ7-xA/viewform"
+            href="/volunteers"
             bg="bg-[#ff3d00]"
             text="I want to volunteer"
-            rel="nofollow"
           />
           <CTAButton href="/#events" bg="bg-[#4b1bd1]" text="I want to build" />
           <CTAButton href="/sponsors" bg="bg-[#00ffd7]" text="I want to sponsor" textColor="text-black" />
