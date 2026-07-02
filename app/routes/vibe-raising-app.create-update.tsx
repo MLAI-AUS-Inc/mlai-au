@@ -21,6 +21,7 @@ import {
     saveVibeRaisingMonthlyUpdate,
     uploadVibeRaisingPitchDeck,
     uploadVibeRaisingUpdateVideo,
+    resolveActiveCompanyId,
 } from "~/lib/vibe-raising";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
@@ -449,14 +450,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     let existingData = null;
     if (editId) {
-        const existingUpdate = await getVibeRaisingMonthlyUpdateById(env, request, editId).catch((error) => {
+        const existingUpdate = await getVibeRaisingMonthlyUpdateById(env, request, editId, resolveActiveCompanyId(user)).catch((error) => {
             console.warn("Unable to load Vibe Raising update for editing.", error);
             return null;
         });
         existingData = existingUpdate ? buildExistingUpdateFormData(existingUpdate) : null;
     }
 
-    const existingMonthlyUpdates = await getVibeRaisingMonthlyUpdates(env, request).catch((error) => {
+    const existingMonthlyUpdates = await getVibeRaisingMonthlyUpdates(env, request, resolveActiveCompanyId(user)).catch((error) => {
         console.warn("Unable to load existing Vibe Raising monthly updates for create flow.", error);
         return [];
     });
@@ -557,6 +558,9 @@ function extractVibeRaisingActionError(error: unknown, fallback: string) {
 export async function action({ request, context }: Route.ActionArgs) {
     const env = getEnv(context);
     const { appUser } = await requireVibeRaisingFounder(env, request);
+    // Pin every read and save in this action to the company the page was
+    // rendered for, instead of the backend's mutable active_company.
+    const activeCompanyId = resolveActiveCompanyId(appUser);
     const formData = await request.formData();
     const intent = formData.get("intent");
     const updates = Object.fromEntries(formData);
@@ -577,7 +581,7 @@ export async function action({ request, context }: Route.ActionArgs) {
                 return redirect("/founder-tools/updates");
             }
 
-            const drafts = await getVibeRaisingDrafts(env, request);
+            const drafts = await getVibeRaisingDrafts(env, request, activeCompanyId);
             console.log("[monthly-update:publish-action] loaded drafts for fallback", JSON.stringify({
                 draftCount: drafts.length,
                 publishableDrafts: drafts
@@ -616,6 +620,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
             const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
                 ...savePayload,
+                companyId: activeCompanyId,
                 saveMode: "ready",
             });
             if (savedUpdate?.id && BACKEND_DRAFT_ID_PATTERN.test(savedUpdate.id)) {
@@ -701,6 +706,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         try {
             savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
                 ...savePayload,
+                companyId: activeCompanyId,
                 saveMode: "ready",
             });
         } catch (error) {
@@ -738,6 +744,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         try {
             update = await saveVibeRaisingMonthlyUpdate(env, request, {
                 ...savePayload,
+                companyId: activeCompanyId,
                 saveMode: "draft",
             });
         } catch (error) {

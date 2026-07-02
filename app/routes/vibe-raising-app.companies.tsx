@@ -28,7 +28,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         Boolean(activeCompany?.id) &&
         (
             hasSubmittedVibeRaisingUpdate(request, activeCompany?.id) ||
-            (await getVibeRaisingMonthlyUpdates(env, request)).length > 0
+            (await getVibeRaisingMonthlyUpdates(env, request, activeCompany?.id ?? null)).length > 0
         );
 
     return { user, activeCompanyId: activeCompany?.id ?? null, activeCompanyHasUpdates };
@@ -49,7 +49,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
         const hasExistingUpdate =
             hasSubmittedVibeRaisingUpdate(request, companyId) ||
-            (await getVibeRaisingMonthlyUpdates(env, request)).length > 0;
+            (await getVibeRaisingMonthlyUpdates(env, request, companyId)).length > 0;
 
         return redirect(hasExistingUpdate ? "/founder-tools/updates" : "/founder-tools/updates/create");
     }

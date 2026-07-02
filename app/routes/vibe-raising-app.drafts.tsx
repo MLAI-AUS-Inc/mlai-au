@@ -14,6 +14,7 @@ import { getEnv } from "~/lib/env.server";
 import {
     getVibeRaisingDrafts,
     requireVibeRaisingFounder,
+    resolveActiveCompanyId,
 } from "~/lib/vibe-raising";
 import {
     ArrowRightIcon,
@@ -93,7 +94,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         throw redirect("/founder-tools/company-setup");
     }
 
-    const drafts = await getVibeRaisingDrafts(env, request);
+    const drafts = await getVibeRaisingDrafts(env, request, resolveActiveCompanyId(appUser));
 
     return {
         drafts,
