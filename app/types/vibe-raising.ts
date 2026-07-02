@@ -26,6 +26,7 @@ export interface VibeRaisingCompany {
   hasRevenue?: string | null;
   audienceVisibility?: VibeRaisingAudienceVisibility | null;
   registered: boolean;
+  monthlyUpdatesEnabled?: boolean;
 }
 
 export interface VibeRaisingProfile {
