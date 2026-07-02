@@ -11,6 +11,9 @@ import {
 } from "~/lib/vibe-marketing";
 import { combineCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
+  companyDomainConflictFromError,
+  detectCompanyDomainConflict,
+  domainConflictFromActionData,
   getActiveVibeRaisingCompany,
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
@@ -214,6 +217,15 @@ export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData();
   const intent = stringFromForm(formData, "intent");
   const companyContext = companyContextFromForm(formData);
+  // "create-new" | "update-existing" — the user's answer to a domain-conflict
+  // prompt from a previous submit of this same form.
+  const domainDecision = stringFromForm(formData, "domainDecision");
+  const activeCompany = vibeContext.appUser
+    ? getActiveVibeRaisingCompany(vibeContext.appUser)
+    : vibeContext.profile
+      ? getActiveVibeRaisingCompany(vibeContext.profile)
+      : null;
+  const createAsNew = isAddingNew || domainDecision === "create-new";
 
   try {
     if (intent === "start-autofill") {
@@ -224,7 +236,19 @@ export async function action({ request, context }: Route.ActionArgs) {
         });
       }
 
+      if (!createAsNew && !domainDecision) {
+        const conflict = detectCompanyDomainConflict(
+          activeCompany,
+          stringFromForm(formData, "domain"),
+          intent,
+        );
+        if (conflict) return { intent, domainConflict: conflict };
+      }
+
       const result = await startVibeMarketingAutofill(env, request, {
+        companyId: createAsNew ? null : activeCompany?.id ?? null,
+        createNew: createAsNew || undefined,
+        confirmDomainChange: domainDecision === "update-existing" || undefined,
         companyName: stringFromForm(formData, "companyName"),
         company_name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
@@ -314,14 +338,15 @@ export async function action({ request, context }: Route.ActionArgs) {
       });
     }
 
-    const activeCompany = vibeContext.appUser
-      ? getActiveVibeRaisingCompany(vibeContext.appUser)
-      : vibeContext.profile
-        ? getActiveVibeRaisingCompany(vibeContext.profile)
-        : null;
+    if (!createAsNew && !domainDecision) {
+      const conflict = detectCompanyDomainConflict(activeCompany, domain, intent);
+      if (conflict) return { intent, domainConflict: conflict };
+    }
+
     const { founderProfiles, founderNames } = founderNamesFromForm(formData);
     const companyId = await saveVibeRaisingCompany(env, request, {
-      companyId: isAddingNew ? null : activeCompany?.id ?? null,
+      companyId: createAsNew ? null : activeCompany?.id ?? null,
+      createNew: createAsNew,
       name: companyName,
       domain,
       companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
@@ -352,6 +377,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
+    const conflict = companyDomainConflictFromError(error, intent);
+    if (conflict) return { intent, domainConflict: conflict };
     return {
       intent,
       error: readableBackendError(error, {
@@ -364,19 +391,22 @@ export async function action({ request, context }: Route.ActionArgs) {
     };
   }
 
-  throw redirect("/founder-tools/updates");
+  const next = url.searchParams.get("next");
+  throw redirect(next && next.startsWith("/founder-tools") ? next : "/founder-tools/updates");
 }
 
 export default function CompanySetup() {
   const { bootstrap, audienceVisibility, isAddingNew, isEditingExisting } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const error = actionData && typeof actionData === "object" && "error" in actionData ? String(actionData.error ?? "") : null;
+  const domainConflict = domainConflictFromActionData(actionData);
   return (
     <div className="min-h-screen bg-[#f7f6f2] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <VibeMarketingStartupBaselineSetup
           bootstrap={bootstrap}
           error={error}
+          domainConflict={domainConflict}
           variant="workflow"
           includeBaseline={false}
           setupEyebrow=""

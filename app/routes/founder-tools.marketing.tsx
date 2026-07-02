@@ -88,6 +88,9 @@ import {
   uploadVibeMarketingCompanyAvatar,
 } from "~/lib/vibe-marketing";
 import {
+  companyDomainConflictFromError,
+  detectCompanyDomainConflict,
+  domainConflictFromActionData,
   getActiveVibeRaisingCompany,
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
@@ -370,6 +373,10 @@ export async function action({ request, context }: Route.ActionArgs) {
   // Pin every read and mutation in this action to the company the page was
   // rendered for, instead of the backend's mutable active_company.
   const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
+  // "create-new" | "update-existing" — the user's answer to a domain-conflict
+  // prompt from a previous submit of the startup-details form.
+  const domainDecision = stringFromForm(formData, "domainDecision");
+  const createAsNew = domainDecision === "create-new";
 
   try {
     if (intent === "save-company-avatar") {
@@ -407,8 +414,13 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
 
       const activeCompany = vibeContext.appUser ? getActiveVibeRaisingCompany(vibeContext.appUser) : null;
+      if (!domainDecision) {
+        const conflict = detectCompanyDomainConflict(activeCompany, domain, intent);
+        if (conflict) return { intent, domainConflict: conflict };
+      }
       const companyId = await saveVibeRaisingCompany(env, request, {
-        companyId: activeCompany?.id ?? null,
+        companyId: createAsNew ? null : activeCompany?.id ?? null,
+        createNew: createAsNew,
         name,
         domain,
         companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
@@ -447,7 +459,16 @@ export async function action({ request, context }: Route.ActionArgs) {
         });
       }
 
+      if (!domainDecision) {
+        const activeCompany = vibeContext.appUser ? getActiveVibeRaisingCompany(vibeContext.appUser) : null;
+        const conflict = detectCompanyDomainConflict(activeCompany, stringFromForm(formData, "domain"), intent);
+        if (conflict) return { intent, domainConflict: conflict };
+      }
+
       const result = await startVibeMarketingAutofill(env, request, {
+        companyId: createAsNew ? null : activeCompanyId,
+        createNew: createAsNew || undefined,
+        confirmDomainChange: domainDecision === "update-existing" || undefined,
         companyName: stringFromForm(formData, "companyName"),
         company_name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
@@ -776,6 +797,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
+    const conflict = companyDomainConflictFromError(error, intent);
+    if (conflict) return { intent, domainConflict: conflict };
     const fallback =
       intent === "start-autofill"
         ? "AI research could not start. Check the backend logs and try again."
@@ -4731,6 +4754,7 @@ export default function FounderToolsMarketing() {
   const location = useLocation();
   const error = actionError(actionData);
   const errorIntent = actionIntent(actionData);
+  const domainConflict = domainConflictFromActionData(actionData);
   const setupMergedNotice = new URLSearchParams(location.search).get("setupMerged") === "1";
   const shouldShowTopicPicker = shouldShowVibeMarketingTopicPicker(bootstrap);
 
@@ -4746,7 +4770,7 @@ export default function FounderToolsMarketing() {
           setupMergedNotice={setupMergedNotice}
         />
       ) : (
-        <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} />
+        <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} domainConflict={domainConflict} />
       )}
     </div>
   );

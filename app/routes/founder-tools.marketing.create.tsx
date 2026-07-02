@@ -60,6 +60,9 @@ import {
 } from "~/lib/vibe-marketing";
 import type { VibeMarketingArticleSetupState, VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 import {
+  companyDomainConflictFromError,
+  detectCompanyDomainConflict,
+  domainConflictFromActionData,
   getActiveVibeRaisingCompany,
   getOptionalVibeRaisingContext,
   requireVibeRaisingFounder,
@@ -543,6 +546,10 @@ export async function action({ request, context }: Route.ActionArgs) {
   const activeCompanyId = activeCompany?.id ?? null;
   const formData = await request.formData();
   const intent = stringFromForm(formData, "intent");
+  // "create-new" | "update-existing" — the user's answer to a domain-conflict
+  // prompt from a previous submit of the startup-details form.
+  const domainDecision = stringFromForm(formData, "domainDecision");
+  const createAsNew = domainDecision === "create-new";
 
   try {
     if (intent === "save-startup-details") {
@@ -554,8 +561,13 @@ export async function action({ request, context }: Route.ActionArgs) {
           problemSolved: stringFromForm(formData, "problemSolved"),
           targetAudience: stringFromForm(formData, "targetAudience"),
         });
+      if (!domainDecision) {
+        const conflict = detectCompanyDomainConflict(activeCompany, stringFromForm(formData, "domain"), intent);
+        if (conflict) return { intent, domainConflict: conflict };
+      }
       const companyId = await saveVibeRaisingCompany(env, request, {
-        companyId: activeCompany?.id ?? null,
+        companyId: createAsNew ? null : activeCompany?.id ?? null,
+        createNew: createAsNew,
         name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
         companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
@@ -591,7 +603,14 @@ export async function action({ request, context }: Route.ActionArgs) {
           problemSolved: stringFromForm(formData, "problemSolved"),
           targetAudience: stringFromForm(formData, "targetAudience"),
         });
+      if (!domainDecision) {
+        const conflict = detectCompanyDomainConflict(activeCompany, stringFromForm(formData, "domain"), intent);
+        if (conflict) return { intent, domainConflict: conflict };
+      }
       const result = await startVibeMarketingAutofill(env, request, {
+        companyId: createAsNew ? null : activeCompanyId,
+        createNew: createAsNew || undefined,
+        confirmDomainChange: domainDecision === "update-existing" || undefined,
         companyName: stringFromForm(formData, "companyName"),
         company_name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
@@ -935,6 +954,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
+    const conflict = companyDomainConflictFromError(error, intent);
+    if (conflict) return { intent, domainConflict: conflict };
     const fallback =
       intent === "start-autofill"
         ? "AI research could not start. Check the backend logs and try again."
@@ -1044,6 +1065,7 @@ export default function FounderToolsMarketingCreate() {
   const actionData = useActionData<typeof action>();
   const latestActionIntent = actionDataIntent(actionData);
   const latestActionError = actionDataError(actionData);
+  const domainConflict = domainConflictFromActionData(actionData);
   const actionErrorStep = actionIntentStep(latestActionIntent);
   const isRepoArticleStep = activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem";
   const githubAuthError = searchParams.get("githubAuthError");
@@ -1522,6 +1544,7 @@ export default function FounderToolsMarketingCreate() {
           <VibeMarketingStartupBaselineSetup
             bootstrap={bootstrap}
             error={topActionError}
+            domainConflict={domainConflict}
             variant="workflow"
             focusSection={requestedStep === "baseline" ? "baseline" : "profile"}
             autoRefreshGoogleBaseline={shouldRefreshGoogleBaseline}
