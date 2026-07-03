@@ -1647,6 +1647,187 @@ function MetricVisual({
   return <MiniSparkline values={values} tone={tone} />;
 }
 
+const AI_REFERENCE_KIND_LABELS: Record<string, string> = {
+  recommended: "Recommended",
+  cited_source: "Cited as source",
+  compared: "In a comparison",
+  listed: "Listed option",
+  mentioned: "Mentioned",
+};
+
+const AI_PROVIDER_LABELS: Record<string, string> = {
+  chatgpt: "ChatGPT",
+  claude: "Claude",
+  gemini: "Gemini",
+  perplexity: "Perplexity",
+};
+
+function aiProviderLabel(key: unknown) {
+  const normalized = String(key ?? "").toLowerCase();
+  return AI_PROVIDER_LABELS[normalized] ?? String(key ?? "");
+}
+
+// Verbatim quotes + per-article citation results collected by the baseline —
+// only measured data is rendered; the panel disappears when there is none.
+function AiCitationInsights({ metric }: { metric?: VibeMarketingWebsiteBaselineMetric }) {
+  const quotes = (Array.isArray(metric?.aiQuotes) ? metric.aiQuotes : []) as Array<Record<string, unknown>>;
+  const articleCitations = plainObject(metric?.articleCitations);
+  const articles = (Array.isArray(articleCitations?.articles) ? articleCitations?.articles : []) as Array<Record<string, unknown>>;
+  const citedPages = (Array.isArray(metric?.citedPages) ? metric.citedPages : []) as Array<Record<string, unknown>>;
+  const checkedCount = numericValue(articleCitations?.checkedCount) ?? 0;
+  const citedCount = numericValue(articleCitations?.citedCount) ?? 0;
+  if (!quotes.length && !checkedCount && !citedPages.length) return null;
+
+  return (
+    <div className="mt-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-black text-gray-950">What AI says about your site</p>
+            <p className="mt-0.5 text-xs font-semibold text-gray-500">
+              Verbatim references from real assistant responses collected during this baseline.
+            </p>
+          </div>
+        </div>
+        {checkedCount ? (
+          <span
+            className={clsx(
+              "rounded-full px-3 py-1 text-xs font-black",
+              citedCount > 0 ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100" : "bg-slate-100 text-slate-600",
+            )}
+          >
+            {citedCount} of {checkedCount} articles cited by AI
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-wide text-gray-500">How the AIs reference you</p>
+          {quotes.length ? (
+            <ul className="mt-3 space-y-3">
+              {quotes.slice(0, 4).map((quote, index) => {
+                const kind = String(quote.kind ?? "mentioned");
+                const citedUrl = typeof quote.citedUrl === "string" ? quote.citedUrl : null;
+                return (
+                  <li key={index} className="rounded-xl bg-slate-50 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] font-black">
+                      <span className="rounded-full bg-white px-2 py-0.5 text-slate-700 ring-1 ring-slate-200">
+                        {String(quote.providerLabel ?? "") || aiProviderLabel(quote.provider)}
+                      </span>
+                      <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-700 ring-1 ring-sky-100">
+                        {AI_REFERENCE_KIND_LABELS[kind] ?? "Mentioned"}
+                      </span>
+                      {typeof quote.query === "string" && quote.query ? (
+                        <span className="truncate text-slate-400">for “{quote.query}”</span>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-gray-700">“{String(quote.text ?? "")}”</p>
+                    {citedUrl ? (
+                      <a
+                        href={citedUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 inline-block max-w-full truncate text-xs font-bold text-violet-700 hover:underline"
+                      >
+                        {citedUrl}
+                      </a>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold leading-5 text-slate-500">
+              The assistants did not reference your brand in this baseline&apos;s checks yet.
+            </p>
+          )}
+        </div>
+
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-wide text-gray-500">Articles the AIs are using</p>
+          {articles.length ? (
+            <ul className="mt-3 space-y-3">
+              {articles.map((article, index) => {
+                const citedBy = (Array.isArray(article.articleCitedBy) ? article.articleCitedBy : []) as unknown[];
+                const url = typeof article.url === "string" ? article.url : "";
+                const providerRows = (Array.isArray(article.providers) ? article.providers : []) as Array<Record<string, unknown>>;
+                const citedRow = providerRows.find((row) => row.articleCited);
+                const contexts = (Array.isArray(citedRow?.mentionContexts) ? citedRow?.mentionContexts : []) as Array<Record<string, unknown>>;
+                return (
+                  <li key={index} className="rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <a
+                        href={url || undefined}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="min-w-0 truncate text-sm font-black text-gray-950 hover:text-violet-700"
+                      >
+                        {String(article.title ?? "") || url}
+                      </a>
+                      {citedBy.length ? (
+                        <span className="flex flex-wrap gap-1.5">
+                          {citedBy.map((provider) => (
+                            <span
+                              key={String(provider)}
+                              className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-700 ring-1 ring-emerald-100"
+                            >
+                              ✓ {aiProviderLabel(provider)}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-500">
+                          Not cited yet
+                        </span>
+                      )}
+                    </div>
+                    {typeof article.keyword === "string" && article.keyword ? (
+                      <p className="mt-1 text-xs font-semibold text-gray-500">Target topic: {article.keyword}</p>
+                    ) : null}
+                    {contexts.length ? (
+                      <p className="mt-2 text-xs font-semibold leading-5 text-gray-600">“{String(contexts[0]?.text ?? "")}”</p>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold leading-5 text-slate-500">
+              Once your first articles are live, each baseline run checks whether the AI assistants cite them.
+            </p>
+          )}
+          {citedPages.length ? (
+            <div className="mt-4">
+              <p className="text-xs font-black uppercase tracking-wide text-gray-500">Most-cited pages on your site</p>
+              <ul className="mt-2 space-y-1.5">
+                {citedPages.slice(0, 5).map((page, index) => (
+                  <li key={index} className="flex items-center justify-between gap-3 text-xs font-semibold text-gray-600">
+                    <span className="min-w-0 truncate">
+                      {String(page.articleTitle ?? "") || String(page.url ?? "")}
+                      {page.isArticle ? (
+                        <span className="ml-2 rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-black text-violet-700">
+                          Your article
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="shrink-0 font-black text-gray-950">
+                      {numericValue(page.citations) ?? 0}× cited
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BaselineMetricCard({
   label,
   metric,
@@ -3394,6 +3575,8 @@ export default function VibeMarketingStartupBaselineSetup({
               </ul>
             </div>
           </div>
+
+          <AiCitationInsights metric={baselineMetrics.aiVisibility} />
 
           {searchConsole?.status === "measured" && searchConsoleSummary ? (
             <div className="mt-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
