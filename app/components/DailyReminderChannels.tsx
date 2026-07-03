@@ -27,7 +27,7 @@ const WHATSAPP_LOGO_URL =
 const PUBLISH_CHANNEL_FALLBACK_DETAILS: Record<VibeMarketingNotificationChannelType, string> = {
   slack: "Connected · #mlai-research",
   email: "Account email unavailable",
-  whatsapp: "Coming soon",
+  whatsapp: "Not connected · add it in Settings",
 };
 
 type PublishChannelTone = "active" | "warning" | "muted";
@@ -98,20 +98,27 @@ function publishChannelDetail(
   accountEmail?: string | null,
   accountEmailVerified?: boolean | null,
 ) {
-  if (type === "whatsapp") return "Coming soon";
   if (type === "email" && accountEmail) {
     const verifiedLabel = accountEmailVerified === false ? "Unverified" : "Verified";
     return `${accountEmail} · ${verifiedLabel}`;
   }
   if (channel?.consentState === "active") return activeChannelDetail(type, channel);
+  if (type === "whatsapp" && channel?.consentState === "pending") {
+    return `${channel.routeId || "Number"} · Verification pending`;
+  }
   return PUBLISH_CHANNEL_FALLBACK_DETAILS[type];
 }
 
 function publishChannelTone(
   type: VibeMarketingNotificationChannelType,
+  channel: VibeMarketingNotificationChannel | null,
   accountEmailVerified?: boolean | null,
 ): PublishChannelTone {
-  if (type === "whatsapp") return "muted";
+  if (type === "whatsapp") {
+    if (channel?.consentState === "active") return "active";
+    if (channel?.consentState === "pending") return "warning";
+    return "muted";
+  }
   if (type === "email" && accountEmailVerified === false) return "warning";
   return "active";
 }
@@ -120,7 +127,7 @@ function PublishChannelStatusBadge({ tone }: { tone: PublishChannelTone }) {
   if (tone === "muted") {
     return (
       <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
-        Coming soon
+        Not set up
       </span>
     );
   }
@@ -178,7 +185,7 @@ function ChannelRow({
 }) {
   const isActive = channel?.consentState === "active";
   const isPending = channel?.consentState === "pending";
-  const publishTone = publishChannelTone(type, accountEmailVerified);
+  const publishTone = publishChannelTone(type, channel, accountEmailVerified);
 
   if (variant === "publish") {
     return (
@@ -201,22 +208,6 @@ function ChannelRow({
           </div>
         </div>
         <PublishChannelStatusBadge tone={publishTone} />
-      </div>
-    );
-  }
-
-  if (type === "whatsapp") {
-    return (
-      <div className="rounded-xl border border-gray-200 bg-white p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <span className="block truncate text-sm font-black text-gray-900">{CHANNEL_LABELS[type]}</span>
-            <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-500">
-              Coming soon
-            </span>
-          </div>
-        </div>
-        <p className="mt-2 text-xs font-semibold text-gray-500">WhatsApp reminders are not available yet.</p>
       </div>
     );
   }
@@ -291,6 +282,68 @@ function ChannelRow({
             Send verification email
           </button>
           <p className="text-[11px] font-medium text-gray-500">Leave blank to use your account email.</p>
+        </Form>
+      ) : type === "whatsapp" && isPending && channel?.pendingVerification ? (
+        <Form method="POST" className="mt-2 space-y-2">
+          <input type="hidden" name="channelId" value={channel.id} />
+          <p className="text-xs font-semibold text-gray-600">
+            Code sent to <span className="font-black">{channel.routeId}</span> on WhatsApp.
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              name="code"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="6-digit code"
+              className="w-28 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold tracking-widest outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
+            />
+            <button
+              type="submit"
+              name="intent"
+              value="verify-channel-otp"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+            >
+              Verify
+            </button>
+            <button
+              type="submit"
+              name="intent"
+              value="resend-channel-otp"
+              disabled={isSubmitting}
+              className="text-xs font-bold text-violet-700 underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              Resend
+            </button>
+          </div>
+          {typeof channel.pendingVerification.attemptsRemaining === "number" &&
+          channel.pendingVerification.attemptsRemaining < 5 ? (
+            <p className="text-[11px] font-medium text-amber-700">
+              {channel.pendingVerification.attemptsRemaining} attempts remaining.
+            </p>
+          ) : null}
+        </Form>
+      ) : type === "whatsapp" ? (
+        <Form method="POST" className="mt-2 space-y-2">
+          <input type="hidden" name="channelType" value="whatsapp" />
+          <input
+            type="tel"
+            name="routeId"
+            placeholder="+61 400 000 000"
+            className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
+          />
+          <button
+            type="submit"
+            name="intent"
+            value="connect-channel"
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+          >
+            Send code
+          </button>
+          <p className="text-[11px] font-medium text-gray-500">
+            International format. We&apos;ll send a 6-digit code on WhatsApp. Reply STOP any time to opt out.
+          </p>
         </Form>
       ) : null}
     </div>
