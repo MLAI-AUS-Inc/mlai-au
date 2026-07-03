@@ -137,6 +137,15 @@ function setupPhase(run: VibeMarketingRunSummary) {
     };
   }
   if (ready) {
+    // Server-rendered stacks get no hosted preview (code_review_ready): the
+    // reviewable surface is the setup branch diff on the run page.
+    if (isSetupPreviewRun && status === "code_review_ready") {
+      return {
+        title: "Articles setup ready for code review",
+        description: "A live preview isn't supported for this site's stack. Open the setup build to review the code changes, then approve setup PR creation.",
+        tone: "ready" as const,
+      };
+    }
     return {
       title: isSetupPreviewRun ? "Articles setup preview ready" : "Articles setup ready to build",
       description: isSetupPreviewRun
