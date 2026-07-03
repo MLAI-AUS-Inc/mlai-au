@@ -812,6 +812,9 @@ export default function ArticleSystemConnectionPanel({
     surfaceExists ||
     (scanScaffoldStatus !== "not_needed" &&
       !["ambiguous", "unmatched", "missing"].includes(scanArticleSurfaceState));
+  // Server-rendered stacks get no hosted preview; Content Factory parks the run in
+  // "code_review_ready" and the reviewable surface is the setup branch diff.
+  const setupCodeReviewReady = setupStatus === "code_review_ready";
   const scaffoldStatus: ArticleSystemScaffoldStatus = !setupTargetReady && !selectedSurfaceUrl
     ? "not_ready"
     : scaffoldExplicitReady
@@ -822,7 +825,7 @@ export default function ArticleSystemConnectionPanel({
           ? "verifying"
           : scaffoldPublishReady
             ? "publish_ready"
-            : setupPreviewUrl
+            : setupPreviewUrl || setupCodeReviewReady
               ? "review_ready"
               : scaffoldLegacyReady
                 ? "legacy_ready"
@@ -1033,7 +1036,13 @@ export default function ArticleSystemConnectionPanel({
             body: "The latest scan could not confirm the saved articles route in this repository. Re-scan, choose a different route, or create a new articles folder.",
             tone: "amber" as const,
           }
-        : scaffoldStatusCopy[scaffoldStatus];
+        : scaffoldStatus === "review_ready" && setupCodeReviewReady
+          ? {
+              title: "Articles setup is ready for code review",
+              body: "A live preview isn't supported for this site's stack yet. Open the setup build to review the changed files and approve.",
+              tone: "violet" as const,
+            }
+          : scaffoldStatusCopy[scaffoldStatus];
   const scaffoldIconTone = {
     emerald: "bg-emerald-100 text-emerald-700",
     violet: "bg-violet-100 text-violet-700",

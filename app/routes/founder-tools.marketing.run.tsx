@@ -6,6 +6,7 @@ import {
   ArrowLeftIcon,
   ArrowPathIcon,
   ArrowRightIcon,
+  ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
   ChevronDownIcon,
@@ -1191,7 +1192,25 @@ function ArticleSystemSetupPreviewPanel({
         source.livePreview?.exactRender === true
       ),
   );
-  const canApprove = Boolean(!setupAlreadyApproved && setupExactPreviewReady && (run.status === "awaiting_approval" || run.status === "approval_required"));
+  // Server-rendered stacks (FastAPI/Django/Rails/...) get no hosted preview shape;
+  // Content Factory parks the run in "code_review_ready" and the reviewable surface
+  // is the setup branch diff, so approval proceeds without a preview URL.
+  const setupCodeReviewReady = Boolean(
+    !setupAlreadyApproved &&
+      setupStatus === "code_review_ready" &&
+      (run.status === "awaiting_approval" || run.status === "approval_required"),
+  );
+  const previewUnsupportedReason =
+    stringResultValue(run, "preview_unsupported_reason", "previewUnsupportedReason") ||
+    String(setup.preview_unsupported_reason ?? setup.previewUnsupportedReason ?? "");
+  const setupBranchName =
+    stringResultValue(run, "branch_name", "branchName") || String(setup.branch_name ?? setup.branchName ?? "");
+  const setupBranchUrl = repo && setupBranchName ? `https://github.com/${repo}/tree/${setupBranchName}` : "";
+  const canApprove = Boolean(
+    !setupAlreadyApproved &&
+      (setupExactPreviewReady || setupCodeReviewReady) &&
+      (run.status === "awaiting_approval" || run.status === "approval_required"),
+  );
   const setupCompleted = setupMerged;
   const previewReady = setupExactPreviewReady;
   const setupTerminalFailure = ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus);
@@ -1314,6 +1333,55 @@ function ArticleSystemSetupPreviewPanel({
             );
           }}
         />
+      ) : setupCodeReviewReady ? (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+            <p className="text-sm font-black text-violet-950">Review the code changes to approve this setup</p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-violet-900">
+              {previewUnsupportedReason ||
+                "A live preview isn't supported for this site's stack yet, so the setup is reviewed from its code changes instead."}
+            </p>
+            {setupBranchUrl ? (
+              <a
+                href={setupBranchUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-violet-800 shadow-sm transition hover:bg-violet-100"
+              >
+                Review the branch on GitHub
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+              </a>
+            ) : null}
+          </div>
+          {canApprove ? (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Form method="POST">
+                <button
+                  type="submit"
+                  name="intent"
+                  value="deny"
+                  disabled={isSubmitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
+                >
+                  {(isActionPending?.("deny") ?? isSubmitting) ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <XCircleIcon className="h-4 w-4" />}
+                  {(isActionPending?.("deny") ?? isSubmitting) ? "Rejecting..." : "Reject setup"}
+                </button>
+              </Form>
+              <Form method="POST">
+                <button
+                  type="submit"
+                  name="intent"
+                  value="approve"
+                  disabled={isSubmitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                >
+                  {(isActionPending?.("approve") ?? isSubmitting) ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                  {(isActionPending?.("approve") ?? isSubmitting) ? "Approving..." : "Approve setup and create PR"}
+                </button>
+              </Form>
+            </div>
+          ) : null}
+        </div>
       ) : !setupCompleted ? (
         <div className="space-y-4">
           {previewFailed ? (
