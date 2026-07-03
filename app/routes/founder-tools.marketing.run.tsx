@@ -71,7 +71,7 @@ import {
   verifyNotificationChannelOtp,
   canonicalizeTopicCandidates,
 } from "~/lib/vibe-marketing";
-import { requireVibeRaisingFounder, resolveActiveCompanyId } from "~/lib/vibe-raising";
+import { requireVibeRaisingFounder, resolveActiveCompanyId, setVibeRaisingActiveCompany } from "~/lib/vibe-raising";
 import type {
   VibeMarketingComponentManifestItem,
   VibeMarketingComponentCommentAnchor,
@@ -337,11 +337,23 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const companyId = resolveActiveCompanyId(appUser);
   const runId = params.runId ?? "";
   const bootstrap = await getVibeMarketingBootstrap(env, request, companyId, "summary");
-  const run = await getVibeMarketingRun(env, request, runId, companyId).catch((error: unknown) => {
-    // A deleted/reset run (e.g. after an article-setup teardown) 404s here while a stale
-    // wizard session still links to it. Redirect to the wizard instead of letting the 404
-    // throw and SSR-500 the marketing page. (run-status.tsx handles the status-poll path.)
+  const run = await getVibeMarketingRun(env, request, runId, companyId).catch(async (error: unknown) => {
     if (isApiNotFoundError(error)) {
+      // Daily-reminder links carry no company hint, so a run belonging to one
+      // of the founder's OTHER companies 404s under the active one. Find the
+      // owner, switch to it, and re-enter the page instead of dropping the
+      // deep link.
+      for (const company of appUser.companies ?? []) {
+        if (!company.id || company.id === companyId) continue;
+        const found = await getVibeMarketingRun(env, request, runId, company.id, "status").catch(() => null);
+        if (found) {
+          await setVibeRaisingActiveCompany(env, request, company.id);
+          throw redirect(new URL(request.url).pathname + new URL(request.url).search);
+        }
+      }
+      // A deleted/reset run (e.g. after an article-setup teardown) 404s here while a stale
+      // wizard session still links to it. Redirect to the wizard instead of letting the 404
+      // throw and SSR-500 the marketing page. (run-status.tsx handles the status-poll path.)
       throw redirect("/founder-tools/marketing");
     }
     throw error;
