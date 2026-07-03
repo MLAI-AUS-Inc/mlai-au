@@ -42,6 +42,7 @@ import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vib
 import {
   connectVibeMarketingGithub,
   controlVibeMarketingRun,
+  getVibeMarketingBaselineHistory,
   getVibeMarketingGithubRepos,
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
@@ -492,12 +493,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 
   const vibeContext = await getOptionalVibeRaisingContext(env, request);
-  const bootstrap = await getVibeMarketingBootstrap(
-    env,
-    request,
-    resolveActiveCompanyId(vibeContext.appUser),
-    "summary",
-  );
+  const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
+  const [bootstrap, baselineHistory] = await Promise.all([
+    getVibeMarketingBootstrap(env, request, activeCompanyId, "summary"),
+    getVibeMarketingBaselineHistory(env, request, activeCompanyId),
+  ]);
   const requestedStep = normalizeStep(url.searchParams.get("step"), "startupDetails");
   if (isArticleSystemSetupBlocked(bootstrap) && ["research", "chooseArticle"].includes(requestedStep)) {
     url.searchParams.set("step", "articleSystem");
@@ -525,6 +525,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
   return {
     bootstrap,
+    baselineHistory,
     githubRepos,
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
@@ -1056,7 +1057,7 @@ function PanelHeader({
 }
 
 export default function FounderToolsMarketingCreate() {
-  const { bootstrap, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
+  const { bootstrap, baselineHistory, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap, {
     hasResearchRun: Boolean(searchParams.get("researchRunId")?.trim()),
@@ -1544,6 +1545,7 @@ export default function FounderToolsMarketingCreate() {
         {setupStepActive ? (
           <VibeMarketingStartupBaselineSetup
             bootstrap={bootstrap}
+            baselineHistory={baselineHistory}
             error={topActionError}
             domainConflict={domainConflict}
             variant="workflow"

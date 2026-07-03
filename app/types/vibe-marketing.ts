@@ -774,6 +774,16 @@ export interface VibeMarketingGoogleBaselineConnection {
   connectUrl?: string | null;
 }
 
+export interface VibeMarketingBaselineHistoryPoint {
+  id?: number | null;
+  runId?: string | null;
+  status?: string | null;
+  collectedAt?: string | null;
+  overallScore?: number | null;
+  scoreCoverage?: number | null;
+  metricScores?: Record<string, number | null>;
+}
+
 export interface VibeMarketingGithubRepo {
   fullName: string;
   full_name?: string;

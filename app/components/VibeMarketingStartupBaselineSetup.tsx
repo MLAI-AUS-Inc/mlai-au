@@ -47,6 +47,7 @@ import AbnAutocomplete from "~/components/AbnAutocomplete";
 import type {
   VibeMarketingAutofillCompetitor,
   VibeMarketingAutofillResult,
+  VibeMarketingBaselineHistoryPoint,
   VibeMarketingBootstrap,
   VibeMarketingRunSummary,
   VibeMarketingWebsiteBaseline,
@@ -116,6 +117,7 @@ type SetupVariant = "landing" | "workflow";
 
 type VibeMarketingStartupBaselineSetupProps = {
   bootstrap: VibeMarketingBootstrap;
+  baselineHistory?: VibeMarketingBaselineHistoryPoint[];
   error?: string | null;
   domainConflict?: CompanyDomainConflict | null;
   variant?: SetupVariant;
@@ -713,7 +715,6 @@ function sourceStatusLabel(status?: string | null) {
 }
 
 type BaselineTone = "violet" | "emerald" | "amber" | "rose" | "sky" | "slate";
-type BaselineTrendShape = "rise" | "steady" | "flat";
 
 const baselineToneClasses: Record<
   BaselineTone,
@@ -783,19 +784,23 @@ function numberListFromUnknown(value: unknown): number[] {
     .filter((item): item is number => typeof item === "number" && Number.isFinite(item));
 }
 
-function fallbackTrendValues(score: number | null, shape: BaselineTrendShape) {
-  if (score === null) return [];
-  if (shape === "flat") return Array.from({ length: 9 }, () => score);
-  const start = shape === "rise" ? Math.max(0, score - 15) : Math.max(0, score - 5);
-  const end = shape === "rise" ? score : Math.min(100, score + 3);
-  return Array.from({ length: 9 }, (_, index) => {
-    const progress = index / 8;
-    const wave = shape === "rise" ? Math.sin(index * 1.15) * 3 : Math.sin(index * 1.7) * 2;
-    return Math.min(100, Math.max(0, start + (end - start) * progress + wave));
-  });
+function historySeriesForMetric(history: VibeMarketingBaselineHistoryPoint[], metricKey?: string): number[] {
+  if (!metricKey) return [];
+  return history
+    .map((point) => point.metricScores?.[metricKey])
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
 }
 
-function trendValuesFromMetric(metric: VibeMarketingWebsiteBaselineMetric | undefined, fallbackScore: number | null, shape: BaselineTrendShape) {
+// Only real measurements chart: cross-snapshot history first, then any series
+// the metric payload itself carries. No data means no line — a single snapshot
+// must not be dressed up as a trend.
+function trendValuesForMetric(
+  metric: VibeMarketingWebsiteBaselineMetric | undefined,
+  history: VibeMarketingBaselineHistoryPoint[],
+  metricKey?: string,
+) {
+  const historyValues = historySeriesForMetric(history, metricKey);
+  if (historyValues.length >= 2) return historyValues;
   const directKeys = ["trend", "series", "history", "values", "daily", "dailyScores", "data", "points"];
   for (const key of directKeys) {
     const values = numberListFromUnknown(metric?.[key]);
@@ -804,7 +809,7 @@ function trendValuesFromMetric(metric: VibeMarketingWebsiteBaselineMetric | unde
   const searchConsole = plainObject(metric?.googleSearchConsole);
   const searchConsoleDaily = numberListFromUnknown(searchConsole?.daily);
   if (searchConsoleDaily.length >= 2) return searchConsoleDaily;
-  return fallbackTrendValues(fallbackScore, shape);
+  return [];
 }
 
 function sparklinePoints(values: number[], width = 240, height = 74) {
@@ -1506,13 +1511,63 @@ function MiniSparkline({ values, tone }: { values: number[]; tone: BaselineTone 
   );
 }
 
-function BaselineComparisonChart() {
+function BaselineComparisonChart({ history }: { history: VibeMarketingBaselineHistoryPoint[] }) {
+  const scored = history.filter((point): point is VibeMarketingBaselineHistoryPoint & { overallScore: number } =>
+    typeof point.overallScore === "number" && Number.isFinite(point.overallScore),
+  );
+  if (scored.length >= 2) {
+    const values = scored.map((point) => point.overallScore);
+    const points = sparklinePoints(values, 236, 72);
+    const first = scored[0];
+    const last = scored[scored.length - 1];
+    const delta = Math.round(last.overallScore - first.overallScore);
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+          <p className="text-xs font-black text-gray-950">Overall score across {scored.length} snapshots</p>
+          <span
+            className={clsx(
+              "rounded-full px-2 py-0.5 text-[11px] font-black",
+              delta > 0 ? "bg-emerald-50 text-emerald-700" : delta < 0 ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-600",
+            )}
+          >
+            {delta > 0 ? `+${delta}` : delta}
+          </span>
+        </div>
+        <svg viewBox="0 0 260 92" className="mt-2 h-28 w-full overflow-visible" role="img" aria-label="Overall baseline score over time">
+          <polyline
+            points={points
+              .split(" ")
+              .map((point) => {
+                const [x, y] = point.split(",");
+                return `${Number(x) + 12},${Number(y) + 4}`;
+              })
+              .join(" ")}
+            fill="none"
+            stroke="#5b21b6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="4"
+          />
+          <text x="12" y="90" fill="#111827" fontSize="12" fontWeight="800">
+            {formatStableDate(first.collectedAt ?? "", "First")} · {Math.round(first.overallScore)}
+          </text>
+          <text x="150" y="90" fill="#111827" fontSize="12" fontWeight="800">
+            {formatStableDate(last.collectedAt ?? "", "Latest")} · {Math.round(last.overallScore)}
+          </text>
+        </svg>
+      </div>
+    );
+  }
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-      <div className="flex gap-1.5 border-b border-gray-100 pb-2">
-        <span className="h-2 w-2 rounded-full bg-violet-200" />
-        <span className="h-2 w-2 rounded-full bg-violet-200" />
-        <span className="h-2 w-2 rounded-full bg-violet-200" />
+      <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+        <div className="flex gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-violet-200" />
+          <span className="h-2 w-2 rounded-full bg-violet-200" />
+          <span className="h-2 w-2 rounded-full bg-violet-200" />
+        </div>
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-500">Example preview</span>
       </div>
       <svg viewBox="0 0 260 108" className="mt-2 h-28 w-full" role="img" aria-label="Baseline comparison illustration">
         <line x1="125" y1="0" x2="125" y2="108" stroke="#c4b5fd" strokeDasharray="5 5" strokeWidth="2" />
@@ -1538,18 +1593,18 @@ function BaselineComparisonChart() {
 
 function MetricVisual({
   metric,
-  score,
+  metricKey,
+  history,
   status,
   tone,
   visual,
-  trendShape = "rise",
 }: {
   metric?: VibeMarketingWebsiteBaselineMetric;
-  score: number | null;
+  metricKey?: string;
+  history: VibeMarketingBaselineHistoryPoint[];
   status?: string | null;
   tone: BaselineTone;
   visual: "sparkline" | "ai-sources" | "none";
-  trendShape?: BaselineTrendShape;
 }) {
   if (visual === "ai-sources") {
     const rows = aiVisibilityPlatformRows(metric);
@@ -1581,27 +1636,37 @@ function MetricVisual({
     );
   }
   if (visual === "none") return null;
-  return <MiniSparkline values={trendValuesFromMetric(metric, score, trendShape)} tone={tone} />;
+  const values = trendValuesForMetric(metric, history, metricKey);
+  if (values.length < 2) {
+    return (
+      <div className="mt-5 flex h-[74px] items-center rounded-xl bg-slate-50 px-4 text-xs font-bold leading-5 text-slate-500">
+        No trend yet — rerun the baseline after publishing to chart change over time.
+      </div>
+    );
+  }
+  return <MiniSparkline values={values} tone={tone} />;
 }
 
 function BaselineMetricCard({
   label,
   metric,
+  metricKey,
+  history = [],
   icon: Icon,
   tone,
   description,
   visual = "sparkline",
-  trendShape,
   action,
   compact = false,
 }: {
   label: string;
   metric?: VibeMarketingWebsiteBaselineMetric;
+  metricKey?: string;
+  history?: VibeMarketingBaselineHistoryPoint[];
   icon: LucideIcon;
   tone: BaselineTone;
   description: string;
   visual?: "sparkline" | "ai-sources" | "none";
-  trendShape?: BaselineTrendShape;
   action?: ReactNode;
   compact?: boolean;
 }) {
@@ -1627,7 +1692,7 @@ function BaselineMetricCard({
       </div>
       <p className={clsx("mt-2 text-sm font-semibold leading-6 text-gray-600", !compact && "line-clamp-3")}>{message ?? description}</p>
       {action ? <div className="mt-4">{action}</div> : null}
-      {!compact ? <MetricVisual metric={metric} score={score} status={status} tone={tone} visual={visual} trendShape={trendShape} /> : null}
+      {!compact ? <MetricVisual metric={metric} metricKey={metricKey} history={history} status={status} tone={tone} visual={visual} /> : null}
     </div>
   );
 }
@@ -1907,6 +1972,7 @@ function ProfileResearchProgressCard({
 
 export default function VibeMarketingStartupBaselineSetup({
   bootstrap,
+  baselineHistory = [],
   error,
   domainConflict = null,
   variant = "landing",
@@ -3155,7 +3221,7 @@ export default function VibeMarketingStartupBaselineSetup({
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <BaselineComparisonChart />
+              <BaselineComparisonChart history={baselineHistory} />
               <p className="mt-3 text-sm font-semibold leading-6 text-gray-600">We compare future results to this baseline.</p>
             </div>
           </div>
@@ -3233,6 +3299,8 @@ export default function VibeMarketingStartupBaselineSetup({
             <BaselineMetricCard
               label="Technical health"
               metric={baselineMetrics.technicalHealth}
+              metricKey="technicalHealth"
+              history={baselineHistory}
               icon={Search}
               tone="violet"
               description="How healthy and easy your site is for search engines to crawl."
@@ -3240,6 +3308,8 @@ export default function VibeMarketingStartupBaselineSetup({
             <BaselineMetricCard
               label="AI visibility"
               metric={baselineMetrics.aiVisibility}
+              metricKey="aiVisibility"
+              history={baselineHistory}
               icon={Sparkles}
               tone="sky"
               description="How often AI platforms reference your website as a source."
@@ -3248,6 +3318,8 @@ export default function VibeMarketingStartupBaselineSetup({
             <BaselineMetricCard
               label="Organic search"
               metric={baselineMetrics.organicSearch}
+              metricKey="organicSearch"
+              history={baselineHistory}
               icon={TrendingUp}
               tone="emerald"
               description="How your site performs in organic search results."
@@ -3255,10 +3327,11 @@ export default function VibeMarketingStartupBaselineSetup({
             <BaselineMetricCard
               label="Authority"
               metric={baselineMetrics.authority}
+              metricKey="authority"
+              history={baselineHistory}
               icon={Link2}
               tone="amber"
               description="How trusted your site is based on backlinks and brand signals."
-              trendShape="flat"
             />
           </div>
 

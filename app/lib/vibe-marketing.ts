@@ -24,6 +24,7 @@ import type {
   VibeMarketingScanProgress,
   VibeMarketingStepState,
   VibeMarketingStartupProfile,
+  VibeMarketingBaselineHistoryPoint,
   VibeMarketingWebsiteBaseline,
   VibeMarketingGoogleBaselineConnection,
   VibeMarketingArticleBucket,
@@ -1585,6 +1586,46 @@ export async function getVibeMarketingBootstrap(
   } catch (error) {
     if (shouldUseDevBackendFallback(error)) return DEV_BOOTSTRAP;
     throw error;
+  }
+}
+
+function normalizeBaselineHistoryPoint(raw: unknown): VibeMarketingBaselineHistoryPoint {
+  const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const metricScores: Record<string, number | null> = {};
+  if (payload.metricScores && typeof payload.metricScores === "object") {
+    for (const [key, value] of Object.entries(payload.metricScores as Record<string, unknown>)) {
+      metricScores[key] = typeof value === "number" && Number.isFinite(value) ? value : null;
+    }
+  }
+  return {
+    id: typeof payload.id === "number" ? payload.id : null,
+    runId: typeof payload.runId === "string" ? payload.runId : null,
+    status: typeof payload.status === "string" ? payload.status : null,
+    collectedAt: typeof payload.collectedAt === "string" ? payload.collectedAt : null,
+    overallScore: typeof payload.overallScore === "number" ? payload.overallScore : null,
+    scoreCoverage: typeof payload.scoreCoverage === "number" ? payload.scoreCoverage : null,
+    metricScores,
+  };
+}
+
+// Trends are progressive enhancement: never let a history failure break the
+// baseline page, just render without sparklines.
+export async function getVibeMarketingBaselineHistory(
+  env: Env,
+  request: Request,
+  companyId?: string | null,
+): Promise<VibeMarketingBaselineHistoryPoint[]> {
+  if (shouldUseDevBackendStub()) return [];
+  try {
+    const client = createApiClient(env, request);
+    const params = new URLSearchParams();
+    if (companyId) params.set("company_id", companyId);
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const response = await client.get(`${BASE_PATH}/baseline/history${query}`);
+    const raw = response.data?.snapshots;
+    return Array.isArray(raw) ? raw.map(normalizeBaselineHistoryPoint) : [];
+  } catch {
+    return [];
   }
 }
 
