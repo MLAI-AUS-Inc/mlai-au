@@ -625,6 +625,24 @@ function baselineSummaryText(summary: VibeMarketingWebsiteBaseline["summary"]) {
   return "Run a baseline to capture website health, search visibility, authority, AI visibility, and traffic before article generation starts.";
 }
 
+function baselineMeasuredCounts(baseline: VibeMarketingWebsiteBaseline) {
+  const entries = Object.values(baseline.metrics ?? {});
+  const measured = entries.filter((metric) => metric && typeof metric === "object" && metric.status === "measured").length;
+  return { measured, total: entries.length };
+}
+
+// Single narrative derived from the same bands as the scorecard legend, so the
+// status pill, the band label, and this text can never contradict each other.
+function baselineNarrative(baseline: VibeMarketingWebsiteBaseline) {
+  const score = clampScore(baseline.overallScore);
+  if (score === null) return baselineSummaryText(baseline.summary);
+  const band = baselineScoreBand(score);
+  const counts = baselineMeasuredCounts(baseline);
+  const coverageNote =
+    counts.total > 0 && counts.measured < counts.total ? ` Based on ${counts.measured} of ${counts.total} measured areas.` : "";
+  return `${band.label}: ${band.description}${coverageNote}`;
+}
+
 function metricStatus(label: string, metric?: VibeMarketingWebsiteBaselineMetric) {
   const message = typeof metric?.message === "string" ? metric.message : "";
   if (label === "Lighthouse" && /429|too many requests|googleapis|pagespeedonline|runpagespeed/i.test(message)) {
@@ -649,6 +667,9 @@ function metricMessage(label: string, metric?: VibeMarketingWebsiteBaselineMetri
   }
   if (label === "Lighthouse" && looksLikeTechnicalBaselineMessage(message)) {
     return "PageSpeed Insights could not load right now. You can keep going and retry later.";
+  }
+  if (label === "Traffic/users" && message && /accessnotconfigured|api has not been used/i.test(message)) {
+    return "Search Console is connected, but Google's Search Console API is currently disabled for this app. Retry once it is re-enabled — your connection is fine.";
   }
   if (label === "Traffic/users" && looksLikeTechnicalBaselineMessage(message)) {
     return "Search Console traffic lookup failed. You can keep going and retry it later.";
@@ -728,7 +749,9 @@ function baselineStatusLabel(baseline: VibeMarketingWebsiteBaseline, active: boo
   if (active) return "Collecting baseline";
   if (baseline.skipped) return "Skipped";
   if (baseline.stale) return "Baseline stale";
-  if (baseline.passed || baseline.status === "completed" || typeof baseline.overallScore === "number") return "Baseline ready";
+  // "Collected" is a collection status, not a quality verdict — the band label
+  // (Strong/Fair/Needs work) carries the verdict, so the two can't contradict.
+  if (baseline.passed || baseline.status === "completed" || typeof baseline.overallScore === "number") return "Baseline collected";
   return "Baseline needed";
 }
 
@@ -2041,7 +2064,9 @@ export default function VibeMarketingStartupBaselineSetup({
         ? baselineHasSnapshot
           ? trafficMetricMessage ?? "Search Console is connected. Traffic data will load automatically."
           : "Search Console is connected. Run a baseline snapshot first, then traffic can load."
-        : trafficMetricMessage ?? "Connect Search Console to include verified traffic data.";
+        : bootstrap.googleBaselineConnection?.connected
+          ? "Google is connected, but Search Console access wasn't granted. Reconnect and approve Search Console read-only access."
+          : trafficMetricMessage ?? "Connect Search Console to include verified traffic data.";
   const trafficDisplayMetric: VibeMarketingWebsiteBaselineMetric = {
     ...(trafficMetric ?? {}),
     status: trafficStatus ?? trafficMetric?.status,
@@ -2053,6 +2078,17 @@ export default function VibeMarketingStartupBaselineSetup({
   const baselineDomain = effectiveBaseline.domain || startupValues.domain || bootstrap.organization.domain || bootstrap.company.domain || "No domain saved yet";
   const baselineScore = clampScore(effectiveBaseline.overallScore);
   const baselineBand = baselineScoreBand(baselineScore);
+  const baselineMeasured = baselineMeasuredCounts(effectiveBaseline);
+  const baselineCoverage =
+    typeof effectiveBaseline.scoreCoverage === "number"
+      ? Math.min(100, Math.max(0, Math.round(effectiveBaseline.scoreCoverage)))
+      : null;
+  const baselineCoverageLabel =
+    baselineScore !== null && baselineMeasured.total > 0 && baselineMeasured.measured < baselineMeasured.total
+      ? `Measured ${baselineMeasured.measured} of ${baselineMeasured.total} areas${
+          baselineCoverage !== null ? ` (${baselineCoverage}% of score weight)` : ""
+        } — the score reflects measured areas only.`
+      : null;
   const baselineCollectedLabel = effectiveBaseline.collectedAt ? formatStableDate(effectiveBaseline.collectedAt) : "Not collected yet";
   const coreWebVitalsMetric = deriveCoreWebVitalsMetric(baselineMetrics);
   const baselineActionError = baselineStartData?.error ?? googleBaselineFetcher.data?.error ?? skipBaselineFetcher.data?.error ?? null;
@@ -3067,7 +3103,9 @@ export default function VibeMarketingStartupBaselineSetup({
                     className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50"
                   >
                     <GoogleIcon />
-                    Connect Google Search Console
+                    {bootstrap.googleBaselineConnection?.connected
+                      ? "Reconnect Google — add Search Console access"
+                      : "Connect Google Search Console"}
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 ) : (
@@ -3088,7 +3126,7 @@ export default function VibeMarketingStartupBaselineSetup({
                     We&apos;ll collect the latest data and calculate your starting metrics across SEO, visibility, and traffic.
                   </p>
                   <p className="mt-4 text-sm font-black text-gray-950">{baselineDomain}</p>
-                  <p className="mt-1 text-sm font-semibold text-gray-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-600">{baselineNarrative(effectiveBaseline)}</p>
                   <p className="mt-2 text-xs font-semibold text-gray-500">
                     Last updated: {baselineCollectedLabel}
                     {effectiveBaseline.stale ? " · stale" : ""}
@@ -3134,9 +3172,9 @@ export default function VibeMarketingStartupBaselineSetup({
                 {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 <span>
                   {baselineRun?.status === "completed"
-                    ? "Baseline ready"
+                    ? "Baseline collected"
                     : baselineRun?.status === "failed" || baselineRun?.status === "blocked"
-                      ? "Baseline needs attention"
+                      ? "Baseline collection failed"
                       : "Collecting baseline"}
                 </span>
               </div>
@@ -3150,15 +3188,20 @@ export default function VibeMarketingStartupBaselineSetup({
               <MetricInfoTooltip label="Baseline scorecard" body={metricHelpText("Baseline scorecard")} />
             </div>
             <div className="mt-4 grid gap-6 lg:grid-cols-[1.1fr_1fr_1.5fr] lg:items-center">
-              <div className="flex items-center gap-5">
-                <div>
-                  <p className="text-sm font-semibold text-gray-600">Overall baseline score</p>
-                  <div className="mt-2 flex items-end gap-2">
-                    <span className="text-5xl font-black text-gray-950">{baselineScore === null ? "-" : baselineScore}</span>
-                    <span className="pb-2 text-sm font-black text-gray-500">out of 100</span>
+              <div>
+                <div className="flex items-center gap-5">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600">Overall baseline score</p>
+                    <div className="mt-2 flex items-end gap-2">
+                      <span className="text-5xl font-black text-gray-950">{baselineScore === null ? "-" : baselineScore}</span>
+                      <span className="pb-2 text-sm font-black text-gray-500">out of 100</span>
+                    </div>
                   </div>
+                  <BaselineScoreRing score={baselineScore} tone={baselineBand.tone} />
                 </div>
-                <BaselineScoreRing score={baselineScore} tone={baselineBand.tone} />
+                {baselineCoverageLabel ? (
+                  <p className="mt-3 text-xs font-bold leading-5 text-gray-500">{baselineCoverageLabel}</p>
+                ) : null}
               </div>
 
               <div className="border-gray-100 lg:border-l lg:pl-6">
