@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-choose-a-melbourne-accelerator-program-for-ai-startups': {
+        title: "How to Choose a Melbourne Accelerator Program for AI Startups",
+        date: "2026-07-03",
+        description: "Melbourne accelerator program fit guide for AI founders comparing stage, eligibility, support, funding, timing, and next startup milestone.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-choose-a-melbourne-accelerator-program-for-ai-startups",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-789a9d24-7c30-4e6e-866c-27c9c32daf39.jpg?alt=media&token=d5330211-23c9-492a-815b-121b44ca6609",
+        imageAlt: "Melbourne AI founders comparing accelerator notes over laptops in a candid close-up mentoring session",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
