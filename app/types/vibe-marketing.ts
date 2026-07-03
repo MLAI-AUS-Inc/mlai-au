@@ -759,6 +759,7 @@ export interface VibeMarketingWebsiteBaseline {
   skipReason?: string | null;
   collectedAt?: string | null;
   overallScore?: number | null;
+  scoreCoverage?: number | null;
   summary?: string | Record<string, unknown> | null;
   metrics?: Record<string, VibeMarketingWebsiteBaselineMetric>;
   sourceStatus?: Record<string, string>;

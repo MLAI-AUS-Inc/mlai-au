@@ -1634,6 +1634,23 @@ function baselineSummaryText(summary: VibeMarketingWebsiteBaseline["summary"]) {
   return "Run a baseline to capture website health, search visibility, authority, AI visibility, and traffic before article generation starts.";
 }
 
+// Same bands as the baseline scorecard legend (80+/50+), so the dashboard strip
+// can't contradict the score shown next to it.
+function baselineNarrative(baseline: VibeMarketingWebsiteBaseline) {
+  const score = typeof baseline.overallScore === "number" ? Math.min(100, Math.max(0, Math.round(baseline.overallScore))) : null;
+  if (score === null) return baselineSummaryText(baseline.summary);
+  const band =
+    score >= 80
+      ? { label: "Strong", description: "You're well positioned to rank." }
+      : score >= 50
+        ? { label: "Fair", description: "You're on the right track with room to grow." }
+        : { label: "Needs work", description: "Important areas need attention." };
+  const entries = Object.values(baseline.metrics ?? {});
+  const measured = entries.filter((metric) => metric && typeof metric === "object" && metric.status === "measured").length;
+  const coverageNote = entries.length > 0 && measured < entries.length ? ` Based on ${measured} of ${entries.length} measured areas.` : "";
+  return `${band.label}: ${band.description}${coverageNote}`;
+}
+
 function metricStatus(label: string, metric?: VibeMarketingWebsiteBaselineMetric) {
   const message = typeof metric?.message === "string" ? metric.message : "";
   if (label === "Lighthouse" && /429|too many requests|googleapis|pagespeedonline|runpagespeed/i.test(message)) {
@@ -2295,7 +2312,9 @@ function FirstArticleSetupPage({
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm transition hover:bg-slate-50"
                   >
                     <GoogleIcon />
-                    Connect Google Search Console
+                    {bootstrap.googleBaselineConnection?.connected
+                      ? "Reconnect Google — add Search Console access"
+                      : "Connect Google Search Console"}
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 ) : (
@@ -2317,7 +2336,7 @@ function FirstArticleSetupPage({
                     This can run without Search Console. Use it to compare future article growth against today&apos;s website state.
                   </p>
                   <p className="mt-3 text-sm font-black text-slate-950">{effectiveBaseline.domain || startupValues.domain || "No domain saved yet"}</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">{baselineNarrative(effectiveBaseline)}</p>
                   {effectiveBaseline.collectedAt ? (
                     <p className="mt-1 text-xs font-semibold text-slate-500">
                       Collected {formatStableDate(effectiveBaseline.collectedAt, "recently")}
@@ -2360,9 +2379,9 @@ function FirstArticleSetupPage({
                 {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 <span>
                   {baselineRun?.status === "completed"
-                    ? "Baseline ready"
+                    ? "Baseline collected"
                     : baselineRun?.status === "failed" || baselineRun?.status === "blocked"
-                      ? "Baseline needs attention"
+                      ? "Baseline collection failed"
                       : "Collecting baseline"}
                 </span>
               </div>

@@ -1173,6 +1173,12 @@ function normalizeWebsiteBaseline(raw: unknown): VibeMarketingWebsiteBaseline {
         : typeof payload.overall_score === "number"
           ? payload.overall_score
           : null,
+    scoreCoverage:
+      typeof payload.scoreCoverage === "number"
+        ? payload.scoreCoverage
+        : typeof payload.score_coverage === "number"
+          ? payload.score_coverage
+          : null,
     summary:
       typeof summary === "string" || (summary && typeof summary === "object")
         ? (summary as VibeMarketingWebsiteBaseline["summary"])
