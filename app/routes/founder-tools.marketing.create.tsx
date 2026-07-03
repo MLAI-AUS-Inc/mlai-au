@@ -1429,12 +1429,23 @@ export default function FounderToolsMarketingCreate() {
       !pendingArticleSystemSetupRunId &&
       pendingArticleSystemScan.status === "completed",
   );
-  const setupPreviewReady = Boolean(
+  // Server-rendered stacks get no hosted preview; the run parks in
+  // code_review_ready and the reviewable surface is the branch diff on the run
+  // page, so the review CTA must not require a preview URL.
+  const setupCodeReviewReady = Boolean(
     setupStatusRun &&
       !setupPublished &&
       !setupVerifying &&
       !setupManualMergeRequired &&
-      hasExactArticleSystemSetupPreview(setupStatusRun),
+      setupChildStatus === "code_review_ready",
+  );
+  const setupPreviewReady = Boolean(
+    setupCodeReviewReady ||
+      (setupStatusRun &&
+        !setupPublished &&
+        !setupVerifying &&
+        !setupManualMergeRequired &&
+        hasExactArticleSystemSetupPreview(setupStatusRun)),
   );
   const setupLegacyNeedsPreview = Boolean(
     pendingArticleSystemScan && !pendingArticleSystemSetupRunId && SETUP_READY_STATUSES.has(pendingArticleSystemScan.status),
@@ -1478,7 +1489,7 @@ export default function FounderToolsMarketingCreate() {
       to={`/founder-tools/marketing/runs/${encodeURIComponent(setupPreviewRunId)}`}
       className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
     >
-      Review articles setup preview
+      {setupCodeReviewReady ? "Review setup changes" : "Review articles setup preview"}
       <ArrowRightIcon className="h-4 w-4" />
     </Link>
   ) : setupLegacyNeedsPreview ? (
