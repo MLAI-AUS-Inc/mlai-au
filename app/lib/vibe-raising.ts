@@ -381,6 +381,9 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     hasRevenue,
     audienceVisibility,
     registered,
+    monthlyUpdatesEnabled: Boolean(
+      payload.monthlyUpdatesEnabled ?? payload.monthly_updates_enabled,
+    ),
   };
 }
 
@@ -430,6 +433,8 @@ function normalizeProfile(raw: unknown): VibeRaisingProfile {
           payload.companyRegistered ??
           payload.company_registered ??
           payload.registered,
+        monthlyUpdatesEnabled:
+          payload.monthlyUpdatesEnabled ?? payload.monthly_updates_enabled,
       }),
     ];
   }
@@ -2112,6 +2117,21 @@ export async function saveVibeRaisingCompany(
   const client = createApiClient(env, request);
   const response = await client.post(COMPANIES_PATH, body);
   return getCompanyIdFromPayload(response.data);
+}
+
+export async function setVibeRaisingCompanyMonthlyUpdates(
+  env: Env,
+  request: Request,
+  companyId: string,
+  enabled: boolean,
+): Promise<boolean> {
+  const client = createApiClient(env, request);
+  const response = await client.post(
+    `${COMPANIES_PATH}${encodeURIComponent(companyId)}/monthly-updates/`,
+    { enabled },
+  );
+  const data = (response.data ?? {}) as Record<string, unknown>;
+  return Boolean(data.monthlyUpdatesEnabled ?? enabled);
 }
 
 export async function setVibeRaisingActiveCompany(

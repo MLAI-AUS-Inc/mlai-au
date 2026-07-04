@@ -1,6 +1,6 @@
 import type { Route } from "./+types/vibe-raising-app.companies";
 import { useState } from "react";
-import { Link, Form, redirect, useActionData, useNavigation } from "react-router";
+import { Link, Form, redirect, useActionData, useFetcher, useNavigation } from "react-router";
 import { getEnv } from "~/lib/env.server";
 import { readableBackendError } from "~/lib/backend-error";
 import {
@@ -10,6 +10,7 @@ import {
     hasSubmittedVibeRaisingUpdate,
     requireVibeRaisingFounder,
     setVibeRaisingActiveCompany,
+    setVibeRaisingCompanyMonthlyUpdates,
 } from "~/lib/vibe-raising";
 import {
     PlusIcon,
@@ -21,6 +22,7 @@ import {
     CheckBadgeIcon,
     TrashIcon,
     ExclamationTriangleIcon,
+    CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { clsx } from "clsx";
@@ -89,7 +91,96 @@ export async function action({ request, context }: Route.ActionArgs) {
         return redirect(remaining.length ? "/founder-tools/companies" : "/founder-tools/company-setup");
     }
 
+    if (intent === "toggle-monthly-updates") {
+        const env = getEnv(context);
+        const { appUser: user } = await requireVibeRaisingFounder(env, request);
+        const companyId = formData.get("companyId")?.toString() || "";
+        const enabled = formData.get("enabled")?.toString() === "true";
+
+        if (!user.companies.some((company) => company.id === companyId)) {
+            return { intent, error: "That company could not be found." };
+        }
+        try {
+            const monthlyUpdatesEnabled = await setVibeRaisingCompanyMonthlyUpdates(
+                env,
+                request,
+                companyId,
+                enabled,
+            );
+            return { intent, companyId, monthlyUpdatesEnabled };
+        } catch (error) {
+            return {
+                intent,
+                companyId,
+                error: readableBackendError(error, {
+                    fallback: "Monthly updates could not be changed.",
+                }),
+            };
+        }
+    }
+
     return null;
+}
+
+function MonthlyUpdatesToggle({ company }: { company: { id: string; monthlyUpdatesEnabled?: boolean } }) {
+    const fetcher = useFetcher<{ intent?: string; monthlyUpdatesEnabled?: boolean; error?: string }>();
+    const pending = fetcher.state !== "idle";
+    // Optimistic: reflect the in-flight submission, then the server's answer, then loader state.
+    const submittedEnabled =
+        fetcher.formData?.get("intent") === "toggle-monthly-updates"
+            ? fetcher.formData?.get("enabled") === "true"
+            : undefined;
+    const enabled =
+        submittedEnabled ??
+        fetcher.data?.monthlyUpdatesEnabled ??
+        Boolean(company.monthlyUpdatesEnabled);
+    const error = fetcher.data?.error ?? null;
+
+    return (
+        <div
+            className="mt-4 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+            style={{ borderColor: "var(--vr-color-border)", background: "var(--vr-color-surface)" }}
+        >
+            <div className="flex items-start gap-3">
+                <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: "var(--vr-color-bg)", border: "1px solid var(--vr-color-border)" }}
+                >
+                    <CalendarDaysIcon className="h-5 w-5" style={{ color: "var(--vr-color-primary)" }} />
+                </span>
+                <div className="min-w-0">
+                    <div className="text-sm font-black text-slate-950">Automated monthly updates</div>
+                    <div className="vr-text-caption" style={{ color: "var(--vr-color-text-sub)" }}>
+                        Generate an investor update for this company every month. You still review before it&apos;s sent.
+                    </div>
+                    {error ? <div className="mt-1 text-xs font-bold text-red-600">{error}</div> : null}
+                </div>
+            </div>
+            <fetcher.Form method="POST" className="shrink-0 self-start sm:self-center">
+                <input type="hidden" name="intent" value="toggle-monthly-updates" />
+                <input type="hidden" name="companyId" value={company.id} />
+                <input type="hidden" name="enabled" value={enabled ? "false" : "true"} />
+                <button
+                    type="submit"
+                    role="switch"
+                    aria-checked={enabled}
+                    disabled={pending}
+                    className={clsx(
+                        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition disabled:opacity-60",
+                    )}
+                    style={{ background: enabled ? "var(--vr-color-primary)" : "var(--vr-color-border)" }}
+                >
+                    <span className="sr-only">{enabled ? "Disable monthly updates" : "Enable monthly updates"}</span>
+                    <span
+                        className={clsx(
+                            "inline-block h-5 w-5 transform rounded-full bg-white shadow transition",
+                            enabled ? "translate-x-6" : "translate-x-1",
+                        )}
+                    />
+                </button>
+            </fetcher.Form>
+        </div>
+    );
 }
 
 export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
@@ -282,6 +373,9 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                 <span className="hidden sm:inline">Edit Details</span>
                             </Link>
                         </div>
+
+                        {/* Automated monthly investor updates opt-in */}
+                        <MonthlyUpdatesToggle company={activeCompany} />
                     </div>
                 </div>
             )}
