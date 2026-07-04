@@ -6,6 +6,7 @@ export default [
   route("/sponsors", "routes/sponsors.tsx"),
   route("/mlai-studio", "routes/mlai-studio.tsx"),
   route("/press-kit", "routes/press-kit.tsx"),
+  route("/volunteers", "routes/volunteers.tsx"),
   route("/events", "routes/events.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
