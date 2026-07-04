@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Form } from "react-router";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { Check, Mail } from "lucide-react";
@@ -25,9 +26,9 @@ const WHATSAPP_LOGO_URL =
   "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Robotics%20%26%20AI%20For%20Everyone%20(10).png?alt=media&token=20386aff-4770-472f-839e-b6086868de41";
 
 const PUBLISH_CHANNEL_FALLBACK_DETAILS: Record<VibeMarketingNotificationChannelType, string> = {
-  slack: "Connected · #mlai-research",
+  slack: "Connected",
   email: "Account email unavailable",
-  whatsapp: "Not connected · add it in Settings",
+  whatsapp: "Not connected",
 };
 
 type PublishChannelTone = "active" | "warning" | "muted";
@@ -175,6 +176,7 @@ function ChannelRow({
   accountEmail,
   accountEmailVerified,
   variant = "settings",
+  channelError,
 }: {
   type: VibeMarketingNotificationChannelType;
   channel: VibeMarketingNotificationChannel | null;
@@ -182,32 +184,125 @@ function ChannelRow({
   accountEmail?: string | null;
   accountEmailVerified?: boolean | null;
   variant?: "settings" | "publish";
+  channelError?: string | null;
 }) {
+  const [whatsappSetupOpen, setWhatsappSetupOpen] = useState(false);
   const isActive = channel?.consentState === "active";
   const isPending = channel?.consentState === "pending";
   const publishTone = publishChannelTone(type, channel, accountEmailVerified);
 
   if (variant === "publish") {
-    return (
-      <div className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
-        <div className="flex min-w-0 items-center gap-3">
-          <ChannelIcon type={type} />
-          <div className="min-w-0">
-            <p className="truncate text-base font-black leading-5 text-gray-950">{CHANNEL_LABELS[type]}</p>
-            <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-5 text-slate-600">
-              <span
-                className={clsx(
-                  "h-2 w-2 shrink-0 rounded-full",
-                  publishTone === "active" && "bg-emerald-500",
-                  publishTone === "warning" && "bg-amber-500",
-                  publishTone === "muted" && "bg-slate-400",
-                )}
-              />
-              <span className="truncate">{publishChannelDetail(type, channel, accountEmail, accountEmailVerified)}</span>
-            </p>
+    // WhatsApp connects right here: Set up -> number -> code -> verified.
+    // The verified number persists as an org notification channel, so this
+    // is one-time; the row simply shows connected on every later visit.
+    const whatsappNeedsSetup = type === "whatsapp" && !isActive && !isPending;
+    const whatsappForm =
+      type === "whatsapp" && isPending && channel?.pendingVerification ? (
+        <Form method="POST" className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+          <input type="hidden" name="channelId" value={channel.id} />
+          <p className="text-xs font-semibold text-gray-600">
+            Code sent to <span className="font-black">{channel.routeId}</span> on WhatsApp.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              name="code"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="6-digit code"
+              className="h-10 w-32 rounded-lg border border-gray-200 px-3 text-sm font-semibold tracking-widest outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
+            />
+            <button
+              type="submit"
+              name="intent"
+              value="verify-channel-otp"
+              disabled={isSubmitting}
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+            >
+              Verify
+            </button>
+            <button
+              type="submit"
+              name="intent"
+              value="resend-channel-otp"
+              disabled={isSubmitting}
+              className="text-sm font-bold text-violet-700 underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              Resend
+            </button>
           </div>
+          {typeof channel.pendingVerification.attemptsRemaining === "number" &&
+          channel.pendingVerification.attemptsRemaining < 5 ? (
+            <p className="text-[11px] font-medium text-amber-700">
+              {channel.pendingVerification.attemptsRemaining} attempts remaining.
+            </p>
+          ) : null}
+          {channelError ? <p className="text-xs font-semibold text-red-700">{channelError}</p> : null}
+        </Form>
+      ) : whatsappNeedsSetup && whatsappSetupOpen ? (
+        <Form method="POST" className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+          <input type="hidden" name="channelType" value="whatsapp" />
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="tel"
+              name="routeId"
+              placeholder="+61 400 000 000"
+              className="h-10 w-48 rounded-lg border border-gray-200 px-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
+            />
+            <button
+              type="submit"
+              name="intent"
+              value="connect-channel"
+              disabled={isSubmitting}
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+            >
+              Send code
+            </button>
+          </div>
+          <p className="text-[11px] font-medium text-gray-500">
+            International format. We&apos;ll send a 6-digit code on WhatsApp — one-time setup.
+          </p>
+          {channelError ? <p className="text-xs font-semibold text-red-700">{channelError}</p> : null}
+        </Form>
+      ) : null;
+
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+        <div className="flex min-h-[52px] items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <ChannelIcon type={type} />
+            <div className="min-w-0">
+              <p className="truncate text-base font-black leading-5 text-gray-950">{CHANNEL_LABELS[type]}</p>
+              <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-5 text-slate-600">
+                <span
+                  className={clsx(
+                    "h-2 w-2 shrink-0 rounded-full",
+                    publishTone === "active" && "bg-emerald-500",
+                    publishTone === "warning" && "bg-amber-500",
+                    publishTone === "muted" && "bg-slate-400",
+                  )}
+                />
+                <span className="truncate">{publishChannelDetail(type, channel, accountEmail, accountEmailVerified)}</span>
+              </p>
+            </div>
+          </div>
+          {whatsappNeedsSetup ? (
+            <button
+              type="button"
+              onClick={() => setWhatsappSetupOpen((open) => !open)}
+              className={clsx(
+                "shrink-0 rounded-md px-3 py-1.5 text-[10px] font-black uppercase tracking-wide shadow-sm transition",
+                whatsappSetupOpen
+                  ? "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                  : "bg-violet-600 text-white hover:bg-violet-700",
+              )}
+            >
+              {whatsappSetupOpen ? "Cancel" : "Set up"}
+            </button>
+          ) : (
+            <PublishChannelStatusBadge tone={publishTone} />
+          )}
         </div>
-        <PublishChannelStatusBadge tone={publishTone} />
+        {whatsappForm}
       </div>
     );
   }
@@ -372,7 +467,7 @@ export default function DailyReminderChannels({
   return (
     <div className={clsx("space-y-2", variant === "publish" && "space-y-2.5")}>
       <p className="text-xs font-black uppercase tracking-wide text-gray-500">Notification channels</p>
-      {channelError ? (
+      {channelError && variant !== "publish" ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700">
           {channelError}
         </p>
@@ -386,7 +481,13 @@ export default function DailyReminderChannels({
         accountEmailVerified={accountEmailVerified}
         variant={variant}
       />
-      <ChannelRow type="whatsapp" channel={pickChannel(channels, "whatsapp")} isSubmitting={isSubmitting} variant={variant} />
+      <ChannelRow
+        type="whatsapp"
+        channel={pickChannel(channels, "whatsapp")}
+        isSubmitting={isSubmitting}
+        variant={variant}
+        channelError={variant === "publish" ? channelError : null}
+      />
     </div>
   );
 }

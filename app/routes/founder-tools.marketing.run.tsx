@@ -2841,6 +2841,8 @@ function PublishDailyResearchReminderCard({
   isSubmitting,
   accountEmail,
   accountEmailVerified,
+  channelActionError,
+  channelActionIntent,
 }: {
   channels: VibeMarketingNotificationChannel[];
   dailyEnabled: boolean;
@@ -2851,6 +2853,8 @@ function PublishDailyResearchReminderCard({
   isSubmitting: boolean;
   accountEmail?: string | null;
   accountEmailVerified?: boolean | null;
+  channelActionError?: string | null;
+  channelActionIntent?: string | null;
 }) {
   const statusLabel = dailyEnabled ? "Enabled" : dailyReady ? "Ready" : "Needs setup";
 
@@ -2883,6 +2887,8 @@ function PublishDailyResearchReminderCard({
           isSubmitting={isSubmitting}
           accountEmail={accountEmail}
           accountEmailVerified={accountEmailVerified}
+          error={channelActionError}
+          errorIntent={channelActionIntent}
           variant="publish"
         />
       </div>
@@ -2947,6 +2953,8 @@ function PublishAndAutomateDetail({
   isActionPending,
   accountEmail,
   accountEmailVerified,
+  channelActionError,
+  channelActionIntent,
 }: {
   run: VibeMarketingRunSummary;
   bootstrap: VibeMarketingBootstrap;
@@ -2954,6 +2962,8 @@ function PublishAndAutomateDetail({
   isActionPending?: (...keys: string[]) => boolean;
   accountEmail?: string | null;
   accountEmailVerified?: boolean | null;
+  channelActionError?: string | null;
+  channelActionIntent?: string | null;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const automationStep = run.workflowProgress?.steps.find((step) => step.id === "automation");
@@ -3348,6 +3358,8 @@ function PublishAndAutomateDetail({
             isSubmitting={isSubmitting}
             accountEmail={accountEmail}
             accountEmailVerified={accountEmailVerified}
+            channelActionError={channelActionError}
+            channelActionIntent={channelActionIntent}
           />
         </div>
 
@@ -4406,6 +4418,8 @@ export default function FounderToolsMarketingRun() {
               isActionPending={pendingActions.isPending}
               accountEmail={accountEmail}
               accountEmailVerified={accountEmailVerified}
+              channelActionError={actionData?.error ?? null}
+              channelActionIntent={actionData && "intent" in actionData ? String(actionData.intent) : null}
             />
           ) : isArticleGenerationRun ? (
             <ArticleGenerationReviewDetail
