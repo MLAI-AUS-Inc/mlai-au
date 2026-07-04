@@ -2123,6 +2123,35 @@ export async function setVibeRaisingActiveCompany(
   await client.post(ACTIVE_COMPANY_PATH, { companyId });
 }
 
+export type VibeRaisingCompanyOffboarding = {
+  companyId: string;
+  gmailDisconnected: boolean;
+  connectionsRemoved: number;
+  orgShared: boolean;
+  orgDataPurged: boolean;
+  newActiveCompanyId?: string | null;
+  warnings: string[];
+};
+
+/**
+ * Delete (offboard) a company: the backend revokes its integrations, purges its
+ * data, re-points the active company, and frees the domain. Returns the
+ * offboarding summary and the refreshed profile's new active company id.
+ */
+export async function deleteVibeRaisingCompany(
+  env: Env,
+  request: Request,
+  companyId: string,
+): Promise<{ offboarding: VibeRaisingCompanyOffboarding | null; newActiveCompanyId: string | null }> {
+  const client = createApiClient(env, request);
+  const response = await client.delete(`${COMPANIES_PATH}${encodeURIComponent(companyId)}/`);
+  const data = (response.data ?? {}) as Record<string, any>;
+  const offboarding = (data.offboarding ?? null) as VibeRaisingCompanyOffboarding | null;
+  const newActiveCompanyId =
+    (data.profile?.activeCompanyId ?? offboarding?.newActiveCompanyId ?? null) || null;
+  return { offboarding, newActiveCompanyId };
+}
+
 // Local dev only: seeded monthly updates so the founder's "My Updates" page
 // shows realistic content without the backend.
 const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [

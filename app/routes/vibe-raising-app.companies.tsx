@@ -1,7 +1,10 @@
 import type { Route } from "./+types/vibe-raising-app.companies";
-import { Link, Form, redirect, useNavigation } from "react-router";
+import { useState } from "react";
+import { Link, Form, redirect, useActionData, useNavigation } from "react-router";
 import { getEnv } from "~/lib/env.server";
+import { readableBackendError } from "~/lib/backend-error";
 import {
+    deleteVibeRaisingCompany,
     getActiveVibeRaisingCompany,
     getVibeRaisingMonthlyUpdates,
     hasSubmittedVibeRaisingUpdate,
@@ -16,6 +19,8 @@ import {
     GlobeAltIcon,
     IdentificationIcon,
     CheckBadgeIcon,
+    TrashIcon,
+    ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { clsx } from "clsx";
@@ -53,7 +58,37 @@ export async function action({ request, context }: Route.ActionArgs) {
 
         return redirect(hasExistingUpdate ? "/founder-tools/updates" : "/founder-tools/updates/create");
     }
-    
+
+    if (intent === "delete-company") {
+        const env = getEnv(context);
+        const { appUser: user } = await requireVibeRaisingFounder(env, request);
+        const companyId = formData.get("companyId")?.toString() || "";
+        const target = user.companies.find((company) => company.id === companyId);
+
+        // Ownership is re-checked server-side; this just avoids a pointless call.
+        if (!target) {
+            return { intent, error: "That company could not be found." };
+        }
+        // Guard against a stale form where the typed confirmation no longer matches.
+        const confirmName = formData.get("confirmName")?.toString().trim() ?? "";
+        if (confirmName !== target.name.trim()) {
+            return { intent, error: "Type the company name exactly to confirm removal." };
+        }
+
+        try {
+            await deleteVibeRaisingCompany(env, request, companyId);
+        } catch (error) {
+            return {
+                intent,
+                error: readableBackendError(error, { fallback: "That company could not be removed." }),
+            };
+        }
+
+        // A founder with no companies left onboards again; otherwise back to the list.
+        const remaining = user.companies.filter((company) => company.id !== companyId);
+        return redirect(remaining.length ? "/founder-tools/companies" : "/founder-tools/company-setup");
+    }
+
     return null;
 }
 
@@ -61,7 +96,20 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
     const { user, activeCompanyId, activeCompanyHasUpdates } = loaderData;
     const companies = user.companies || [];
     const navigation = useNavigation();
+    const actionData = useActionData<typeof action>();
     const isSwitching = navigation.state === "submitting" && navigation.formData?.get("intent") === "switch-company";
+    const deletingCompanyId =
+        navigation.state === "submitting" && navigation.formData?.get("intent") === "delete-company"
+            ? navigation.formData?.get("companyId")?.toString() ?? null
+            : null;
+    const deleteError =
+        actionData && "intent" in actionData && actionData.intent === "delete-company"
+            ? (actionData as { error?: string }).error ?? null
+            : null;
+
+    // Which company's danger-zone confirmation is expanded, and the typed name.
+    const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
+    const [confirmName, setConfirmName] = useState("");
 
     const activeCompany = companies.find((c) => c.id === activeCompanyId) || companies[0];
     const otherCompanies = companies.filter((c) => c.id !== activeCompany?.id);
@@ -322,6 +370,102 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                     <span className="hidden sm:inline">Register another company</span>
                 </span>
             </Link>
+
+            {/* Danger zone — remove a company (revokes its integrations + deletes its data) */}
+            {companies.length > 0 && (
+                <div
+                    className="rounded-2xl border p-5 sm:p-6"
+                    style={{ borderColor: "rgba(220, 38, 38, 0.25)", background: "rgba(254, 242, 242, 0.5)" }}
+                >
+                    <div className="flex items-center gap-2">
+                        <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+                        <h3 className="text-sm font-black uppercase tracking-wide text-red-700">Danger zone</h3>
+                    </div>
+                    <p className="mt-1.5 text-sm font-semibold text-red-900/80">
+                        Removing a company disconnects its integrations (Gmail, Stripe, Notion, Slack, and the rest) and
+                        permanently deletes its updates and articles. This cannot be undone.
+                    </p>
+
+                    <div className="mt-4 space-y-2.5">
+                        {companies.map((company) => {
+                            const isConfirming = pendingRemovalId === company.id;
+                            const isDeleting = deletingCompanyId === company.id;
+                            const confirmMatches = confirmName.trim() === company.name.trim();
+                            return (
+                                <div
+                                    key={company.id}
+                                    className="rounded-xl border bg-white p-4"
+                                    style={{ borderColor: "rgba(220, 38, 38, 0.18)" }}
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="truncate text-sm font-black text-gray-950">{company.name}</div>
+                                            {company.domain && (
+                                                <div className="truncate text-xs font-semibold text-gray-500">{company.domain}</div>
+                                            )}
+                                        </div>
+                                        {!isConfirming ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPendingRemovalId(company.id);
+                                                    setConfirmName("");
+                                                }}
+                                                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-black text-red-700 transition hover:bg-red-50"
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
+                                                Remove
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPendingRemovalId(null);
+                                                    setConfirmName("");
+                                                }}
+                                                className="shrink-0 rounded-lg px-3 py-2 text-xs font-black text-gray-500 transition hover:text-gray-800"
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {isConfirming && (
+                                        <Form method="POST" className="mt-3 border-t border-red-100 pt-3">
+                                            <input type="hidden" name="intent" value="delete-company" />
+                                            <input type="hidden" name="companyId" value={company.id} />
+                                            <label className="block text-xs font-bold text-gray-700">
+                                                Type <span className="font-black text-gray-950">{company.name}</span> to confirm
+                                            </label>
+                                            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                                                <input
+                                                    name="confirmName"
+                                                    value={confirmName}
+                                                    onChange={(event) => setConfirmName(event.target.value)}
+                                                    autoComplete="off"
+                                                    placeholder={company.name}
+                                                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-500/10"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    disabled={!confirmMatches || isDeleting}
+                                                    className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    <TrashIcon className="h-4 w-4" />
+                                                    {isDeleting ? "Removing…" : "Remove company"}
+                                                </button>
+                                            </div>
+                                            {deleteError && (
+                                                <p className="mt-2 text-xs font-bold text-red-700">{deleteError}</p>
+                                            )}
+                                        </Form>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
