@@ -56,6 +56,7 @@ function setupStepLabel(stepKey: string) {
     fetch_org_config: "Loading setup context",
     synthesize_repository_contract: "Preparing setup instructions",
     draft_article_system_setup: "Drafting articles setup changes",
+    compose_article_kit: "Generating article components",
     build_preview: "Building articles setup preview",
     render_preview: "Rendering articles setup preview",
     package_preview: "Preparing review assets",
