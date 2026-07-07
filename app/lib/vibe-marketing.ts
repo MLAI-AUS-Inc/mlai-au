@@ -2047,6 +2047,8 @@ export function normalizeNotificationChannel(payload: unknown): VibeMarketingNot
     consentState: String(
       data.consentState ?? data.consent_state ?? "pending",
     ) as VibeMarketingNotificationChannel["consentState"],
+    // Absent on legacy payloads → treat as enabled (matches the backend default).
+    deliveryEnabled: Boolean(data.deliveryEnabled ?? data.delivery_enabled ?? true),
     verifiedAt: asNullableString(data.verifiedAt ?? data.verified_at),
     isPrimary: Boolean(data.isPrimary ?? data.is_primary),
     pendingVerification: pending
@@ -2149,6 +2151,20 @@ export async function saveResearchAutomation(
 ) {
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/notifications/automation`, body);
+  return normalizeNotificationChannelsPayload(response.data);
+}
+
+export async function setNotificationChannelDelivery(
+  env: Env,
+  request: Request,
+  channelId: string,
+  enabled: boolean,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.patch(
+    `${BASE_PATH}/notifications/channels/${encodeURIComponent(channelId)}`,
+    { deliveryEnabled: enabled },
+  );
   return normalizeNotificationChannelsPayload(response.data);
 }
 

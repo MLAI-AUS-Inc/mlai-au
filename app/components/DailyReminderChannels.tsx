@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Form } from "react-router";
+import { Form, useFetcher } from "react-router";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { Check, Mail } from "lucide-react";
 import { clsx } from "clsx";
@@ -143,6 +143,60 @@ function PublishChannelStatusBadge({ tone }: { tone: PublishChannelTone }) {
     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-600 text-white shadow-sm">
       <Check className="h-4 w-4" strokeWidth={3} />
     </span>
+  );
+}
+
+// Checkbox that toggles whether a connected channel receives the daily reminder.
+// Submits inline via a fetcher (no page nav), reflects the sent value optimistically,
+// and reverts + shows the reason if the server rejects (e.g. the last channel).
+function DeliveryToggle({
+  channel,
+  type,
+  isSubmitting,
+}: {
+  channel: VibeMarketingNotificationChannel;
+  type: VibeMarketingNotificationChannelType;
+  isSubmitting: boolean;
+}) {
+  const fetcher = useFetcher<{ intent?: string; ok?: boolean; error?: string }>();
+  const busy = fetcher.state !== "idle";
+  const sent = fetcher.formData?.get("enabled");
+  const checked = sent != null ? sent === "true" : channel.deliveryEnabled;
+  const error = !busy && fetcher.data?.error ? fetcher.data.error : null;
+  const next = !checked;
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <fetcher.Form method="POST" className="inline">
+        <input type="hidden" name="intent" value="set-channel-delivery" />
+        <input type="hidden" name="channelId" value={channel.id} />
+        <input type="hidden" name="enabled" value={next ? "true" : "false"} />
+        <button
+          type="submit"
+          role="switch"
+          aria-checked={checked}
+          aria-label={`Send the daily research reminder via ${CHANNEL_LABELS[type]}`}
+          title={
+            checked
+              ? `Sending via ${CHANNEL_LABELS[type]} — click to stop`
+              : `Not sending via ${CHANNEL_LABELS[type]} — click to enable`
+          }
+          disabled={isSubmitting || busy}
+          className={clsx(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:opacity-60",
+            checked
+              ? "border-violet-600 bg-violet-600 text-white hover:bg-violet-700"
+              : "border-gray-300 bg-white text-transparent hover:border-violet-400",
+          )}
+        >
+          <Check className="h-4 w-4" strokeWidth={3} />
+        </button>
+      </fetcher.Form>
+      {error ? (
+        <span className="max-w-[9.5rem] text-right text-[10px] font-semibold leading-tight text-red-600">
+          {error}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -298,6 +352,8 @@ function ChannelRow({
             >
               {whatsappSetupOpen ? "Cancel" : "Set up"}
             </button>
+          ) : isActive && channel ? (
+            <DeliveryToggle channel={channel} type={type} isSubmitting={isSubmitting} />
           ) : (
             <PublishChannelStatusBadge tone={publishTone} />
           )}
