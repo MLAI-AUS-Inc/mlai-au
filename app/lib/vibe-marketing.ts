@@ -159,6 +159,7 @@ function normalizeGithubRepo(value: unknown): VibeMarketingGithubRepo | null {
   if (!fullName) return null;
   const defaultBranch = asNullableString(payload.defaultBranch) ?? asNullableString(payload.default_branch);
   const installationId = asNullableString(payload.installationId) ?? asNullableString(payload.installation_id);
+  const accountLogin = asNullableString(payload.accountLogin) ?? asNullableString(payload.account_login);
   return {
     fullName,
     full_name: fullName,
@@ -169,6 +170,8 @@ function normalizeGithubRepo(value: unknown): VibeMarketingGithubRepo | null {
     default_branch: defaultBranch,
     installationId,
     installation_id: installationId,
+    accountLogin,
+    account_login: accountLogin,
   };
 }
 
