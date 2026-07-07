@@ -63,6 +63,7 @@ import {
   removeNotificationChannel,
   replayVibeMarketingDaily,
   resendNotificationChannelCode,
+  setNotificationChannelDelivery,
   submitVibeMarketingArticleSystemComments,
   submitVibeMarketingComponentComments,
   startVibeMarketingScan,
@@ -589,6 +590,14 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       await resendNotificationChannelCode(env, request, stringFromForm(formData, "channelId"));
     } else if (intent === "remove-channel") {
       await removeNotificationChannel(env, request, stringFromForm(formData, "channelId"));
+    } else if (intent === "set-channel-delivery") {
+      const channelId = stringFromForm(formData, "channelId");
+      if (!channelId) return { intent, error: "Missing channel." };
+      const enabled = stringFromForm(formData, "enabled") === "true";
+      await setNotificationChannelDelivery(env, request, channelId, enabled);
+      // Return (rather than fall through to the redirect below) so the toggle's
+      // fetcher stays inline; loader revalidation refreshes the checkbox state.
+      return { intent, ok: true };
     } else if (["approve", "deny", "resume", "restart", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const targetRunId = stringFromForm(formData, "targetRunId");
