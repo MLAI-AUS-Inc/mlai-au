@@ -796,6 +796,8 @@ export interface VibeMarketingGithubRepo {
   default_branch?: string | null;
   installationId?: string | null;
   installation_id?: string | null;
+  accountLogin?: string | null;
+  account_login?: string | null;
 }
 
 export interface VibeMarketingGithubReposResponse {

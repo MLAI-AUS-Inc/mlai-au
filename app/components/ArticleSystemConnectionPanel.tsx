@@ -106,6 +106,37 @@ function repoNames(githubRepos: VibeMarketingGithubReposResponse) {
     .filter(Boolean);
 }
 
+// Group the shared repo pool by the GitHub account it belongs to, so a founder
+// with more than one connected account (e.g. a personal account + a GitHub org)
+// sees the picker split into labelled sections instead of one flat list.
+function reposByAccount(
+  githubRepos: VibeMarketingGithubReposResponse,
+): Array<{ account: string; repos: string[] }> {
+  const list = githubRepos.repos?.length ? githubRepos.repos : githubRepos.repositories ?? [];
+  const groups = new Map<string, string[]>();
+  for (const repo of list) {
+    const fullName = repo.fullName || repo.full_name || [repo.owner, repo.name].filter(Boolean).join("/");
+    if (!fullName) continue;
+    const account =
+      repo.accountLogin ||
+      repo.account_login ||
+      repo.owner ||
+      (fullName.includes("/") ? fullName.split("/")[0] : "") ||
+      "Other";
+    const existing = groups.get(account);
+    if (existing) existing.push(fullName);
+    else groups.set(account, [fullName]);
+  }
+  return Array.from(groups.entries()).map(([account, repos]) => ({ account, repos }));
+}
+
+// Distinct GitHub accounts represented in the shared pool (for the connected label).
+function connectedGithubAccounts(githubRepos: VibeMarketingGithubReposResponse): string[] {
+  return reposByAccount(githubRepos)
+    .map((group) => group.account)
+    .filter((account) => account && account !== "Other");
+}
+
 function selectedRepoName({
   bootstrap,
   githubRepos,
@@ -641,6 +672,8 @@ export default function ArticleSystemConnectionPanel({
   const connected = isGithubConnected(githubRepos, bootstrap);
   void showDenySetupAction;
   const repos = repoNames(githubRepos);
+  const accountGroups = reposByAccount(githubRepos);
+  const githubAccounts = connectedGithubAccounts(githubRepos);
   const selectedRepo = selectedRepoName({ bootstrap, githubRepos, repos, repoSelection });
   const repoUrl = selectedRepo.includes("/") ? `https://github.com/${selectedRepo}` : "";
   const scaffoldReady = Boolean(bootstrap.checks.scaffold?.passed);
@@ -1236,11 +1269,21 @@ export default function ArticleSystemConnectionPanel({
                         {...repoControlProps}
                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
                       >
-                        {repos.map((repo) => (
-                          <option key={repo} value={repo}>
-                            {repo}
-                          </option>
-                        ))}
+                        {accountGroups.length > 1
+                          ? accountGroups.map((group) => (
+                              <optgroup key={group.account} label={group.account}>
+                                {group.repos.map((repo) => (
+                                  <option key={repo} value={repo}>
+                                    {repo}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ))
+                          : repos.map((repo) => (
+                              <option key={repo} value={repo}>
+                                {repo}
+                              </option>
+                            ))}
                       </select>
                     ) : (
                       <input
@@ -1269,7 +1312,9 @@ export default function ArticleSystemConnectionPanel({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="flex items-center gap-2 text-sm font-semibold text-slate-500">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    Connected to GitHub{selectedRepo ? ` as ${selectedRepo.split("/")[0]}` : ""}.
+                    {githubAccounts.length > 1
+                      ? `Connected to GitHub · ${githubAccounts.join(", ")}.`
+                      : `Connected to GitHub${selectedRepo ? ` as ${selectedRepo.split("/")[0]}` : ""}.`}
                     {repoUrl ? (
                       <a href={repoUrl} target="_blank" rel="noreferrer" className="inline-flex text-slate-500 transition hover:text-violet-700">
                         <ExternalLink className="h-4 w-4" />
@@ -1283,7 +1328,7 @@ export default function ArticleSystemConnectionPanel({
                     onClick={markGithubAuthOpen}
                     className="text-sm font-black text-violet-700 transition hover:text-violet-900"
                   >
-                    Manage GitHub access
+                    Add or manage GitHub accounts
                   </a>
                 </div>
               </div>
