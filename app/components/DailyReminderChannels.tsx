@@ -26,8 +26,8 @@ const WHATSAPP_LOGO_URL =
   "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Robotics%20%26%20AI%20For%20Everyone%20(10).png?alt=media&token=20386aff-4770-472f-839e-b6086868de41";
 
 const PUBLISH_CHANNEL_FALLBACK_DETAILS: Record<VibeMarketingNotificationChannelType, string> = {
-  slack: "Connected",
-  email: "Account email unavailable",
+  slack: "Not receiving daily topics",
+  email: "Not receiving daily topics",
   whatsapp: "Not connected",
 };
 
@@ -97,31 +97,25 @@ function publishChannelDetail(
   type: VibeMarketingNotificationChannelType,
   channel: VibeMarketingNotificationChannel | null,
   accountEmail?: string | null,
-  accountEmailVerified?: boolean | null,
 ) {
-  if (type === "email" && accountEmail) {
-    const verifiedLabel = accountEmailVerified === false ? "Unverified" : "Verified";
-    return `${accountEmail} · ${verifiedLabel}`;
-  }
+  // Reflect the real channel, not the account email: a channel delivers only when
+  // it exists and is ACTIVE. "Connected · route" for active, honest off/pending state otherwise.
   if (channel?.consentState === "active") return activeChannelDetail(type, channel);
-  if (type === "whatsapp" && channel?.consentState === "pending") {
-    return `${channel.routeId || "Number"} · Verification pending`;
+  if (channel?.consentState === "pending") {
+    if (type === "email") return `${channel.routeId || accountEmail || "Email"} · Confirm to start`;
+    if (type === "whatsapp") return `${channel.routeId || "Number"} · Verification pending`;
   }
+  if (type === "email" && accountEmail) return `${accountEmail} · Off`;
   return PUBLISH_CHANNEL_FALLBACK_DETAILS[type];
 }
 
 function publishChannelTone(
-  type: VibeMarketingNotificationChannelType,
   channel: VibeMarketingNotificationChannel | null,
-  accountEmailVerified?: boolean | null,
 ): PublishChannelTone {
-  if (type === "whatsapp") {
-    if (channel?.consentState === "active") return "active";
-    if (channel?.consentState === "pending") return "warning";
-    return "muted";
-  }
-  if (type === "email" && accountEmailVerified === false) return "warning";
-  return "active";
+  // Honest across all types: green only when there's a real ACTIVE channel.
+  if (channel?.consentState === "active") return "active";
+  if (channel?.consentState === "pending") return "warning";
+  return "muted";
 }
 
 function PublishChannelStatusBadge({ tone }: { tone: PublishChannelTone }) {
@@ -200,6 +194,73 @@ function DeliveryToggle({
   );
 }
 
+// Checkbox for a channel TYPE (Slack/Email) that may not be connected yet.
+// Enabling connects on first use (Slack instant; Email sends a verification link),
+// then flips delivery on/off. Inline fetcher + optimistic state + honest pending/error text.
+function ChannelTypeToggle({
+  type,
+  channel,
+  isSubmitting,
+  accountEmail,
+}: {
+  type: VibeMarketingNotificationChannelType;
+  channel: VibeMarketingNotificationChannel | null;
+  isSubmitting: boolean;
+  accountEmail?: string | null;
+}) {
+  const fetcher = useFetcher<{ intent?: string; ok?: boolean; error?: string; status?: string }>();
+  const busy = fetcher.state !== "idle";
+  const isPending = channel?.consentState === "pending";
+  // "On" only when a real ACTIVE channel is actually delivering.
+  const serverChecked = channel?.consentState === "active" && Boolean(channel?.deliveryEnabled);
+  const sent = fetcher.formData?.get("enabled");
+  const checked = sent != null ? sent === "true" : serverChecked;
+  const next = !checked;
+  const status = !busy ? fetcher.data?.status : undefined;
+  const error = !busy && fetcher.data?.error ? fetcher.data.error : null;
+  // Email just enabled but not verified yet, or a still-pending channel: nudge to confirm.
+  const awaitingConfirm = type === "email" && (status === "verification_sent" || isPending);
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <fetcher.Form method="POST" className="inline">
+        <input type="hidden" name="intent" value="set-channel-type-delivery" />
+        <input type="hidden" name="channelType" value={type} />
+        <input type="hidden" name="enabled" value={next ? "true" : "false"} />
+        <button
+          type="submit"
+          role="switch"
+          aria-checked={checked}
+          aria-label={`Send the daily research reminder via ${CHANNEL_LABELS[type]}`}
+          title={
+            checked
+              ? `Sending via ${CHANNEL_LABELS[type]} — click to stop`
+              : `Not sending via ${CHANNEL_LABELS[type]} — click to enable`
+          }
+          disabled={isSubmitting || busy}
+          className={clsx(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:opacity-60",
+            checked
+              ? "border-violet-600 bg-violet-600 text-white hover:bg-violet-700"
+              : "border-gray-300 bg-white text-transparent hover:border-violet-400",
+          )}
+        >
+          <Check className="h-4 w-4" strokeWidth={3} />
+        </button>
+      </fetcher.Form>
+      {awaitingConfirm ? (
+        <span className="max-w-[10rem] text-right text-[10px] font-semibold leading-tight text-amber-700">
+          Check your inbox{accountEmail ? ` (${accountEmail})` : ""} to confirm.
+        </span>
+      ) : null}
+      {error ? (
+        <span className="max-w-[10rem] text-right text-[10px] font-semibold leading-tight text-red-600">
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function ChannelIcon({ type }: { type: VibeMarketingNotificationChannelType }) {
   const iconClassName = "h-7 w-7";
   if (type === "slack") {
@@ -243,7 +304,7 @@ function ChannelRow({
   const [whatsappSetupOpen, setWhatsappSetupOpen] = useState(false);
   const isActive = channel?.consentState === "active";
   const isPending = channel?.consentState === "pending";
-  const publishTone = publishChannelTone(type, channel, accountEmailVerified);
+  const publishTone = publishChannelTone(channel);
 
   if (variant === "publish") {
     // WhatsApp connects right here: Set up -> number -> code -> verified.
@@ -335,7 +396,7 @@ function ChannelRow({
                     publishTone === "muted" && "bg-slate-400",
                   )}
                 />
-                <span className="truncate">{publishChannelDetail(type, channel, accountEmail, accountEmailVerified)}</span>
+                <span className="truncate">{publishChannelDetail(type, channel, accountEmail)}</span>
               </p>
             </div>
           </div>
@@ -352,10 +413,19 @@ function ChannelRow({
             >
               {whatsappSetupOpen ? "Cancel" : "Set up"}
             </button>
-          ) : isActive && channel ? (
-            <DeliveryToggle channel={channel} type={type} isSubmitting={isSubmitting} />
+          ) : type === "whatsapp" ? (
+            isActive && channel ? (
+              <DeliveryToggle channel={channel} type={type} isSubmitting={isSubmitting} />
+            ) : (
+              <PublishChannelStatusBadge tone={publishTone} />
+            )
           ) : (
-            <PublishChannelStatusBadge tone={publishTone} />
+            <ChannelTypeToggle
+              type={type}
+              channel={channel}
+              isSubmitting={isSubmitting}
+              accountEmail={accountEmail}
+            />
           )}
         </div>
         {whatsappForm}

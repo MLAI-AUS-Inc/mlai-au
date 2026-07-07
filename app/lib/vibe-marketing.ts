@@ -2168,6 +2168,26 @@ export async function setNotificationChannelDelivery(
   return normalizeNotificationChannelsPayload(response.data);
 }
 
+// Turn daily delivery on/off for a whole channel TYPE (slack/email/whatsapp),
+// connecting on first enable where the method allows it. `status` reflects the
+// outcome: "active" | "verification_sent" (email pending) | "disabled".
+export async function setChannelTypeDelivery(
+  env: Env,
+  request: Request,
+  channelType: string,
+  enabled: boolean,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/notifications/channels/delivery`, {
+    channelType,
+    enabled,
+  });
+  return {
+    ...normalizeNotificationChannelsPayload(response.data),
+    status: asNullableString(response.data?.status) ?? "",
+  };
+}
+
 export async function getVibeMarketingRun(
   env: Env,
   request: Request,

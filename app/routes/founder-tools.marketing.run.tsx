@@ -63,6 +63,7 @@ import {
   removeNotificationChannel,
   replayVibeMarketingDaily,
   resendNotificationChannelCode,
+  setChannelTypeDelivery,
   setNotificationChannelDelivery,
   submitVibeMarketingArticleSystemComments,
   submitVibeMarketingComponentComments,
@@ -598,6 +599,13 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       // Return (rather than fall through to the redirect below) so the toggle's
       // fetcher stays inline; loader revalidation refreshes the checkbox state.
       return { intent, ok: true };
+    } else if (intent === "set-channel-type-delivery") {
+      const channelType = stringFromForm(formData, "channelType");
+      if (!channelType) return { intent, error: "Missing channel." };
+      const enabled = stringFromForm(formData, "enabled") === "true";
+      // Type-based: connects Slack/Email on first enable (email → verification sent).
+      const result = await setChannelTypeDelivery(env, request, channelType, enabled);
+      return { intent, ok: true, status: result.status };
     } else if (["approve", "deny", "resume", "restart", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const targetRunId = stringFromForm(formData, "targetRunId");
