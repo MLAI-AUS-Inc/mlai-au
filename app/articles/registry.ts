@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-invest-in-business-startups-without-guesswork': {
+        title: "How to Invest in Business Startups Without Guesswork",
+        date: "2026-07-07",
+        description: "Invest in business startups with clearer options, readiness checks, and a practical route for comparing opportunities before committing capital.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-invest-in-business-startups-without-guesswork",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c0e45464-001e-4d58-8b2a-4c3867ac8ef3.jpg?alt=media&token=17fdbf00-856a-4180-ad5d-5831a17c2d8f",
+        imageAlt: "Close-up of founders and investor comparing startup notes and financials at a cafe table",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
