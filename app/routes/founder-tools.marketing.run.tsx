@@ -1179,6 +1179,7 @@ function ArticleSystemSetupPreviewPanel({
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
 }) {
+  const submitCommentsFetcher = useFetcher<typeof action>();
   const setup = articleSystemSetupPayload(run);
   const source = sourceRun ?? run;
   const repo = run.githubRepo || source.githubRepo || stringResultValue(run, "github_repo", "githubRepo") || stringResultValue(source, "github_repo", "githubRepo");
@@ -1312,52 +1313,68 @@ function ArticleSystemSetupPreviewPanel({
             if (setupAlreadyApproved) return null;
             const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
             const approveDisabled = isSubmitting || needsCommentSubmitFirst || !previewUrl;
-            const submitCommentsPending = isActionPending?.("submit-article-system-comments") ?? isSubmitting;
+            // Submit revision comments through a dedicated fetcher: a failed POST
+            // (e.g. a content-factory 500) then leaves the pinned draft comments in
+            // place and surfaces the error inline for retry, while only a successful
+            // submit redirects to the revision run (which clears the composer).
+            const submitCommentsPending = submitCommentsFetcher.state !== "idle";
+            const submitCommentsError =
+              submitCommentsFetcher.state === "idle" ? submitCommentsFetcher.data?.error ?? null : null;
             const denyPending = isActionPending?.("deny") ?? isSubmitting;
             const approvePending = isActionPending?.("approve") ?? isSubmitting;
             return (
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Form method="POST">
-                  <input type="hidden" name="setupRunId" value={setupRunId} />
-                  <button
-                    type="submit"
-                    name="intent"
-                    value="submit-article-system-comments"
-                    disabled={isSubmitting || !reviewState.canSendRevisionRequest}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
+              <div className="flex w-full flex-col gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <submitCommentsFetcher.Form method="POST">
+                    <input type="hidden" name="setupRunId" value={setupRunId} />
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="submit-article-system-comments"
+                      disabled={submitCommentsPending || isSubmitting || !reviewState.canSendRevisionRequest}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
+                    >
+                      {submitCommentsPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                      {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry revision comments" : "Send revision comments"}
+                    </button>
+                  </submitCommentsFetcher.Form>
+                  {canApprove ? (
+                    <>
+                      <Form method="POST">
+                        <button
+                          type="submit"
+                          name="intent"
+                          value="deny"
+                          disabled={isSubmitting}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
+                        >
+                          {denyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <XCircleIcon className="h-4 w-4" />}
+                          {denyPending ? "Rejecting..." : "Reject setup"}
+                        </button>
+                      </Form>
+                      <Form method="POST">
+                        <button
+                          type="submit"
+                          name="intent"
+                          value="approve"
+                          disabled={approveDisabled}
+                          title={needsCommentSubmitFirst ? "Send or clear draft revision comments before approving." : undefined}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                        >
+                          {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                          {approvePending ? "Approving..." : "Approve setup and create PR"}
+                        </button>
+                      </Form>
+                    </>
+                  ) : null}
+                </div>
+                {submitCommentsError ? (
+                  <p
+                    role="alert"
+                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
                   >
-                    {submitCommentsPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                    {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry revision comments" : "Send revision comments"}
-                  </button>
-                </Form>
-                {canApprove ? (
-                  <>
-                    <Form method="POST">
-                      <button
-                        type="submit"
-                        name="intent"
-                        value="deny"
-                        disabled={isSubmitting}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
-                      >
-                        {denyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <XCircleIcon className="h-4 w-4" />}
-                        {denyPending ? "Rejecting..." : "Reject setup"}
-                      </button>
-                    </Form>
-                    <Form method="POST">
-                      <button
-                        type="submit"
-                        name="intent"
-                        value="approve"
-                        disabled={approveDisabled}
-                        title={needsCommentSubmitFirst ? "Send or clear draft revision comments before approving." : undefined}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
-                      >
-                        {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                        {approvePending ? "Approving..." : "Approve setup and create PR"}
-                      </button>
-                    </Form>
-                  </>
+                    {submitCommentsError} Your revision comments are still pinned — try sending them again.
+                  </p>
                 ) : null}
               </div>
             );
