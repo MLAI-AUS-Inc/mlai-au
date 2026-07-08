@@ -60,10 +60,13 @@ import {
   getVibeMarketingBootstrap,
   getVibeMarketingGithubRepos,
   getVibeMarketingRun,
+  getDailyRunStatus,
   removeNotificationChannel,
   replayVibeMarketingDaily,
+  runDailyResearchNow,
   resendNotificationChannelCode,
   setChannelTypeDelivery,
+  type ManualRunStatus,
   setNotificationChannelDelivery,
   submitVibeMarketingArticleSystemComments,
   submitVibeMarketingComponentComments,
@@ -576,6 +579,16 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
+    } else if (intent === "run-daily-now") {
+      // Inline "Run today now": start a real automation run (same pipeline as the
+      // 8am send) and return the run id to poll — no navigation.
+      const result = await runDailyResearchNow(env, request);
+      return { intent, ok: true, runId: result.runId, status: result.status, reused: result.reused };
+    } else if (intent === "poll-daily-run") {
+      const dailyRunId = stringFromForm(formData, "runId");
+      if (!dailyRunId) return { intent, error: "Missing run." };
+      const dailyRun = await getDailyRunStatus(env, request, dailyRunId);
+      return { intent, ok: true, run: dailyRun };
     } else if (intent === "connect-channel") {
       const channelType = stringFromForm(formData, "channelType");
       if (!channelType) return { intent, error: "Choose a notification channel to connect." };
@@ -2848,6 +2861,160 @@ function ArticleSetupPublishDetail({
   );
 }
 
+type RunTodayNowUiState = "idle" | "researching" | "sent" | "failed";
+
+interface RunTodayNowController {
+  trigger: () => void;
+  uiState: RunTodayNowUiState;
+  message: string | null;
+  deliveries: ManualRunStatus["deliveries"];
+  busy: boolean;
+  starting: boolean;
+}
+
+const RUN_NOW_POLL_TIMEOUT_MS = 15 * 60 * 1000;
+
+function friendlyRunFailure(run: ManualRunStatus): string {
+  const err = (run.lastError || "").toLowerCase();
+  if (err.includes("insufficient_roo_points") || err.includes("roo points")) {
+    return "Not enough Roo points to research topics.";
+  }
+  if (err.includes("missing_config") || err.includes("missing config")) {
+    return "Finish the marketing setup wizard first, then try again.";
+  }
+  if (err.includes("billing_identity_missing")) {
+    return "Link a Slack account to bill Roo points for this domain.";
+  }
+  return "We couldn't complete the run. Please try again shortly.";
+}
+
+// "Run today now": start a real automation run and poll its status inline (no
+// navigation). Delivery is asynchronous — discovery research takes minutes — so the
+// UI stays in "researching" until a topic delivery is confirmed SENT.
+function useRunTodayNow(): RunTodayNowController {
+  const runFetcher = useFetcher<{
+    intent?: string;
+    ok?: boolean;
+    error?: string;
+    runId?: string;
+    reused?: boolean;
+  }>();
+  const pollFetcher = useFetcher<{ intent?: string; ok?: boolean; error?: string; run?: ManualRunStatus }>();
+  const [runId, setRunId] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState(0);
+  const [uiState, setUiState] = useState<RunTodayNowUiState>("idle");
+  const [message, setMessage] = useState<string | null>(null);
+  const [deliveries, setDeliveries] = useState<ManualRunStatus["deliveries"]>([]);
+
+  const trigger = useCallback(() => {
+    setUiState("researching");
+    setMessage(null);
+    setDeliveries([]);
+    setRunId(null);
+    const formData = new FormData();
+    formData.set("intent", "run-daily-now");
+    void runFetcher.submit(formData, { method: "POST" });
+  }, [runFetcher]);
+
+  // run-now response -> start polling, or fail.
+  useEffect(() => {
+    if (runFetcher.state !== "idle" || !runFetcher.data) return;
+    if (runFetcher.data.intent !== "run-daily-now") return;
+    if (runFetcher.data.error) {
+      setUiState("failed");
+      setMessage(runFetcher.data.error);
+      setRunId(null);
+      return;
+    }
+    if (runFetcher.data.runId) {
+      setRunId(runFetcher.data.runId);
+      setStartedAt(Date.now());
+      setUiState("researching");
+      setMessage(
+        runFetcher.data.reused
+          ? "Already researching — your topics are on the way."
+          : "Researching your top 3 topics — they'll arrive shortly.",
+      );
+    }
+  }, [runFetcher.state, runFetcher.data]);
+
+  // Schedule the next poll while researching (re-fires as the poll fetcher goes idle).
+  useEffect(() => {
+    if (uiState !== "researching" || !runId || pollFetcher.state !== "idle") return;
+    if (startedAt && Date.now() - startedAt > RUN_NOW_POLL_TIMEOUT_MS) {
+      setUiState("failed");
+      setMessage("This is taking longer than usual — your topics may still arrive on WhatsApp.");
+      return;
+    }
+    const firstPoll = pollFetcher.data?.run?.id !== runId;
+    const timer = window.setTimeout(
+      () => {
+        const formData = new FormData();
+        formData.set("intent", "poll-daily-run");
+        formData.set("runId", runId);
+        void pollFetcher.submit(formData, { method: "POST" });
+      },
+      firstPoll ? 2000 : 8000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [uiState, runId, startedAt, pollFetcher.state, pollFetcher.data]);
+
+  // poll response -> sent / failed / keep researching.
+  useEffect(() => {
+    if (pollFetcher.state !== "idle" || !pollFetcher.data) return;
+    if (pollFetcher.data.intent !== "poll-daily-run") return;
+    if (pollFetcher.data.error) {
+      setUiState("failed");
+      setMessage(pollFetcher.data.error);
+      return;
+    }
+    const run = pollFetcher.data.run;
+    if (!run || run.id !== runId) return;
+    if (run.phase === "sent") {
+      setUiState("sent");
+      setDeliveries(run.deliveries ?? []);
+      setMessage(null);
+    } else if (run.phase === "failed") {
+      setUiState("failed");
+      setMessage(friendlyRunFailure(run));
+    }
+  }, [pollFetcher.state, pollFetcher.data, runId]);
+
+  const starting = runFetcher.state !== "idle";
+  const busy = starting || uiState === "researching";
+  return { trigger, uiState, message, deliveries, busy, starting };
+}
+
+function RunTodayNowStatus({ controller }: { controller: RunTodayNowController }) {
+  const { uiState, message, deliveries } = controller;
+  if (uiState === "idle") return null;
+  if (uiState === "sent") {
+    const labels: Record<string, string> = { slack: "Slack", email: "Email", whatsapp: "WhatsApp" };
+    const names = deliveries
+      .filter((d) => d.status === "sent")
+      .map((d) => `${labels[d.channelType] ?? d.channelType}${d.routeId ? ` (${d.routeId})` : ""}`);
+    return (
+      <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+        <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+        <span>{names.length ? `Sent to ${names.join(", ")}.` : "Sent to your channels."}</span>
+      </div>
+    );
+  }
+  if (uiState === "failed") {
+    return (
+      <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        {message ?? "We couldn't complete the run."}
+      </div>
+    );
+  }
+  return (
+    <div className="mt-3 flex items-start gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
+      <ArrowPathIcon className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-violet-600" />
+      <span>{message ?? "Researching your top 3 topics…"}</span>
+    </div>
+  );
+}
+
 function PublishDailyResearchReminderCard({
   channels,
   dailyEnabled,
@@ -2874,6 +3041,7 @@ function PublishDailyResearchReminderCard({
   channelActionIntent?: string | null;
 }) {
   const statusLabel = dailyEnabled ? "Enabled" : dailyReady ? "Ready" : "Needs setup";
+  const runNow = useRunTodayNow();
 
   return (
     <section className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
@@ -2943,10 +3111,9 @@ function PublishDailyResearchReminderCard({
             {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable reminder"}
           </button>
           <button
-            type="submit"
-            name="intent"
-            value="run-daily-discovery-now"
-            disabled={isSubmitting || !dailyEnabled}
+            type="button"
+            onClick={runNow.trigger}
+            disabled={isSubmitting || !dailyEnabled || runNow.busy}
             className={clsx(
               "inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-sm transition disabled:cursor-not-allowed",
               dailyEnabled
@@ -2954,11 +3121,16 @@ function PublishDailyResearchReminderCard({
                 : "border border-gray-200 bg-gray-100 text-gray-500",
             )}
           >
-            {runDailyPending ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <PlayIcon className="h-5 w-5" />}
-            {runDailyPending ? "Starting..." : "Run today now"}
+            {runNow.busy ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <PlayIcon className="h-5 w-5" />}
+            {runNow.starting
+              ? "Starting..."
+              : runNow.uiState === "researching"
+                ? "Researching..."
+                : "Run today now"}
           </button>
         </div>
       </Form>
+      <RunTodayNowStatus controller={runNow} />
     </section>
   );
 }

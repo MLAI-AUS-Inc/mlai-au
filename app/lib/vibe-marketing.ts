@@ -2191,6 +2191,61 @@ export async function setChannelTypeDelivery(
   };
 }
 
+export interface ManualRunDelivery {
+  channelType: string;
+  routeId: string;
+  status: string;
+  deliveredAt: string | null;
+}
+
+export interface ManualRunStatus {
+  id: string;
+  status: string;
+  phase: "researching" | "sent" | "failed" | string;
+  lastError: string;
+  deliveries: ManualRunDelivery[];
+}
+
+// Start an on-demand daily-research run (same pipeline as the 8am send). Returns
+// a run id to poll; the actual channel delivery is asynchronous (research takes minutes).
+export async function runDailyResearchNow(env: Env, request: Request) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/notifications/automation/run-now`, {});
+  return {
+    runId: asNullableString(response.data?.automationRunId) ?? "",
+    status: asNullableString(response.data?.status) ?? "",
+    reused: Boolean(response.data?.reused),
+  };
+}
+
+export async function getDailyRunStatus(
+  env: Env,
+  request: Request,
+  runId: string,
+): Promise<ManualRunStatus> {
+  const client = createApiClient(env, request);
+  const response = await client.get(
+    `${BASE_PATH}/notifications/automation/runs/${encodeURIComponent(runId)}`,
+  );
+  const data = (response.data ?? {}) as Record<string, unknown>;
+  const rawDeliveries = Array.isArray(data.deliveries) ? data.deliveries : [];
+  return {
+    id: asNullableString(data.id) ?? runId,
+    status: asNullableString(data.status) ?? "",
+    phase: (asNullableString(data.phase) ?? "researching") as ManualRunStatus["phase"],
+    lastError: asNullableString(data.lastError) ?? "",
+    deliveries: rawDeliveries.map((item) => {
+      const d = (item ?? {}) as Record<string, unknown>;
+      return {
+        channelType: asNullableString(d.channelType) ?? "",
+        routeId: asNullableString(d.routeId) ?? "",
+        status: asNullableString(d.status) ?? "",
+        deliveredAt: asNullableString(d.deliveredAt),
+      };
+    }),
+  };
+}
+
 export async function getVibeMarketingRun(
   env: Env,
   request: Request,
