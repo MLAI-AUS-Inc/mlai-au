@@ -61,6 +61,7 @@ import {
   getVibeMarketingGithubRepos,
   getVibeMarketingRun,
   getDailyRunStatus,
+  previewIframeSrc,
   removeNotificationChannel,
   replayVibeMarketingDaily,
   runDailyResearchNow,
@@ -101,14 +102,15 @@ const POLLING_STATUSES = new Set([
   "preview_building",
   "preview_verifying",
   "repair_preview_building",
+  "revision_preview_building",
   "awaiting_confirmation",
   "awaiting_delivery_mode",
   "awaiting_approval",
   "approval_required",
 ]);
-const LIVE_PREVIEW_ACTIVE_STATUSES = new Set(["queued", "pending", "preparing", "starting", "building", "running", "preview_verifying", "repair_preview_building"]);
+const LIVE_PREVIEW_ACTIVE_STATUSES = new Set(["queued", "pending", "preparing", "starting", "building", "running", "preview_verifying", "repair_preview_building", "revision_preview_building"]);
 const LIVE_PREVIEW_FAILURE_STATUSES = new Set(["failed", "blocked", "expired", "cancelled", "canceled", "timeout", "timed_out"]);
-const ARTICLE_SETUP_ACTIVE_STATUSES = new Set(["queued", "pending", "processing", "running", "in_progress", "preview_building", "preview_verifying", "repair_preview_building"]);
+const ARTICLE_SETUP_ACTIVE_STATUSES = new Set(["queued", "pending", "processing", "running", "in_progress", "preview_building", "preview_verifying", "repair_preview_building", "revision_preview_building"]);
 const ARTICLE_SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "preview_failed"]);
 const ARTICLE_SETUP_FALLBACK_STATUSES = new Set(["fallback_ready"]);
 const ARTICLE_SETUP_PUBLISH_STATUSES = new Set(["pr_created", "setup_pr_created", "manual_merge_required", "merged", "merged_verifying", "verifying"]);
@@ -1159,7 +1161,7 @@ function setupBuildCancelActionSlot(
   );
 }
 
-function ArticleSystemSetupPreviewPanel({
+export function ArticleSystemSetupPreviewPanel({
   run,
   sourceRun,
   selectedComponent,
@@ -1246,6 +1248,12 @@ function ArticleSystemSetupPreviewPanel({
     Boolean(fallbackPreviewUrl) ||
     ARTICLE_SETUP_FALLBACK_STATUSES.has(setupStatus) ||
     isFailedArticlePreview(run.livePreview);
+  // A revision rebuild redeploys the preview in place; without a visible state the
+  // user just stares at the stale preview and concludes their comments were lost.
+  const revisionRebuildInFlight =
+    run.currentStep === "revision_preview_building" ||
+    setupStatus === "revision_preview_building" ||
+    articleSystemSetupCurrentStep(run).toLowerCase() === "revision_preview_building";
 
   return (
     <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -1277,6 +1285,15 @@ function ArticleSystemSetupPreviewPanel({
               </span>
             ))}
           </div>
+        </div>
+      ) : null}
+
+      {revisionRebuildInFlight ? (
+        <div role="status" className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+          <p className="text-sm font-black text-violet-950">Applying your revision comments</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-violet-900">
+            The preview rebuilds in about 3–5 minutes and refreshes here automatically. Your pinned comments stay saved.
+          </p>
         </div>
       ) : null}
 
@@ -2248,6 +2265,15 @@ function LivePreviewCommentInspectorPanel({
   }, [selectedComponent, sendInspectorCommand]);
 
   const displayPreviewUrl = previewDisplayUrl(preview?.previewUrl);
+  // Revision rebuilds redeploy to the SAME preview URL, so the iframe would never
+  // reload on its own. Key the src by the deployed commit so a fresh deployment
+  // remounts the iframe and the user sees the revised page instead of the stale one.
+  const proofRecord = preview?.proof && typeof preview.proof === "object" ? (preview.proof as Record<string, unknown>) : {};
+  const previewRevisionKey =
+    [proofRecord.commitSha, proofRecord.commit_sha, preview?.commitSha, run.result?.["branch_commit_sha"]]
+      .map((value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : ""))
+      .find(Boolean) ?? "";
+  const previewSrc = previewIframeSrc(preview?.previewUrl, previewRevisionKey);
 
   return (
     <div className="space-y-4">
@@ -2313,8 +2339,9 @@ function LivePreviewCommentInspectorPanel({
                 ) : null}
                 <iframe
                   ref={iframeRef}
+                  key={previewSrc}
                   title={previewTitle}
-                  src={preview?.previewUrl ?? ""}
+                  src={previewSrc}
                   className="h-[820px] w-full bg-white"
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                   onLoad={() => {

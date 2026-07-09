@@ -1022,6 +1022,30 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
   };
 }
 
+// Revision rebuilds redeploy the preview to the SAME URL, so an iframe whose src
+// never changes silently keeps showing the stale deployment. Appending the
+// deployed revision (commit sha) as a cfRev query param gives the iframe a new
+// src per deployment; with an empty revision key the url passes through unchanged
+// so non-revision flows render byte-identical markup.
+export function previewIframeSrc(previewUrl: string | null | undefined, revisionKey: string | null | undefined): string {
+  const rawUrl = String(previewUrl ?? "");
+  if (!rawUrl.trim()) return "";
+  const key = String(revisionKey ?? "").trim();
+  if (!key) return rawUrl;
+  const url = rawUrl.trim();
+  const hashIndex = url.indexOf("#");
+  const hash = hashIndex >= 0 ? url.slice(hashIndex) : "";
+  const base = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
+  const queryIndex = base.indexOf("?");
+  const path = queryIndex >= 0 ? base.slice(0, queryIndex) : base;
+  const query = queryIndex >= 0 ? base.slice(queryIndex + 1) : "";
+  const params = query
+    .split("&")
+    .filter((param) => param && param.split("=", 1)[0] !== "cfRev");
+  params.push(`cfRev=${encodeURIComponent(key)}`);
+  return `${path}?${params.join("&")}${hash}`;
+}
+
 function normalizeComponentFeedbackComment(raw: unknown): VibeMarketingComponentFeedbackComment | null {
   const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
   if (!payload) return null;
