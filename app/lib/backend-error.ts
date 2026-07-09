@@ -9,7 +9,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function looksLikeHtml(value: string) {
+export function looksLikeHtml(value: string) {
   const normalized = value.trim().toLowerCase();
   return (
     normalized.startsWith("<!doctype html") ||

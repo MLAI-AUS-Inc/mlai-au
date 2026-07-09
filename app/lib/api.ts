@@ -1,4 +1,5 @@
 import axios, { type InternalAxiosRequestConfig, AxiosHeaders, type AxiosAdapter } from 'axios';
+import { looksLikeHtml } from "~/lib/backend-error";
 
 export function shouldUseDevBackendStub() {
     return import.meta.env.DEV && import.meta.env.VITE_STUB_BACKEND === "true";
@@ -46,6 +47,32 @@ export function isApiNotFoundError(error: unknown): boolean {
         (error as { response?: { status?: number } } | null)?.response?.status ??
         (error as { status?: number } | null)?.status;
     return status === 404;
+}
+
+// Extract the human-readable failure reason a backend returned, across every thrown shape:
+// the axios shape (`error.response.data`), the top-level-status Worker shape (`error.data`, see
+// the note above), a string body, and DRF bodies keyed on `detail`/`error`/`message`/
+// `non_field_errors` (string or list). Falls back to the error message, then a generic string.
+// Used so a real server reason (e.g. a 409 detail) surfaces in the UI instead of axios's opaque
+// "Request failed with status code 409".
+export function apiErrorDetail(error: unknown, fallback = "Run action failed."): string {
+    const body =
+        (error as { response?: { data?: unknown } } | null)?.response?.data ??
+        (error as { data?: unknown } | null)?.data;
+    // A string body is the real reason UNLESS it's an HTML error page (Cloudflare/nginx gateway
+    // 5xx, or a Django DEBUG-off 500) — dumping that whole document into the banner is worse than
+    // the axios status message, so let those fall through to `error.message`.
+    if (typeof body === "string" && body.trim() && !looksLikeHtml(body)) return body.trim();
+    if (body && typeof body === "object") {
+        const rec = body as Record<string, unknown>;
+        const candidate = rec.detail ?? rec.error ?? rec.message ?? rec.non_field_errors;
+        if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+        if (Array.isArray(candidate) && typeof candidate[0] === "string" && candidate[0].trim()) {
+            return candidate[0].trim();
+        }
+    }
+    const message = (error as { message?: string } | null)?.message;
+    return typeof message === "string" && message.trim() ? message.trim() : fallback;
 }
 
 // Catch-all stub adapter for local development only. When
