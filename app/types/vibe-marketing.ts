@@ -118,6 +118,8 @@ export interface VibeMarketingArticleSetupState {
   livePreview?: VibeMarketingLivePreview | null;
   retryAvailable?: boolean;
   error?: string | null;
+  previewRuntimeUnsupported?: boolean;
+  previewUnsupportedReason?: string | null;
   source?: "config" | "scan_run" | "setup_run" | "none" | string;
   updatedAt?: string | null;
   articleSurfaceMode?: string | null;

@@ -1056,6 +1056,14 @@ export default function ArticleSystemConnectionPanel({
   // Adopting an existing page (the scan found a working articles surface and the
   // user picked an existing detected route) publishes into it without rebuilding.
   const isAdoptingExisting = surfaceExists && selectedMode === "existing";
+  // The specific reason a code-review-ready park has no hosted preview (server-rendered
+  // stack, worker runtime crash, manual scaffold, …). Prefer the normalized setup state,
+  // fall back to reading it off the setup run payload; empty when unknown.
+  const previewUnsupportedReason = String(
+    articleSetupState?.previewUnsupportedReason ??
+      articleSystemSetupString(effectiveSetupRun, "preview_unsupported_reason", "previewUnsupportedReason") ??
+      "",
+  ).trim();
   const scaffoldStatusContent =
     scaffoldStatus === "ready_to_build" && isAdoptingExisting
       ? {
@@ -1072,7 +1080,9 @@ export default function ArticleSystemConnectionPanel({
         : scaffoldStatus === "review_ready" && setupCodeReviewReady
           ? {
               title: "Articles setup is ready for code review",
-              body: "A live preview isn't supported for this site's stack yet. Open the setup build to review the changed files and approve.",
+              body: previewUnsupportedReason
+                ? `${previewUnsupportedReason} Open the setup build to review the changed files and approve.`
+                : "A live preview isn't supported for this site's stack yet. Open the setup build to review the changed files and approve.",
               tone: "violet" as const,
             }
           : scaffoldStatusCopy[scaffoldStatus];

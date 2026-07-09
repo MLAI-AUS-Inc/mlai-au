@@ -327,6 +327,9 @@ function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupStat
     livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
     retryAvailable: asBoolean(payload.retryAvailable ?? payload.retry_available),
     error: asNullableString(payload.error),
+    previewRuntimeUnsupported: asBoolean(payload.previewRuntimeUnsupported ?? payload.preview_runtime_unsupported),
+    previewUnsupportedReason:
+      asNullableString(payload.previewUnsupportedReason) ?? asNullableString(payload.preview_unsupported_reason),
     source: source ?? undefined,
     updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
     // The scan's verdict on the chosen route. Carried through so the wizard can
