@@ -141,9 +141,18 @@ function setupPhase(run: VibeMarketingRunSummary) {
     // Server-rendered stacks get no hosted preview (code_review_ready): the
     // reviewable surface is the setup branch diff on the run page.
     if (isSetupPreviewRun && status === "code_review_ready") {
+      const setup = setupPayload(run);
+      const reason = String(
+        setup.preview_unsupported_reason ??
+          setup.previewUnsupportedReason ??
+          nestedObject(run.result).preview_unsupported_reason ??
+          "",
+      ).trim();
       return {
         title: "Articles setup ready for code review",
-        description: "A live preview isn't supported for this site's stack. Open the setup build to review the code changes, then approve setup PR creation.",
+        description: reason
+          ? `${reason} Open the setup build to review the code changes, then approve setup PR creation.`
+          : "A live preview isn't supported for this site's stack. Open the setup build to review the code changes, then approve setup PR creation.",
         tone: "ready" as const,
       };
     }

@@ -116,6 +116,19 @@ function staleArticleSetupState(): VibeMarketingArticleSetupState {
   };
 }
 
+function codeReviewReadySetupState(reason: string | null): VibeMarketingArticleSetupState {
+  return {
+    repo: "DrAnuG1995/website",
+    githubRepo: "DrAnuG1995/website",
+    setupRunId: "setup-code-review-1",
+    setupStatus: "code_review_ready",
+    setupRunStatus: "code_review_ready",
+    routePath: "/articles",
+    previewUnsupportedReason: reason,
+    source: "config",
+  };
+}
+
 function renderPanel({
   bootstrap = baseBootstrap(),
   articleSetupState = staleArticleSetupState(),
@@ -179,5 +192,30 @@ describe("article system connection panel", () => {
     expect(markup).toContain("value=\"reset-article-setup\"");
     expect(markup).not.toContain(">Continue<");
     expect(markup).not.toContain("/founder-tools/marketing/create?step=research");
+  });
+
+  test("renders the specific preview-unsupported reason on a code_review_ready park", () => {
+    const reason = "The hosted preview deployed, but the app server crashed on boot because it requires production secrets.";
+    const markup = renderPanel({
+      articleSetupState: codeReviewReadySetupState(reason),
+      scanRun: null,
+    });
+
+    expect(markup).toContain("Articles setup is ready for code review");
+    expect(markup).toContain("The hosted preview deployed, but the app server crashed on boot");
+    expect(markup).toContain("Open the setup build to review the changed files and approve.");
+    // The generic stack fallback must NOT appear when a real reason is known.
+    expect(markup).not.toContain("supported for this site");
+  });
+
+  test("falls back to the generic stack sentence when no preview-unsupported reason is present", () => {
+    const markup = renderPanel({
+      articleSetupState: codeReviewReadySetupState(null),
+      scanRun: null,
+    });
+
+    expect(markup).toContain("Articles setup is ready for code review");
+    expect(markup).toContain("supported for this site");
+    expect(markup).toContain("Open the setup build to review the changed files and approve.");
   });
 });
