@@ -31,7 +31,7 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { RooPointCost } from "~/components/RooPointCost";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
-import { isApiNotFoundError } from "~/lib/api";
+import { apiErrorDetail, isApiNotFoundError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
 import {
   VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
@@ -684,14 +684,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
-    return {
-      intent,
-      error:
-        error?.data?.detail ??
-        error?.response?.data?.detail ??
-        error?.message ??
-        "Run action failed.",
-    };
+    // Surface the real backend reason (e.g. a revision 409 detail) across every thrown shape,
+    // instead of genericizing to axios's opaque "Request failed with status code 409".
+    return { intent, error: apiErrorDetail(error) };
   }
 
   throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(runId)}`);
