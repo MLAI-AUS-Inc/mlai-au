@@ -176,13 +176,13 @@ function DeliveryToggle({
           }
           disabled={isSubmitting || busy}
           className={clsx(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:opacity-60",
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:opacity-60",
             checked
               ? "border-violet-600 bg-violet-600 text-white hover:bg-violet-700"
               : "border-gray-300 bg-white text-transparent hover:border-violet-400",
           )}
         >
-          <Check className="h-4 w-4" strokeWidth={3} />
+          <Check className="h-5 w-5" strokeWidth={3} />
         </button>
       </fetcher.Form>
       {error ? (
@@ -238,13 +238,13 @@ function ChannelTypeToggle({
           }
           disabled={isSubmitting || busy}
           className={clsx(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:opacity-60",
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:opacity-60",
             checked
               ? "border-violet-600 bg-violet-600 text-white hover:bg-violet-700"
               : "border-gray-300 bg-white text-transparent hover:border-violet-400",
           )}
         >
-          <Check className="h-4 w-4" strokeWidth={3} />
+          <Check className="h-5 w-5" strokeWidth={3} />
         </button>
       </fetcher.Form>
       {awaitingConfirm ? (
@@ -318,20 +318,20 @@ function ChannelRow({
           <p className="text-xs font-semibold text-gray-600">
             Code sent to <span className="font-black">{channel.routeId}</span> on WhatsApp.
           </p>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
             <input
               name="code"
               inputMode="numeric"
               maxLength={6}
               placeholder="6-digit code"
-              className="h-10 w-32 rounded-lg border border-gray-200 px-3 text-sm font-semibold tracking-widest outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
+              className="h-12 min-w-0 w-full rounded-lg border border-gray-200 px-3 text-sm font-semibold tracking-widest outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
             />
             <button
               type="submit"
               name="intent"
               value="verify-channel-otp"
               disabled={isSubmitting}
-              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+              className="inline-flex h-12 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
             >
               Verify
             </button>
@@ -340,7 +340,7 @@ function ChannelRow({
               name="intent"
               value="resend-channel-otp"
               disabled={isSubmitting}
-              className="text-sm font-bold text-violet-700 underline-offset-2 hover:underline disabled:opacity-50"
+              className="col-span-2 inline-flex min-h-11 items-center justify-center text-sm font-bold text-violet-700 underline-offset-2 hover:underline disabled:opacity-50 sm:col-span-1"
             >
               Resend
             </button>
@@ -356,19 +356,19 @@ function ChannelRow({
       ) : whatsappNeedsSetup && whatsappSetupOpen ? (
         <Form method="POST" className="mt-3 space-y-2 border-t border-gray-100 pt-3">
           <input type="hidden" name="channelType" value="whatsapp" />
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
             <input
               type="tel"
               name="routeId"
               placeholder="+61 400 000 000"
-              className="h-10 w-48 rounded-lg border border-gray-200 px-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
+              className="h-12 min-w-0 w-full rounded-lg border border-gray-200 px-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
             />
             <button
               type="submit"
               name="intent"
               value="connect-channel"
               disabled={isSubmitting}
-              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+              className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50 sm:w-auto"
             >
               Send code
             </button>
@@ -381,8 +381,8 @@ function ChannelRow({
       ) : null;
 
     return (
-      <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
-        <div className="flex min-h-[52px] items-center justify-between gap-3">
+      <div className="min-w-0 rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] sm:px-4">
+        <div className="flex min-h-[52px] min-w-0 items-center justify-between gap-2 sm:gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <ChannelIcon type={type} />
             <div className="min-w-0">
@@ -405,7 +405,7 @@ function ChannelRow({
               type="button"
               onClick={() => setWhatsappSetupOpen((open) => !open)}
               className={clsx(
-                "shrink-0 rounded-md px-3 py-1.5 text-[10px] font-black uppercase tracking-wide shadow-sm transition",
+                "min-h-11 shrink-0 rounded-xl px-3 text-xs font-black uppercase tracking-wide shadow-sm transition",
                 whatsappSetupOpen
                   ? "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                   : "bg-violet-600 text-white hover:bg-violet-700",
@@ -591,7 +591,7 @@ export default function DailyReminderChannels({
   const channelError =
     error && errorIntent && (CHANNEL_INTENTS as readonly string[]).includes(errorIntent) ? error : null;
   return (
-    <div className={clsx("space-y-2", variant === "publish" && "space-y-2.5")}>
+    <div className={clsx("min-w-0 space-y-2", variant === "publish" && "space-y-2.5")}>
       <p className="text-xs font-black uppercase tracking-wide text-gray-500">Notification channels</p>
       {channelError && variant !== "publish" ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700">
