@@ -330,6 +330,8 @@ function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupStat
     previewRuntimeUnsupported: asBoolean(payload.previewRuntimeUnsupported ?? payload.preview_runtime_unsupported),
     previewUnsupportedReason:
       asNullableString(payload.previewUnsupportedReason) ?? asNullableString(payload.preview_unsupported_reason),
+    baselineBuildBlocked: asBoolean(payload.baselineBuildBlocked ?? payload.baseline_build_blocked),
+    codeReviewReason: asNullableString(payload.codeReviewReason) ?? asNullableString(payload.code_review_reason),
     source: source ?? undefined,
     updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
     // The scan's verdict on the chosen route. Carried through so the wizard can

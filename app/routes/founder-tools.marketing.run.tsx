@@ -508,7 +508,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         cleanup: true,
         workflow: "article_system_setup",
       });
-      throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
+      throw redirect("/founder-tools/marketing/create?step=articleSystem");
     } else if (intent === "retry-scan") {
       const result = await controlVibeMarketingRun(env, request, runId, "resume", { workflow: "repo_scan" });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
@@ -1233,6 +1233,15 @@ export function ArticleSystemSetupPreviewPanel({
   const previewUnsupportedReason =
     stringResultValue(run, "preview_unsupported_reason", "previewUnsupportedReason") ||
     String(setup.preview_unsupported_reason ?? setup.previewUnsupportedReason ?? "");
+  const baselineBuildBlocked = Boolean(
+    setup.baseline_build_blocked ??
+      setup.baselineBuildBlocked ??
+      run.result?.baseline_build_blocked ??
+      run.result?.baselineBuildBlocked,
+  );
+  const codeReviewReason =
+    stringResultValue(run, "code_review_reason", "codeReviewReason") ||
+    String(setup.code_review_reason ?? setup.codeReviewReason ?? "");
   const setupBranchName =
     stringResultValue(run, "branch_name", "branchName") || String(setup.branch_name ?? setup.branchName ?? "");
   const setupBranchUrl = repo && setupBranchName ? `https://github.com/${repo}/tree/${setupBranchName}` : "";
@@ -1399,8 +1408,10 @@ export function ArticleSystemSetupPreviewPanel({
           <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
             <p className="text-sm font-black text-violet-950">Review the code changes to approve this setup</p>
             <p className="mt-1 text-sm font-semibold leading-6 text-violet-900">
-              {previewUnsupportedReason ||
-                "A live preview isn't supported for this site's stack yet, so the setup is reviewed from its code changes instead."}
+              {baselineBuildBlocked
+                ? `No GitHub Action was dispatched because the unchanged repository baseline failed local build verification.${codeReviewReason ? ` ${codeReviewReason}` : ""}`
+                : previewUnsupportedReason ||
+                  "A live preview isn't supported for this site's stack yet, so the setup is reviewed from its code changes instead."}
             </p>
             {setupBranchUrl ? (
               <a

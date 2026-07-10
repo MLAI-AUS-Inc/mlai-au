@@ -853,7 +853,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         workflow: "article_system_setup",
         companyId: activeCompanyId,
       });
-      return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "start-discovery") {

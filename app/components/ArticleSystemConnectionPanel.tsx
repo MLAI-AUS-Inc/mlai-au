@@ -208,6 +208,17 @@ function articleSystemSetupString(run: VibeMarketingRunSummary | null | undefine
   return stringResultValue(run, ...keys);
 }
 
+function articleSystemSetupBoolean(run: VibeMarketingRunSummary | null | undefined, ...keys: string[]) {
+  if (!run) return false;
+  const setup = articleSystemSetupPayload(run);
+  for (const key of keys) {
+    if (setup[key] !== undefined) return Boolean(setup[key]);
+    const value = resultValue(run, key);
+    if (value !== undefined) return Boolean(value);
+  }
+  return false;
+}
+
 function setupPreviewUrlForRun(run: VibeMarketingRunSummary | null | undefined) {
   if (!run) return "";
   return (
@@ -1064,6 +1075,15 @@ export default function ArticleSystemConnectionPanel({
       articleSystemSetupString(effectiveSetupRun, "preview_unsupported_reason", "previewUnsupportedReason") ??
       "",
   ).trim();
+  const baselineBuildBlocked = Boolean(
+    articleSetupState?.baselineBuildBlocked ??
+      articleSystemSetupBoolean(effectiveSetupRun, "baseline_build_blocked", "baselineBuildBlocked"),
+  );
+  const codeReviewReason = String(
+    articleSetupState?.codeReviewReason ??
+      articleSystemSetupString(effectiveSetupRun, "code_review_reason", "codeReviewReason") ??
+      "",
+  ).trim();
   const scaffoldStatusContent =
     scaffoldStatus === "ready_to_build" && isAdoptingExisting
       ? {
@@ -1080,9 +1100,11 @@ export default function ArticleSystemConnectionPanel({
         : scaffoldStatus === "review_ready" && setupCodeReviewReady
           ? {
               title: "Articles setup is ready for code review",
-              body: previewUnsupportedReason
-                ? `${previewUnsupportedReason} Open the setup build to review the changed files and approve.`
-                : "A live preview isn't supported for this site's stack yet. Open the setup build to review the changed files and approve.",
+              body: baselineBuildBlocked
+                ? `No GitHub Action was dispatched because the unchanged repository baseline failed local build verification.${codeReviewReason ? ` ${codeReviewReason}` : ""} Open the setup build to review the changed files and approve.`
+                : previewUnsupportedReason
+                  ? `${previewUnsupportedReason} Open the setup build to review the changed files and approve.`
+                  : "A live preview isn't supported for this site's stack yet. Open the setup build to review the changed files and approve.",
               tone: "violet" as const,
             }
           : scaffoldStatusCopy[scaffoldStatus];

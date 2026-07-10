@@ -78,6 +78,9 @@ function normalizedSteps(run: VibeMarketingRunSummary): VibeMarketingStepState[]
 }
 
 function activeStepLabel(run: VibeMarketingRunSummary, steps: VibeMarketingStepState[]) {
+  if (run.workflow === "article_system_setup" && setupStatus(run) === "code_review_ready") {
+    return "Awaiting setup code review";
+  }
   const active =
     steps.find((step) => RUNNING_STATUSES.has(step.status)) ??
     steps.find((step) => !COMPLETE_STEP_STATUSES.has(step.status)) ??
@@ -95,6 +98,37 @@ function setupPhase(run: VibeMarketingRunSummary) {
   const stale = Boolean(run.stale || run.staleReason);
   const approved = run.status === "completed" || run.approvalState === "approved";
   const ready = READY_STATUSES.has(run.status) || READY_STATUSES.has(status);
+
+  // `code_review_ready` is a stable approval gate, not an active build. Let the
+  // setup payload win even if an older mirrored run status still says `running`.
+  if (isSetupPreviewRun && status === "code_review_ready") {
+    const setup = setupPayload(run);
+    const result = nestedObject(run.result);
+    const baselineBuildBlocked = Boolean(
+      setup.baseline_build_blocked ??
+        setup.baselineBuildBlocked ??
+        result.baseline_build_blocked ??
+        result.baselineBuildBlocked,
+    );
+    const reason = String(
+      (baselineBuildBlocked
+        ? setup.code_review_reason ?? setup.codeReviewReason ?? result.code_review_reason ?? result.codeReviewReason
+        : setup.preview_unsupported_reason ??
+          setup.previewUnsupportedReason ??
+          result.preview_unsupported_reason ??
+          result.previewUnsupportedReason) ??
+        "",
+    ).trim();
+    return {
+      title: "Articles setup ready for code review",
+      description: baselineBuildBlocked
+        ? `No GitHub Action was dispatched because the unchanged repository baseline failed local build verification.${reason ? ` ${reason}` : ""} Review the setup branch, then approve setup PR creation.`
+        : reason
+          ? `${reason} Open the setup build to review the code changes, then approve setup PR creation.`
+          : "A live preview isn't supported for this site's stack. Open the setup build to review the code changes, then approve setup PR creation.",
+      tone: "ready" as const,
+    };
+  }
 
   if (active) {
     return {
@@ -138,24 +172,6 @@ function setupPhase(run: VibeMarketingRunSummary) {
     };
   }
   if (ready) {
-    // Server-rendered stacks get no hosted preview (code_review_ready): the
-    // reviewable surface is the setup branch diff on the run page.
-    if (isSetupPreviewRun && status === "code_review_ready") {
-      const setup = setupPayload(run);
-      const reason = String(
-        setup.preview_unsupported_reason ??
-          setup.previewUnsupportedReason ??
-          nestedObject(run.result).preview_unsupported_reason ??
-          "",
-      ).trim();
-      return {
-        title: "Articles setup ready for code review",
-        description: reason
-          ? `${reason} Open the setup build to review the code changes, then approve setup PR creation.`
-          : "A live preview isn't supported for this site's stack. Open the setup build to review the code changes, then approve setup PR creation.",
-        tone: "ready" as const,
-      };
-    }
     return {
       title: isSetupPreviewRun ? "Articles setup preview ready" : "Articles setup ready to build",
       description: isSetupPreviewRun
@@ -180,7 +196,13 @@ function progressPercent(run: VibeMarketingRunSummary, steps: VibeMarketingStepS
   const currentIndex = currentStep ? steps.findIndex((step) => step.key === currentStep) : -1;
   const completedUnits = Math.max(completedSteps, currentIndex > 0 ? currentIndex : 0);
 
-  if (run.status === "completed" || run.approvalState === "approved" || READY_STATUSES.has(run.status)) return 100;
+  if (
+    run.status === "completed" ||
+    run.approvalState === "approved" ||
+    READY_STATUSES.has(run.status) ||
+    setupStatus(run) === "code_review_ready"
+  )
+    return 100;
   if (FAILED_STATUSES.has(run.status)) return Math.max(12, Math.min(100, Math.round((completedUnits / totalSteps) * 100)));
   if (RUNNING_STATUSES.has(run.status) || RUNNING_STATUSES.has(setupStatus(run))) return Math.max(12, Math.min(95, Math.round((completedUnits / totalSteps) * 100)));
   return Math.max(5, Math.min(100, Math.round((completedUnits / totalSteps) * 100)));
