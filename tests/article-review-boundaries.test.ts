@@ -37,4 +37,32 @@ describe("article review component boundaries", () => {
     expect(content).toContain("event.stopPropagation();");
     expect(content).toContain("<ArticleCommentCanvas");
   });
+
+  test("ready article reviews use the compact mobile review state", () => {
+    const route = source("app/routes/founder-tools.marketing.run.tsx");
+    const shell = source("app/components/MarketingWorkflowShell.tsx");
+    const reviewDetail = route.slice(
+      route.indexOf("function ArticleGenerationReviewDetail"),
+      route.indexOf("function ArticleSetupPublishDetail"),
+    );
+
+    expect(shell).toContain("{mobileSummary ? (");
+    expect(route).toContain('eyebrow: "Article review"');
+    expect(route).toContain('title: "Ready for review"');
+    expect(route).toContain('status: "Needs review"');
+    expect(route).toContain("compactMobileControls");
+    expect(route).toContain('compactMobileControls && "hidden sm:flex"');
+    expect(route).toContain('className="fixed inset-x-0 bottom-0 z-40');
+    expect(reviewDetail.indexOf("<LiveArticlePreviewPanel")).toBeLessThan(reviewDetail.indexOf("<ArticleRunStageProgress"));
+    expect(route).not.toContain('>Live article preview</h2>');
+  });
+
+  test("article review only shows the action relevant to the current state", () => {
+    const content = source("app/routes/founder-tools.marketing.run.tsx");
+
+    expect(content).toContain("const showRevisionAction = reviewState.canSendRevisionRequest || revisionInProgress;");
+    expect(content).toContain("{showRevisionAction ? (");
+    expect(content).toContain('emptyDraftText="No comments yet"');
+    expect(content).toContain('commentModeReadyText="Ready for comments"');
+  });
 });

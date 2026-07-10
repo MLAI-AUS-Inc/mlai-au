@@ -36,6 +36,12 @@ interface MarketingWorkflowShellProps {
   activeDetailSlot?: ReactNode;
   activeDetailLabel?: string;
   activeDetailDefaultExpanded?: boolean;
+  mobileSummary?: {
+    eyebrow: string;
+    title: string;
+    status: string;
+    description?: string;
+  };
   showPrimaryAction?: boolean;
   className?: string;
 }
@@ -278,6 +284,7 @@ export default function MarketingWorkflowShell({
   activeDetailSlot,
   activeDetailLabel = "Progress details",
   activeDetailDefaultExpanded = true,
+  mobileSummary,
   showPrimaryAction = false,
   className,
 }: MarketingWorkflowShellProps) {
@@ -317,6 +324,29 @@ export default function MarketingWorkflowShell({
 
   return (
     <section className={clsx("min-w-0 lg:rounded-2xl lg:border lg:border-gray-200 lg:bg-white lg:px-8 lg:py-9 lg:shadow-md lg:shadow-gray-200/60", className)}>
+      {mobileSummary ? (
+        <div className="lg:hidden">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-wide text-violet-600">
+                {mobileSummary.eyebrow}
+              </p>
+              <HeadingTag className="mt-1.5 text-2xl font-black leading-tight tracking-tight text-gray-950">
+                {mobileSummary.title}
+              </HeadingTag>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-800">
+              <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
+              {mobileSummary.status}
+            </span>
+          </div>
+          {mobileSummary.description ? (
+            <p className="mt-2 max-w-xl text-sm font-semibold leading-5 text-gray-600">
+              {mobileSummary.description}
+            </p>
+          ) : null}
+        </div>
+      ) : (
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm lg:hidden">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -432,6 +462,7 @@ export default function MarketingWorkflowShell({
           </ol>
         ) : null}
       </div>
+      )}
 
       <div className="hidden lg:block">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">

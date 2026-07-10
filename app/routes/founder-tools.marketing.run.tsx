@@ -2054,11 +2054,13 @@ function LivePreviewCommentInspectorPanel({
   emptyDraftText = "0 draft pins ready for revision.",
   submittedRetryText = "Submitted comments are ready to retry.",
   waitingBridgeText = "Waiting for comment bridge",
+  commentModeReadyText = "Comment mode active",
   actionSlot,
   unavailableSlot,
   requiresExactPreview = false,
   readOnly = false,
   initiallyExpanded = false,
+  compactMobileControls = false,
 }: {
   run: VibeMarketingRunSummary;
   targetRunId?: string | null;
@@ -2071,11 +2073,13 @@ function LivePreviewCommentInspectorPanel({
   emptyDraftText?: string;
   submittedRetryText?: string;
   waitingBridgeText?: string;
+  commentModeReadyText?: string;
   actionSlot: (state: LivePreviewCommentInspectorState) => ReactNode;
   unavailableSlot?: ReactNode;
   requiresExactPreview?: boolean;
   readOnly?: boolean;
   initiallyExpanded?: boolean;
+  compactMobileControls?: boolean;
 }) {
   const manifest = run.componentManifest;
   const components = useMemo(() => manifest?.components ?? [], [manifest]);
@@ -2336,10 +2340,15 @@ function LivePreviewCommentInspectorPanel({
   const previewSrc = previewIframeSrc(preview?.previewUrl, previewRevisionKey);
 
   return (
-    <div className="space-y-4">
+    <div className={clsx("space-y-4", compactMobileControls && "pb-20 sm:pb-0")}>
       <div className="space-y-4">
         {!previewExpanded ? (
-          <div className="sticky top-[4.75rem] z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:top-3 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            className={clsx(
+              "sticky top-[4.75rem] z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:top-3 sm:flex-row sm:items-center sm:justify-between",
+              compactMobileControls && "hidden sm:flex",
+            )}
+          >
             <div>
               <p className="text-sm font-black text-gray-950">{reviewTitle}</p>
               <p className="text-xs font-semibold text-gray-500">
@@ -2350,7 +2359,7 @@ function LivePreviewCommentInspectorPanel({
                     : emptyDraftText}
               </p>
               <p className={clsx("mt-1 text-xs font-black", commentModeActive ? "text-emerald-700" : "text-amber-700")}>
-                {commentModeActive ? "Comment mode active" : waitingBridgeText}
+                {commentModeActive ? commentModeReadyText : waitingBridgeText}
               </p>
               {previewWarnings.length ? (
                 <details className="mt-2 text-xs font-semibold text-amber-800">
@@ -2408,13 +2417,15 @@ function LivePreviewCommentInspectorPanel({
                     )}
                   </button>
                 </div>
-                {previewExpanded ? (
+                {previewExpanded || compactMobileControls ? (
                   <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-black">
                     <span className={commentModeActive ? "text-emerald-700" : "text-amber-700"}>
-                      {commentModeActive ? "Comment mode active" : waitingBridgeText}
+                      {commentModeActive ? commentModeReadyText : waitingBridgeText}
                     </span>
                     <span className="text-gray-500">
-                      {draftComments.length} {draftNoun}{draftComments.length === 1 ? "" : "s"}
+                      {draftComments.length > 0
+                        ? `${draftComments.length} ${draftNoun}${draftComments.length === 1 ? "" : "s"}`
+                        : emptyDraftText}
                     </span>
                   </div>
                 ) : null}
@@ -2518,6 +2529,14 @@ function LivePreviewCommentInspectorPanel({
           )}
         </div>
       </div>
+      {compactMobileControls && !previewExpanded && canRenderPreview ? (
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-3 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur sm:hidden"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          {actionSlot(reviewState)}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -2543,22 +2562,18 @@ function LiveArticlePreviewPanel({
   const reviewApprovalReady = isArticleReviewPreviewReady(run);
 
   return (
-    <section className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-black text-gray-950">Live article preview</h2>
-          <p className="mt-1 text-sm font-semibold text-gray-500">
-            Review the generated article and pin comments directly on sections that need changes.
-          </p>
-        </div>
-      </div>
-
+    <section>
       <LivePreviewCommentInspectorPanel
         run={run}
         selectedComponent={selectedComponent}
         onSelectComponent={onSelectComponent}
         previewTitle="Live generated article preview"
+        reviewTitle="Review article"
+        draftNoun="comment"
+        emptyDraftText="No comments yet"
+        commentModeReadyText="Ready for comments"
         initiallyExpanded={initiallyExpanded}
+        compactMobileControls
         actionSlot={(reviewState) => {
           const canAcceptRevision =
             run.workflow === "article_revision" &&
@@ -2582,6 +2597,7 @@ function LiveArticlePreviewPanel({
             reviewState.hasPendingRevisionBatch &&
             reviewState.latestBatchStatus !== "failed" &&
             reviewState.draftComments.length === 0;
+          const showRevisionAction = reviewState.canSendRevisionRequest || revisionInProgress;
           const revisionActionLabel = submitCommentsPending
             ? "Sending comments..."
             : revisionInProgress
@@ -2623,24 +2639,26 @@ function LiveArticlePreviewPanel({
                   </button>
                 </Form>
               ) : null}
-              <Form method="POST">
-                <button
-                  type="submit"
-                  name="intent"
-                  value="submit-component-comments"
-                  disabled={isSubmitting || !reviewState.canSendRevisionRequest}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
-                >
-                  {submitCommentsPending ? (
-                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                  ) : revisionInProgress ? (
-                    <ClockIcon className="h-4 w-4" />
-                  ) : (
-                    <PaperAirplaneIcon className="h-4 w-4" />
-                  )}
-                  {revisionActionLabel}
-                </button>
-              </Form>
+              {showRevisionAction ? (
+                <Form method="POST">
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="submit-component-comments"
+                    disabled={isSubmitting || !reviewState.canSendRevisionRequest}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
+                  >
+                    {submitCommentsPending ? (
+                      <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                    ) : revisionInProgress ? (
+                      <ClockIcon className="h-4 w-4" />
+                    ) : (
+                      <PaperAirplaneIcon className="h-4 w-4" />
+                    )}
+                    {revisionActionLabel}
+                  </button>
+                </Form>
+              ) : null}
             </div>
           );
         }}
@@ -2846,7 +2864,6 @@ function ArticleGenerationReviewDetail({
   const hasArticlePreview = hasReadyArticlePreview(run);
   return (
     <div className="space-y-5">
-      <ArticleRunStageProgress run={run} variant="embedded" />
       {hasArticlePreview ? (
         <LiveArticlePreviewPanel
           run={run}
@@ -2857,7 +2874,10 @@ function ArticleGenerationReviewDetail({
           initiallyExpanded={initiallyExpanded}
         />
       ) : (
-        <ArticlePreviewEmptyState run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} />
+        <>
+          <ArticleRunStageProgress run={run} variant="embedded" />
+          <ArticlePreviewEmptyState run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} />
+        </>
       )}
     </div>
   );
@@ -4834,6 +4854,16 @@ export default function FounderToolsMarketingRun() {
           ) : undefined
         }
         activeDetailLabel={isSetupPublishView ? "Publish" : isSetupGenerateView ? "Build setup page" : isSetupReviewView ? "Review setup preview" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
+        mobileSummary={
+          isArticleGenerationRun && hasArticlePreview && !isPublishAutomateView
+            ? {
+                eyebrow: "Article review",
+                title: "Ready for review",
+                status: "Needs review",
+                description: "Tap any section to comment, or approve the draft as-is.",
+              }
+            : undefined
+        }
       />
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : null}

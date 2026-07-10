@@ -534,3 +534,7 @@
 - [~] root.tsx pathname-based canonical (line 141): RECONSIDERED — it is load-bearing (strips query params, correctly consolidating /?trk= and /?utm_source= -> /). The only downside is a cosmetic /articles?page=N conflict that is harmless (deep pagination is fine not-indexed). Recommend LEAVING it as-is; vibe-raising dupes were already fixed at the worker.
 - [x] GSC "Crawled - currently not indexed" (18): diagnosed, NOT a code bug. Real articles are live 200 + index,follow + clean self-canonical (Google indexing discretion, same as Discovered). /how-to-pitch-your-idea, /?trk=, /?utm_source=chatgpt.com, /hackathon?trk= all correctly 301 -> 200 (will reclassify). /members is a dead 404 with no internal links (correct to leave, or 301 if a target chosen). /articles?page=3 = normal pagination non-indexing. Lever is request-indexing + internal linking + content differentiation + time.
 - [x] GSC "Discovered - currently not indexed" (18 articles): diagnosed as crawl-prioritization, NOT a code bug — all in sitemap with lastmod, IndexNow pinging, crawlable paginated internal links, live 200, no noindex. Lever is request-indexing + internal linking + time, not code.
+- [x] Simplify the review-ready article screen for mobile
+- [x] Remove duplicate progress and preview messaging once an article is ready
+- [x] Show one context-aware review action at a time
+- [x] Run focused tests, typecheck, and 390px browser verification
