@@ -116,6 +116,21 @@ const LIVE_PREVIEW_FAILURE_STATUSES = new Set(["failed", "blocked", "expired", "
 const ARTICLE_SETUP_ACTIVE_STATUSES = new Set(["queued", "pending", "processing", "running", "in_progress", "preview_building", "preview_verifying", "repair_preview_building", "revision_preview_building"]);
 const ARTICLE_SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "preview_failed"]);
 const ARTICLE_SETUP_FALLBACK_STATUSES = new Set(["fallback_ready"]);
+const ARTICLE_SETUP_MANUAL_QUALITY_OVERRIDE_STEPS = new Set([
+  "verify_directory_browser",
+  "repair_directory_browser_failure",
+  "review_directory_visual_style",
+  "repair_directory_visual_style",
+]);
+const ARTICLE_SETUP_MANUAL_QUALITY_OVERRIDE_ERROR_CODES = new Set([
+  "DIRECTORY_APP_SHELL_MISSING",
+  "DIRECTORY_BROWSER_VERIFICATION_FAILED",
+  "DIRECTORY_PREVIEW_LOAD_FAILED",
+  "DIRECTORY_PREVIEW_ROUTE_NOT_FOUND",
+  "DIRECTORY_SEMANTIC_SLOTS_MISSING",
+  "DIRECTORY_STYLE_REVIEW_FAILED",
+  "SEED_DETAIL_ROUTE_NOT_RENDERED",
+]);
 const ARTICLE_SETUP_PUBLISH_STATUSES = new Set(["pr_created", "setup_pr_created", "manual_merge_required", "merged", "merged_verifying", "verifying"]);
 const ARTICLE_SETUP_MERGED_STATUSES = new Set(["merged", "merged_verifying", "verifying", "published", "verified"]);
 const SETUP_STEP_VIEW_VALUES = new Set(["generate", "review", "publish"]);
@@ -1209,6 +1224,15 @@ export function ArticleSystemSetupPreviewPanel({
   const manualMergeRequired = setupStatus === "manual_merge_required" || run.currentStep === "manual_merge_required";
   const setupMerged = !manualMergeRequired && isArticleSystemSetupMerged(run);
   const setupAlreadyApproved = Boolean(isArticleSystemSetupPublishState(run) || isArticleSystemSetupMerged(run) || run.approvalState === "approved");
+  // The durable approval state is the canonical signal. Callback propagation can
+  // briefly leave the top-level run status at `running` even after approval has
+  // been opened, so accepting only the two status aliases makes the green action
+  // disappear from an otherwise approval-ready preview.
+  const setupApprovalRequired = Boolean(
+    run.approvalState === "approval_required" ||
+      run.status === "awaiting_approval" ||
+      run.status === "approval_required",
+  );
   const changedFiles = [
     ...arrayResultValue(run, "changed_files_preview"),
     ...(Array.isArray(setup.changed_files_preview) ? setup.changed_files_preview : []),
@@ -1231,7 +1255,7 @@ export function ArticleSystemSetupPreviewPanel({
   const setupCodeReviewReady = Boolean(
     !setupAlreadyApproved &&
       setupStatus === "code_review_ready" &&
-      (run.status === "awaiting_approval" || run.status === "approval_required"),
+      setupApprovalRequired,
   );
   const previewUnsupportedReason =
     stringResultValue(run, "preview_unsupported_reason", "previewUnsupportedReason") ||
@@ -1248,14 +1272,36 @@ export function ArticleSystemSetupPreviewPanel({
   const setupBranchName =
     stringResultValue(run, "branch_name", "branchName") || String(setup.branch_name ?? setup.branchName ?? "");
   const setupBranchUrl = repo && setupBranchName ? `https://github.com/${repo}/tree/${setupBranchName}` : "";
+  const setupTerminalFailure = ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus);
+  const terminalQualityErrorCode = (
+    stringResultValue(run, "error_code", "errorCode") ||
+    String(setup.error_code ?? setup.errorCode ?? "")
+  ).trim().toUpperCase();
+  const terminalQualityStep = (
+    run.currentStep ||
+    stringResultValue(run, "failed_step", "failedStep") ||
+    String(setup.failed_step ?? setup.failedStep ?? "") ||
+    articleSystemSetupCurrentStep(run)
+  ).trim().toLowerCase();
+  const manualQualityOverrideAvailable = Boolean(
+    !setupAlreadyApproved &&
+      setupExactPreviewReady &&
+      setupTerminalFailure &&
+      (
+        ARTICLE_SETUP_MANUAL_QUALITY_OVERRIDE_ERROR_CODES.has(terminalQualityErrorCode) ||
+        (
+          terminalQualityErrorCode === "SETUP_STEP_STALLED" &&
+          ARTICLE_SETUP_MANUAL_QUALITY_OVERRIDE_STEPS.has(terminalQualityStep)
+        )
+      ),
+  );
   const canApprove = Boolean(
     !setupAlreadyApproved &&
       (setupExactPreviewReady || setupCodeReviewReady) &&
-      (run.status === "awaiting_approval" || run.status === "approval_required"),
+      (setupApprovalRequired || manualQualityOverrideAvailable),
   );
   const setupCompleted = setupMerged;
   const previewReady = setupExactPreviewReady;
-  const setupTerminalFailure = ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus);
   const previewActive = !setupTerminalFailure && hasActiveLivePreview(run.livePreview);
   const previewFailed =
     setupTerminalFailure ||
@@ -1384,15 +1430,53 @@ export function ArticleSystemSetupPreviewPanel({
                           name="intent"
                           value="approve"
                           disabled={approveDisabled}
-                          title={needsCommentSubmitFirst ? "Send or clear draft revision comments before approving." : undefined}
+                          title={
+                            needsCommentSubmitFirst
+                              ? "Send or clear draft revision comments before approving."
+                              : manualQualityOverrideAvailable
+                                ? "Approve the exact hosted preview and record a human override of the terminal automated quality check."
+                                : undefined
+                          }
                           className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                         >
                           {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                          {approvePending ? "Approving..." : "Approve setup and create PR"}
+                          {approvePending
+                            ? "Approving..."
+                            : manualQualityOverrideAvailable
+                              ? "Approve preview and create PR"
+                              : "Approve setup and create PR"}
                         </button>
                       </Form>
+                      {manualQualityOverrideAvailable ? (
+                        <span className="max-w-sm text-xs font-semibold leading-5 text-amber-700">
+                          Automated browser or visual checks stopped. Approval records your reviewed-preview override.
+                        </span>
+                      ) : null}
                     </>
-                  ) : null}
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        disabled
+                        title={
+                          setupTerminalFailure
+                            ? "Approval is unavailable because the setup checks did not pass."
+                            : "Approval will unlock automatically when the browser and visual checks finish."
+                        }
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm opacity-60 sm:w-auto"
+                      >
+                        {setupTerminalFailure ? (
+                          <ExclamationTriangleIcon className="h-4 w-4" />
+                        ) : (
+                          <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                        )}
+                        Approve setup and create PR
+                      </button>
+                      <span className="text-xs font-semibold text-gray-500">
+                        {setupTerminalFailure ? "Approval unavailable" : "Approval checks running..."}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {submitCommentsError ? (
                   <p
