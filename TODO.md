@@ -1,3 +1,7 @@
+- [x] Pin GitHub repository reads and mutations to the company shown in Founder Tools
+- [x] Surface scan/setup start failures instead of silently redirecting
+- [x] Run company-context frontend typecheck and build
+
 - [x] Move Article authors ahead of the article-system Danger zone
 - [x] Refresh empty author cards and fields so they look active and editable
 - [x] Add focused layout and author-form render tests

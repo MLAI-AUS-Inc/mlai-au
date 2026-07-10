@@ -3,7 +3,7 @@ import { redirect } from "react-router";
 
 import { getEnv } from "~/lib/env.server";
 import { connectVibeMarketingGithub } from "~/lib/vibe-marketing";
-import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
+import { requireVibeRaisingFounder, resolveActiveCompanyId } from "~/lib/vibe-raising";
 
 const DEFAULT_RETURN_TO = "/founder-tools/marketing/create?step=articleSystem";
 
@@ -61,7 +61,8 @@ function githubAuthErrorMessage(error: unknown) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  await requireVibeRaisingFounder(env, request);
+  const { appUser } = await requireVibeRaisingFounder(env, request);
+  const companyId = resolveActiveCompanyId(appUser);
 
   const url = new URL(request.url);
   const returnTo = safeReturnTo(url.searchParams.get("returnTo"));
@@ -75,6 +76,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   try {
     const response = await connectVibeMarketingGithub(env, request, {
+      companyId,
+      company_id: companyId,
       returnUrl,
       return_url: returnUrl,
       ...(githubRepo && !forceReconnect ? { githubRepo, github_repo: githubRepo } : {}),

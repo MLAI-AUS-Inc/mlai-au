@@ -373,7 +373,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const shouldLoadGithubRepos = ["repo_scan", "content_factory_scan"].includes(run.workflow) && !setupRunIdForRun(run);
   if (shouldLoadGithubRepos) {
     try {
-      githubRepos = await getVibeMarketingGithubRepos(env, request);
+      githubRepos = await getVibeMarketingGithubRepos(env, request, companyId);
     } catch {
       githubRepos = { status: "unavailable", repos: [], repositories: [], error: "Repository list is unavailable." };
     }
@@ -427,6 +427,8 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         env,
         request,
         {
+          companyId,
+          company_id: companyId,
           ...(githubRepo && !forceReconnect ? { githubRepo, github_repo: githubRepo } : {}),
           ...(forceReconnect ? { forceReconnect: true, force_reconnect: true } : {}),
         },

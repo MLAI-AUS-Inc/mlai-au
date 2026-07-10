@@ -341,9 +341,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     };
   }
 
+  const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
   const [bootstrap, githubRepos] = await Promise.all([
-    getVibeMarketingBootstrap(env, request, resolveActiveCompanyId(vibeContext.appUser), "summary"),
-    getVibeMarketingGithubRepos(env, request).catch(() => unavailableGithubRepos()),
+    getVibeMarketingBootstrap(env, request, activeCompanyId, "summary"),
+    getVibeMarketingGithubRepos(env, request, activeCompanyId).catch(() => unavailableGithubRepos()),
   ]);
   return {
     bootstrap,
