@@ -513,7 +513,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   });
   if (activeStep === "articleSystem" || requestedStep === "articleSystem") {
     try {
-      githubRepos = await getVibeMarketingGithubRepos(env, request);
+      githubRepos = await getVibeMarketingGithubRepos(env, request, activeCompanyId);
     } catch (error) {
       githubRepos = {
         status: "unavailable",
@@ -684,6 +684,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         env,
         request,
         {
+          companyId: activeCompanyId,
+          company_id: activeCompanyId,
           returnUrl,
           return_url: returnUrl,
           ...(githubRepo && !forceReconnect ? { githubRepo, github_repo: githubRepo } : {}),
@@ -730,6 +732,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         autoSetupPreview: false,
         auto_setup_preview: false,
       });
+      if (result.error) {
+        return { intent, error: result.error, errors: result.errors };
+      }
       if (result.runId) {
         return redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
       }
@@ -756,6 +761,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         autoSetupPreview: true,
         auto_setup_preview: true,
       });
+      if (result.error) {
+        return { intent, error: result.error, errors: result.errors };
+      }
       const setupRunId = result.setupRunId || result.runId;
       if (setupRunId) {
         return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);

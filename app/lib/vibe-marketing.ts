@@ -1791,7 +1791,11 @@ export async function connectVibeMarketingGithub(env: Env, request: Request, bod
   };
 }
 
-export async function getVibeMarketingGithubRepos(env: Env, request: Request): Promise<VibeMarketingGithubReposResponse> {
+export async function getVibeMarketingGithubRepos(
+  env: Env,
+  request: Request,
+  companyId?: string | null,
+): Promise<VibeMarketingGithubReposResponse> {
   if (shouldUseDevBackendStub()) {
     return normalizeGithubReposResponse({
       status: "connected",
@@ -1810,7 +1814,10 @@ export async function getVibeMarketingGithubRepos(env: Env, request: Request): P
     });
   }
   const client = createApiClient(env, request);
-  const response = await client.get(`${BASE_PATH}/github/repos`);
+  const params = new URLSearchParams();
+  if (companyId) params.set("company_id", companyId);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const response = await client.get(`${BASE_PATH}/github/repos${query}`);
   return normalizeGithubReposResponse(response.data);
 }
 
