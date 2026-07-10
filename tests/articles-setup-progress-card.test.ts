@@ -50,4 +50,24 @@ describe("articles setup progress card", () => {
     expect(markup).toContain("supported for this site");
     expect(markup).toContain("Open the setup build to review the code changes, then approve setup PR creation.");
   });
+
+  test("explains a baseline build block and does not render it as an active build", () => {
+    const run = codeReviewReadyRun(null);
+    run.status = "running";
+    run.result = {
+      article_system_setup: {
+        status: "code_review_ready",
+        baseline_build_blocked: true,
+        code_review_reason: "Build error: Error: supabaseUrl is required.",
+      },
+    };
+
+    const markup = renderToStaticMarkup(createElement(ArticlesSetupProgressCard, { run }));
+
+    expect(markup).toContain("Articles setup ready for code review");
+    expect(markup).toContain("No GitHub Action was dispatched");
+    expect(markup).toContain("supabaseUrl is required");
+    expect(markup).not.toContain("Building articles setup preview");
+    expect(markup).not.toContain("supported for this site");
+  });
 });

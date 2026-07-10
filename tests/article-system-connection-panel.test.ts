@@ -218,4 +218,17 @@ describe("article system connection panel", () => {
     expect(markup).toContain("supported for this site");
     expect(markup).toContain("Open the setup build to review the changed files and approve.");
   });
+
+  test("explains why no GitHub Action exists when the unchanged baseline build failed", () => {
+    const state = codeReviewReadySetupState(null);
+    state.baselineBuildBlocked = true;
+    state.codeReviewReason = "Build error: Error: supabaseUrl is required.";
+
+    const markup = renderPanel({ articleSetupState: state, scanRun: null });
+
+    expect(markup).toContain("Articles setup is ready for code review");
+    expect(markup).toContain("No GitHub Action was dispatched");
+    expect(markup).toContain("supabaseUrl is required");
+    expect(markup).not.toContain("supported for this site");
+  });
 });

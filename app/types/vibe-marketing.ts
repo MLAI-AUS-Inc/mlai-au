@@ -120,6 +120,8 @@ export interface VibeMarketingArticleSetupState {
   error?: string | null;
   previewRuntimeUnsupported?: boolean;
   previewUnsupportedReason?: string | null;
+  baselineBuildBlocked?: boolean;
+  codeReviewReason?: string | null;
   source?: "config" | "scan_run" | "setup_run" | "none" | string;
   updatedAt?: string | null;
   articleSurfaceMode?: string | null;
