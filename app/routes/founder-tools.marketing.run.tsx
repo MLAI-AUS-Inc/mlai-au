@@ -7,6 +7,8 @@ import {
   ArrowPathIcon,
   ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
+  ArrowsPointingInIcon,
+  ArrowsPointingOutIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
   ChevronDownIcon,
@@ -2099,6 +2101,7 @@ function LivePreviewCommentInspectorPanel({
   const [inspectorProtocolVersion, setInspectorProtocolVersion] = useState<number | null>(preview?.inspectorProtocolVersion ?? null);
   const [inspectorMode, setInspectorMode] = useState<string | null>(preview?.inspectorMode ?? null);
   const [legacyInspectorWarning, setLegacyInspectorWarning] = useState<string | null>(null);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const serverComments = useMemo(() => run.componentFeedback?.comments ?? [], [run.componentFeedback?.comments]);
   const [comments, setComments] = useState<VibeMarketingComponentFeedbackComment[]>(serverComments);
@@ -2264,6 +2267,35 @@ function LivePreviewCommentInspectorPanel({
     sendInspectorCommand({ type: "setSelectedComponent", componentId: selectedComponent.id });
   }, [selectedComponent, sendInspectorCommand]);
 
+  useEffect(() => {
+    if (!previewExpanded) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [previewExpanded]);
+
+  useEffect(() => {
+    if (!previewExpanded) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !pendingPin && !openCommentId) setPreviewExpanded(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [openCommentId, pendingPin, previewExpanded]);
+
+  useEffect(() => {
+    if (!canRenderPreview) {
+      setPreviewExpanded(false);
+      return;
+    }
+    const measurementTimer = window.setTimeout(() => {
+      sendInspectorCommand({ type: "measureComponents" });
+    }, 160);
+    return () => window.clearTimeout(measurementTimer);
+  }, [canRenderPreview, previewExpanded, sendInspectorCommand]);
+
   const displayPreviewUrl = previewDisplayUrl(preview?.previewUrl);
   // Revision rebuilds redeploy to the SAME preview URL, so the iframe would never
   // reload on its own. Key the src by the deployed commit so a fresh deployment
@@ -2307,10 +2339,18 @@ function LivePreviewCommentInspectorPanel({
           {actionSlot(reviewState)}
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+        <div
+          className={clsx(
+            "overflow-hidden bg-gray-50",
+            previewExpanded
+              ? "fixed inset-0 z-[100] flex h-[100dvh] w-screen flex-col"
+              : "relative rounded-xl border border-gray-200",
+          )}
+          aria-label={previewExpanded ? "Expanded interactive article preview" : undefined}
+        >
           {canRenderPreview ? (
             <>
-              <div className="border-b border-gray-200 bg-white px-3 py-2">
+              <div className="shrink-0 border-b border-gray-200 bg-white px-3 py-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 shadow-inner">
                     <LockClosedIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" aria-hidden="true" />
@@ -2328,7 +2368,31 @@ function LivePreviewCommentInspectorPanel({
                     <span className="sm:hidden">Open</span>
                     <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
                   </a>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewExpanded((expanded) => !expanded)}
+                    aria-pressed={previewExpanded}
+                    aria-label={previewExpanded ? "Exit expanded preview" : "Expand interactive preview"}
+                    title={previewExpanded ? "Exit expanded preview" : "Expand interactive preview"}
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                  >
+                    {previewExpanded ? (
+                      <ArrowsPointingInIcon className="h-5 w-5" aria-hidden="true" />
+                    ) : (
+                      <ArrowsPointingOutIcon className="h-5 w-5" aria-hidden="true" />
+                    )}
+                  </button>
                 </div>
+                {previewExpanded ? (
+                  <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-black">
+                    <span className={commentModeActive ? "text-emerald-700" : "text-amber-700"}>
+                      {commentModeActive ? "Comment mode active" : waitingBridgeText}
+                    </span>
+                    <span className="text-gray-500">
+                      {draftComments.length} {draftNoun}{draftComments.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                ) : null}
               </div>
               {contentOnlyPreviewActive ? (
                 <div
@@ -2343,7 +2407,7 @@ function LivePreviewCommentInspectorPanel({
                   </span>
                 </div>
               ) : null}
-              <div className="relative">
+              <div className={clsx("relative", previewExpanded && "min-h-0 flex-1")}>
                 {legacyInspectorWarning ? (
                   <div className="absolute left-4 right-4 top-4 z-30 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 shadow-sm">
                     {legacyInspectorWarning}
@@ -2354,7 +2418,12 @@ function LivePreviewCommentInspectorPanel({
                   key={previewSrc}
                   title={previewTitle}
                   src={previewSrc}
-                  className="h-[calc(100dvh-11rem)] min-h-[560px] w-full bg-white sm:h-[820px]"
+                  className={clsx(
+                    "w-full bg-white",
+                    previewExpanded
+                      ? "h-full min-h-0"
+                      : "h-[calc(100dvh-11rem)] min-h-[560px] sm:h-[820px]",
+                  )}
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                   onLoad={() => {
                     window.setTimeout(() => {
@@ -3920,7 +3989,11 @@ function CommentPopover({
         }, 0);
       }}
       onKeyDown={(event) => {
-        if (event.key === "Escape") onCancel();
+        if (event.key === "Escape") {
+          event.stopPropagation();
+          onCancel();
+          return;
+        }
         if ((event.metaKey || event.ctrlKey) && event.key === "Enter") commit();
       }}
     >
