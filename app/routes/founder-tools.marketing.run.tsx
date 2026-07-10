@@ -52,6 +52,7 @@ import {
   viewedWorkflowStepIdForRun,
 } from "~/lib/vibe-marketing-run-view";
 import { shouldSkipVibeMarketingRunRevalidation } from "~/lib/vibe-marketing-step-revalidation";
+import { shouldOpenExpandedArticleReview } from "~/lib/vibe-marketing-review-entry";
 import {
   connectVibeMarketingGithub,
   controlVibeMarketingRun,
@@ -2057,6 +2058,7 @@ function LivePreviewCommentInspectorPanel({
   unavailableSlot,
   requiresExactPreview = false,
   readOnly = false,
+  initiallyExpanded = false,
 }: {
   run: VibeMarketingRunSummary;
   targetRunId?: string | null;
@@ -2073,6 +2075,7 @@ function LivePreviewCommentInspectorPanel({
   unavailableSlot?: ReactNode;
   requiresExactPreview?: boolean;
   readOnly?: boolean;
+  initiallyExpanded?: boolean;
 }) {
   const manifest = run.componentManifest;
   const components = useMemo(() => manifest?.components ?? [], [manifest]);
@@ -2112,7 +2115,10 @@ function LivePreviewCommentInspectorPanel({
   const [inspectorProtocolVersion, setInspectorProtocolVersion] = useState<number | null>(preview?.inspectorProtocolVersion ?? null);
   const [inspectorMode, setInspectorMode] = useState<string | null>(preview?.inspectorMode ?? null);
   const [legacyInspectorWarning, setLegacyInspectorWarning] = useState<string | null>(null);
-  const [previewExpanded, setPreviewExpanded] = useState(false);
+  const expansionRunKey = String(targetRunId || run.runId || "preview");
+  const [previewExpanded, setPreviewExpanded] = useState(() => Boolean(initiallyExpanded && canRenderPreview));
+  const expansionRunKeyRef = useRef(expansionRunKey);
+  const initialExpansionAppliedRef = useRef(Boolean(initiallyExpanded && canRenderPreview));
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const serverComments = useMemo(() => run.componentFeedback?.comments ?? [], [run.componentFeedback?.comments]);
   const [comments, setComments] = useState<VibeMarketingComponentFeedbackComment[]>(serverComments);
@@ -2279,6 +2285,17 @@ function LivePreviewCommentInspectorPanel({
   }, [selectedComponent, sendInspectorCommand]);
 
   useEffect(() => {
+    if (expansionRunKeyRef.current !== expansionRunKey) {
+      expansionRunKeyRef.current = expansionRunKey;
+      initialExpansionAppliedRef.current = false;
+      setPreviewExpanded(false);
+    }
+    if (!initiallyExpanded || initialExpansionAppliedRef.current || !canRenderPreview) return;
+    initialExpansionAppliedRef.current = true;
+    setPreviewExpanded(true);
+  }, [canRenderPreview, expansionRunKey, initiallyExpanded]);
+
+  useEffect(() => {
     if (!previewExpanded) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -2321,34 +2338,36 @@ function LivePreviewCommentInspectorPanel({
   return (
     <div className="space-y-4">
       <div className="space-y-4">
-        <div className="sticky top-[4.75rem] z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:top-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-black text-gray-950">{reviewTitle}</p>
-            <p className="text-xs font-semibold text-gray-500">
-              {draftComments.length > 0
-                ? `${draftComments.length} ${draftNoun}${draftComments.length === 1 ? "" : "s"} ready for review.`
-                : canRetrySubmittedBatch
-                  ? submittedRetryText
-                  : emptyDraftText}
-            </p>
-            <p className={clsx("mt-1 text-xs font-black", commentModeActive ? "text-emerald-700" : "text-amber-700")}>
-              {commentModeActive ? "Comment mode active" : waitingBridgeText}
-            </p>
-            {previewWarnings.length ? (
-              <details className="mt-2 text-xs font-semibold text-amber-800">
-                <summary className="cursor-pointer font-black">Preview warnings</summary>
-                <ul className="mt-1 list-disc space-y-1 pl-4">
-                  {previewWarnings.map((warning) => (
-                    <li key={warning} className="break-words font-mono">
-                      {warning}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            ) : null}
+        {!previewExpanded ? (
+          <div className="sticky top-[4.75rem] z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:top-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-gray-950">{reviewTitle}</p>
+              <p className="text-xs font-semibold text-gray-500">
+                {draftComments.length > 0
+                  ? `${draftComments.length} ${draftNoun}${draftComments.length === 1 ? "" : "s"} ready for review.`
+                  : canRetrySubmittedBatch
+                    ? submittedRetryText
+                    : emptyDraftText}
+              </p>
+              <p className={clsx("mt-1 text-xs font-black", commentModeActive ? "text-emerald-700" : "text-amber-700")}>
+                {commentModeActive ? "Comment mode active" : waitingBridgeText}
+              </p>
+              {previewWarnings.length ? (
+                <details className="mt-2 text-xs font-semibold text-amber-800">
+                  <summary className="cursor-pointer font-black">Preview warnings</summary>
+                  <ul className="mt-1 list-disc space-y-1 pl-4">
+                    {previewWarnings.map((warning) => (
+                      <li key={warning} className="break-words font-mono">
+                        {warning}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+            </div>
+            {actionSlot(reviewState)}
           </div>
-          {actionSlot(reviewState)}
-        </div>
+        ) : null}
 
         <div
           className={clsx(
@@ -2358,6 +2377,8 @@ function LivePreviewCommentInspectorPanel({
               : "relative rounded-xl border border-gray-200",
           )}
           aria-label={previewExpanded ? "Expanded interactive article preview" : undefined}
+          role={previewExpanded ? "dialog" : undefined}
+          aria-modal={previewExpanded ? true : undefined}
         >
           {canRenderPreview ? (
             <>
@@ -2369,19 +2390,12 @@ function LivePreviewCommentInspectorPanel({
                       {displayPreviewUrl}
                     </span>
                   </div>
-                  <a
-                    href={preview?.previewUrl ?? ""}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
-                  >
-                    <span className="hidden sm:inline">Open full preview</span>
-                    <span className="sm:hidden">Open</span>
-                    <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
-                  </a>
                   <button
                     type="button"
-                    onClick={() => setPreviewExpanded((expanded) => !expanded)}
+                    onClick={() => {
+                      initialExpansionAppliedRef.current = true;
+                      setPreviewExpanded((expanded) => !expanded);
+                    }}
                     aria-pressed={previewExpanded}
                     aria-label={previewExpanded ? "Exit expanded preview" : "Expand interactive preview"}
                     title={previewExpanded ? "Exit expanded preview" : "Expand interactive preview"}
@@ -2457,6 +2471,43 @@ function LivePreviewCommentInspectorPanel({
                   readOnly={readOnly}
                 />
               </div>
+              {previewExpanded ? (
+                <div
+                  className="shrink-0 border-t border-gray-200 bg-white px-3 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]"
+                  style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+                >
+                  {hasPendingRevisionBatch ? (
+                    <div
+                      role="status"
+                      className={clsx(
+                        "mb-3 rounded-xl px-3 py-2 text-xs font-bold",
+                        latestBatchStatus === "failed"
+                          ? "border border-amber-200 bg-amber-50 text-amber-900"
+                          : "border border-violet-100 bg-violet-50 text-violet-900",
+                      )}
+                    >
+                      {latestBatchStatus === "failed"
+                        ? "The revision request needs another try. Your comments are safe."
+                        : "Comments sent. Your article revision is underway."}
+                    </div>
+                  ) : null}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black uppercase tracking-wide text-gray-400">Review actions</p>
+                      <p className="mt-0.5 text-sm font-bold text-gray-700">
+                        {draftComments.length > 0
+                          ? `${draftComments.length} comment${draftComments.length === 1 ? "" : "s"} ready to send.`
+                          : hasPendingRevisionBatch
+                            ? latestBatchStatus === "failed"
+                              ? "Retry when you are ready."
+                              : "We will let you know when the revision is ready."
+                            : "Tap the article to leave a comment, or approve it as-is."}
+                      </p>
+                    </div>
+                    {actionSlot(reviewState)}
+                  </div>
+                </div>
+              ) : null}
             </>
           ) : (
             unavailableSlot ?? (
@@ -2477,12 +2528,14 @@ function LiveArticlePreviewPanel({
   onSelectComponent,
   isSubmitting,
   isActionPending,
+  initiallyExpanded = false,
 }: {
   run: VibeMarketingRunSummary;
   selectedComponent: VibeMarketingComponentManifestItem | null;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
+  initiallyExpanded?: boolean;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const acceptArticleIntent = articleReviewApproveIntentForRun(run, publishStep?.primaryAction?.intent);
@@ -2505,6 +2558,7 @@ function LiveArticlePreviewPanel({
         selectedComponent={selectedComponent}
         onSelectComponent={onSelectComponent}
         previewTitle="Live generated article preview"
+        initiallyExpanded={initiallyExpanded}
         actionSlot={(reviewState) => {
           const canAcceptRevision =
             run.workflow === "article_revision" &&
@@ -2524,8 +2578,21 @@ function LiveArticlePreviewPanel({
           const acceptArticlePending = isActionPending?.(acceptArticleIntent) ?? isSubmitting;
           const acceptRevisionPending = isActionPending?.("accept-component-revision") ?? isSubmitting;
           const submitCommentsPending = isActionPending?.("submit-component-comments") ?? isSubmitting;
+          const revisionInProgress =
+            reviewState.hasPendingRevisionBatch &&
+            reviewState.latestBatchStatus !== "failed" &&
+            reviewState.draftComments.length === 0;
+          const revisionActionLabel = submitCommentsPending
+            ? "Sending comments..."
+            : revisionInProgress
+              ? "Revision in progress"
+              : reviewState.canRetrySubmittedBatch
+                ? "Retry revision request"
+                : reviewState.draftComments.length > 0
+                  ? `Send ${reviewState.draftComments.length} comment${reviewState.draftComments.length === 1 ? "" : "s"} for revision`
+                  : "Send comments for revision";
           return (
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               {canAcceptArticleForPublish ? (
                 <Form method="POST">
                   <input type="hidden" name="autoMerge" value="true" />
@@ -2564,8 +2631,14 @@ function LiveArticlePreviewPanel({
                   disabled={isSubmitting || !reviewState.canSendRevisionRequest}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
                 >
-                  {submitCommentsPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                  {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
+                  {submitCommentsPending ? (
+                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                  ) : revisionInProgress ? (
+                    <ClockIcon className="h-4 w-4" />
+                  ) : (
+                    <PaperAirplaneIcon className="h-4 w-4" />
+                  )}
+                  {revisionActionLabel}
                 </button>
               </Form>
             </div>
@@ -2761,12 +2834,14 @@ function ArticleGenerationReviewDetail({
   onSelectComponent,
   isSubmitting,
   isActionPending,
+  initiallyExpanded = false,
 }: {
   run: VibeMarketingRunSummary;
   selectedComponent: VibeMarketingComponentManifestItem | null;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
+  initiallyExpanded?: boolean;
 }) {
   const hasArticlePreview = hasReadyArticlePreview(run);
   return (
@@ -2779,6 +2854,7 @@ function ArticleGenerationReviewDetail({
           onSelectComponent={onSelectComponent}
           isSubmitting={isSubmitting}
           isActionPending={isActionPending}
+          initiallyExpanded={initiallyExpanded}
         />
       ) : (
         <ArticlePreviewEmptyState run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} />
@@ -4549,6 +4625,7 @@ export default function FounderToolsMarketingRun() {
   );
   const requestedSetupStep = isArticleSystemSetupRun ? setupStepViewFromSearch(location.search) : null;
   const requestedArticleStep = isArticleGenerationRun ? articleStepViewFromSearch(location.search) : null;
+  const notificationReviewExpanded = isArticleGenerationRun && shouldOpenExpandedArticleReview(location.search);
   const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run), requestedArticleStep);
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
@@ -4752,6 +4829,7 @@ export default function FounderToolsMarketingRun() {
               onSelectComponent={setSelectedComponent}
               isSubmitting={isSubmitting || previewStartFetcher.state !== "idle"}
               isActionPending={pendingActions.isPending}
+              initiallyExpanded={notificationReviewExpanded}
             />
           ) : undefined
         }

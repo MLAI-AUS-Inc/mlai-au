@@ -27,8 +27,12 @@ describe("article review component boundaries", () => {
     const content = source("app/routes/founder-tools.marketing.run.tsx");
 
     expect(content).toContain('aria-label={previewExpanded ? "Exit expanded preview" : "Expand interactive preview"}');
+    expect(content).toContain('initiallyExpanded={notificationReviewExpanded}');
     expect(content).toContain('? "fixed inset-0 z-[100] flex h-[100dvh] w-screen flex-col"');
     expect(content).toContain('? "h-full min-h-0"');
+    expect(content).toContain('"Comments sent. Your article revision is underway."');
+    expect(content).toContain('"Send comments for revision"');
+    expect(content).not.toContain("Open full preview");
     expect(content).toContain('sendInspectorCommand({ type: "measureComponents" });');
     expect(content).toContain("event.stopPropagation();");
     expect(content).toContain("<ArticleCommentCanvas");
