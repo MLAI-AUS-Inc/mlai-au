@@ -15,8 +15,8 @@ type AuthorDraft = {
 };
 
 const INPUT_CLASS =
-  "w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10";
-const LABEL_CLASS = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500";
+  "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10";
+const LABEL_CLASS = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600";
 
 let newRowSeq = 0;
 
@@ -87,14 +87,14 @@ export default function VibeMarketingAuthorsSetup({
   const serializedDefaultId = selectedDraft ? resolvedId(selectedDraft) : "";
 
   return (
-    <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
           <Users className="h-5 w-5" />
         </span>
         <div>
-          <h3 className="text-base font-black text-gray-900">Article authors</h3>
-          <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+          <h3 className="text-base font-black text-slate-950">Article authors</h3>
+          <p className="mt-1 text-sm font-medium leading-6 text-slate-600">
             Every generated article is published under an author byline. Add the people who write for you and pick
             a default — you can choose a different author per article when you generate one.
           </p>
@@ -107,16 +107,25 @@ export default function VibeMarketingAuthorsSetup({
         <input type="hidden" name="defaultAuthorId" value={serializedDefaultId} />
 
         <div className="space-y-3">
-          {drafts.map((draft, index) => {
+          {drafts.map((draft) => {
             const hasName = Boolean(draft.name.trim());
             const isDefault = selectedDraft?.id === draft.id && hasName;
             return (
-              <div key={draft.id} className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+              <div
+                key={draft.id}
+                className={`rounded-xl border bg-white p-4 transition ${
+                  isDefault ? "border-violet-200 ring-1 ring-violet-100" : "border-slate-200"
+                }`}
+              >
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <label
                     className={`inline-flex items-center gap-2 text-sm font-bold ${
-                      isDefault ? "text-violet-600" : "text-gray-500"
-                    } ${hasName ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}
+                      isDefault
+                        ? "text-violet-600"
+                        : hasName
+                          ? "cursor-pointer text-slate-600 transition hover:text-violet-600"
+                          : "cursor-default text-slate-500"
+                    }`}
                   >
                     <input
                       type="radio"
@@ -126,14 +135,18 @@ export default function VibeMarketingAuthorsSetup({
                       disabled={!hasName}
                       onChange={() => setSelectedRowId(draft.id)}
                     />
-                    <Star className={`h-4 w-4 ${isDefault ? "fill-violet-600 text-violet-600" : ""}`} />
-                    {isDefault ? "Default byline" : "Set as default"}
+                    <Star
+                      className={`h-4 w-4 ${
+                        isDefault ? "fill-violet-600 text-violet-600" : hasName ? "text-violet-400" : "text-slate-400"
+                      }`}
+                    />
+                    {isDefault ? "Default byline" : hasName ? "Set as default" : "Add a name to set as default"}
                   </label>
                   {drafts.length > 1 ? (
                     <button
                       type="button"
                       onClick={() => setDrafts((current) => current.filter((item) => item.id !== draft.id))}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-400 transition hover:bg-white hover:text-red-600"
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-400 transition hover:bg-slate-50 hover:text-red-600"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Remove
@@ -202,7 +215,7 @@ export default function VibeMarketingAuthorsSetup({
           <button
             type="button"
             onClick={() => setDrafts((current) => [...current, emptyDraft(newRowId())])}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50/50 px-4 py-2.5 text-sm font-bold text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
           >
             <UserPlus className="h-4 w-4" />
             Add author
@@ -210,7 +223,7 @@ export default function VibeMarketingAuthorsSetup({
           <button
             type="submit"
             disabled={isSubmitting || serializedAuthors.length === 0}
-            className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:hover:bg-slate-200"
           >
             {isSubmitting ? "Saving…" : "Save authors"}
           </button>

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
@@ -133,10 +133,12 @@ function renderPanel({
   bootstrap = baseBootstrap(),
   articleSetupState = staleArticleSetupState(),
   scanRun = blockedScanRun(),
+  beforeDangerZone,
 }: {
   bootstrap?: VibeMarketingBootstrap;
   articleSetupState?: VibeMarketingArticleSetupState | null;
   scanRun?: VibeMarketingRunSummary | null;
+  beforeDangerZone?: ReactNode;
 } = {}) {
   const router = createMemoryRouter(
     [
@@ -151,6 +153,7 @@ function renderPanel({
           articleSetupState,
           scanRun,
           framed: false,
+          beforeDangerZone,
         }),
       },
     ],
@@ -163,6 +166,17 @@ function renderPanel({
 }
 
 describe("article system connection panel", () => {
+  test("renders supplied workflow content before the danger zone", () => {
+    const marker = "Article authors slot";
+    const markup = renderPanel({
+      beforeDangerZone: createElement("div", null, marker),
+    });
+
+    expect(markup).toContain(marker);
+    expect(markup).toContain("Danger zone");
+    expect(markup.indexOf(marker)).toBeLessThan(markup.indexOf("Danger zone"));
+  });
+
   test("shows stale saved route with change, re-scan, and reset controls", () => {
     const markup = renderPanel();
 
