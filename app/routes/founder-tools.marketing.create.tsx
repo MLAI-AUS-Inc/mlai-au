@@ -1579,6 +1579,15 @@ export default function FounderToolsMarketingCreate() {
               scanRun={latestScan}
               articleSetupState={articleSetupState}
               framed={false}
+              beforeDangerZone={
+                activeStep === "articleSystem" ? (
+                  <VibeMarketingAuthorsSetup
+                    authors={bootstrap.settings.authors ?? []}
+                    defaultAuthorId={bootstrap.settings.defaultAuthorId ?? null}
+                    isSubmitting={isSubmitting}
+                  />
+                ) : null
+              }
             />
 
             {!githubReadyForPublishing ? (
@@ -1593,13 +1602,6 @@ export default function FounderToolsMarketingCreate() {
               </div>
             ) : null}
 
-            {activeStep === "articleSystem" ? (
-              <VibeMarketingAuthorsSetup
-                authors={bootstrap.settings.authors ?? []}
-                defaultAuthorId={bootstrap.settings.defaultAuthorId ?? null}
-                isSubmitting={isSubmitting}
-              />
-            ) : null}
           </>
         ) : null}
 

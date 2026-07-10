@@ -1,3 +1,8 @@
+- [x] Move Article authors ahead of the article-system Danger zone
+- [x] Refresh empty author cards and fields so they look active and editable
+- [x] Add focused layout and author-form render tests
+- [x] Run targeted tests and typecheck
+
 - [x] Add Watt The Hack track sidebar routes
 - [x] Add Watt The Hack track placeholder pages
 - [x] Run Watt The Hack track tab verification

@@ -54,6 +54,7 @@ type ArticleSystemConnectionPanelProps = {
   articleSetupState?: VibeMarketingArticleSetupState | null;
   framed?: boolean;
   showDenySetupAction?: boolean;
+  beforeDangerZone?: ReactNode;
 };
 
 const SCAN_RUNNING_STATUSES = new Set(["queued", "running", "pending", "starting"]);
@@ -675,6 +676,7 @@ export default function ArticleSystemConnectionPanel({
   articleSetupState,
   framed = true,
   showDenySetupAction = false,
+  beforeDangerZone,
 }: ArticleSystemConnectionPanelProps) {
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const location = useLocation();
@@ -1756,6 +1758,8 @@ export default function ArticleSystemConnectionPanel({
             )}
           </div>
         </div>
+
+        {beforeDangerZone}
 
         {setupTargetReady || scaffoldReady || scaffoldConnected ? (
           <div className="rounded-2xl border border-red-200 bg-white">
