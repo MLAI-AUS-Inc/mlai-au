@@ -22,4 +22,15 @@ describe("article review component boundaries", () => {
     expect(content.match(/data-cf-component-type="events-cta"/g)?.length).toBe(2);
     expect(content.match(/data-cf-component-label="Upcoming events CTA"/g)?.length).toBe(2);
   });
+
+  test("article review keeps commenting available in the expanded iframe", () => {
+    const content = source("app/routes/founder-tools.marketing.run.tsx");
+
+    expect(content).toContain('aria-label={previewExpanded ? "Exit expanded preview" : "Expand interactive preview"}');
+    expect(content).toContain('? "fixed inset-0 z-[100] flex h-[100dvh] w-screen flex-col"');
+    expect(content).toContain('? "h-full min-h-0"');
+    expect(content).toContain('sendInspectorCommand({ type: "measureComponents" });');
+    expect(content).toContain("event.stopPropagation();");
+    expect(content).toContain("<ArticleCommentCanvas");
+  });
 });
