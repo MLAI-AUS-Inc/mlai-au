@@ -2278,7 +2278,7 @@ function LivePreviewCommentInspectorPanel({
   return (
     <div className="space-y-4">
       <div className="space-y-4">
-        <div className="sticky top-3 z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+        <div className="sticky top-[4.75rem] z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:top-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-black text-gray-950">{reviewTitle}</p>
             <p className="text-xs font-semibold text-gray-500">
@@ -2311,11 +2311,23 @@ function LivePreviewCommentInspectorPanel({
           {canRenderPreview ? (
             <>
               <div className="border-b border-gray-200 bg-white px-3 py-2">
-                <div className="flex min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 shadow-inner">
-                  <LockClosedIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" aria-hidden="true" />
-                  <span className="min-w-0 truncate" aria-label={`Preview URL: ${displayPreviewUrl}`}>
-                    {displayPreviewUrl}
-                  </span>
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 shadow-inner">
+                    <LockClosedIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" aria-hidden="true" />
+                    <span className="min-w-0 truncate" aria-label={`Preview URL: ${displayPreviewUrl}`}>
+                      {displayPreviewUrl}
+                    </span>
+                  </div>
+                  <a
+                    href={preview?.previewUrl ?? ""}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                  >
+                    <span className="hidden sm:inline">Open full preview</span>
+                    <span className="sm:hidden">Open</span>
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
+                  </a>
                 </div>
               </div>
               {contentOnlyPreviewActive ? (
@@ -2342,7 +2354,7 @@ function LivePreviewCommentInspectorPanel({
                   key={previewSrc}
                   title={previewTitle}
                   src={previewSrc}
-                  className="h-[820px] w-full bg-white"
+                  className="h-[calc(100dvh-11rem)] min-h-[560px] w-full bg-white sm:h-[820px]"
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                   onLoad={() => {
                     window.setTimeout(() => {
@@ -2781,7 +2793,7 @@ function ArticleSetupPublishDetail({
           <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "running" : "ready"} />
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
           <PublishFlowCard title="Publish" status={cardStatus} eyebrow={cardEyebrow}>
             {setupMerged ? (
               <div className="space-y-3">
@@ -3083,7 +3095,7 @@ function PublishDailyResearchReminderCard({
   const runNow = useRunTodayNow();
 
   return (
-    <section className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
+    <section className="h-full min-w-0 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
       <div className="flex items-start gap-4">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-100 text-violet-700 shadow-inner">
           <CalendarDaysIcon className="h-8 w-8" />
@@ -3125,7 +3137,7 @@ function PublishDailyResearchReminderCard({
             <input
               name="defaultTimezone"
               defaultValue={defaultTimezone}
-              className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-12 pr-10 text-sm font-bold text-slate-700 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+              className="h-12 min-w-0 w-full rounded-xl border border-gray-200 bg-white pl-12 pr-10 text-sm font-bold text-slate-700 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
             />
             <ChevronDownIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
           </div>
@@ -3292,7 +3304,7 @@ function PublishAndAutomateDetail({
       {publishChildMissingRemote ? null : (
         <ArticleRunStageProgress run={run} variant="embedded" reviewHref={canViewArticle ? viewArticleHref : undefined} />
       )}
-      <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+      <section className="min-w-0 rounded-3xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
@@ -3313,7 +3325,7 @@ function PublishAndAutomateDetail({
           <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishStep?.status ?? "ready"} />
         </div>
 
-        <div className="mt-6 grid items-stretch gap-5 lg:grid-cols-2">
+        <div className="mt-6 grid min-w-0 grid-cols-[minmax(0,1fr)] items-stretch gap-5 lg:grid-cols-2">
           <PublishFlowCard
             title="Publish"
             status={
@@ -3620,7 +3632,7 @@ function PublishFlowCard({
   children: ReactNode;
 }) {
   return (
-    <section className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
+    <section className="h-full min-w-0 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-xl font-black leading-7 text-gray-950">{title}</h3>
@@ -3901,7 +3913,7 @@ function CommentPopover({
   return (
     <div
       ref={popoverRef}
-      className="absolute left-4 top-4 z-30 w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-gray-200 bg-white p-3 text-left shadow-2xl"
+      className="fixed inset-x-3 bottom-3 z-50 w-auto max-w-none rounded-xl border border-gray-200 bg-white p-3 text-left shadow-2xl sm:absolute sm:bottom-auto sm:left-4 sm:right-auto sm:top-4 sm:z-30 sm:w-80 sm:max-w-[calc(100vw-3rem)]"
       onBlurCapture={() => {
         window.setTimeout(() => {
           if (!popoverRef.current?.contains(document.activeElement)) commit();

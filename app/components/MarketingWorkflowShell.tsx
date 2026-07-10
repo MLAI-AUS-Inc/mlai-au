@@ -283,6 +283,7 @@ export default function MarketingWorkflowShell({
 }: MarketingWorkflowShellProps) {
   const activeDetailId = useId();
   const [activeDetailExpanded, setActiveDetailExpanded] = useState(activeDetailDefaultExpanded);
+  const [mobileStepsExpanded, setMobileStepsExpanded] = useState(false);
   const steps = progress?.steps ?? [];
   if (!steps.length) return null;
   const requiredStep = steps.find((step) => step.id === progress?.currentStepId) ?? steps.find((step) => step.status !== "complete" && step.status !== "locked") ?? steps[0];
@@ -315,7 +316,124 @@ export default function MarketingWorkflowShell({
   const activeDetailAnchorPercent = ((viewedIndex + 0.5) / Math.max(displayGroups.length, 1)) * 100;
 
   return (
-    <section className={clsx("rounded-2xl border border-gray-200 bg-white px-5 py-7 shadow-md shadow-gray-200/60 sm:px-8 sm:py-9", className)}>
+    <section className={clsx("min-w-0 lg:rounded-2xl lg:border lg:border-gray-200 lg:bg-white lg:px-8 lg:py-9 lg:shadow-md lg:shadow-gray-200/60", className)}>
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm lg:hidden">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-wide text-violet-600">
+              Step {viewedIndex + 1} of {displayGroups.length}
+            </p>
+            <HeadingTag className="mt-2 text-2xl font-black leading-tight tracking-tight text-gray-950">
+              {title}
+            </HeadingTag>
+          </div>
+          <span
+            className={clsx(
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-black",
+              statusTone(viewedGroup.status),
+            )}
+          >
+            <StepStatusIcon status={viewedGroup.status} />
+            {statusLabel(viewedGroup.status)}
+          </span>
+        </div>
+
+        <p className="mt-3 text-sm font-black leading-5 text-gray-700">
+          {headerLabel}
+        </p>
+        <p className="mt-2 text-sm font-semibold leading-6 text-gray-500">
+          {subtitle ?? viewedGroup.summary}
+        </p>
+
+        <div
+          className="mt-4 h-1.5 overflow-hidden rounded-full bg-gray-100"
+          aria-hidden
+        >
+          <div
+            className="h-full rounded-full bg-violet-600 transition-all"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+
+        <button
+          type="button"
+          aria-expanded={mobileStepsExpanded}
+          onClick={() => setMobileStepsExpanded((expanded) => !expanded)}
+          className="mt-3 flex min-h-11 w-full items-center justify-between rounded-xl px-2 text-left text-sm font-black text-violet-700 transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+        >
+          <span>
+            {mobileStepsExpanded ? "Hide all steps" : "View all steps"}
+          </span>
+          {mobileStepsExpanded ? (
+            <ChevronUpIcon className="h-5 w-5" />
+          ) : (
+            <ChevronDownIcon className="h-5 w-5" />
+          )}
+        </button>
+
+        {mobileStepsExpanded ? (
+          <ol className="mt-2 space-y-2 border-t border-gray-100 pt-3">
+            {displayGroups.map((group, index) => {
+              const active = group.id === viewedGroup.id;
+              const locked =
+                group.status === "locked" && group.id !== "repo_article_system";
+              const Icon = group.icon;
+              const row = (
+                <div className="flex min-h-12 items-center gap-3 px-3 py-2.5">
+                  <span
+                    className={clsx(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border",
+                      iconCircleTone(group.status, active),
+                    )}
+                  >
+                    {group.status === "complete" ? (
+                      <CheckCircleIcon className="h-5 w-5" />
+                    ) : (
+                      <Icon className="h-5 w-5" />
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-black leading-5 text-gray-950">
+                      {group.label}
+                    </span>
+                    <span className="block text-xs font-bold text-gray-500">
+                      {statusLabel(group.status)}
+                    </span>
+                  </span>
+                  <span className="text-xs font-black text-gray-400">
+                    {index + 1}
+                  </span>
+                </div>
+              );
+              return (
+                <li key={group.id}>
+                  {locked ? (
+                    <div className="rounded-xl bg-gray-50 opacity-70">
+                      {row}
+                    </div>
+                  ) : (
+                    <Link
+                      to={group.href}
+                      aria-current={active ? "step" : undefined}
+                      aria-label={`${group.label}, ${statusLabel(group.status)}`}
+                      className={clsx(
+                        "block rounded-xl border transition",
+                        active
+                          ? "border-violet-200 bg-violet-50"
+                          : "border-gray-100 bg-white hover:bg-gray-50",
+                      )}
+                    >
+                      {row}
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        ) : null}
+      </div>
+
+      <div className="hidden lg:block">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-black uppercase tracking-wide text-violet-600">
@@ -421,42 +539,44 @@ export default function MarketingWorkflowShell({
           );
         })}
       </ol>
+      </div>
 
       {hasActiveDetail ? (
-        <div className="relative mt-4">
+        <div className="relative mt-4 min-w-0 lg:rounded-2xl lg:border lg:border-violet-100 lg:bg-white lg:p-3 lg:shadow-sm lg:shadow-violet-100/50">
           <span
             className="pointer-events-none absolute -top-2 hidden h-4 w-4 -translate-x-1/2 rotate-45 rounded-[3px] border-l border-t border-violet-100 bg-white lg:block"
             style={{ left: `${activeDetailAnchorPercent}%` }}
             aria-hidden
           />
-          <div className="rounded-2xl border border-violet-100 bg-white p-3 shadow-sm shadow-violet-100/50">
-            <button
-              type="button"
-              aria-expanded={activeDetailExpanded}
-              aria-controls={activeDetailId}
-              onClick={() => setActiveDetailExpanded((expanded) => !expanded)}
-              className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-            >
-              <span className="min-w-0">
-                <span className="block text-sm font-black text-gray-950">{activeDetailLabel}</span>
-                <span className="mt-0.5 block text-xs font-bold text-gray-500">
-                  {viewedGroup.label} - {statusLabel(viewedGroup.status)}
-                </span>
+          <button
+            type="button"
+            aria-expanded={activeDetailExpanded}
+            aria-controls={activeDetailId}
+            onClick={() => setActiveDetailExpanded((expanded) => !expanded)}
+            className="hidden w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500/30 lg:flex"
+          >
+            <span className="min-w-0">
+              <span className="block text-sm font-black text-gray-950">
+                {activeDetailLabel}
               </span>
-              <span className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-violet-100 bg-white text-violet-700 shadow-sm">
-                {activeDetailExpanded ? (
-                  <ChevronUpIcon className="h-5 w-5" />
-                ) : (
-                  <ChevronDownIcon className="h-5 w-5" />
-                )}
+              <span className="mt-0.5 block text-xs font-bold text-gray-500">
+                {viewedGroup.label} - {statusLabel(viewedGroup.status)}
               </span>
-            </button>
-            <div id={activeDetailId} hidden={!activeDetailExpanded}>
+            </span>
+            <span className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-violet-100 bg-white text-violet-700 shadow-sm">
               {activeDetailExpanded ? (
-                <div className="mt-3 border-t border-violet-100 px-1 pt-4">
-                  {activeDetailSlot}
-                </div>
-              ) : null}
+                <ChevronUpIcon className="h-5 w-5" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5" />
+              )}
+            </span>
+          </button>
+          <div
+            id={activeDetailId}
+            className={clsx("min-w-0", !activeDetailExpanded && "lg:hidden")}
+          >
+            <div className="min-w-0 lg:mt-3 lg:border-t lg:border-violet-100 lg:px-1 lg:pt-4">
+              {activeDetailSlot}
             </div>
           </div>
         </div>

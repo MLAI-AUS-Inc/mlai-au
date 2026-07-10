@@ -330,6 +330,7 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
     stages.find((stage) => stage.status === "up_next") ??
     stages[stages.length - 1];
   const activeStageIndex = Math.max(0, stages.findIndex((stage) => stage.id === activeStage?.id));
+  const completedStageCount = stages.filter((stage) => stage.status === "complete").length;
   const headline =
     activeStage?.status === "attention"
       ? "This article run needs attention"
@@ -357,7 +358,40 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
         </div>
       </div>
 
-      <div className={clsx("grid gap-2 sm:grid-cols-2 lg:grid-cols-5", !embedded && "mt-5")}>
+      <div className={clsx("sm:hidden", !embedded && "mt-5")}>
+        <div className="rounded-xl border border-violet-100 bg-white/80 p-3 shadow-sm">
+          <div className="flex items-center justify-between gap-3 text-xs font-black uppercase tracking-wide text-violet-700">
+            <span>{activeStage?.label ?? "Generating article"}</span>
+            <span>{Math.max(completedStageCount, activeStageIndex)} / {stages.length}</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-violet-100" aria-hidden>
+            <div
+              className="h-full rounded-full bg-violet-600 transition-all"
+              style={{ width: `${Math.max(6, (Math.max(completedStageCount, activeStageIndex) / stages.length) * 100)}%` }}
+            />
+          </div>
+          <details className="mt-2">
+            <summary className="flex min-h-11 cursor-pointer items-center text-sm font-black text-violet-700">
+              View generation details
+            </summary>
+            <div className="mt-1 space-y-2 border-t border-violet-100 pt-3">
+              {stages.map((stage) => (
+                <div key={stage.id} className={clsx("flex items-center gap-3 rounded-lg border px-3 py-2", stageStatusTone(stage.status))}>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80">
+                    <StageIcon status={stage.status} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-black text-gray-950">{stage.label}</span>
+                    <span className="block text-xs font-bold uppercase tracking-wide">{stageStatusLabel(stage.status)}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div className={clsx("hidden gap-2 sm:grid sm:grid-cols-2 lg:grid-cols-5", !embedded && "mt-5")}>
         {stages.map((stage) => {
           const chipClass = clsx(
             "block rounded-xl border px-3 py-3 transition",
