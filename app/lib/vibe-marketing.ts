@@ -137,6 +137,11 @@ function asBoolean(value: unknown): boolean {
   return Boolean(value);
 }
 
+function asOptionalBoolean(value: unknown): boolean | null {
+  if (value === null || value === undefined) return null;
+  return asBoolean(value);
+}
+
 function asNumberOrString(value: unknown): number | string | null {
   return asNumber(value) ?? asNullableString(value);
 }
@@ -355,6 +360,25 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     payload.result && typeof payload.result === "object" && !Array.isArray(payload.result)
       ? (payload.result as Record<string, unknown>)
       : {};
+  const resultSources = [
+    result,
+    result.result && typeof result.result === "object" && !Array.isArray(result.result)
+      ? (result.result as Record<string, unknown>)
+      : null,
+    result.latest_control_response &&
+    typeof result.latest_control_response === "object" &&
+    !Array.isArray(result.latest_control_response)
+      ? (result.latest_control_response as Record<string, unknown>)
+      : null,
+  ].filter((source): source is Record<string, unknown> => Boolean(source));
+  const resultValue = (...keys: string[]) => {
+    for (const source of resultSources) {
+      for (const key of keys) {
+        if (source[key] !== null && source[key] !== undefined) return source[key];
+      }
+    }
+    return undefined;
+  };
   return {
     runId: asNullableString(payload.runId) ?? asNullableString(payload.run_id) ?? "",
     workflow: asNullableString(payload.workflow) ?? "",
@@ -379,6 +403,29 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
       asNullableString(payload.blockingCode) ??
       asNullableString(payload.blocking_code) ??
       blockingCodeFromPayload(result),
+    preconditionStatus:
+      asNullableString(payload.preconditionStatus) ??
+      asNullableString(payload.precondition_status) ??
+      asNullableString(resultValue("preconditionStatus", "precondition_status")),
+    repairStatus:
+      asNullableString(payload.repairStatus) ??
+      asNullableString(payload.repair_status) ??
+      asNullableString(resultValue("repairStatus", "repair_status")),
+    repairRunId:
+      asNullableString(payload.repairRunId) ??
+      asNullableString(payload.repair_run_id) ??
+      asNullableString(resultValue("repairRunId", "repair_run_id", "scanRunId", "scan_run_id")),
+    setupRunId:
+      asNullableString(payload.setupRunId) ??
+      asNullableString(payload.setup_run_id) ??
+      asNullableString(resultValue("setupRunId", "setup_run_id", "scaffoldJobId", "scaffold_job_id")),
+    nextAction:
+      asNullableString(payload.nextAction) ??
+      asNullableString(payload.next_action) ??
+      asNullableString(resultValue("nextAction", "next_action")),
+    requiresUserAction:
+      asOptionalBoolean(payload.requiresUserAction ?? payload.requires_user_action) ??
+      asOptionalBoolean(resultValue("requiresUserAction", "requires_user_action")),
     cancelledRunIds: asStringList(payload.cancelledRunIds ?? payload.cancelled_run_ids),
     protectedRunIds: asStringList(payload.protectedRunIds ?? payload.protected_run_ids),
     artifacts: Array.isArray(payload.artifacts) ? payload.artifacts : [],
@@ -912,7 +959,10 @@ function normalizeContentPackage(raw: unknown): VibeMarketingContentPackage | nu
   const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
   if (!payload) return null;
   const artifactPaths = asStringRecord(payload.artifactPaths ?? payload.artifact_paths);
-  const contentPackaged = Boolean(payload.contentPackaged ?? payload.content_packaged ?? Object.keys(artifactPaths).length);
+  // Generic run artifacts (repository scans, org-config snapshots, research
+  // bundles) are not proof that an article package exists. Only the explicit
+  // package-completion contract may unlock Review/Publish in the UI.
+  const contentPackaged = asBoolean(payload.contentPackaged ?? payload.content_packaged ?? false);
   if (!contentPackaged && !asNullableString(payload.title) && !asNullableString(payload.slug)) return null;
   return {
     title: asNullableString(payload.title),

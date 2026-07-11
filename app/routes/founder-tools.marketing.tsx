@@ -70,6 +70,7 @@ import {
   restoreHiddenArticleId,
 } from "~/lib/vibe-marketing-article-discard";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
+import { articleRunPathAfterStart } from "~/lib/vibe-marketing-run-view";
 import {
   controlVibeMarketingRun,
   discardVibeMarketingWrittenArticle,
@@ -747,8 +748,12 @@ export async function action({ request, context }: Route.ActionArgs) {
         sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
 
-      if (result.runId) {
-        return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      const runPath = articleRunPathAfterStart(result);
+      if (runPath) {
+        // Precondition-repair runs are durable article runs too. Their run page
+        // now owns the setup-check/action state and continues polling until
+        // research begins, so keep one stable URL for the entire attempt.
+        return redirect(runPath);
       }
 
       return {

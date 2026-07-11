@@ -1,8 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  articlePreconditionRepairStateForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
+  articleRunPathAfterStart,
+  articleWorkflowProgressForRunPage,
   hasPublishHandoffEvidence,
   isArticleReviewPreviewReady,
   isPublishApprovalGate,
@@ -107,5 +110,172 @@ describe("vibe marketing run view state", () => {
         }),
       ),
     ).toBe("publish");
+  });
+
+  test("keeps a newly-running article on Generate despite stale publish progress", () => {
+    const run = articleRun({
+      status: "running",
+      currentStep: "fetch_org_config",
+      approvalState: null,
+      previewUrl: null,
+      componentManifest: null,
+      livePreview: null,
+      workflowProgress: {
+        currentStepId: "publish",
+        steps: [
+          { id: "generate", label: "Generate", phase: "article", status: "complete", href: "/generate" },
+          { id: "review", label: "Review", phase: "article", status: "complete", href: "/review" },
+          { id: "publish", label: "Publish", phase: "article", status: "ready", href: "/publish" },
+        ],
+      },
+      result: {},
+    });
+
+    expect(hasPublishHandoffEvidence(run)).toBe(false);
+    expect(viewedWorkflowStepIdForRun(run, null, null, "publish")).toBe("generate");
+    expect(articleWorkflowProgressForRunPage(run, null)).toMatchObject({
+      currentStepId: "generate",
+      steps: [
+        { id: "generate", status: "running" },
+        { id: "review", status: "locked" },
+        { id: "publish", status: "locked" },
+      ],
+    });
+  });
+
+  test("shows an automatic setup repair as Generate and keeps polling on the article run", () => {
+    const run = articleRun({
+      status: "blocked",
+      currentStep: "blocked",
+      approvalState: null,
+      previewUrl: null,
+      componentManifest: null,
+      contentPackage: null,
+      livePreview: null,
+      errorCode: "ARTICLE_SYSTEM_SETUP_REQUIRED",
+      preconditionStatus: "precondition_failed",
+      repairStatus: "queued",
+      repairRunId: "scan-repair-1",
+      requiresUserAction: false,
+      result: {
+        precondition_status: "precondition_failed",
+        repair_status: "queued",
+        repair_run_id: "scan-repair-1",
+        requires_user_action: false,
+      },
+    });
+
+    expect(articlePreconditionRepairStateForRun(run)).toMatchObject({
+      isPrecondition: true,
+      autoRecovering: true,
+      requiresUserAction: false,
+      repairRunId: "scan-repair-1",
+    });
+    expect(viewedWorkflowStepIdForRun(run)).toBe("generate");
+  });
+
+  test("links genuine setup blockers to their repair run", () => {
+    const run = articleRun({
+      status: "blocked",
+      currentStep: "blocked",
+      approvalState: null,
+      previewUrl: null,
+      componentManifest: null,
+      contentPackage: null,
+      livePreview: null,
+      errorCode: "ARTICLE_SYSTEM_SETUP_REQUIRED",
+      preconditionStatus: "precondition_failed",
+      repairStatus: "awaiting_approval",
+      setupRunId: "setup-review-1",
+      nextAction: "approve_scaffold",
+      requiresUserAction: true,
+      result: {},
+    });
+
+    expect(articlePreconditionRepairStateForRun(run)).toMatchObject({
+      isPrecondition: true,
+      autoRecovering: false,
+      requiresUserAction: true,
+      actionHref: "/founder-tools/marketing/runs/setup-review-1",
+      actionLabel: "Review article setup",
+    });
+    expect(viewedWorkflowStepIdForRun(run)).toBe("generate");
+    expect(articleWorkflowProgressForRunPage(run, null)?.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "generate", status: "needs_action" }),
+        expect.objectContaining({ id: "publish", status: "locked" }),
+      ]),
+    );
+  });
+
+  test("turns a queued setup child into an actionable link instead of an endless repair spinner", () => {
+    const run = articleRun({
+      status: "blocked",
+      currentStep: "blocked",
+      approvalState: null,
+      previewUrl: null,
+      componentManifest: null,
+      contentPackage: null,
+      livePreview: null,
+      errorCode: "ARTICLE_SYSTEM_SETUP_REQUIRED",
+      preconditionStatus: "precondition_failed",
+      repairStatus: "setup_queued",
+      repairRunId: "setup-preview-queued-1",
+      setupRunId: "setup-preview-queued-1",
+      nextAction: "review_setup",
+      requiresUserAction: true,
+      result: {
+        precondition_status: "precondition_failed",
+        repair_status: "setup_queued",
+        repair_run_id: "setup-preview-queued-1",
+        setup_run_id: "setup-preview-queued-1",
+        next_action: "review_setup",
+        requires_user_action: true,
+      },
+    });
+
+    expect(articlePreconditionRepairStateForRun(run)).toMatchObject({
+      isPrecondition: true,
+      autoRecovering: false,
+      requiresUserAction: true,
+      repairRunId: "setup-preview-queued-1",
+      actionHref: "/founder-tools/marketing/runs/setup-preview-queued-1",
+      actionLabel: "Review article setup",
+    });
+  });
+
+  test("keeps every accepted article start on its durable run URL", () => {
+    expect(articleRunPathAfterStart({ runId: "queued-article" })).toBe(
+      "/founder-tools/marketing/runs/queued-article",
+    );
+    expect(articleRunPathAfterStart({ runId: "repairing article" })).toBe(
+      "/founder-tools/marketing/runs/repairing%20article",
+    );
+    expect(articleRunPathAfterStart({ runId: null })).toBeNull();
+  });
+
+  test("turns an exhausted automatic resume into an actionable article retry", () => {
+    const run = articleRun({
+      status: "blocked",
+      currentStep: "blocked",
+      approvalState: null,
+      previewUrl: null,
+      componentManifest: null,
+      contentPackage: null,
+      livePreview: null,
+      errorCode: "ARTICLE_SYSTEM_SETUP_REQUIRED",
+      preconditionStatus: "precondition_failed",
+      repairStatus: "resume_failed",
+      nextAction: "resume_article",
+      requiresUserAction: true,
+      result: {},
+    });
+
+    expect(articlePreconditionRepairStateForRun(run)).toMatchObject({
+      isPrecondition: true,
+      autoRecovering: false,
+      requiresUserAction: true,
+      actionLabel: "Resume article",
+    });
   });
 });

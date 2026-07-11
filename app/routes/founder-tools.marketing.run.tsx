@@ -41,9 +41,12 @@ import {
 } from "~/lib/vibe-marketing-billing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
+  articlePreconditionRepairStateForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
+  articleWorkflowProgressForRunPage,
   hasPublishHandoffEvidence,
+  isArticleGenerationActivelyRunning,
   isArticleReviewPreviewReady,
   isPublishApprovalGate,
   isPublishFlowSettled,
@@ -321,6 +324,7 @@ function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
   if (run.workflow === "article_system_setup" && isActiveArticleSystemSetupRun(run)) {
     return false;
   }
+  if (articlePreconditionRepairStateForRun(run).autoRecovering) return false;
   if (run.status === "awaiting_confirmation" || run.status === "awaiting_approval" || run.status === "approval_required") {
     return true;
   }
@@ -393,7 +397,10 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       githubRepos = { status: "unavailable", repos: [], repositories: [], error: "Repository list is unavailable." };
     }
   }
-  const setupRunId = setupRunIdForRun(run);
+  // Article runs keep their own stable page while an associated scan/setup
+  // repairs the publish target. Loading that child as this page's setup run
+  // would incorrectly replace Generate with the separate setup workflow UI.
+  const setupRunId = isArticleGenerationWorkflow(run.workflow) ? "" : setupRunIdForRun(run);
   let setupRun: VibeMarketingRunSummary | null = null;
   if (setupRunId && setupRunId !== run.runId) {
     try {
@@ -2963,6 +2970,7 @@ function ArticleGenerationReviewDetail({
   const hasArticlePreview = hasReadyArticlePreview(run);
   return (
     <div className="space-y-5">
+      <ArticlePreconditionRepairNotice run={run} />
       {hasArticlePreview ? (
         <LiveArticlePreviewPanel
           run={run}
@@ -2979,6 +2987,74 @@ function ArticleGenerationReviewDetail({
         </>
       )}
     </div>
+  );
+}
+
+function ArticlePreconditionRepairNotice({ run }: { run: VibeMarketingRunSummary }) {
+  const repair = articlePreconditionRepairStateForRun(run);
+  if (!repair.isPrecondition) return null;
+
+  const recovering = repair.autoRecovering || isArticleGenerationActivelyRunning(run);
+  if (recovering) {
+    return (
+      <section role="status" className="rounded-xl border border-violet-200 bg-violet-50 p-5 text-violet-950">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-violet-700 shadow-sm">
+            <ArrowPathIcon className="h-5 w-5 animate-spin" aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className="text-base font-black">Checking article setup before research</h2>
+            <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-violet-900">
+              Content Factory is refreshing the repository&apos;s article location. This article will continue into research and writing automatically when that check is ready.
+            </p>
+            {repair.repairStatus ? (
+              <p className="mt-2 text-xs font-black uppercase tracking-wide text-violet-700">
+                Setup check: {repair.repairStatus.replace(/_/g, " ")}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!repair.requiresUserAction) return null;
+  return (
+    <section role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 flex-shrink-0" aria-hidden="true" />
+          <div>
+            <h2 className="text-base font-black">Article setup needs one action</h2>
+            <p className="mt-1 max-w-2xl text-sm font-semibold leading-6">{repair.message}</p>
+            <p className="mt-2 text-xs font-black uppercase tracking-wide text-amber-700">
+              This article run is saved and will continue after setup is ready.
+            </p>
+          </div>
+        </div>
+        {repair.nextAction === "resume_article" ? (
+          <Form method="POST">
+            <button
+              type="submit"
+              name="intent"
+              value="resume"
+              className="inline-flex w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm font-black text-amber-900 shadow-sm transition hover:bg-amber-100 sm:w-auto"
+            >
+              {repair.actionLabel}
+              <PlayIcon className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </Form>
+        ) : (
+          <Link
+            to={repair.actionHref}
+            className="inline-flex w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm font-black text-amber-900 shadow-sm transition hover:bg-amber-100 sm:w-auto"
+          >
+            {repair.actionLabel}
+            <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -4653,26 +4729,7 @@ function workflowProgressForRunPage(
       }),
     };
   }
-  if (!progress || !isArticleGenerationWorkflow(run.workflow) || !POLLING_STATUSES.has(run.status)) {
-    return progress;
-  }
-  if (progress.currentStepId === "publish" || progress.currentStepId === "automation" || hasPublishHandoffEvidence(run)) {
-    return progress;
-  }
-
-  return {
-    ...progress,
-    currentStepId: "generate",
-    nextStepId: progress.nextStepId === "generate" ? null : progress.nextStepId,
-    steps: progress.steps.map((step) =>
-      step.id === "generate"
-        ? {
-            ...step,
-            status: "running",
-          }
-        : step,
-    ),
-  };
+  return articleWorkflowProgressForRunPage(run, progress);
 }
 
 export default function FounderToolsMarketingRun() {
@@ -4700,6 +4757,9 @@ export default function FounderToolsMarketingRun() {
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
   const workflow = String(run.workflow ?? "");
+  const isArticleWorkflowRun = isArticleWorkflow(workflow);
+  const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
+  const articleRepairState = articlePreconditionRepairStateForRun(run);
   const isScanRun = SCAN_WORKFLOWS.has(workflow);
   const isSetupScanContext = isScanRun && isSetupScanRun(run);
   const isStaleScan = isScanRun && Boolean(run.stale || run.staleReason === "scan_queue_not_started");
@@ -4718,11 +4778,10 @@ export default function FounderToolsMarketingRun() {
   const shouldPoll =
     setupRunActive ||
     (POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
+    articleRepairState.autoRecovering ||
     setupPreviewActive ||
     hasPendingArticlePreview(run) ||
     (hasPublishHandoffEvidence(run) && !isPublishFlowSettled(run));
-  const isArticleWorkflowRun = isArticleWorkflow(workflow);
-  const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const hasArticlePreview = hasReadyArticlePreview(run);
   const setupBlocked = isArticleSystemSetupBlocked(bootstrap);
   const isDiscoveryConfirmation =
@@ -4731,7 +4790,7 @@ export default function FounderToolsMarketingRun() {
     !setupBlocked;
   const isPublishApproval = isPublishApprovalGate(run);
   const effectiveSetupPreviewRun = setupRun ?? (isScanRun && setupRunIdForRun(run) ? run : null);
-  const showRunAttentionBanner = RESUMABLE_ATTENTION_STATUSES.has(run.status);
+  const showRunAttentionBanner = RESUMABLE_ATTENTION_STATUSES.has(run.status) && !articleRepairState.isPrecondition;
   const canResume = Boolean(run.resumeAvailable && RESUMABLE_ATTENTION_STATUSES.has(run.status));
   const discoveryCandidates = useMemo(
     () => (isDiscoveryConfirmation ? topicCandidatesFromRun(run) : []),
