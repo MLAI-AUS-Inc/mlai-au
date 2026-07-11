@@ -542,3 +542,6 @@
 - [x] Remove duplicate progress and preview messaging once an article is ready
 - [x] Show one context-aware review action at a time
 - [x] Run focused tests, typecheck, and 390px browser verification
+- [x] Keep new and self-healing article runs on Generate until their own review evidence exists
+- [x] Surface automatic article-setup repair and actionable setup blockers on the durable article run page
+- [x] Add focused repair-state, progress, normalization, and start-route tests; run `bun run typecheck`

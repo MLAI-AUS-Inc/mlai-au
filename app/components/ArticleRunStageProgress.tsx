@@ -7,6 +7,10 @@ import {
 import { clsx } from "clsx";
 import { Link } from "react-router";
 
+import {
+  articlePreconditionRepairStateForRun,
+  isArticleGenerationActivelyRunning,
+} from "~/lib/vibe-marketing-run-view";
 import type { VibeMarketingRunSummary, VibeMarketingStepState } from "~/types/vibe-marketing";
 
 type StageId =
@@ -281,12 +285,22 @@ function StageIcon({ status }: { status: StageStatus }) {
 
 export function deriveArticleProgressStages(run: VibeMarketingRunSummary): StageView[] {
   const total = Math.max(run.stepOrder.length, run.steps.length, 1);
+  const repair = articlePreconditionRepairStateForRun(run);
   const activeStep = currentInternalStep(run);
-  const activeStage = stageForStep(activeStep ?? run.currentStep, activeStep ? run.steps.indexOf(activeStep) : 0, total);
+  const activeStage = repair.isPrecondition
+    ? "article_system"
+    : stageForStep(activeStep ?? run.currentStep, activeStep ? run.steps.indexOf(activeStep) : 0, total);
   const failingStep = run.steps.find((step) => FAILED_STEP_STATUSES.has(step.status)) ?? null;
-  const failingStage = failingStep ? stageForStep(failingStep, run.steps.indexOf(failingStep), total) : null;
-  const runFailed = FAILED_RUN_STATUSES.has(run.status);
-  const runRunning = RUNNING_RUN_STATUSES.has(run.status);
+  const failingStage = repair.requiresUserAction
+    ? "article_system"
+    : repair.autoRecovering
+      ? null
+      : failingStep
+      ? stageForStep(failingStep, run.steps.indexOf(failingStep), total)
+      : null;
+  const activeArticle = isArticleGenerationActivelyRunning(run);
+  const runFailed = FAILED_RUN_STATUSES.has(run.status) && !repair.autoRecovering && !activeArticle;
+  const runRunning = RUNNING_RUN_STATUSES.has(run.status) || repair.autoRecovering || activeArticle;
   const runComplete = run.status === "completed";
   const activeStageIndex = STAGE_INDEX.get(activeStage) ?? 0;
 
@@ -295,7 +309,10 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
     const stageSteps = run.steps.filter((step, index) => stageForStep(step, index, total) === stage.id);
     const allStageStepsComplete =
       stageSteps.length > 0 && stageSteps.every((step) => COMPLETE_STEP_STATUSES.has(step.status));
-    const attention = failingStage === stage.id || (runFailed && stage.id === activeStage);
+    const attention =
+      (repair.requiresUserAction && stage.id === "article_system") ||
+      failingStage === stage.id ||
+      (runFailed && stage.id === activeStage);
     const running = runRunning && stage.id === activeStage && !attention;
     const complete = runComplete || allStageStepsComplete || (runRunning && stageIndex < activeStageIndex && !attention);
     const status: StageStatus = attention ? "attention" : running ? "running" : complete ? "complete" : "up_next";
@@ -304,7 +321,11 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
       ...stage,
       status,
       detail:
-        status === "complete"
+        repair.isPrecondition && stage.id === "article_system" && status === "running"
+          ? "Refreshing the repository article setup before topic research starts automatically."
+          : repair.requiresUserAction && stage.id === "article_system" && status === "attention"
+            ? repair.message
+            : status === "complete"
           ? stage.completeText
           : status === "running"
             ? stage.activeText
@@ -323,6 +344,7 @@ export function articleRunTechnicalProgressLabel(run: VibeMarketingRunSummary) {
 
 export default function ArticleRunStageProgress({ run, variant = "standalone", reviewHref }: ArticleRunStageProgressProps) {
   const stages = deriveArticleProgressStages(run);
+  const repair = articlePreconditionRepairStateForRun(run);
   const embedded = variant === "embedded";
   const activeStage =
     stages.find((stage) => stage.status === "attention") ??
@@ -332,7 +354,11 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
   const activeStageIndex = Math.max(0, stages.findIndex((stage) => stage.id === activeStage?.id));
   const completedStageCount = stages.filter((stage) => stage.status === "complete").length;
   const headline =
-    activeStage?.status === "attention"
+    repair.autoRecovering
+      ? "Checking article setup before research"
+      : repair.requiresUserAction
+        ? "Article setup needs attention"
+        : activeStage?.status === "attention"
       ? "This article run needs attention"
       : run.status === "completed"
         ? "Article ready for review"
