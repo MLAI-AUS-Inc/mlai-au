@@ -1274,15 +1274,28 @@ export function ArticleSystemSetupPreviewPanel({
   const setupBranchUrl = repo && setupBranchName ? `https://github.com/${repo}/tree/${setupBranchName}` : "";
   const setupTerminalFailure = ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus);
   const terminalQualityErrorCode = (
+    run.errorCode ||
     stringResultValue(run, "error_code", "errorCode") ||
     String(setup.error_code ?? setup.errorCode ?? "")
   ).trim().toUpperCase();
-  const terminalQualityStep = (
-    run.currentStep ||
-    stringResultValue(run, "failed_step", "failedStep") ||
-    String(setup.failed_step ?? setup.failedStep ?? "") ||
-    articleSystemSetupCurrentStep(run)
-  ).trim().toLowerCase();
+  // MLAI exposes the remote error code canonically at the top level, while
+  // callback state can leave `currentStep` on a generic local failure label.
+  // Check every preserved step signal instead of allowing the first stale value
+  // to hide the actual browser/style repair step.
+  const terminalQualitySteps = new Set(
+    [
+      run.currentStep,
+      articleSystemSetupCurrentStep(run),
+      articleSystemSetupFailureStep(run),
+      stringResultValue(run, "failed_step", "failedStep"),
+      String(setup.failed_step ?? setup.failedStep ?? ""),
+    ]
+      .map((value) => String(value ?? "").trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const terminalQualityStepPresent = Array.from(terminalQualitySteps).some((step) =>
+    ARTICLE_SETUP_MANUAL_QUALITY_OVERRIDE_STEPS.has(step),
+  );
   const manualQualityOverrideAvailable = Boolean(
     !setupAlreadyApproved &&
       setupExactPreviewReady &&
@@ -1291,7 +1304,7 @@ export function ArticleSystemSetupPreviewPanel({
         ARTICLE_SETUP_MANUAL_QUALITY_OVERRIDE_ERROR_CODES.has(terminalQualityErrorCode) ||
         (
           terminalQualityErrorCode === "SETUP_STEP_STALLED" &&
-          ARTICLE_SETUP_MANUAL_QUALITY_OVERRIDE_STEPS.has(terminalQualityStep)
+          terminalQualityStepPresent
         )
       ),
   );
