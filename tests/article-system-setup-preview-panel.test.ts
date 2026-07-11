@@ -138,4 +138,32 @@ describe("article system setup preview panel", () => {
     expect(markup).toContain("Approval records your reviewed-preview override.");
     expect(markup).not.toContain("Approval unavailable");
   });
+
+  test("recognizes a projected stall code when the local current step is stale", () => {
+    const markup = renderPanel(
+      exactPreviewRun({
+        status: "blocked",
+        currentStep: "article_system_setup_preview_failed",
+        approvalState: "not_required",
+        errorCode: "SETUP_STEP_STALLED",
+        livePreview: {
+          available: true,
+          status: "failed",
+          platformStatus: "ready",
+          previewUrl: "https://preview.example/articles",
+          exactRender: true,
+        },
+        result: {
+          status: "blocked",
+          setup_status: "preview_verifying",
+          failed_step: "repair_directory_visual_style",
+          article_system_setup: { status: "preview_verifying" },
+        },
+      }),
+    );
+
+    expect(markup).toContain("Approve preview and create PR");
+    expect(markup).toContain('value="approve"');
+    expect(markup).not.toContain("Approval unavailable");
+  });
 });
