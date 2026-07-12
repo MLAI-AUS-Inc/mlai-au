@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/a-practical-guide-for-australian-founders-building-an-ai-startup': {
+        title: "A Practical Guide for Australian Founders Building an AI Startup",
+        date: "2026-07-12",
+        description: "Australian founders can build a focused first AI startup.",
+        author: "Dr Sam Donegan",
+        slug: "featured/a-practical-guide-for-australian-founders-building-an-ai-startup",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e79c88fc-4c95-41a5-97b4-82ddbd846b29.jpg?alt=media&token=9fb77a30-cac3-449e-b544-e72cba021bf9",
+        imageAlt: "A Practical Guide for Australian Founders Building an AI Startup",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
