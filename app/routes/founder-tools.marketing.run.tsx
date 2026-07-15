@@ -3101,21 +3101,35 @@ function ArticleSetupPublishDetail({
   // Present the two underlying setup steps (create, then merge) as one friendly "Publish" action.
   const publishPending = approvePending || mergePending;
   const publishIntent = prUrl && !setupMerged ? "merge-setup-pr" : "approve";
+
+  // A created-but-unmerged setup PR is IDLE: it moves only when the founder clicks
+  // Publish (which merges it). The one exception is native auto-merge (merge_status
+  // "publishing"), where GitHub will merge once required checks pass with nothing for
+  // the founder to do — that IS genuinely in flight. So the card only reads "running"
+  // when a merge/publish action is actually happening, never on prUrl alone.
+  const autoMergeInFlight = mergeStatus === "publishing";
+  const publishInFlight = publishPending || autoMergeInFlight;
+  // merge_blocked_reason is overloaded: the auto-merge path stamps a benign
+  // "publishing to production…" message into it. Only treat it as a block when we are
+  // NOT mid-auto-merge, so an in-flight publish never reads as "Needs a retry".
+  const rawBlockedReason = autoMergeInFlight ? "" : mergeBlockedReason;
+  // The setup PR exists and is just waiting for the founder to click Publish.
+  const readyToPublish = Boolean(prUrl) && !setupMerged && !publishInFlight && !rawBlockedReason && !prCreateFailed;
   const publishLabel = publishPending
     ? "Publishing..."
-    : prCreateFailed || mergeBlockedReason
+    : prCreateFailed || rawBlockedReason
       ? "Retry publish"
       : "Publish";
   // Keep the backend's git phrasing out of the UI when a publish can't finish automatically.
   const blockedMessage =
-    mergeBlockedReason && /merge the setup pr/i.test(mergeBlockedReason)
+    rawBlockedReason && /merge the setup pr/i.test(rawBlockedReason)
       ? "Publishing couldn't finish automatically — retry, or view changes to check the latest status."
-      : mergeBlockedReason;
+      : rawBlockedReason;
   const cardStatus = setupMerged
     ? "complete"
     : blockedMessage || prCreateFailed
       ? "blocked"
-      : publishPending || prUrl
+      : publishInFlight
         ? "running"
         : "ready";
   const cardEyebrow = setupMerged
@@ -3124,11 +3138,13 @@ function ArticleSetupPublishDetail({
       ? "Needs a retry"
       : prCreateFailed
         ? "Retry needed"
-        : prUrl
+        : publishInFlight
           ? checksStatus
             ? `Checks ${checksStatus}`
             : "Publishing"
-          : "Ready";
+          : readyToPublish
+            ? "Ready to publish"
+            : "Ready";
 
   return (
     <div className="space-y-5">
@@ -3141,7 +3157,7 @@ function ArticleSetupPublishDetail({
               Publish the articles setup — it goes live with the next site build. Once it&apos;s published, article generation unlocks and you can turn on daily research reminders.
             </p>
           </div>
-          <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "running" : "ready"} />
+          <WorkflowStatusPill status={setupMerged ? "complete" : publishInFlight ? "running" : "ready"} />
         </div>
 
         <div className="mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
@@ -3169,9 +3185,13 @@ function ArticleSetupPublishDetail({
                     ? blockedMessage
                     : prCreateFailed
                       ? "Publishing didn't finish last time. Retry to publish the approved setup."
-                      : prUrl
-                        ? "Your setup is publishing. This page updates on its own once it's live."
-                        : "Publish the approved setup. It goes live with the next site build and unlocks article generation."}
+                      : autoMergeInFlight
+                        ? "Publishing to production. GitHub merges automatically once required checks pass — this page updates on its own."
+                        : publishPending
+                          ? "Publishing the approved setup…"
+                          : readyToPublish
+                            ? "Ready to publish — click Publish to merge the setup PR. It goes live with the next site build and unlocks article generation."
+                            : "Publish the approved setup. It goes live with the next site build and unlocks article generation."}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -4675,6 +4695,10 @@ function workflowProgressForRunPage(
     const setupStatus = articleSystemSetupStatus(run);
     const manualMergeRequired = setupStatus === "manual_merge_required";
     const setupPrCreated = isArticleSystemSetupPublishState(run);
+    // Native auto-merge is armed server-side: GitHub merges once checks pass, with
+    // nothing for the founder to do. Every other created-but-unmerged PR is idle and
+    // waits for a Publish click — so the publish step is a call to action, not running.
+    const autoMergeInFlight = articleSystemSetupMergeStatus(run) === "publishing";
     const setupMerged = isArticleSystemSetupMerged(run);
     const setupActive = isActiveArticleSystemSetupRun(run);
     const setupTerminal = !setupActive && isTerminalAttentionStatus(run.status);
@@ -4716,10 +4740,18 @@ function workflowProgressForRunPage(
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}?setupStep=publish`,
             summary: setupComplete
               ? "Your published setup is being verified."
-              : setupPrCreated
-                ? "Publish the articles setup, then enable daily article reminders."
-                : "Publish the approved setup preview.",
-            status: setupComplete ? "complete" : setupPrCreated || manualMergeRequired ? "needs_action" : "locked",
+              : autoMergeInFlight
+                ? "Publishing to production — GitHub merges automatically once required checks pass."
+                : setupPrCreated
+                  ? "Ready to publish — click Publish to merge the setup PR."
+                  : "Publish the approved setup preview.",
+            status: setupComplete
+              ? "complete"
+              : autoMergeInFlight
+                ? "running"
+                : setupPrCreated || manualMergeRequired
+                  ? "needs_action"
+                  : "locked",
           };
         }
         if (step.id === "research" || step.id === "choose_topic" || step.id === "automation") {
