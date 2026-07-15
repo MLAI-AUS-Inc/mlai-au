@@ -41,6 +41,7 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import AvatarModal from "~/components/AvatarModal";
 import { RooPointCost } from "~/components/RooPointCost";
+import VibeMarketingAnalyticsSection from "~/components/VibeMarketingAnalyticsSection";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
@@ -4713,6 +4714,10 @@ function ReturningTopicPickerPage({
               )}
             </div>
           </section>
+
+          {publishedArticles.length ? (
+            <VibeMarketingAnalyticsSection companyId={bootstrap.company.id} />
+          ) : null}
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
