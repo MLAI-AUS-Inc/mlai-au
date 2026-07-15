@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { deriveArticleProgressStages } from "../app/components/ArticleRunStageProgress";
+import {
+  articleRunVisibleError,
+  deriveArticleProgressStages,
+} from "../app/components/ArticleRunStageProgress";
 import type { VibeMarketingRunSummary } from "../app/types/vibe-marketing";
 
 function repairingArticle(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarketingRunSummary {
@@ -27,27 +30,34 @@ function repairingArticle(overrides: Partial<VibeMarketingRunSummary> = {}): Vib
 
 describe("article generation stage progress during setup repair", () => {
   test("shows automatic repair as an in-progress article-system check", () => {
-    const stages = deriveArticleProgressStages(repairingArticle());
+    const run = repairingArticle({
+      errors: [
+        "The existing article scaffold only proves a listing page. Content Factory must repair it before generation.",
+      ],
+    });
+    const stages = deriveArticleProgressStages(run);
 
     expect(stages.find((stage) => stage.id === "article_system")).toMatchObject({
       status: "running",
       detail: "Refreshing the repository article setup before topic research starts automatically.",
     });
     expect(stages.some((stage) => stage.status === "attention")).toBe(false);
+    expect(articleRunVisibleError(run)).toBe("");
   });
 
   test("shows a genuine setup blocker as needing attention", () => {
-    const stages = deriveArticleProgressStages(
-      repairingArticle({
-        repairStatus: "awaiting_approval",
-        requiresUserAction: true,
-        result: { message: "Approve the generated article setup before continuing." },
-      }),
-    );
+    const run = repairingArticle({
+      repairStatus: "awaiting_approval",
+      requiresUserAction: true,
+      errors: ["Approve the generated article setup before continuing."],
+      result: { message: "Approve the generated article setup before continuing." },
+    });
+    const stages = deriveArticleProgressStages(run);
 
     expect(stages.find((stage) => stage.id === "article_system")).toMatchObject({
       status: "attention",
       detail: "Approve the generated article setup before continuing.",
     });
+    expect(articleRunVisibleError(run)).toBe("Approve the generated article setup before continuing.");
   });
 });

@@ -342,9 +342,16 @@ export function articleRunTechnicalProgressLabel(run: VibeMarketingRunSummary) {
   return `${completed} of ${total} checks complete`;
 }
 
+export function articleRunVisibleError(run: VibeMarketingRunSummary) {
+  const repair = articlePreconditionRepairStateForRun(run);
+  if (repair.autoRecovering) return "";
+  return run.errors[0] ?? "";
+}
+
 export default function ArticleRunStageProgress({ run, variant = "standalone", reviewHref }: ArticleRunStageProgressProps) {
   const stages = deriveArticleProgressStages(run);
   const repair = articlePreconditionRepairStateForRun(run);
+  const visibleError = articleRunVisibleError(run);
   const embedded = variant === "embedded";
   const activeStage =
     stages.find((stage) => stage.status === "attention") ??
@@ -379,7 +386,7 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
             Step {Math.min(activeStageIndex + 1, stages.length)} of {stages.length}
           </span>
           <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black uppercase tracking-wide text-violet-700 shadow-sm">
-            {run.status.replace(/_/g, " ")}
+            {repair.autoRecovering ? "checking" : run.status.replace(/_/g, " ")}
           </span>
         </div>
       </div>
@@ -452,9 +459,9 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
         })}
       </div>
 
-      {run.errors.length > 0 ? (
+      {visibleError ? (
         <div className={clsx("rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700", !embedded && "mt-3")}>
-          {run.errors[0]}
+          {visibleError}
         </div>
       ) : null}
     </section>
