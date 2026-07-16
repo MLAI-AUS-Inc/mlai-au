@@ -1297,7 +1297,7 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
 
     if (!hasUpdates) {
         return (
-            <div className="vr-scope mx-auto max-w-6xl space-y-8 pb-12">
+            <div className="vr-updates-dashboard vr-scope mx-auto max-w-6xl space-y-8 pb-12">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <h1 className="vr-text-page-title">Your Monthly Updates</h1>
@@ -1415,7 +1415,7 @@ function FounderDashboard({ user, updates, metricHistory }: { user: any, updates
     }
 
     return (
-        <div className="vr-scope mx-auto max-w-6xl space-y-8 pb-12">
+        <div className="vr-updates-dashboard vr-scope mx-auto max-w-6xl space-y-8 pb-12">
             <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                     <h1 className="vr-text-page-title">Your Monthly Updates</h1>
@@ -1753,6 +1753,60 @@ export default function VibeRaisingHome() {
         return <InvestorDashboard portfolioUpdates={portfolioUpdates} />;
     }
 
-    return <FounderDashboard user={user} updates={updates} metricHistory={metricHistory} />;
+    return (
+        <>
+            <style>{`
+                html:has(.vr-updates-dashboard),
+                body:has(.vr-updates-dashboard) {
+                    background: #F5F0E6;
+                }
+                body:has(.vr-updates-dashboard) {
+                    --vr-color-app-bg: #F5F0E6;
+                }
+                .vr-updates-dashboard {
+                    --vr-font-title: 'Oswald', 'Arial Narrow', sans-serif;
+                    --vr-font-body: 'Roboto', system-ui, sans-serif;
+                    --vr-color-primary: #ff3c00;
+                    --vr-color-primary-dark: #1a1a1a;
+                    --vr-color-primary-contrast: #f5f0e6;
+                    --vr-color-secondary: #00ffd7;
+                    --vr-color-featured: #3637dc;
+                    --vr-color-text: #1a1a1a;
+                    --vr-palette-paper: #f5f0e6;
+                    --vr-palette-black: #1a1a1a;
+                    --vr-palette-orange: #ff3c00;
+                    background: #f5f0e6;
+                    color: #1a1a1a;
+                    font-family: 'Roboto', system-ui, sans-serif;
+                }
+                .vr-updates-dashboard :is(h1, h2, h3, h4, .vr-text-page-title, .vr-metric-value, .vr-metric-eyebrow) {
+                    color: #1a1a1a;
+                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+                    font-weight: 700;
+                    letter-spacing: -0.01em;
+                    line-height: 0.96;
+                    text-transform: uppercase;
+                }
+                .vr-updates-dashboard :is(button, a) {
+                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+                    font-weight: 700;
+                    letter-spacing: 0.025em;
+                    text-transform: uppercase;
+                }
+                .vr-updates-dashboard :is(.text-gray-950, .text-gray-900, .text-slate-700) { color: #1a1a1a !important; }
+                .vr-updates-dashboard :is(.text-slate-600, .text-gray-600, .text-slate-500, .text-gray-500) { color: #5c554c !important; }
+                .vr-updates-dashboard :is(.vr-metric-card, .vr-tabs, .vr-ucf-card) { box-shadow: none !important; }
+                .vr-updates-dashboard .vr-metric-card { border-color: #d7cfbf !important; background: #fff !important; }
+                .vr-updates-dashboard [style*="linear-gradient"] { background: transparent !important; background-image: none !important; }
+                .vr-updates-dashboard .vr-hero-preview-metrics > div { border-color: #00ffd7 !important; }
+                .vr-updates-dashboard .vr-metrics-row > :nth-child(1) .vr-metric-card-bar { background: #4b0db3 !important; }
+                .vr-updates-dashboard .vr-metrics-row > :nth-child(2) .vr-metric-card-bar { background: #00ffd7 !important; }
+                .vr-updates-dashboard .vr-metrics-row > :nth-child(3) .vr-metric-card-bar { background: #ff3c00 !important; }
+                .vr-updates-dashboard .vr-metrics-row > :nth-child(4) .vr-metric-card-bar { background: #3637dc !important; }
+                .vr-updates-dashboard .vr-metrics-row > :nth-child(5) .vr-metric-card-bar { background: #fefc22 !important; }
+            `}</style>
+            <FounderDashboard user={user} updates={updates} metricHistory={metricHistory} />
+        </>
+    );
 }
 

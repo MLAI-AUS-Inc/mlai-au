@@ -2879,12 +2879,6 @@ export default function CreateUpdate() {
             .map((key) => byKey.get(key))
             .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source && isConnectedInputSource(source)));
     }, [compactSources]);
-    const selectedConnectedSourceLabels = useMemo(
-        () => compactOptionalSources
-            .filter((source) => selectedDraftInputSources.has(source.key))
-            .map((source) => source.label),
-        [compactOptionalSources, selectedDraftInputSources],
-    );
     const draftReturnPath = useMemo(() => {
         const params = new URLSearchParams(location.search);
         const selected = Array.from(selectedDraftInputSources);
@@ -4872,136 +4866,60 @@ export default function CreateUpdate() {
         </section>
     );
 
-    const connectedDataSummary = selectedConnectedSourceLabels.length > 0
-        ? selectedConnectedSourceLabels.join(", ")
-        : compactSourcesLoading
-            ? "Checking sources..."
-            : "Manual draft only";
-
     const optionalDataSourcesSection = (
-        <section className="flex min-h-[5.25rem] w-full items-center rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:min-h-0 sm:rounded-[2rem] sm:p-6">
-            <div className="flex w-full min-w-0 items-center justify-between gap-3 sm:flex-col sm:items-stretch sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex min-w-0 items-center gap-3 sm:block">
-                    <div className="min-w-0">
-                        <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
-                            <span className="sm:hidden">Connect data</span>
-                            <span className="hidden sm:inline">Connect data for AI drafting</span>
-                        </h2>
-                        <p className="mt-1 truncate text-base font-black leading-tight text-gray-950 sm:hidden">
-                            {connectedDataSummary}
-                        </p>
-                        <p className="mt-2 hidden max-w-2xl text-sm leading-6 text-slate-600 sm:block">
-                            The draft template works without connected data. Select a connected source only if you want MLAI to generate a source-assisted first draft.
-                        </p>
-                    </div>
+        <section className="flex min-h-[5.25rem] w-full flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:min-h-0 sm:rounded-[2rem] sm:p-6">
+            <div className="flex w-full min-w-0 items-center justify-between gap-3 sm:gap-6">
+                <div className="min-w-0">
+                    <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
+                        <span className="sm:hidden">Connect data</span>
+                        <span className="hidden sm:inline">Connect data for AI drafting</span>
+                    </h2>
+                    <p className="mt-2 hidden max-w-2xl text-sm leading-6 text-slate-600 sm:block">
+                        The draft template works without connected data. Select a connected source only if you want MLAI to generate a source-assisted first draft.
+                    </p>
                 </div>
-                <Link
-                    to={manageConnectionsHref}
-                    className="inline-flex flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white sm:rounded-xl sm:border-[var(--vr-color-border)] sm:bg-[var(--vr-palette-paper)] sm:px-4 sm:py-3 sm:text-sm sm:font-extrabold sm:text-[var(--vr-color-text)] sm:hover:bg-[var(--vr-palette-paper)] sm:hover:text-[var(--vr-color-primary)]"
-                >
-                    <span className="sm:hidden">Manage</span>
-                    <span className="hidden sm:inline">Manage connections</span>
-                </Link>
+
+                <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
+                    {compactSourcesLoading ? (
+                        <ArrowPathIcon className="h-5 w-5 animate-spin text-slate-400" aria-label="Checking connections" />
+                    ) : (
+                        compactOptionalSources.map((source) => {
+                            const selected = selectedDraftInputSources.has(source.key);
+                            return (
+                                <button
+                                    key={source.key}
+                                    type="button"
+                                    onClick={() => toggleDraftInputSource(source)}
+                                    className={clsx(
+                                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vr-color-primary)] focus-visible:ring-offset-2",
+                                        selected
+                                            ? "bg-[rgba(0,255,215,0.12)] ring-1 ring-[var(--vr-color-primary)]"
+                                            : "hover:bg-[rgba(0,255,215,0.08)]",
+                                    )}
+                                    title={`${selected ? "Remove" : "Use"} ${source.label} for source-assisted drafting`}
+                                    aria-pressed={selected}
+                                    aria-label={`${selected ? "Remove" : "Use"} ${source.label} for source-assisted drafting`}
+                                >
+                                    <DraftSourceLogo sourceKey={source.key} />
+                                </button>
+                            );
+                        })
+                    )}
+                    <Link
+                        to={manageConnectionsHref}
+                        className="inline-flex flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white sm:rounded-xl sm:border-[var(--vr-color-border)] sm:bg-[var(--vr-palette-paper)] sm:px-4 sm:py-3 sm:text-sm sm:font-extrabold sm:text-[var(--vr-color-text)] sm:hover:bg-[var(--vr-palette-paper)] sm:hover:text-[var(--vr-color-primary)]"
+                    >
+                        <span className="sm:hidden">Manage</span>
+                        <span className="hidden sm:inline">Manage connections</span>
+                    </Link>
+                </div>
             </div>
+
             {compactSourcesError ? (
                 <p className="mt-4 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
                     {compactSourcesError}
                 </p>
             ) : null}
-
-            <div className="mt-5 hidden flex-wrap gap-2 sm:flex">
-                {selectedConnectedSourceLabels.length > 0 ? (
-                    selectedConnectedSourceLabels.map((label) => (
-                        <span
-                            key={label}
-                            className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]"
-                        >
-                            Using {label}
-                        </span>
-                    ))
-                ) : (
-                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-gray-100">
-                        Manual draft only
-                    </span>
-                )}
-                {compactSourcesLoading ? (
-                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-gray-100">
-                        Checking sources...
-                    </span>
-                ) : null}
-            </div>
-
-            <div className="mt-5 hidden sm:block">
-                <div className="grid grid-cols-3 gap-3 lg:grid-cols-8">
-                {compactOptionalSources.map((source) => {
-                    const connected = isConnectedInputSource(source);
-                    const selected = selectedDraftInputSources.has(source.key);
-                    return (
-                        <button
-                            key={source.key}
-                            type="button"
-                            disabled={!connected}
-                            onClick={() => toggleDraftInputSource(source)}
-                            className={clsx(
-                                "group relative flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-2 py-3 text-center transition sm:px-3",
-                                source.key !== "google_analytics" && source.key !== "stripe" && "hidden lg:flex",
-                                connected
-                                    ? selected
-                                        ? "cursor-pointer border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)]"
-                                        : "cursor-pointer border-gray-200 bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)]"
-                                    : "cursor-not-allowed border-gray-100 bg-gray-50 opacity-60",
-                            )}
-                            title={`${source.label}: ${compactSourceStatusLabel(source)}`}
-                            aria-pressed={connected ? selected : undefined}
-                            aria-label={`${selected ? "Remove" : "Use"} ${source.label} for source-assisted drafting`}
-                        >
-                            <DraftSourceLogo sourceKey={source.key} />
-                            <span
-                                className={clsx(
-                                    "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full border bg-white text-[10px] font-black shadow-sm",
-                                    selected
-                                        ? "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)]"
-                                        : connected
-                                            ? "border-emerald-200 text-emerald-500"
-                                            : "border-gray-200 text-gray-300",
-                                )}
-                                aria-hidden
-                            >
-                                {selected ? (
-                                    <CheckCircleIcon className="h-4 w-4" />
-                                ) : connected ? (
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                ) : null}
-                            </span>
-                            <span className="w-full truncate text-xs font-black text-gray-950">{source.label}</span>
-                            <span
-                                className={clsx(
-                                    "w-full truncate text-[11px] font-bold",
-                                    connected ? "text-[var(--vr-color-primary)]" : "text-slate-400",
-                                )}
-                            >
-                                {compactSourceStatusLabel(source)}
-                            </span>
-                        </button>
-                    );
-                })}
-                    <Link
-                        to={manageConnectionsHref}
-                        className="group relative flex min-w-0 cursor-pointer flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-3 text-center transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] sm:px-3 lg:hidden"
-                        aria-label="Open all source connections"
-                    >
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
-                            <span className="flex items-center gap-1">
-                                <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
-                                <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
-                                <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
-                            </span>
-                        </span>
-                        <span className="w-full truncate text-xs font-black text-gray-950">More</span>
-                        <span className="w-full truncate text-[11px] font-bold text-slate-400">Connections</span>
-                    </Link>
-                </div>
-            </div>
         </section>
     );
 
@@ -5013,6 +4931,182 @@ export default function CreateUpdate() {
         saveDraftFetcher.submit(nextFormData, { method: "post" });
     }, [saveDraftFetcher]);
 
+    const mlaiGenerateUpdateBrand = (
+        <>
+            <style>{`
+                body:has(.mlai-vibe-update) {
+                    --vr-color-app-bg: #f5f0e6;
+                    background: #f5f0e6;
+                }
+                .mlai-vibe-update {
+                    --vr-font-title: 'Oswald', 'Arial Narrow', sans-serif;
+                    --vr-font-body: 'Roboto', system-ui, sans-serif;
+                    --vr-color-primary: #1a1a1a;
+                    --vr-color-primary-contrast: #f5f0e6;
+                    --vr-color-text: #1a1a1a;
+                    --vr-color-border: #d7cfbf;
+                    --vr-palette-paper: #f5f0e6;
+                    --vr-palette-black: #1a1a1a;
+                    --vr-palette-orange: #ff3c00;
+                    --vr-palette-coral: #ff3c00;
+                    background: #f5f0e6;
+                    color: #1a1a1a;
+                    font-family: 'Roboto', system-ui, sans-serif;
+                }
+                .mlai-vibe-update :is(h1, h2, h3, h4) {
+                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+                    font-weight: 700;
+                    letter-spacing: -0.01em;
+                    line-height: 0.96;
+                    text-transform: uppercase;
+                }
+                .mlai-vibe-update h2 { font-size: clamp(1.5rem, 2.4vw, 2rem); }
+                .mlai-vibe-update h3 { font-size: clamp(1.2rem, 1.7vw, 1.5rem); }
+                .mlai-vibe-update :is(button, [role="button"]) {
+                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+                    font-weight: 700;
+                    letter-spacing: 0.025em;
+                    text-transform: uppercase;
+                }
+                .mlai-vibe-update :is(input, textarea, select) {
+                    font-family: 'Roboto', system-ui, sans-serif;
+                    font-size: 0.9375rem;
+                    line-height: 1.5;
+                }
+                .mlai-vibe-update [class*="shadow"] { box-shadow: none !important; }
+                @media (min-width: 640px) {
+                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button > div + p + p {
+                        display: none;
+                    }
+                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button > div + p {
+                        margin-top: 0.9rem;
+                        color: #1a1a1a;
+                        font-size: clamp(1rem, 1.8vw, 1.35rem);
+                        line-height: 1;
+                        white-space: normal;
+                    }
+                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p) {
+                        min-height: 8.5rem;
+                        padding-bottom: 1rem;
+                    }
+                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover {
+                        background: transparent !important;
+                        box-shadow: none !important;
+                    }
+                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover > div {
+                        border-color: #00ffd7 !important;
+                    }
+                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover > div + p {
+                        color: #00a98f !important;
+                    }
+                }
+                .mlai-vibe-update__identity {
+                    position: relative;
+                    overflow: hidden;
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: space-between;
+                    gap: 1.5rem;
+                    border-radius: 28px;
+                    background: #1a1a1a;
+                    color: #f5f0e6;
+                    padding: clamp(1.5rem, 3vw, 2.5rem);
+                }
+                .mlai-vibe-update__kicker {
+                    position: relative;
+                    z-index: 1;
+                    margin: 0;
+                    font-family: 'Roboto', system-ui, sans-serif;
+                    font-size: 0.7rem;
+                    font-weight: 800;
+                    letter-spacing: 0.18em;
+                    text-transform: uppercase;
+                }
+                .mlai-vibe-update__kicker { color: #00ffd7; }
+                .mlai-vibe-update__graphic {
+                    position: relative;
+                    z-index: 1;
+                    flex: 0 0 auto;
+                    width: clamp(9rem, 17vw, 13rem);
+                    height: clamp(7rem, 13vw, 9.5rem);
+                }
+                .mlai-vibe-update__graphic-block,
+                .mlai-vibe-update__graphic-dot {
+                    position: absolute;
+                    display: block;
+                }
+                .mlai-vibe-update__graphic-block {
+                    bottom: 0;
+                    border-radius: 1.15rem 1.15rem 0.25rem 0.25rem;
+                }
+                .mlai-vibe-update__graphic-block--one {
+                    left: 0;
+                    width: 28%;
+                    height: 39%;
+                    background: #00ffd7;
+                }
+                .mlai-vibe-update__graphic-block--two {
+                    left: 34%;
+                    width: 28%;
+                    height: 64%;
+                    background: #f5f0e6;
+                }
+                .mlai-vibe-update__graphic-block--three {
+                    right: 0;
+                    width: 31%;
+                    height: 91%;
+                    background: #ff3c00;
+                }
+                .mlai-vibe-update__graphic-dot {
+                    top: 0;
+                    left: 42%;
+                    width: 1.25rem;
+                    height: 1.25rem;
+                    border-radius: 999px;
+                    background: #00ffd7;
+                }
+                .mlai-vibe-update__title {
+                    position: relative;
+                    z-index: 1;
+                    margin: 0.5rem 0 0;
+                    color: #f5f0e6;
+                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+                    font-size: clamp(2.5rem, 7vw, 4.5rem);
+                    font-weight: 700;
+                    letter-spacing: -0.025em;
+                    line-height: 0.86;
+                    text-transform: uppercase;
+                }
+                .mlai-vibe-update__subtitle {
+                    position: relative;
+                    z-index: 1;
+                    max-width: 38rem;
+                    margin: 0.85rem 0 0;
+                    color: #ebe4d4;
+                    font-size: 0.95rem;
+                    font-weight: 500;
+                    line-height: 1.5;
+                }
+                @media (max-width: 640px) {
+                    .mlai-vibe-update__identity { align-items: flex-start; flex-direction: column; gap: 1rem; }
+                    .mlai-vibe-update__graphic { width: 8rem; height: 6rem; }
+                }
+            `}</style>
+            <header className="mlai-vibe-update__identity">
+                <div>
+                    <p className="mlai-vibe-update__kicker">MLAI / Founder Tools</p>
+                    <h1 className="mlai-vibe-update__title">Vibe Raising</h1>
+                    <p className="mlai-vibe-update__subtitle">Founder update studio for the progress investors need to see.</p>
+                </div>
+                <div className="mlai-vibe-update__graphic" aria-hidden="true">
+                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--one" />
+                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--two" />
+                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--three" />
+                    <span className="mlai-vibe-update__graphic-dot" />
+                </div>
+            </header>
+        </>
+    );
     // 1. Feedback View — preview-dominant with rating sidebar
     if ((actionData?.step === "feedback" || actionData?.step === "publish-error") && !dismissedFeedback) {
         const { feedback, data } = actionData;
@@ -5195,7 +5289,8 @@ export default function CreateUpdate() {
         };
 
         return (
-            <div className="mx-auto max-w-6xl space-y-10 pb-32">
+            <div className="mlai-vibe-update mx-auto max-w-6xl space-y-10 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:px-6">
+                {mlaiGenerateUpdateBrand}
                 <Form id={PUBLISH_REVIEW_FORM_ID} method="POST" className="hidden">
                     <input type="hidden" name="intent" value="publish" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
@@ -5210,7 +5305,7 @@ export default function CreateUpdate() {
                         onClick={() => setShowConfirmPopup(false)}
                     >
                         <div
-                            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-8 text-center shadow-xl"
+                            className="mlai-vibe-update__publish-dialog relative w-full max-w-3xl overflow-hidden rounded-2xl bg-white p-6 text-center shadow-xl sm:p-10"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <MonthlyUpdateStepper
@@ -5860,7 +5955,8 @@ export default function CreateUpdate() {
 
     // 3. Create/Edit Form View
     return (
-        <div className="mx-auto max-w-6xl space-y-4 pb-32 sm:space-y-10">
+        <div className="mlai-vibe-update mx-auto max-w-6xl space-y-4 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:space-y-10 sm:px-6">
+            {mlaiGenerateUpdateBrand}
             <div className="space-y-4">
                 <div ref={draftStepperRef} className="hidden sm:block">
                     <MonthlyUpdateStepper
@@ -5887,7 +5983,7 @@ export default function CreateUpdate() {
                             <div className="overflow-visible rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm transition-all sm:p-8 lg:p-10">
                                 <div className="grid gap-4">
                                     <div>
-                                        <div className="rounded-3xl border border-gray-200 bg-[var(--vr-palette-paper)] p-4 shadow-sm sm:p-5">
+                                        <div className="rounded-3xl bg-white p-4 shadow-sm sm:p-5">
                                             <p className="mb-5 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base sm:leading-7">
                                                 {monthSelectionCaption}
                                             </p>

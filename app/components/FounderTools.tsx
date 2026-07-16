@@ -30,6 +30,7 @@ const TOOLS = [
     icon: "📣",
     t: "Vibe Marketing",
     d: "Use AI to publish content, rank in search, and show up in answer engines so the right customers actually find you.",
+    to: "/platform/login?app=founder-tools&next=/founder-tools/marketing",
   },
   {
     c: "purple",
@@ -133,7 +134,7 @@ export default function FounderTools() {
               );
 
               return card.to ? (
-                <Link key={card.t} to={card.to} className={`ft-card ft-${card.c}`} aria-label="Open Vibe Raising landing page">
+                <Link key={card.t} to={card.to} className={`ft-card ft-${card.c}`} aria-label={card.t === "Vibe Marketing" ? "Sign in to access Vibe Marketing" : "Open Vibe Raising landing page"}>
                   {cardContent}
                 </Link>
               ) : (
