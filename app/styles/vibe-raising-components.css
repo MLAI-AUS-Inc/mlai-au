@@ -135,6 +135,49 @@
   border: 1px solid rgba(237, 95, 0, 0.2);
 }
 
+/* ── Landing hero scroll cue ─────────────────────────────── */
+
+.vr-scope .hero-scroll-cue {
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.32));
+}
+
+.vr-scope .hero-scroll-cue__arrow {
+  animation: vr-scroll-cue-heartbeat 1.25s ease-in-out infinite;
+  opacity: 0.46;
+}
+
+.vr-scope .hero-scroll-cue:hover .hero-scroll-cue__arrow,
+.vr-scope .hero-scroll-cue:focus-visible .hero-scroll-cue__arrow {
+  opacity: 1;
+}
+
+.vr-scope .hero-scroll-cue__arrow + .hero-scroll-cue__arrow {
+  margin-top: -8px;
+}
+
+@keyframes vr-scroll-cue-heartbeat {
+  0%,
+  100% {
+    opacity: 0.34;
+    transform: translateY(0) scale(0.92);
+  }
+
+  28% {
+    opacity: 1;
+    transform: translateY(3px) scale(1.14);
+  }
+
+  44% {
+    opacity: 0.72;
+    transform: translateY(1px) scale(0.98);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.08);
+  }
+}
+
 /* ── Connector source cards ─────────────────────────────── */
 
 .vr-scope .vr-source-grid {

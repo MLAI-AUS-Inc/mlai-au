@@ -1,6 +1,6 @@
 import { clsx } from "clsx";
 import { EyeIcon, UserGroupIcon, UserIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { VibeRaisingAudienceVisibility } from "~/types/vibe-raising";
 
 export const VIBE_RAISING_AUDIENCE_VISIBILITY_OPTIONS: Array<{
@@ -32,7 +32,7 @@ type Props = {
   value?: VibeRaisingAudienceVisibility | null;
   defaultValue?: VibeRaisingAudienceVisibility | null;
   onChange?: (value: VibeRaisingAudienceVisibility) => void;
-  title?: string;
+  title?: ReactNode;
   description?: string;
   className?: string;
 };
@@ -55,7 +55,7 @@ export default function VibeRaisingAudienceVisibilityField({
         <p className="text-base font-black text-gray-950">{title}</p>
         {description ? <p className="text-sm font-semibold text-slate-500">{description}</p> : null}
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label={title}>
+      <div className="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label={typeof title === "string" ? title : "Update visibility"}>
         {VIBE_RAISING_AUDIENCE_VISIBILITY_OPTIONS.map((option) => {
           const Icon = optionIconMap[option.value];
           const checked = selectedValue === option.value;

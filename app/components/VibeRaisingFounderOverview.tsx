@@ -334,6 +334,11 @@ const landingNumberSectionClassName =
 const landingNumberContentClassName =
   "w-full max-w-3xl space-y-5 lg:col-start-2 lg:justify-self-start";
 
+const firstUpdateCtaClassName =
+  "min-w-[17rem] items-center justify-between gap-3 rounded-xl bg-[var(--vr-palette-mint)] px-8 py-4 font-bold text-[var(--vr-palette-black)] shadow-lg shadow-[rgba(0,255,215,0.18)] transition-all hover:bg-[var(--color-teal-500)] hover:shadow-xl active:scale-[0.98]";
+
+const founderToolsLoginPath = "https://mlai.au/platform/login?app=founder-tools&next=/founder-tools/updates/create";
+
 export default function VibeRaisingFounderOverview({
   firstName,
   heading,
@@ -351,6 +356,14 @@ export default function VibeRaisingFounderOverview({
   bleedToShell?: boolean;
   onCreateFirstUpdate: () => void;
 }) {
+  const scrollToInvestorSection = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    document.getElementById("responsible-investors")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <div className={clsx("vr-scope", bleedToShell && "-m-6 sm:-m-8 lg:-m-10")}>
       <div className="relative overflow-hidden">
@@ -375,45 +388,66 @@ export default function VibeRaisingFounderOverview({
               <p className="mx-auto mb-4 max-w-xl text-base leading-snug text-white/84 sm:text-lg lg:mx-0">
                 Use monthly updates to build investor relationships before you raise.
               </p>
-              <button
-                onClick={onCreateFirstUpdate}
-                className="hidden items-center gap-3 rounded-xl bg-[var(--vr-palette-mint)] px-8 py-4 font-bold text-[var(--vr-palette-black)] shadow-lg shadow-[rgba(0,255,215,0.18)] transition-all hover:bg-[var(--color-teal-500)] hover:shadow-xl active:scale-[0.98] lg:inline-flex"
-              >
-                Create Your First Update
-                <ArrowRightIcon className="h-5 w-5" />
-              </button>
+              <div className="hidden flex-col items-center gap-3 lg:inline-flex lg:items-start">
+                <button
+                  onClick={onCreateFirstUpdate}
+                  className={clsx(firstUpdateCtaClassName, "inline-flex")}
+                >
+                  Create Your First Update
+                  <ArrowRightIcon className="h-5 w-5" />
+                </button>
+                <a
+                  href={founderToolsLoginPath}
+                  className={clsx(firstUpdateCtaClassName, "inline-flex")}
+                >
+                  Already a user
+                  <ArrowRightIcon className="h-5 w-5" />
+                </a>
+              </div>
             </div>
 
             <div className="lg:translate-y-20 lg:justify-self-end">
               <VibeRaisingHeroExampleUpdatePreview />
             </div>
 
-            <div className="flex justify-center lg:hidden">
+            <div className="flex flex-col items-center justify-center gap-3 lg:hidden">
               <button
                 onClick={onCreateFirstUpdate}
-                className="inline-flex items-center gap-3 rounded-xl bg-[var(--vr-palette-mint)] px-8 py-4 font-bold text-[var(--vr-palette-black)] shadow-lg shadow-[rgba(0,255,215,0.18)] transition-all hover:bg-[var(--color-teal-500)] hover:shadow-xl active:scale-[0.98]"
+                className={clsx(firstUpdateCtaClassName, "inline-flex")}
               >
                 Create Your First Update
                 <ArrowRightIcon className="h-5 w-5" />
               </button>
+              <a
+                href={founderToolsLoginPath}
+                className={clsx(firstUpdateCtaClassName, "inline-flex")}
+              >
+                Already a user
+                <ArrowRightIcon className="h-5 w-5" />
+              </a>
             </div>
           </div>
 
           <a
             href="#responsible-investors"
             aria-label="Scroll down to explore the founder overview"
-            className="group absolute bottom-6 left-1/2 inline-flex -translate-x-1/2 flex-col items-center gap-2 text-center text-white transition-opacity hover:opacity-80"
+            onClick={scrollToInvestorSection}
+            className="hero-scroll-cue group absolute bottom-6 left-1/2 inline-flex -translate-x-1/2 flex-col items-center gap-0 text-center text-white transition-opacity hover:opacity-90"
           >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="hero-scroll-cue__arrow h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
-            </svg>
+            {[0, 1, 2].map((index) => (
+              <svg
+                key={index}
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="hero-scroll-cue__arrow h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                style={{ animationDelay: `${index * 0.16}s` }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+              </svg>
+            ))}
           </a>
         </div>
       </div>
