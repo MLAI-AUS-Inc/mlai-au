@@ -1,7 +1,7 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import fs from "node:fs";
 
@@ -37,6 +37,63 @@ const livePreviewDisableHmr = ["1", "true", "yes", "on"].includes(
 const inspectorPort =
   livePreviewDisableHmr || process.env.CLOUDFLARE_INSPECTOR_PORT === "false" ? false : undefined;
 const wattTheHackApiPathPattern = /^\/api\/v1\/hackathons\/(?:watt|watt-the-hack)(?:\/|$)/;
+type GuardedHotChannel = {
+  send: (...args: any[]) => any;
+  __cloudflareRaceGuard?: true;
+};
+
+function patchCloudflareHotChannel(hot: GuardedHotChannel) {
+  if (hot.__cloudflareRaceGuard) return;
+
+  const send = hot.send.bind(hot);
+  hot.send = (...args) => {
+    try {
+      return send(...args);
+    } catch (error) {
+      if (error instanceof Error && error.message === "The WebSocket is undefined") return;
+      throw error;
+    }
+  };
+  hot.__cloudflareRaceGuard = true;
+}
+
+function suppressCloudflareHotChannelRace(): Plugin {
+  return {
+    name: "suppress-cloudflare-hot-channel-race",
+    apply: "serve",
+    configResolved(config) {
+      for (const environmentOptions of Object.values(config.environments)) {
+        const devOptions = environmentOptions.dev;
+        const createEnvironment = devOptions?.createEnvironment;
+        if (!createEnvironment) continue;
+
+        devOptions.createEnvironment = ((...args: Parameters<typeof createEnvironment>) => {
+          const environment = createEnvironment(...args);
+          if (environment instanceof Promise) {
+            return environment.then((resolvedEnvironment) => {
+              patchCloudflareHotChannel(resolvedEnvironment.hot as GuardedHotChannel);
+              return resolvedEnvironment;
+            });
+          }
+
+          patchCloudflareHotChannel(environment.hot as GuardedHotChannel);
+          return environment;
+        }) as typeof createEnvironment;
+      }
+    },
+    configureServer(server) {
+      const patchHotChannels = () => {
+        for (const environment of Object.values(server.environments)) {
+          patchCloudflareHotChannel(environment.hot as GuardedHotChannel);
+        }
+      };
+
+      patchHotChannels();
+      server.httpServer?.once("listening", patchHotChannels);
+      return () => patchHotChannels();
+    },
+  };
+}
 const sharedOptimizeDepsInclude = [
   "@heroicons/react/20/solid",
   "@heroicons/react/24/solid",
@@ -49,6 +106,8 @@ const sharedOptimizeDepsInclude = [
   "date-fns",
   "gsap",
   "gsap/ScrollTrigger",
+  "jszip",
+  "motion/react",
   "react-dropzone",
   "recharts",
   "tailwind-merge",
@@ -57,12 +116,13 @@ const sharedOptimizeDepsInclude = [
 export default defineConfig({
   plugins: [
     cloudflare({ viteEnvironment: { name: "ssr" }, inspectorPort }),
+    suppressCloudflareHotChannelRace(),
     tailwindcss(),
     reactRouter(),
     tsconfigPaths(),
   ],
   server: {
-    ...(livePreviewDisableHmr ? { hmr: false as const } : {}),
+    hmr: { overlay: false },
     proxy: {
       '/api': {
         target: 'http://localhost',

@@ -76,42 +76,68 @@ export default function FounderToolsIndex() {
       label: "Vibe Raising",
       href: "/founder-tools/updates",
       icon: DocumentTextIcon,
-      accent: "bg-violet-50 text-violet-700 ring-violet-100",
+      accent: "bg-[#4b0db3] text-white ring-[#4b0db3]",
     },
     {
       label: "Vibe Marketing",
       href: "/founder-tools/marketing",
       icon: MegaphoneIcon,
-      accent: "bg-teal-50 text-teal-700 ring-teal-100",
+      accent: "bg-[#00ffd7] text-[#1a1a1a] ring-[#00ffd7]",
     },
     {
       label: "Data Sources",
       href: "/founder-tools/data-sources",
       icon: CircleStackIcon,
-      accent: "bg-sky-50 text-sky-700 ring-sky-100",
+      accent: "bg-[#fefc22] text-[#1a1a1a] ring-[#fefc22]",
     },
     {
       label: "Company Settings",
       href: "/founder-tools/company-setup",
       icon: PencilSquareIcon,
-      accent: "bg-slate-50 text-slate-700 ring-slate-100",
+      accent: "bg-[#ff3c00] text-white ring-[#ff3c00]",
     },
   ];
   const productCardClass =
-    "group rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md";
+    "ft-dashboard__product-card group rounded-2xl border p-5 text-left transition";
   const openFirstVibeRaisingUpdate = () => {
     triggerAnnouncement(() => navigate("/founder-tools/updates/create"));
   };
 
   return (
-    <div className="min-h-screen bg-[#fbfaf8] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-          <div className="h-24 bg-gradient-to-r from-violet-600 via-teal-500 to-cyan-400" />
+    <>
+      <style>{`
+        .ft-dashboard { background: #f5f0e6; color: #1a1a1a; font-family: 'Roboto', system-ui, sans-serif; }
+        .ft-dashboard :is(h1, h2) { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 700; letter-spacing: -0.01em; line-height: 0.95; text-transform: uppercase; }
+        .ft-dashboard__surface { border-color: #d7cfbf !important; background: #fff !important; box-shadow: none !important; }
+        .ft-dashboard__hero-bar { position: relative; height: 6rem; overflow: hidden; background: #1a1a1a; }
+        .ft-dashboard__hero-mark { position: absolute; display: block; border-radius: 999px; }
+        .ft-dashboard__hero-mark--mint { top: -3.5rem; right: 4rem; width: 11rem; height: 11rem; background: #00ffd7; }
+        .ft-dashboard__hero-mark--orange { right: 1.5rem; bottom: 1.25rem; width: 2rem; height: 2rem; background: #ff3c00; }
+        .ft-dashboard__avatar { border: 2px solid #1a1a1a; background: #1a1a1a; box-shadow: none !important; }
+        .ft-dashboard__eyebrow { color: #4b0db3; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+        .ft-dashboard__company-name { color: #1a1a1a; font-size: clamp(2rem, 4vw, 3rem); }
+        .ft-dashboard__email { color: #5c554c; }
+        .ft-dashboard__secondary-action { border-color: #1a1a1a !important; background: #f5f0e6 !important; color: #1a1a1a !important; box-shadow: none !important; }
+        .ft-dashboard__secondary-action:hover { background: #00ffd7 !important; }
+        .ft-dashboard__detail { border-color: #d7cfbf !important; background: #f5f0e6 !important; }
+        .ft-dashboard__detail-label { color: #5c554c !important; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 700; letter-spacing: 0.06em; }
+        .ft-dashboard__detail-value { color: #1a1a1a !important; }
+        .ft-dashboard__product-card { border-color: #d7cfbf !important; background: #fff !important; box-shadow: none !important; }
+        .ft-dashboard__product-card:hover { border-color: #1a1a1a !important; background: #1a1a1a !important; transform: translateY(-0.2rem); }
+        .ft-dashboard__product-title { color: #1a1a1a !important; }
+        .ft-dashboard__product-card:hover .ft-dashboard__product-title, .ft-dashboard__product-card:hover .ft-dashboard__product-arrow { color: #f5f0e6 !important; }
+        .ft-dashboard__active-icon { background: #fefc22 !important; color: #1a1a1a !important; box-shadow: none !important; }
+        .ft-dashboard__primary-action { background: #ff3c00 !important; color: #fff !important; box-shadow: none !important; }
+        .ft-dashboard__primary-action:hover { background: #1a1a1a !important; }
+      `}</style>
+      <div className="ft-dashboard min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+        <section className="ft-dashboard__surface overflow-hidden rounded-2xl border">
+          <div className="ft-dashboard__hero-bar" aria-hidden="true"><span className="ft-dashboard__hero-mark ft-dashboard__hero-mark--mint" /><span className="ft-dashboard__hero-mark ft-dashboard__hero-mark--orange" /></div>
           <div className="p-6 sm:p-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex min-w-0 gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-950 text-xl font-black text-white shadow-sm">
+                <div className="ft-dashboard__avatar flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-xl font-black text-white">
                   {activeCompany?.domain ? (
                     <img
                       src={`https://www.google.com/s2/favicons?domain=${activeCompany.domain}&sz=128`}
@@ -123,16 +149,16 @@ export default function FounderToolsIndex() {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-black text-violet-700">Founder Tools</p>
-                  <h1 className="mt-1 truncate text-3xl font-black tracking-normal text-gray-950">
+                  <p className="ft-dashboard__eyebrow text-sm">Founder Tools</p>
+                  <h1 className="ft-dashboard__company-name mt-1 truncate">
                     {activeCompany?.name || user.companyName || "Your company"}
                   </h1>
-                  <p className="mt-2 text-sm font-semibold text-gray-500">{user.email}</p>
+                  <p className="ft-dashboard__email mt-2 text-sm font-semibold">{user.email}</p>
                 </div>
               </div>
               <Link
                 to="/founder-tools/company-setup"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                className="ft-dashboard__secondary-action inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-black transition"
               >
                 <PencilSquareIcon className="h-4 w-4" />
                 Edit setup
@@ -143,12 +169,12 @@ export default function FounderToolsIndex() {
               {details.map((detail) => {
                 const Icon = detail.icon;
                 return (
-                  <div key={detail.label} className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
-                    <div className="flex items-center gap-2 text-xs font-black uppercase text-gray-400">
+                  <div key={detail.label} className="ft-dashboard__detail rounded-xl border p-4">
+                    <div className="ft-dashboard__detail-label flex items-center gap-2 text-xs uppercase">
                       <Icon className="h-4 w-4" />
                       {detail.label}
                     </div>
-                    <p className="mt-3 truncate text-sm font-black text-gray-950">{detail.value}</p>
+                    <p className="ft-dashboard__detail-value mt-3 truncate text-sm font-black">{detail.value}</p>
                   </div>
                 );
               })}
@@ -165,9 +191,9 @@ export default function FounderToolsIndex() {
                   <span className={`flex h-11 w-11 items-center justify-center rounded-xl ring-1 ${item.accent}`}>
                     <Icon className="h-5 w-5" />
                   </span>
-                  <ArrowRightIcon className="h-5 w-5 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-gray-600" />
+                  <ArrowRightIcon className="ft-dashboard__product-arrow h-5 w-5 text-gray-300 transition group-hover:translate-x-0.5" />
                 </div>
-                <p className="mt-5 text-base font-black text-gray-950">{item.label}</p>
+                <h2 className="ft-dashboard__product-title mt-5 text-xl">{item.label}</h2>
               </>
             );
 
@@ -196,20 +222,20 @@ export default function FounderToolsIndex() {
           })}
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+        <section className="ft-dashboard__surface rounded-2xl border p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-500 ring-1 ring-gray-100">
+              <span className="ft-dashboard__active-icon flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-[#fefc22]">
                 <ChartBarSquareIcon className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-black text-gray-950">Active company</p>
-                <p className="mt-1 text-sm font-semibold text-gray-500">{activeCompany?.name || user.companyName}</p>
+                <h2 className="text-lg text-[#1a1a1a]">Active company</h2>
+                <p className="mt-1 text-sm font-semibold text-[#5c554c]">{activeCompany?.name || user.companyName}</p>
               </div>
             </div>
             <Link
               to="/founder-tools/companies"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
+              className="ft-dashboard__primary-action inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black transition"
             >
               <BuildingOffice2Icon className="h-4 w-4" />
               Manage companies
@@ -217,6 +243,7 @@ export default function FounderToolsIndex() {
           </div>
         </section>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
