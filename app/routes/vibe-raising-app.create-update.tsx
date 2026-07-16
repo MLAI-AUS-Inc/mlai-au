@@ -123,6 +123,7 @@ const COMPACT_OPTIONAL_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_create_update_mobile_tour_seen_v1";
+const STORY_MATERIALS_SUGGESTION_SEEN_STORAGE_PREFIX = "vibe_raising_story_materials_suggestion_seen_v1";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
 const PUBLISH_REVIEW_FORM_ID = "vibe-raising-publish-review-form";
@@ -331,6 +332,21 @@ function isFutureMonthlyUpdate(month: string, year: number | string) {
     if (monthIndex < 0 || !Number.isFinite(parsedYear)) return true;
     const now = new Date();
     return parsedYear > now.getFullYear() || (parsedYear === now.getFullYear() && monthIndex > now.getMonth());
+}
+
+const MIN_MONTHLY_UPDATE_YEAR = 2025;
+const MIN_MONTHLY_UPDATE_MONTH_INDEX = 5; // June 2025 is the earliest selectable update month.
+
+function isBeforeMinimumMonthlyUpdate(month: string, year: number | string) {
+    const monthIndex = VIBE_RAISING_MONTH_OPTIONS.findIndex((option) => option.name === month);
+    const parsedYear = Number(year);
+    if (monthIndex < 0 || !Number.isFinite(parsedYear)) return true;
+    return parsedYear < MIN_MONTHLY_UPDATE_YEAR ||
+        (parsedYear === MIN_MONTHLY_UPDATE_YEAR && monthIndex < MIN_MONTHLY_UPDATE_MONTH_INDEX);
+}
+
+function firstAllowedMonthForYear(year: number) {
+    return VIBE_RAISING_MONTH_OPTIONS.find((option) => !isBeforeMinimumMonthlyUpdate(option.name, year))?.name;
 }
 
 function getCurrentMonthlyUpdatePeriod(now = new Date()) {
@@ -828,15 +844,104 @@ function MetricInfoBadge({ info }: { info?: string }) {
     if (!info) return null;
 
     return (
-        <div className="group absolute right-1.5 top-1.5">
-            <div className="cursor-help text-gray-300 transition-colors hover:text-gray-500">
-                <InformationCircleIcon className="h-3.5 w-3.5" />
-            </div>
-            <div className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-48 translate-y-1 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-                {info}
-                <div className="absolute right-2 top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-gray-900" />
-            </div>
+        <div className="absolute right-1.5 top-1.5">
+            <CardInfoTooltip info={info} mobileAlign="right" />
         </div>
+    );
+}
+
+function CardInfoTooltip({
+    info,
+    mobileAlign = "center",
+}: {
+    info: string;
+    mobileAlign?: "center" | "right";
+}) {
+    const tooltipId = useId();
+    const tooltipRef = useRef<HTMLDetailsElement | null>(null);
+    const closeTimerRef = useRef<number | null>(null);
+
+    const clearCloseTimer = () => {
+        if (closeTimerRef.current === null) return;
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+    };
+
+    useEffect(() => {
+        const closeWhenAnotherTooltipOpens = (event: Event) => {
+            if ((event as CustomEvent<string>).detail === tooltipId) return;
+            tooltipRef.current?.removeAttribute("open");
+            clearCloseTimer();
+        };
+
+        const closeOnOutsidePointerDown = (event: PointerEvent) => {
+            const tooltip = tooltipRef.current;
+            if (!tooltip || tooltip.contains(event.target as Node)) return;
+            tooltip.removeAttribute("open");
+            clearCloseTimer();
+        };
+
+        window.addEventListener("vibe-raising-tooltip-open", closeWhenAnotherTooltipOpens);
+        document.addEventListener("pointerdown", closeOnOutsidePointerDown);
+        return () => {
+            clearCloseTimer();
+            window.removeEventListener("vibe-raising-tooltip-open", closeWhenAnotherTooltipOpens);
+            document.removeEventListener("pointerdown", closeOnOutsidePointerDown);
+        };
+    }, [tooltipId]);
+
+    return (
+        <details
+            ref={tooltipRef}
+            onMouseEnter={() => {
+                if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+                tooltipRef.current?.setAttribute("open", "");
+            }}
+            onMouseLeave={() => {
+                if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+                tooltipRef.current?.removeAttribute("open");
+            }}
+            onToggle={(event) => {
+                clearCloseTimer();
+                if (!event.currentTarget.open) return;
+                window.dispatchEvent(new CustomEvent("vibe-raising-tooltip-open", { detail: tooltipId }));
+                closeTimerRef.current = window.setTimeout(() => {
+                    tooltipRef.current?.removeAttribute("open");
+                }, 5000);
+            }}
+            className="group relative inline-flex h-5 w-5 flex-shrink-0 align-middle text-[var(--vr-color-primary)]"
+        >
+            <summary
+                aria-label="More information"
+                aria-describedby={tooltipId}
+                onClick={(event) => {
+                    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+                        event.preventDefault();
+                    }
+                }}
+                className="flex h-5 w-5 list-none touch-manipulation cursor-pointer items-center justify-center [&::-webkit-details-marker]:hidden hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vr-color-primary)]"
+            >
+                <InformationCircleIcon className="h-3.5 w-3.5" />
+            </summary>
+            <span
+                id={tooltipId}
+                role="tooltip"
+                className={clsx(
+                    "pointer-events-none absolute bottom-full z-50 mb-2 w-52 max-w-[calc(100vw-2rem)] translate-y-1 rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-left text-xs font-medium normal-case leading-5 tracking-normal text-white opacity-0 shadow-[0_14px_30px_-10px_rgba(15,23,42,0.65)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 group-open:translate-y-0 group-open:opacity-100 sm:left-0 sm:right-auto sm:w-64 sm:translate-x-0",
+                    mobileAlign === "right"
+                        ? "right-0 left-auto translate-x-0"
+                        : "left-1/2 -translate-x-1/2",
+                )}
+            >
+                {info}
+                <span
+                    className={clsx(
+                        "absolute top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-slate-950 sm:left-2 sm:right-auto sm:translate-x-0",
+                        mobileAlign === "right" ? "right-2" : "left-1/2 -translate-x-1/2",
+                    )}
+                />
+            </span>
+        </details>
     );
 }
 
@@ -860,35 +965,39 @@ function MonthYearTabs({
     isDateEditable?: boolean;
 }) {
     const [isYearMenuOpen, setIsYearMenuOpen] = useState(false);
+    const [mobileMenu, setMobileMenu] = useState<"month" | "year" | null>(null);
     const yearMenuRef = useRef<HTMLDivElement | null>(null);
+    const mobileMenuRef = useRef<HTMLDivElement | null>(null);
     const yearOptions = Array.from({ length: 11 }, (_, index) => year - 5 + index);
     const visibleMonthChoices = monthChoices?.length
         ? monthChoices
         : VIBE_RAISING_MONTH_OPTIONS.map((option) => ({ month: option.name, year }));
-    const useCompactCreateTimeline = Boolean(monthChoices?.length);
+    const useCompactCreateTimeline = Boolean(monthChoices?.length && monthChoices.length <= 2);
     const showYearInMonthLabel = new Set(visibleMonthChoices.map((option) => option.year)).size > 1;
-    const mobileMonthOptions = monthChoices?.length
-        ? visibleMonthChoices.filter((option, index, options) => (
-            options.findIndex((candidate) => candidate.month === option.month) === index
-        ))
+    const mobileMonthOptions = useCompactCreateTimeline
+        ? VIBE_RAISING_MONTH_OPTIONS.map((option) => ({ month: option.name, year }))
+        : monthChoices?.length
+            ? visibleMonthChoices.filter((option, index, options) => (
+                options.findIndex((candidate) => candidate.month === option.month) === index
+            ))
         : VIBE_RAISING_MONTH_OPTIONS.map((option) => ({ month: option.name, year }));
-    const mobileYearOptions = monthChoices?.length
-        ? Array.from(new Set(visibleMonthChoices.map((option) => option.year))).sort((a, b) => b - a)
-        : yearOptions;
+    const mobileYearOptions = yearOptions;
 
     useEffect(() => {
-        if (!isYearMenuOpen) return;
+        if (!isYearMenuOpen && !mobileMenu) return;
 
         const closeOnOutsideClick = (event: MouseEvent) => {
             const target = event.target as Node;
-            if (isYearMenuOpen && !yearMenuRef.current?.contains(target)) {
+            if (!yearMenuRef.current?.contains(target) && !mobileMenuRef.current?.contains(target)) {
                 setIsYearMenuOpen(false);
+                setMobileMenu(null);
             }
         };
 
         const closeOnEscape = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 setIsYearMenuOpen(false);
+                setMobileMenu(null);
             }
         };
 
@@ -899,7 +1008,33 @@ function MonthYearTabs({
             document.removeEventListener("mousedown", closeOnOutsideClick);
             document.removeEventListener("keydown", closeOnEscape);
         };
-    }, [isYearMenuOpen]);
+    }, [isYearMenuOpen, mobileMenu]);
+
+    const selectMobileMonth = (nextMonth: string) => {
+        const matchingChoice =
+            visibleMonthChoices.find((option) => option.month === nextMonth && option.year === year) ??
+            visibleMonthChoices.find((option) => option.month === nextMonth);
+        onMonthChange(nextMonth);
+        if (matchingChoice) onYearChange(matchingChoice.year);
+        onPeriodChange?.("current");
+        setMobileMenu(null);
+    };
+
+    const selectMobileYear = (nextYear: number) => {
+        const matchingChoice = visibleMonthChoices.find(
+            (option) => option.year === nextYear && option.month === month,
+        );
+        const fallbackChoice = visibleMonthChoices.find((option) => option.year === nextYear);
+        const fallbackAllowedMonth = firstAllowedMonthForYear(nextYear);
+        onYearChange(nextYear);
+        if (isBeforeMinimumMonthlyUpdate(month, nextYear) && fallbackAllowedMonth) {
+            onMonthChange(fallbackAllowedMonth);
+        } else if (!matchingChoice && fallbackChoice) {
+            onMonthChange(fallbackChoice.month);
+        }
+        onPeriodChange?.("current");
+        setMobileMenu(null);
+    };
 
     return (
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
@@ -910,80 +1045,83 @@ function MonthYearTabs({
                 </>
             )}
 
-            <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2 sm:hidden">
-                <div>
-                    <label className="sr-only" htmlFor="vibe-raising-mobile-month-select">
-                        Select update month
-                    </label>
-                    <select
-                        id="vibe-raising-mobile-month-select"
-                        value={month}
+            <div ref={mobileMenuRef} className="grid grid-cols-[minmax(0,1fr)_104px] gap-2 sm:hidden">
+                <div className="relative">
+                    <button
+                        type="button"
                         disabled={!isDateEditable}
-                        onChange={(event) => {
-                            if (!isDateEditable) return;
-                            const nextMonth = event.target.value;
-                            const matchingChoice =
-                                visibleMonthChoices.find((option) => option.month === nextMonth && option.year === year) ??
-                                visibleMonthChoices.find((option) => option.month === nextMonth);
-                            onMonthChange(nextMonth);
-                            if (matchingChoice) {
-                                onYearChange(matchingChoice.year);
-                            }
-                            onPeriodChange?.("current");
-                            setIsYearMenuOpen(false);
-                        }}
+                        onClick={() => setMobileMenu((current) => current === "month" ? null : "month")}
+                        aria-label="Select update month"
+                        aria-haspopup="listbox"
+                        aria-expanded={mobileMenu === "month"}
                         className={clsx(
-                            "h-12 w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 text-sm font-black text-gray-950 shadow-sm outline-none ring-1 ring-white/60 transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]",
+                            "flex h-12 w-full items-center justify-between rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 text-sm font-black text-gray-950 shadow-sm outline-none ring-1 ring-white/60 transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]",
                             isDateEditable ? "cursor-pointer" : "cursor-default opacity-70",
                         )}
                     >
-                        {!month.trim() ? (
-                            <option value="" disabled>
-                                Select month
-                            </option>
-                        ) : null}
-                        {mobileMonthOptions.map((option) => (
-                            <option key={option.month} value={option.month}>
-                                {option.month}
-                            </option>
-                        ))}
-                    </select>
+                        <span>{month || "Select month"}</span>
+                        <ChevronDownIcon className={clsx("h-4 w-4 transition-transform", mobileMenu === "month" && "rotate-180")} />
+                    </button>
+                    {mobileMenu === "month" ? (
+                        <div role="listbox" aria-label="Update month" className="absolute left-0 top-[calc(100%+0.5rem)] z-50 max-h-64 w-full overflow-y-auto rounded-2xl border border-[var(--vr-color-border)] bg-white p-1.5 shadow-2xl">
+                            {mobileMonthOptions.map((option) => {
+                                const isDisabled = isBeforeMinimumMonthlyUpdate(option.month, year);
+                                return (
+                                    <button
+                                        key={option.month}
+                                        type="button"
+                                        role="option"
+                                        aria-selected={option.month === month}
+                                        disabled={isDisabled}
+                                        onClick={() => selectMobileMonth(option.month)}
+                                        className={clsx(
+                                            "flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-black transition",
+                                            isDisabled ? "cursor-not-allowed text-slate-300" : option.month === month ? "bg-[var(--vr-color-primary)] text-white" : "text-gray-950 hover:bg-[var(--vr-palette-paper)]",
+                                        )}
+                                    >
+                                        {option.month}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ) : null}
                 </div>
 
-                <div>
-                    <label className="sr-only" htmlFor="vibe-raising-mobile-year-select">
-                        Select update year
-                    </label>
-                    <select
-                        id="vibe-raising-mobile-year-select"
-                        value={year}
+                <div className="relative">
+                    <button
+                        type="button"
                         disabled={!isDateEditable}
-                        onChange={(event) => {
-                            if (!isDateEditable) return;
-                            const nextYear = Number(event.target.value);
-                            if (!Number.isFinite(nextYear)) return;
-                            const matchingChoice = visibleMonthChoices.find(
-                                (option) => option.year === nextYear && option.month === month,
-                            );
-                            const fallbackChoice = visibleMonthChoices.find((option) => option.year === nextYear);
-                            onYearChange(nextYear);
-                            if (!matchingChoice && fallbackChoice) {
-                                onMonthChange(fallbackChoice.month);
-                            }
-                            onPeriodChange?.("current");
-                            setIsYearMenuOpen(false);
-                        }}
+                        onClick={() => setMobileMenu((current) => current === "year" ? null : "year")}
+                        aria-label="Select update year"
+                        aria-haspopup="listbox"
+                        aria-expanded={mobileMenu === "year"}
                         className={clsx(
-                            "h-12 w-full rounded-2xl border border-gray-950 bg-gray-950 px-3 text-center text-sm font-black tracking-[0.08em] text-white shadow-lg shadow-black/15 outline-none ring-1 ring-white/10 transition focus:ring-4 focus:ring-[rgba(11,11,11,0.16)]",
+                            "flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-gray-950 bg-gray-950 px-3 text-center text-sm font-black tracking-[0.08em] text-white shadow-lg shadow-black/15 outline-none ring-1 ring-white/10 transition focus:ring-4 focus:ring-[rgba(11,11,11,0.16)]",
                             isDateEditable ? "cursor-pointer" : "cursor-default opacity-70",
                         )}
                     >
-                        {mobileYearOptions.map((optionYear) => (
-                            <option key={optionYear} value={optionYear}>
-                                {optionYear}
-                            </option>
-                        ))}
-                    </select>
+                        <span>{year}</span>
+                        <ChevronDownIcon className={clsx("h-4 w-4 transition-transform", mobileMenu === "year" && "rotate-180")} />
+                    </button>
+                    {mobileMenu === "year" ? (
+                        <div role="listbox" aria-label="Update year" className="absolute right-0 top-[calc(100%+0.5rem)] z-50 max-h-64 w-36 overflow-y-auto rounded-2xl border border-gray-800 bg-gray-950 p-1.5 shadow-2xl">
+                            {mobileYearOptions.map((optionYear) => (
+                                <button
+                                    key={optionYear}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={optionYear === year}
+                                    onClick={() => selectMobileYear(optionYear)}
+                                    className={clsx(
+                                        "flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-black transition",
+                                        optionYear === year ? "bg-white text-gray-950" : "text-white/75 hover:bg-white/10 hover:text-white",
+                                    )}
+                                >
+                                    {optionYear}
+                                </button>
+                            ))}
+                        </div>
+                    ) : null}
                 </div>
             </div>
 
@@ -993,13 +1131,14 @@ function MonthYearTabs({
                         role="listbox"
                         aria-label="Update month"
                         className={clsx(
-                            "grid w-full",
+                            "grid w-full divide-x divide-[var(--vr-color-border)]",
                             useCompactCreateTimeline ? "grid-cols-2" : "grid-cols-12",
                         )}
                     >
                         {visibleMonthChoices.map((option) => {
                             const monthTheme = getVibeRaisingMonthTheme(option.month);
                             const isSelected = option.month === month && option.year === year;
+                            const isDisabled = !isDateEditable || isBeforeMinimumMonthlyUpdate(option.month, option.year);
                             const monthLabel = showYearInMonthLabel
                                 ? `${option.month.slice(0, 3).toUpperCase()} ${option.year}`
                                 : option.month.slice(0, 3).toUpperCase();
@@ -1009,21 +1148,22 @@ function MonthYearTabs({
                                     type="button"
                                     role="option"
                                     aria-selected={isSelected}
-                                    disabled={!isDateEditable}
+                                    aria-disabled={isDisabled}
+                                    disabled={isDisabled}
                                     onClick={() => {
-                                        if (!isDateEditable) return;
+                                        if (isDisabled) return;
                                         onMonthChange(option.month);
                                         onYearChange(option.year);
                                         onPeriodChange?.("current");
                                         setIsYearMenuOpen(false);
                                     }}
                                     className={clsx(
-                                        "flex min-h-[54px] min-w-0 items-center justify-center border-r border-[var(--vr-color-border)] px-2 text-center font-black uppercase tracking-[0.08em] transition-colors last:border-r-0",
+                                        "flex min-h-[54px] min-w-0 items-center justify-center px-2 text-center font-black uppercase tracking-[0.08em] transition-colors",
                                         useCompactCreateTimeline ? "text-[11px] sm:text-xs md:text-sm" : "text-[9px] sm:text-[10px] md:text-[11px]",
-                                        isDateEditable ? "cursor-pointer" : "cursor-default",
-                                        isSelected
+                                        isDisabled ? "cursor-not-allowed bg-gray-100 text-slate-300 opacity-60 grayscale" : "cursor-pointer",
+                                        isSelected && !isDisabled
                                             ? `${monthTheme.tabClass} ${monthTheme.textClass} shadow-none`
-                                            : "bg-[var(--vr-palette-paper)] text-slate-500 hover:bg-white hover:text-gray-950",
+                                            : !isDisabled && "bg-[var(--vr-palette-paper)] text-slate-500 hover:bg-white hover:text-gray-950",
                                     )}
                                 >
                                     <span className="truncate">{monthLabel}</span>
@@ -1086,7 +1226,11 @@ function MonthYearTabs({
                                             role="option"
                                             aria-selected={isSelected}
                                             onClick={() => {
+                                                const fallbackAllowedMonth = firstAllowedMonthForYear(optionYear);
                                                 onYearChange(optionYear);
+                                                if (isBeforeMinimumMonthlyUpdate(month, optionYear) && fallbackAllowedMonth) {
+                                                    onMonthChange(fallbackAllowedMonth);
+                                                }
                                                 setIsYearMenuOpen(false);
                                             }}
                                             className={clsx(
@@ -1585,6 +1729,11 @@ function getEmailDraftStorageKey(domain?: string | null) {
     return `vibe_raising_email_draft:${normalized}`;
 }
 
+function getStoryMaterialsSuggestionSeenStorageKey(activeCompanyId?: string | null, domain?: string | null) {
+    const accountKey = String(activeCompanyId || domain || "unknown").trim().toLowerCase();
+    return `${STORY_MATERIALS_SUGGESTION_SEEN_STORAGE_PREFIX}:${accountKey}`;
+}
+
 function getEmailDraftForceRegenerateKey(domain?: string | null) {
     const normalized = String(domain || "").trim().toLowerCase() || "unknown";
     return `vibe_raising_email_draft_force_regenerate:${normalized}`;
@@ -1837,7 +1986,9 @@ function BulletTextarea({
     placeholder,
     onChange,
     onFocus,
+    onEnterNewItem,
     onMobileAdvance,
+    bulletIndex,
     enterKeyHint,
     className,
 }: {
@@ -1845,7 +1996,9 @@ function BulletTextarea({
     placeholder: string;
     onChange: (value: string) => void;
     onFocus?: () => void;
+    onEnterNewItem?: () => void;
     onMobileAdvance?: () => void;
+    bulletIndex?: number;
     enterKeyHint?: "enter" | "done" | "go" | "next" | "previous" | "search" | "send";
     className?: string;
 }) {
@@ -1870,12 +2023,16 @@ function BulletTextarea({
             }}
             onFocus={onFocus}
             onKeyDown={(event) => {
-                if (!onMobileAdvance) return;
                 if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
                 event.preventDefault();
-                onMobileAdvance();
+                if (onEnterNewItem) {
+                    onEnterNewItem();
+                    return;
+                }
+                onMobileAdvance?.();
             }}
             enterKeyHint={enterKeyHint}
+            data-bullet-input-index={bulletIndex}
             placeholder={placeholder}
             className={clsx(
                 "w-full resize-none overflow-hidden whitespace-pre-wrap break-words",
@@ -1896,7 +2053,7 @@ function SectionWithExample({
 }: SectionWithExampleProps) {
     const titleId = useId();
     const cardRef = useRef<HTMLElement | null>(null);
-    const cardInView = useInView(cardRef, { amount: 0.45, once: false });
+    const cardInView = useInView(cardRef, { amount: 0.15, once: true });
     const { items, commitItems } = useBulletItemsState(value, onChange);
     const questionKey = getDraftQuestionKey(name, label);
     const questionMeta = questionKey ? DRAFT_QUESTION_META[questionKey] : null;
@@ -1932,13 +2089,27 @@ function SectionWithExample({
         commitItems(updated);
     };
 
-    const addItem = () => {
-        commitItems([...items, ""]);
-    };
-
     const removeItem = (index: number) => {
         const updated = items.filter((_, i) => i !== index);
         commitItems(updated.length ? updated : [""]);
+    };
+
+    const focusItem = (index: number) => {
+        if (typeof window === "undefined") return;
+        window.requestAnimationFrame(() => {
+            const nextInput = cardRef.current?.querySelector<HTMLTextAreaElement>(`textarea[data-bullet-input-index="${index}"]`);
+            if (!nextInput) return;
+            nextInput.focus();
+            nextInput.setSelectionRange(nextInput.value.length, nextInput.value.length);
+        });
+    };
+
+    const addItemAfter = (index: number) => {
+        const insertionIndex = Math.max(0, Math.min(index + 1, items.length));
+        const updated = [...items];
+        updated.splice(insertionIndex, 0, "");
+        commitItems(updated);
+        focusItem(insertionIndex);
     };
 
     return (
@@ -1948,18 +2119,18 @@ function SectionWithExample({
             data-draft-section={name}
             data-draft-question-card="true"
             aria-labelledby={titleId}
-            initial={{ scale: 0.94, opacity: 0 }}
-            animate={cardInView ? { scale: 1, opacity: 1 } : { scale: 0.94, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            initial={{ y: 20, opacity: 0 }}
+            animate={cardInView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
+            transition={{ duration: 0.32, ease: "easeOut" }}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
         >
             <input type="hidden" name={name} value={value || ""} />
-            <header className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-400 sm:hidden">
+            <header className="space-y-1.5">
+                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.24em] text-gray-400 sm:hidden">
                     {questionMeta ? `${questionMeta.step} / 05 - ${questionMeta.eyebrow}` : label}
                 </p>
-                <h3 id={titleId} className="text-base font-black leading-snug text-gray-950 sm:text-lg">
+                <h3 id={titleId} className="text-[17px] font-black leading-6 text-gray-950 sm:text-lg sm:leading-snug">
                     {questionPrompt}
                 </h3>
                 <p className="text-xs font-bold uppercase tracking-wide text-[var(--vr-color-primary)] sm:hidden">{label}</p>
@@ -1972,7 +2143,9 @@ function SectionWithExample({
                         <BulletTextarea
                             value={item}
                             onChange={(text) => updateItem(i, text)}
+                            onEnterNewItem={() => addItemAfter(i)}
                             onMobileAdvance={handleMobileAdvance}
+                            bulletIndex={i}
                             enterKeyHint={enableMobileAdvance ? (mobileAdvanceTo ? "next" : "done") : undefined}
                             placeholder={hints[i % hints.length] || placeholder}
                             className="min-h-11 flex-1 rounded-none border-0 bg-transparent px-0 py-2 text-[16px] leading-6 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:outline-none focus:ring-0 sm:text-sm"
@@ -1981,10 +2154,10 @@ function SectionWithExample({
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-1.5 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-300 transition hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]"
+                                className="mt-2 flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
                                 aria-label={`Remove ${label} point ${i + 1}`}
                             >
-                                Remove
+                                <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>
                         )}
                     </li>
@@ -1994,10 +2167,10 @@ function SectionWithExample({
             <footer className="mt-3 border-t border-dashed border-[var(--vr-color-border)] pt-3">
                 <button
                     type="button"
-                    onClick={addItem}
+                    onClick={() => addItemAfter(items.length - 1)}
                     className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[rgba(0,128,128,0.08)] px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.16)]"
                 >
-                    Add point
+                    Add point +
                 </button>
             </footer>
         </motion.section>
@@ -2034,14 +2207,19 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
                         className="flex-1 rounded-lg border border-[var(--vr-color-border)] bg-white px-3 py-1.5 text-xs leading-5 text-gray-900 shadow-sm placeholder:text-gray-300 placeholder:italic focus:border-[var(--vr-color-primary)] focus:ring-[var(--vr-color-primary)]"
                     />
                     {(items.length > 1 || item.trim().length > 0) && (
-                        <button type="button" onClick={() => remove(i)} className="mt-1 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-300 transition-all hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]">
-                            Remove
+                        <button
+                            type="button"
+                            onClick={() => remove(i)}
+                            className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
+                            aria-label={`Remove point ${i + 1}`}
+                        >
+                            <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                     )}
                 </div>
             ))}
             <button type="button" onClick={add} className="mt-1 flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[var(--vr-color-primary)] transition-all hover:bg-[rgba(0,255,215,0.12)]">
-                Add point
+                Add point +
             </button>
         </div>
     );
@@ -2554,6 +2732,7 @@ export default function CreateUpdate() {
         existingMonthlyUpdates,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
+    const [activeReviewActionData, setActiveReviewActionData] = useState<any>(null);
     const saveDraftFetcher = useFetcher<typeof action>();
     const submit = useSubmit();
     const navigate = useNavigate();
@@ -2610,6 +2789,9 @@ export default function CreateUpdate() {
     const [showReviewLinkedInPopup, setShowReviewLinkedInPopup] = useState(false);
     const [showStoryMaterialsSuggestion, setShowStoryMaterialsSuggestion] = useState(false);
     const [dismissedStoryMaterialsSuggestionKey, setDismissedStoryMaterialsSuggestionKey] = useState<string | null>(null);
+    const [hasPreviouslySeenStoryMaterialsSuggestion, setHasPreviouslySeenStoryMaterialsSuggestion] = useState(false);
+    const [hasLoadedStoryMaterialsSuggestionSeenState, setHasLoadedStoryMaterialsSuggestionSeenState] = useState(false);
+    const [hasTriggeredStoryMaterialsSuggestion, setHasTriggeredStoryMaterialsSuggestion] = useState(false);
     const [highlightMaterialsSection, setHighlightMaterialsSection] = useState(false);
     const [showAllCreateStepMonths, setShowAllCreateStepMonths] = useState(false);
     const [pendingDraftRequest, setPendingDraftRequest] = useState<{
@@ -2622,8 +2804,18 @@ export default function CreateUpdate() {
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
-        if (actionData?.step === "feedback" || actionData?.step === "publish-error") setDismissedFeedback(false);
+        if (actionData?.step === "feedback" || actionData?.step === "publish-error") {
+            setActiveReviewActionData(actionData);
+            setDismissedFeedback(false);
+        }
     }, [actionData]);
+
+    useEffect(() => {
+        if (actionData?.step !== "feedback" && actionData?.step !== "publish-error") return;
+        setMonthConfirmed(true);
+        setSelectedDraftStage("reporting");
+        setMetricsConfirmed(true);
+    }, [actionData?.step]);
 
     useEffect(() => {
         const navigationFormData = navigation.formData;
@@ -2696,13 +2888,29 @@ export default function CreateUpdate() {
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || currentCreatePeriod.month);
     const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || currentCreatePeriod.year);
     const [activePeriodKey, setActivePeriodKey] = useState("current");
+    const createStepVisibleMonthOptions = useMemo(() => {
+        if (isEdit || showAllCreateStepMonths || selectedYear === MIN_MONTHLY_UPDATE_YEAR) {
+            return VIBE_RAISING_MONTH_OPTIONS.map((option) => ({
+                month: option.name,
+                year: selectedYear,
+            }));
+        }
+        return createStepMonthOptions;
+    }, [createStepMonthOptions, isEdit, selectedYear, showAllCreateStepMonths]);
     const hasSelectedMonth = Boolean(selectedMonth.trim());
     const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
     const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
     const targetMonthIso = getMonthlyUpdateIsoMonth(selectedMonth, selectedYear);
     const isSelectedMonthInFuture = hasSelectedMonth && isFutureMonthlyUpdate(selectedMonth, selectedYear);
+    const isSelectedMonthBeforeMinimum = hasSelectedMonth && isBeforeMinimumMonthlyUpdate(selectedMonth, selectedYear);
+    const isSelectedMonthUnavailable = isSelectedMonthInFuture || isSelectedMonthBeforeMinimum;
     const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
         (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
+    );
+    const isCreatingFirstMonthlyUpdate = !isEdit && existingMonthlyUpdates.length === 0;
+    const storyMaterialsSuggestionSeenStorageKey = getStoryMaterialsSuggestionSeenStorageKey(
+        user.activeCompanyId,
+        user.domain,
     );
     const selectedMonthLabel = hasSelectedMonth ? `${selectedMonth} ${selectedYear}` : "Select a month";
     const catchUpMonthLabel = createStepMonthOptions[0]?.month || "May";
@@ -2868,11 +3076,9 @@ export default function CreateUpdate() {
     const draftStepperRef = useRef<HTMLDivElement | null>(null);
     const monthSelectorRef = useRef<HTMLDivElement | null>(null);
     const draftTemplateSectionRef = useRef<HTMLDivElement | null>(null);
-    const draftStickyTriggerRef = useRef<HTMLDivElement | null>(null);
     const generateDraftSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const shouldDimMetricsTemplate = false;
     const [awakeMetricCards, setAwakeMetricCards] = useState<Set<string>>(new Set());
-    const [showDraftStickyOnMobile, setShowDraftStickyOnMobile] = useState(false);
     const compactOptionalSources = useMemo(() => {
         const byKey = new Map(compactSources.map((source) => [source.key, source]));
         return COMPACT_OPTIONAL_SOURCE_KEYS
@@ -2971,13 +3177,13 @@ export default function CreateUpdate() {
         if (isEdit) return;
         if (showAllCreateStepMonths) return;
         if (!selectedMonth.trim()) return;
-        const isVisibleCreateStepMonth = createStepMonthOptions.some(
+        const isVisibleCreateStepMonth = (createStepVisibleMonthOptions || []).some(
             (option) => option.month === selectedMonth && option.year === selectedYear,
         );
-        if (isVisibleCreateStepMonth) return;
+        if (isVisibleCreateStepMonth || !isFutureMonthlyUpdate(selectedMonth, selectedYear)) return;
         setSelectedMonth("");
         setSelectedYear(currentCreatePeriod.year);
-    }, [createStepMonthOptions, currentCreatePeriod.year, isEdit, selectedMonth, selectedYear, showAllCreateStepMonths]);
+    }, [createStepVisibleMonthOptions, currentCreatePeriod.year, isEdit, selectedMonth, selectedYear, showAllCreateStepMonths]);
 
     const dismissMetricCard = useCallback((metricKey: string) => {
         setAwakeMetricCards((previous) => {
@@ -3601,7 +3807,7 @@ export default function CreateUpdate() {
             navigate("/founder-tools/companies");
             return;
         }
-        if (isSelectedMonthInFuture || !targetMonthIso) {
+        if (isSelectedMonthUnavailable || !targetMonthIso) {
             setEmailDraftUiError("Choose the current month or a previous month before generating an update.");
             return;
         }
@@ -3630,7 +3836,7 @@ export default function CreateUpdate() {
     }, [
         backendBaseUrl,
         canGenerateDraftFromEmail,
-        isSelectedMonthInFuture,
+        isSelectedMonthUnavailable,
         navigate,
         selectedInputSources,
         startOrResumeEmailDraft,
@@ -3670,7 +3876,7 @@ export default function CreateUpdate() {
     }, [connectedDraftInputSources, executeDraftRequest, existingUpdateForSelectedMonth, selectedInputSources]);
 
     const handleGenerateSelectedMonthUpdate = useCallback(() => {
-        if (!hasSelectedMonth || isSelectedMonthInFuture) return;
+        if (!hasSelectedMonth || isSelectedMonthUnavailable) return;
         setMonthConfirmed(true);
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
@@ -3682,11 +3888,14 @@ export default function CreateUpdate() {
         if (typeof window !== "undefined") {
             window.requestAnimationFrame(() => {
                 window.requestAnimationFrame(() => {
-                    draftTemplateSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    const scrollTarget = isMobileTourViewport
+                        ? document.getElementById("mobile-selected-month-summary")
+                        : draftTemplateSectionRef.current;
+                    scrollTarget?.scrollIntoView({ behavior: "smooth", block: "start" });
                 });
             });
         }
-    }, [hasSelectedMonth, isSelectedMonthInFuture]);
+    }, [hasSelectedMonth, isMobileTourViewport, isSelectedMonthUnavailable]);
 
     const handleGenerateDraftFromEmailClick = useCallback(() => {
         requestDraftFromSelectedInputs();
@@ -3699,7 +3908,7 @@ export default function CreateUpdate() {
     const handleGenerateDraftCardTouchEnd = useCallback((event: React.TouchEvent<HTMLButtonElement>) => {
         const start = generateDraftSwipeStartRef.current;
         generateDraftSwipeStartRef.current = null;
-        if (!start || !isMobileTourViewport || !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy) return;
+        if (!start || !isMobileTourViewport || !hasSelectedMonth || isSelectedMonthUnavailable || emailDraftActionBusy) return;
 
         const touch = event.changedTouches[0];
         if (!touch) return;
@@ -3709,7 +3918,7 @@ export default function CreateUpdate() {
         if (deltaX >= 72 && deltaY <= 40) {
             handleGenerateSelectedMonthUpdate();
         }
-    }, [emailDraftActionBusy, handleGenerateSelectedMonthUpdate, hasSelectedMonth, isMobileTourViewport, isSelectedMonthInFuture]);
+    }, [emailDraftActionBusy, handleGenerateSelectedMonthUpdate, hasSelectedMonth, isMobileTourViewport, isSelectedMonthUnavailable]);
 
     const handleConfirmRegenerateDraft = useCallback(() => {
         const request = pendingDraftRequest ?? {};
@@ -3967,6 +4176,8 @@ export default function CreateUpdate() {
         ? "MLAI needs at least one approved source to generate a draft. You can also skip this and write manually."
         : emailDraftActionBusy
         ? "Contacting the MLAI backend and preparing the selected sources for drafting."
+        : isSelectedMonthBeforeMinimum
+            ? "Choose June 2025 or later. Older updates are not eligible for scoring or draft rewards."
         : isSelectedMonthInFuture
             ? "Choose the current month or a previous month. Future monthly updates can be drafted once that month starts."
         : canGenerateDraftFromEmail
@@ -4016,31 +4227,6 @@ export default function CreateUpdate() {
         metricsConfirmed &&
         (!isAutoDrafting || canContinueDraftManually) &&
         !showEmailWizard;
-    useEffect(() => {
-        if (!isMobileTourViewport || selectedDraftStage !== "reporting" || !hasDraftTemplate) {
-            setShowDraftStickyOnMobile(false);
-            return;
-        }
-
-        const updateStickyVisibility = () => {
-            const trigger = draftStickyTriggerRef.current;
-            if (!trigger) {
-                setShowDraftStickyOnMobile(false);
-                return;
-            }
-
-            const rect = trigger.getBoundingClientRect();
-            setShowDraftStickyOnMobile(rect.top <= window.innerHeight - 140);
-        };
-
-        updateStickyVisibility();
-        window.addEventListener("scroll", updateStickyVisibility, true);
-        window.addEventListener("resize", updateStickyVisibility);
-        return () => {
-            window.removeEventListener("scroll", updateStickyVisibility, true);
-            window.removeEventListener("resize", updateStickyVisibility);
-        };
-    }, [hasDraftTemplate, isMobileTourViewport, selectedDraftStage]);
     const hasAnyMetricValue = Object.values(metricValues).some((value) => String(value || "").trim().length > 0);
     const qualitativeDraftText = [highlights, challenges, learnings, next30Days, asks].join("\n");
     const hasQualitativeDraftText =
@@ -4051,22 +4237,10 @@ export default function CreateUpdate() {
         String(uploadedVideoUrl || videoStoragePath || "").trim() ||
         (videoUploadStatus === "ready" && String(videoPreviewUrl || "").trim())
     );
-    const draftQuestionCompletionItems = [
-        { label: "Highlights", done: String(highlights || "").trim().length > 0 },
-        { label: "Challenges", done: String(challenges || "").trim().length > 0 },
-        { label: "Learnings", done: String(learnings || "").trim().length > 0 },
-        { label: "Next", done: String(next30Days || "").trim().length > 0 },
-        { label: "Ask", done: String(asks || "").trim().length > 0 },
-    ];
-    const draftProgressItems = [
-        { label: "Story", done: hasUploadedStoryMaterial },
-        { label: "Metrics", done: hasAnyMetricValue },
-        ...draftQuestionCompletionItems,
-    ];
-    const draftCompletedCount = draftProgressItems.filter((item) => item.done).length;
-    const draftCompletionPercent = Math.round((draftCompletedCount / draftProgressItems.length) * 100);
-    const nextDraftProgressItem = draftProgressItems.find((item) => !item.done);
     const shouldSuggestStoryMaterials =
+        hasLoadedStoryMaterialsSuggestionSeenState &&
+        !hasPreviouslySeenStoryMaterialsSuggestion &&
+        isCreatingFirstMonthlyUpdate &&
         hasDraftTemplate &&
         hasQualitativeDraftText &&
         !hasAnyMetricValue &&
@@ -4074,17 +4248,38 @@ export default function CreateUpdate() {
         dismissedStoryMaterialsSuggestionKey !== selectedMonthUpdateKey;
 
     useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        try {
+            setHasPreviouslySeenStoryMaterialsSuggestion(
+                window.localStorage.getItem(storyMaterialsSuggestionSeenStorageKey) === "1",
+            );
+        } catch {
+            setHasPreviouslySeenStoryMaterialsSuggestion(false);
+        }
+        setHasLoadedStoryMaterialsSuggestionSeenState(true);
+        setHasTriggeredStoryMaterialsSuggestion(false);
+    }, [storyMaterialsSuggestionSeenStorageKey]);
+
+    useEffect(() => {
         if (!shouldSuggestStoryMaterials) {
             setShowStoryMaterialsSuggestion(false);
             return;
         }
+        if (hasTriggeredStoryMaterialsSuggestion) return;
 
         const timeoutId = window.setTimeout(() => {
+            try {
+                window.localStorage.setItem(storyMaterialsSuggestionSeenStorageKey, "1");
+            } catch {
+                // Keep the prompt usable when storage is unavailable.
+            }
+            setHasTriggeredStoryMaterialsSuggestion(true);
             setShowStoryMaterialsSuggestion(true);
         }, 900);
 
         return () => window.clearTimeout(timeoutId);
-    }, [shouldSuggestStoryMaterials]);
+    }, [hasTriggeredStoryMaterialsSuggestion, shouldSuggestStoryMaterials, storyMaterialsSuggestionSeenStorageKey]);
 
     const dismissStoryMaterialsSuggestion = useCallback(() => {
         setDismissedStoryMaterialsSuggestionKey(selectedMonthUpdateKey);
@@ -4119,8 +4314,9 @@ export default function CreateUpdate() {
         >
             <div className="flex w-full min-w-0 flex-1 items-center justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                        Selected month
+                    <p className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                        <span>Selected month</span>
+                        <CardInfoTooltip info="This update will be filed under the selected month. Use Edit to choose a different reporting month." />
                     </p>
                     <p className="truncate text-base font-black text-gray-950">
                         {selectedMonthLabel}
@@ -4129,7 +4325,7 @@ export default function CreateUpdate() {
                 <button
                     type="button"
                     onClick={returnToMonthSelection}
-                    className="flex-shrink-0 cursor-pointer rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
+                    className="inline-flex min-h-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-xs font-black text-white shadow-md shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
                     aria-label={`Edit selected update month: ${selectedMonthLabel}`}
                 >
                     Edit
@@ -4165,7 +4361,7 @@ export default function CreateUpdate() {
                 statusDetail: selectedMonthLabel,
                 primaryLabel: "Start draft",
                 onPrimary: handleGenerateSelectedMonthUpdate,
-                primaryDisabled: !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy,
+                primaryDisabled: !hasSelectedMonth || isSelectedMonthUnavailable || emailDraftActionBusy,
                 primaryType: "button" as const,
             };
         }
@@ -4681,13 +4877,12 @@ export default function CreateUpdate() {
                                         }}
                                         className="group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition hover:bg-[rgba(0,128,128,0.05)] focus:outline-none focus:ring-2 focus:ring-[var(--vr-color-primary)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left"
                                     >
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
-                                            Pitch deck
+                                        <p className="text-[1rem] font-black uppercase leading-6 tracking-[0.06em] text-[var(--vr-color-primary)]">
+                                            PITCH DECK
                                         </p>
-                                        <h3 className="mt-2 text-xl font-black text-gray-950">Upload deck</h3>
                                         <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
                                             <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
-                                            Upload file
+                                            Upload deck
                                         </span>
                                         <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
                                             Slides, bio, market story, traction.
@@ -4710,7 +4905,7 @@ export default function CreateUpdate() {
                                             if (isRecording) {
                                                 stopRecording();
                                             } else {
-                                                void startRecording();
+                                                openMaterialsPicker();
                                             }
                                         }}
                                         className={clsx(
@@ -4718,12 +4913,16 @@ export default function CreateUpdate() {
                                             isRecording ? "bg-[rgba(242,114,63,0.10)]" : "hover:bg-[rgba(242,114,63,0.06)]",
                                         )}
                                     >
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                            Walkthrough video
+                                        <p className="text-[1rem] font-black uppercase leading-6 tracking-[0.06em] text-[var(--vr-palette-coral)]">
+                                            WALKTHROUGH VIDEO
                                         </p>
                                         <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
-                                            <VideoCameraIcon className="h-4 w-4" aria-hidden="true" />
-                                            {isRecordingPermissionPending ? "Requesting access" : isRecording ? "Stop recording" : "Start recording"}
+                                            {isRecording ? (
+                                                <VideoCameraIcon className="h-4 w-4" aria-hidden="true" />
+                                            ) : (
+                                                <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
+                                            )}
+                                            {isRecordingPermissionPending ? "Requesting access" : isRecording ? "Stop recording" : "Upload video"}
                                         </span>
                                         <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
                                             Useful when metrics are light.
@@ -4773,9 +4972,10 @@ export default function CreateUpdate() {
                                                         event.stopPropagation();
                                                         removePitchDeck();
                                                     }}
-                                                    className="rounded-full border border-[rgba(242,114,63,0.24)] bg-white px-3 py-1 text-xs font-extrabold text-[var(--vr-palette-coral)] transition hover:bg-[rgba(242,114,63,0.08)]"
+                                                    className="flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
+                                                    aria-label="Remove pitch deck"
                                                 >
-                                                    Remove
+                                                    <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
                                                 </button>
                                             </div>
                                         </div>
@@ -4814,9 +5014,10 @@ export default function CreateUpdate() {
                                                         event.stopPropagation();
                                                         removeWalkthroughMedia();
                                                     }}
-                                                    className="rounded-full border border-[rgba(242,114,63,0.24)] bg-white px-3 py-1 text-xs font-extrabold text-[var(--vr-palette-coral)] transition hover:bg-[rgba(242,114,63,0.08)]"
+                                                    className="flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
+                                                    aria-label="Remove walkthrough media"
                                                 >
-                                                    Remove
+                                                    <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
                                                 </button>
                                             </div>
                                         </div>
@@ -4870,9 +5071,10 @@ export default function CreateUpdate() {
         <section className="flex min-h-[5.25rem] w-full flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:min-h-0 sm:rounded-[2rem] sm:p-6">
             <div className="flex w-full min-w-0 items-center justify-between gap-3 sm:gap-6">
                 <div className="min-w-0">
-                    <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
+                    <h2 className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
                         <span className="sm:hidden">Connect data</span>
                         <span className="hidden sm:inline">Connect data for AI drafting</span>
+                        <CardInfoTooltip info="Connect external data sources here. You can still complete and save the update manually without them." />
                     </h2>
                     <p className="mt-2 hidden max-w-2xl text-sm leading-6 text-slate-600 sm:block">
                         The draft template works without connected data. Select a connected source only if you want MLAI to generate a source-assisted first draft.
@@ -4905,13 +5107,18 @@ export default function CreateUpdate() {
                             );
                         })
                     )}
-                    <Link
-                        to={manageConnectionsHref}
-                        className="inline-flex flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary)] hover:text-white sm:rounded-xl sm:border-[var(--vr-color-border)] sm:bg-[var(--vr-palette-paper)] sm:px-4 sm:py-3 sm:text-sm sm:font-extrabold sm:text-[var(--vr-color-text)] sm:hover:bg-[var(--vr-palette-paper)] sm:hover:text-[var(--vr-color-primary)]"
-                    >
-                        <span className="sm:hidden">Manage</span>
-                        <span className="hidden sm:inline">Manage connections</span>
-                    </Link>
+                    <div className="flex flex-col items-stretch gap-2 text-center">
+                        <Link
+                            to={manageConnectionsHref}
+                            className="inline-flex min-h-11 cursor-pointer items-center justify-center whitespace-nowrap rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-extrabold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
+                        >
+                            <span className="sm:hidden">Manage</span>
+                            <span className="hidden sm:inline">Manage connections</span>
+                        </Link>
+                        <span className="hidden min-h-11 w-full items-center justify-center rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-sm font-extrabold text-slate-500 sm:inline-flex">
+                            Manual draft only
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -5108,11 +5315,15 @@ export default function CreateUpdate() {
         </>
     );
     // 1. Feedback View — preview-dominant with rating sidebar
-    if ((actionData?.step === "feedback" || actionData?.step === "publish-error") && !dismissedFeedback) {
-        const { feedback, data } = actionData;
-        const publishError = actionData.step === "publish-error" ? String((actionData as any).error || "") : "";
+    const reviewActionData = activeReviewActionData?.step === "feedback" || activeReviewActionData?.step === "publish-error"
+        ? activeReviewActionData
+        : actionData;
+
+    if ((reviewActionData?.step === "feedback" || reviewActionData?.step === "publish-error") && !dismissedFeedback) {
+        const { feedback, data } = reviewActionData;
+        const publishError = reviewActionData.step === "publish-error" ? String((reviewActionData as any).error || "") : "";
         const reviewData = data as any;
-        const rawReviewDraftId = String(reviewData?.draftId || actionData?.update?.id || "").trim();
+        const rawReviewDraftId = String(reviewData?.draftId || reviewActionData?.update?.id || "").trim();
         const reviewDraftId = BACKEND_DRAFT_ID_PATTERN.test(rawReviewDraftId) ? rawReviewDraftId : "";
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
@@ -5934,6 +6145,21 @@ export default function CreateUpdate() {
                     )}
                 </div>
 
+                <div className="sticky top-[4.5rem] z-30 mb-4 flex min-h-14 items-center sm:hidden" aria-label="Review progress">
+                    <div className="min-w-0 flex-1 rounded-xl border border-[var(--vr-color-border)] bg-white px-3 py-2 shadow-lg shadow-black/10">
+                        <div className="flex items-center justify-between gap-3">
+                            <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[var(--vr-color-primary)]">Draft progress</p>
+                            <p className="shrink-0 text-sm font-black text-gray-950">75%</p>
+                        </div>
+                        <div className="mt-1 flex items-center gap-2">
+                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200/80">
+                                <div className="h-full w-3/4 rounded-full bg-[var(--vr-color-primary)]" />
+                            </div>
+                            <p className="shrink-0 text-[10px] font-bold text-slate-500">Review</p>
+                        </div>
+                    </div>
+                </div>
+
                 <VibeRaisingStickyStepBar
                     hideStatus
                     compactOnMobile
@@ -5955,12 +6181,17 @@ export default function CreateUpdate() {
 
     // 3. Create/Edit Form View
     return (
-        <div className="mlai-vibe-update mx-auto max-w-6xl space-y-4 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:space-y-10 sm:px-6">
+        <div
+            className={clsx(
+                "mlai-vibe-update mx-auto w-full max-w-6xl space-y-4 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:space-y-10 sm:px-6",
+                isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate && "pt-16 sm:pt-0",
+            )}
+        >
             {mlaiGenerateUpdateBrand}
             <div className="space-y-4">
                 <div ref={draftStepperRef} className="hidden sm:block">
                     <MonthlyUpdateStepper
-                        activeStep="draft"
+                        activeStep={monthConfirmed ? "connect" : "draft"}
                         disableMotion
                         enabledSteps={isEdit ? ["draft"] : ["draft", "connect"]}
                         onStepClick={handleDraftStepperClick}
@@ -5993,9 +6224,12 @@ export default function CreateUpdate() {
                                                 onMonthChange={setSelectedMonth}
                                                 onYearChange={setSelectedYear}
                                                 onPeriodChange={setActivePeriodKey}
-                                                monthChoices={!isEdit && !showAllCreateStepMonths ? createStepMonthOptions : undefined}
+                                                monthChoices={createStepVisibleMonthOptions}
                                                 isDateEditable={!isEmailDraftBusy}
                                             />
+                                            <p className="mt-4 text-xs font-semibold leading-5 text-slate-500">
+                                                20 Roo Points are awarded only for updates from the last 3 months.
+                                            </p>
                                             {!isEdit && !showAllCreateStepMonths ? (
                                                 <div className="mt-5 hidden items-center gap-3 text-sm font-semibold text-[var(--vr-color-primary)] sm:flex">
                                                     <span className="text-[var(--vr-color-primary)]">Need an older month?</span>
@@ -6008,12 +6242,17 @@ export default function CreateUpdate() {
                                                     </button>
                                                 </div>
                                             ) : null}
+                                            {isSelectedMonthBeforeMinimum ? (
+                                                <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+                                                    Updates before June 2025 are not eligible for scoring or draft rewards.
+                                                </p>
+                                            ) : null}
                                             {isSelectedMonthInFuture && (
                                                 <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
                                                     Future monthly updates can be generated once that month starts.
                                                 </p>
                                             )}
-                                            {existingUpdateForSelectedMonth && !isSelectedMonthInFuture && (
+                                            {existingUpdateForSelectedMonth && !isSelectedMonthUnavailable && (
                                                 <p className="mt-3 rounded-xl border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.12)] px-4 py-3 text-sm font-medium text-[var(--vr-color-primary)]">
                                                     An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
                                                 </p>
@@ -6022,7 +6261,7 @@ export default function CreateUpdate() {
                                     </div>
                                     <button
                                         type="button"
-                                        disabled={!hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy}
+                                        disabled={!hasSelectedMonth || isSelectedMonthUnavailable || emailDraftActionBusy}
                                         onClick={() => {
                                             handleGenerateSelectedMonthUpdate();
                                         }}
@@ -6030,7 +6269,7 @@ export default function CreateUpdate() {
                                         onTouchEnd={handleGenerateDraftCardTouchEnd}
                                         className={clsx(
                                             "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 sm:hidden",
-                                            !hasSelectedMonth || isSelectedMonthInFuture || emailDraftActionBusy
+                                            !hasSelectedMonth || isSelectedMonthUnavailable || emailDraftActionBusy
                                                 ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
                                                 : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
                                         )}
@@ -6059,7 +6298,7 @@ export default function CreateUpdate() {
                 </div>
             </section>
             ) : (
-                <section className="sm:hidden">
+                <section id="mobile-selected-month-summary" className="scroll-mt-36 sm:hidden">
                     <div className="space-y-4">
                         {renderSelectedMonthSummaryCard()}
                     </div>
@@ -6099,6 +6338,7 @@ export default function CreateUpdate() {
                                     <div ref={draftTemplateSectionRef} className="scroll-mt-28 space-y-4 sm:mt-8 sm:space-y-6 lg:mt-10">
                                     {optionalDataSourcesSection}
                                     {!shouldShowEmailDraftProgress ? (
+                                        <div className="relative">
                                         <button
                                             type="button"
                                             disabled={emailDraftActionBusy || isSelectedMonthInFuture || selectedInputSources.length === 0}
@@ -6129,26 +6369,31 @@ export default function CreateUpdate() {
                                                     <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-base sm:font-bold sm:normal-case sm:tracking-normal sm:text-gray-950">
                                                         <span className="sm:hidden">AI drafting</span>
                                                         <span className="hidden sm:inline">{emailDraftButtonTitle}</span>
-                                                    </p>
-                                                    <p className="mt-1 text-sm font-black leading-tight text-gray-950 sm:max-w-2xl sm:text-sm sm:font-medium sm:leading-6 sm:text-gray-600">
-                                                        <span className="sm:hidden">{emailDraftButtonTitle}</span>
-                                                        <span className="hidden sm:inline">{emailDraftButtonDescription}</span>
+                                                        <span className="relative ml-2 hidden align-middle text-[var(--vr-color-primary)] transition group-hover:text-black sm:inline-flex" aria-hidden="true">
+                                                            <InformationCircleIcon className="h-3.5 w-3.5" />
+                                                            <span className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-2rem)] translate-y-1 rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-left text-xs font-medium normal-case leading-5 tracking-normal text-white opacity-0 shadow-[0_14px_30px_-10px_rgba(15,23,42,0.65)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus:translate-y-0 group-focus:opacity-100">
+                                                                {emailDraftButtonDescription}
+                                                                <span className="absolute left-2 top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-slate-950" />
+                                                            </span>
+                                                        </span>
                                                     </p>
                                                 </div>
                                             </div>
                                             <span className={clsx(
                                                 "flex flex-shrink-0 items-center justify-center rounded-full border px-3 py-1 text-xs font-black transition sm:h-10 sm:w-10 sm:rounded-xl sm:px-0 sm:py-0 sm:group-hover:translate-x-1",
-                                                hasNoSourceForAssistedDraft
-                                                    ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
-                                                    : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
+                                                "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:border-[var(--vr-palette-black)] group-hover:bg-[var(--vr-palette-black)]",
                                             )}>
                                                 <span className="sm:hidden">Draft</span>
                                                 <ArrowRightIcon className={clsx(
                                                     "hidden h-5 w-5 sm:block",
-                                                    hasNoSourceForAssistedDraft ? "text-gray-300" : "text-current",
+                                                    "text-current",
                                                 )} />
                                             </span>
                                         </button>
+                                        <div className="absolute left-[6.75rem] top-1/2 z-10 -translate-y-1/2 sm:hidden">
+                                            <CardInfoTooltip info={emailDraftButtonDescription} />
+                                        </div>
+                                        </div>
                                     ) : null}
                                 <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
                                     <input type="hidden" name="intent" value="review" />
@@ -6180,7 +6425,12 @@ export default function CreateUpdate() {
                                         name="draftAudienceVisibility"
                                         value={audienceVisibility}
                                         onChange={setAudienceVisibility}
-                                        title="Update visibility"
+                                        title={(
+                                            <span className="inline-flex items-center gap-2">
+                                                Update visibility
+                                                <CardInfoTooltip info="Choose who can see this update: only you, the MLAI community, or investors." />
+                                            </span>
+                                        )}
                                         description="For this draft"
                                     />
 
@@ -6240,15 +6490,15 @@ export default function CreateUpdate() {
                                                         <div className="min-w-0 flex-1">
                                                             <div className="group/metric-heading relative flex max-w-full flex-wrap items-center gap-1">
                                                                 <span className={clsx(
-                                                                    "min-w-0 cursor-help break-words text-left text-[11px] font-black uppercase leading-tight tracking-wide transition duration-200 sm:text-xs",
+                                                                    "min-w-0 cursor-pointer break-words text-left text-[11px] font-black uppercase leading-tight tracking-wide transition duration-200 sm:text-xs",
                                                                     "text-gray-500",
                                                                 )}>
                                                                     {metric.label}
                                                                 </span>
                                                                 {metric.info ? (
-                                                                    <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-52 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium normal-case leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover/metric-heading:translate-y-0 group-hover/metric-heading:opacity-100">
+                                                                    <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-48 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium normal-case leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover/metric-heading:translate-y-0 group-hover/metric-heading:opacity-100 sm:left-0 sm:w-52 sm:translate-x-0">
                                                                         {metric.info}
-                                                                        <div className="absolute left-3 top-0 h-0 w-0 -translate-y-full border-b-[5px] border-l-[5px] border-r-[5px] border-b-gray-900 border-l-transparent border-r-transparent" />
+                                                                        <div className="absolute left-1/2 top-0 h-0 w-0 -translate-x-1/2 -translate-y-full border-b-[5px] border-l-[5px] border-r-[5px] border-b-gray-900 border-l-transparent border-r-transparent sm:left-3 sm:translate-x-0" />
                                                                     </div>
                                                                 ) : null}
                                                             </div>
@@ -6344,7 +6594,6 @@ export default function CreateUpdate() {
 
                                 </Form>
                                     {materialsSection}
-                                    <div ref={draftStickyTriggerRef} aria-hidden className="h-1 w-full" />
                                     </div>
                                 </>
                             ) : null}
@@ -6354,22 +6603,17 @@ export default function CreateUpdate() {
             </section>
 
             {isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate ? (
-                <div className="pointer-events-none fixed left-14 right-4 top-0 z-50 flex h-16 items-center sm:hidden" aria-label="Draft progress">
-                    <div className="min-w-0 flex-1">
+                <div className="pointer-events-none fixed inset-x-4 top-[4.5rem] z-30 flex min-h-14 items-center sm:hidden" aria-label="Draft progress">
+                    <div className="min-w-0 flex-1 rounded-xl border border-[var(--vr-color-border)] bg-white px-3 py-2 shadow-lg shadow-black/10">
                         <div className="flex items-center justify-between gap-3">
                             <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[var(--vr-color-primary)]">Draft progress</p>
-                            <p className="shrink-0 text-sm font-black text-gray-950">{draftCompletionPercent}%</p>
+                            <p className="shrink-0 text-sm font-black text-gray-950">25%</p>
                         </div>
                         <div className="mt-1 flex items-center gap-2">
                             <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200/80">
-                                <div
-                                    className="h-full rounded-full bg-[var(--vr-color-primary)] transition-all duration-300 ease-out"
-                                    style={{ width: `${draftCompletionPercent}%` }}
-                                />
+                                <div className="h-full w-1/4 rounded-full bg-[var(--vr-color-primary)]" />
                             </div>
-                            <p className="max-w-[8rem] truncate text-[10px] font-bold text-slate-500">
-                                {nextDraftProgressItem ? `Next: ${nextDraftProgressItem.label}` : "Ready"}
-                            </p>
+                            <p className="shrink-0 text-[10px] font-bold text-slate-500">Draft</p>
                         </div>
                     </div>
                 </div>
@@ -6379,7 +6623,6 @@ export default function CreateUpdate() {
                 key={monthConfirmed ? "draft-template-actions" : "select-month-actions"}
                 className={clsx(
                     !monthConfirmed && "hidden sm:block",
-                    isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate && !showDraftStickyOnMobile && "hidden sm:block",
                 )}
                 hideStatusOnMobile={isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate}
                 hideBackOnMobile
@@ -6591,7 +6834,7 @@ export default function CreateUpdate() {
                             {!isEdit && (
                                 <Link
                                     to={manageConnectionsHref}
-                                    className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
+                                    className="inline-flex items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                                 >
                                     Manage connections
                                 </Link>
@@ -6631,13 +6874,13 @@ export default function CreateUpdate() {
                         ) : (
                             <button
                                 type="button"
-                                disabled={emailDraftActionBusy || isSelectedMonthInFuture || selectedInputSources.length === 0}
+                                disabled={emailDraftActionBusy || isSelectedMonthUnavailable || selectedInputSources.length === 0}
                                 onClick={() => {
                                     void handleGenerateDraftFromEmailClick();
                                 }}
                                 className={clsx(
                                     "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
-                                    canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
+                                    canGenerateDraftFromEmail && !isSelectedMonthUnavailable && selectedInputSources.length > 0
                                         ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
                                         : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
                                 )}
@@ -7124,4 +7367,3 @@ export default function CreateUpdate() {
         </div>
     );
 }
-
