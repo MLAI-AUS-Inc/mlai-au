@@ -43,7 +43,7 @@ export default [
     route("profile", "routes/esafety.profile.tsx"),
   ]),
 
-  // Medhack: Frontiers (Hospital) App routes
+  // HealthHack (Hospital) App routes
   route("/hospital/app", "routes/hospital.app.tsx", [
     index("routes/hospital.app.dashboard.tsx"),
     route("dashboard", "routes/hospital.app.dashboard-redirect.tsx"),
@@ -87,6 +87,7 @@ export default [
   // Hackathon pages
   route("/hackathon", "routes/article-link-cleanups.tsx", { id: "cleanup-hackathon-singular" }),
   route("/hackathons", "routes/hackathons.tsx"),
+  route("/healthhack", "routes/healthhack.tsx"),
   route("/medhack", "routes/medhack.tsx"),
 
   // Valley MVP demo (mobile-first, mocked, no auth)

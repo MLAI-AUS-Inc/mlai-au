@@ -177,7 +177,7 @@ export default function SlackChat({
     const userMap = buildUserMap(messages);
 
     return (
-        <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
+        <div className="healthhack-card relative overflow-hidden rounded-2xl">
             <div className="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-[#783f8e]/20 blur-3xl" />
             <div className="relative z-10 p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -199,7 +199,7 @@ export default function SlackChat({
                         Slack Chat
                     </h3>
                     <span className="text-xs text-white/40 ml-auto">
-                        #medhack-frontiers
+                        #healthhack
                     </span>
                 </div>
 

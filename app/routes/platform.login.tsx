@@ -228,7 +228,7 @@ export default function PlatformLogin() {
 
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
-        if (app === "hospital") return "Sign in to Medhack: Frontiers";
+        if (app === "hospital") return "Sign in to HealthHack";
         if (app === "watt-the-hack") return "Sign in to Watt The Hack";
         if (app === "founder-tools") return "Sign in to Founder Tools";
         return "Welcome!";

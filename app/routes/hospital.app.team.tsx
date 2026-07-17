@@ -280,7 +280,7 @@ export default function HospitalAppTeam() {
     const teamAvatarUrl = previewTeamAvatarUrl || teamData?.avatar_url || generateAvatarUrl(getInitials(teamName || 'Team'));
 
     return (
-        <div className="min-h-screen bg-[#110822]">
+        <div className="min-h-screen bg-transparent">
             <main className="py-10">
                 {/* Profile header */}
                 <div className="mx-auto max-w-3xl px-4 sm:px-6 md:flex md:items-center md:justify-between md:space-x-5 lg:max-w-7xl lg:px-8">

@@ -1,4 +1,6 @@
-const AI_HOSPITAL_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202025-11-25%20at%2011.24.04%E2%80%AFam.png?alt=media&token=b23e69c8-f0c7-4f76-8439-49ae8056c987";
+import { Link } from "react-router";
+import { HEALTHHACK_BRAND } from "~/lib/healthhack-brand";
+
 const ESAFETY_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
 const WATT_THE_HACK_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FChatGPT%20Image%20May%2021%2C%202026%2C%2010_48_11%20PM%20(1).png?alt=media&token=5e39b6e6-7b02-471c-866f-5d18aae506fe";
 
@@ -34,23 +36,33 @@ export default function Hackathons() {
                         </div>
                     </div>
 
-                    {/* Medhack: Frontiers Card — Disabled */}
-                    <div
-                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
+                    {/* HealthHack Card */}
+                    <Link
+                        to="/hospital/app"
+                        aria-label="Open HealthHack"
+                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--brutalist-blue)]"
                     >
-                        <img
-                            src={AI_HOSPITAL_STATIC}
-                            alt="Medhack: Frontiers"
-                            className="absolute inset-0 h-full w-full object-cover object-top"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_30%,rgba(139,92,246,0.7),transparent_33%),linear-gradient(135deg,#16082d,#40158c_55%,#170b39)]" />
+                        <div className="absolute -right-6 -top-10 h-[115%] w-1/2 opacity-70 transition-transform duration-300 group-hover:scale-[1.03]">
+                            <img
+                                src={HEALTHHACK_BRAND.assets.mark}
+                                alt=""
+                                className="h-full w-full object-contain"
+                            />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
                         <div className="absolute bottom-0 left-0 right-0 p-6 text-white z-10">
-                            <h3 className="text-2xl font-bold">Medhack: Frontiers (Coming Soon)</h3>
+                            <h3 className="sr-only">HealthHack</h3>
+                            <img
+                                src={HEALTHHACK_BRAND.assets.wordmark}
+                                alt=""
+                                className="h-12 w-auto max-w-[68%] object-contain object-left sm:h-14"
+                            />
                             <p className="mt-2 text-sm text-gray-200">
-                                Revolutionizing healthcare with AI. Join us to build the future of medicine.
+                                Build practical solutions to real healthcare challenges.
                             </p>
                         </div>
-                    </div>
+                    </Link>
 
                     {/* eSafety Hackathon Card — Disabled */}
                     <div
