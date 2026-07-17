@@ -13,12 +13,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 const DATASETS = [
     {
-        name: "Advanced Tract Dataset 1",
+        name: "Large Tract Dataset 1",
         description: "Real de-identified EMR data to explore and build your solution around.",
         url: "https://kaggle.com/datasets/4dbfe5ed9320db06fc60bdf33aa2d604e15773c4e992e9e090e630c9bafb5384",
     },
     {
-        name: "Advanced Tract Dataset 2",
+        name: "Large Tract Dataset 2",
         description: "Additional dataset with more complex patient scenarios.",
         url: "https://kaggle.com/datasets/dd6cc7f5d00dc22cfa6d500202a2ca774155cd7a49bfd3bcbe2aba1ab99082c4",
     },
@@ -102,18 +102,18 @@ export default function HospitalAppPitching() {
             <div className="mx-auto max-w-5xl space-y-8">
 
                 {/* Hero */}
-                <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)]">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
-                    <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
-                    <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-[#ff69b4]/15 blur-3xl" />
+                <div className="relative overflow-hidden rounded-2xl border border-indigo-300/30 shadow-[0_0_40px_rgba(99,102,241,0.18)]">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-indigo-800 to-indigo-950" />
+                    <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-indigo-300/20 blur-3xl" />
+                    <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-blue-400/15 blur-3xl" />
                     <div className="relative z-10 p-8 lg:p-12">
-                        <p className="text-sm font-bold uppercase tracking-widest text-[#e2a9f1]">HealthHack 2026</p>
+                        <p className="text-sm font-bold uppercase tracking-widest text-indigo-200">HealthHack 2026</p>
                         <h1 className="mt-2 text-3xl lg:text-4xl font-black text-white tracking-tight">
-                            Big Tract (Pitching)
+                            Large Tract (Pitching)
                         </h1>
                         <p className="mt-4 text-lg text-white/80 max-w-2xl leading-relaxed">
                             Feeling ambitious? Ready to dive into a real-world healthcare challenge and come up with a
-                            solution&mdash;tech, process, or otherwise? The Advanced Tract might be less about coding and more
+                            solution&mdash;tech, process, or otherwise? The Large Tract is less about coding and more
                             about teamwork, creativity, and planning. Bonus: there&apos;s a bigger prize at the end!
                         </p>
                         <div className="flex flex-wrap gap-3 mt-6">
@@ -123,7 +123,7 @@ export default function HospitalAppPitching() {
                                     href={ds.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-white hover:text-indigo-800"
                                 >
                                     {ds.name}
                                 </a>
@@ -132,16 +132,38 @@ export default function HospitalAppPitching() {
                     </div>
                 </div>
 
+                {/* Featured pitching guide */}
+                <div className="relative overflow-hidden rounded-2xl border border-indigo-300/35 bg-gradient-to-r from-indigo-700 via-indigo-800 to-indigo-950 p-6 sm:p-8 shadow-[0_18px_50px_rgba(49,46,129,0.28)]">
+                    <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-indigo-300/20 blur-3xl" />
+                    <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-200">
+                                Start here
+                            </p>
+                            <h2 className="mt-2 text-2xl font-bold text-white">Learn How to Pitch Your Idea</h2>
+                            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">
+                                Use this practical guide to turn your healthcare solution into a clear, convincing story for the semifinal and final judging panels.
+                            </p>
+                        </div>
+                        <Link
+                            to="/articles/featured/how-to-pitch-your-idea"
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-indigo-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-indigo-50"
+                        >
+                            Read the pitching guide
+                            <span aria-hidden="true">&rarr;</span>
+                        </Link>
+                    </div>
+                </div>
+
                 {/* What's This All About? */}
                 <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6 sm:p-8">
                     <h2 className="text-2xl font-bold text-white mb-4">What&apos;s This All About?</h2>
                     <div className="space-y-4 text-white/70 leading-relaxed">
                         <p>
-                            In the Advanced Tract, you and your team will identify a healthcare challenge, brainstorm a solution,
-                            build a small demo or MVP, and then pitch your idea to our panel of judges on{" "}
-                            <strong className="text-white">Pitch Night (March 4)</strong>. Don&apos;t be intimidated by the word
-                            &quot;Advanced&quot;&mdash;it&apos;s not necessarily harder from a technical standpoint, but it does take
-                            more time, research, and collaboration.
+                            In the Large Tract, you and your team will identify a healthcare challenge, brainstorm a solution,
+                            build a small demo or MVP, and pitch your idea in the Sunday semifinals from{" "}
+                            <strong className="text-white">4:00 PM at Stone &amp; Chalk Tech Central</strong>. It is not
+                            necessarily harder from a technical standpoint, but it does take more time, research, and collaboration.
                         </p>
                         <p>
                             Remember: <strong className="text-white">your solution can be anything</strong>&mdash;it doesn&apos;t have
@@ -152,9 +174,9 @@ export default function HospitalAppPitching() {
                     </div>
                 </div>
 
-                {/* How to Win the Advanced Track */}
+                {/* How to succeed in the Large Tract */}
                 <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6 sm:p-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">How to Win the Advanced Track</h2>
+                    <h2 className="text-2xl font-bold text-white mb-2">How to Succeed in the Large Tract</h2>
                     <p className="text-sm text-white/60 mb-6">
                         This process aligns with the <em>Double Diamond</em> framework: Discover, Define, Develop, and Deliver.
                         It&apos;s all about understanding user needs deeply, exploring multiple ideas, then refining and honing
@@ -242,14 +264,15 @@ export default function HospitalAppPitching() {
                     </p>
                 </div>
 
-                {/* Pitch Night */}
+                {/* Semifinals and Grand Finals */}
                 <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6 sm:p-8">
-                    <h2 className="text-2xl font-bold text-white mb-4">Pitch Night</h2>
+                    <h2 className="text-2xl font-bold text-white mb-4">Semifinals &amp; Grand Finals</h2>
                     <div className="space-y-4 text-white/70 leading-relaxed">
                         <p>
-                            Pitch Night is on <strong className="text-white">Wednesday 4th March</strong> at{" "}
-                            <strong className="text-white">Monash College City Campus, Docklands</strong>. The most promising teams
-                            from their video submissions are selected to pitch live to judges, investors, and a live audience.
+                            Semifinals begin at <strong className="text-white">4:00 PM on Sunday, 19 July</strong> at{" "}
+                            <strong className="text-white">Stone &amp; Chalk Tech Central</strong>. Finalists are announced at
+                            6:05 PM, and the <strong className="text-white">top six teams</strong> return to pitch in the
+                            Grand Finals from <strong className="text-white">6:15 PM</strong>.
                         </p>
                         <p>
                             We&apos;ll give you resources on how to craft your pitch, so even if you&apos;ve never done one before, no
@@ -303,7 +326,7 @@ export default function HospitalAppPitching() {
                     <h2 className="text-2xl font-bold text-white mb-4">Big Prize, Bigger Impact</h2>
                     <div className="space-y-4 text-white/70 leading-relaxed">
                         <p>
-                            The Advanced Tract has a <strong className="text-white">large prize</strong> at stake, but the real win
+                            The Large Tract has a <strong className="text-white">large prize</strong> at stake, but the real win
                             is creating a solution that could genuinely help patients, providers, and entire health systems.
                             Think outside the box, collaborate with your amazing team, and show us what you&apos;ve got!
                         </p>
@@ -323,14 +346,6 @@ export default function HospitalAppPitching() {
                             Now get out there, dream big, and have fun tackling the world&apos;s healthcare challenges head-on.
                             We can&apos;t wait to see what you come up with!
                         </p>
-                    </div>
-                    <div className="mt-6">
-                        <Link
-                            to="/articles/featured/how-to-pitch-your-idea"
-                            className="inline-flex items-center rounded-md bg-[#ff2d78] px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#ff4d8e] hover:shadow-[0_0_20px_rgba(255,45,120,0.4)]"
-                        >
-                            Learn How to Pitch Your Idea
-                        </Link>
                     </div>
                 </div>
 

@@ -2,11 +2,9 @@ import type { MetaFunction } from "react-router";
 import MedhackTableOfContents from "~/components/medhack/MedhackTableOfContents";
 import MedhackHero from "~/components/medhack/MedhackHero";
 import MedhackAbout from "~/components/medhack/MedhackAbout";
-import MedhackSubtopics from "~/components/medhack/MedhackSubtopics";
-import MedhackVenue from "~/components/medhack/MedhackVenue";
 import MedhackSchedule from "~/components/medhack/MedhackSchedule";
+import MedhackPitchingFinals from "~/components/medhack/MedhackPitchingFinals";
 import MedhackJudging from "~/components/medhack/MedhackJudging";
-import MedhackMentorSchedule from "~/components/medhack/MedhackMentorSchedule";
 import MedhackCodeOfConduct from "~/components/medhack/MedhackCodeOfConduct";
 import MedhackPolicies from "~/components/medhack/MedhackPolicies";
 import MedhackContact from "~/components/medhack/MedhackContact";
@@ -17,7 +15,7 @@ export const meta: MetaFunction = () => {
     {
       name: "description",
       content:
-        "Everything you need to know about HealthHack. Explore the schedule, challenge tracks, judging criteria, mentors, venue details, and event policies.",
+        "Everything you need to know about HealthHack, including the weekend schedule, track format, pitching finals, judging criteria, and event policies.",
     },
     { property: "og:title", content: "HealthHack — Information Pack" },
     {
@@ -60,14 +58,13 @@ export default function MedhackInfoPack() {
                 The goal is simple yet ambitious: leverage cutting-edge technology to solve pressing real-world healthcare challenges.
               </p>
               <p className="text-white/70 leading-relaxed">
-                By working closely with doctors, nurses, pharmacists, and industry mentors, participants will create AI-driven solutions that tackle high-impact healthcare challenges. We encourage everyone to participate in both tracts&mdash;code your solution in the Small Tract and pitch your ideas in the Big Tract for the complete experience. Whether you&apos;re new to AI or a seasoned expert, this hackathon is your chance to contribute to the future of healthcare innovation.
+                By working closely with doctors, nurses, pharmacists, and industry mentors, participants will create AI-driven solutions that tackle high-impact healthcare challenges. We encourage everyone to participate in both tracts&mdash;code your solution in the Small Tract and pitch your ideas in the Large Tract for the complete experience. Whether you&apos;re new to AI or a seasoned expert, this hackathon is your chance to contribute to the future of healthcare innovation.
               </p>
             </div>
           </section>
 
-          <MedhackSubtopics />
-          <MedhackVenue />
           <MedhackSchedule />
+          <MedhackPitchingFinals />
 
           <section id="how-it-works" className="scroll-mt-24">
             <h2 className="text-3xl font-bold text-white mb-6">How It Works</h2>
@@ -83,7 +80,7 @@ export default function MedhackInfoPack() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6">
-                  <h3 className="text-xl font-bold text-white mb-3">Big Tract (Pitching)</h3>
+                  <h3 className="text-xl font-bold text-white mb-3">Large Tract (Pitching)</h3>
                   <p className="text-sm text-white/70 leading-relaxed">
                     Ready to tackle real-world healthcare challenges? You&apos;ll get access to real, de-identified Electronic Medical Record (EMR) data and work closely with healthcare mentors. Through interviews and guided discussions, you&apos;ll identify critical bottlenecks in the healthcare system and develop an AI-driven solution. Your mission: understand the problem, build a compelling demo, and pitch your idea to expert judges.
                   </p>
@@ -100,7 +97,7 @@ export default function MedhackInfoPack() {
                     "Pitch your solution with a compelling story: the problem, who benefits, how it works, and why it\u2019s better.",
                   ].map((step, i) => (
                     <li key={i} className="flex gap-3 text-sm text-white/70">
-                      <span className="flex-shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-[#783f8e] text-white text-xs font-bold">
+                      <span className="flex-shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-indigo-600 text-white text-xs font-bold">
                         {i + 1}
                       </span>
                       {step}
@@ -112,7 +109,6 @@ export default function MedhackInfoPack() {
           </section>
 
           <MedhackJudging />
-          <MedhackMentorSchedule />
           <MedhackCodeOfConduct />
           <MedhackPolicies />
           <MedhackContact />

@@ -8,9 +8,9 @@ export default function MedhackHero() {
       className="healthhack-hero scroll-mt-24 relative overflow-hidden rounded-3xl"
     >
       {/* Decorative blur circles */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-[#783f8e]/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-[#5a2d6a]/40 blur-2xl" />
+      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-500/25 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-indigo-800/35 blur-2xl" />
 
       <div className="relative z-10 flex flex-col items-center gap-8 px-6 py-16 text-center lg:flex-row lg:gap-12 lg:px-16 lg:py-20 lg:text-left">
         {/* Text content */}
@@ -32,7 +32,7 @@ export default function MedhackHero() {
               href={HEALTHHACK_BRAND.ticketsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#783f8e] shadow-lg transition hover:bg-white/90 hover:shadow-xl"
+              className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-sm font-bold text-indigo-800 shadow-lg transition hover:bg-indigo-50 hover:shadow-xl"
             >
               Get tickets
             </a>

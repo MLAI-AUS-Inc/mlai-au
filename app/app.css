@@ -40,9 +40,9 @@
 
 .healthhack-hero {
   background:
-    radial-gradient(circle at 75% 45%, rgba(114, 59, 230, 0.42), transparent 32%),
-    linear-gradient(115deg, #2d0b72 0%, #4f1b9f 43%, #17103b 100%);
-  box-shadow: 0 28px 80px rgba(5, 1, 16, 0.42), 0 0 0 1px rgba(201, 181, 255, 0.16);
+    radial-gradient(circle at 75% 45%, rgba(129, 140, 248, 0.34), transparent 32%),
+    linear-gradient(115deg, #4338ca 0%, #312e81 48%, #111338 100%);
+  box-shadow: 0 28px 80px rgba(5, 1, 16, 0.42), 0 0 0 1px rgba(165, 180, 252, 0.22);
 }
 
 .healthhack-card {

@@ -6,12 +6,6 @@ export interface MedhackSection {
   level: number;
 }
 
-export interface MedhackSubtopic {
-  name: string;
-  type: "pitching" | "coding";
-  description: string;
-}
-
 export interface MedhackScheduleDay {
   title: string;
   date: string;
@@ -42,16 +36,6 @@ export interface MedhackPerson {
   bio: string;
 }
 
-export interface MedhackMentorScheduleDay {
-  title: string;
-  date: string;
-  timeBlocks: string[];
-  mentors: Array<{
-    name: string;
-    available: boolean[];
-  }>;
-}
-
 export interface MedhackPolicy {
   title: string;
   description: string;
@@ -74,12 +58,10 @@ export const MEDHACK_SECTIONS: MedhackSection[] = [
   { id: "hero", title: "Overview", level: 2 },
   { id: "about", title: "About Us", level: 2 },
   { id: "event", title: "The Event", level: 2 },
-  { id: "subtopics", title: "Subtopics", level: 2 },
-  { id: "venue", title: "Venue", level: 2 },
   { id: "schedule", title: "Schedule", level: 2 },
+  { id: "pitching-finals", title: "Pitching Finals", level: 2 },
   { id: "how-it-works", title: "How It Works", level: 2 },
   { id: "judging", title: "Judging", level: 2 },
-  { id: "mentor-schedules", title: "Mentor Schedules", level: 2 },
   { id: "code-of-conduct", title: "Code of Conduct", level: 2 },
   { id: "policies", title: "Policies & Info", level: 2 },
   { id: "contact", title: "Contact & Socials", level: 2 },
@@ -98,136 +80,60 @@ export const MEDHACK_EVENT_OVERVIEW = {
   tagline: "Clinicians, builders and optimists in the same room for one intense weekend of problem-solving. Prototype real solutions to real healthcare bottlenecks.",
   description: "HealthHack brings clinicians, builders and optimists into the same room for one intense weekend of problem-solving at the cutting edge of medical innovation. With professionals from medicine, data science, and AI development all under one roof, we\u2019re pushing the boundaries of what\u2019s possible in healthcare.",
   goal: "The goal is simple yet ambitious: leverage cutting-edge technology to solve pressing real-world healthcare challenges.",
-  participation: "By working closely with doctors, nurses, pharmacists, and industry mentors, participants will create AI-driven solutions that tackle high-impact healthcare challenges. We encourage everyone to participate in both tracts\u2014code your solution in the Small Tract and pitch your ideas in the Big Tract for the complete experience. Whether you\u2019re new to AI or a seasoned expert, this hackathon is your chance to contribute to the future of healthcare innovation.",
-};
-
-// --- Subtopics ---
-
-export const MEDHACK_SUBTOPICS: MedhackSubtopic[] = [
-  {
-    name: "Aging Populations",
-    type: "pitching",
-    description: "As populations age, healthcare systems face rising multi-morbidity, frailty and demand for long-term support. This stream focuses on improving quality of life for older adults in areas around falls, dementia and mobility.",
-  },
-  {
-    name: "Ward",
-    type: "pitching",
-    description: "Inpatient wards are where most hospital care actually happens, and where small failures can quietly escalate. This stream targets monitoring, communication and coordination to improve outcomes during hospital stays.",
-  },
-  {
-    name: "Workforce Load",
-    type: "pitching",
-    description: "Healthcare workers are under sustained pressure from increasing demand and limited resources. This stream targets systems that reduce cognitive load and support safe, sustainable care delivery so clinicians can spend more time with patients.",
-  },
-  {
-    name: "Emergency Department",
-    type: "pitching",
-    description: "Emergency departments operate under constant uncertainty and time pressure. This stream focuses on triage, early decision-making and patient flow to improve safety and responsiveness in acute care settings.",
-  },
-  {
-    name: "Rural",
-    type: "pitching",
-    description: "Geography remains a major determinant of health outcomes. This stream focuses on delivering timely, high-quality care to rural and remote communities despite distance, workforce shortages and limited infrastructure.",
-  },
-  {
-    name: "Preventative Medicine",
-    type: "coding",
-    description: "Earlier insight can change outcomes. This stream explores how data, modelling, and clinical indicators can be used to anticipate risk, personalise care, and support better decision-making before deterioration occurs.",
-  },
-];
-
-// --- Venue ---
-
-export const MEDHACK_VENUE = {
-  hackathon: {
-    name: "Monash University Clayton Campus",
-    address: "Clayton, Victoria",
-    dates: "Saturday 21 \u2013 Sunday 22 February 2026",
-    notes: "Day 1 (Saturday) is mandatory for registration and orientation. Day 2 (Sunday) is optional but highly recommended\u2014we\u2019ve reserved a space for your team with extra guidance, food, drinks, and activities.",
-  },
-  teamFormation: {
-    name: "Stone & Chalk",
-    address: "Melbourne CBD",
-    date: "Sunday 15 February 2026, 5:00 PM \u2013 8:00 PM",
-  },
-  pitchNight: {
-    name: "Monash College City Campus",
-    address: "Docklands, Victoria",
-    date: "Wednesday 4 March 2026, doors open 5:30 PM",
-  },
+  participation: "By working closely with doctors, nurses, pharmacists, and industry mentors, participants will create AI-driven solutions that tackle high-impact healthcare challenges. We encourage everyone to participate in both tracts\u2014code your solution in the Small Tract and pitch your ideas in the Large Tract for the complete experience. Whether you\u2019re new to AI or a seasoned expert, this hackathon is your chance to contribute to the future of healthcare innovation.",
 };
 
 // --- Schedule ---
 
 export const MEDHACK_SCHEDULE: MedhackScheduleDay[] = [
   {
-    title: "Team Formation",
-    date: "Sunday Feb 15",
-    dateTime: "2026-02-15",
-    summary: "Meet potential teammates and form your team before the hack.",
-    location: "Stone & Chalk, Melbourne CBD",
+    title: "HealthHack — Build Day",
+    date: "Saturday, 18 July",
+    dateTime: "2026-07-18",
+    summary: "Day 1 · 10:30 AM–8:30 PM",
+    location: "Stone & Chalk Tech Central",
     timeSlots: [
-      { name: "Team Formation / Ice Breakers / Social Activity", start: "5:00 PM" },
-      { name: "Event wraps up", start: "8:00 PM" },
+      { name: "Doors open, registration and coffee", start: "10:30 AM" },
+      { name: "Opening ceremony", start: "11:00 AM" },
+      { name: "Sponsor and partner welcomes", start: "11:10 AM" },
+      { name: "Opening keynote — Dr Anu", start: "11:25 AM" },
+      { name: "Challenge and event briefing — Yana Lin and track leads", start: "11:45 AM" },
+      { name: "Hacking begins", start: "12:05 PM" },
+      { name: "Lunch", start: "12:30 PM" },
+      { name: "What The Health — Emily Casey", start: "1:00 PM" },
+      { name: "Speaker session 2 — TBC", start: "2:00 PM" },
+      { name: "Hacking continues", start: "2:30 PM" },
+      { name: "Snacks and coffee", start: "4:30 PM" },
+      { name: "Team checkpoint", start: "4:45 PM" },
+      { name: "Dinner and networking", start: "7:30 PM" },
+      { name: "Wrap and Sunday priorities — Yana Lin", start: "8:10 PM" },
+      { name: "Day one closes", start: "8:30 PM" },
     ],
   },
   {
-    title: "Hackathon Day 1",
-    date: "Saturday Feb 21",
-    dateTime: "2026-02-21",
-    summary: "Mandatory registration, orientation and the main hack day.",
-    location: "Monash University Clayton Campus",
+    title: "HealthHack — Day 2 & Finals",
+    date: "Sunday, 19 July",
+    dateTime: "2026-07-19",
+    summary: "Day 2 · 10:30 AM–8:30 PM",
+    location: "Stone & Chalk Tech Central",
     timeSlots: [
-      { name: "Event start / Student sign-ins", start: "10:30 AM" },
-      { name: "Welcome / Introduction speech", start: "11:00 AM" },
-      { name: "Sponsor speeches", start: "11:30 AM" },
-      { name: "Social Activity (Optional) / Hacking & Brainstorming", start: "12:30 PM" },
-      { name: "Lunch and/or refreshments provided", start: "1:30 PM" },
-      { name: "Mentors & Co-designers available / Hacking", start: "2:30 PM" },
-      { name: "Workshop 1 - Technical", start: "3:00 PM" },
-      { name: "Mentors & Co-designers available", start: "4:00 PM" },
-      { name: "Workshop 2 - Technical", start: "5:45 PM" },
-      { name: "Dinner and/or refreshments provided", start: "6:45 PM" },
-      { name: "Mentors & Co-designers available / Hacking", start: "7:45 PM" },
-      { name: "Day 1 wraps up", start: "8:45 PM" },
-    ],
-  },
-  {
-    title: "Hackathon Day 2",
-    date: "Sunday Feb 22",
-    dateTime: "2026-02-22",
-    summary: "Optional second day for teams to continue building and get extra support.",
-    location: "Monash University Clayton Campus",
-    timeSlots: [
-      { name: "Breakfast", start: "8:30 AM" },
-      { name: "Morning Briefing / Hacking", start: "9:00 AM" },
-      { name: "Mentors & Co-designers available", start: "9:30 AM" },
-      { name: "Workshop 3 - Pitching", start: "10:30 AM" },
-      { name: "Mentors & Co-designers available", start: "11:15 AM" },
-      { name: "Lunch and/or refreshments provided", start: "12:15 PM" },
-      { name: "Social Activity (Optional) / Hacking", start: "1:30 PM" },
-      { name: "Mentors & Co-designers available", start: "2:30 PM" },
-      { name: "Day 2 wraps up", start: "5:30 PM" },
-    ],
-  },
-  {
-    title: "Pitch Night",
-    date: "Wednesday Mar 4",
-    dateTime: "2026-03-04",
-    summary: "Finalists pitch their solutions to judges, investors and a live audience.",
-    location: "Monash College City Campus, Docklands",
-    timeSlots: [
-      { name: "Networking", start: "5:30 PM" },
-      { name: "Acknowledgment of Country & Intro to Councillor", start: "6:00 PM" },
-      { name: "Councillor opening remarks", start: "6:05 PM" },
-      { name: "Sponsor introductions", start: "6:10 PM" },
-      { name: "Overview of the event & introduction of judges", start: "6:20 PM" },
-      { name: "Pitches (x4)", start: "6:30 PM" },
-      { name: "Break", start: "7:10 PM" },
-      { name: "Pitches (x4)", start: "7:30 PM" },
-      { name: "Judges deliberate / Startup programs", start: "8:10 PM" },
-      { name: "Winners announced", start: "8:30 PM" },
-      { name: "Networking & after drinks", start: "8:40 PM" },
+      { name: "Doors open, Sunday registration and coffee", start: "10:30 AM" },
+      { name: "Day-two welcome — Yana Lin", start: "11:00 AM" },
+      { name: "Hacking continues", start: "11:15 AM" },
+      { name: "Lunch", start: "12:30 PM" },
+      { name: "Submission and pitch clinic", start: "2:30 PM" },
+      { name: "Snacks and 45-minute submission warning", start: "3:15 PM" },
+      { name: "15-minute submission warning", start: "3:45 PM" },
+      { name: "Submissions lock and semifinals begin", start: "4:00 PM" },
+      { name: "Large Tract semifinals and Small Tract technical verification", start: "4:00 PM", end: "5:45 PM" },
+      { name: "Finalists announced", start: "6:05 PM" },
+      { name: "Grand Finals begin — top six pitching teams", start: "6:15 PM" },
+      { name: "Finalist pitches and Q&A", start: "6:15 PM", end: "7:25 PM" },
+      { name: "Coding showcase and result", start: "7:25 PM" },
+      { name: "Judge deliberation and audience networking", start: "7:35 PM", end: "8:00 PM" },
+      { name: "Awards — Yana Lin, MC and sponsors", start: "8:00 PM" },
+      { name: "Closing remarks — Yana Lin", start: "8:20 PM" },
+      { name: "Day two closes", start: "8:30 PM" },
     ],
   },
 ];
@@ -242,7 +148,7 @@ export const MEDHACK_HOW_IT_WORKS = {
       description: "Perfect for those who want to dive into hands-on AI development. You\u2019ll receive continuous patient vitals data\u2014such as heart rate, blood pressure, and oxygen saturation\u2014from simulated patients. Your task? Build an AI model that can monitor these vitals in real-time and alert healthcare staff when something looks abnormal. Whether you\u2019re new to AI or experienced in data science, our workshops and mentors will support you in creating a working solution.",
     },
     {
-      name: "Big Tract (Pitching)",
+      name: "Large Tract (Pitching)",
       description: "Ready to tackle real-world healthcare challenges? You\u2019ll get access to real, de-identified Electronic Medical Record (EMR) data and work closely with healthcare mentors. Through interviews and guided discussions, you\u2019ll identify critical bottlenecks in the healthcare system and develop an AI-driven solution. Your mission: understand the problem, build a compelling demo, and pitch your innovative idea to a panel of expert judges.",
     },
   ],
@@ -257,7 +163,7 @@ export const MEDHACK_HOW_IT_WORKS = {
 
 // --- Judging Criteria ---
 
-export const MEDHACK_JUDGING_OVERVIEW = "For the Big Tract (Pitching), teams submit a short video pitch which is assessed by our judges. The most promising teams are selected to pitch at Pitch Night on 4th March 2026, where the final winners are selected. For the Small Tract (Coding), the team with the highest score on the leaderboard wins.";
+export const MEDHACK_JUDGING_OVERVIEW = "For the Large Tract (Pitching), teams enter semifinals at 4:00 PM on Sunday. The top six teams are announced at 6:05 PM and invited to pitch in the Grand Finals from 6:15 PM. For the Small Tract (Coding), submissions are technically verified before the coding showcase and result.";
 
 export const MEDHACK_JUDGING_CRITERIA: MedhackJudgingCriterion[] = [
   {
@@ -368,77 +274,6 @@ export const MEDHACK_JUDGES: MedhackPerson[] = [
     bio: "Dr. Liu oversees clinical AI product development at Heidi Health, one of Australia\u2019s fastest-growing health tech companies. His work focuses on ensuring AI tools meet the rigorous standards required for clinical use.",
   },
 ];
-
-// --- Mentors ---
-// Removed: mentor bios were hallucinated. Real mentor names are listed in the schedule data only.
-
-// --- Mentor Schedules ---
-
-export const MEDHACK_MENTOR_SCHEDULE_DAY1: MedhackMentorScheduleDay = {
-  title: "Day 1 \u2014 Saturday Feb 21",
-  date: "2026-02-21",
-  timeBlocks: ["11am\u20133pm", "3pm\u20137:15pm", "6:45pm\u20139pm"],
-  mentors: [
-    { name: "Eddie Chen", available: [true, true, false] },
-    { name: "Andrew Carey", available: [true, false, false] },
-    { name: "Makenzie Thomas", available: [false, false, false] },
-    { name: "Matthew Jones", available: [true, true, false] },
-    { name: "Wenjing Sun", available: [true, true, true] },
-    { name: "Tyler Tranquille", available: [false, true, false] },
-    { name: "John Forsythe", available: [false, true, false] },
-    { name: "Ellie McBain", available: [true, true, false] },
-    { name: "Peter McKenna", available: [false, true, false] },
-    { name: "Vera Ignjatovic", available: [false, false, false] },
-    { name: "Bora Ith", available: [true, true, false] },
-    { name: "Jaber Jaber", available: [true, false, false] },
-    { name: "Harjas Gill", available: [false, true, false] },
-    { name: "Kailash Kumar Vinu", available: [true, true, false] },
-    { name: "Darren Rajit", available: [false, true, false] },
-    { name: "Johnny Pham", available: [false, true, false] },
-    { name: "Som Sangu", available: [true, false, false] },
-    { name: "Vlada Rozova", available: [true, true, false] },
-    { name: "Dinasha Wimalasiri", available: [false, true, false] },
-    { name: "Rachel Zhao", available: [true, true, false] },
-    { name: "Yilin Wu", available: [true, true, false] },
-    { name: "Jordan Moshcovitis", available: [true, false, false] },
-    { name: "Jessica Attenborough", available: [false, false, false] },
-    { name: "Brandon Glasser", available: [false, true, false] },
-    { name: "Anish Calpakam", available: [false, true, false] },
-  ],
-};
-
-export const MEDHACK_MENTOR_SCHEDULE_DAY2: MedhackMentorScheduleDay = {
-  title: "Day 2 \u2014 Sunday Feb 22",
-  date: "2026-02-22",
-  timeBlocks: ["8:30am\u201312:30pm", "12:30pm\u20135:30pm"],
-  mentors: [
-    { name: "Eddie Chen", available: [true, true] },
-    { name: "Andrew Carey", available: [true, false] },
-    { name: "Makenzie Thomas", available: [true, false] },
-    { name: "Matthew Jones", available: [false, false] },
-    { name: "Wenjing Sun", available: [false, false] },
-    { name: "Tyler Tranquille", available: [false, false] },
-    { name: "John Forsythe", available: [false, true] },
-    { name: "Peter McKenna", available: [true, true] },
-    { name: "Vera Ignjatovic", available: [false, true] },
-    { name: "Bora Ith", available: [true, true] },
-    { name: "Jaber Jaber", available: [true, true] },
-    { name: "Harjas Gill", available: [true, true] },
-    { name: "Kailash Kumar Vinu", available: [false, true] },
-    { name: "Darren Rajit", available: [false, false] },
-    { name: "Johnny Pham", available: [false, false] },
-    { name: "Som Sangu", available: [false, false] },
-    { name: "Vlada Rozova", available: [false, false] },
-    { name: "Dinasha Wimalasiri", available: [false, false] },
-    { name: "Rachel Zhao", available: [true, true] },
-    { name: "Yilin Wu", available: [false, true] },
-    { name: "Jordan Moshcovitis", available: [false, false] },
-    { name: "Jessica Attenborough", available: [false, false] },
-    { name: "Brandon Glasser", available: [false, true] },
-    { name: "Ellie McBain", available: [true, false] },
-    { name: "Anish Calpakam", available: [true, false] },
-  ],
-};
 
 // --- Code of Ethical Conduct ---
 

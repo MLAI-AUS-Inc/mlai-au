@@ -117,13 +117,13 @@ const DATASETS = [
         primary: true,
     },
     {
-        name: "Big Tract Dataset 1",
+        name: "Large Tract Dataset 1",
         description: "Extended dataset for teams looking for a bigger challenge.",
         url: "https://www.kaggle.com/competitions/medhack-frontiers",
         primary: false,
     },
     {
-        name: "Big Tract Dataset 2",
+        name: "Large Tract Dataset 2",
         description: "Additional dataset with more complex patient scenarios.",
         url: "https://www.kaggle.com/competitions/medhack-frontiers",
         primary: false,
@@ -136,12 +136,12 @@ export default function HospitalAppCoding() {
             <div className="mx-auto max-w-5xl space-y-8">
 
                 {/* Hero */}
-                <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)]">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
-                    <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
-                    <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-[#ff69b4]/15 blur-3xl" />
+                <div className="relative overflow-hidden rounded-2xl border border-indigo-300/30 shadow-[0_0_40px_rgba(99,102,241,0.18)]">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-indigo-800 to-indigo-950" />
+                    <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-indigo-300/20 blur-3xl" />
+                    <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-blue-400/15 blur-3xl" />
                     <div className="relative z-10 p-8 lg:p-12">
-                        <p className="text-sm font-bold uppercase tracking-widest text-[#e2a9f1]">HealthHack 2026</p>
+                        <p className="text-sm font-bold uppercase tracking-widest text-indigo-200">HealthHack 2026</p>
                         <h1 className="mt-2 text-3xl lg:text-4xl font-black text-white tracking-tight">
                             Small Tract (Coding)
                         </h1>
@@ -154,13 +154,13 @@ export default function HospitalAppCoding() {
                                 href="https://www.kaggle.com/competitions/medhack-frontiers"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center rounded-md bg-white px-5 py-2.5 text-sm font-bold text-[#783f8e] transition-all hover:bg-white/90 hover:shadow-lg"
+                                className="inline-flex items-center rounded-md bg-white px-5 py-2.5 text-sm font-bold text-indigo-800 transition-all hover:bg-indigo-50 hover:shadow-lg"
                             >
                                 Go to Kaggle Competition
                             </a>
                             <Link
                                 to="/hospital/app/submit"
-                                className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-white hover:text-indigo-800"
                             >
                                 Submit Predictions
                             </Link>
