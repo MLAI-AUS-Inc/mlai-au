@@ -7,6 +7,60 @@
 @import "./styles/press-kit.css";
 @import "./styles/volunteers.css";
 
+.healthhack-app {
+  --hh-bg: #0d061c;
+  --hh-bg-soft: #140925;
+  --hh-surface: #1b0d35;
+  --hh-surface-raised: #241044;
+  --hh-violet: #5b20d6;
+  --hh-violet-deep: #351078;
+  --hh-lavender: #c9b5ff;
+  --hh-border: rgba(201, 181, 255, 0.2);
+  --hh-glow: rgba(107, 48, 225, 0.3);
+  min-height: 100vh;
+  color-scheme: dark;
+  color: #fff;
+  background:
+    radial-gradient(circle at 74% 8%, rgba(91, 32, 214, 0.17), transparent 30rem),
+    linear-gradient(180deg, var(--hh-bg-soft), var(--hh-bg));
+}
+
+.healthhack-sidebar {
+  background:
+    linear-gradient(180deg, rgba(105, 48, 204, 0.98), rgba(48, 14, 105, 0.98)),
+    var(--hh-violet-deep);
+  box-shadow: 18px 0 60px rgba(7, 2, 18, 0.24);
+}
+
+.healthhack-topbar {
+  border-color: var(--hh-border);
+  background: rgba(13, 6, 28, 0.88);
+  backdrop-filter: blur(18px);
+}
+
+.healthhack-hero {
+  background:
+    radial-gradient(circle at 75% 45%, rgba(114, 59, 230, 0.42), transparent 32%),
+    linear-gradient(115deg, #2d0b72 0%, #4f1b9f 43%, #17103b 100%);
+  box-shadow: 0 28px 80px rgba(5, 1, 16, 0.42), 0 0 0 1px rgba(201, 181, 255, 0.16);
+}
+
+.healthhack-card {
+  border: 1px solid var(--hh-border);
+  background: linear-gradient(145deg, rgba(36, 16, 68, 0.94), rgba(20, 9, 37, 0.94));
+  box-shadow: 0 18px 55px rgba(5, 1, 16, 0.2);
+}
+
+.healthhack-primary-action {
+  background: linear-gradient(135deg, #6f2be8, #4b16bd);
+  box-shadow: 0 12px 28px rgba(91, 32, 214, 0.28);
+}
+
+.healthhack-primary-action:hover {
+  background: linear-gradient(135deg, #7f3df0, #5b20d6);
+  box-shadow: 0 16px 36px rgba(91, 32, 214, 0.4);
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {

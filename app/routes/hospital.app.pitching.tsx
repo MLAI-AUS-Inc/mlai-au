@@ -98,7 +98,7 @@ export default function HospitalAppPitching() {
     const totalScore = MEDHACK_JUDGING_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0);
 
     return (
-        <main className="min-h-screen bg-[#110822] px-4 sm:px-6 lg:px-8 py-8">
+        <main className="min-h-screen bg-transparent px-4 sm:px-6 lg:px-8 py-8">
             <div className="mx-auto max-w-5xl space-y-8">
 
                 {/* Hero */}
@@ -107,7 +107,7 @@ export default function HospitalAppPitching() {
                     <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
                     <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-[#ff69b4]/15 blur-3xl" />
                     <div className="relative z-10 p-8 lg:p-12">
-                        <p className="text-sm font-bold uppercase tracking-widest text-[#e2a9f1]">MedHack: Frontiers 2026</p>
+                        <p className="text-sm font-bold uppercase tracking-widest text-[#e2a9f1]">HealthHack 2026</p>
                         <h1 className="mt-2 text-3xl lg:text-4xl font-black text-white tracking-tight">
                             Big Tract (Pitching)
                         </h1>

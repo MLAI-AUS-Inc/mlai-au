@@ -23,7 +23,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export default function HospitalAppResources() {
     return (
-        <div className="min-h-screen bg-[#110822]">
+        <div className="min-h-screen bg-transparent">
             {/* Mobile TOC */}
             <div className="lg:hidden px-4 pt-6">
                 <MedhackTableOfContents />
@@ -47,7 +47,7 @@ export default function HospitalAppResources() {
                                 Clinicians, builders and optimists in the same room for one intense weekend of problem-solving. Prototype real solutions to real healthcare bottlenecks.
                             </p>
                             <p className="text-white/70 leading-relaxed">
-                                MedHack: Frontiers brings clinicians, builders and optimists into the same room for one intense weekend of problem-solving at the cutting edge of medical innovation. With professionals from medicine, data science, and AI development all under one roof, we&apos;re pushing the boundaries of what&apos;s possible in healthcare.
+                                HealthHack brings clinicians, builders and optimists into the same room for one intense weekend of problem-solving at the cutting edge of medical innovation. With professionals from medicine, data science, and AI development all under one roof, we&apos;re pushing the boundaries of what&apos;s possible in healthcare.
                             </p>
                             <p className="text-white/70 leading-relaxed">
                                 The goal is simple yet ambitious: leverage cutting-edge technology to solve pressing real-world healthcare challenges.
@@ -66,7 +66,7 @@ export default function HospitalAppResources() {
                         <h2 className="text-3xl font-bold text-white mb-6">How It Works</h2>
                         <div className="space-y-6">
                             <p className="text-white/70 leading-relaxed">
-                                MedHack: Frontiers has two tracts. We encourage all participants to take on both for the full experience&mdash;code a solution and pitch your ideas.
+                                HealthHack has two tracts. We encourage all participants to take on both for the full experience&mdash;code a solution and pitch your ideas.
                             </p>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6">

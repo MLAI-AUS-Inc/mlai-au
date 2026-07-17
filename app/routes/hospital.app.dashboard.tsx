@@ -9,6 +9,8 @@ import type { ChannelResponse, SlackMessage } from "~/services/hackathon";
 import { DocumentArrowUpIcon, UsersIcon, InformationCircleIcon, MegaphoneIcon } from "@heroicons/react/24/outline";
 import SlackChat from "~/components/hospital/SlackChat";
 import { type Announcement } from "~/components/Announcements";
+import HealthHackLogo from "~/components/healthhack/HealthHackLogo";
+import { HEALTHHACK_BRAND } from "~/lib/healthhack-brand";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -50,18 +52,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return { user, announcements, latestScore, hasTeam, channelMessages, channelCursor };
 }
 
-const MEDHACK_LOGO = "https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db";
-
 export default function HospitalAppDashboard() {
     const { user, announcements, latestScore, hasTeam, channelMessages, channelCursor } = useLoaderData<typeof loader>();
 
     return (
-        <div className="min-h-screen bg-[#110822] p-4 sm:p-6">
+        <div className="min-h-screen bg-transparent p-4 sm:p-6">
             <div className="w-full mx-auto space-y-6">
 
                 {/* Hero Banner */}
-                <div className="relative overflow-visible rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)] mt-16 lg:mt-20">
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
+                <div className="healthhack-hero relative mt-16 overflow-visible rounded-3xl lg:mt-20">
                     <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
                     <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-[#ff69b4]/15 blur-3xl" />
                     <div className="absolute top-10 right-10 h-32 w-32 rounded-full bg-[#e2a9f1]/10 blur-2xl" />
@@ -87,40 +86,30 @@ export default function HospitalAppDashboard() {
                         />
                     </div>
                     <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-end gap-4 sm:gap-6 p-5 sm:p-8 lg:p-12">
-                        <div className="flex-1 space-y-3 sm:space-y-4">
-                            <div className="flex items-center gap-3 sm:gap-4">
-                                <img src={MEDHACK_LOGO} alt="" className="h-12 sm:h-16 lg:h-20" />
-                                <div>
-                                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-none tracking-tight">
-                                        MEDHACK:<br />FRONTIERS
-                                    </h1>
-                                </div>
-                            </div>
-                            <p className="text-sm sm:text-lg font-bold text-white/90 tracking-widest uppercase">
-                                The Future of Healthcare
+                        <div className="max-w-3xl flex-1 space-y-3 sm:space-y-4">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/65 sm:text-xs">
+                                {HEALTHHACK_BRAND.organizerLine} presents
+                            </p>
+                            <h1>
+                                <HealthHackLogo className="h-auto w-[18rem] max-w-full object-contain sm:w-[28rem] lg:w-[34rem]" />
+                            </h1>
+                            <p className="max-w-xl text-lg font-semibold text-white/90 sm:text-2xl">
+                                {HEALTHHACK_BRAND.tagline}
                             </p>
                             <div className="flex flex-wrap gap-2 sm:gap-3 pt-2">
                                 <a
-                                    href="https://luma.com/uxf4awhv"
+                                    href={HEALTHHACK_BRAND.ticketsUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                    className="healthhack-primary-action inline-flex items-center rounded-lg px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white transition-all sm:px-5 sm:text-xs"
                                 >
-                                    Hackathon Tickets
-                                </a>
-                                <a
-                                    href="https://luma.com/zi6w8y0x"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
-                                >
-                                    Pitch Night Tickets
+                                    Get tickets
                                 </a>
                                 <Link
-                                    to="/medhack"
+                                    to={HEALTHHACK_BRAND.routes.infoPack}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/45 bg-white/5 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:border-white hover:bg-white hover:text-[#351078] sm:px-5 sm:text-xs"
                                 >
                                     <InformationCircleIcon className="h-4 w-4" />
                                     Info Pack
@@ -131,7 +120,7 @@ export default function HospitalAppDashboard() {
                         <div className="hidden lg:block absolute right-8 bottom-0 z-20">
                             <img
                                 src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/LAST%20CHANCE%20TO%20REGISTER%20(1).png?alt=media&token=50ec1b74-f1a5-48a5-a5ee-8238d034169d"
-                                alt="MedHack participants"
+                                alt="HealthHack participants"
                                 className="h-[26rem] w-auto object-contain object-bottom drop-shadow-[0_0_25px_rgba(226,169,241,0.3)]"
                             />
                         </div>
@@ -141,7 +130,7 @@ export default function HospitalAppDashboard() {
                 {/* Second Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     {/* Announcements Card */}
-                    <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
+                    <div className="healthhack-card lg:col-span-3 relative overflow-hidden rounded-2xl">
                         <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-[#783f8e]/20 blur-3xl" />
                         <div className="relative z-10 p-5 sm:p-6">
                             <div className="flex items-center gap-3 mb-4">
@@ -165,7 +154,7 @@ export default function HospitalAppDashboard() {
                     </div>
 
                     {/* Submissions Card */}
-                    <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
+                    <div className="healthhack-card lg:col-span-2 relative overflow-hidden rounded-2xl">
                         <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-[#783f8e]/20 blur-2xl" />
                         <div className="relative z-10 flex h-full flex-col p-6">
                             <div className="flex items-center gap-3">
@@ -185,7 +174,7 @@ export default function HospitalAppDashboard() {
                             )}
                             <Link
                                 to="/hospital/app/submit"
-                                className="mt-4 block w-full rounded-lg bg-[#ff2d78] py-3 text-center text-sm font-bold uppercase tracking-wider text-white transition-all hover:bg-[#ff4d8e] hover:shadow-[0_0_20px_rgba(255,45,120,0.4)]"
+                                className="healthhack-primary-action mt-4 block w-full rounded-lg py-3 text-center text-sm font-bold uppercase tracking-wider text-white transition-all"
                             >
                                 Go to Submissions
                             </Link>
@@ -196,7 +185,7 @@ export default function HospitalAppDashboard() {
                 {/* Third Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     {/* Leaderboard Card */}
-                    <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
+                    <div className="healthhack-card lg:col-span-3 relative overflow-hidden rounded-2xl">
                         <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[#783f8e]/20 blur-2xl" />
                         <div className="relative z-10 p-5 sm:p-6">
                             <h3 className="text-lg sm:text-xl font-black text-white tracking-wide">
@@ -208,7 +197,7 @@ export default function HospitalAppDashboard() {
                                     {/* 2nd Place */}
                                     <div className="flex flex-col items-center">
                                         <img
-                                            src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db"
+                                            src={HEALTHHACK_BRAND.assets.mark}
                                             alt="2nd place"
                                             className="h-12 w-12 rounded-full object-cover ring-2 ring-[#e2a9f1]/40 bg-[#783f8e]/40"
                                         />
@@ -285,7 +274,7 @@ export default function HospitalAppDashboard() {
                     </div>
 
                     {/* My Team Card */}
-                    <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
+                    <div className="healthhack-card lg:col-span-2 relative overflow-hidden rounded-2xl">
                         <div className="absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-[#783f8e]/20 blur-2xl" />
                         <div className="relative z-10 flex h-full flex-col p-6">
                             <div className="flex items-center gap-3">
@@ -301,7 +290,7 @@ export default function HospitalAppDashboard() {
                             </p>
                             <Link
                                 to="/hospital/app/team"
-                                className="mt-4 block w-full rounded-lg bg-[#ff2d78] py-3 text-center text-sm font-bold uppercase tracking-wider text-white transition-all hover:bg-[#ff4d8e] hover:shadow-[0_0_20px_rgba(255,45,120,0.4)]"
+                                className="healthhack-primary-action mt-4 block w-full rounded-lg py-3 text-center text-sm font-bold uppercase tracking-wider text-white transition-all"
                             >
                                 Go to Team Management
                             </Link>
@@ -316,7 +305,7 @@ export default function HospitalAppDashboard() {
                 />
 
                 {/* Sponsors Section */}
-                <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/15 bg-[#1a0e2e]/60">
+                <div className="healthhack-card relative overflow-hidden rounded-2xl">
                     <div className="absolute inset-0 bg-gradient-to-r from-[#783f8e]/10 via-transparent to-[#783f8e]/10" />
                     <div className="relative z-10 px-6 py-6">
                         <p className="text-center text-sm font-semibold uppercase tracking-widest text-white/40 mb-6">
@@ -325,7 +314,7 @@ export default function HospitalAppDashboard() {
                         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
                             {[
                                 { name: 'Stone & Chalk', logo: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/supporter%20logos%2F8.png?alt=media&token=eaf9c16d-7937-434f-9b83-18c83b5fe6a5' },
-                                { name: 'Monash University (MIME)', logo: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/supporter%20logos%2F12.png?alt=media&token=310d1f9c-b1f8-482f-9a2e-ba8840a901a4' },
+                                { name: 'UNSW No Code Society', logo: HEALTHHACK_BRAND.assets.ncs },
                                 { name: 'MedTech Actuator', logo: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/supporter%20logos%2F13.png?alt=media&token=ab0f1919-1d21-4cb9-8608-c612440c3c63' },
                                 { name: 'The Product Bus', logo: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/supporter%20logos%2F26.png?alt=media&token=9fd6b65a-2ebf-44a4-ace8-1125ce2f4d58' },
                                 { name: 'StartSpace', logo: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/supporter%20logos%2F27.png?alt=media&token=1ed732ae-08fb-4428-a960-4756f164f7c8' },

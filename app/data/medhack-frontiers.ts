@@ -1,4 +1,4 @@
-// MedHack: Frontiers 2026 — Information Pack Data
+// HealthHack 2026 — Information Pack Data
 
 export interface MedhackSection {
   id: string;
@@ -89,14 +89,14 @@ export const MEDHACK_SECTIONS: MedhackSection[] = [
 
 export const MEDHACK_ABOUT = {
   mlai: "MLAI is a not-for-profit organization fostering a vibrant community passionate about AI. With over 10,000 members from diverse backgrounds\u2014data scientists, AI developers, healthcare professionals, and students\u2014MLAI\u2019s mission is to make AI accessible, fun, and impactful. From monthly lightning talks to large-scale hackathons, MLAI\u2019s events are always oversubscribed, reflecting the community\u2019s strong demand for practical AI applications, real-world challenges, and meaningful professional connections. By consistently delivering value to participants and sponsors, MLAI nurtures innovation and drives forward the future of AI in Australia and beyond.",
-  mymi: "MYMI is a student-led organization affiliated with Monash University, dedicated to bridging the gap between medicine, technology, and entrepreneurship. Our mission is to cultivate the next generation of medtech innovators by providing opportunities for students and professionals to collaborate on cutting-edge projects, gain industry insights, and develop essential skills for the future of healthcare. Through events, workshops, and networking sessions, MYMI empowers students to become proactive contributors to the medtech ecosystem.",
+  ncs: "UNSW No Code Society is a student-led organisation empowering the next generation of builders, makers and innovators. Through workshops, hackathons and networking events, the society helps people build products and solve problems with modern tools, regardless of their technical background. HealthHack Sydney is its flagship event.",
 };
 
 // --- Event Overview ---
 
 export const MEDHACK_EVENT_OVERVIEW = {
   tagline: "Clinicians, builders and optimists in the same room for one intense weekend of problem-solving. Prototype real solutions to real healthcare bottlenecks.",
-  description: "MedHack: Frontiers brings clinicians, builders and optimists into the same room for one intense weekend of problem-solving at the cutting edge of medical innovation. With professionals from medicine, data science, and AI development all under one roof, we\u2019re pushing the boundaries of what\u2019s possible in healthcare.",
+  description: "HealthHack brings clinicians, builders and optimists into the same room for one intense weekend of problem-solving at the cutting edge of medical innovation. With professionals from medicine, data science, and AI development all under one roof, we\u2019re pushing the boundaries of what\u2019s possible in healthcare.",
   goal: "The goal is simple yet ambitious: leverage cutting-edge technology to solve pressing real-world healthcare challenges.",
   participation: "By working closely with doctors, nurses, pharmacists, and industry mentors, participants will create AI-driven solutions that tackle high-impact healthcare challenges. We encourage everyone to participate in both tracts\u2014code your solution in the Small Tract and pitch your ideas in the Big Tract for the complete experience. Whether you\u2019re new to AI or a seasoned expert, this hackathon is your chance to contribute to the future of healthcare innovation.",
 };
@@ -235,7 +235,7 @@ export const MEDHACK_SCHEDULE: MedhackScheduleDay[] = [
 // --- How It Works ---
 
 export const MEDHACK_HOW_IT_WORKS = {
-  intro: "MedHack: Frontiers has two tracts. We encourage all participants to take on both for the full experience\u2014code a solution and pitch your ideas.",
+  intro: "HealthHack has two tracts. We encourage all participants to take on both for the full experience\u2014code a solution and pitch your ideas.",
   tracts: [
     {
       name: "Small Tract (Coding)",
@@ -474,7 +474,7 @@ export const MEDHACK_CODE_OF_CONDUCT: MedhackConductRule[] = [
 export const MEDHACK_POLICIES: MedhackPolicy[] = [
   {
     title: "Intellectual Property",
-    description: "All intellectual property created during the hackathon remains the property of the team that created it. MLAI and MYMI do not claim any ownership over your solutions, code, or ideas. You are free to continue developing your project after the event.",
+    description: "All intellectual property created during the hackathon remains the property of the team that created it. MLAI and UNSW No Code Society do not claim any ownership over your solutions, code, or ideas. You are free to continue developing your project after the event.",
   },
   {
     title: "Confidentiality",
@@ -482,7 +482,7 @@ export const MEDHACK_POLICIES: MedhackPolicy[] = [
   },
   {
     title: "Project Continuation",
-    description: "We encourage teams to continue developing their solutions after the hackathon. MLAI and MYMI may offer follow-up support, introductions to investors, or incubator opportunities for promising projects. Winners may be invited to present at future MLAI events.",
+    description: "We encourage teams to continue developing their solutions after the hackathon. MLAI and UNSW No Code Society may offer follow-up support, introductions to investors, or incubator opportunities for promising projects. Winners may be invited to present at future MLAI events.",
   },
   {
     title: "Media & Photography",
@@ -490,7 +490,7 @@ export const MEDHACK_POLICIES: MedhackPolicy[] = [
   },
   {
     title: "Liability",
-    description: "Participants attend the event at their own risk. MLAI and MYMI are not liable for any loss, damage, or injury sustained during the hackathon. Please follow all venue safety guidelines and instructions from event staff.",
+    description: "Participants attend the event at their own risk. MLAI and UNSW No Code Society are not liable for any loss, damage, or injury sustained during the hackathon. Please follow all venue safety guidelines and instructions from event staff.",
   },
 ];
 

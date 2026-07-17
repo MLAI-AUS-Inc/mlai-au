@@ -16,6 +16,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, Form } from 'react-router';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
+import HealthHackLogo from '~/components/healthhack/HealthHackLogo';
+import { HEALTHHACK_BRAND } from '~/lib/healthhack-brand';
 
 interface User {
     email: string;
@@ -62,7 +64,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
     const fullName = user?.full_name || 'User';
 
     return (
-        <>
+        <div className="healthhack-app">
             <div>
                 {/* Mobile sidebar */}
                 <Transition.Root show={sidebarOpen} as={Fragment}>
@@ -119,13 +121,11 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                     </Transition.Child>
 
                                     {/* Sidebar content */}
-                                    <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-[#783f8e] px-6 pb-2">
+                                    <div className="healthhack-sidebar flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-2">
                                         <div className="flex h-16 shrink-0 items-center">
                                             <Link to="/hospital/app" className="flex items-center">
-                                                <img
-                                                    className="h-10"
-                                                    src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db"
-                                                    alt="Medhack logo"
+                                                <HealthHackLogo
+                                                    className="h-10 w-auto object-contain"
                                                 />
                                             </Link>
                                         </div>
@@ -142,15 +142,15 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
 
                                                                     className={classNames(
                                                                         item.current
-                                                                            ? 'bg-white bg-opacity-10 text-[#e2a9f1]'
-                                                                            : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-[#e2a9f1]',
+                                                                            ? 'bg-white/15 text-[var(--hh-lavender)] ring-1 ring-white/10'
+                                                                            : 'text-white/80 hover:bg-white/10 hover:text-white',
                                                                         'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6',
                                                                         'transition-all duration-200 ease-in-out'
                                                                     )}
                                                                 >
                                                                     <item.icon
                                                                         className={classNames(
-                                                                            item.current ? 'text-[#e2a9f1]' : 'text-white group-hover:text-[#e2a9f1]',
+                                                                            item.current ? 'text-[var(--hh-lavender)]' : 'text-white/80 group-hover:text-white',
                                                                             'h-6 w-6 shrink-0',
                                                                             'transition-colors duration-200'
                                                                         )}
@@ -166,11 +166,11 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                                 <li className="mt-auto">
                                                     <Link
                                                         to="/hospital/app/settings"
-                                                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-white hover:bg-opacity-10 hover:text-[#e2a9f1] transition-all duration-200 ease-in-out"
+                                                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white/80 hover:bg-white/10 hover:text-white transition-all duration-200 ease-in-out"
                                                         onClick={() => setSidebarOpen(false)}
                                                     >
                                                         <Cog6ToothIcon
-                                                            className="h-6 w-6 shrink-0 text-white group-hover:text-[#e2a9f1] transition-colors duration-200"
+                                                            className="h-6 w-6 shrink-0 text-white/80 group-hover:text-white transition-colors duration-200"
                                                             aria-hidden="true"
                                                         />
                                                         Settings
@@ -187,7 +187,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
 
                 {/* Desktop sidebar */}
                 <aside
-                    className={`hidden lg:flex fixed left-0 top-0 z-50 h-screen flex-col bg-[#783f8e] transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'
+                    className={`healthhack-sidebar hidden lg:flex fixed left-0 top-0 z-50 h-screen flex-col transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'
                         }`}
                     onMouseEnter={() => setIsExpanded(true)}
                     onMouseLeave={() => setIsExpanded(false)}
@@ -195,11 +195,10 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                     <div className="flex h-full flex-col">
                         {/* Logo */}
                         <div className="flex h-20 items-center justify-center overflow-visible">
-                            <Link to="/hospital/app" className="flex items-center justify-center">
-                                <img
-                                    className="h-14 w-14 object-contain shrink-0 transition-all duration-300"
-                                    src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db"
-                                    alt="Medhack logo"
+                            <Link to="/hospital/app" className="flex w-full items-center justify-center px-3">
+                                <HealthHackLogo
+                                    variant={isExpanded ? 'wordmark' : 'mark'}
+                                    className={`${isExpanded ? 'h-10 w-44' : 'h-14 w-14'} shrink-0 object-contain transition-all duration-300`}
                                 />
                             </Link>
                         </div>
@@ -213,8 +212,8 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                     {...('external' in item && item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                                     className={classNames(
                                         item.current
-                                            ? 'bg-white bg-opacity-10 text-[#e2a9f1]'
-                                            : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-[#e2a9f1]',
+                                            ? 'bg-white/15 text-[var(--hh-lavender)] ring-1 ring-white/10'
+                                            : 'text-white/80 hover:bg-white/10 hover:text-white',
                                         'group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200'
                                     )}
                                 >
@@ -237,7 +236,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                         <div className="px-3 pb-4">
                             <Link
                                 to="/hospital/app/settings"
-                                className="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-[#e2a9f1] transition-all duration-200"
+                                className="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-all duration-200"
                             >
                                 <Cog6ToothIcon
                                     className={`flex-shrink-0 h-6 w-6 transition-all duration-300 ${isExpanded ? 'mr-3' : 'mr-0'
@@ -257,7 +256,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
 
                 <div className="lg:pl-20">
                     {/* Top bar */}
-                    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-[#e2a9f1]/20 bg-[#110822] px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+                    <div className="healthhack-topbar sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
                         <button
                             type="button"
                             onClick={() => setSidebarOpen(true)}
@@ -271,7 +270,14 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                         <div aria-hidden="true" className="h-6 w-px bg-white/20 lg:hidden" />
 
                         <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                            <div className="relative flex flex-1"></div>
+                            <div className="relative flex flex-1 items-center">
+                                <Link to={HEALTHHACK_BRAND.routes.app} className="lg:hidden">
+                                    <HealthHackLogo className="h-7 w-auto object-contain" />
+                                </Link>
+                                <p className="hidden text-xs font-semibold uppercase tracking-[0.22em] text-white/45 lg:block">
+                                    {HEALTHHACK_BRAND.organizerLine}
+                                </p>
+                            </div>
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
                                 <button type="button" className="-m-2.5 p-2.5 text-white/50 hover:text-white/80">
                                     <span className="sr-only">View notifications</span>
@@ -348,11 +354,11 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                     </div>
 
                     {/* Main content */}
-                    <main className="bg-[#110822]">
+                    <main className="min-h-[calc(100vh-4rem)] bg-transparent">
                         {children}
                     </main>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
