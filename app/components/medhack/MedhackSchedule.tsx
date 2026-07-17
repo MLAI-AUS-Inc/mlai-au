@@ -3,7 +3,7 @@ import { MEDHACK_SCHEDULE } from "~/data/medhack-frontiers";
 
 function ScheduleCard({ day }: { day: (typeof MEDHACK_SCHEDULE)[number] }) {
   return (
-    <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6">
+    <div className="rounded-2xl border border-indigo-400/20 bg-[#1a0e2e]/80 p-6">
       <h3 className="text-xl font-bold text-white uppercase text-center">
         {day.title}
       </h3>
@@ -14,14 +14,14 @@ function ScheduleCard({ day }: { day: (typeof MEDHACK_SCHEDULE)[number] }) {
 
       {day.location && (
         <p className="mt-2 text-sm text-white/50">
-          <span className="text-[#e2a9f1]">Location:</span> {day.location}
+          <span className="font-semibold text-indigo-300">Location:</span> {day.location}
         </p>
       )}
 
       <ul className="mt-4 divide-y divide-white/10 border-y border-white/10">
         {day.timeSlots.map((slot, i) => (
           <li key={i} className="py-3">
-            <span className="block font-mono text-xs text-[#e2a9f1]">
+            <span className="block font-mono text-xs text-indigo-300">
               {slot.start}
               {slot.end ? ` – ${slot.end}` : ""}
             </span>
@@ -51,7 +51,7 @@ export default function MedhackSchedule() {
             onClick={() => setActiveTab(idx)}
             className={
               idx === activeTab
-                ? "bg-[#783f8e] text-white rounded-full px-5 py-2.5 text-sm font-bold uppercase whitespace-nowrap"
+                ? "bg-indigo-600 text-white rounded-full px-5 py-2.5 text-sm font-bold uppercase whitespace-nowrap"
                 : "text-white/50 hover:text-white hover:bg-white/5 rounded-full px-5 py-2.5 text-sm font-bold uppercase whitespace-nowrap"
             }
           >
@@ -65,8 +65,8 @@ export default function MedhackSchedule() {
         <ScheduleCard day={MEDHACK_SCHEDULE[activeTab]} />
       </div>
 
-      {/* Desktop: show all 4 schedule cards */}
-      <div className="hidden lg:grid lg:grid-cols-4 gap-6">
+      {/* Desktop: show both event days side by side */}
+      <div className="hidden lg:grid lg:grid-cols-2 gap-6">
         {MEDHACK_SCHEDULE.map((day) => (
           <ScheduleCard key={day.title} day={day} />
         ))}

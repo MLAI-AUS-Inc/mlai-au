@@ -1,3 +1,8 @@
+- [x] Replace the HealthHack resources schedule with the supplied Saturday and Sunday run sheets
+- [x] Remove Subtopics, Venue, and Mentor Schedules from HealthHack resources and navigation
+- [x] Add the Large Tract semifinal/final pathway and prominently feature the pitching guide
+- [x] Run HealthHack resource tests, typecheck, build, and responsive browser verification
+
 - [x] Pin GitHub repository reads and mutations to the company shown in Founder Tools
 - [x] Surface scan/setup start failures instead of silently redirecting
 - [x] Run company-context frontend typecheck and build
