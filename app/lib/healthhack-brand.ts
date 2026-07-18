@@ -11,5 +11,9 @@ export const HEALTHHACK_BRAND = {
     app: "/hospital/app",
     infoPack: "/healthhack",
   },
+  kaggle: {
+    competition: "https://www.kaggle.com/competitions/health-hack-sydney",
+    data: "https://www.kaggle.com/competitions/health-hack-sydney/data",
+  },
   ticketsUrl: "https://luma.com/mlai-8obe",
 } as const;

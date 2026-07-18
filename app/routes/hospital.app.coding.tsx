@@ -2,6 +2,7 @@ import type { Route } from "./+types/hospital.app.coding";
 import { redirect, Link } from "react-router";
 import { getCurrentUser } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
+import { HEALTHHACK_BRAND } from "~/lib/healthhack-brand";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -113,19 +114,19 @@ const DATASETS = [
     {
         name: "Kaggle Competition",
         description: "Join the competition, download the beginner tract dataset, and submit your predictions.",
-        url: "https://www.kaggle.com/competitions/medhack-frontiers",
+        url: HEALTHHACK_BRAND.kaggle.competition,
         primary: true,
     },
     {
         name: "Large Tract Dataset 1",
         description: "Extended dataset for teams looking for a bigger challenge.",
-        url: "https://www.kaggle.com/competitions/medhack-frontiers",
+        url: HEALTHHACK_BRAND.kaggle.data,
         primary: false,
     },
     {
         name: "Large Tract Dataset 2",
         description: "Additional dataset with more complex patient scenarios.",
-        url: "https://www.kaggle.com/competitions/medhack-frontiers",
+        url: HEALTHHACK_BRAND.kaggle.data,
         primary: false,
     },
 ];
@@ -151,7 +152,7 @@ export default function HospitalAppCoding() {
                         </p>
                         <div className="flex flex-wrap gap-3 mt-6">
                             <a
-                                href="https://www.kaggle.com/competitions/medhack-frontiers"
+                                href={HEALTHHACK_BRAND.kaggle.competition}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center rounded-md bg-white px-5 py-2.5 text-sm font-bold text-indigo-800 transition-all hover:bg-indigo-50 hover:shadow-lg"
