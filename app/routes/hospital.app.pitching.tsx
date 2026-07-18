@@ -2,6 +2,7 @@ import type { Route } from "./+types/hospital.app.pitching";
 import { redirect, Link } from "react-router";
 import { getCurrentUser } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
+import { HEALTHHACK_BRAND } from "~/lib/healthhack-brand";
 import { MEDHACK_JUDGING_CRITERIA } from "~/data/medhack-frontiers";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -15,12 +16,12 @@ const DATASETS = [
     {
         name: "Large Tract Dataset 1",
         description: "Real de-identified EMR data to explore and build your solution around.",
-        url: "https://kaggle.com/datasets/4dbfe5ed9320db06fc60bdf33aa2d604e15773c4e992e9e090e630c9bafb5384",
+        url: HEALTHHACK_BRAND.kaggle.data,
     },
     {
         name: "Large Tract Dataset 2",
         description: "Additional dataset with more complex patient scenarios.",
-        url: "https://kaggle.com/datasets/dd6cc7f5d00dc22cfa6d500202a2ca774155cd7a49bfd3bcbe2aba1ab99082c4",
+        url: HEALTHHACK_BRAND.kaggle.data,
     },
 ];
 
