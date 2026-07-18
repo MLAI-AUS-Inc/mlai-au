@@ -10,7 +10,6 @@ import ClassAccuracyBars from "~/components/hospital/ClassAccuracyBars";
 import ConfusionMatrixHeatmap from "~/components/hospital/ConfusionMatrixHeatmap";
 import MissedCrisesAlert from "~/components/hospital/MissedCrisesAlert";
 import ClinicalMetricsPanel from "~/components/hospital/ClinicalMetricsPanel";
-import First100RowsTable from "~/components/hospital/First100RowsTable";
 import SubmissionHistory from "~/components/hospital/SubmissionHistory";
 import type { HospitalSubmission, SubmissionSummary } from "~/types/submission";
 
@@ -160,7 +159,6 @@ export default function HospitalAppSubmit() {
                                         <ClassAccuracyBars classStats={feedback.class_stats} />
                                         <ConfusionMatrixHeatmap confusionMatrix={feedback.confusion_matrix} />
                                     </div>
-                                    <First100RowsTable rows={feedback.first_100_public} />
                                 </div>
                             ) : (
                                 <div className="bg-[#1a0e2e]/80 border border-[#e2a9f1]/20 rounded-2xl p-6 text-center">
