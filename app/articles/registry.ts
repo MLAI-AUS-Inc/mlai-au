@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup': {
+        title: "What Is an Accelerator and Is It Right for Your AI Startup?",
+        date: "2026-07-20",
+        description: "What is an accelerator for AI startups? Assess program fit.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c41fdb6d-155e-4092-9490-bca493c02527.jpg?alt=media&token=2219af28-2507-4c87-b5e6-368ad4e5c45a",
+        imageAlt: "AI startup founders reviewing accelerator program notes during a candid close-up meeting",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
