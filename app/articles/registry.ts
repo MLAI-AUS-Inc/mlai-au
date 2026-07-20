@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-apply-for-an-abn-number-in-australia': {
+        title: "How to Apply for an ABN Number in Australia",
+        date: "2026-07-20",
+        description: "How to apply for an ABN number in Australia online.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-apply-for-an-abn-number-in-australia",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-9729b7df-c540-4e5a-8416-50a5f071620b.jpg?alt=media&token=6830eeee-0c31-4725-ac85-6fbda515630d",
+        imageAlt: "Australian freelancer reviewing an online ABN application on a laptop at home, hands sorting paperwork",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
