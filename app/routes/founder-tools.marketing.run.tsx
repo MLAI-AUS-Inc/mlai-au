@@ -42,6 +42,7 @@ import {
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   articlePreconditionRepairStateForRun,
+  articlePreviewQualityStateForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
   articleWorkflowProgressForRunPage,
@@ -648,7 +649,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       // Type-based: connects Slack/Email on first enable (email → verification sent).
       const result = await setChannelTypeDelivery(env, request, channelType, enabled);
       return { intent, ok: true, status: result.status };
-    } else if (["approve", "deny", "resume", "restart", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
+    } else if (["approve", "deny", "resume", "restart", "retry-preview-quality", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const targetRunId = stringFromForm(formData, "targetRunId");
       const autoMerge =
@@ -2666,9 +2667,75 @@ function LiveArticlePreviewPanel({
   const acceptArticleIntent = articleReviewApproveIntentForRun(run, publishStep?.primaryAction?.intent);
   const acceptArticleLabel = articleReviewApproveLabelForRun(run);
   const reviewApprovalReady = isArticleReviewPreviewReady(run);
+  const previewQuality = articlePreviewQualityStateForRun(run);
+  const retryQualityPending = isActionPending?.("retry-preview-quality") ?? isSubmitting;
+  const showQualityNotice = Boolean(
+    previewQuality.checking ||
+      previewQuality.blocksApproval ||
+      previewQuality.advisory ||
+      previewQuality.status === "review_error" ||
+      previewQuality.status === "queue_failed",
+  );
 
   return (
-    <section>
+    <section className="space-y-4">
+      {showQualityNotice ? (
+        <div
+          role={previewQuality.blocksApproval && !previewQuality.checking ? "alert" : "status"}
+          className={clsx(
+            "rounded-xl border p-4",
+            previewQuality.checking
+              ? "border-violet-200 bg-violet-50 text-violet-950"
+              : previewQuality.blocksApproval
+                ? "border-red-200 bg-red-50 text-red-950"
+                : "border-amber-200 bg-amber-50 text-amber-950",
+          )}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-3">
+              {previewQuality.checking ? (
+                <ArrowPathIcon className="mt-0.5 h-5 w-5 flex-shrink-0 animate-spin" aria-hidden="true" />
+              ) : (
+                <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 flex-shrink-0" aria-hidden="true" />
+              )}
+              <div>
+                <p className="text-sm font-black">
+                  {previewQuality.checking
+                    ? "Checking hosted article quality"
+                    : previewQuality.blocksApproval
+                      ? "Publishing is waiting on a quality check"
+                      : "Advisory preview feedback"}
+                </p>
+                {previewQuality.message ? (
+                  <p className="mt-1 max-w-3xl text-sm font-semibold leading-6">{previewQuality.message}</p>
+                ) : null}
+                {previewQuality.mismatchSummaries.length ? (
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-xs font-semibold">
+                    {previewQuality.mismatchSummaries.map((summary) => <li key={summary}>{summary}</li>)}
+                  </ul>
+                ) : null}
+                {previewQuality.repairInstructions.length ? (
+                  <p className="mt-2 text-xs font-semibold">Suggested repair: {previewQuality.repairInstructions[0]}</p>
+                ) : null}
+              </div>
+            </div>
+            {previewQuality.canRetry ? (
+              <Form method="POST">
+                <button
+                  type="submit"
+                  name="intent"
+                  value="retry-preview-quality"
+                  disabled={isSubmitting}
+                  className="inline-flex w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+                >
+                  {retryQualityPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowPathIcon className="h-4 w-4" />}
+                  {retryQualityPending ? "Retrying..." : "Retry quality check"}
+                </button>
+              </Form>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <LivePreviewCommentInspectorPanel
         run={run}
         selectedComponent={selectedComponent}
@@ -2694,6 +2761,7 @@ function LiveArticlePreviewPanel({
               !canAcceptRevision &&
               !reviewState.hasPendingRevisionBatch &&
               (reviewApprovalReady || publishStep?.status === "ready") &&
+              !previewQuality.blocksApproval &&
               acceptArticleIntent,
           );
           const acceptArticlePending = isActionPending?.(acceptArticleIntent) ?? isSubmitting;
@@ -4813,6 +4881,7 @@ export default function FounderToolsMarketingRun() {
     articleRepairState.autoRecovering ||
     setupPreviewActive ||
     hasPendingArticlePreview(run) ||
+    articlePreviewQualityStateForRun(run).checking ||
     (hasPublishHandoffEvidence(run) && !isPublishFlowSettled(run));
   const hasArticlePreview = hasReadyArticlePreview(run);
   const setupBlocked = isArticleSystemSetupBlocked(bootstrap);

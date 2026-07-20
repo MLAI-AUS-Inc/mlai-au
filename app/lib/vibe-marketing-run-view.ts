@@ -118,6 +118,26 @@ function boolResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
   return false;
 }
 
+function objectResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
+  for (const key of keys) {
+    const values = [
+      run.result?.[key],
+      run.result?.["result"] && typeof run.result["result"] === "object"
+        ? (run.result["result"] as Record<string, unknown>)[key]
+        : undefined,
+      run.result?.["latest_control_response"] && typeof run.result["latest_control_response"] === "object"
+        ? (run.result["latest_control_response"] as Record<string, unknown>)[key]
+        : undefined,
+    ];
+    for (const value of values) {
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        return value as Record<string, unknown>;
+      }
+    }
+  }
+  return {} as Record<string, unknown>;
+}
+
 function optionalBoolResultValue(run: VibeMarketingRunSummary, ...keys: string[]): boolean | null {
   for (const key of keys) {
     const values = [
@@ -156,6 +176,72 @@ export interface ArticlePreconditionRepairState {
   message: string;
   actionHref: string;
   actionLabel: string;
+}
+
+export interface ArticlePreviewQualityState {
+  status: string;
+  checking: boolean;
+  blocksApproval: boolean;
+  advisory: boolean;
+  canRetry: boolean;
+  message: string;
+  findings: string[];
+  repairInstructions: string[];
+  mismatchSummaries: string[];
+}
+
+export function articlePreviewQualityStateForRun(run: VibeMarketingRunSummary): ArticlePreviewQualityState {
+  const quality = objectResultValue(run, "article_preview_quality", "articlePreviewQuality");
+  const blocker = objectResultValue(run, "approval_blocker", "approvalBlocker");
+  const status = normalized(typeof quality.status === "string" ? quality.status : "");
+  const findings = Array.isArray(quality.findings)
+    ? quality.findings.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const repairInstructions = Array.isArray(quality.repair_instructions)
+    ? quality.repair_instructions.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : Array.isArray(quality.repairInstructions)
+      ? quality.repairInstructions.map((item) => String(item ?? "").trim()).filter(Boolean)
+      : [];
+  const style = quality.style && typeof quality.style === "object"
+    ? (quality.style as Record<string, unknown>)
+    : {};
+  const mismatchSummaries = Array.isArray(style.mismatches)
+    ? style.mismatches
+        .map((item) =>
+          item && typeof item === "object"
+            ? String((item as Record<string, unknown>).summary ?? "").trim()
+            : String(item ?? "").trim(),
+        )
+        .filter(Boolean)
+    : [];
+  const checking = status === "queued" || status === "running" || status === "transient_findings";
+  const blocksApproval = checking || status === "blocking_findings";
+  const advisory = status === "advisory_findings";
+  const editorialScoreMissing = findings.includes("editorial:score_missing");
+  const blockerMessage = String(blocker.message ?? blocker.detail ?? "").trim();
+  const message = blockerMessage || (checking
+    ? "The hosted article quality check is running. Publishing will unlock automatically when it finishes."
+    : editorialScoreMissing
+      ? "The editorial reviewer did not return the required score. The article content rendered successfully; retry this quality check without regenerating the draft."
+      : status === "blocking_findings"
+        ? "The hosted preview has a blocking quality finding that must be resolved before publishing."
+        : advisory
+          ? "The preview passed its publishing gate with advisory style feedback. You can publish it as-is or send a revision comment."
+          : "");
+  return {
+    status,
+    checking,
+    blocksApproval,
+    advisory,
+    canRetry: Boolean(
+      !checking &&
+        (editorialScoreMissing || status === "review_error" || status === "queue_failed"),
+    ),
+    message,
+    findings,
+    repairInstructions,
+    mismatchSummaries,
+  };
 }
 
 export function isArticleGenerationActivelyRunning(run: VibeMarketingRunSummary) {

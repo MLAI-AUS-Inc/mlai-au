@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   articlePreconditionRepairStateForRun,
+  articlePreviewQualityStateForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
   articleRunPathAfterStart,
@@ -81,6 +82,55 @@ describe("vibe marketing run view state", () => {
     expect(articleReviewApproveLabelForRun(run)).toEqual({
       idle: "Approve article and create PR",
       pending: "Approving...",
+    });
+  });
+
+  test("blocks approval while required editorial quality evidence is missing", () => {
+    const run = articleRun({
+      result: {
+        status: "preview_ready",
+        review_surface_kind: "component_live_preview",
+        preview_url: "https://preview.example/articles/generated",
+        approval_blocker: {
+          message: "The editorial reviewer did not produce the required score.",
+        },
+        article_preview_quality: {
+          status: "blocking_findings",
+          findings: ["editorial:score_missing", "style:1_mismatches"],
+          repair_instructions: ["Use the captured heading font."],
+          style: {
+            mismatches: [{ summary: "Heading font does not match the captured baseline." }],
+          },
+        },
+      },
+    });
+
+    expect(articlePreviewQualityStateForRun(run)).toMatchObject({
+      status: "blocking_findings",
+      blocksApproval: true,
+      canRetry: true,
+      message: "The editorial reviewer did not produce the required score.",
+      repairInstructions: ["Use the captured heading font."],
+      mismatchSummaries: ["Heading font does not match the captured baseline."],
+    });
+  });
+
+  test("treats style-only findings as advisory and keeps publishing available", () => {
+    const run = articleRun({
+      result: {
+        status: "preview_ready",
+        article_preview_quality: {
+          status: "advisory_findings",
+          findings: ["style:1_mismatches"],
+        },
+      },
+    });
+
+    expect(articlePreviewQualityStateForRun(run)).toMatchObject({
+      status: "advisory_findings",
+      blocksApproval: false,
+      advisory: true,
+      canRetry: false,
     });
   });
 
