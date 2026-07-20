@@ -1,5 +1,5 @@
 import type { Route } from "./+types/platform.login";
-import { Form, Link, redirect, useActionData, useNavigation, useSearchParams, useSubmit } from "react-router";
+import { Form, Link, redirect, useActionData, useLoaderData, useNavigation, useSearchParams, useSubmit } from "react-router";
 import { checkUser, createUser, getCurrentUser, sendMagicLink, type AuthAppName } from "~/lib/auth";
 import { useEffect, useState } from "react";
 import { GradientBackground } from "~/components/GradientBackground";
@@ -106,11 +106,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         console.warn("Skipping logged-in redirect because current user lookup failed.", error);
     }
 
+    if (user && app === "hospital" && !user.is_superuser) {
+        return { healthHackAccessDenied: true };
+    }
+
     if (user) {
         return redirect(next);
     }
 
-    return null;
+    return { healthHackAccessDenied: false };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -126,8 +130,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     const next = normalizeAuthNextForApp(app ?? null, formData.get("next")?.toString(), { fallback: "/hackathons" });
     const email = String(formData.get("email") || "").trim();
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
+    const adminOnly = app === "hospital";
 
     if (intent === "create") {
+        if (adminOnly) {
+            return { error: "HealthHack has closed. Administrator access only." };
+        }
+
         const firstName = formData.get("firstName")?.toString();
         const lastName = formData.get("lastName")?.toString();
         const phone = formData.get("phone")?.toString();
@@ -141,6 +150,7 @@ export async function action({ request, context }: Route.ActionArgs) {
                 role,
                 app,
                 next,
+                adminOnly,
             });
             return {
                 sent: true,
@@ -156,13 +166,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     try {
-        const userCheck = await checkUser(env, { email, next, app });
+        const userCheck = await checkUser(env, { email, next, app, adminOnly });
 
         if (!userCheck.user_exists) {
             return { userExists: false, email };
         }
 
-        const result = await sendMagicLink(env, { email, next, app });
+        const result = await sendMagicLink(env, { email, next, app, adminOnly });
         return {
             sent: true,
             sentAt: Date.now(),
@@ -177,6 +187,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function PlatformLogin() {
+    const loaderData = useLoaderData<typeof loader>();
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
     const app = parseAuthApp(searchParams.get("app"));
@@ -200,6 +211,7 @@ export default function PlatformLogin() {
     const errorMessages: Record<string, string> = {
         invalid_link: "The verification link is invalid or missing. Please try logging in again.",
         verification_failed: "Email verification failed. The link may have expired. Please try logging in again.",
+        healthhack_closed: "HealthHack has closed. Administrator access only.",
     };
 
     useEffect(() => {
@@ -240,6 +252,9 @@ export default function PlatformLogin() {
         }
         if (app === "watt-the-hack") {
             return "Use your email to sign in. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
+        }
+        if (app === "hospital") {
+            return "HealthHack has closed. Sign-in is restricted to administrators.";
         }
 
         return "Provide your email to create your account";
@@ -323,7 +338,10 @@ export default function PlatformLogin() {
         </div>
     );
 
-    const currentError = data?.error || (error ? errorMessages[error] : null);
+    const currentError =
+        data?.error ||
+        (loaderData.healthHackAccessDenied ? errorMessages.healthhack_closed : null) ||
+        (error ? errorMessages[error] : null);
 
     return (
         <main

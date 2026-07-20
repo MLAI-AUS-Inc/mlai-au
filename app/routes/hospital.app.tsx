@@ -8,6 +8,7 @@ interface UserData {
     email: string;
     full_name: string;
     avatar_url?: string;
+    is_superuser: boolean;
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -16,6 +17,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     if (!user) {
         return redirect("/platform/login?app=hospital&next=/hospital/app/dashboard");
+    }
+
+    if (!user.is_superuser) {
+        return redirect("/platform/login?app=hospital&next=/hospital/app/dashboard&error=healthhack_closed");
     }
 
     return { user: user as UserData };

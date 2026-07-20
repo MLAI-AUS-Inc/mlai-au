@@ -58,10 +58,15 @@ export async function sendMagicLink(env: Env, body: {
     role?: "participant" | "mentor" | "judge" | "organizer";
     next?: string;
     app?: AuthAppName;
+    adminOnly?: boolean;
 }) {
     const client = getAxios(env);
     const app = resolveAuthApp(body);
-    const response = await client.post("/api/v1/auth/send-magic-link/", { ...body, app });
+    const response = await client.post("/api/v1/auth/send-magic-link/", {
+        ...body,
+        app,
+        healthhack_admin_only: body.adminOnly,
+    });
     return response.data;
 }
 
@@ -69,10 +74,15 @@ export async function checkUser(env: Env, body: {
     email: string;
     next?: string;
     app?: AuthAppName;
+    adminOnly?: boolean;
 }) {
     const client = getAxios(env);
     const app = resolveAuthApp(body);
-    const response = await client.post("/api/v1/auth/check-user/", { ...body, app });
+    const response = await client.post("/api/v1/auth/check-user/", {
+        ...body,
+        app,
+        healthhack_admin_only: body.adminOnly,
+    });
     return response.data;
 }
 
@@ -179,10 +189,15 @@ export async function createUser(env: Env, body: {
     role?: "participant" | "mentor" | "judge" | "organizer";
     app?: AuthAppName;
     next?: string;
+    adminOnly?: boolean;
 }) {
     const client = getAxios(env);
     const app = resolveAuthApp(body);
-    const response = await client.post("/api/v1/auth/create-user/", { ...body, app });
+    const response = await client.post("/api/v1/auth/create-user/", {
+        ...body,
+        app,
+        healthhack_admin_only: body.adminOnly,
+    });
     return response.data;
 }
 
