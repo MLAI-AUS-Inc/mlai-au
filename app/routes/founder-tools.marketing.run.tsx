@@ -646,7 +646,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const channelType = stringFromForm(formData, "channelType");
       if (!channelType) return { intent, error: "Missing channel." };
       const enabled = stringFromForm(formData, "enabled") === "true";
-      // Type-based: connects Slack/Email on first enable (email → verification sent).
+      // Type-based: connects Slack/Email on first enable using the signed-in identity.
       const result = await setChannelTypeDelivery(env, request, channelType, enabled);
       return { intent, ok: true, status: result.status };
     } else if (["approve", "deny", "resume", "restart", "retry-preview-quality", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {

@@ -550,3 +550,5 @@
 - [x] Keep new and self-healing article runs on Generate until their own review evidence exists
 - [x] Surface automatic article-setup repair and actionable setup blockers on the durable article run page
 - [x] Add focused repair-state, progress, normalization, and start-route tests; run `bun run typecheck`
+- [x] Remove the redundant notification-channel email confirmation UI
+- [x] Run focused notification-channel UI verification
