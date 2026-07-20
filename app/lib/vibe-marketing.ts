@@ -2258,8 +2258,8 @@ export async function setNotificationChannelDelivery(
 }
 
 // Turn daily delivery on/off for a whole channel TYPE (slack/email/whatsapp),
-// connecting on first enable where the method allows it. `status` reflects the
-// outcome: "active" | "verification_sent" (email pending) | "disabled".
+// connecting on first enable where the method allows it. Email uses the
+// authenticated account address immediately. `status` is "active" or "disabled".
 export async function setChannelTypeDelivery(
   env: Env,
   request: Request,

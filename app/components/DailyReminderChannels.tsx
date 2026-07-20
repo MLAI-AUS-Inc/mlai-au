@@ -89,7 +89,7 @@ function activeChannelDetail(
 ) {
   const route = channel.displayName || channel.routeId;
   if (type === "slack") return route ? `Connected · ${route}` : "Connected";
-  if (type === "email") return route ? `${route} · Verified` : "Verified";
+  if (type === "email") return route ? `${route} · Account email` : "Account email";
   return route || "Connected";
 }
 
@@ -102,7 +102,7 @@ function publishChannelDetail(
   // it exists and is ACTIVE. "Connected · route" for active, honest off/pending state otherwise.
   if (channel?.consentState === "active") return activeChannelDetail(type, channel);
   if (channel?.consentState === "pending") {
-    if (type === "email") return `${channel.routeId || accountEmail || "Email"} · Confirm to start`;
+    if (type === "email") return `${channel.routeId || accountEmail || "Email"} · Ready to connect`;
     if (type === "whatsapp") return `${channel.routeId || "Number"} · Verification pending`;
   }
   if (type === "email" && accountEmail) return `${accountEmail} · Off`;
@@ -195,31 +195,25 @@ function DeliveryToggle({
 }
 
 // Checkbox for a channel TYPE (Slack/Email) that may not be connected yet.
-// Enabling connects on first use (Slack instant; Email sends a verification link),
-// then flips delivery on/off. Inline fetcher + optimistic state + honest pending/error text.
+// Enabling connects on first use using the authenticated account identity, then
+// flips delivery on/off. Inline fetcher + optimistic state + honest error text.
 function ChannelTypeToggle({
   type,
   channel,
   isSubmitting,
-  accountEmail,
 }: {
   type: VibeMarketingNotificationChannelType;
   channel: VibeMarketingNotificationChannel | null;
   isSubmitting: boolean;
-  accountEmail?: string | null;
 }) {
   const fetcher = useFetcher<{ intent?: string; ok?: boolean; error?: string; status?: string }>();
   const busy = fetcher.state !== "idle";
-  const isPending = channel?.consentState === "pending";
   // "On" only when a real ACTIVE channel is actually delivering.
   const serverChecked = channel?.consentState === "active" && Boolean(channel?.deliveryEnabled);
   const sent = fetcher.formData?.get("enabled");
   const checked = sent != null ? sent === "true" : serverChecked;
   const next = !checked;
-  const status = !busy ? fetcher.data?.status : undefined;
   const error = !busy && fetcher.data?.error ? fetcher.data.error : null;
-  // Email just enabled but not verified yet, or a still-pending channel: nudge to confirm.
-  const awaitingConfirm = type === "email" && (status === "verification_sent" || isPending);
   return (
     <div className="flex shrink-0 flex-col items-end gap-1">
       <fetcher.Form method="POST" className="inline">
@@ -247,11 +241,6 @@ function ChannelTypeToggle({
           <Check className="h-5 w-5" strokeWidth={3} />
         </button>
       </fetcher.Form>
-      {awaitingConfirm ? (
-        <span className="max-w-[10rem] text-right text-[10px] font-semibold leading-tight text-amber-700">
-          Check your inbox{accountEmail ? ` (${accountEmail})` : ""} to confirm.
-        </span>
-      ) : null}
       {error ? (
         <span className="max-w-[10rem] text-right text-[10px] font-semibold leading-tight text-red-600">
           {error}
@@ -424,7 +413,6 @@ function ChannelRow({
               type={type}
               channel={channel}
               isSubmitting={isSubmitting}
-              accountEmail={accountEmail}
             />
           )}
         </div>
@@ -466,33 +454,9 @@ function ChannelRow({
             Uses the workspace account matching your sign-in email.
           </p>
         </Form>
-      ) : type === "email" && isPending && channel ? (
-        <div className="mt-2 space-y-2">
-          <p className="text-xs font-semibold text-gray-600">
-            Verification link sent to <span className="font-black">{channel.routeId}</span>. Check your inbox.
-          </p>
-          <Form method="POST" className="inline">
-            <input type="hidden" name="channelId" value={channel.id} />
-            <button
-              type="submit"
-              name="intent"
-              value="resend-channel-otp"
-              disabled={isSubmitting}
-              className="text-xs font-bold text-violet-700 underline-offset-2 hover:underline disabled:opacity-50"
-            >
-              Resend email
-            </button>
-          </Form>
-        </div>
       ) : type === "email" ? (
         <Form method="POST" className="mt-2 space-y-2">
           <input type="hidden" name="channelType" value="email" />
-          <input
-            type="email"
-            name="routeId"
-            placeholder={accountEmail || "name@example.com"}
-            className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10"
-          />
           <button
             type="submit"
             name="intent"
@@ -500,9 +464,11 @@ function ChannelRow({
             disabled={isSubmitting}
             className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
           >
-            Send verification email
+            Use account email
           </button>
-          <p className="text-[11px] font-medium text-gray-500">Leave blank to use your account email.</p>
+          <p className="text-[11px] font-medium text-gray-500">
+            Daily reminders will go to {accountEmail || "your signed-in email"}. No extra confirmation is required.
+          </p>
         </Form>
       ) : type === "whatsapp" && isPending && channel?.pendingVerification ? (
         <Form method="POST" className="mt-2 space-y-2">
