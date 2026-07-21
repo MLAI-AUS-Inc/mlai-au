@@ -139,6 +139,17 @@ function trendRecord(candidate: VibeMarketingTopicCandidate) {
   return recordValue(candidate.velocity);
 }
 
+const MEASURED_TREND_SOURCES = new Set(["glimpse", "google_trends", "dataforseo_ai"]);
+
+function trendSource(candidate: VibeMarketingTopicCandidate) {
+  const record = trendRecord(candidate);
+  return (
+    stringValue(candidate.trendSource) ||
+    stringValue(record?.source) ||
+    ""
+  ).toLowerCase();
+}
+
 function numberSeries(value: unknown) {
   if (!Array.isArray(value)) return [];
   return value
@@ -158,24 +169,13 @@ function numberSeries(value: unknown) {
 }
 
 function searchHistory(candidate: VibeMarketingTopicCandidate) {
+  if (candidate.trendIsEstimated || !MEASURED_TREND_SOURCES.has(trendSource(candidate))) return [];
   const explicit = numberSeries(candidate.monthlySearches);
   if (explicit.length >= 2) return explicit;
   const record = trendRecord(candidate);
   const velocityHistory = numberSeries(record?.dailyVolumes ?? record?.daily_volumes);
   if (velocityHistory.length >= 2) return velocityHistory;
   return [];
-}
-
-function placeholderHistory(candidate: VibeMarketingTopicCandidate) {
-  const volume = numericValue(candidate.volume);
-  const base = volume && volume > 0 ? volume : 100;
-  const multipliers = [0.52, 0.68, 0.61, 0.76, 0.72, 0.84, 0.91, 0.8];
-  return multipliers.map((multiplier) => Math.max(1, Math.round(base * multiplier)));
-}
-
-function chartValues(candidate: VibeMarketingTopicCandidate) {
-  const history = searchHistory(candidate);
-  return history.length >= 2 ? history : placeholderHistory(candidate);
 }
 
 function trendStatus(candidate: VibeMarketingTopicCandidate) {
@@ -260,7 +260,7 @@ function whyTopic(candidate: VibeMarketingTopicCandidate) {
   return metrics || reason || "Recommended from the latest topic discovery.";
 }
 
-function Sparkline({ values }: { values: number[] }) {
+function Sparkline({ values, basis }: { values: number[]; basis?: string | null }) {
   if (values.length < 2) {
     return (
       <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 text-xs font-bold text-gray-400">
@@ -271,8 +271,8 @@ function Sparkline({ values }: { values: number[] }) {
   const width = 320;
   const height = 112;
   const padding = 10;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const min = 0;
+  const max = basis === "relative_interest" ? 100 : Math.max(...values) * 1.08 || 1;
   const span = max - min || 1;
   const points = values.map((value, index) => {
     const x = padding + (index / Math.max(values.length - 1, 1)) * (width - padding * 2);
@@ -311,7 +311,8 @@ function trendPercentLabel(candidate: VibeMarketingTopicCandidate) {
   const score = numericValue(recordValue(candidate.velocity)?.velocityScore ?? recordValue(candidate.velocity)?.velocity_score);
   const value = trendPercent !== undefined ? trendPercent : score !== undefined ? score * 100 : undefined;
   if (value === undefined) return null;
-  return `${value > 0 ? "+" : ""}${Math.round(value)}% past 6 months`;
+  const period = stringValue(candidate.trendPeriodLabel) || "over the measured period";
+  return `${value > 0 ? "+" : ""}${Math.round(value)}% ${period}`;
 }
 
 function TrendPanel({ candidate }: { candidate: VibeMarketingTopicCandidate }) {
@@ -439,9 +440,8 @@ export function TopicDecisionCard({
 }) {
   const volume = numericValue(candidate.volume);
   const score = opportunityScore(candidate);
-  const history = searchHistory(candidate);
-  const trendValues = chartValues(candidate);
-  const hasTrend = history.length >= 2 || Boolean(trendStatus(candidate));
+  const trendValues = searchHistory(candidate);
+  const hasTrend = trendValues.length >= 2;
   const opportunity = score === undefined ? "Unavailable" : `${formatNumber(score)} / 2,000`;
   const relatedKeywords = candidate.relatedKeywords ?? [];
   const handleSelect = () => onChange();
@@ -500,13 +500,13 @@ export function TopicDecisionCard({
 
         <div className="rounded-xl border border-gray-100 bg-white px-4 py-3">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-xs font-black text-gray-950">Search Volume Over Time</p>
+            <p className="text-xs font-black text-gray-950">Search Demand Over Time</p>
             <p className="text-xs font-bold text-gray-500">
               {volume !== undefined ? `${formatNumber(volume)} searches/mo` : candidate.volumeDisplay ?? "Volume unavailable"}
             </p>
           </div>
-          <Sparkline values={trendValues} />
-          {!hasTrend ? <p className="mt-1 text-[11px] font-bold text-gray-400">Estimated shape until trend history is available.</p> : null}
+          <Sparkline values={trendValues} basis={candidate.trendBasis} />
+          {!hasTrend ? <p className="mt-1 text-[11px] font-bold text-gray-400">Measured trend history is not available for this topic.</p> : null}
         </div>
 
         <TrendPanel candidate={candidate} />

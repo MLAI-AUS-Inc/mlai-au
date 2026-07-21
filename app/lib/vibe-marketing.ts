@@ -667,13 +667,31 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     volume: payload.volume,
     volumeDisplay: asNullableString(payload.volumeDisplay) ?? asNullableString(payload.volume_display),
     tier: payload.tier,
-    velocity: payload.velocity ?? payload.latestVelocity ?? payload.latest_velocity,
+    velocity: payload.velocity ?? payload.velocity_data ?? payload.latestVelocity ?? payload.latest_velocity,
+    monthlySearches:
+      payload.monthlySearches ??
+      payload.monthly_searches ??
+      payload.trendPoints ??
+      payload.trend_points,
     aiSaturation:
       payload.aiSaturation ??
       payload.ai_saturation ??
       payload.latestSaturation ??
       payload.latest_saturation,
+    trendStatus: payload.trendStatus ?? payload.trend_status ?? payload.trending_status,
+    trendPercent: payload.trendPercent ?? payload.trend_percent,
+    trendDescription:
+      asNullableString(payload.trendDescription) ??
+      asNullableString(payload.trend_description) ??
+      asNullableString(payload.trend_summary),
     trendLabel: asNullableString(payload.trendLabel) ?? asNullableString(payload.trending_label),
+    trendSource: asNullableString(payload.trendSource) ?? asNullableString(payload.trend_source),
+    trendSourceLabel:
+      asNullableString(payload.trendSourceLabel) ?? asNullableString(payload.trend_source_label),
+    trendBasis: asNullableString(payload.trendBasis) ?? asNullableString(payload.trend_basis),
+    trendPeriodLabel:
+      asNullableString(payload.trendPeriodLabel) ?? asNullableString(payload.trend_period_label),
+    trendIsEstimated: asOptionalBoolean(payload.trendIsEstimated ?? payload.trend_is_estimated) ?? undefined,
     statsMeaning: asNullableString(payload.statsMeaning) ?? asNullableString(payload.stats_meaning),
     whyRecommended: asNullableString(payload.whyRecommended) ?? asNullableString(payload.why_recommended),
     recommendationReason: asNullableString(payload.recommendationReason) ?? asNullableString(payload.recommendation_reason),

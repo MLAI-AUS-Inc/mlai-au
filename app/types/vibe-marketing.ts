@@ -402,6 +402,11 @@ export interface VibeMarketingTopicCandidate {
   trendPercent?: unknown;
   trendDescription?: string | null;
   trendLabel?: string | null;
+  trendSource?: string | null;
+  trendSourceLabel?: string | null;
+  trendBasis?: string | null;
+  trendPeriodLabel?: string | null;
+  trendIsEstimated?: boolean;
   statsMeaning?: string | null;
   whyRecommended?: string | null;
   recommendationReason?: string | null;
