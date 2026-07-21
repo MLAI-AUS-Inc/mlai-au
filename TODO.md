@@ -218,6 +218,10 @@
 - [x] Add Vibe Raising backend profile/auth helper layer and types
 - [x] Extract reusable Vibe Raising onboarding card component
 - [x] Refactor Vibe Raising routes off `vibe_raising_session` auth
+
+- [x] Preserve measured topic-trend provenance in the Vibe Marketing candidate contract
+- [x] Remove synthetic topic sparklines and render only measured demand history
+- [x] Add focused topic trend-card tests and run typecheck
 - [x] Extend shared login and verify-email flow for `app=vibe-raising`
 - [x] Add Vibe Raising CTA to `/hackathons`
 - [x] Run `bun run typecheck`
