@@ -2024,6 +2024,7 @@ function BulletTextarea({
             onFocus={onFocus}
             onKeyDown={(event) => {
                 if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+                if (!onEnterNewItem && !onMobileAdvance) return;
                 event.preventDefault();
                 if (onEnterNewItem) {
                     onEnterNewItem();
@@ -2179,6 +2180,7 @@ function SectionWithExample({
 
 // Bullet-point input for past month cards
 function BulletInput({ value, onChange, placeholder, section }: { value: string; onChange: (v: string) => void; placeholder?: string; section?: string }) {
+    const inputListRef = useRef<HTMLDivElement | null>(null);
     const { items, commitItems } = useBulletItemsState(value, onChange);
     const hints = section ? (SECTION_HINTS[section] || []) : [];
 
@@ -2191,18 +2193,33 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
         const updated = items.filter((_, j) => j !== i);
         commitItems(updated.length ? updated : [""]);
     };
-    const add = () => {
-        commitItems([...items, ""]);
+    const focusItem = (index: number) => {
+        if (typeof window === "undefined") return;
+        window.requestAnimationFrame(() => {
+            const nextInput = inputListRef.current?.querySelector<HTMLTextAreaElement>(`textarea[data-bullet-input-index="${index}"]`);
+            if (!nextInput) return;
+            nextInput.focus();
+            nextInput.setSelectionRange(nextInput.value.length, nextInput.value.length);
+        });
+    };
+    const addItemAfter = (index: number) => {
+        const insertionIndex = Math.max(0, Math.min(index + 1, items.length));
+        const updated = [...items];
+        updated.splice(insertionIndex, 0, "");
+        commitItems(updated);
+        focusItem(insertionIndex);
     };
 
     return (
-        <div className="space-y-1.5 pt-1">
+        <div ref={inputListRef} className="space-y-1.5 pt-1">
             {items.map((item, i) => (
                 <div key={i} className="flex items-start gap-2">
                     <span className="mt-2 select-none text-xs text-[var(--vr-color-primary)]">•</span>
                     <BulletTextarea
                         value={item}
                         onChange={(text) => update(i, text)}
+                        onEnterNewItem={() => addItemAfter(i)}
+                        bulletIndex={i}
                         placeholder={hints[i % hints.length] || placeholder || "Add a point..."}
                         className="flex-1 rounded-lg border border-[var(--vr-color-border)] bg-white px-3 py-1.5 text-xs leading-5 text-gray-900 shadow-sm placeholder:text-gray-300 placeholder:italic focus:border-[var(--vr-color-primary)] focus:ring-[var(--vr-color-primary)]"
                     />
@@ -2218,7 +2235,7 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
                     )}
                 </div>
             ))}
-            <button type="button" onClick={add} className="mt-1 flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[var(--vr-color-primary)] transition-all hover:bg-[rgba(0,255,215,0.12)]">
+            <button type="button" onClick={() => addItemAfter(items.length - 1)} className="mt-1 flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[var(--vr-color-primary)] transition-all hover:bg-[rgba(0,255,215,0.12)]">
                 Add point +
             </button>
         </div>
