@@ -42,6 +42,7 @@ import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgres
 import AvatarModal from "~/components/AvatarModal";
 import { RooPointCost } from "~/components/RooPointCost";
 import VibeMarketingAnalyticsSection from "~/components/VibeMarketingAnalyticsSection";
+import VibeMarketingDailyBriefSection from "~/components/VibeMarketingDailyBriefSection";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
@@ -4714,6 +4715,10 @@ function ReturningTopicPickerPage({
               )}
             </div>
           </section>
+
+          {publishedArticles.length ? (
+            <VibeMarketingDailyBriefSection companyId={bootstrap.company.id} />
+          ) : null}
 
           {publishedArticles.length ? (
             <VibeMarketingAnalyticsSection companyId={bootstrap.company.id} />
