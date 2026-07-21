@@ -79,7 +79,7 @@ export default function VibeRaisingStickyStepBar({
     };
 
     return (
-        <div className={["fixed inset-x-4 bottom-4 z-40 lg:left-24", className].filter(Boolean).join(" ")}>
+        <div className={["relative z-40 mt-4 w-full sm:fixed sm:inset-x-4 sm:bottom-4 sm:w-auto lg:left-24", className].filter(Boolean).join(" ")}>
             <div
                 className={[
                     "mx-auto flex max-w-6xl flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white/95 shadow-2xl shadow-black/10 backdrop-blur sm:flex-row sm:items-center sm:px-5 sm:py-4",
