@@ -455,3 +455,183 @@ export function vibeMarketingAnalyticsErrorMessage(
 ): string {
   return apiErrorDetail(error, fallback);
 }
+
+export interface VibeMarketingReportHeadline {
+  humanVisits: number | null;
+  engagedReaderRate: number | null;
+  ctaClickers: number | null;
+  ctaConversionRate: number | null;
+  visitsDelta: number | null;
+  ctaClickersDelta: number | null;
+}
+
+export interface VibeMarketingReportSummary {
+  id: number;
+  reportDate: string | null;
+  generatedAt: string | null;
+  windowStart: string | null;
+  windowEnd: string | null;
+  dataThroughDate: string | null;
+  headline: VibeMarketingReportHeadline;
+  categories: Record<string, number>;
+}
+
+export interface VibeMarketingReportArticle {
+  id: string | null;
+  title: string;
+  slug: string | null;
+  url: string | null;
+  category: string;
+  categoryLabel: string;
+  reasons: string[];
+  visits: number | null;
+  visitsDelta: number | null;
+  engagedReaderRate: number | null;
+  scroll90Rate: number | null;
+  ctaVisibilityRate: number | null;
+  ctaClickThroughRate: number | null;
+  ctaConversionRate: number | null;
+  searchVisits: number | null;
+  aiVisits: number | null;
+}
+
+export interface VibeMarketingReportSource {
+  category: string;
+  visits: number;
+  isAi: boolean;
+}
+
+export interface VibeMarketingReportDetail extends VibeMarketingReportSummary {
+  windowDays: number | null;
+  articles: VibeMarketingReportArticle[];
+  sources: VibeMarketingReportSource[];
+  notes: string[];
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+function normalizeReportHeadline(value: unknown): VibeMarketingReportHeadline {
+  const payload = asRecord(value);
+  return {
+    humanVisits: asNumber(payload.humanVisits ?? payload.human_visits),
+    engagedReaderRate: asNumber(payload.engagedReaderRate ?? payload.engaged_reader_rate),
+    ctaClickers: asNumber(payload.ctaClickers ?? payload.cta_clickers),
+    ctaConversionRate: asNumber(payload.ctaConversionRate ?? payload.cta_conversion_rate),
+    visitsDelta: asNumber(payload.visitsDelta ?? payload.visits_delta),
+    ctaClickersDelta: asNumber(payload.ctaClickersDelta ?? payload.cta_clickers_delta),
+  };
+}
+
+function normalizeReportCategories(value: unknown): Record<string, number> {
+  const payload = asRecord(value);
+  const categories: Record<string, number> = {};
+  for (const [key, raw] of Object.entries(payload)) {
+    const count = asNumber(raw);
+    if (count !== null) categories[key] = count;
+  }
+  return categories;
+}
+
+function normalizeReportSummary(value: unknown): VibeMarketingReportSummary | null {
+  const payload = asRecord(value);
+  const id = asNumber(payload.id);
+  if (id === null) return null;
+  return {
+    id,
+    reportDate: asString(payload.reportDate ?? payload.report_date),
+    generatedAt: asString(payload.generatedAt ?? payload.generated_at),
+    windowStart: asString(payload.windowStart ?? payload.window_start),
+    windowEnd: asString(payload.windowEnd ?? payload.window_end),
+    dataThroughDate: asString(payload.dataThroughDate ?? payload.data_through_date),
+    headline: normalizeReportHeadline(payload.headline),
+    categories: normalizeReportCategories(payload.categoriesSummary ?? payload.categories_summary),
+  };
+}
+
+function normalizeReportArticle(value: unknown): VibeMarketingReportArticle | null {
+  const payload = asRecord(value);
+  const title = asString(payload.title);
+  if (!title) return null;
+  const metrics = asRecord(payload.metrics);
+  return {
+    id: asString(payload.id),
+    title,
+    slug: asString(payload.slug),
+    url: asString(payload.canonicalUrl ?? payload.canonical_url ?? payload.liveUrl ?? payload.live_url),
+    category: asString(payload.category) ?? "gathering_data",
+    categoryLabel: asString(payload.categoryLabel ?? payload.category_label) ?? "Gathering data",
+    reasons: asStringArray(payload.reasons),
+    visits: asNumber(metrics.visits),
+    visitsDelta: asNumber(payload.visitsDelta ?? payload.visits_delta),
+    engagedReaderRate: asNumber(metrics.engagedReaderRate ?? metrics.engaged_reader_rate),
+    scroll90Rate: asNumber(metrics.scroll90Rate ?? metrics.scroll_90_rate),
+    ctaVisibilityRate: asNumber(metrics.ctaVisibilityRate ?? metrics.cta_visibility_rate),
+    ctaClickThroughRate: asNumber(metrics.ctaClickThroughRate ?? metrics.cta_click_through_rate),
+    ctaConversionRate: asNumber(metrics.ctaConversionRate ?? metrics.cta_conversion_rate),
+    searchVisits: asNumber(payload.searchVisits ?? payload.search_visits),
+    aiVisits: asNumber(payload.aiVisits ?? payload.ai_visits),
+  };
+}
+
+function normalizeReportDetail(value: unknown): VibeMarketingReportDetail | null {
+  const body = asRecord(value);
+  const summary = normalizeReportSummary(body);
+  if (!summary) return null;
+  const payload = asRecord(body.payload);
+  const window = asRecord(payload.window);
+  const articles = Array.isArray(payload.articles)
+    ? payload.articles
+        .map((item) => normalizeReportArticle(item))
+        .filter((item): item is VibeMarketingReportArticle => item !== null)
+    : [];
+  const sources = Array.isArray(payload.sources)
+    ? payload.sources
+        .map((item) => {
+          const record = asRecord(item);
+          const category = asString(record.category);
+          if (!category) return null;
+          return {
+            category,
+            visits: asNumber(record.visits) ?? 0,
+            isAi: record.isAi === true || category === "ai",
+          };
+        })
+        .filter((item): item is VibeMarketingReportSource => item !== null)
+    : [];
+  return {
+    ...summary,
+    windowDays: asNumber(window.days),
+    articles,
+    sources,
+    notes: asStringArray(payload.notes),
+  };
+}
+
+export async function getVibeMarketingAnalyticsReports(
+  options: VibeMarketingAnalyticsRequestOptions & { limit?: number } = {},
+): Promise<VibeMarketingReportSummary[]> {
+  const limit = options.limit && Number.isFinite(options.limit) ? String(options.limit) : null;
+  const response = await clientFor(options).get(
+    queryPath(`${ANALYTICS_BASE_PATH}/reports`, { limit, company_id: options.companyId }),
+  );
+  const body = asRecord(response.data);
+  if (!Array.isArray(body.reports)) return [];
+  return body.reports
+    .map((item) => normalizeReportSummary(item))
+    .filter((item): item is VibeMarketingReportSummary => item !== null);
+}
+
+export async function getVibeMarketingAnalyticsReport(
+  reportId: number,
+  options: VibeMarketingAnalyticsRequestOptions = {},
+): Promise<VibeMarketingReportDetail | null> {
+  const response = await clientFor(options).get(
+    queryPath(`${ANALYTICS_BASE_PATH}/reports/${encodeURIComponent(String(reportId))}`, {
+      company_id: options.companyId,
+    }),
+  );
+  return normalizeReportDetail(response.data);
+}
