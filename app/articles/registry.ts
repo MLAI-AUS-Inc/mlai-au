@@ -73,6 +73,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/startup-business-investment-before-raising-capital': {
+        title: "Startup Business Investment Before Raising Capital",
+        date: "2026-07-22",
+        description: "Startup business investment preparation for founders",
+        author: "Dr Sam Donegan",
+        slug: "featured/startup-business-investment-before-raising-capital",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b2cb4460-1a26-41da-a4b8-86b06dc14699.jpg?alt=media&token=826c3ff5-7a9f-47d2-893b-ab75cc7f1279",
+        imageAlt: "Australian startup founder pauses thoughtfully before an investor meeting, candid close-up conversation scene",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
