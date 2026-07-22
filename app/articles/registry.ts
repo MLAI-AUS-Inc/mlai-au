@@ -75,6 +75,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-community-is-in-ai-and-why-it-is-more-than-a-group': {
+        title: "What Community Is in AI and Why It Is More Than a Group",
+        date: "2026-07-22",
+        description: "What community is in AI: shared purpose, trust and participation.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-community-is-in-ai-and-why-it-is-more-than-a-group",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-224f0dfd-4f1d-493c-b646-bcc4df200d8d.jpg?alt=media&token=8d14687e-44aa-4fa4-a4c1-02c095ddc973",
+        imageAlt: "Diverse adults in close conversation at an Australian AI community gathering, listening with trust and focus",
+    },
     'featured/best-meetup-websites-for-ai-and-startup-communities-in-australia': {
         title: "Best Meetup Websites for AI and Startup Communities in Australia",
         date: "2026-06-21",
