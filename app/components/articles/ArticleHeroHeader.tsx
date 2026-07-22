@@ -68,7 +68,11 @@ export function ArticleHeroHeader({
         orange: 'text-white/70 hover:text-white',
     }
 
-    const highlightColor = headerBgColor === 'cyan' ? 'text-[#ff3d00]' : 'text-[#ff3d00]'
+    // Article content is cast past these prop types, so an unknown color
+    // can reach us at runtime and must not render "undefined" classes.
+    const heroColor: keyof typeof bgColorMap = bgColorMap[headerBgColor] ? headerBgColor : 'cyan'
+
+    const highlightColor = heroColor === 'cyan' ? 'text-[#ff3d00]' : 'text-[#ff3d00]'
 
     return (
         <div
@@ -78,7 +82,7 @@ export function ArticleHeroHeader({
             data-cf-component-label="Hero header"
         >
             {/* Hero Banner */}
-            <div className={`${bgColorMap[headerBgColor]} rounded-2xl px-6 py-8 sm:px-10 sm:py-12 lg:px-14 lg:py-16`}>
+            <div className={`${bgColorMap[heroColor]} rounded-2xl px-6 py-8 sm:px-10 sm:py-12 lg:px-14 lg:py-16`}>
                 {/* Breadcrumbs */}
                 {breadcrumbs && breadcrumbs.length > 0 && (
                     <nav
@@ -92,17 +96,17 @@ export function ArticleHeroHeader({
                             {breadcrumbs.map((item, index) => (
                                 <li key={index} className="flex items-center gap-2">
                                     {index > 0 && (
-                                        <span className={`${textColorMap[headerBgColor]} opacity-50`}>/</span>
+                                        <span className={`${textColorMap[heroColor]} opacity-50`}>/</span>
                                     )}
                                     {item.href && !item.current ? (
                                         <Link
                                             to={item.href}
-                                            className={`${breadcrumbLinkColor[headerBgColor]} transition-colors underline-offset-4 hover:underline flex items-center gap-1`}
+                                            className={`${breadcrumbLinkColor[heroColor]} transition-colors underline-offset-4 hover:underline flex items-center gap-1`}
                                         >
                                             {item.icon ? <item.icon className="h-4 w-4" /> : item.label}
                                         </Link>
                                     ) : (
-                                        <span className={`${textColorMap[headerBgColor]} ${item.current ? 'font-semibold' : ''} flex items-center gap-1`}>
+                                        <span className={`${textColorMap[heroColor]} ${item.current ? 'font-semibold' : ''} flex items-center gap-1`}>
                                             {item.icon ? <item.icon className="h-4 w-4" /> : item.label}
                                         </span>
                                     )}
@@ -114,7 +118,7 @@ export function ArticleHeroHeader({
 
                 {/* Title */}
                 <h1
-                    className={`text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight ${textColorMap[headerBgColor]}`}
+                    className={`text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight ${textColorMap[heroColor]}`}
                     style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
                     data-cf-component-id="title"
                     data-cf-component-type="title"

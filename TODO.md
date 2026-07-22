@@ -1,3 +1,6 @@
+- [x] Fall back to default palettes for unknown variant keys in QuoteBlock, ArticleCallout, ArticleResourceCTA, Badge, and ArticleHeroHeader (mirrors the AudienceGrid SSR fix in PR 1448)
+- [x] Run `react-router typegen` + `tsc -b` and SSR fallback render checks for the hardened article components
+
 - [x] Replace the HealthHack resources schedule with the supplied Saturday and Sunday run sheets
 - [x] Remove Subtopics, Venue, and Mentor Schedules from HealthHack resources and navigation
 - [x] Add the Large Tract semifinal/final pathway and prominently feature the pitching guide

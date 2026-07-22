@@ -29,7 +29,9 @@ export function QuoteBlock({
     },
   } as const
 
-  const palette = variants[variant]
+  // Article content is cast past these prop types, so an unknown
+  // variant can reach us at runtime and must not crash SSR.
+  const palette = variants[variant] ?? variants.purple
 
   return (
     <div
