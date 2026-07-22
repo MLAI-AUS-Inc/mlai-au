@@ -2,16 +2,6 @@
 
 This is the MLAI website - a React Router v7 application for a not-for-profit community based in Australia that aims to empower the Australian AI Community.
 
-## ⚠ Scope: only touch Watt The Hack code
-
-This repo is the **entire MLAI website**, not just Watt The Hack — there are ~91 routes and only ~19 are WTH. When doing Watt The Hack work, edit **only** WTH-owned paths:
-
-- `app/routes/watt-the-hack.*`
-- `app/lib/wth-*`, `app/lib/watt-the-hack-*`
-- `app/components/watt-the-hack/`
-
-**Do not modify, refactor, rename, or "tidy up" any other route, component, or lib.** They belong to other parts of the site and other developers, and editing them can break unrelated production systems. If a WTH change seems to require a file outside these paths, stop and flag it instead of editing.
-
 ## Common advice
 
 Use `bun` instead of `npm` -- `bun run typecheck`, `bun run typegen`
