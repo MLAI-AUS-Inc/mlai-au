@@ -5,6 +5,7 @@ import {
     type ArticleWithSlug,
 } from "~/articles/registry";
 import { ArticleLayout } from "~/components/articles/ArticleLayout";
+import ContentFactoryArticleAnalytics from "~/articles/ContentFactoryArticleAnalytics";
 import { fetchEvents, type Event } from "~/lib/events";
 import { getEnv } from "~/lib/env.server";
 import type { Route } from "./+types/articles.slug";
@@ -144,8 +145,17 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             faqItems={faqItems}
             upcomingEvents={upcomingEvents}
         >
-            <div className="relative">
-                <ArticleContent key={article.slug} article={article} />
+            {/* Anonymous Content Factory analytics: the runtime only activates
+                inside this data-cf-article-detail boundary, on the production
+                domain, for registry entries carrying an analyticsArticleId. */}
+            <div className="relative" data-cf-article-detail="true">
+                <ContentFactoryArticleAnalytics
+                    analyticsArticleId={article.analyticsArticleId ?? ""}
+                    articlePath={`/articles/${article.slug}`}
+                />
+                <div data-cf-article-body="true">
+                    <ArticleContent key={article.slug} article={article} />
+                </div>
             </div>
         </ArticleLayout>
     );
