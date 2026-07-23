@@ -22,7 +22,13 @@ import {
     uploadVibeRaisingPitchDeck,
     uploadVibeRaisingUpdateVideo,
     resolveActiveCompanyId,
+    setVibeRaisingActiveCompany,
 } from "~/lib/vibe-raising";
+import {
+    getMonthlyUpdateReminderCompanyId,
+    removeReminderCompanySelector,
+    resolveMonthlyUpdateReminderCompany,
+} from "~/lib/monthly-update-reminder-link";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { normalizeVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
 import {
@@ -448,6 +454,23 @@ function normalizeAudienceVisibilityValue(value: unknown): VibeRaisingAudienceVi
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const { appUser: user } = await requireVibeRaisingFounder(env, request);
+    const url = new URL(request.url);
+    const reminderCompany = resolveMonthlyUpdateReminderCompany(
+        user,
+        getMonthlyUpdateReminderCompanyId(url),
+    );
+
+    if (reminderCompany.status === "invalid") {
+        throw redirect("/founder-tools/companies?error=invalid-reminder-company");
+    }
+    if (reminderCompany.status === "valid") {
+        if (reminderCompany.needsSwitch) {
+            await setVibeRaisingActiveCompany(env, request, reminderCompany.company.id);
+        }
+        // Strip the one-use selector so refreshes and copied URLs do not keep
+        // mutating the user's active-company preference. Attribution remains.
+        throw redirect(removeReminderCompanySelector(url));
+    }
 
     // Require company registration before creating updates
     if (!user.companyRegistered) {
@@ -455,7 +478,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     // Check for edit mode
-    const url = new URL(request.url);
     const editId = url.searchParams.get("edit");
     const resumeEmailDrafting =
         url.searchParams.get("email_draft") === "1" ||
