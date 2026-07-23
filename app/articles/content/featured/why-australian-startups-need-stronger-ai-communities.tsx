@@ -302,8 +302,8 @@ export default function ArticleContent() {
             cards={[
               { title: 'AI founders', description: 'Bring a clear product, data or market question so community feedback can sharpen validation before decisions become fixed.', variant: 'orange' },
               { title: 'Technical builders', description: 'Use the community to find real workflows, domain constraints and customer problems that need more than tool experimentation.', variant: 'purple' },
-              { title: 'Researchers and domain experts', description: 'Connect research knowledge and practical workflow insight with founders who need stronger evidence and better product judgement.', variant: 'teal' },
-              { title: 'Investors and ecosystem supporters', description: 'Look for credible signals of capability, sharper validation and useful weak ties between teams, customers and support pathways.', variant: 'teal' },
+              { title: 'Researchers and domain experts', description: 'Connect research knowledge and practical workflow insight with founders who need stronger evidence and better product judgement.', variant: 'yellow' },
+              { title: 'Investors and ecosystem supporters', description: 'Look for credible signals of capability, sharper validation and useful weak ties between teams, customers and support pathways.', variant: 'yellow' },
             ]}
           />
         </div>

@@ -47,7 +47,9 @@ export function AudienceGrid({ heading, cards, className }: AudienceGridProps) {
       ) : null}
       <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
         {cards.map((card, idx) => {
-          const styles = variantStyles[card.variant ?? 'orange']
+          // Article content is cast past these prop types, so an unknown
+          // variant can reach us at runtime and must not crash SSR.
+          const styles = variantStyles[card.variant ?? 'orange'] ?? variantStyles.orange
           return (
             <div
               key={`${card.title}-${idx}`}
