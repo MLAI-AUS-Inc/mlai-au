@@ -3,8 +3,9 @@ import { normalizeAuthNextForApp } from "~/lib/auth-return";
 import type { User } from "~/types/user";
 import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
+import { parseVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
 import type {
-  VibeRaisingAudienceVisibility,
+  VibeRaisingAudienceVisibilitySelection,
   VibeRaisingDraftResultsResponse,
   VibeRaisingAppUser,
   VibeRaisingBankFeedAccount,
@@ -172,14 +173,8 @@ type OptionalContext = {
 
 type VibeRaisingSaveMode = "draft" | "ready";
 
-function normalizeAudienceVisibility(value: unknown): VibeRaisingAudienceVisibility | null {
-  const text = asNullableString(value);
-  if (!text) return null;
-  const normalized = text.toLowerCase().replace(/[\s-]+/g, "_");
-  if (normalized === "just_me" || normalized === "private") return "just_me";
-  if (normalized === "community") return "community";
-  if (normalized === "investors" || normalized === "investor") return "investors";
-  return null;
+function normalizeAudienceVisibility(value: unknown): VibeRaisingAudienceVisibilitySelection | null {
+  return parseVibeRaisingAudienceVisibility(value);
 }
 
 export function isVibeRaisingProfileComplete(profile: VibeRaisingProfile): boolean {
@@ -200,6 +195,11 @@ function asNullableString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function asNullableIdentifier(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return asNullableString(value);
 }
 
 function asRevenueStatus(value: unknown): string | null {
@@ -898,7 +898,7 @@ export function normalizeMetricHistory(raw: unknown): VibeRaisingMetricHistory {
   return history;
 }
 
-function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
+export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
   if (!raw || typeof raw !== "object") return null;
 
   const payload = unwrapPayload(raw) as Record<string, unknown>;
@@ -921,11 +921,11 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
     (monthName && yearValue ? `${monthName} ${yearValue}` : monthName) ??
     "Update";
   const id =
-    asNullableString(payload.id) ??
-    asNullableString(payload.draftId) ??
-    asNullableString(payload.draft_id) ??
-    asNullableString(payload.updateId) ??
-    asNullableString(payload.update_id) ??
+    asNullableIdentifier(payload.id) ??
+    asNullableIdentifier(payload.draftId) ??
+    asNullableIdentifier(payload.draft_id) ??
+    asNullableIdentifier(payload.updateId) ??
+    asNullableIdentifier(payload.update_id) ??
     monthLabel;
 
   return {
@@ -2103,7 +2103,7 @@ export async function saveVibeRaisingCompany(
     stage?: string | null;
     organizationKind?: string | null;
     hasRevenue?: string | null;
-    audienceVisibility?: VibeRaisingAudienceVisibility | null;
+    audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
     shortDescription?: string | null;
     problemSolved?: string | null;
     targetAudience?: string | null;
@@ -2184,7 +2184,7 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     date: "2026-01-30T00:00:00.000Z",
     status: "ready",
     visibility: "published",
-    audienceVisibility: "investors",
+    audienceVisibility: ["investors"],
     publishedAt: "2026-01-30T00:00:00.000Z",
     summary:
       "SupportSorted (SuSo) is an AI-powered referral and matching platform for disability support professionals, allied-health clinics, and care coordinators. We are seeing early product-market resonance, active pilots, and MAP accelerator backing while we focus this quarter on shipping and tightening the core matching loop.",
@@ -2222,7 +2222,7 @@ const DEV_MONTHLY_DRAFTS_STUB: VibeRaisingMonthlyUpdate[] = [
     date: "2026-05-02T00:00:00.000Z",
     status: "draft",
     visibility: "private",
-    audienceVisibility: "just_me",
+    audienceVisibility: ["just_me"],
     publishedAt: null,
     summary: "Saved privately while the founder refines MAP milestone progress, pilot signals, and investor asks.",
     sourceUrl: "https://mlai.au/founder-tools/drafts",
@@ -2524,7 +2524,7 @@ export async function saveVibeRaisingMonthlyUpdate(
     metrics: Record<string, string>;
     metricSuggestions?: VibeRaisingMetricSuggestion[];
     displayConfig?: VibeRaisingMetricDisplayConfig | null;
-    audienceVisibility?: VibeRaisingAudienceVisibility | null;
+    audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
     summary?: string | null;
     sourceUrl?: string | null;
     pitchDeckUrl?: string | null;

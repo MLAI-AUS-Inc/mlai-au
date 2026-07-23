@@ -5,6 +5,7 @@ import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartup
 import { readableBackendError } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
+import { normalizeVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
 import {
   getVibeMarketingBootstrap,
   startVibeMarketingAutofill,
@@ -23,7 +24,7 @@ import {
 } from "~/lib/vibe-raising";
 import type { VibeMarketingBootstrap } from "~/types/vibe-marketing";
 import type {
-  VibeRaisingAudienceVisibility,
+  VibeRaisingAudienceVisibilitySelection,
   VibeRaisingCompany,
   VibeRaisingProfile,
 } from "~/types/vibe-raising";
@@ -39,11 +40,8 @@ function stringFromForm(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
-function audienceVisibilityFromForm(formData: FormData): VibeRaisingAudienceVisibility {
-  const value = stringFromForm(formData, "audienceVisibility").toLowerCase();
-  if (value === "community") return "community";
-  if (value === "investors") return "investors";
-  return "just_me";
+function audienceVisibilityFromForm(formData: FormData): VibeRaisingAudienceVisibilitySelection {
+  return normalizeVibeRaisingAudienceVisibility(formData.getAll("audienceVisibility"));
 }
 
 const COMPANY_SETUP_FIELD_LABELS: Record<string, string> = {
@@ -198,7 +196,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   return {
     bootstrap,
-    audienceVisibility: activeCompany?.audienceVisibility ?? "just_me",
+    audienceVisibility: activeCompany?.audienceVisibility ?? ["just_me"],
     isAddingNew,
     isEditingExisting: Boolean(activeCompany && !isAddingNew && activeCompany.registered),
   };
