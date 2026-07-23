@@ -31,7 +31,9 @@ export function Badge({ variant = "slate", children, className }: BadgeProps) {
     <span
       className={clsx(
         "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
-        BADGE_VARIANTS[variant],
+        // Article content is cast past these prop types, so an unknown
+        // variant can reach us at runtime and must not drop the badge styling.
+        BADGE_VARIANTS[variant] ?? BADGE_VARIANTS.slate,
         className,
       )}
     >

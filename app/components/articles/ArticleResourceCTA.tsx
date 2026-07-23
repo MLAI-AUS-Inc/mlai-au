@@ -65,7 +65,9 @@ export function ArticleResourceCTA({
     accent = 'purple',
     previewCards = DEFAULT_PREVIEW_CARDS,
 }: ArticleResourceCTAProps) {
-    const styles = ACCENT_STYLES[accent]
+    // Article content is cast past these prop types, so an unknown
+    // accent can reach us at runtime and must not crash SSR.
+    const styles = ACCENT_STYLES[accent] ?? ACCENT_STYLES.purple
 
     return (
         <div className="my-12 relative overflow-hidden rounded-[36px] p-8 sm:p-12 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.55)] not-prose">

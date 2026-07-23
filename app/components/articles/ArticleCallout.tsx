@@ -44,7 +44,9 @@ export function ArticleCallout({
     children,
     className = '',
 }: ArticleCalloutProps) {
-    const styles = VARIANT_STYLES[variant]
+    // Article content is cast past these prop types, so an unknown
+    // variant can reach us at runtime and must not crash SSR.
+    const styles = VARIANT_STYLES[variant] ?? VARIANT_STYLES.info
 
     return (
         <div className={`my-8 border-l-4 ${styles.border} ${styles.background} pl-6 py-4 pr-4 rounded-r-lg ${className}`}>
