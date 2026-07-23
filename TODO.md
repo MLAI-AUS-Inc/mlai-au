@@ -1,3 +1,8 @@
+- [x] Preserve multi-audience visibility arrays from the Vibe Raising backend
+- [x] Make community and investor visibility independently selectable
+- [x] Preserve numeric backend draft IDs during frontend normalization
+- [x] Add focused audience visibility tests and run typecheck/build
+
 - [x] Fall back to default palettes for unknown variant keys in QuoteBlock, ArticleCallout, ArticleResourceCTA, Badge, and ArticleHeroHeader (mirrors the AudienceGrid SSR fix in PR 1448)
 - [x] Run `react-router typegen` + `tsc -b` and SSR fallback render checks for the hardened article components
 

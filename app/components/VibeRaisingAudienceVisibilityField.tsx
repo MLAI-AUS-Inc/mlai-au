@@ -1,7 +1,14 @@
 import { clsx } from "clsx";
 import { EyeIcon, UserGroupIcon, UserIcon } from "@heroicons/react/24/outline";
 import { useState, type ReactNode } from "react";
-import type { VibeRaisingAudienceVisibility } from "~/types/vibe-raising";
+import {
+  normalizeVibeRaisingAudienceVisibility,
+  toggleVibeRaisingAudienceVisibility,
+} from "~/lib/vibe-raising-audience-visibility";
+import type {
+  VibeRaisingAudienceVisibility,
+  VibeRaisingAudienceVisibilitySelection,
+} from "~/types/vibe-raising";
 
 export const VIBE_RAISING_AUDIENCE_VISIBILITY_OPTIONS: Array<{
   value: VibeRaisingAudienceVisibility;
@@ -29,9 +36,9 @@ const optionIconMap = {
 
 type Props = {
   name: string;
-  value?: VibeRaisingAudienceVisibility | null;
-  defaultValue?: VibeRaisingAudienceVisibility | null;
-  onChange?: (value: VibeRaisingAudienceVisibility) => void;
+  value?: VibeRaisingAudienceVisibilitySelection | null;
+  defaultValue?: VibeRaisingAudienceVisibilitySelection | null;
+  onChange?: (value: VibeRaisingAudienceVisibilitySelection) => void;
   title?: ReactNode;
   description?: string;
   className?: string;
@@ -40,14 +47,16 @@ type Props = {
 export default function VibeRaisingAudienceVisibilityField({
   name,
   value,
-  defaultValue = "just_me",
+  defaultValue = ["just_me"],
   onChange,
   title = "Who should see this?",
-  description = "Choose whether this stays private, shows to the community, or is visible to investors.",
+  description = "Keep this private, or select one or both public audiences.",
   className,
 }: Props) {
-  const [localValue, setLocalValue] = useState<VibeRaisingAudienceVisibility>(defaultValue ?? "just_me");
-  const selectedValue = value ?? localValue;
+  const [localValue, setLocalValue] = useState<VibeRaisingAudienceVisibilitySelection>(() =>
+    normalizeVibeRaisingAudienceVisibility(defaultValue),
+  );
+  const selectedValue = normalizeVibeRaisingAudienceVisibility(value ?? localValue);
 
   return (
     <section className={clsx("rounded-2xl border border-[var(--vr-color-border)] bg-white p-4 shadow-sm", className)}>
@@ -55,13 +64,14 @@ export default function VibeRaisingAudienceVisibilityField({
         <p className="text-base font-black text-gray-950">{title}</p>
         {description ? <p className="text-sm font-semibold text-slate-500">{description}</p> : null}
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label={typeof title === "string" ? title : "Update visibility"}>
+      <div className="mt-3 grid grid-cols-3 gap-2" role="group" aria-label={typeof title === "string" ? title : "Update visibility"}>
         {VIBE_RAISING_AUDIENCE_VISIBILITY_OPTIONS.map((option) => {
           const Icon = optionIconMap[option.value];
-          const checked = selectedValue === option.value;
+          const checked = selectedValue.includes(option.value);
           const handleSelect = () => {
-            setLocalValue(option.value);
-            onChange?.(option.value);
+            const nextValue = toggleVibeRaisingAudienceVisibility(selectedValue, option.value);
+            setLocalValue(nextValue);
+            onChange?.(nextValue);
           };
           return (
             <label
@@ -74,7 +84,7 @@ export default function VibeRaisingAudienceVisibilityField({
               )}
             >
               <input
-                type="radio"
+                type="checkbox"
                 name={name}
                 value={option.value}
                 checked={checked}

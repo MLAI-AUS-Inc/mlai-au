@@ -2,6 +2,7 @@ import type { User } from "~/types/user";
 
 export type VibeRaisingRole = "founder" | "investor";
 export type VibeRaisingAudienceVisibility = "just_me" | "community" | "investors";
+export type VibeRaisingAudienceVisibilitySelection = VibeRaisingAudienceVisibility[];
 
 export interface VibeRaisingFounderProfile {
   name: string;
@@ -24,7 +25,7 @@ export interface VibeRaisingCompany {
   stage?: string | null;
   organizationKind?: string | null;
   hasRevenue?: string | null;
-  audienceVisibility?: VibeRaisingAudienceVisibility | null;
+  audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
   registered: boolean;
   monthlyUpdatesEnabled?: boolean;
 }
@@ -54,7 +55,7 @@ export interface VibeRaisingAppUser {
   stage?: string | null;
   organizationKind?: string | null;
   hasRevenue?: string | null;
-  audienceVisibility?: VibeRaisingAudienceVisibility | null;
+  audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
   companyRegistered: boolean;
 }
 
@@ -133,7 +134,7 @@ export interface VibeRaisingMonthlyUpdate {
   date: string;
   status?: string | null;
   visibility?: "private" | "published" | string | null;
-  audienceVisibility?: VibeRaisingAudienceVisibility | null;
+  audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
   publishedAt?: string | null;
   summary?: string | null;
   sourceUrl?: string | null;

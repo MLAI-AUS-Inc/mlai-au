@@ -24,6 +24,7 @@ import {
     resolveActiveCompanyId,
 } from "~/lib/vibe-raising";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
+import { normalizeVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
 import {
     VIBE_METRIC_KEYS,
     VIBE_METRIC_OPTIONS,
@@ -71,7 +72,7 @@ import type {
     VibeRaisingFounderProfile,
     VibeRaisingInputSourceSummary,
     VibeRaisingManualDocument,
-    VibeRaisingAudienceVisibility,
+    VibeRaisingAudienceVisibilitySelection,
     VibeRaisingMetricDisplayConfig,
     VibeRaisingMetricSuggestion,
     VibeRaisingMetricVisibility,
@@ -440,11 +441,8 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
     };
 }
 
-function normalizeAudienceVisibilityValue(value: unknown): VibeRaisingAudienceVisibility {
-    const text = String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
-    if (text === "community") return "community";
-    if (text === "investors" || text === "investor") return "investors";
-    return "just_me";
+function normalizeAudienceVisibilityValue(value: unknown): VibeRaisingAudienceVisibilitySelection {
+    return normalizeVibeRaisingAudienceVisibility(value);
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -512,7 +510,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         .filter(Boolean);
 
     return {
-        audienceVisibility: normalizeAudienceVisibilityValue(formData.get("audienceVisibility")),
+        audienceVisibility: normalizeAudienceVisibilityValue(formData.getAll("audienceVisibility")),
         month: String(formData.get("month") || "").trim(),
         year: Number(formData.get("year") || 0),
         summary: String(formData.get("summary") || "").trim() || null,
@@ -579,8 +577,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     const activeCompanyId = resolveActiveCompanyId(appUser);
     const formData = await request.formData();
     const intent = formData.get("intent");
-    const updates = Object.fromEntries(formData);
     const savePayload = buildMonthlyUpdateSavePayload(formData);
+    const updates: Record<string, unknown> = {
+        ...Object.fromEntries(formData),
+        audienceVisibility: savePayload.audienceVisibility,
+    };
 
     if (intent === "publish") {
         const draftId = String(formData.get("draftId") || "").trim();
@@ -2887,7 +2888,7 @@ export default function CreateUpdate() {
         const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
         return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
     });
-    const [audienceVisibility, setAudienceVisibility] = useState<VibeRaisingAudienceVisibility>(
+    const [audienceVisibility, setAudienceVisibility] = useState<VibeRaisingAudienceVisibilitySelection>(
         () => normalizeAudienceVisibilityValue(defaultData?.audienceVisibility || user.audienceVisibility),
     );
     const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
@@ -5522,7 +5523,9 @@ export default function CreateUpdate() {
                 <Form id={PUBLISH_REVIEW_FORM_ID} method="POST" className="hidden">
                     <input type="hidden" name="intent" value="publish" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
-                    <input type="hidden" name="audienceVisibility" value={reviewAudienceVisibility} />
+                    {reviewAudienceVisibility.map((audience) => (
+                        <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
+                    ))}
                     <input type="hidden" name="month" value={reviewMonth} />
                     <input type="hidden" name="year" value={reviewYear} />
                 </Form>
@@ -6416,7 +6419,9 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
                                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
-                                    <input type="hidden" name="audienceVisibility" value={audienceVisibility} />
+                                    {audienceVisibility.map((audience) => (
+                                        <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
+                                    ))}
                                     <input type="hidden" name="summary" value={summary} />
                                     <input type="hidden" name="sourceUrl" value={sourceUrl} />
                                     <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
