@@ -1,3 +1,7 @@
+- [x] Resolve monthly-update reminder links to an explicitly owned Founder Tools company
+- [x] Reject stale or foreign reminder company IDs without mutating active-company state
+- [x] Add focused reminder-link tests and run typecheck/build
+
 - [x] Preserve multi-audience visibility arrays from the Vibe Raising backend
 - [x] Make community and investor visibility independently selectable
 - [x] Preserve numeric backend draft IDs during frontend normalization
