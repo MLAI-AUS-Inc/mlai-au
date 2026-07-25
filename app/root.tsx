@@ -14,6 +14,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
+import { useSessionKeepalive } from "~/lib/session-keepalive";
 
 const GA_MEASUREMENT_ID = "G-1645KKLT8B";
 const CLARITY_TAG_ID = "wwfzm7293o";
@@ -100,6 +101,10 @@ export default function Layout() {
     isFounderToolsApp ||
     isValleyApp ||
     isWattTheHackApp;
+
+  // Signed-in surfaces renew their access token in the background, so a tab left open
+  // for days keeps working instead of quietly 401-ing. Public pages never ping.
+  useSessionKeepalive(isAppRoute);
 
   return (
     <html lang="en" suppressHydrationWarning>

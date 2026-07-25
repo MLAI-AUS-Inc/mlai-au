@@ -1,5 +1,6 @@
 import { createRequestHandler } from "react-router";
 import { isWattTheHackEndpointPath } from "~/lib/watt-the-hack-access";
+import { withSessionRefresh } from "./session-refresh";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -48,9 +49,15 @@ function isCacheableHomepageResponse(response: Response): boolean {
 }
 
 async function renderWithReactRouter(request: Request, env: Env, ctx: ExecutionContext) {
-  return requestHandler(request, {
-    cloudflare: { env, ctx },
-  });
+  // Every render goes through the session refresher: it renews an expiring access
+  // token from the long-lived refresh cookie and relays the new cookies to the
+  // browser, so a returning user is never bounced to the magic-link screen while
+  // their refresh token is still valid. Anonymous requests pass straight through.
+  return withSessionRefresh(request, env, (refreshedRequest) =>
+    requestHandler(refreshedRequest, {
+      cloudflare: { env, ctx },
+    }),
+  );
 }
 
 export default {
