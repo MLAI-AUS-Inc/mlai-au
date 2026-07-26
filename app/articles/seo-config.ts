@@ -29,6 +29,13 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/invest-in-business-startups-before-you-commit': {
         toc: true,
         howTo: false,
