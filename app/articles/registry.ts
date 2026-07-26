@@ -75,6 +75,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-technology-startups-build-useful-ai-products': {
+        title: "How Technology Startups Build Useful AI Products",
+        date: "2026-07-26",
+        description: "Technology startups turn useful problems into focused AI products and test what users value before expanding.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-technology-startups-build-useful-ai-products",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e742d725-d724-4873-88f2-7309baa4a3d9.jpg?alt=media&token=021f9bb0-b302-4b6f-a0ea-036a764d6109",
+        imageAlt: "Startup team testing an AI product prototype with a user during a candid close-up feedback session",
+    },
     'featured/what-community-is-in-ai-and-why-it-is-more-than-a-group': {
         title: "What Community Is in AI and Why It Is More Than a Group",
         date: "2026-07-26",
