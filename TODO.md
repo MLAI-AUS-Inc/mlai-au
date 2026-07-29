@@ -568,3 +568,22 @@
 - [x] Add focused repair-state, progress, normalization, and start-route tests; run `bun run typecheck`
 - [x] Remove the redundant notification-channel email confirmation UI
 - [x] Run focused notification-channel UI verification
+
+## Article quality remediation (July 2026)
+
+- [x] Confirm Google's latest primary-source guidance on AI-generated and scaled low-value content
+- [x] Inventory and score every live article for people-first value, originality, trust, accuracy, and scaled-content risk
+- [x] Produce the prioritized audit and urgent implementation plan
+- [x] Contain the salary and AI Bits Issue 9 integrity failures with noindex, sitemap/internal-surface removal, and a dated correction
+- [x] Add Studio project-intake and public Founder Tools acquisition routes with article conversion tracking
+- [x] Repair shared article indexing, canonical, publisher, author, schema, metadata, and internal-link infrastructure
+- [x] Rebuild the beginner AI canonical with an original interactive exercise, transparent workflow, primary sources, and limitations
+- [x] Rebuild the Australian unicorn canonical with a dated evidence dataset and downloadable dilution calculator
+- [x] Consolidate the AGI explainers into a primary-source guide with an interactive claim evaluator
+- [x] Rebuild the Australian accelerator guide with a dated program finder and fit scorecard
+- [x] Rebuild the Sydney meetup guide with organizer-sourced event data and an event-fit worksheet
+- [x] Withdraw and noindex the stale coding-tools listicle; preregister and checksum its replacement benchmark
+- [ ] Snapshot urgent URLs in Search Console/analytics before deciding the remaining canonical merges
+- [ ] Add attributable founder, investor, adviser, organizer, and attendee interviews called out in the implementation plan
+- [ ] Run and publish the coding-assistant benchmark before reindexing its replacement
+- [ ] Complete editorial, subject-matter, accessibility, and score-gate review before reindexing provisional content

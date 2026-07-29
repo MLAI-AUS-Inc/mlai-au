@@ -10,12 +10,14 @@ interface UpcomingEventsCTAProps {
     events: Event[]
     maxEvents?: number
     className?: string
+    onCtaClick?: (destination: string) => void
 }
 
 export default function UpcomingEventsCTA({
     events,
     maxEvents = 3,
     className = '',
+    onCtaClick,
 }: UpcomingEventsCTAProps) {
     const cardStyles = [
         {
@@ -44,6 +46,7 @@ export default function UpcomingEventsCTA({
     // Events are already filtered to upcoming on the server to avoid hydration mismatch
     // Just sort and slice here
     const upcomingEvents = events
+        .slice()
         .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
         .slice(0, maxEvents)
 
@@ -60,6 +63,7 @@ export default function UpcomingEventsCTA({
                     <p className="text-white/85 mb-6">Stay tuned for upcoming AI and ML events in Australia.</p>
                     <Link
                         to="/events"
+                        onClick={() => onCtaClick?.("/events")}
                         className="inline-flex items-center justify-center rounded-full bg-[#ff3d00] px-7 py-3 text-base font-semibold text-white shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-nowrap"
                     >
                         View Event Calendar&nbsp;→
@@ -100,6 +104,7 @@ export default function UpcomingEventsCTA({
                     <a
                         key={event._id}
                         href={getEventUrl(event)}
+                        onClick={() => onCtaClick?.(getEventUrl(event))}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`group relative flex flex-col rounded-[28px] overflow-hidden shadow-[0_25px_70px_-30px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-1.5 border ${style.border} ${style.bg}`}
@@ -134,6 +139,7 @@ export default function UpcomingEventsCTA({
             <div className="text-center mt-8">
                 <Link
                     to="/events"
+                    onClick={() => onCtaClick?.("/events")}
                     className="inline-flex items-center justify-center rounded-full bg-[#ff3d00] px-8 py-3 text-base font-semibold text-white shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-nowrap"
                 >
                     View All Events&nbsp;→

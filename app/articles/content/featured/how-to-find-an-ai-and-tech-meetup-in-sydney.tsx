@@ -1,333 +1,543 @@
-import type { ReactNode } from 'react'
-import { Home } from 'lucide-react'
-import { DEFAULT_AUTHOR_KEY, getAuthorProfile, DEFAULT_AUTHOR_AVATAR_FALLBACK_URL } from '../../authors'
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
-import { ArticleReferences } from '../../../components/articles/ArticleReferences'
-import ArticleDisclaimer from '../../../components/articles/ArticleDisclaimer'
-import QuoteBlock from '../../../components/articles/QuoteBlock'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
+import type { ReactNode } from "react";
+import { Home } from "lucide-react";
+import { Link } from "react-router";
 
-export const useCustomHeader = true
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleReferences } from "~/components/articles/ArticleReferences";
+import SydneyEventFitFinder from "~/components/articles/SydneyEventFitFinder";
+import {
+  SYDNEY_AI_TECH_EVENTS,
+  SYDNEY_EVENT_DATASET_OWNER,
+  SYDNEY_EVENT_DATASET_REVIEW_CADENCE,
+  SYDNEY_EVENT_DATASET_VERIFIED_AT,
+} from "~/lib/sydney-ai-tech-events";
 
-const TOPIC = 'How to Find an AI and Tech Meetup in Sydney'
-export const CATEGORY = 'featured'
-export const SLUG = 'how-to-find-an-ai-and-tech-meetup-in-sydney'
-export const DATE_PUBLISHED = '2026-06-16'
-export const DATE_MODIFIED = '2026-06-16'
-export const DESCRIPTION = 'Meetup in Sydney for AI, tech and startup networking.'
-const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-46210747-b902-4e9d-8ffa-f3df1058658b.jpg?alt=media&token=2ecc04f5-87e3-4795-aba4-d59f1905b8e5'
-const HERO_IMAGE_ALT = 'Close-up candid of Sydney tech meetup attendees networking over laptops at an AI startup event'
-export const FEATURED_FOCUS = 'startups'
+export const useCustomHeader = true;
 
-const AUTHOR_PROFILE = getAuthorProfile(DEFAULT_AUTHOR_KEY)
-const AUTHOR = AUTHOR_PROFILE?.name ?? 'Dr Sam Donegan'
-const AUTHOR_ROLE = AUTHOR_PROFILE?.role ?? AUTHOR_PROFILE?.credentials ?? 'Founder'
-const AUTHOR_BIO = AUTHOR_PROFILE?.bio ?? ''
-const AUTHOR_AVATAR = AUTHOR_PROFILE?.avatarUrl ?? DEFAULT_AUTHOR_AVATAR_FALLBACK_URL
+const TOPIC = "Sydney AI and Tech Meetups: A Verified 2026 Event Finder";
+export const CATEGORY = "featured";
+export const SLUG = "how-to-find-an-ai-and-tech-meetup-in-sydney";
+export const DATE_PUBLISHED = "2026-06-16";
+export const DATE_MODIFIED = "2026-07-29";
+export const DESCRIPTION =
+  "Compare eight Sydney AI and tech communities by audience, recent activity, cost and format, then build a shortlist with MLAI’s event-fit worksheet.";
+const HERO_IMAGE =
+  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-46210747-b902-4e9d-8ffa-f3df1058658b.jpg?alt=media&token=2ecc04f5-87e3-4795-aba4-d59f1905b8e5";
+const HERO_IMAGE_ALT =
+  "Sydney technology meetup attendees discussing AI projects around laptops";
+export const FEATURED_FOCUS = "community";
 
 interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
-}
-
-type AuthorDetails = {
-  name: string
-  role: string
-  bio: string
-  avatarUrl: string
-}
-
-function AuthorBio({ author }: { author: AuthorDetails }) {
-  const initials = author.name
-    .trim()
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('')
-
-  return (
-    <section className='rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6'>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-        <div
-          role='img'
-          aria-label={author.name}
-          className='flex h-20 w-20 items-center justify-center rounded-full bg-slate-200 bg-cover bg-center text-lg font-semibold text-slate-700'
-          style={author.avatarUrl ? { backgroundImage: `url(${author.avatarUrl})` } : undefined}
-        >
-          {author.avatarUrl ? null : initials}
-        </div>
-        <div>
-          <p className='text-lg font-semibold text-slate-900'>{author.name}</p>
-          <p className='text-sm font-medium uppercase tracking-[0.18em] text-slate-500'>{author.role}</p>
-        </div>
-      </div>
-      {author.bio ? <p className='mt-4 text-base leading-7 text-slate-700'>{author.bio}</p> : null}
-    </section>
-  )
+  id: number;
+  question: string;
+  answer: ReactNode;
 }
 
 export const faqItems: FAQ[] = [
-  { id: 1, question: 'How do I find a useful AI or tech meetup in Sydney?', answer: 'Start with the conversation you want, then search across AI, machine learning, data science, tech startup, IT, UX, web, content strategy, and small-business AI labels. Shortlist a few groups before you RSVP.' },
-  { id: 2, question: 'Should I only attend events with AI in the title?', answer: 'No. AI conversations often appear inside startup, business, UX, web, content strategy, and small-business groups. The event purpose and audience matter more than whether the title includes AI.' },
-  { id: 3, question: 'What should I check before RSVP?', answer: 'Look for a clear audience, topic, next event date, location, format, regular activity, and practical value. If the page is vague about these details, put it lower on your shortlist.' },
-  { id: 4, question: 'How can I turn one event into a stronger local network?', answer: 'Prepare a short introduction and one practical question. After the event, note useful people, topics, and groups, then decide whether to return, try an adjacent meetup, or get more involved.' },
-]
+  {
+    id: 1,
+    question: "Where can I find AI meetups in Sydney?",
+    answer:
+      "Start with the organiser pages in this dated directory. As at 29 July 2026, Cursor Sydney, Proof to Production and AI Week Sydney had future dates visible. Sydney AI Meetup, SydJS, GDG Sydney, Sydney AI Developers and the Power BI & Fabric group showed recent activity but no later date verified by MLAI.",
+  },
+  {
+    id: 2,
+    question: "How do I tell whether a Sydney meetup is still active?",
+    answer:
+      "A future event on the organiser’s own page is the strongest public signal. A recent event history or stated cadence is useful but does not prove another event is scheduled. Recheck the page and cancellation notices on the day you travel.",
+  },
+  {
+    id: 3,
+    question: "Are these Sydney AI and tech events free?",
+    answer:
+      "Terms vary. The reviewed Proof to Production event was A$25, the latest Sydney AI Meetup seminar was free, and AI Week contains a mix of paid and free activities. Several organiser pages did not state a price, so confirm before registering.",
+  },
+  {
+    id: 4,
+    question: "Which Sydney tech meetup is best for beginners?",
+    answer:
+      "Choose by audience and agenda rather than group size. Proof to Production says no technical background is required, while the Power BI & Fabric group welcomes beginners. Technical talks may still suit learners if the agenda and assumed knowledge are clear.",
+  },
+  {
+    id: 5,
+    question: "Can I attend a Sydney AI event online?",
+    answer:
+      "Some communities use online or hybrid formats. The latest reviewed Sydney AI Meetup event was on Zoom, Sydney AI Developers lists virtual activity, and AI Week’s main conference advertises streaming. Check the specific event because formats can change.",
+  },
+  {
+    id: 6,
+    question: "How can an organiser correct or add a listing?",
+    answer:
+      "Send MLAI the organiser URL, next event date, audience, cost, format and access information through the contact page. MLAI reviews this directory monthly but will not publish a future-date claim without a public source.",
+  },
+];
 
 export const summaryHighlights = {
-  heading: 'Key facts: How to Find an AI and Tech Meetup in Sydney',
-  intro: 'Meetup in Sydney for AI, tech and startup networking.',
+  heading: "A dated shortlist, not a scraped popularity ranking",
+  intro:
+    "Eight organiser pages were checked on 29 July 2026. Future dates are separated from groups with only recent activity.",
   items: [
-    { label: 'Where to meet singles in Sydney?', description: 'This guide focuses on AI and tech networking, not dating. For professional conversations, search Sydney groups around AI, startups, IT, UX, web, content strategy, and small business.' },
-    { label: 'What replaced Meetup?', description: 'The grounded article does not identify a replacement for Meetup. It recommends checking event platforms and organiser websites, because some groups publish dates, locations, sponsors, and formats on their own pages.' },
-    { label: 'Is meetup a good way to meet singles?', description: 'This article does not assess meetups for dating. It covers how to find Sydney AI, tech, startup, business, and digital events that support useful professional conversations.' },
+    {
+      label: "Three future dates verified",
+      description:
+        "Cursor Sydney, Proof to Production and AI Week Sydney had an upcoming date or program visible.",
+    },
+    {
+      label: "Five groups require a date check",
+      description:
+        "They showed recent or recurring activity, but MLAI did not find a later public date during the review.",
+    },
+    {
+      label: "Build a goal-based shortlist",
+      description:
+        "Use the interactive worksheet to compare audience, format, cost evidence and activity.",
+    },
   ],
-}
+};
 
 export const articleMeta = {
-  title: 'How to Find an AI and Tech Meetup in Sydney',
+  title: TOPIC,
   topic: TOPIC,
   category: CATEGORY,
   slug: SLUG,
   description: DESCRIPTION,
   datePublished: DATE_PUBLISHED,
   dateModified: DATE_MODIFIED,
-  author: AUTHOR,
   image: HERO_IMAGE,
   imageAlt: HERO_IMAGE_ALT,
   featuredFocus: FEATURED_FOCUS,
+};
+
+const REFERENCES = [
+  {
+    id: 1,
+    href: "https://cursorsydney.com/events/2026-08-meetup/",
+    title: "Cursor Sydney #7",
+    publisher: "Cursor Sydney",
+    description:
+      "Organiser page for the 12 August 2026 in-person meetup at Atlassian.",
+    category: "industry",
+  },
+  {
+    id: 2,
+    href: "https://www.meetup.com/en-au/proof-to-production-australia/events/314330717/",
+    title: "AI on Tap — Proof to Production Australia",
+    publisher: "Proof to Production Australia",
+    description:
+      "Organiser listing for the paid 6 August 2026 Sydney event.",
+    category: "industry",
+  },
+  {
+    id: 3,
+    href: "https://aiweek.com.au/",
+    title: "AI Week Sydney 2026",
+    publisher: "AI Week Sydney",
+    description:
+      "Official program hub for events scheduled from 6 to 13 December 2026.",
+    category: "industry",
+  },
+  {
+    id: 4,
+    href: "https://sydneyaimeetup.org/",
+    title: "Sydney AI Meetup",
+    publisher: "Sydney AI Meetup",
+    description:
+      "Official group site showing monthly seminars, symposia and recent event activity.",
+    category: "industry",
+  },
+  {
+    id: 5,
+    href: "https://sydjs.com/",
+    title: "SydJS",
+    publisher: "SydJS",
+    description:
+      "Official community site with the group’s 2026 JavaScript and AI-related event history.",
+    category: "industry",
+  },
+  {
+    id: 6,
+    href: "https://gdg.community.dev/events/details/google-gdg-sydney-presents-gdg-sydney-meetup-june-2026/",
+    title: "GDG Sydney Meetup — June 2026",
+    publisher: "Google Developer Group Sydney",
+    description:
+      "Official event page used to verify the group’s recent Sydney activity.",
+    category: "industry",
+  },
+  {
+    id: 7,
+    href: "https://www.meetup.com/en-au/sydney-ai-tech-talks/",
+    title: "Sydney AI Developers Group",
+    publisher: "Sydney AI Developers Group",
+    description:
+      "Organiser page describing the technical focus, event history and recent activity.",
+    category: "industry",
+  },
+  {
+    id: 8,
+    href: "https://www.meetup.com/en-au/microsoft-power-bi-fabric-user-group-sydney/",
+    title: "Microsoft Power BI & Fabric User Group Sydney",
+    publisher: "Power BI & Fabric User Group Sydney",
+    description:
+      "Organiser page used to verify audience and recent North Sydney activity.",
+    category: "industry",
+  },
+  {
+    id: 9,
+    href: "https://www.meetup.com/en-au/pydata-sydney/",
+    title: "PyData Sydney",
+    publisher: "PyData Sydney",
+    description:
+      "A counterexample reviewed and excluded because its page said the group was parked and showed no upcoming events.",
+    category: "watchlist",
+  },
+];
+
+function formatVerifiedDate(date: string) {
+  return new Intl.DateTimeFormat("en-AU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Australia/Sydney",
+  }).format(new Date(`${date}T12:00:00+10:00`));
 }
 
-const faqSchemaItems = [
-  { question: 'Where to meet singles in Sydney?', answer: 'This guide focuses on AI and tech networking, not dating. For professional conversations, search Sydney groups around AI, startups, IT, UX, web, content strategy, and small business.' },
-  { question: 'What replaced Meetup?', answer: 'The grounded article does not identify a replacement for Meetup. It recommends checking event platforms and organiser websites, because some groups publish dates, locations, sponsors, and formats on their own pages.' },
-  { question: 'Is meetup a good way to meet singles?', answer: 'This article does not assess meetups for dating. It covers how to find Sydney AI, tech, startup, business, and digital events that support useful professional conversations.' },
-  { question: 'How do I find a useful AI or tech meetup in Sydney?', answer: 'Start with the conversation you want, then search across AI, machine learning, data science, tech startup, IT, UX, web, content strategy, and small-business AI labels. Shortlist a few groups before you RSVP.' },
-  { question: 'Should I only attend events with AI in the title?', answer: 'No. AI conversations often appear inside startup, business, UX, web, content strategy, and small-business groups. The event purpose and audience matter more than whether the title includes AI.' },
-  { question: 'What should I check before RSVP?', answer: 'Look for a clear audience, topic, next event date, location, format, regular activity, and practical value. If the page is vague about these details, put it lower on your shortlist.' },
-  { question: 'How can I turn one event into a stronger local network?', answer: 'Prepare a short introduction and one practical question. After the event, note useful people, topics, and groups, then decide whether to return, try an adjacent meetup, or get more involved.' },
-]
-
-const faqStructuredData = faqSchemaItems.length
-  ? JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqSchemaItems.map((item) => ({
-        '@type': 'Question',
-        name: item.question,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: item.answer,
-        },
-      })),
-    })
-  : null
-
 export default function ArticleContent() {
-  const authorDetails: AuthorDetails = {
-    name: AUTHOR,
-    role: AUTHOR_ROLE,
-    bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR,
-  }
-
   return (
     <>
-      {faqStructuredData ? (
-        <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
-
       <ArticleHeroHeader
         breadcrumbs={[
-          { label: 'Home', href: '/', icon: Home },
-          { label: 'Articles', href: '/articles' },
+          { label: "Home", href: "/", icon: Home },
+          { label: "Articles", href: "/articles" },
           { label: TOPIC, current: true },
         ]}
         title={TOPIC}
-        titleHighlight={TOPIC}
-        headerBgColor='cyan'
+        titleHighlight="Verified 2026 Event Finder"
+        headerBgColor="cyan"
         summary={summaryHighlights}
         heroImage={HERO_IMAGE}
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <ArticleTocPlaceholder className='bg-transparent' />
+      <div className="prose prose-lg prose-slate max-w-none bg-transparent">
+        <p className="lead">
+          <strong>The short answer:</strong> check the event date before you
+          choose the brand. On 29 July 2026, MLAI found future Sydney dates for
+          Cursor Sydney, Proof to Production and AI Week Sydney. Five other
+          relevant communities showed recent activity, but no later public date
+          was verified. That difference matters: a large member count or long
+          archive does not mean a meetup is running next week.
+        </p>
+        <p>
+          This finder compares audiences, topics, cadence, cost evidence,
+          format and venue information from organiser-controlled pages. Use it
+          to discover a room, then recheck the source before paying or
+          travelling. MLAI does not run or endorse the third-party events
+          listed here.
+        </p>
 
-      <div className='prose prose-lg prose-slate max-w-none bg-transparent'>
-        <div id='intro' data-cf-component-id='section:intro' data-cf-component-type='section' data-cf-component-label='Find the right Sydney meetup before you RSVP' data-cf-source-section-id='intro'>
-          <p><strong>{TOPIC}</strong> — A useful meetup in Sydney is not always listed under the exact label you expect. If you are looking for AI, machine learning, startups, or digital work, also check nearby labels such as tech startup, IT, web, new media, content strategy, UX, small business, and AI assistants.</p>
-          <p>Start with the conversation you need. You might want to learn a topic, meet collaborators, find customers, test an idea, hire talent, or get advice from people who have faced similar problems. This guide uses a practical filter method, rather than a fixed directory, because event names, dates, and formats change.</p>
+        <aside className="not-prose my-8 rounded-[24px] border border-amber-300 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
+          <p className="font-black">Time-sensitive directory</p>
+          <p className="mt-1">
+            Last checked {formatVerifiedDate(SYDNEY_EVENT_DATASET_VERIFIED_AT)}.
+            “Recent recurring” means there was recent activity or an explicit
+            cadence, not that a future event is confirmed. Always open the
+            organiser link again on the day.
+          </p>
+        </aside>
+
+        <h2>Eight Sydney AI and tech communities checked in July 2026</h2>
+        <p>
+          The activity label is deliberately conservative. Only a future date
+          visible during MLAI’s review receives “upcoming”. Other rows can
+          still be useful, but you need to wait for or find the organiser’s
+          next announcement.
+        </p>
+
+        <div className="not-prose my-8 overflow-x-auto rounded-[24px] border border-gray-300 bg-white">
+          <table className="min-w-[1120px] border-collapse text-left text-sm">
+            <caption className="border-b border-gray-200 bg-gray-950 px-5 py-4 text-left text-base font-black text-white">
+              Sydney AI and tech event directory · verified{" "}
+              {formatVerifiedDate(SYDNEY_EVENT_DATASET_VERIFIED_AT)}
+            </caption>
+            <thead className="bg-[#f8f3e8] text-xs uppercase tracking-[0.08em] text-gray-700">
+              <tr>
+                <th className="px-4 py-3">Community</th>
+                <th className="px-4 py-3">Audience and topic</th>
+                <th className="px-4 py-3">Activity</th>
+                <th className="px-4 py-3">Cost</th>
+                <th className="px-4 py-3">Format / place</th>
+                <th className="px-4 py-3">Access information</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 align-top text-gray-800">
+              {SYDNEY_AI_TECH_EVENTS.map((event) => (
+                <tr key={event.name}>
+                  <td className="w-44 px-4 py-4">
+                    <a
+                      href={event.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-black text-[#4b1bd1] underline decoration-2 underline-offset-4"
+                    >
+                      {event.name}
+                    </a>
+                    <p className="mt-2 text-xs capitalize text-gray-600">
+                      {event.kind}
+                    </p>
+                  </td>
+                  <td className="w-64 px-4 py-4">
+                    <p className="font-bold">{event.audience}</p>
+                    <p className="mt-2 text-xs leading-5 text-gray-600">
+                      {event.topics}
+                    </p>
+                  </td>
+                  <td className="w-60 px-4 py-4">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ${
+                        event.activityStatus === "upcoming"
+                          ? "bg-green-100 text-green-900"
+                          : "bg-amber-100 text-amber-950"
+                      }`}
+                    >
+                      {event.activityStatus === "upcoming"
+                        ? "Upcoming"
+                        : "Check next date"}
+                    </span>
+                    <p className="mt-2 leading-5">
+                      {event.nextOrLatestActivity}
+                    </p>
+                    <p className="mt-2 text-xs text-gray-600">
+                      {event.cadence}
+                    </p>
+                  </td>
+                  <td className="w-44 px-4 py-4">{event.cost}</td>
+                  <td className="w-52 px-4 py-4">
+                    <p className="font-bold capitalize">
+                      {event.formats.join(" + ")}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-gray-600">
+                      {event.venueOrPlatform}
+                    </p>
+                  </td>
+                  <td className="w-60 px-4 py-4 text-xs leading-5">
+                    {event.accessibility}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        <div id='choose-your-room' data-cf-component-id='section:choose-your-room' data-cf-component-type='section' data-cf-component-label='Choose the room that matches your goal' data-cf-source-section-id='choose-your-room'>
-          <h2>Choose the room that matches your goal</h2>
-          <p>A good meetup in Sydney is not always the one with the most obvious AI label. Start with the conversation you want to have. If you are building a product, looking for customers, or trying to avoid common business mistakes, a startup or business group may be more useful than a general tech talk.</p>
-          <p>Content strategy, UX, web, new media, marketing, and digital producer groups can be relevant because AI work often shows up in content systems, user journeys, websites, and digital strategy. For small-business owners, a more structured informal meeting can also help.</p>
-          <div data-cf-component-id='image:choose-your-room' data-cf-component-type='image' data-cf-component-label='Image: Choose the room that matches your goal' data-cf-source-section-id='choose-your-room'>
-            <ArticleImageBlock
-              src='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9ae45c0d-e7e4-48f2-8839-f26897ad4846.jpg?alt=media&token=c0d566e1-bf0b-4bf1-af7d-35284969dc68'
-              alt='Hands sorting meetup notes beside coffee and laptop, choosing the right Sydney room for startup goals'
-              caption='Choose the room that matches your goal'
-              width={1200}
-              height={800}
-            />
-          </div>
-          <QuoteBlock title='Choose by conversation' variant='purple'>
-            Pick a meetup based on the discussion you want to have, not just whether the event name includes AI.
-          </QuoteBlock>
-          <h3>Founders and operators</h3>
-          <p>Choose business and startup meetups when you want practical feedback, customer insight, or a clearer view of how other people have handled growth, mistakes, and decisions. These rooms are useful when your AI question is really a business question.</p>
-          <h3>Digital and small-business practitioners</h3>
-          <p>Choose digital, content, UX, web, or small-business rooms when your goal is to improve how work gets done. These groups can give you applied conversations about strategy, users, systems, and day-to-day operations.</p>
-        </div>
+        <p>
+          Price and accessibility are not guessed. “Not stated” is more useful
+          than filling a gap with an assumption. If cost, venue access, captioning
+          or sensory conditions affect whether you can attend, contact the
+          organiser before registering.
+        </p>
 
-        <div id='search-beyond-ai' data-cf-component-id='section:search-beyond-ai' data-cf-component-type='section' data-cf-component-label='Search beyond events that call themselves AI' data-cf-source-section-id='search-beyond-ai'>
-          <h2>Search beyond events that call themselves AI</h2>
-          <p>A good meetup in Sydney may not use the word AI in its title. Sydney sources point to active groups around tech startups, information technology, the web industry, new media, content strategy, UX, and small business support. These can still be useful if you want to meet builders, founders, product people, or business owners who are testing AI in real work.</p>
-          <p>Do not stop at the first event listing you find. Check the organiser’s own website where possible, because some groups publish their next meetup, location, sponsors, and format on their own pages. Build a short list of candidate groups, then compare the agenda, audience, timing, and level of structure before you book.</p>
-          <ul>
-            <li>Search across adjacent fields, not only AI-branded events.</li>
-            <li>Check organiser pages as well as event platforms.</li>
-            <li>Shortlist a few groups before committing to one.</li>
-            <li>Read the agenda before assuming the event will be technical.</li>
+        <SydneyEventFitFinder />
+
+        <h2>How to choose a meetup by the job you need done</h2>
+        <h3>If you want to build AI or software</h3>
+        <p>
+          Start with an agenda that names the tools, technical level and
+          speakers. Cursor Sydney, Sydney AI Developers, Sydney AI Meetup, GDG
+          Sydney and SydJS each offer a different technical doorway. A research
+          seminar, web-development talk and product demo are not interchangeable,
+          even when all three mention AI.
+        </p>
+
+        <h3>If you are applying AI inside a business</h3>
+        <p>
+          Look for operators discussing deployment decisions, team adoption,
+          customer value and measurable outcomes. Proof to Production is
+          positioned for business leaders and founders without requiring a
+          technical background. The Power BI & Fabric group is more specific
+          to analytics and Microsoft’s data ecosystem.
+        </p>
+
+        <h3>If you want collaborators, customers or career connections</h3>
+        <p>
+          Read the audience description and format, not just the talk title.
+          Structured introductions, demos and discussion time can matter more
+          than a large RSVP count. Go to learn and contribute first; treating
+          every conversation as a sales lead usually weakens the relationship.
+        </p>
+
+        <h2>How MLAI checks whether a group is active</h2>
+        <ol>
+          <li>
+            <strong>Find an organiser-controlled page.</strong> Aggregated
+            search results can be stale or can confuse cities with the same
+            name.
+          </li>
+          <li>
+            <strong>Look for a future date.</strong> This is the strongest
+            public signal that someone can register now.
+          </li>
+          <li>
+            <strong>Separate history from availability.</strong> Past events
+            and a stated monthly cadence show a community has operated, but
+            they do not create a future booking.
+          </li>
+          <li>
+            <strong>Check practical details.</strong> A useful listing exposes
+            the audience, agenda, place or platform, price and registration
+            path. Missing access information remains marked missing.
+          </li>
+          <li>
+            <strong>Remove explicitly inactive groups.</strong> PyData Sydney,
+            for example, was not included because its reviewed page said the
+            group was parked and showed no upcoming event.
+          </li>
+          <li>
+            <strong>Recheck before travel.</strong> Venue changes,
+            cancellations and waitlists can appear after a directory review.
+          </li>
+        </ol>
+
+        <h2>Turn one RSVP into a useful community connection</h2>
+        <ol>
+          <li>
+            Write a 20-second introduction: what you are working on, who it is
+            for and what you hope to learn.
+          </li>
+          <li>
+            Prepare one question that can produce a specific answer, such as
+            “What failed when you first moved this workflow into production?”
+          </li>
+          <li>
+            Arrive early enough to understand the room and follow the
+            organiser’s code of conduct.
+          </li>
+          <li>
+            Speak with two or three relevant people rather than collecting as
+            many contacts as possible.
+          </li>
+          <li>
+            Send a short follow-up within a day, referring to the actual
+            conversation and one useful next step.
+          </li>
+          <li>
+            Decide after two events whether the group fits. One unusual agenda
+            is not always representative of the community.
+          </li>
+        </ol>
+
+        <aside className="not-prose my-10 rounded-[28px] border-2 border-gray-950 bg-[#00ffd7] p-6 shadow-[6px_6px_0_#111827] sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#4b1bd1]">
+            Meet the Australian AI community
+          </p>
+          <h2 className="mt-3 text-2xl font-black text-gray-950">
+            Check MLAI’s in-person and online events
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-800">
+            If a Sydney date does not fit, join an MLAI online event or find
+            the next in-person gathering. Event pages publish the audience,
+            format and registration details available for each session.
+          </p>
+          <Link
+            to="/events"
+            className="mt-5 inline-flex rounded-full bg-gray-950 px-5 py-3 text-sm font-black text-white no-underline transition hover:bg-[#4b1bd1] focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-200"
+          >
+            Explore MLAI events
+          </Link>
+        </aside>
+
+        <h2>Send a correction or suggest a Sydney group</h2>
+        <p>
+          Organisers and attendees can{" "}
+          <Link to="/contact">send MLAI a directory correction</Link>. Include
+          the organiser-controlled URL, next event date, intended audience,
+          cost, venue or online format, and any published accessibility contact
+          or adjustments. MLAI will verify the source before changing the
+          activity label.
+        </p>
+
+        <aside className="not-prose my-10 rounded-[28px] bg-gray-950 p-6 text-white sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#00ffd7]">
+            Method, changelog, limitations and disclosure
+          </p>
+          <h2 className="mt-3 text-2xl font-black">
+            A maintained discovery aid with an explicit reporting gap
+          </h2>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-gray-200">
+            <li>
+              <strong className="text-white">Inclusion rule:</strong> a Sydney
+              or Sydney-accessible AI, machine-learning, software, web, data or
+              applied-AI community with public organiser evidence and either a
+              future event or recent recurring activity.
+            </li>
+            <li>
+              <strong className="text-white">Activity rule:</strong> only a
+              visible date after 29 July 2026 receives “upcoming”. Event
+              history alone receives “recent recurring” and a warning to check
+              the next date.
+            </li>
+            <li>
+              <strong className="text-white">Maintenance:</strong>{" "}
+              {SYDNEY_EVENT_DATASET_OWNER} owns the dataset and reviews it{" "}
+              {SYDNEY_EVENT_DATASET_REVIEW_CADENCE.toLowerCase()}. The current
+              dataset was checked on{" "}
+              {formatVerifiedDate(SYDNEY_EVENT_DATASET_VERIFIED_AT)}.
+            </li>
+            <li>
+              <strong className="text-white">Exclusions:</strong> groups with no
+              relevant subject, no attributable organiser source, or an
+              explicit inactive/parked status are not listed. Sponsorship,
+              membership count and past attendance do not buy placement.
+            </li>
+            <li>
+              <strong className="text-white">Limitations:</strong> MLAI did not
+              independently verify venue accessibility, attendee experience,
+              ticket availability or last-minute changes. Unpublished details
+              are labelled “not stated”, not inferred.
+            </li>
+            <li>
+              <strong className="text-white">Original asset:</strong> MLAI
+              created the typed eight-group dataset, future-date confidence
+              labels and goal/format/cost event-fit worksheet for this page.
+              Worksheet choices stay in the browser.
+            </li>
+            <li>
+              <strong className="text-white">Changelog:</strong> this revision
+              removes irrelevant search-query terms, generic networking filler,
+              unrelated references, the separate FAQ schema and an article-only
+              CTA. It adds organiser sources, a correction route, freshness
+              ownership and an Events-first conversion path.
+            </li>
+            <li>
+              <strong className="text-white">Current editorial gate:</strong>{" "}
+              MLAI has not yet interviewed six listed organisers or attended
+              or obtained attributable first-hand reports for three groups. Do
+              not mark this article final or score it 80+ until those reporting
+              gates are completed and the findings are incorporated.
+            </li>
+            <li>
+              <strong className="text-white">AI assistance:</strong> AI tools
+              assisted source discovery, drafting and code generation.
+              Time-sensitive claims were checked against the linked organiser
+              pages; missing first-hand evidence is disclosed rather than
+              simulated.
+            </li>
           </ul>
-          <div data-cf-component-id='image:search-beyond-ai' data-cf-component-type='image' data-cf-component-label='Image: Search beyond events that call themselves AI' data-cf-source-section-id='search-beyond-ai'>
-            <ArticleImageBlock
-              src='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-bc6141f4-5c7f-4ca1-bc5e-7c31637aeee6.jpg?alt=media&token=a3692106-4c55-476a-8810-f5470e02d2f9'
-              alt='Sydney coworking meetup board with startup, UX, web, and small business event flyers pinned on a wall'
-              caption='Search beyond events that call themselves AI'
-              width={1200}
-              height={800}
-            />
-          </div>
-          <QuoteBlock title='Check the agenda first' variant='purple'>
-            Validate the actual event agenda before assuming a meetup will be technical.
-          </QuoteBlock>
-          <h3>Useful search labels</h3>
-          <p>Try combinations such as AI, machine learning, data science, tech startup, IT, web industry, new media, content strategy, UX, and small-business AI support.</p>
-        </div>
-
-        <div id='vet-the-meetup' data-cf-component-id='section:vet-the-meetup' data-cf-component-type='section' data-cf-component-label='Check the signals of a worthwhile meetup' data-cf-source-section-id='vet-the-meetup'>
-          <h2>Check the signals of a worthwhile meetup</h2>
-          <p>Before you spend an evening at a meetup in Sydney, look for signs that the event has a clear purpose. A useful page should tell you who the group is for, what people will discuss, when the next event is, and where it happens.</p>
-          <p>Regularity is another useful signal. A long-running group, or one that shows a history of meetings, suggests there is a community behind the event. A small business meetup can still be casual and friendly while being structured enough to support honest discussion, idea sharing, and experienced opinions.</p>
-          <h3>Quality signals to look for</h3>
-          <p>Look for a defined audience, a clear topic, the next event date, the location, the format, and a practical reason to attend. For example, the value might be advice from people in your field, a workshop, or a focused discussion with others facing similar problems.</p>
-          <ul>
-            <li>Clear audience, such as founders, content designers, small business owners, or people in a defined field.</li>
-            <li>Next event date, location, and format.</li>
-            <li>Signs of regular activity or a long-running community.</li>
-            <li>Practical value, such as discussion, advice, ideas, or a workshop.</li>
-          </ul>
-        </div>
-
-        <div data-cf-component-id='resource-cta:meetup-shortlist-resource' data-cf-component-type='resource-cta' data-cf-component-label='Get the resource'>
-          <ArticleResourceCTA
-            eyebrow='Free checklist'
-            title='Sydney AI and Tech Meetup Finder Checklist'
-            description='Use this checklist to search beyond AI-labelled events, compare meetup signals, and choose one Sydney event that matches your current networking goal.'
-            buttonLabel='Download the PDF'
-            buttonHref='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fresources%2Fhow-to-find-an-ai-and-tech-meetup-in-sydney-checklist-e18bfca9.pdf?alt=media&token=a8a65696-e553-4fdd-996e-c907a23989f3'
-            accent='purple'
-            previewCards={[
-              {
-                title: 'RSVP filter',
-                subtitle: 'PDF',
-                color: 'bg-[#ff3d00]',
-                textColor: 'text-white',
-                rotationClass: 'rotate-[-6deg]',
-              },
-              {
-                title: 'Quality signals',
-                subtitle: 'PDF',
-                color: 'bg-[#00ffd7]',
-                textColor: 'text-black',
-                rotationClass: 'rotate-[7deg]',
-              },
-            ]}
-          />
-        </div>
-
-        <div id='use-adjacent-communities' data-cf-component-id='section:use-adjacent-communities' data-cf-component-type='section' data-cf-component-label='Use business and startup events to meet AI people' data-cf-source-section-id='use-adjacent-communities'>
-          <h2>Use business and startup events to meet AI people</h2>
-          <p>A meetup in Sydney does not need to have “AI” in the title to be useful for AI networking. Business groups can put you in the same room as founders, marketers, operators, and small-business owners who are trying to solve real problems.</p>
-          <p>Startup and digital-industry events can be especially useful for AI founders and builders. A tech startup meetup may help you test an idea, meet potential collaborators, or hear how other founders explain their product. Small-business meetings can offer a more practical setting, where people share honest opinions and experienced advice.</p>
-          <p>Go in with a simple plan.</p>
-          <div data-cf-component-id='image:use-adjacent-communities' data-cf-component-type='image' data-cf-component-label='Image: Use business and startup events to meet AI people' data-cf-source-section-id='use-adjacent-communities'>
-            <ArticleImageBlock
-              src='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-5e2c5237-0611-49a5-ba65-a0efe23f4885.jpg?alt=media&token=72eadcc4-1b4f-4415-91c8-14b59f831ff8'
-              alt='Close-up of founders swapping business cards at a Sydney startup meetup for AI networking'
-              caption='Use business and startup events to meet AI people'
-              width={1200}
-              height={800}
-            />
-          </div>
-          <QuoteBlock title='Contribute before you pitch' variant='purple'>
-            Business events are most useful when you add to the room instead of treating every conversation as a sales opportunity.
-          </QuoteBlock>
-        </div>
-
-        <div id='turn-rsvp-into-network' data-cf-component-id='section:turn-rsvp-into-network' data-cf-component-type='section' data-cf-component-label='Turn one RSVP into a Sydney AI network' data-cf-source-section-id='turn-rsvp-into-network'>
-          <h2>Turn one RSVP into a Sydney AI network</h2>
-          <p>Do not try to attend every meetup in Sydney at once. Shortlist two or three groups that fit your current goal, then RSVP to one event you can attend properly. A tech startup meetup may suit a founder or builder. A small business meeting may suit someone who wants practical advice.</p>
-          <p>Good meetups work because people share ideas, opinions, experience, and useful contacts in a setting that makes conversation easier.</p>
-          <p>After the event, write down the people, topics, and groups that were useful. Then decide your next step: return to the same group, try an adjacent meetup, or get more involved. The right meetup in Sydney is not the busiest one.</p>
-          <ul>
-            <li>Shortlist two or three high-fit groups.</li>
-            <li>Attend one event that matches your immediate goal.</li>
-          </ul>
-          <div data-cf-component-id='image:turn-rsvp-into-network' data-cf-component-type='image' data-cf-component-label='Image: Turn one RSVP into a Sydney AI network' data-cf-source-section-id='turn-rsvp-into-network'>
-            <ArticleImageBlock
-              src='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-698b84e6-c16b-4dfe-b9a6-464dc0a01b59.jpg?alt=media&token=658c6e4f-e4a1-4e8f-9bae-7bdd062ab3f2'
-              alt='Sydney AI meetup attendees chatting after one RSVP at a casual tech networking event'
-              caption='Turn one RSVP into a Sydney AI network'
-              width={1200}
-              height={800}
-            />
-          </div>
-        </div>
+        </aside>
 
         <ArticleReferences
-          references={[
-            { id: 1, href: 'https://maxmyprofit.com.au/sydney-business-meetup-groups/', title: '6 Sydney Business Meetup Groups you Should be a Part Of - MaxMyProfit', publisher: 'maxmyprofit.com.au', description: 'Authoritative reference supporting 6 Sydney Business Meetup Groups you Should be a Part Of - MaxMyProfit.', category: 'guide' },
-            { id: 2, href: 'https://www.australiansmallbusiness.com.au/services/small-business-sydney-meetups/', title: 'Small Business Meetups | Online Business Admin Courses & AI Assistants for Small Business', publisher: 'australiansmallbusiness.com.au', description: 'Authoritative reference supporting Small Business Meetups | Online Business Admin Courses & AI Assistants for Small Business.', category: 'guide' },
-            { id: 3, href: 'https://localsaucetours.com.au/unique-ways-to-meet-people-in-sydney/', title: 'Unique Ways to Meet People in Sydney - Local Sauce Tours', publisher: 'localsaucetours.com.au', description: 'Authoritative reference supporting Unique Ways to Meet People in Sydney - Local Sauce Tours.', category: 'guide' },
-            { id: 4, href: 'https://hannahdemilta.com/2013/01/24/5-tips-for-planning-a-sydney-meetup/', title: '5 Tips for Planning a Sydney Meetup – Hannah DeMilta', publisher: 'hannahdemilta.com', description: 'Authoritative reference supporting 5 Tips for Planning a Sydney Meetup – Hannah DeMilta.', category: 'guide' },
-            { id: 5, href: 'https://au.linkedin.com/company/sydney-content-strategy-meetup', title: 'Sydney Content Strategy Meetup | LinkedIn', publisher: 'au.linkedin.com', description: 'Authoritative reference supporting Sydney Content Strategy Meetup | LinkedIn.', category: 'guide' },
-            { id: 6, href: 'https://events.humanitix.com/good-things-sydney-meetup', title: 'Good Things Sydney Meetup', publisher: 'events.humanitix.com', description: 'Authoritative reference supporting Good Things Sydney Meetup.', category: 'guide' },
-            { id: 7, href: 'https://publicrelationssydney.com.au/networking-groups-in-sydney/', title: 'Networking groups in Sydney', publisher: 'publicrelationssydney.com.au', description: 'Authoritative reference supporting Networking groups in Sydney.', category: 'guide' },
-            { id: 8, href: 'https://www.sydneycontentstrategy.com/', title: 'Sydney content strategy meetup', publisher: 'sydneycontentstrategy.com', description: 'Authoritative reference supporting Sydney content strategy meetup.', category: 'guide' },
-          ]}
-          heading='Sources & further reading'
+          references={[...REFERENCES]}
+          heading="Sydney organiser sources"
+          description="Primary organiser pages checked for the 29 July 2026 revision."
+          previewCount={5}
         />
 
-        <ArticleDisclaimer />
-
-        <div className='my-12 not-prose' data-cf-component-id='cta' data-cf-component-type='company-cta' data-cf-component-label='Company CTA'>
-          <ArticleCompanyCTA
-            title='Build your Sydney AI network with purpose'
-            body='Shortlist the groups that match your goal, check the agenda and format, then attend one event ready to ask a useful question.'
-            buttonText='Explore AI community guides'
-            buttonHref='/articles'
+        <div className="mt-12">
+          <ArticleFAQ
+            items={faqItems}
+            heading="Sydney AI and tech meetup questions"
           />
         </div>
       </div>
-
-      <div data-cf-component-id='author-bio' data-cf-component-type='author-bio' data-cf-component-label='About the Author'>
-        <AuthorBio author={authorDetails} />
-      </div>
-
-      <div className='mt-12' data-cf-component-id='faq' data-cf-component-type='faq' data-cf-component-label='FAQ'>
-        <ArticleFAQ items={faqItems} />
-      </div>
-
-      <ArticleFooterNav backHref='/articles' topHref='#' />
     </>
-  )
+  );
 }

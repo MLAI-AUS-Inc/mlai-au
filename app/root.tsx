@@ -14,6 +14,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
+import { getArticleBySlug } from "~/articles/registry";
 import { useSessionKeepalive } from "~/lib/session-keepalive";
 
 const GA_MEASUREMENT_ID = "G-1645KKLT8B";
@@ -67,6 +68,14 @@ export default function Layout() {
   const location = useLocation();
   const shouldLoadThirdPartyAnalytics = import.meta.env.PROD;
   const pagePath = `${location.pathname}${location.search}`;
+  const articleRouteMatch = location.pathname.match(/^\/articles\/(.+?)\/?$/);
+  const routeArticle = articleRouteMatch
+    ? getArticleBySlug(decodeURIComponent(articleRouteMatch[1]))
+    : undefined;
+  const routeOwnsFullMetadata =
+    Boolean(routeArticle) ||
+    location.pathname === "/mlai-studio/start-project" ||
+    location.pathname === "/founder-tools/start";
 
   useEffect(() => {
     if (!shouldLoadThirdPartyAnalytics) return;
@@ -87,9 +96,13 @@ export default function Layout() {
   const isVibeRaisingLegacyApp =
     location.pathname.startsWith("/vibe-raising/") &&
     location.pathname !== "/vibe-raising/";
+  const isPublicFounderToolsPage =
+    location.pathname === "/founder-tools/start" ||
+    location.pathname === "/founder-tools/start/";
   const isFounderToolsApp =
-    location.pathname === "/founder-tools" ||
-    location.pathname.startsWith("/founder-tools/");
+    !isPublicFounderToolsPage &&
+    (location.pathname === "/founder-tools" ||
+      location.pathname.startsWith("/founder-tools/"));
   const isValleyApp =
     location.pathname === "/valley" ||
     location.pathname.startsWith("/valley/");
@@ -116,34 +129,31 @@ export default function Layout() {
         <meta name="application-name" content="MLAI-website" />
         <meta name="referrer" content="origin-when-cross-origin" />
 
-        {/* Author meta tags */}
-        <meta name="author" content="Dr Sam Donegan" />
-        <meta name="author" content="Dr Lukas Wesemann" />
-
-        {/* Open Graph meta tags */}
-        <meta property="og:title" content="MLAI" />
-        <meta
-          property="og:description"
-          content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
-        />
-        <meta property="og:url" content={`https://mlai.au${location.pathname}`} />
-        <meta property="og:type" content="website" />
-        <meta
-          property="og:image"
-          content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"
-        />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta
-          property="og:image:alt"
-          content="MLAI Logo, a Kangaroo wearing sunglasses"
-        />
-
-        {/* Robots meta tag */}
-        <meta name="robots" content="index, follow" />
-
-        {/* Canonical URL to consolidate http/https/www variants */}
-        <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
+        {!routeOwnsFullMetadata ? (
+          <>
+            {/* Site defaults. Article routes provide exact values through route meta. */}
+            <meta name="author" content="MLAI Aus Inc." />
+            <meta property="og:title" content="MLAI" />
+            <meta
+              property="og:description"
+              content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
+            />
+            <meta property="og:url" content={`https://mlai.au${location.pathname}`} />
+            <meta property="og:type" content="website" />
+            <meta
+              property="og:image"
+              content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"
+            />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta
+              property="og:image:alt"
+              content="MLAI Logo, a Kangaroo wearing sunglasses"
+            />
+            <meta name="robots" content="index, follow" />
+            <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
+          </>
+        ) : null}
 
         <Meta />
         <Links />

@@ -1,0 +1,187 @@
+{
+  "protocolId": "mlai-ai-coding-assistant-benchmark-v1",
+  "title": "AI Coding Assistants Tested on Real Project Tasks",
+  "status": "preregistered-no-results",
+  "preregisteredAt": "2026-07-29",
+  "owner": "MLAI editorial and Studio engineering",
+  "purpose": "Compare coding assistants on reproducible project work without declaring a universal winner.",
+  "toolSelection": {
+    "minimumTools": 4,
+    "maximumTools": 6,
+    "eligibility": [
+      "The tool provides an autonomous or conversational coding workflow that can inspect and edit a local repository.",
+      "MLAI has approved access and can lawfully run the same synthetic fixtures.",
+      "The exact product version, model, settings, price basis, permissions and test date can be recorded.",
+      "The tool can be restricted to an isolated task workspace with the same allowed commands."
+    ],
+    "candidatePool": [
+      "Codex CLI",
+      "Claude Code",
+      "Gemini CLI",
+      "GitHub Copilot coding agent or CLI",
+      "Cursor agent",
+      "Aider"
+    ],
+    "availabilityRule": "If fewer than four eligible tools are frozen before the first trial, do not run or publish a comparison.",
+    "conflictRule": "Record vendor credits, employment, sponsorship, affiliate relationships and free access. Exclude affiliate links from the article."
+  },
+  "tasks": [
+    {
+      "id": "T1",
+      "name": "Boundary bug fix",
+      "category": "bug-fix",
+      "goal": "Repair a deterministic calculation defect without changing the public API.",
+      "primaryVerification": "All hidden boundary and regression tests pass.",
+      "scope": "One implementation file plus tests if the tool chooses to add them."
+    },
+    {
+      "id": "T2",
+      "name": "API error handling",
+      "category": "api-error-handling",
+      "goal": "Handle non-2xx, malformed payload, timeout and caller-abort paths while preserving the success contract.",
+      "primaryVerification": "All hidden response, abort and error-shape tests pass.",
+      "scope": "One API client module and its public types."
+    },
+    {
+      "id": "T3",
+      "name": "Behaviour-preserving refactor",
+      "category": "refactor",
+      "goal": "Remove duplicated order-grouping logic without changing observable output or input immutability.",
+      "primaryVerification": "Golden-output, immutability and edge-case tests pass.",
+      "scope": "Two implementation modules sharing duplicated logic."
+    },
+    {
+      "id": "T4",
+      "name": "Test generation",
+      "category": "test-generation",
+      "goal": "Write tests for a documented string-normalisation utility without editing production code.",
+      "primaryVerification": "Submitted tests detect the pre-registered mutation set and contain no vacuous assertions.",
+      "scope": "Tests only; production-file changes fail the scope check."
+    },
+    {
+      "id": "T5",
+      "name": "UI state reducer",
+      "category": "ui-state",
+      "goal": "Fix asynchronous request-state transitions, including stale responses and retry.",
+      "primaryVerification": "Hidden reducer sequence, stale-response and immutability tests pass.",
+      "scope": "A framework-independent TypeScript reducer and its types."
+    },
+    {
+      "id": "T6",
+      "name": "Multi-file agent workflow",
+      "category": "agent-workflow",
+      "goal": "Add a small export feature across validation, transformation and command layers.",
+      "primaryVerification": "Hidden end-to-end, error-path and out-of-scope checks pass.",
+      "scope": "Three named source files and optional tests; unrelated files are protected."
+    }
+  ],
+  "trialDesign": {
+    "repetitionsPerToolTask": 3,
+    "minimumTrials": 72,
+    "maximumTrials": 108,
+    "randomisation": {
+      "method": "Deterministic blocked randomisation within each task and repetition.",
+      "seed": "MLAI-CODE-BENCHMARK-V1-2026-07-29",
+      "freezeBeforeRuns": true
+    },
+    "workspace": [
+      "Every trial starts from a fresh copy of the same fixture commit.",
+      "The assistant can see the task prompt, fixture source, visible tests and documented commands.",
+      "Hidden acceptance tests and reference changes stay outside the assistant workspace until verification.",
+      "Package installation and network retrieval from the task workspace are disabled.",
+      "Only synthetic data and MLAI-authored or permissively licensed code are used."
+    ],
+    "limits": {
+      "wallClockMinutes": 20,
+      "initialPromptCount": 1,
+      "plannedHumanInterventions": 0,
+      "retryAfterAssistantFailure": false
+    },
+    "operatorRule": "The operator may correct only an authentication or benchmark-infrastructure failure that is independent of the assistant output. The original trial is preserved and exclusion is decided from the pre-registered rules."
+  },
+  "outcomes": {
+    "primary": {
+      "name": "Verified completion without regression or out-of-scope changes",
+      "unit": "binary per trial",
+      "passRule": "Every task-specific hidden acceptance test passes, all baseline tests pass, protected-file hashes match and no disallowed file is added.",
+      "reporting": "Report pass count and rate by tool and task with a Wilson 95% confidence interval. Do not collapse the result into one universal winner."
+    },
+    "secondary": [
+      "Wall-clock seconds",
+      "Assistant-reported or provider-reported input and output tokens, otherwise null",
+      "Provider-reported cost in original currency and test-date AUD conversion, otherwise null",
+      "Human interventions",
+      "Commands and test runs",
+      "Files read when the tool exposes this information, otherwise null",
+      "Files changed, lines added and lines removed",
+      "Baseline regressions",
+      "Out-of-scope changes",
+      "Claimed completion versus verified completion",
+      "Blinded maintainability and scope score"
+    ],
+    "missingDataRule": "Keep missing tokens, costs or file-read telemetry null. Do not estimate or rank missing values as zero."
+  },
+  "humanReview": {
+    "blinding": "Remove tool name, model, run order and provider-specific attribution from diffs before review.",
+    "reviewers": "Name at least one independent software reviewer before the first trial; the experiment operator cannot be the only reviewer.",
+    "dimensions": [
+      "Correctness reasoning",
+      "Maintainability",
+      "Scope discipline",
+      "Security and privacy handling",
+      "Clarity of added tests or documentation"
+    ],
+    "scale": "1 to 5 per dimension using anchored definitions frozen with the fixtures."
+  },
+  "exclusions": [
+    {
+      "code": "E1",
+      "rule": "Provider authentication or service outage before the assistant receives the prompt.",
+      "action": "Preserve the record, mark infrastructure exclusion and rerun once at the end of the same block."
+    },
+    {
+      "code": "E2",
+      "rule": "Benchmark harness defect proven to affect the fixture or verifier before results are unblinded.",
+      "action": "Pause all tools, amend the protocol, rebuild every affected trial and report the amendment."
+    },
+    {
+      "code": "E3",
+      "rule": "Assistant timeout, refusal, crash, invalid edit or failure to finish after receiving the prompt.",
+      "action": "Count as a failed trial; do not rerun."
+    }
+  ],
+  "analysis": {
+    "primaryComparison": "Task-stratified pass rates and absolute pass-rate differences.",
+    "uncertainty": "Wilson 95% confidence intervals; descriptive task-level results because the sample is small.",
+    "ties": "Report ties and constraint-specific trade-offs. No tie-break based on subjective preference.",
+    "sensitivity": [
+      "Include all trials under intention-to-test.",
+      "Show results with infrastructure exclusions removed.",
+      "Report task-level outcomes so one easy task cannot hide a critical-task failure."
+    ]
+  },
+  "requiredArtifacts": [
+    "Frozen protocol and amendments",
+    "Fixture source and licence notes",
+    "Visible and hidden tests",
+    "Reference verifier checks",
+    "Tool roster, versions, models, prices, settings and permissions",
+    "Randomisation schedule",
+    "Initial prompts",
+    "Raw run records and sanitised logs",
+    "Git diffs and final workspace hashes",
+    "Verifier output",
+    "Blinded human-review records",
+    "Analysis code and machine-readable results",
+    "Failures and exclusions"
+  ],
+  "releaseGates": [
+    "At least four eligible tools and all exact settings are frozen before the first trial.",
+    "All six fixtures and hidden tests pass independent validation before the first trial.",
+    "The full pre-registered run matrix is complete or every missing trial has a pre-registered exclusion.",
+    "Failures, missing telemetry and protocol amendments are included.",
+    "Named engineering, security/privacy, editorial and accessibility reviewers sign off.",
+    "The replacement article contains no affiliate ranking and makes no universal-winner claim.",
+    "The date-neutral canonical passes the MLAI article score gate before the stale URL receives a one-hop 301."
+  ]
+}
