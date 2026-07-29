@@ -89,7 +89,7 @@ gh repo clone MLAI-AUS-Inc/roo
 Optional for content/article flows:
 
 ```bash
-gh repo clone MLAI-AUS-Inc/content-factory
+gh repo clone drsamdonegan/content-factory
 ```
 
 If this fails, ask an admin to confirm the repo name and grant access.
