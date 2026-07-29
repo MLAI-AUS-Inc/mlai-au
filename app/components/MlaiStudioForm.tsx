@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { API_URL } from "~/lib/api";
+import { trackAttributedConversion } from "~/lib/article-conversions";
 
 /* ============================================================
    MLAI STUDIO — multi-step application form
@@ -347,6 +348,7 @@ export default function ApplicationForm() {
       return;
     }
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    trackAttributedConversion("studio_builder_application_submitted");
     setSubmitting(false);
     setDone(true);
   };

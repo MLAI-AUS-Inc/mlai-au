@@ -1,0 +1,27 @@
+{
+  "status": "template-not-frozen",
+  "freezeBeforeFirstTrial": true,
+  "pricingSnapshotDate": null,
+  "tools": [
+    {
+      "toolName": "",
+      "productVersion": "",
+      "model": "",
+      "modelVersionOrSnapshot": "",
+      "accountTier": "",
+      "priceBasis": "",
+      "currency": "",
+      "temperatureOrEffort": "",
+      "contextSetting": "",
+      "permissionMode": "",
+      "dataRetentionSetting": "",
+      "trainingUseSetting": "",
+      "officialProductSource": "",
+      "officialPricingSource": "",
+      "officialPrivacySource": "",
+      "conflictsOrFreeAccess": "",
+      "approvedBy": "",
+      "approvedAt": ""
+    }
+  ]
+}

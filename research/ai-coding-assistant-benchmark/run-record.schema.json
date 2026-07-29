@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mlai.au/research/ai-coding-assistant-benchmark/run-record.schema.json",
+  "title": "MLAI coding-assistant benchmark run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolId",
+    "trialId",
+    "toolId",
+    "taskId",
+    "repetition",
+    "startedAt",
+    "finishedAt",
+    "termination",
+    "assistantClaimedComplete",
+    "verification",
+    "workspace"
+  ],
+  "properties": {
+    "protocolId": {
+      "const": "mlai-ai-coding-assistant-benchmark-v1"
+    },
+    "trialId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "toolId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "taskId": {
+      "enum": ["T1", "T2", "T3", "T4", "T5", "T6"]
+    },
+    "repetition": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finishedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "wallClockSeconds": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "termination": {
+      "enum": ["completed", "timeout", "refusal", "crash", "infrastructure-exclusion"]
+    },
+    "assistantClaimedComplete": {
+      "type": "boolean"
+    },
+    "tokens": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "output": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "cost": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "currency": {
+          "type": ["string", "null"]
+        },
+        "source": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "humanInterventions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hiddenAcceptancePassed",
+        "baselinePassed",
+        "protectedHashesMatch",
+        "disallowedFilesAdded",
+        "verifiedCompletion"
+      ],
+      "properties": {
+        "hiddenAcceptancePassed": {
+          "type": "boolean"
+        },
+        "baselinePassed": {
+          "type": "boolean"
+        },
+        "protectedHashesMatch": {
+          "type": "boolean"
+        },
+        "disallowedFilesAdded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verifiedCompletion": {
+          "type": "boolean"
+        },
+        "verifierOutputPath": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixtureCommit", "finalCommit", "diffPath", "filesChanged"],
+      "properties": {
+        "fixtureCommit": {
+          "type": "string"
+        },
+        "finalCommit": {
+          "type": ["string", "null"]
+        },
+        "diffPath": {
+          "type": "string"
+        },
+        "filesChanged": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "linesAdded": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "linesRemoved": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "exclusionCode": {
+      "enum": ["E1", "E2", null]
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

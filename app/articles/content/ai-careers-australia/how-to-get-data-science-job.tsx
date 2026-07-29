@@ -271,7 +271,7 @@ export default function ArticlePage() {
           {/* SECTION: Compliance & logistics */}
           <h2>Logistics: right to work, clearance, and salary research</h2>
           <p>
-            Ensure you can evidence Australian work rights; some government/defence roles require background checks or security clearances. Salary bands vary by city, sector, and role seniority—use multiple sources (recent ads, salary guides) and note that figures can change; see our <a href="/articles/featured/how-much-do-data-scientists-make">data scientist salary guide</a> for detailed ranges as at 2026.
+            Ensure you can evidence Australian work rights; some government/defence roles require background checks or security clearances. Salary bands vary by city, sector, role seniority, and whether the figure is base pay or a package—compare recent disclosed advertisements with multiple current salary sources.
           </p>
 
           <AudienceGrid

@@ -5,6 +5,7 @@ export default [
   route("/dashboard", "routes/dashboard.tsx"),
   route("/sponsors", "routes/sponsors.tsx"),
   route("/mlai-studio", "routes/mlai-studio.tsx"),
+  route("/mlai-studio/start-project", "routes/mlai-studio.start-project.tsx"),
   route("/press-kit", "routes/press-kit.tsx"),
   route("/volunteers", "routes/volunteers.tsx"),
   route("/events", "routes/events.tsx"),
@@ -108,12 +109,16 @@ export default [
   route("/articles/startups/how-vcs-value-startups", "routes/article-link-cleanups.tsx", { id: "cleanup-startups-how-vcs-value-startups" }),
   route("/articles/ai-startup-accelerator", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-startup-accelerator" }),
   route("/articles/featured/ai-startup-accelerator", "routes/article-link-cleanups.tsx", { id: "cleanup-featured-ai-startup-accelerator" }),
+  route("/articles/featured/what-is-artificial-intelligence-with-example-for-everyday-readers", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-example-duplicate" }),
+  route("/articles/featured/how-to-startup-a-practical-guide-for-first-time-founders", "routes/article-link-cleanups.tsx", { id: "cleanup-how-to-startup-duplicate" }),
+  route("/articles/featured/what-is-agi-in-artificial-intelligence-and-why-it-matters", "routes/article-link-cleanups.tsx", { id: "cleanup-agi-acronym-duplicate" }),
   route("/articles/*", "routes/articles.slug.tsx"),
 
   // Vibe Raising public landing
   route("/vibe-raising", "routes/vibe-raising-landing.tsx"),
 
   // Founder Tools App routes
+  route("/founder-tools/start", "routes/founder-tools-start.tsx"),
   route("/founder-tools", "routes/vibe-raising-app.tsx", { id: "founder-tools-root" }, [
     index("routes/founder-tools.index.tsx"),
     route("upgrade", "routes/founder-tools.upgrade.tsx"),

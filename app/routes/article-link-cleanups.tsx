@@ -18,6 +18,9 @@ const ARTICLE_LINK_CLEANUPS: Record<string, string> = {
   "/articles/startups/how-vcs-value-startups": "/articles/featured/how-vcs-value-startups",
   "/articles/ai-startup-accelerator": "/articles/featured/startup-accelerator-australia",
   "/articles/featured/ai-startup-accelerator": "/articles/featured/startup-accelerator-australia",
+  "/articles/featured/what-is-artificial-intelligence-with-example-for-everyday-readers": "/articles/featured/what-is-artificial-intelligence-in-simple-words",
+  "/articles/featured/how-to-startup-a-practical-guide-for-first-time-founders": "/articles/featured/what-an-entrepreneur-does-and-how-to-start-well",
+  "/articles/featured/what-is-agi-in-artificial-intelligence-and-why-it-matters": "/articles/featured/what-is-general-artificial-intelligence-and-why-it-matters",
 };
 
 export function loader({ request }: Route.LoaderArgs) {

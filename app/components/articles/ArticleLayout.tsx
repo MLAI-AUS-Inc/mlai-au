@@ -6,6 +6,7 @@ import { type ArticleWithSlug } from "~/articles/registry"
 import {
   getArticleBySlug,
   getNextArticleSlug, // implemented
+  isArticleIndexable,
   ORDERED_ARTICLE_ROUTE_SLUGS,
   resolveArticleRouteSlug,
 } from "~/articles/registry"
@@ -20,14 +21,13 @@ import RelatedArticlesCarousel from '../RelatedArticlesCarousel'
 import ProfessionalsCarousel from '../ProfessionalsCarousel'
 import { ArticleDisclaimer } from './ArticleDisclaimer'
 import UpcomingEventsCTA from './UpcomingEventsCTA'
+import ArticleConversionCTA from './ArticleConversionCTA'
 import { type Event } from '~/lib/events'
 // import { loadArticleFeaturedProfessionals } from '@/lib/professionals/articleFeaturedProfessionals'
 import type { ClinicianProfile } from '~/data/types'
 import type { ArticleFAQItem } from './ArticleFAQ'
 
-const DEFAULT_SITE_URL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL)
-  ? process.env.NEXT_PUBLIC_SITE_URL
-  : 'https://mlai.au'
+const DEFAULT_SITE_URL = 'https://mlai.au'
 
 
 type ArticleHowToStep = {
@@ -179,19 +179,22 @@ function buildArticleStructuredData({
   }
 
   if (article.author) {
+    const isEditorialTeam = /team|mlai/i.test(article.author)
     articleNode.author = {
-      '@type': 'Person',
+      '@type': isEditorialTeam ? 'Organization' : 'Person',
       name: article.author,
+      ...(isEditorialTeam ? { url: DEFAULT_SITE_URL } : {}),
     }
   }
 
   articleNode.publisher = {
     '@type': 'Organization',
-    name: 'Support Sorted',
+    '@id': `${DEFAULT_SITE_URL}/#organization`,
+    name: 'MLAI Aus Inc.',
     url: DEFAULT_SITE_URL,
     logo: {
       '@type': 'ImageObject',
-      url: `${DEFAULT_SITE_URL}/favicon_128px.png`,
+      url: `${DEFAULT_SITE_URL}/mlai-logo.webp`,
     },
   }
 
@@ -339,6 +342,10 @@ function buildRelatedArticleSlugs(
     .filter((href: any) => typeof href === 'string' && href.startsWith('/articles/'))
     .map((href: string) => href.replace(/^\/articles\//, '').replace(/\/$/, ''))
     .filter((slug: string) => slug && slug !== currentSlug)
+    .filter((slug: string) => {
+      const relatedArticle = getArticleBySlug(slug)
+      return Boolean(relatedArticle && isArticleIndexable(relatedArticle))
+    })
 
   if (fromConfig.length > 0) {
     return Array.from(new Set(fromConfig))
@@ -506,7 +513,8 @@ export function ArticleLayout({
   const breadcrumbJson = resolvedBreadcrumbItems
     ? createBreadcrumbJson(resolvedBreadcrumbItems, articlePath)
     : null
-  const showCitations = Boolean(seoConfig.citations)
+  const isUnderEditorialReview = article.publicationStatus === 'under-review'
+  const showCitations = !isUnderEditorialReview && Boolean(seoConfig.citations)
   const routeSlug = resolvedRouteSlug.replace(/^\/+/, "")
 
   const resolvedPersona = featuredProfessionalsPersona ?? article.professionalsPersona
@@ -523,7 +531,9 @@ export function ArticleLayout({
   const nextArticleSlug = getNextArticleSlug(routeSlug)
   const hasMultipleArticles = ORDERED_ARTICLE_ROUTE_SLUGS.length > 1
   const shouldShowNextArticle = Boolean(
-    nextArticleSlug && (hasMultipleArticles || nextArticleSlug !== routeSlug),
+    !isUnderEditorialReview &&
+    nextArticleSlug &&
+    (hasMultipleArticles || nextArticleSlug !== routeSlug),
   )
   const nextArticleMeta = shouldShowNextArticle && nextArticleSlug
     ? getArticleBySlug(nextArticleSlug)
@@ -532,7 +542,9 @@ export function ArticleLayout({
     ? `/articles/${nextArticleSlug}`
     : undefined
 
-  const relatedArticleSlugs = buildRelatedArticleSlugs(articlePath, routeSlug)
+  const relatedArticleSlugs = isUnderEditorialReview
+    ? []
+    : buildRelatedArticleSlugs(articlePath, routeSlug)
   const canonicalUrl = new URL(articlePath, DEFAULT_SITE_URL).toString()
   const structuredDataConfig = seoConfig.structuredData
   const structuredFaqItems =
@@ -634,7 +646,7 @@ export function ArticleLayout({
                 </div>
               ) : null}
               <div data-article-content>{children}</div>
-              {showDisclaimer ? <ArticleDisclaimer /> : null}
+              {showDisclaimer && !isUnderEditorialReview ? <ArticleDisclaimer /> : null}
               <div className="not-prose my-12">
                 {/* <FindProfessionalsCTA
                   id="find-professionals"
@@ -736,12 +748,22 @@ export function ArticleLayout({
               </div>
             </div> */}
 
-            {/* -------- Bottom CTA: Upcoming Events -------- */}
-            <UpcomingEventsCTA
-              events={upcomingEvents ?? []}
-              maxEvents={3}
-              className={`mx-auto ${resolvedContentMaxWidth} mt-16`}
-            />
+            {seoConfig.conversion ? (
+              <ArticleConversionCTA
+                articleSlug={article.slug}
+                config={seoConfig.conversion}
+                events={upcomingEvents ?? []}
+                className={`mx-auto ${resolvedContentMaxWidth} mt-16`}
+              />
+            ) : (
+              // Preserve existing conversion behaviour until each remaining
+              // article has been assigned an intent-specific CTA.
+              <UpcomingEventsCTA
+                events={upcomingEvents ?? []}
+                maxEvents={3}
+                className={`mx-auto ${resolvedContentMaxWidth} mt-16`}
+              />
+            )}
           </article>
         </div>
       </div>

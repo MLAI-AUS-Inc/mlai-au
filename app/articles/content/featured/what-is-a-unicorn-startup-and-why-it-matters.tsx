@@ -1,294 +1,582 @@
-import type { ReactNode } from 'react'
-import { Home } from 'lucide-react'
-import { AcademicCapIcon, RocketLaunchIcon, UsersIcon } from '@heroicons/react/24/outline'
-import { DEFAULT_AUTHOR_KEY, getAuthorProfile, DEFAULT_AUTHOR_AVATAR_FALLBACK_URL } from '~/articles/authors'
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import QuoteBlock from '../../../components/articles/QuoteBlock'
-import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
-import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
-import { ArticleStepList } from '../../../components/articles/ArticleStepList'
-import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
-import { ArticleReferences } from '../../../components/articles/ArticleReferences'
-import ArticleDisclaimer from '../../../components/articles/ArticleDisclaimer'
+import type { ReactNode } from "react";
+import { Home } from "lucide-react";
+import { Link } from "react-router";
 
-export const useCustomHeader = true
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleReferences } from "~/components/articles/ArticleReferences";
+import UnicornValuationCalculator from "~/components/articles/UnicornValuationCalculator";
+import {
+  AUSTRALIAN_UNICORN_EVIDENCE,
+  UNICORN_DATASET_OWNER,
+  UNICORN_DATASET_REVIEW_CADENCE,
+  UNICORN_DATASET_VERIFIED_AT,
+} from "~/lib/australian-unicorn-evidence";
 
-const TOPIC = "What Is a Unicorn Startup and Why It Matters"
-export const CATEGORY = "featured"
-export const SLUG = "what-is-a-unicorn-startup-and-why-it-matters"
-export const DATE_PUBLISHED = "2026-04-23"
-export const DATE_MODIFIED = "2026-04-23"
-export const DESCRIPTION = "What is unicorn startup? Learn the definition, how private valuations work, why the label matters, and why it does not guarantee profitability or long-term success."
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d806828c-a396-45ac-899e-2757423ebb86.jpg?alt=media&token=68db8b05-de8f-473e-aff2-f3bc4ecec96a"
-const HERO_IMAGE_ALT = "Startup founders reviewing unicorn startup valuation on a laptop in a candid"
-export const FEATURED_FOCUS = "startups"
+export const useCustomHeader = true;
 
-const AUTHOR_PROFILE = getAuthorProfile(DEFAULT_AUTHOR_KEY)
-const AUTHOR = AUTHOR_PROFILE?.name ?? 'Dr Sam Donegan'
-const AUTHOR_ROLE = AUTHOR_PROFILE?.role ?? AUTHOR_PROFILE?.credentials ?? 'Founder'
-const AUTHOR_BIO = AUTHOR_PROFILE?.bio ?? ''
-const AUTHOR_AVATAR = AUTHOR_PROFILE?.avatarUrl ?? DEFAULT_AUTHOR_AVATAR_FALLBACK_URL
+const TOPIC =
+  "What Is a Unicorn Startup? Australian Examples and a Valuation Calculator";
+export const CATEGORY = "featured";
+export const SLUG = "what-is-a-unicorn-startup-and-why-it-matters";
+export const DATE_PUBLISHED = "2026-04-23";
+export const DATE_MODIFIED = "2026-07-29";
+export const DESCRIPTION =
+  "Understand the US$1 billion unicorn threshold, inspect five sourced Australian valuation events, and model dilution in a transparent founder calculator.";
+const HERO_IMAGE =
+  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d806828c-a396-45ac-899e-2757423ebb86.jpg?alt=media&token=68db8b05-de8f-473e-aff2-f3bc4ecec96a";
+const HERO_IMAGE_ALT =
+  "Australian startup founders checking a valuation and ownership scenario";
 
 interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
+  id: number;
+  question: string;
+  answer: ReactNode;
 }
 
 export const faqItems: FAQ[] = [
-  { id: 1, question: "Who coined the term unicorn startup?", answer: "A unicorn startup is a privately owned startup valued at more than US$1 billion. That is the core definition used in startup and finance coverage. The private part matters: a unicorn is not a company that is already listed on a public share market. In practice, the label is about valuation. It tells you that investors or the market have priced the company ab." },
-  { id: 2, question: "Does a unicorn have to be a private company?", answer: "Yes. In this context, a unicorn is a privately held startup valued at more than US$1 billion. Publicly listed companies are not usually described with the term." },
-  { id: 3, question: "How does a startup reach a US$1 billion valuation?", answer: "It typically happens in a private funding round, where investors and the company agree on a valuation. That figure reflects expectations about future growth, market size, and competitive strength." },
-  { id: 4, question: "Does unicorn status mean a startup is profitable or low risk?", answer: "No. The label points to valuation, not guaranteed profits, resilience, or long-term leadership. A company can be a unicorn while still losing money or facing future valuation pressure." },
-  { id: 5, question: "Can a unicorn lose that status later?", answer: "Yes. Private valuations can fall when market conditions weaken, interest rates rise, or investors become more cautious. The label reflects a point-in-time valuation, not a permanent result." },
-]
+  {
+    id: 1,
+    question: "What is a unicorn startup?",
+    answer:
+      "In common current usage, a unicorn is a privately held startup with a valuation of at least US$1 billion. The valuation is a dated estimate or transaction term, not cash in the bank and not proof of profitability.",
+  },
+  {
+    id: 2,
+    question: "Does a US$1 billion valuation mean the company received US$1 billion?",
+    answer:
+      "No. A funding round may invest a much smaller amount at a negotiated company valuation. In a secondary sale, cash generally goes to the selling shareholder rather than the company.",
+  },
+  {
+    id: 3,
+    question: "What is the difference between pre-money and post-money valuation?",
+    answer:
+      "In a simple primary priced round, pre-money is the negotiated company value immediately before the new investment and post-money is pre-money plus the new primary cash. Real documents can add option-pool, security and preference effects.",
+  },
+  {
+    id: 4,
+    question: "Can a startup lose unicorn status?",
+    answer:
+      "Yes. A later priced round, secondary transaction, impairment, acquisition or public listing can make the old label stale or no longer applicable. When no current price is disclosed, the honest status is unknown.",
+  },
+  {
+    id: 5,
+    question: "Which Australian-founded startups have had unicorn valuations?",
+    answer:
+      "This page documents explicit US-dollar valuation events for Airwallex, Canva, Culture Amp, Go1 and Linktree. It is a verified sample, not a complete or current ranking of Australian unicorns.",
+  },
+  {
+    id: 6,
+    question: "How does MLAI handle Australian-dollar valuations?",
+    answer:
+      "The core evidence table requires a source that explicitly states at least US$1 billion. MLAI does not use a live or historical exchange-rate conversion to push an ambiguous Australian-dollar announcement over the threshold.",
+  },
+  {
+    id: 7,
+    question: "Is the dilution calculator financial advice?",
+    answer:
+      "No. It is a simplified educational model for a primary priced round. It excludes option-pool changes, SAFEs, convertible notes, preferences, debt, tax and secondary transactions. Founders should obtain qualified advice on their actual documents.",
+  },
+];
 
 export const summaryHighlights = {
-  heading: "Key facts: What Is a Unicorn Startup and Why It Matters",
-  intro: "What is unicorn startup? Learn the definition, how private valuations work, why the label matters, and why it does not guarantee profitability or long-term success.",
+  heading: "A valuation milestone, not a quality certificate",
+  intro:
+    "Use a unicorn label as the start of diligence: check the date, currency, transaction and ownership effects.",
   items: [
-    { label: "What defines a unicorn startup?", description: "A unicorn startup is a privately owned startup valued at more than US$1 billion. The term describes a private-market valuation milestone, not automatic proof of profitability, maturity, or lasting success." },
-    { label: "Is it true that 90% of startups fail?", description: "This article does not verify any single failure-rate figure for startups. Its grounded focus is narrower: what the unicorn label means, how private valuations are set, and why that label can mislead." },
-    { label: "What is the 50 100 500 rule startup?", description: "The grounded source material for this article does not define a 50 100 500 startup rule. Instead, it explains unicorn status as a private valuation above US$1 billion, usually set during funding rounds." },
+    {
+      label: "Five attributable examples",
+      description:
+        "Every company row links to an announcement that explicitly reports a US$1 billion-plus valuation.",
+    },
+    {
+      label: "Current status is separated",
+      description:
+        "Historical threshold evidence is not presented as a continuously valid market price.",
+    },
+    {
+      label: "The maths is inspectable",
+      description:
+        "Change the round inputs, see the formula and download the simplified scenario as CSV.",
+    },
   ],
-}
+};
 
 export const articleMeta = {
-  title: "What Is a Unicorn Startup and Why It Matters",
+  title: TOPIC,
   topic: TOPIC,
   category: CATEGORY,
   slug: SLUG,
   description: DESCRIPTION,
   datePublished: DATE_PUBLISHED,
   dateModified: DATE_MODIFIED,
-  author: AUTHOR,
   image: HERO_IMAGE,
   imageAlt: HERO_IMAGE_ALT,
-  featuredFocus: FEATURED_FOCUS,
-}
+  featuredFocus: "startups",
+};
 
-const faqSchemaItems = [
-  { question: "What defines a unicorn startup?", answer: "A unicorn startup is a privately owned startup valued at more than US$1 billion. The term describes a private-market valuation milestone, not automatic proof of profitability, maturity, or lasting success." },
-  { question: "Is it true that 90% of startups fail?", answer: "This article does not verify any single failure-rate figure for startups. Its grounded focus is narrower: what the unicorn label means, how private valuations are set, and why that label can mislead." },
-  { question: "What is the 50 100 500 rule startup?", answer: "The grounded source material for this article does not define a 50 100 500 startup rule. Instead, it explains unicorn status as a private valuation above US$1 billion, usually set during funding rounds." },
-  { question: "Who coined the term unicorn startup?", answer: "A unicorn startup is a privately owned startup valued at more than US$1 billion. That is the core definition used in startup and finance coverage. The private part matters: a unicorn is not a company that is already listed on a public share market. In practice, the label is about valuation. It tells you that investors or the market have priced the company ab." },
-  { question: "Does a unicorn have to be a private company?", answer: "Yes. In this context, a unicorn is a privately held startup valued at more than US$1 billion. Publicly listed companies are not usually described with the term." },
-  { question: "How does a startup reach a US$1 billion valuation?", answer: "It typically happens in a private funding round, where investors and the company agree on a valuation. That figure reflects expectations about future growth, market size, and competitive strength." },
-  { question: "Does unicorn status mean a startup is profitable or low risk?", answer: "No. The label points to valuation, not guaranteed profits, resilience, or long-term leadership. A company can be a unicorn while still losing money or facing future valuation pressure." },
-  { question: "Can a unicorn lose that status later?", answer: "Yes. Private valuations can fall when market conditions weaken, interest rates rise, or investors become more cautious. The label reflects a point-in-time valuation, not a permanent result." },
-]
-
-const faqStructuredData = faqSchemaItems.length
-  ? JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqSchemaItems.map((item) => ({
-        '@type': 'Question',
-        name: item.question,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: item.answer,
-        },
-      })),
-    })
-  : null
+const REFERENCES = [
+  {
+    id: 1,
+    href: "https://techcrunch.com/2013/11/02/welcome-to-the-unicorn.club/",
+    title: "Welcome To The Unicorn Club: Learning From Billion-Dollar Startups",
+    publisher: "Aileen Lee, TechCrunch",
+    description:
+      "The 2013 article that introduced the term and explicitly described its snapshot and source limitations.",
+    category: "analysis",
+  },
+  {
+    id: 2,
+    href: "https://www.airwallex.com/global/blog/the-ai-era-has-no-home-market-build-accordingly",
+    title: "The AI Era Has No Home Market. Build Accordingly.",
+    publisher: "Airwallex",
+    description:
+      "Company announcement of a June 2026 financing at a US$11 billion valuation.",
+    category: "industry",
+  },
+  {
+    id: 3,
+    href: "https://www.canva.com/newsroom/news/canva-announces-usd-40-billion-valuation-fueled-global-demand-visual-communication/",
+    title: "Canva Announces USD 40 Billion Valuation",
+    publisher: "Canva",
+    description:
+      "Company announcement of a September 2021 US$200 million round and US$40 billion valuation.",
+    category: "industry",
+  },
+  {
+    id: 4,
+    href: "https://www.cultureamp.com/company/announcements/global-employee-experience-leader-culture-amp-raises-100-million",
+    title: "Culture Amp raises $100M in Series F funding round",
+    publisher: "Culture Amp",
+    description:
+      "Company announcement of a July 2021 Series F and valuation above US$1.5 billion.",
+    category: "industry",
+  },
+  {
+    id: 5,
+    href: "https://www.globenewswire.com/news-release/2021/07/19/2264897/0/en/go1-raises-200-million-in-series-d-funding-to-further-corporate-learning.html",
+    title: "Go1 Raises $200 Million in Series D Funding",
+    publisher: "Go1 via GlobeNewswire",
+    description:
+      "Company announcement of a July 2021 Series D and valuation above US$1 billion.",
+    category: "industry",
+  },
+  {
+    id: 6,
+    href: "https://www.prnewswire.com/news-releases/linktree-raises-110-million-usd-led-by-index-and-coatue-to-power-next-phase-of-growth-for-creators-consumers-and-brands-301503884.html",
+    title: "Linktree Raises $110 Million USD Led by Index and Coatue",
+    publisher: "Linktree via PR Newswire",
+    description:
+      "Company announcement of a March 2022 round at a US$1.3 billion valuation.",
+    category: "industry",
+  },
+  {
+    id: 7,
+    href: "https://business.gov.au/finance/funding/choose-your-funding",
+    title: "Choose your funding",
+    publisher: "business.gov.au",
+    description:
+      "Australian Government comparison of equity finance and other business funding paths.",
+    category: "government",
+  },
+  {
+    id: 8,
+    href: "https://business.gov.au/grants-and-programs/venture-capital/safe-notes",
+    title: "SAFE Notes",
+    publisher: "business.gov.au",
+    description:
+      "Australian Government explanation of SAFE mechanics and legal qualification.",
+    category: "government",
+  },
+  {
+    id: 9,
+    href: "https://asic.gov.au/regulatory-resources/fundraising/",
+    title: "Fundraising",
+    publisher: "ASIC",
+    description:
+      "Australian fundraising rules and regulatory starting points.",
+    category: "government",
+  },
+] as const;
 
 export default function ArticleContent() {
-  const authorDetails = {
-    name: AUTHOR,
-    role: AUTHOR_ROLE,
-    bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR,
-  }
-
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
       <ArticleHeroHeader
         breadcrumbs={[
-          { label: 'Home', href: '/', icon: Home },
-          { label: 'Articles', href: "/articles" },
+          { label: "Home", href: "/", icon: Home },
+          { label: "Articles", href: "/articles" },
           { label: TOPIC, current: true },
         ]}
         title={TOPIC}
-        titleHighlight={TOPIC}
+        titleHighlight="Unicorn Startup"
         headerBgColor="cyan"
         summary={summaryHighlights}
         heroImage={HERO_IMAGE}
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <ArticleTocPlaceholder className="bg-transparent" />
-
       <div className="prose prose-lg prose-slate max-w-none bg-transparent">
-        <p><strong>{TOPIC}</strong> — {"A unicorn startup is a privately owned startup valued at more than US$1 billion. That is the core definition used in startup and finance coverage. The private part matters: a unicorn is not a company that is already listed on a public share market."}</p>
-        <p>{"In practice, the label is about valuation. It tells you that investors or the market have priced the company above the billion-dollar mark while it is still privately held. It does not mean every unicorn looks the same, and it should not be read as a full verdict on the company beyond that valuation milestone."}</p>
-        <p>{"The term became popular because these companies were once seen as unusually rare. Source material traces the term to 2013, when venture capitalist Aileen Lee used the mythical unicorn as a symbol for that rarity. So when people ask what is a unicorn startup, the plain answer is simple: it is a rare private startup that has reached a valuation above US$1 billion."}</p>
-        <ArticleImageBlock
-          src={HERO_IMAGE}
-          alt={HERO_IMAGE_ALT}
-          caption="What is unicorn startup? Learn the definition, how private valuations work, why the label matters, and why it does not guarantee profitability or long-term success."
-          width={1600}
-          height={1067}
-        />
+        <section
+          aria-labelledby="unicorn-direct-answer"
+          className="not-prose my-8 rounded-[28px] border-2 border-gray-950 bg-[#fefc22] p-6 sm:p-8"
+        >
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-700">
+            Direct answer
+          </p>
+          <h2
+            id="unicorn-direct-answer"
+            className="mt-3 text-3xl font-black tracking-tight text-gray-950"
+          >
+            A unicorn is a privately held startup valued at US$1 billion or
+            more—but the date and deal matter as much as the headline.
+          </h2>
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-900">
+            The label records a valuation milestone. It does not say the
+            company received US$1 billion, earns a profit, has liquid shares or
+            will achieve a billion-dollar exit. Read it as: “a transaction or
+            valuation source supported this number at this point in time.”
+          </p>
+        </section>
 
-        <AudienceGrid
-          heading="Who is this guide for?"
-          cards={[
-            {
-              title: 'Founders & Builders',
-              description: 'For operators validating demand, pitching a vision, and moving before momentum stalls.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />,
-              variant: 'orange',
-            },
-            {
-              title: 'Students & Switchers',
-              description: 'For readers learning how strong technical partners evaluate traction, skills, and fit.',
-              icon: <AcademicCapIcon className="h-6 w-6" />,
-              variant: 'purple',
-            },
-            {
-              title: 'Community Builders',
-              description: 'For connectors, mentors, and organisers helping founders meet collaborators in the right rooms.',
-              icon: <UsersIcon className="h-6 w-6" />,
-              variant: 'yellow',
-            },
-          ]}
-        />
+        <p>
+          Venture investor Aileen Lee introduced the “Unicorn Club” in 2013.
+          Her original study used a narrower research definition and warned
+          that its public-source data was a snapshot. Modern startup coverage
+          usually applies the word to private companies at the US$1 billion
+          threshold. The snapshot warning remains essential.
+        </p>
 
-        <QuoteBlock title="Key insight" variant="purple">
-          {"A unicorn startup is a privately owned startup valued at more than US$1 billion. The term describes a private-market valuation milestone, not automatic proof of profitability, maturity, or lasting success."}
-        </QuoteBlock>
-          <h2>{"Why the term unicorn became part of startup culture"}</h2>
-          <p>{"The term unicorn became part of startup culture in 2013, when venture capitalist Aileen Lee used it for privately owned startups valued at more than US$1 billion. The metaphor mattered because billion-dollar private companies were seen as unusually rare at the time."}</p>
-          <p>{"In startup and venture conversations, calling a company a unicorn signalled a private business that had reached a very high valuation before going public. It also suggested strong investor confidence and the kind of growth that attracts attention from founders, media, and the wider tech market. That made the term useful far beyond formal finance definitions."}</p>
-          <p>{"Over time, the term became even more visible as more startups reached billion-dollar private valuations. Sources describing unicorns today still frame the category around that milestone, but they also note that the market now contains many more such companies than it did when the term was coined. That shift has changed how rare unicorns feel, yet the word remains popular because it still acts as a clear status marker in startup culture."}</p>
-          <p>{"In practice, why the term unicorn became part of startup culture works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
-          <p>{"The goal is to keep why the term unicorn became part of startup culture concrete enough to guide action, while still tying each detail back to the main point of the section."}</p>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e35e354f-c231-4d2d-9286-3dfa9abdaa2c.jpg?alt=media&token=01736d90-78c9-48a1-8a31-2f943a557ead"
-            alt="Why the term unicorn became part of startup culture"
-            caption="Why the term unicorn became part of startup culture"
-            width={1200}
-            height={800}
-          />
-          <h2>{"How a startup becomes valued at more than US$1 billion"}</h2>
-          <p>{"A startup usually becomes a unicorn through its private market valuation, not through a public share price. In simple terms, investors and the company agree on a valuation during a funding round, and if that valuation is above US$1 billion, the business is described as a unicorn. This is why the label is usually tied to privately held, venture-backed companies rather than listed firms."}</p>
-          <p>{"Investors may pay up because they expect strong growth, a very large market, or a business that is hard for rivals to copy."}</p>
-          <p>{"A practical way to think about how a startup becomes valued at more than us$1 billion is through What the US$1 billion mark really means and Why valuations can rise or fall quickly."}</p>
-          <ul>
-            <li>{"Unicorn status is usually set during private funding rounds."}</li>
-            <li>{"The valuation reflects investor expectations about future growth and market opportunity."}</li>
-            <li>{"Higher interest rates and weaker market conditions can compress valuations."}</li>
+        <h2>Five Australian-founded companies with documented unicorn rounds</h2>
+        <p>
+          This evidence table answers a precise question: which Australian-
+          founded or Australian-headquartered companies have an attributable
+          announcement explicitly stating a valuation of at least US$1
+          billion? It does not rank company quality and it is not a complete
+          list of companies that may qualify today.
+        </p>
+
+        <div className="not-prose my-8 space-y-5">
+          {AUSTRALIAN_UNICORN_EVIDENCE.map((item) => (
+            <section
+              key={item.company}
+              className="rounded-[24px] border border-gray-300 bg-white p-5 sm:p-6"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#4b1bd1]">
+                    {item.financingEvent}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-black text-gray-950">
+                    {item.company}: {item.disclosedValuation}
+                  </h3>
+                </div>
+                <span
+                  className={`w-fit rounded-full px-3 py-1 text-xs font-black ${
+                    item.statusConfidence === "recent-company-report"
+                      ? "bg-emerald-100 text-emerald-900"
+                      : "bg-amber-100 text-amber-950"
+                  }`}
+                >
+                  {item.statusLabel}
+                </span>
+              </div>
+
+              <dl className="mt-5 grid gap-4 text-sm leading-6 md:grid-cols-2">
+                <div>
+                  <dt className="font-black text-gray-950">
+                    Valuation-event date
+                  </dt>
+                  <dd className="mt-1 text-gray-700">
+                    <time dateTime={item.valuationDate}>
+                      {new Intl.DateTimeFormat("en-AU", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        timeZone: "UTC",
+                      }).format(new Date(`${item.valuationDate}T00:00:00Z`))}
+                    </time>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-black text-gray-950">
+                    Australian connection
+                  </dt>
+                  <dd className="mt-1 text-gray-700">
+                    {item.australianConnection}{" "}
+                    <a
+                      href={item.connectionSourceUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="font-bold text-[#4b1bd1] underline decoration-1 underline-offset-2"
+                    >
+                      Connection source: {item.connectionSourceTitle}.
+                    </a>
+                  </dd>
+                </div>
+                <div className="md:col-span-2">
+                  <dt className="font-black text-gray-950">
+                    What can be said now
+                  </dt>
+                  <dd className="mt-1 text-gray-700">{item.statusNote}</dd>
+                </div>
+              </dl>
+
+              <a
+                href={item.sourceUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mt-5 inline-block text-sm font-black text-[#4b1bd1] underline decoration-2 underline-offset-4"
+              >
+                Read the {item.sourceType}: {item.sourceTitle}
+              </a>
+            </section>
+          ))}
+        </div>
+
+        <aside className="not-prose my-8 rounded-2xl border border-gray-300 bg-white p-5 text-sm text-gray-700">
+          <p className="font-black text-gray-950">Dataset maintenance</p>
+          <p className="mt-2 leading-6">
+            Owner: {UNICORN_DATASET_OWNER}. Last verified:{" "}
+            {UNICORN_DATASET_VERIFIED_AT}. Planned review cadence:{" "}
+            {UNICORN_DATASET_REVIEW_CADENCE}. A historic row remains useful as
+            evidence of a dated valuation event, but it is never silently
+            promoted into a current valuation.
+          </p>
+        </aside>
+
+        <h2>Currency and inclusion rules</h2>
+        <p>
+          The threshold is denominated in US dollars, so currency handling can
+          change the answer. MLAI used four rules:
+        </p>
+        <ol>
+          <li>
+            The source must explicitly state a US-dollar valuation of at least
+            US$1 billion. “$1 billion” without a clear currency is not enough
+            when the context is ambiguous.
+          </li>
+          <li>
+            MLAI does not convert an Australian-dollar valuation to qualify a
+            company. That avoids selecting a convenient exchange rate or
+            conversion date.
+          </li>
+          <li>
+            The event date, round and source are recorded. A 2021 valuation is
+            described as 2021 evidence, not a 2026 price.
+          </li>
+          <li>
+            Unknown means unknown. If no newer attributable priced event was
+            found, the table does not estimate one from revenue, users, token
+            prices or press speculation.
+          </li>
+        </ol>
+
+        <h2>How a funding round can create the valuation</h2>
+        <p>
+          In a simple primary priced round, investors and the company negotiate
+          a pre-money valuation. New cash is added to calculate post-money
+          valuation. The new investor’s simplified ownership is the new
+          investment divided by post-money valuation.
+        </p>
+        <p>
+          Example: a A$900 million pre-money valuation plus A$100 million of new
+          primary cash produces a A$1 billion post-money valuation. The new
+          investor owns 10% in the simplified model. If the founder group owned
+          60% immediately before the round, it owns 54% immediately after: 60%
+          multiplied by 90%.
+        </p>
+        <p>
+          That example is checked arithmetic, not a term-sheet model. An option
+          pool increase, SAFE or note conversion, different share classes,
+          liquidation preferences and other rights can materially change the
+          economics. A secondary transaction is also different: shares change
+          hands and the cash generally goes to the seller, not the company.
+        </p>
+
+        <UnicornValuationCalculator />
+
+        <h2>What a US$1 billion valuation does—and does not—mean</h2>
+        <div className="not-prose my-8 grid gap-4 md:grid-cols-2">
+          {[
+            {
+              title: "It can mean",
+              items: [
+                "A recent investor accepted a price or financing term that implied the valuation.",
+                "The company crossed a widely recognised private-market milestone.",
+                "The round may create financing, hiring, customer and media attention.",
+              ],
+            },
+            {
+              title: "It does not prove",
+              items: [
+                "US$1 billion of cash, revenue, profit or founder liquidity.",
+                "That every ordinary share has the same rights or realisable price.",
+                "A successful exit, durable product demand or a current valuation.",
+              ],
+            },
+          ].map((group) => (
+            <section
+              key={group.title}
+              className="rounded-[24px] border border-gray-300 bg-white p-6"
+            >
+              <h3 className="m-0 text-xl font-black text-gray-950">
+                {group.title}
+              </h3>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-gray-700">
+                {group.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+
+        <h2>How a unicorn loses the label</h2>
+        <p>
+          A valuation is not continuously observable for a private company.
+          The clearest new evidence may be a later priced round or secondary
+          trade. If that event implies less than US$1 billion, calling the
+          company a current unicorn is misleading even though the earlier
+          milestone remains part of its history.
+        </p>
+        <p>
+          An acquisition or public listing also changes the category because
+          the company is no longer a privately held startup. If no transaction
+          discloses a new value, neither an old headline nor silence establishes
+          today’s price. This is why the evidence table distinguishes a recent
+          company report from historical threshold evidence.
+        </p>
+
+        <h2>A founder decision guide: optimise the round, not the label</h2>
+        <ol>
+          <li>
+            <strong>Name the job of the capital.</strong> Tie the amount to
+            measurable product, customer, regulatory, team or runway
+            milestones.
+          </li>
+          <li>
+            <strong>Model ownership under more than one scenario.</strong> Test
+            the priced round plus option-pool, SAFE, note and downside cases
+            with qualified advisers.
+          </li>
+          <li>
+            <strong>Separate primary and secondary cash.</strong> Record how
+            much reaches the company, how much goes to sellers and which rights
+            attach to each security.
+          </li>
+          <li>
+            <strong>Build evidence before the raise.</strong> Keep a dated
+            record of milestones, metrics, risks and asks so investor
+            conversations are based on an operating history rather than a
+            valuation aspiration.
+          </li>
+          <li>
+            <strong>Set a walk-away rule.</strong> Define unacceptable
+            dilution, control, preference, governance and reporting terms
+            before time pressure narrows the decision.
+          </li>
+        </ol>
+        <p>
+          MLAI’s{" "}
+          <Link to="/vibe-raising">Vibe Raising</Link> workflow helps founders
+          turn real monthly company evidence into investor updates before a
+          raise. MLAI’s <Link to="/events">in-person and online events</Link>{" "}
+          are the place to test the questions with other Australian builders.
+        </p>
+
+        <h2>Questions to ask when a unicorn headline appears</h2>
+        <ul>
+          <li>What is the exact valuation date and currency?</li>
+          <li>Is the number pre-money, post-money or only “implied”?</li>
+          <li>Was the transaction primary, secondary or a mixture?</li>
+          <li>How much cash reached the company?</li>
+          <li>Which security was issued, and do all shares have equal rights?</li>
+          <li>Is there a newer priced event, acquisition or public listing?</li>
+          <li>
+            Is the publisher the company, an investor, a regulator or a report
+            repeating another outlet?
+          </li>
+          <li>
+            Which operating evidence—revenue quality, retention, margins,
+            runway or customer concentration—should be examined separately?
+          </li>
+        </ul>
+
+        <aside className="not-prose my-10 rounded-[28px] bg-gray-950 p-6 text-white sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#00ffd7]">
+            Method, changelog, limitations and disclosure
+          </p>
+          <h2 className="mt-3 text-2xl font-black">
+            A sourced event dataset, not a live private-market index
+          </h2>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-gray-200">
+            <li>
+              <strong className="text-white">Inclusion rule:</strong> an
+              attributable announcement explicitly states a valuation of at
+              least US$1 billion and supports an Australian founding or
+              headquarters connection.
+            </li>
+            <li>
+              <strong className="text-white">Exclusions:</strong> Australian-
+              dollar-only valuations, databases without visible source
+              evidence, speculative estimates, token market capitalisation and
+              public-company market capitalisation.
+            </li>
+            <li>
+              <strong className="text-white">Verification:</strong> the five
+              source pages were opened and checked on 29 July 2026. MLAI did
+              not inspect confidential transaction documents or independently
+              value the companies.
+            </li>
+            <li>
+              <strong className="text-white">Status rule:</strong> only the
+              recent 2026 Airwallex announcement is labelled recent. Older
+              events are historical threshold evidence and do not establish a
+              July 2026 valuation.
+            </li>
+            <li>
+              <strong className="text-white">Original asset:</strong> MLAI built
+              the typed evidence table, status-confidence treatment and
+              downloadable primary-round calculator for this page. Calculator
+              inputs remain in the browser.
+            </li>
+            <li>
+              <strong className="text-white">Changelog:</strong> this revision
+              removes generic filler, the false checklist download, irrelevant
+              search-query FAQs, a truncated FAQ answer and duplicate FAQ
+              structured data.
+            </li>
+            <li>
+              <strong className="text-white">Current editorial gate:</strong>{" "}
+              the planned two interviews with relevant Australian founders,
+              investors or qualified advisers and a named financial/legal
+              review have not yet been completed. Do not mark this article
+              final or score it 80+ until those gates are satisfied.
+            </li>
+            <li>
+              <strong className="text-white">AI assistance:</strong> AI tools
+              assisted source discovery, drafting and code generation. Volatile
+              claims were checked against the linked pages; the remaining
+              interview and human-review gaps are stated rather than invented.
+            </li>
           </ul>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-1cc4644d-f888-4f9f-be7e-86c59b33b01c.jpg?alt=media&token=143d7abd-fe05-4331-8830-a2aac4290549"
-            alt="Startup office desk with funding notes and laptop in a candid workspace scene on"
-            caption="How a startup becomes valued at more than US$1 billion"
-            width={1200}
-            height={800}
-          />
-          <h3>{"What the US$1 billion mark really means"}</h3>
-          <p>{"The unicorn threshold sounds like a hard measure of business strength, but it is really a valuation milestone. A company can cross that line even if it is still investing heavily, losing money, or years away from listing on a stock exchange. The label tells you how private investors value the company at that stage, not that the founders can freely spend US$1 billion or that the company has already earned that amount."}</p>
-          <h3>{"Why valuations can rise or fall quickly"}</h3>
-          <p>{"The recent period of slower growth, higher interest rates, and more volatile markets led many startup valuations to fall. In other words, reaching unicorn status does not lock in that value forever. A startup can be worth more than US$1 billion in one funding environment and face a lower valuation later if investors become more cautious."}</p>
+        </aside>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the what is unicorn startup checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
+        <ArticleReferences
+          references={[...REFERENCES]}
+          heading="Valuation, fundraising and definition sources"
+          description="Sources checked for the 29 July 2026 revision."
+          previewCount={5}
         />
 
-        <ArticleStepList
-          title="Practical next steps"
-          steps={[
-            "Unicorn status is usually set during private funding rounds.",
-            "The valuation reflects investor expectations about future growth and market opportunity.",
-            "Higher interest rates and weaker market conditions can compress valuations.",
-          ]}
-          accent="indigo"
-        />
-          <h2>{"What unicorns tend to have in common"}</h2>
-          <p>{"Most unicorns are found in technology-led markets, where a product can reach a very large number of users without the business growing at the same pace in headcount or physical footprint. That does not mean every tech startup becomes a unicorn. It means investors often see stronger upside when a company serves a big market and can scale quickly if demand takes off. Sources here describe unicorns as later-stage private companies with high-growth stories, often in tech, which helps explain why software, platforms, and other digital models show up so often in this category."}</p>
-          <p>{"Another common pattern is a growth engine that looks repeatable. The source material points to product distribution, strong community engagement, and fast feedback loops as useful traits in rapid startup growth. In simple terms, unicorns often find a way to get in front of users, learn quickly from what those users do, and improve fast enough to keep momentum going. A fast-growing startup can have many of these traits and still never reach unicorn status, because timing, market conditions, competition, and funding sentiment also matter."}</p>
-          <p>{"In practice, what unicorns tend to have in common works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
-          <h2>{"Why the unicorn label can mislead founders and readers"}</h2>
-          <p>{"The word \"unicorn\" can sound more solid than it is. In the startup world, it simply means a privately owned company has been valued at more than US$1 billion. Stanford and other explainers present that mark as a major milestone, and that is part of why the term attracts so much attention. But the label describes a valuation status, not a full judgment on the company. It does not automatically mean the business is profitable, durable, or proven over time."}</p>
-          <p>{"Source material notes that many unicorn valuations fell in 2022 as the economic environment weakened, interest rates rose, borrowing became more expensive, volatility increased, and scrutiny became stricter. In other words, the same company can look very different when capital is easy versus when investors become more cautious. A unicorn badge can therefore create a false sense of certainty, even though the number may reflect a moment in the market rather than a permanent level of business quality."}</p>
-          <p>{"For founders and readers, the more useful approach is to treat unicorn status as a signal, not a conclusion. It can point to strong investor interest or fast growth, but it should lead to better questions instead of ending the conversation. What is driving the valuation? Is there clear demand for the product?"}</p>
-          <ul>
-            <li>{"A unicorn is defined by private valuation over US$1 billion."}</li>
-            <li>{"Valuations can change quickly when capital markets tighten."}</li>
-          </ul>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-2b852315-1711-429d-905f-6be6bc340313.jpg?alt=media&token=f846bfb5-f8e9-443c-8aa9-e71d713b6c42"
-            alt="Why the unicorn label can mislead founders and readers"
-            caption="Why the unicorn label can mislead founders and readers"
-            width={1200}
-            height={800}
-          />
-          <h2>{"How to use the term unicorn startup more intelligently"}</h2>
-          <p>{"The smartest way to use the term unicorn startup is to treat it as a valuation label first. In the startup world, a unicorn is a privately held company valued at more than US$1 billion, not simply a company that is innovative, famous, or fast growing. That distinction matters because the label can sound like a verdict on quality when it is really a shorthand for private-market value. When you see the term in news coverage or investor discussion, start by asking whether the company is still private and whether the billion-dollar figure refers to a recent funding-based valuation."}</p>
-          <p>{"From there, read past the headline. A unicorn valuation does not automatically tell you how durable the business is, how strong demand really is, or how well the company may perform over time. Even widely discussed unicorns can face valuation pressure when market conditions change, which is one reason the label should not be confused with guaranteed success. Used that way, unicorn startup is a useful shortcut, but not the end of the analysis."}</p>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-01477610-6827-4692-bf9b-aa2460729e22.jpg?alt=media&token=c00ffd95-ad17-4193-ae7f-072365d1f28d"
-            alt="How to use the term unicorn startup more intelligently"
-            caption="How to use the term unicorn startup more intelligently"
-            width={1200}
-            height={800}
-          />
-
-        <QuoteBlock title="Keep moving forward" variant="orange">
-          {"The grounded source material for this article does not define a 50 100 500 startup rule. Instead, it explains unicorn status as a private valuation above US$1 billion, usually set during funding rounds."}
-        </QuoteBlock>
-
-        <MLAITemplateResourceCTA />
-
-      <ArticleReferences
-        references={[
-          {id: 1, href: "https://en.wikipedia.org/wiki/Unicorn_(finance)", title: "Unicorn (finance) - Wikipedia", publisher: "en.wikipedia.org", description: "Authoritative reference supporting Unicorn (finance) - Wikipedia.", category: "guide"},
-          {id: 2, href: "https://en.wikipedia.org/wiki/List_of_unicorn_startup_companies", title: "List of unicorn startup companies - Wikipedia", publisher: "en.wikipedia.org", description: "Authoritative reference supporting List of unicorn startup companies - Wikipedia.", category: "guide"},
-          {id: 3, href: "https://www.gsb.stanford.edu/insights/explainer-what-unicorn", title: "Explainer: What is a Unicorn? | Stanford Graduate School of Business", publisher: "gsb.stanford.edu", description: "Authoritative reference supporting Explainer: What is a Unicorn? | Stanford Graduate School of Business.", category: "guide"},
-          {id: 4, href: "https://www.canstar.com.au/investor-hub/unicorn-companies/", title: "What are Unicorn Companies? How to Invest in Them | Canstar", publisher: "canstar.com.au", description: "Authoritative reference supporting What are Unicorn Companies? How to Invest in Them | Canstar.", category: "guide"},
-          {id: 5, href: "https://www.linkedin.com/top-content/workplace-trends/trends-in-startup-development/unicorn-startup-growth-strategies/", title: "Unicorn Startup Growth Strategies", publisher: "linkedin.com", description: "Authoritative reference supporting Unicorn Startup Growth Strategies.", category: "guide"},
-          {id: 6, href: "https://www.ringcentral.com/us/en/blog/what-is-a-unicorn-startup/", title: "Unicorn startups: What they are and how to build one | RingCentral Blog", publisher: "ringcentral.com", description: "Authoritative reference supporting Unicorn startups: What they are and how to build one | RingCentral Blog.", category: "guide"},
-          {id: 7, href: "https://www.hubspot.com/startups/reports/hypergrowth-startups/build-unicorn-company", title: "How To Become A Unicorn Startup: Checklist", publisher: "hubspot.com", description: "Authoritative reference supporting How To Become A Unicorn Startup: Checklist.", category: "guide"},
-          {id: 8, href: "https://www.linkedin.com/top-content/business-strategy/startups/common-patterns-in-unicorn-startup-formation/", title: "Common Patterns in Unicorn Startup Formation", publisher: "linkedin.com", description: "Authoritative reference supporting Common Patterns in Unicorn Startup Formation.", category: "guide"},
-          {id: 9, href: "https://tsttechnology.io/blog/unicorn-strategies", title: "Unicorn Strategies: Secrets to Skyrocket Your Startup Growth", publisher: "tsttechnology.io", description: "Authoritative reference supporting Unicorn Strategies: Secrets to Skyrocket Your Startup Growth.", category: "guide"},
-        ]}
-        heading="Sources & further reading"
-      />
-
-        <ArticleDisclaimer />
-
-        <div className="my-12 not-prose">
-          <ArticleCompanyCTA
-            title="Explore more practical startup and AI guides"
-            body="If you want clearer frameworks for reading startup trends and building in fast-moving markets, browse our practical resources for founders, operators, and community builders."
-            buttonText="View practical guides"
-            buttonHref="/articles"
+        <div className="mt-12">
+          <ArticleFAQ
+            items={faqItems}
+            heading="Unicorn startup questions"
           />
         </div>
       </div>
-
-        <AuthorBio author={authorDetails} />
-
-        <div className="mt-12">
-          <ArticleFAQ items={faqItems} />
-        </div>
-
-        <ArticleFooterNav backHref="/articles" topHref="#" />
     </>
-  )
+  );
 }

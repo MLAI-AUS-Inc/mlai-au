@@ -22,6 +22,10 @@ export type ArticleWithSlug = {
   hasContent?: boolean;
   /** Stable Content Factory analytics id; survives slug/URL changes. */
   analyticsArticleId?: string;
+  /** Search indexing state. Noindex articles remain routable but are omitted from discovery surfaces. */
+  indexing?: "index" | "noindex";
+  /** Allows an integrity-risk article to keep its URL while withholding the unreviewed body. */
+  publicationStatus?: "published" | "under-review";
 };
 
 // Route Categories for MLAI
@@ -157,14 +161,15 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         hasContent: true,
     },
     'featured/how-to-find-an-ai-and-tech-meetup-in-sydney': {
-        title: "How to Find an AI and Tech Meetup in Sydney",
+        title: "Sydney AI and Tech Meetups: A Verified 2026 Event Finder",
         date: "2026-06-16",
-        description: "Meetup in Sydney for AI, tech and startup networking.",
+        dateModified: "2026-07-29",
+        description: "Compare eight Sydney AI and tech communities by audience, recent activity, cost and format, then build a shortlist with MLAI’s event-fit worksheet.",
         author: "Dr Sam Donegan",
         slug: "featured/how-to-find-an-ai-and-tech-meetup-in-sydney",
         analyticsArticleId: "64190798-7555-4124-a7d7-311fda857e76",
         image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-46210747-b902-4e9d-8ffa-f3df1058658b.jpg?alt=media&token=2ecc04f5-87e3-4795-aba4-d59f1905b8e5",
-        imageAlt: "Close-up candid of Sydney tech meetup attendees networking over laptops at an AI startup event",
+        imageAlt: "Sydney technology meetup attendees discussing AI projects around laptops",
         hasContent: true,
     },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
@@ -190,36 +195,39 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         hasContent: true,
     },
     'featured/what-is-a-unicorn-startup-and-why-it-matters': {
-        title: "What Is a Unicorn Startup and Why It Matters",
+        title: "What Is a Unicorn Startup? Australian Examples and a Valuation Calculator",
         date: "2026-04-23",
-        description: "What is unicorn startup? Learn the definition, how private valuations work, why the label matters, and why it does not guarantee profitability or long-term success.",
+        dateModified: "2026-07-29",
+        description: "Understand the US$1 billion unicorn threshold, inspect five sourced Australian valuation events, and model dilution in a transparent founder calculator.",
         author: "Dr Sam Donegan",
         slug: "featured/what-is-a-unicorn-startup-and-why-it-matters",
         analyticsArticleId: "ea72084f-7f71-4f23-89e2-19fcac419614",
         image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d806828c-a396-45ac-899e-2757423ebb86.jpg?alt=media&token=68db8b05-de8f-473e-aff2-f3bc4ecec96a",
-        imageAlt: "Startup founders reviewing unicorn startup valuation on a laptop in a candid",
+        imageAlt: "Australian startup founders checking a valuation and ownership scenario",
         hasContent: true,
     },
     'featured/what-an-entrepreneur-does-and-how-to-start-well': {
         title: "What an Entrepreneur Does and How to Start Well",
         date: "2026-04-20",
-        description: "Entrepreneur guide for first-time founders on what the role means, how to validate an idea, build a simple plan, register properly, and organise finances in Australia.",
+        dateModified: "2026-07-28",
+        description: "A practical Australian founder operating guide for the first 90 days, with evidence-based experiments, decision gates and a private in-browser experiment ledger.",
         author: "Dr Sam Donegan",
         slug: "featured/what-an-entrepreneur-does-and-how-to-start-well",
         analyticsArticleId: "dcb5d919-637e-40f4-8de7-e7c379a92c03",
         image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-56ed48a4-989a-4c7a-902a-a4d660355998.jpg?alt=media&token=9f5d6e18-cf07-44dd-b1e2-b211e059cccf",
-        imageAlt: "What an Entrepreneur Does and How to Start Well",
+        imageAlt: "Founder reviewing customer evidence and a 90-day operating plan at a desk",
         hasContent: true,
     },
     'featured/what-is-artificial-intelligence-in-simple-words': {
         title: "What Is Artificial Intelligence in Simple Words?",
         date: "2026-04-18",
-        description: "Learn what artificial intelligence means in simple words, how it works, where you use it every day, and what it can and cannot do.",
+        dateModified: "2026-07-28",
+        description: "A plain-English guide to AI, machine learning and generative AI, with an interactive AI-or-not exercise and a practical human-check workflow.",
         author: "Dr Sam Donegan",
         slug: "featured/what-is-artificial-intelligence-in-simple-words",
         analyticsArticleId: "81b3ca24-a36d-40c4-b2f0-e998f1fa5a36",
         image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aabcc5ca-e159-4024-b1c7-baf0b68dc947.jpg?alt=media&token=a5c618e2-f10a-4f7a-8bc3-5a0702cf9959",
-        imageAlt: "Close-up of a person using an AI voice assistant on a smartphone during a casual everyday moment",
+        imageAlt: "Person using a voice assistant on a smartphone, an everyday example of an AI-enabled interface",
         hasContent: true,
     },
     'featured/what-is-an-agent-in-artificial-intelligence': {
@@ -245,14 +253,15 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         hasContent: true,
     },
     'featured/what-is-general-artificial-intelligence-and-why-it-matters': {
-        title: "What Is General Artificial Intelligence and Why It Matters",
+        title: "What Is General Artificial Intelligence? An Evidence Guide to AGI",
         date: "2026-04-12",
-        description: "What is general artificial intelligence? Learn how AGI differs from narrow AI, why it remains theoretical, and what the term means in practical discussions today.",
+        dateModified: "2026-07-28",
+        description: "A plain-English guide to artificial general intelligence, how AGI definitions differ, and an interactive worksheet for testing AGI claims against real evidence.",
         author: "Dr Sam Donegan",
         slug: "featured/what-is-general-artificial-intelligence-and-why-it-matters",
         analyticsArticleId: "ef76104d-58da-49c1-8a48-c80960448cc9",
         image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6929c81e-098b-48a5-8302-f26c732f8c65.jpg?alt=media&token=cf84b2aa-8393-44a0-a444-257dae974703",
-        imageAlt: "Close-up of two coworkers discussing general artificial intelligence concepts over a laptop in a candid office moment",
+        imageAlt: "Two people comparing evidence and definitions for artificial general intelligence",
         hasContent: true,
     },
     'featured/what-constitutes-a-startup-in-practice': {
@@ -266,17 +275,6 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         imageAlt: "Startup founders discussing whether a new venture is built for scalable growth or steady small-business income",
         hasContent: true,
     },
-    'featured/what-is-agi-in-artificial-intelligence-and-why-it-matters': {
-        title: "What Is AGI in Artificial Intelligence and Why It Matters",
-        date: "2026-04-04",
-        description: "What is AGI in artificial intelligence explained simply, including how it differs from today\u2019s AI systems and how to assess AGI claims without hype.",
-        author: "Dr Sam Donegan",
-        slug: "featured/what-is-agi-in-artificial-intelligence-and-why-it-matters",
-        analyticsArticleId: "8e43b43d-596f-4ff5-8f6d-39404887f275",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-dcfb46e7-19b3-43bb-b1c9-a386be22de5c.jpg?alt=media&token=e798046f-9e1d-439b-b156-ae2f2fc51f46",
-        imageAlt: "Abstract illustration of a human silhouette and AI interface elements representing the idea of artificial general intelligence",
-        hasContent: true,
-      },
     'featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life': {
         title: "What Is Artificial Intelligence Used For in Everyday Work and Life",
         date: "2026-04-10",
@@ -332,28 +330,6 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         imageAlt: "Founder showing an AI prototype to a small business owner during a close-up pilot meeting in Australia",
         hasContent: true,
     },
-    'featured/how-to-startup-a-practical-guide-for-first-time-founders': {
-        title: "How to Startup",
-        date: "2026-04-05",
-        description: "Learn how to startup with a practical sequence: validate customer demand, choose the right team, plan lean, and handle Australian registration and money basics.",
-        author: "Dr Sam Donegan",
-        slug: "featured/how-to-startup-a-practical-guide-for-first-time-founders",
-        analyticsArticleId: "0a99d5e8-47a8-4d1d-96f1-43d402111667",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-85569f30-d263-436f-8592-5bf00e6247cb.jpg?alt=media&token=c98809c7-6e60-40b8-bf89-1cbe6844e7a0",
-        imageAlt: "How to Startup",
-        hasContent: true,
-    },
-    'featured/what-is-artificial-intelligence-with-example-for-everyday-readers': {
-        title: "What Is Artificial Intelligence With Example for Everyday Readers",
-        date: "2026-04-04",
-        description: "What is artificial intelligence with example explained simply",
-        author: "Dr Sam Donegan",
-        slug: "featured/what-is-artificial-intelligence-with-example-for-everyday-readers",
-        analyticsArticleId: "17182c87-b867-481a-90f7-3a85e84956cd",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-7f3951a9-ecc4-465c-b320-fc43c8053e7e.jpg?alt=media&token=df271f37-1457-45a7-8273-a10c00bc8933",
-        imageAlt: "Close-up of a woman using an AI chatbot on her phone while a friend watches",
-        hasContent: true,
-    },
     'featured/how-to-get-the-first-customers-for-my-startup-in-2026': {
         title: "How to Get the First Customers for My Startup in 2026",
         date: "2026-04-04",
@@ -400,6 +376,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/how-to-choose-the-best-ai-for-coding-in-2025': {
         title: 'How to Choose the Best AI for Coding in 2025',
         date: '2026-03-21',
+        dateModified: '2026-07-29',
         description: 'Discover the best AI for coding in 2025. Compare leading coding assistants, key evaluation criteria, and practical steps for safer adoption in real developer workflows.',
         author: 'Dr Sam Donegan',
         slug: 'featured/how-to-choose-the-best-ai-for-coding-in-2025',
@@ -407,6 +384,8 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-2fcc0fc5-779d-4991-a48d-f1ee5bc84d36.jpg?alt=media&token=dd992915-031f-4e66-8362-bc94bdef2730',
         imageAlt: 'How to Choose the Best AI for Coding in 2025',
         hasContent: true,
+        indexing: "noindex",
+        publicationStatus: "under-review",
     },
     'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         title: 'How to Test for a Cofounder Values Match Before You Commit',
@@ -508,16 +487,19 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     imageAlt: "People collaborating in a tech startup environment with a nostalgic 90s film aesthetic.",
   },
   "featured/startup-accelerator-australia": {
-    title: "Startup accelerators in Australia (2026)",
+    title: "Australian Startup Accelerators: A Verified 2026 Program Finder",
     date: "2026-01-10",
+    dateModified: "2026-07-29",
     description:
-      "A practical 2026 guide to Australian startup accelerators: key programs (Startmate, Google for Startups, UNSW 10x), typical terms, and how AI teams can apply.",
+      "Compare verified Australian startup accelerators by stage, format, duration, published terms and intake status, then use MLAI’s interactive fit scorecard.",
     author: "Dr Sam Donegan",
     slug: "featured/startup-accelerator-australia",
     analyticsArticleId: "1cf96443-6ccb-4a80-998f-fb777e21d542",
     image:
       "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b4a9a55e-4254-4bb3-9eed-5b80dfbc4432.jpg?alt=media&token=54ee6558-bb42-4528-812c-7377691e9f9f",
-    imageAlt: "Group of diverse entrepreneurs collaborating in a vibrant tech workspace, with a nostalgic 90s film aesthetic.",
+    imageAlt:
+      "Australian founders comparing accelerator eligibility, terms and program commitments",
+    hasContent: true,
   },
   "featured/how-to-find-networking-events": {
     title: "How to find networking events in Australia (2026)",
@@ -609,14 +591,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   "featured/how-many-startup-accelerators-and-incubators-are-there-in-si": {
     title: "Startup accelerators and incubators in Singapore (2026)",
     date: "2025-12-01",
+    dateModified: "2026-07-29",
     description:
-      "Short answer: about 60–80 active accelerators/incubators in Singapore in 2026, depending on definitions. Learn how counts are built and how to verify programmes.",
+      "This unsupported Singapore accelerator count is under editorial review and withheld from search and MLAI discovery surfaces.",
     author: "Dr Sam Donegan",
     slug: "featured/how-many-startup-accelerators-and-incubators-are-there-in-si",
     image:
       "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-765a4937-d602-4779-9250-982df5058a4b.jpg?alt=media&token=cae4b2b5-76fd-48f2-bb4d-c018c943c150",
     imageAlt: "Diverse group of entrepreneurs discussing ideas in a vibrant 90s film-inspired tech workspace.",
     hasContent: true,
+    indexing: "noindex",
+    publicationStatus: "under-review",
   },
   "featured/how-does-a-venture-capital-firm-work": {
     title: "How Does a Venture Capital Firm Work? (2026 Guide)",
@@ -665,15 +650,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     hasContent: true,
   },
   "featured/how-much-do-data-scientists-make": {
-    title: "How Much Do Data Scientists Make?'",
+    title: "How Much Do Data Scientists Make in Australia?",
     date: "2025-11-15",
     description:
-      "Salary ranges for data scientists in Australia in 2026—entry, mid, senior and lead. City and industry differences, skills that lift pay, and negotiation tips.",
+      "This Australian data scientist salary guide is under editorial review while MLAI rebuilds its methodology and verifies current salary evidence.",
     author: "Dr Sam Donegan",
     slug: "featured/how-much-do-data-scientists-make",
     image:
       "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-efc07de1-b4f1-46b2-8245-211ce8e1dd64.jpg?alt=media&token=ad15ab6a-efa7-4176-ba33-9908ed9a2d2e",
-    imageAlt: "How Much Do Data Scientists Make?'",
+    imageAlt: "Australian data science salary research under editorial review",
+    indexing: "noindex",
+    publicationStatus: "under-review",
   },
 
   // NOTE: Your pasted snippet continues with MANY more entries.
@@ -775,13 +762,15 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9": {
     title: "AI Bits for Techies | Issue #9 | 18 Mar 2026",
     date: "2026-03-18",
-    description: "AI Bits Issue #9: This week explores the \"Agentic Shift\" from single prompts to long-running sessions via the Claude Agent SDK. We break down the \"Initializer-Coder\" framework, the necessity of persistent state, and how to bridge the \"Context Ceiling\" in complex builds.",
+    description: "Correction notice: an earlier version misattributed the OPENDEV report and included quantitative claims absent from the source. MLAI is rebuilding this issue.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9",
     image: ARTICLE_FALLBACK_IMAGE,
     imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
+    indexing: "noindex",
+    publicationStatus: "under-review",
   },
 
 };
@@ -793,6 +782,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
  * - Stable tie-break with slug
  */
 export const ORDERED_ARTICLE_ROUTE_SLUGS: string[] = Object.values(ARTICLE_REGISTRY)
+  .filter(isArticleIndexable)
   .slice()
   .sort((a, b) => {
     const ta = Date.parse(a.date);
@@ -860,7 +850,7 @@ export function getArticleBySlug(slug: string): ArticleWithSlug | undefined {
 }
 
 export function getArticlesSortedNewestFirst(): ArticleWithSlug[] {
-  return Object.values(ARTICLE_REGISTRY).sort((a, b) => {
+  return Object.values(ARTICLE_REGISTRY).filter(isArticleIndexable).sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 }
@@ -870,8 +860,15 @@ export function getClusterCardsForPillar(pillarSlug: string): ArticleWithSlug[] 
   // In a real scenario, you might have a more robust "parent-child" relationship.
   const normalized = normalizeSlug(pillarSlug);
   return Object.values(ARTICLE_REGISTRY).filter(
-    (article) => article.slug.startsWith(normalized + "/") && article.slug !== normalized
+    (article) =>
+      isArticleIndexable(article) &&
+      article.slug.startsWith(normalized + "/") &&
+      article.slug !== normalized
   );
+}
+
+export function isArticleIndexable(article: ArticleWithSlug): boolean {
+  return article.indexing !== "noindex";
 }
 
 export function resolveArticleRouteSlug(registrySlug: string): string {

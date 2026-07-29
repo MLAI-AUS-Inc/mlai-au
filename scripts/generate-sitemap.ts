@@ -2,6 +2,7 @@ import { writeFile } from "fs/promises";
 import path from "path";
 import {
     ARTICLE_REGISTRY,
+    isArticleIndexable,
     resolveArticleRouteSlug,
 } from "../app/articles/registry";
 
@@ -63,18 +64,22 @@ const staticPages: SitemapEntry[] = [
     { path: "/vibe-raising", changefreq: "monthly", priority: 0.7 },
     { path: "/sponsors", changefreq: "monthly", priority: 0.5 },
     { path: "/mlai-studio", changefreq: "weekly", priority: 0.8 },
+    { path: "/mlai-studio/start-project", changefreq: "monthly", priority: 0.8 },
+    { path: "/founder-tools/start", changefreq: "monthly", priority: 0.8 },
     { path: "/press-kit", changefreq: "monthly", priority: 0.6 },
     { path: "/volunteers", changefreq: "monthly", priority: 0.7 },
     { path: "/privacy", changefreq: "yearly", priority: 0.3 },
     { path: "/terms", changefreq: "yearly", priority: 0.3 },
 ];
 
-const articlePages: SitemapEntry[] = Object.values(ARTICLE_REGISTRY).map((article) => ({
-    path: `/articles/${resolveArticleRouteSlug(article.slug)}`,
-    lastmod: normalizeDate(article.dateModified || article.lastUpdated || article.date),
-    changefreq: "monthly",
-    priority: 0.8,
-}));
+const articlePages: SitemapEntry[] = Object.values(ARTICLE_REGISTRY)
+    .filter(isArticleIndexable)
+    .map((article) => ({
+        path: `/articles/${resolveArticleRouteSlug(article.slug)}`,
+        lastmod: normalizeDate(article.dateModified || article.lastUpdated || article.date),
+        changefreq: "monthly",
+        priority: 0.8,
+    }));
 
 const allEntries = [...staticPages, ...articlePages];
 

@@ -1,305 +1,498 @@
-import type { ReactNode } from 'react'
-import { Home } from 'lucide-react'
-import { AcademicCapIcon, RocketLaunchIcon, UsersIcon } from '@heroicons/react/24/outline'
-import { DEFAULT_AUTHOR_KEY, getAuthorProfile, DEFAULT_AUTHOR_AVATAR_FALLBACK_URL } from '~/articles/authors'
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import QuoteBlock from '../../../components/articles/QuoteBlock'
-import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
-import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
-import { ArticleStepList } from '../../../components/articles/ArticleStepList'
-import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
-import { ArticleReferences } from '../../../components/articles/ArticleReferences'
-import ArticleDisclaimer from '../../../components/articles/ArticleDisclaimer'
+import type { ReactNode } from "react";
+import { Home } from "lucide-react";
+import { Link } from "react-router";
 
-export const useCustomHeader = true
+import AgiClaimEvaluator from "~/components/articles/AgiClaimEvaluator";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleReferences } from "~/components/articles/ArticleReferences";
 
-const TOPIC = "What Is General Artificial Intelligence and Why It Matters"
-export const CATEGORY = "featured"
-export const SLUG = "what-is-general-artificial-intelligence-and-why-it-matters"
-export const DATE_PUBLISHED = "2026-04-12"
-export const DATE_MODIFIED = "2026-04-12"
-export const DESCRIPTION = "What is general artificial intelligence? Learn how AGI differs from narrow AI, why it remains theoretical, and what the term means in practical discussions today."
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6929c81e-098b-48a5-8302-f26c732f8c65.jpg?alt=media&token=cf84b2aa-8393-44a0-a444-257dae974703"
-const HERO_IMAGE_ALT = "Close-up of two coworkers discussing general artificial intelligence concepts over a laptop in a candid office moment"
-export const FEATURED_FOCUS = "ai"
+export const useCustomHeader = true;
 
-const AUTHOR_PROFILE = getAuthorProfile(DEFAULT_AUTHOR_KEY)
-const AUTHOR = AUTHOR_PROFILE?.name ?? 'Dr Sam Donegan'
-const AUTHOR_ROLE = AUTHOR_PROFILE?.role ?? AUTHOR_PROFILE?.credentials ?? 'Founder'
-const AUTHOR_BIO = AUTHOR_PROFILE?.bio ?? ''
-const AUTHOR_AVATAR = AUTHOR_PROFILE?.avatarUrl ?? DEFAULT_AUTHOR_AVATAR_FALLBACK_URL
+const TOPIC =
+  "What Is General Artificial Intelligence? An Evidence Guide to AGI";
+export const CATEGORY = "featured";
+export const SLUG =
+  "what-is-general-artificial-intelligence-and-why-it-matters";
+export const DATE_PUBLISHED = "2026-04-12";
+export const DATE_MODIFIED = "2026-07-28";
+export const DESCRIPTION =
+  "A plain-English guide to artificial general intelligence, how AGI definitions differ, and an interactive worksheet for testing AGI claims against real evidence.";
+const HERO_IMAGE =
+  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6929c81e-098b-48a5-8302-f26c732f8c65.jpg?alt=media&token=cf84b2aa-8393-44a0-a444-257dae974703";
+const HERO_IMAGE_ALT =
+  "Two people comparing evidence and definitions for artificial general intelligence";
 
 interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
+  id: number;
+  question: string;
+  answer: ReactNode;
 }
 
 export const faqItems: FAQ[] = [
-  { id: 1, question: "Is AGI the same as narrow AI?", answer: "No. Narrow AI is designed for specific tasks or domains, while AGI refers to a hypothetical system with broad, transferable ability across many kinds of cognitive work." },
-  { id: 2, question: "Why do experts say AGI has not been achieved?", answer: "The sources describe AGI as hypothetical and note there is no single, universally accepted benchmark or consensus threshold that proves it exists. Strong results in selected tasks do not by themselves show fully general intelligence." },
-  { id: 3, question: "What capabilities are usually linked to AGI?", answer: "AGI is usually associated with generalisation across tasks, transferring knowledge between domains, learning from experience, reasoning, planning, abstraction, and adapting to unfamiliar problems. These traits are discussed as a bundle rather than one test." },
-  { id: 4, question: "How should teams talk about AGI responsibly?", answer: "Use the term for broad, human-like or human-level capability across many tasks, not for a model that is simply impressive in one area. It helps to ask whether a system can generalise, transfer skills, and adapt without task-specific rebuilding." },
-  { id: 5, question: "What could AGI change if it were developed?", answer: "Discussions often point to broader automation, more flexible decision support, faster research, and stronger problem solving across domains. However, those effects remain speculative because AGI has not been achieved." },
-]
-
-export const summaryHighlights = {
-  heading: "Key facts: What Is General Artificial Intelligence and Why It Matters",
-  intro: "What is general artificial intelligence? Learn how AGI differs from narrow AI, why it remains theoretical, and what the term means in practical discussions today.",
-  items: [
-    { label: "What is meant by general artificial intelligence?", description: "General artificial intelligence usually means a hypothetical AI system that could match or exceed human cognitive ability across a very wide range of tasks. It implies broad learning, reasoning, and adaptation rather than skill in one narrow domain." },
-    { label: "What is the difference between general intelligence and AI?", description: "In this article, AI usually refers to today\u2019s narrow systems built for specific tasks, while general intelligence refers to broad capability across many tasks and settings. AGI is the idea of applying that general intelligence to machines." },
-    { label: "What is an example of general AI?", description: "There is no confirmed real-world example of general AI in the grounded sources because AGI is still described as theoretical. Current tools may be powerful, but they are not broadly accepted as true AGI." },
-  ],
-}
+  {
+    id: 1,
+    question: "What does AGI stand for?",
+    answer:
+      "AGI usually stands for artificial general intelligence. “General artificial intelligence” is a common word-order variation, but artificial general intelligence is the standard expansion used by the sources in this guide.",
+  },
+  {
+    id: 2,
+    question: "Is general-purpose AI the same as AGI?",
+    answer:
+      "No. General-purpose AI can perform a wide variety of tasks, but that does not establish human-level breadth, transfer, reliability or autonomy. The International AI Safety Report uses general-purpose AI for present systems without treating the term as proof of AGI.",
+  },
+  {
+    id: 3,
+    question: "Has AGI been achieved?",
+    answer:
+      "There is no shared operational definition or single external test that settles that question for every researcher and organisation. A responsible claim must name its definition and evidence instead of presenting a disputed label as a universal fact.",
+  },
+  {
+    id: 4,
+    question: "Does passing one benchmark prove AGI?",
+    answer:
+      "No. A benchmark samples particular capabilities under particular conditions. Useful evidence also reports task breadth, novelty, baselines, repeated trials, failures, assistance, contamination risks and independent replication.",
+  },
+  {
+    id: 5,
+    question: "Is an autonomous AI agent necessarily AGI?",
+    answer:
+      "No. Autonomy describes how independently a system pursues goals or performs actions. Generality describes the breadth of capability. A narrowly capable system can be highly autonomous, while a broad model can still require frequent human direction.",
+  },
+  {
+    id: 6,
+    question: "What should Australian teams do about AGI now?",
+    answer:
+      "Make decisions using the capabilities and risks of the system being deployed today. Define the use case, test it, assign accountability, keep appropriate human control and document limitations rather than relying on an AGI label or forecast.",
+  },
+];
 
 export const articleMeta = {
-  title: "What Is General Artificial Intelligence and Why It Matters",
+  title: TOPIC,
   topic: TOPIC,
   category: CATEGORY,
   slug: SLUG,
   description: DESCRIPTION,
   datePublished: DATE_PUBLISHED,
   dateModified: DATE_MODIFIED,
-  author: AUTHOR,
   image: HERO_IMAGE,
   imageAlt: HERO_IMAGE_ALT,
-  featuredFocus: FEATURED_FOCUS,
+  featuredFocus: "ai",
+};
+
+const REFERENCES = [
+  {
+    id: 1,
+    href: "https://deepmind.google/research/publications/66938/",
+    title: "Levels of AGI for Operationalizing Progress on the Path to AGI",
+    publisher: "Google DeepMind, ICML 2024",
+    description:
+      "Research framework separating breadth or generality, performance depth and deployment factors such as autonomy and risk.",
+    category: "analysis",
+  },
+  {
+    id: 2,
+    href: "https://openai.com/charter/",
+    title: "OpenAI Charter",
+    publisher: "OpenAI",
+    description:
+      "An organisation-specific AGI definition centred on highly autonomous systems and economically valuable work.",
+    category: "industry",
+  },
+  {
+    id: 3,
+    href: "https://internationalaisafetyreport.org/publication/2026-report-executive-summary",
+    title: "International AI Safety Report 2026: Executive Summary",
+    publisher: "International AI Safety Report",
+    description:
+      "Independent expert synthesis on current general-purpose AI capabilities, risks and uncertainty about progress.",
+    category: "analysis",
+  },
+  {
+    id: 4,
+    href: "https://oecd.ai/en/ai-publications/explanatory-memorandum-on-the-updated-oecd-definition-of-an-ai-system",
+    title: "Explanatory memorandum on the updated definition of an AI system",
+    publisher: "OECD.AI",
+    description:
+      "Policy definition of an AI system, useful for separating the broad category of AI from claims about AGI.",
+    category: "government",
+  },
+  {
+    id: 5,
+    href: "https://arcprize.org/media/ARC_AGI_3_Technical_Report.pdf",
+    title: "ARC-AGI-3: A New Challenge for Frontier Agentic Intelligence",
+    publisher: "ARC Prize Foundation, 2026",
+    description:
+      "Technical report for an interactive benchmark focused on adaptation to novel environments, including its stated scope and results.",
+    category: "analysis",
+  },
+  {
+    id: 6,
+    href: "https://www.ai.gov.au/staying-safe-and-responsible/essential-ai-practices/guidance-ai-adoption-foundations",
+    title: "Guidance for AI adoption: foundations",
+    publisher: "Australian Government National AI Centre",
+    description:
+      "Current Australian guidance on accountability, risk, transparency, testing and appropriate human control.",
+    category: "government",
+  },
+] as const;
+
+function DefinitionRow({
+  term,
+  source,
+  meaning,
+  doesNotEstablish,
+}: {
+  term: string;
+  source: string;
+  meaning: string;
+  doesNotEstablish: string;
+}) {
+  return (
+    <tr>
+      <th className="p-4 align-top font-black text-gray-950">{term}</th>
+      <td className="p-4 align-top">{source}</td>
+      <td className="p-4 align-top">{meaning}</td>
+      <td className="p-4 align-top">{doesNotEstablish}</td>
+    </tr>
+  );
 }
 
-const faqSchemaItems = [
-  { question: "What is meant by general artificial intelligence?", answer: "General artificial intelligence usually means a hypothetical AI system that could match or exceed human cognitive ability across a very wide range of tasks. It implies broad learning, reasoning, and adaptation rather than skill in one narrow domain." },
-  { question: "What is the difference between general intelligence and AI?", answer: "In this article, AI usually refers to today\u2019s narrow systems built for specific tasks, while general intelligence refers to broad capability across many tasks and settings. AGI is the idea of applying that general intelligence to machines." },
-  { question: "What is an example of general AI?", answer: "There is no confirmed real-world example of general AI in the grounded sources because AGI is still described as theoretical. Current tools may be powerful, but they are not broadly accepted as true AGI." },
-  { question: "Is AGI the same as narrow AI?", answer: "No. Narrow AI is designed for specific tasks or domains, while AGI refers to a hypothetical system with broad, transferable ability across many kinds of cognitive work." },
-  { question: "Why do experts say AGI has not been achieved?", answer: "The sources describe AGI as hypothetical and note there is no single, universally accepted benchmark or consensus threshold that proves it exists. Strong results in selected tasks do not by themselves show fully general intelligence." },
-  { question: "What capabilities are usually linked to AGI?", answer: "AGI is usually associated with generalisation across tasks, transferring knowledge between domains, learning from experience, reasoning, planning, abstraction, and adapting to unfamiliar problems. These traits are discussed as a bundle rather than one test." },
-  { question: "How should teams talk about AGI responsibly?", answer: "Use the term for broad, human-like or human-level capability across many tasks, not for a model that is simply impressive in one area. It helps to ask whether a system can generalise, transfer skills, and adapt without task-specific rebuilding." },
-  { question: "What could AGI change if it were developed?", answer: "Discussions often point to broader automation, more flexible decision support, faster research, and stronger problem solving across domains. However, those effects remain speculative because AGI has not been achieved." },
-]
-
-const faqStructuredData = faqSchemaItems.length
-  ? JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqSchemaItems.map((item) => ({
-        '@type': 'Question',
-        name: item.question,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: item.answer,
-        },
-      })),
-    })
-  : null
-
 export default function ArticleContent() {
-  const authorDetails = {
-    name: AUTHOR,
-    role: AUTHOR_ROLE,
-    bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR,
-  }
-
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
       <ArticleHeroHeader
         breadcrumbs={[
-          { label: 'Home', href: '/', icon: Home },
-          { label: 'Articles', href: "/articles" },
+          { label: "Home", href: "/", icon: Home },
+          { label: "Articles", href: "/articles" },
           { label: TOPIC, current: true },
         ]}
         title={TOPIC}
-        titleHighlight={TOPIC}
+        titleHighlight="Artificial General Intelligence"
         headerBgColor="cyan"
-        summary={summaryHighlights}
+        summary={{
+          heading: "The short answer",
+          intro:
+            "AGI is a proposed threshold for broad machine intelligence—not a synonym for a chatbot, agent or general-purpose model.",
+          items: [
+            {
+              label: "Definition first",
+              description:
+                "Different organisations set different thresholds. A claim is meaningless until it names the definition.",
+            },
+            {
+              label: "Evidence across dimensions",
+              description:
+                "Breadth, depth, transfer, reliability and test conditions matter more than a single headline score.",
+            },
+            {
+              label: "Act on present systems",
+              description:
+                "Australian teams still need use-case governance, testing and human control whether or not a vendor uses the AGI label.",
+            },
+          ],
+        }}
         heroImage={HERO_IMAGE}
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <ArticleTocPlaceholder className="bg-transparent" />
-
       <div className="prose prose-lg prose-slate max-w-none bg-transparent">
-        <p><strong>{TOPIC}</strong> — {"General artificial intelligence, or AGI, usually refers to a hypothetical form of AI that could match or exceed human cognitive ability across a very wide range of tasks. The key idea is breadth. Instead of being built for one narrow job, an AGI system would be expected to understand, learn, and apply knowledge in many different settings. Sources describe this as the ability to handle virtually any intellectual task a human can do, not just one specialised function."}</p>
-        <p>{"That makes AGI different from the task-specific AI people use today. Current AI systems can be impressive at defined jobs such as language generation, image recognition, or translation, but they are still narrow in scope. AGI implies broader generalisation, transferable skills, and the ability to adapt to unfamiliar problems without needing separate task-by-task programming. In simple terms, narrow AI is good at selected tasks, while AGI is meant to move across domains more like a human can."}</p>
-        <p>{"It is also important to set expectations early: AGI remains theoretical. Multiple sources note that there is no single, universally accepted definition or benchmark that proves AGI has been achieved. This article treats AGI as a concept to understand clearly, so readers can separate the underlying idea from hype and loose claims."}</p>
-        <ArticleImageBlock
-          src={HERO_IMAGE}
-          alt={HERO_IMAGE_ALT}
-          caption="What is general artificial intelligence? Learn how AGI differs from narrow AI, why it remains theoretical, and what the term means in practical discussions today."
-          width={1600}
-          height={1067}
-        />
+        <section
+          aria-labelledby="agi-direct-answer"
+          className="not-prose my-8 rounded-[28px] border-2 border-gray-950 bg-[#fefc22] p-6 sm:p-8"
+        >
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-700">
+            Direct answer
+          </p>
+          <h2
+            id="agi-direct-answer"
+            className="mt-3 text-3xl font-black tracking-tight text-gray-950"
+          >
+            AGI means broad capability—but the threshold is disputed.
+          </h2>
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-900">
+            Artificial general intelligence usually describes a proposed AI
+            system with strong capability across a wide range of cognitive
+            tasks, including unfamiliar ones. There is no single operational
+            definition accepted by every lab, researcher and government. That
+            is why “this is AGI” is a claim to evaluate, not a self-proving
+            product category.
+          </p>
+        </section>
 
-        <AudienceGrid
-          heading="Who is this guide for?"
-          cards={[
-            {
-              title: 'Founders & Builders',
-              description: 'For operators validating demand, pitching a vision, and moving before momentum stalls.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />,
-              variant: 'orange',
-            },
-            {
-              title: 'Students & Switchers',
-              description: 'For readers learning how strong technical partners evaluate traction, skills, and fit.',
-              icon: <AcademicCapIcon className="h-6 w-6" />,
-              variant: 'purple',
-            },
-            {
-              title: 'Community Builders',
-              description: 'For connectors, mentors, and organisers helping founders meet collaborators in the right rooms.',
-              icon: <UsersIcon className="h-6 w-6" />,
-              variant: 'yellow',
-            },
-          ]}
-        />
+        <p>
+          A terminology note matters here: <strong>AGI</strong> conventionally
+          expands to <strong>artificial general intelligence</strong>.
+          “General artificial intelligence” is a common word-order variation
+          and the search phrase used in this page’s original title. Both usually
+          point to the same debate.
+        </p>
 
-        <QuoteBlock title="Key insight" variant="purple">
-          {"General artificial intelligence usually means a hypothetical AI system that could match or exceed human cognitive ability across a very wide range of tasks. It implies broad learning, reasoning, and adaptation rather than skill in one narrow domain."}
-        </QuoteBlock>
-          <h2>{"How AGI differs from the AI people use today"}</h2>
-          <p>{"The main contrast is between narrow AI and general AI. The AI tools people use today are usually narrow AI systems. They can be very capable, but their competence is still centred on defined tasks or domains, such as language work, image recognition, or translation. By comparison, AGI is described in the sources as a theoretical or hypothetical form of AI that could match or exceed human cognitive ability across virtually all tasks, rather than performing well in one slice of work."}</p>
-          <p>{"That is why the word general matters so much. An AGI system would need broad, transferable intelligence. Instead of needing task-specific rebuilding or reprogramming for each new area, it would be expected to generalise knowledge, transfer skills between domains, and handle unfamiliar problems. It would carry learning from one context into another and adapt in a more human-like way when the situation changes."}</p>
-          <p>{"Current AI products can look flexible because one system may answer questions, summarise text, or help with coding. But strong performance across several related tasks is not the same as true general intelligence. The sources consistently describe AGI as something beyond today\u2019s specialised systems, not simply a more polished version of them. So when people ask whether current AI is already AGI, the grounded answer here is no: today\u2019s systems may be powerful, but AGI would require much broader reasoning and transfer across unrelated domains."}</p>
-          <ul>
-            <li>{"Narrow AI is built for specific tasks or domains, even when it seems highly capable."}</li>
-            <li>{"AGI would need to work across virtually all cognitive tasks."}</li>
-            <li>{"A key test is whether knowledge and skills can transfer to unfamiliar domains without task-specific rebuilding."}</li>
-            <li>{"Powerful current AI is not the same as general intelligence."}</li>
-          </ul>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-b8753b72-1803-4c5f-a956-e946a2eba579.jpg?alt=media&token=235b1aa2-fadc-45c4-bbb8-fb2ec7002f9b"
-            alt="How AGI differs from the AI people use today"
-            caption="How AGI differs from the AI people use today"
-            width={1200}
-            height={800}
-          />
-          <h2>{"The core capabilities researchers usually associate with AGI"}</h2>
-          <p>{"Researchers usually describe AGI as a bundle of abilities rather than one passing test. The central idea is broad competence across many kinds of intellectual work, not excellence at one narrow task. In the sources here, AGI is framed as a hypothetical system that can understand, learn, and apply knowledge across a wide range of tasks, including tasks it was not built for in advance. That is why generalisation matters so much in AGI discussions: the system would need to carry what it learns from one setting into another without needing task-specific reprogramming each time."}</p>
-          <p>{"If a system performs well only in familiar conditions, that is closer to narrow AI. AGI, by contrast, is usually described as being able to face unfamiliar problems, learn from experience, and respond in a more human-like way across domains."}</p>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ae87af56-8f9d-4ea5-aa35-aa9af5966c61.jpg?alt=media&token=b53d29fd-f889-409b-873f-421761d6a0c3"
-            alt="The core capabilities researchers usually associate with AGI"
-            caption="The core capabilities researchers usually associate with AGI"
-            width={1200}
-            height={800}
-          />
-          <h3>{"Generalisation, transfer, and learning"}</h3>
-          <p>{"One core capability is generalisation across tasks. In plain English, that means using knowledge or skills learned in one area to help with another area. The priority sources repeatedly contrast this with narrow AI, which is built for specific jobs such as image recognition or translation. AGI is usually defined as something broader: it could transfer skills between domains and deal with new tasks without being rebuilt for each one."}</p>
-          <p>{"Researchers also connect AGI with learning that is not locked to huge amounts of task-specific setup. This is why terms like broad, flexible, and transferable intelligence appear so often in AGI definitions."}</p>
-          <h3>{"Reasoning, planning, and adapting to the unfamiliar"}</h3>
-          <p>{"The sources describe AGI as aiming to match human cognitive abilities across tasks, which implies more than pattern matching on one benchmark. It suggests the ability to work through problems, connect ideas, and apply knowledge in situations that were not seen before. This is where abstraction matters: the system would need to form useful higher-level understanding, not just repeat narrow behaviours."}</p>
-          <p>{"Adaptation to unfamiliar situations is the real stress test for this bundle of abilities. Researchers usually reserve the AGI label for systems that can handle novel problems, move across domains, and continue operating with a broad level of competence. That is why AGI is generally discussed as a combination of reasoning, learning, transfer, and adaptation, not as one isolated benchmark score."}</p>
+        <h2>Four terms that should not be collapsed into one</h2>
+        <p>
+          The clearest way through the hype is to separate the category of
+          system, the breadth of its uses, the proposed capability threshold
+          and the way it operates.
+        </p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the what is general artificial intelligence checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
-
-        <ArticleStepList
-          title="Practical next steps"
-          steps={[
-            "Narrow AI is built for specific tasks or domains, even when it seems highly capable.",
-            "AGI would need to work across virtually all cognitive tasks.",
-            "A key test is whether knowledge and skills can transfer to unfamiliar domains without task-specific rebuilding.",
-            "Powerful current AI is not the same as general intelligence.",
-          ]}
-          accent="indigo"
-        />
-          <h2>{"Why experts still say AGI does not exist yet"}</h2>
-          <p>{"Experts still describe artificial general intelligence as hypothetical, not achieved. Across the sources, AGI is framed as a system that can match or exceed human cognitive ability across any task, or perform the full range of human-level intellectual work with broad, transferable skill. That high bar matters. A model can look very capable in language, coding, image analysis, or other pattern-heavy tasks and still fall short of what many people mean by general intelligence. IBM also notes there is no academic consensus on exactly what would qualify as AGI, which makes claims of arrival even harder to defend."}</p>
-          <p>{"Another reason the debate remains open is that current systems are usually described as narrow or task-bound compared with AGI. Sources distinguish AGI from today\u2019s AI by stressing generalisation, transfer across domains, and the ability to handle novel problems without task-specific reprogramming. IBM separates AGI from strong AI and from artificial superintelligence, while Wikipedia notes that superintelligence would go beyond human ability across every domain by a wide margin. So when people point to a powerful large model and call it AGI, experts often push back for a simple reason: strong performance in selected tests is evidence of capability, but not proof of fully general, human-level intelligence across virtually all cognitive tasks."}</p>
-          <ul>
-            <li>{"AGI is still described as a hypothetical stage, not a confirmed reality."}</li>
-            <li>{"There is no clear academic or industry-wide consensus on what exact threshold would count as AGI."}</li>
-            <li>{"Current AI can be highly impressive while still lacking broad transfer across domains and tasks."}</li>
-            <li>{"AGI, strong AI, and artificial superintelligence are related but not identical ideas."}</li>
-          </ul>
-          <h2>{"What AGI could change for work, products, and society"}</h2>
-          <p>{"If AGI were achieved, the main change would be breadth. Today\u2019s AI tools are usually built for narrower tasks, but AGI is commonly described as a system that could learn, reason, and apply knowledge across many different kinds of work at a human-like level. That is why discussions about AGI often focus on broader decision support, more flexible automation, faster research, and better handling of unfamiliar problems. In practical terms, people imagine systems that could move between planning, analysis, communication, and problem solving without needing a separate tool for each step."}</p>
-          <p>{"That said, these impacts are still hypothetical because AGI does not exist today. Several sources describe AGI as a theoretical goal rather than a deployed reality, and there is still no clear consensus on what would fully qualify as AGI. AGI may be discussed as a future shift in products, jobs, and institutions, but current teams are still working with narrow AI systems that have clearer limits and narrower strengths."}</p>
-          <p>{"For businesses, governments, and community organisations, the more grounded response is not to plan around science-fiction scenarios. It is to build AI literacy, test current tools responsibly, and improve governance now. Existing AI already supports pattern finding, data analysis, workflow support, and some forms of decision-making assistance. That makes present-day capability, human oversight, and clear accountability more important than speculative forecasts about fully general machine intelligence."}</p>
-          <p>{"They can help people think about opportunity and risk at the same time: better problem solving and new services on one side, and safety, misuse, and trust concerns on the other. A sensible approach is to stay informed, separate current AI from hypothetical AGI, and support responsible experimentation that keeps human judgment, transparency, and public understanding in view."}</p>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-5ab8f4b2-aeed-4b19-a826-a51a607507c5.jpg?alt=media&token=e11fc3ea-a2f5-4471-9e1c-dccbe192a141"
-            alt="Ultra-close candid of a worker\u2019s hands switching between sketches, code, and chat on"
-            caption="What AGI could change for work, products, and society"
-            width={1200}
-            height={800}
-          />
-          <h2>{"How to talk about AGI accurately right now"}</h2>
-          <p>{"A careful way to use the term AGI today is to reserve it for a system with broad, human-like or human-level ability across many cognitive tasks. The cited sources describe AGI as hypothetical or theoretical, not as something that has clearly been achieved. They also draw a clear line between AGI and narrow AI. Narrow AI can be excellent at a defined task, but AGI would need to understand, learn, and apply knowledge across many kinds of problems."}</p>
-          <p>{"Instead of asking whether it performs well in one area, ask whether it can generalise to unfamiliar problems, transfer skills across domains, and adapt without task-specific reprogramming."}</p>
-          <p>{"In practice, the most useful stance is to treat AGI as an important research goal and public concept while making present decisions based on current AI systems as they actually exist. For teaching, strategy, or everyday discussion, that means separating exciting progress from claims of general intelligence. Build AI literacy, compare claims against the definition being used, and stay precise about the difference between powerful specialised systems and truly general ones."}</p>
-          <ul>
-            <li>{"Use AGI to mean broad capability across many tasks, not excellence in one task."}</li>
-            <li>{"Keep current decisions grounded in the limits of today\u2019s AI systems."}</li>
-            <li>{"Separate clear terminology from hype when discussing future AI."}</li>
-          </ul>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-92c13584-7c59-47d7-9221-7f5227f0117c.jpg?alt=media&token=a0f7f098-b8c0-479f-becd-539b1d20b433"
-            alt="How to talk about AGI accurately right now"
-            caption="How to talk about AGI accurately right now"
-            width={1200}
-            height={800}
-          />
-
-        <QuoteBlock title="Keep moving forward" variant="orange">
-          {"There is no confirmed real-world example of general AI in the grounded sources because AGI is still described as theoretical. Current tools may be powerful, but they are not broadly accepted as true AGI."}
-        </QuoteBlock>
-
-        <MLAITemplateResourceCTA />
-
-      <ArticleReferences
-        references={[
-          {id: 1, href: "https://www.databricks.com/blog/what-is-artificial-general-intelligence", title: "What is Artificial General Intelligence (AGI)? | Databricks", publisher: "databricks.com", description: "Authoritative reference supporting What is Artificial General Intelligence (AGI)? | Databricks.", category: "guide"},
-          {id: 2, href: "https://nmu.edu/ai-literacy-initiative/general-intelligence-ai", title: "General - Artificial General Intelligence | NMU AI Literacy Initiative", publisher: "nmu.edu", description: "Authoritative reference supporting General - Artificial General Intelligence | NMU AI Literacy Initiative.", category: "guide"},
-          {id: 3, href: "https://cloud.google.com/discover/what-is-artificial-general-intelligence", title: "What Is Artificial General Intelligence? | Google Cloud", publisher: "cloud.google.com", description: "Authoritative reference supporting What Is Artificial General Intelligence? | Google Cloud.", category: "guide"},
-          {id: 4, href: "https://aws.amazon.com/what-is/artificial-general-intelligence/", title: "What is AGI? - Artificial General Intelligence Explained - AWS", publisher: "aws.amazon.com", description: "Authoritative reference supporting What is AGI? - Artificial General Intelligence Explained - AWS.", category: "guide"},
-          {id: 5, href: "https://www.ovhcloud.com/en-au/learn/what-is-artificial-general-intelligence/", title: "What is artificial general intelligence? | OVHcloud Australia", publisher: "ovhcloud.com", description: "Authoritative reference supporting What is artificial general intelligence? | OVHcloud Australia.", category: "guide"},
-          {id: 6, href: "https://www.ibm.com/think/topics/artificial-general-intelligence", title: "What is Artificial General Intelligence (AGI)? | IBM", publisher: "ibm.com", description: "Authoritative reference supporting What is Artificial General Intelligence (AGI)? | IBM.", category: "guide"},
-          {id: 7, href: "https://business.gov.au/online-and-digital/artificial-intelligence", title: "Artificial intelligence (AI) | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Artificial intelligence (AI) | business.gov.au.", category: "guide"},
-          {id: 8, href: "https://en.wikipedia.org/wiki/Artificial_general_intelligence", title: "Artificial general intelligence - Wikipedia", publisher: "en.wikipedia.org", description: "Authoritative reference supporting Artificial general intelligence - Wikipedia.", category: "guide"},
-          {id: 9, href: "https://www.ibm.com/think/topics/artificial-intelligence-business", title: "What is Artificial Intelligence (AI) in Business? | IBM", publisher: "ibm.com", description: "Authoritative reference supporting What is Artificial Intelligence (AI) in Business? | IBM.", category: "guide"},
-          {id: 10, href: "https://www.finance.gov.au/government/public-data/data-and-digital-ministers-meeting/national-framework-assurance-artificial-intelligence-government", title: "National framework for the assurance of artificial intelligence in government | Department of Finance", publisher: "finance.gov.au", description: "Authoritative reference supporting National framework for the assurance of artificial intelligence in government | Department of Finance.", category: "guide"},
-          {id: 11, href: "https://www.digital.nsw.gov.au/policy/artificial-intelligence/artificial-intelligence-strategy", title: "Artificial Intelligence Strategy | Digital NSW", publisher: "digital.nsw.gov.au", description: "Authoritative reference supporting Artificial Intelligence Strategy | Digital NSW.", category: "guide"},
-        ]}
-        heading="Sources & further reading"
-      />
-
-        <ArticleDisclaimer />
-
-        <div className="my-12 not-prose">
-          <ArticleCompanyCTA
-            title="Build practical AI literacy first"
-            body="If you are sorting hype from reality, focus on how current AI systems work, where they help, and where they still need human oversight. Grounded AI knowledge is more useful than guessing about future AGI timelines."
-            buttonText="Explore practical AI learning"
-            buttonHref="/articles"
-          />
+        <div className="not-prose my-8 overflow-x-auto rounded-2xl border border-gray-300">
+          <table className="w-full min-w-[940px] border-collapse bg-white text-left text-sm">
+            <thead className="bg-gray-950 text-white">
+              <tr>
+                <th className="p-4 font-black">Term</th>
+                <th className="p-4 font-black">Source or lens</th>
+                <th className="p-4 font-black">What it means here</th>
+                <th className="p-4 font-black">What the label does not prove</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 text-gray-800">
+              <DefinitionRow
+                term="AI system"
+                source="OECD policy definition"
+                meaning="A machine-based system that infers how to produce outputs such as predictions, content, recommendations or decisions."
+                doesNotEstablish="Human-level ability, broad competence or autonomy."
+              />
+              <DefinitionRow
+                term="General-purpose AI"
+                source="International AI Safety Report 2026"
+                meaning="Models and systems able to perform a wide variety of tasks."
+                doesNotEstablish="That performance is human-level, reliable across every domain or AGI."
+              />
+              <DefinitionRow
+                term="AGI"
+                source="OpenAI Charter"
+                meaning="OpenAI’s threshold refers to highly autonomous systems outperforming humans at most economically valuable work."
+                doesNotEstablish="Industry-wide agreement; it is one influential organisation’s definition."
+              />
+              <DefinitionRow
+                term="Levels of AGI"
+                source="Google DeepMind research framework"
+                meaning="A proposed classification using performance depth and capability breadth, considered separately from autonomy and deployment risk."
+                doesNotEstablish="That a single benchmark result fixes a system’s level across all tasks."
+              />
+              <DefinitionRow
+                term="AI agent"
+                source="System-design lens"
+                meaning="A system that can select and perform steps toward a goal with some degree of independence."
+                doesNotEstablish="Generality: a narrow agent may still act autonomously inside one workflow."
+              />
+            </tbody>
+          </table>
         </div>
-      </div>
 
-        <AuthorBio author={authorDetails} />
+        <p>
+          These definitions answer different questions. The OECD definition
+          helps policy makers decide what counts as an AI system. The 2026
+          International AI Safety Report discusses the capabilities and risks
+          of today’s most capable <em>general-purpose</em> systems. OpenAI’s
+          Charter states a mission-specific AGI threshold. DeepMind’s framework
+          tries to make progress more measurable by separating breadth from
+          performance. None should be silently substituted for another.
+        </p>
+
+        <h2>What evidence would make an AGI claim meaningful?</h2>
+        <p>
+          Start with <strong>breadth</strong>: which materially different tasks
+          and domains are represented? A model completing code, prose and
+          questions through the same text interface may be broadly useful, but
+          the test still needs to show what population of human work those tasks
+          represent.
+        </p>
+        <p>
+          Then ask about <strong>depth</strong>: compared with whom, at what
+          performance level and with what reliability? “Human-level” could mean
+          an untrained participant, a typical worker or a domain expert. Average
+          performance can also hide catastrophic failures that matter in a real
+          deployment.
+        </p>
+        <p>
+          Finally, look for <strong>transfer and adaptation</strong>. An
+          important test uses unfamiliar, held-out problems and discloses what
+          training, prompting, tools, examples and human intervention were
+          allowed. Otherwise a result may measure preparation for a test rather
+          than the ability to acquire a new skill.
+        </p>
+
+        <AgiClaimEvaluator />
+
+        <h2>Why one benchmark cannot settle the question</h2>
+        <p>
+          A benchmark is an instrument, not a verdict. It samples particular
+          abilities using a particular interface, dataset, scoring rule and
+          budget. Strong performance can be genuine progress while still
+          leaving other definitions of AGI unresolved.
+        </p>
+        <p>
+          ARC-AGI is a useful example because its designers deliberately focus
+          on skill acquisition and novel problems rather than accumulated
+          knowledge. The 2026 ARC-AGI-3 technical report introduces interactive
+          environments that require exploration, goal inference and planning.
+          It reports that humans in its study solved all tested environments
+          while evaluated frontier systems scored below one per cent as of
+          March 2026. That is evidence about those systems on that benchmark
+          under its protocol—not a universal measurement of every component of
+          intelligence.
+        </p>
+
+        <h3>Minimum questions for any benchmark headline</h3>
+        <ol>
+          <li>
+            Was the task set held out, and how was possible training-data
+            exposure investigated?
+          </li>
+          <li>
+            Which prompts, tools, memory, retries, time and human help were
+            allowed?
+          </li>
+          <li>
+            Is the reported result an average, best run or selected
+            demonstration?
+          </li>
+          <li>
+            What do humans score under comparable time, information and
+            interface conditions?
+          </li>
+          <li>
+            Which failure modes, costs and safety constraints disappear from
+            the headline number?
+          </li>
+          <li>
+            Can independent evaluators reproduce the protocol and challenge the
+            conclusion?
+          </li>
+        </ol>
+
+        <h2>What can be said responsibly in July 2026?</h2>
+        <p>
+          The International AI Safety Report 2026 says general-purpose AI
+          capabilities have continued to improve, including through techniques
+          applied after initial training. It also describes several plausible
+          paths to 2030: progress could slow, continue at recent rates or
+          accelerate. That range is a useful antidote to treating one forecast
+          as settled fact.
+        </p>
+        <p>
+          This guide therefore does not declare that a particular product is or
+          is not AGI for every possible definition. It makes a narrower claim:
+          no shared label removes the need to define the threshold, publish the
+          test conditions and examine contrary evidence. An organisation may
+          announce that its own threshold has been reached while independent
+          researchers reasonably reject the definition or evidence.
+        </p>
+
+        <div className="not-prose my-8 grid gap-4 md:grid-cols-2">
+          <section className="rounded-[24px] border border-gray-300 bg-white p-5">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">
+              Responsible statement
+            </p>
+            <p className="mt-3 text-base font-black leading-7 text-gray-950">
+              “Under definition D and protocol P, the system exceeded baseline
+              B on these task groups; these failures and open questions remain.”
+            </p>
+          </section>
+          <section className="rounded-[24px] border border-gray-300 bg-orange-100 p-5">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-900">
+              Weak statement
+            </p>
+            <p className="mt-3 text-base font-black leading-7 text-gray-950">
+              “It reasoned in our demo, so AGI is here.”
+            </p>
+          </section>
+        </div>
+
+        <h2>What this means for an Australian builder today</h2>
+        <p>
+          A team does not need an AGI forecast to make a useful AI decision.
+          Start with a real workflow, accountable owner, permitted data,
+          measurable outcome and human intervention point. Test the system that
+          will actually be deployed, including predictable failures, rather
+          than borrowing a frontier-model headline.
+        </p>
+        <p>
+          The Australian Government National AI Centre’s current foundations
+          guidance recommends accountability, risk management, transparency and
+          human control appropriate to the use. Those controls follow from what
+          the system does and whom it affects—not from whether marketing calls
+          it AI, an agent or AGI.
+        </p>
+        <ul>
+          <li>
+            Learn the basic distinction first in MLAI’s{" "}
+            <Link to="/articles/featured/what-is-artificial-intelligence-in-simple-words">
+              plain-English guide to AI
+            </Link>
+            .
+          </li>
+          <li>
+            If the system takes actions, map its boundaries using the guide to{" "}
+            <Link to="/articles/featured/what-is-an-agent-in-artificial-intelligence">
+              AI agents
+            </Link>
+            .
+          </li>
+          <li>
+            Bring disputed claims and methods to an{" "}
+            <Link to="/events">MLAI event</Link> for discussion with the
+            Australian community.
+          </li>
+          <li>
+            When you have a defined workflow and success measure, scope the
+            practical system through{" "}
+            <Link to="/mlai-studio/start-project">MLAI Studio</Link>.
+          </li>
+        </ul>
+
+        <aside className="not-prose my-10 rounded-[28px] bg-gray-950 p-6 text-white sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#00ffd7]">
+            Method, limitations and disclosure
+          </p>
+          <h2 className="mt-3 text-2xl font-black">
+            This page evaluates claims; it does not certify AGI
+          </h2>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-gray-200">
+            <li>
+              <strong className="text-white">Source method:</strong> definitions,
+              capability statements and Australian governance handoffs were
+              checked against the linked primary or official sources on 28 July
+              2026.
+            </li>
+            <li>
+              <strong className="text-white">Original asset:</strong> MLAI built
+              the eight-part claim evaluator and definition matrix for this
+              revision. The worksheet does not submit or save its contents.
+            </li>
+            <li>
+              <strong className="text-white">Limit:</strong> the framework is a
+              reading aid, not a validated scientific scale. Its score measures
+              disclosure completeness, not intelligence.
+            </li>
+            <li>
+              <strong className="text-white">Review gate:</strong> MLAI has not
+              yet run the planned Australian expert roundtable on contested AGI
+              definitions. A named human subject reviewer is still required
+              before this article is declared final or scored 80+.
+            </li>
+            <li>
+              <strong className="text-white">AI assistance:</strong> this July
+              2026 revision used AI-assisted research, drafting and code
+              generation. Links, distinctions and attributed claims were
+              checked against the sources listed below.
+            </li>
+          </ul>
+        </aside>
+
+        <ArticleReferences
+          references={[...REFERENCES]}
+          heading="Primary definitions and evidence"
+          description="Sources checked for this 28 July 2026 revision."
+          previewCount={4}
+        />
 
         <div className="mt-12">
-          <ArticleFAQ items={faqItems} />
+          <ArticleFAQ items={faqItems} heading="AGI questions, answered carefully" />
         </div>
-
-        <ArticleFooterNav backHref="/articles" topHref="#" />
+      </div>
     </>
-  )
+  );
 }

@@ -19,6 +19,19 @@ export type ArticleStructuredDataConfig = {
     howTo?: ArticleStructuredDataHowToConfig
 }
 
+export type ArticleConversionType =
+    | "events"
+    | "studio-builder"
+    | "studio-project"
+    | "founder-tools"
+    | "vibe-raising"
+
+export type ArticleConversionConfig = {
+    primary: ArticleConversionType
+    secondary?: ArticleConversionType
+    version?: string
+}
+
 export type ArticleSeoConfig = {
     toc?: boolean
     howTo?: boolean
@@ -26,6 +39,7 @@ export type ArticleSeoConfig = {
     citations?: boolean
     internalLinks?: string[]
     structuredData?: ArticleStructuredDataConfig
+    conversion?: ArticleConversionConfig
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
@@ -35,6 +49,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         mediaObject: false,
         citations: true,
         internalLinks: [],
+        conversion: { primary: "vibe-raising", secondary: "events", version: "urgent-v1" },
     },
     '/articles/featured/what-community-is-in-ai-and-why-it-is-more-than-a-group': {
         toc: true,
@@ -56,6 +71,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         mediaObject: false,
         citations: true,
         internalLinks: [],
+        conversion: { primary: "vibe-raising", secondary: "events", version: "urgent-v1" },
     },
     '/articles/featured/a-practical-guide-for-australian-founders-building-an-ai-startup': {
         toc: true,
@@ -91,6 +107,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         mediaObject: false,
         citations: true,
         internalLinks: [],
+        conversion: { primary: "events", version: "sydney-event-finder-v1" },
     },
     '/articles/featured/how-to-pitch-your-idea': {
         toc: true,
@@ -119,20 +136,23 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         mediaObject: false,
         citations: true,
         internalLinks: [],
+        conversion: { primary: "vibe-raising", secondary: "events", version: "unicorn-evidence-v1" },
     },
     '/articles/featured/what-an-entrepreneur-does-and-how-to-start-well': {
         toc: true,
         howTo: false,
         mediaObject: false,
-        citations: true,
+        citations: false,
         internalLinks: [],
+        conversion: { primary: "founder-tools", secondary: "events", version: "urgent-v1" },
     },
     '/articles/featured/what-is-artificial-intelligence-in-simple-words': {
         toc: true,
         howTo: false,
         mediaObject: false,
-        citations: true,
+        citations: false,
         internalLinks: [],
+        conversion: { primary: "events", secondary: "studio-project", version: "urgent-v1" },
     },
     '/articles/featured/what-is-an-agent-in-artificial-intelligence': {
         toc: true,
@@ -152,18 +172,12 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         toc: true,
         howTo: false,
         mediaObject: false,
-        citations: true,
+        citations: false,
         internalLinks: [],
+        conversion: { primary: "events", secondary: "studio-project", version: "urgent-v1" },
     },
     '/articles/featured/what-constitutes-a-startup-in-practice': {
   toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: true,
-        internalLinks: [],
-    },
-    '/articles/featured/what-is-agi-in-artificial-intelligence-and-why-it-matters': {
-        toc: true,
         howTo: false,
         mediaObject: false,
         citations: true,
@@ -204,20 +218,6 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
-    '/articles/featured/how-to-startup-a-practical-guide-for-first-time-founders': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: true,
-        internalLinks: [],
-    },
-    '/articles/featured/what-is-artificial-intelligence-with-example-for-everyday-readers': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: true,
-        internalLinks: [],
-    },
     '/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026': {
         toc: true,
         howTo: false,
@@ -252,6 +252,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         mediaObject: false,
         citations: true,
         internalLinks: [],
+        conversion: { primary: "studio-builder", secondary: "events", version: "urgent-v1" },
     },
     '/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         toc: true,
@@ -292,8 +293,9 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         toc: true,
         howTo: false,
         mediaObject: false,
-        citations: true,
+        citations: false,
         internalLinks: [],
+        conversion: { primary: "founder-tools", secondary: "events", version: "accelerator-finder-v1" },
     },
     '/articles/featured/how-to-find-networking-events': {
         toc: true,
@@ -350,6 +352,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         mediaObject: false,
         citations: true,
         internalLinks: [],
+        conversion: { primary: "founder-tools", secondary: "events", version: "urgent-v1" },
     },
     '/articles/featured/how-does-a-venture-capital-firm-work': {
         toc: true,
@@ -378,6 +381,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         mediaObject: false,
         citations: true,
         internalLinks: [],
+        conversion: { primary: "studio-builder", secondary: "events", version: "urgent-v1" },
     },
     '/articles/featured/how-to-build-a-model-in-data-science': {
         toc: true,
@@ -651,11 +655,16 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             faq: { enabled: true },
         },
     },
+    '/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9': {
+        toc: true,
+        howTo: false,
+        mediaObject: true,
+        citations: true,
+        internalLinks: [],
+        conversion: { primary: "studio-builder", secondary: "events", version: "urgent-v1" },
+    },
 };
 
 export const canonical = (path: string) => {
-    const siteUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL
-        ? process.env.NEXT_PUBLIC_SITE_URL
-        : 'https://mlai.au';
-    return `${siteUrl}${path}`;
+    return `https://mlai.au${path}`;
 };
