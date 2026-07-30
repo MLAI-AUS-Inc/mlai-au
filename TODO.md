@@ -1,3 +1,5 @@
+- [x] Point new-developer Content Factory setup at `drsamdonegan/content-factory`
+
 - [x] Resolve monthly-update reminder links to an explicitly owned Founder Tools company
 - [x] Reject stale or foreign reminder company IDs without mutating active-company state
 - [x] Add focused reminder-link tests and run typecheck/build
