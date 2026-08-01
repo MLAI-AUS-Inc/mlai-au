@@ -6,7 +6,7 @@ const DESCRIPTION =
 const SLACK_INVITE =
   "https://join.slack.com/t/mlai-aus/shared_invite/zt-3xsuoq3yb-_hah3nVNtga9pFQUvsxJeQ";
 const WEB_APP_URL =
-  import.meta.env.VITE_MLAI_CHAT_WEB_URL || "https://chat.mlai.au/chat";
+  import.meta.env.VITE_MLAI_CHAT_WEB_URL || "https://chat.mlai.au/";
 const DESKTOP_RELEASE_URL =
   import.meta.env.VITE_MLAI_CHAT_DESKTOP_URL ||
   "https://github.com/MLAI-AUS-Inc/mlai-chat/releases/latest";
@@ -214,7 +214,7 @@ export default function CommunityPage() {
           />
           <ClientCard
             action="Download latest release"
-            body="Install the standalone MLAI Chat app for macOS, Windows, or Linux."
+            body="Install the signed standalone MLAI Chat release for macOS, Windows, or Linux."
             eyebrow="Computer"
             href={DESKTOP_RELEASE_URL}
             title="Desktop"
