@@ -15,6 +15,7 @@ const footerNavigation = {
     { name: "How to Pitch", href: "/articles/featured/how-to-pitch-your-idea" },
     { name: "Vibe Raising", href: "/vibe-raising" },
     { name: "Meet Roo", href: "/roo" },
+    { name: "MLAI Chat", href: "/community" },
     { name: "Press Kit", href: "/press-kit" },
   ],
   social: [
