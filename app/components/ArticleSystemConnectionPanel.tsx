@@ -77,6 +77,16 @@ const SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verificatio
 const SETUP_PUBLISH_STATUSES = new Set(["pr_created", "setup_pr_created", "manual_merge_required"]);
 const SETUP_VERIFYING_STATUSES = new Set(["merged", "merged_verifying", "verifying"]);
 
+function getBrowserSessionStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    return window.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
 }
@@ -748,8 +758,8 @@ export default function ArticleSystemConnectionPanel({
   const lastScanProgressAtRef = useRef(Date.now());
   const lastTerminalRevalidationRef = useRef("");
   const [pageVisible, setPageVisible] = useState(true);
-  const [githubAuthWaiting, setGithubAuthWaiting] = useState(() =>
-    typeof window !== "undefined" && window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true",
+  const [githubAuthWaiting, setGithubAuthWaiting] = useState(
+    () => getBrowserSessionStorage()?.getItem("vibe-marketing:github-auth-open") === "true",
   );
 
   const candidates = useMemo(() => (effectiveScanRun ? articleSurfaceCandidates(effectiveScanRun) : []), [effectiveScanRun]);
@@ -918,9 +928,7 @@ export default function ArticleSystemConnectionPanel({
 
   useEffect(() => {
     if (!githubAuthWaiting || (!connected && !connectionError && !githubRepos.error)) return;
-    if (typeof window !== "undefined") {
-      window.sessionStorage.removeItem("vibe-marketing:github-auth-open");
-    }
+    getBrowserSessionStorage()?.removeItem("vibe-marketing:github-auth-open");
     setGithubAuthWaiting(false);
   }, [connected, connectionError, githubAuthWaiting, githubRepos.error]);
 
@@ -996,7 +1004,7 @@ export default function ArticleSystemConnectionPanel({
 
   const markGithubAuthOpen = () => {
     if (typeof window === "undefined") return;
-    window.sessionStorage.setItem("vibe-marketing:github-auth-open", "true");
+    getBrowserSessionStorage()?.setItem("vibe-marketing:github-auth-open", "true");
     setGithubAuthWaiting(true);
   };
 
