@@ -589,3 +589,19 @@
 - [ ] Add attributable founder, investor, adviser, organizer, and attendee interviews called out in the implementation plan
 - [ ] Run and publish the coding-assistant benchmark before reindexing its replacement
 - [ ] Complete editorial, subject-matter, accessibility, and score-gate review before reindexing provisional content
+
+## Plane admin workspace entry
+
+- [x] Add the `admin.mlai.au` client-visible environment value
+- [x] Gate a real external Project workspace link with the backend admin entitlement
+- [x] Cover URL, visibility, external navigation, and internal-route absence with focused tests
+- [x] Run type generation, typecheck, focused tests, and the production build
+
+## Preserved admin login handoff
+
+- [x] Add the backend-supported `admin` authentication context
+- [x] Restrict auth return values to safe relative paths and fix admin completion to `https://ops.mlai.au`
+- [x] Restrict the Plane workspace URL to exactly `https://admin.mlai.au`
+- [x] Add open-redirect and happy-path tests
+- [x] Re-run type generation, typecheck, tests, and production build
+- [x] Align admin return-path fragment handling with the backend and operations callback

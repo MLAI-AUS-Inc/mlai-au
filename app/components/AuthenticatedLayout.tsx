@@ -18,13 +18,13 @@ import { ImageWithFallback } from './ImageWithFallback';
 import { ROO_POINTS_ANIMATED_GIF_URL, ROO_POINTS_COIN_URL } from '~/components/RooPointCost';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
 import type { RooPointsBalance } from '~/lib/roo-points';
-import type { User } from '~/types/user';
+import type { User, UserNavigationItem } from '~/types/user';
 
 interface AuthenticatedLayoutProps {
     children: React.ReactNode;
     user: User;
     navigation?: NavigationItem[];
-    userNavigation?: { name: string; href: string }[];
+    userNavigation?: UserNavigationItem[];
     rooPointsBalance?: RooPointsBalance | null;
     logoutAction?: string;
     companySwitcher?: React.ReactNode;
@@ -45,6 +45,22 @@ function classNames(...classes: (string | undefined | boolean)[]) {
 
 function formatRooPointsBalance(balance: number) {
     return new Intl.NumberFormat("en-AU", { maximumFractionDigits: 0 }).format(balance);
+}
+
+export function UserNavigationLink({ item, className }: { item: UserNavigationItem; className: string }) {
+    if (item.external) {
+        return (
+            <a href={item.href} className={className}>
+                {item.name}
+            </a>
+        );
+    }
+
+    return (
+        <Link to={item.href} className={className}>
+            {item.name}
+        </Link>
+    );
 }
 
 function RooPointsBadge({ balance }: { balance: number }) {
@@ -545,8 +561,8 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                             {userNavigation.map((item) => (
                                                 <Menu.Item key={item.name}>
                                                     {({ focus }) => (
-                                                        <Link
-                                                            to={item.href}
+                                                        <UserNavigationLink
+                                                            item={item}
                                                             className={classNames(
                                                                 isFounderToolsApp
                                                                     ? focus ? 'bg-[rgba(0,255,215,0.14)]' : ''
@@ -555,9 +571,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                                     ? 'block px-3 py-1 text-sm leading-6 text-[var(--vr-color-text)]'
                                                                     : 'block px-3 py-1 text-sm leading-6 text-gray-900',
                                                             )}
-                                                        >
-                                                            {item.name}
-                                                        </Link>
+                                                        />
                                                     )}
                                                 </Menu.Item>
                                             ))}

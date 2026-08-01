@@ -13,6 +13,7 @@ import {
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import CompanySwitcher from "~/components/CompanySwitcher";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
+import { getFounderUserNavigation } from "~/lib/admin-workspace";
 import { getEnv } from "~/lib/env.server";
 import { getCurrentRooPointsBalance } from "~/lib/roo-points";
 import {
@@ -47,10 +48,6 @@ const BASE_FOUNDER_NAVIGATION = [
   { name: "Upgrades", href: "/founder-tools/upgrades", icon: BoltIcon },
   { name: "Data Sources", href: "/founder-tools/data-sources", icon: CircleStackIcon },
   { name: "My Companies", href: "/founder-tools/companies", icon: BuildingOffice2Icon },
-];
-
-const FOUNDER_USER_NAVIGATION = [
-  { name: "My companies", href: "/founder-tools/companies" },
 ];
 
 function canAccessDuringCompanySetup(pathname: string) {
@@ -114,11 +111,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     appUser: vibeContext.appUser,
     rooPointsBalance,
     backendBaseUrl: String(env.BACKEND_BASE_URL || "https://api.mlai.au"),
+    adminWorkspaceUrl: String(env.VITE_ADMIN_WORKSPACE_URL || ""),
   };
 }
 
 export default function VibeRaisingApp() {
-  const { user, appUser, backendBaseUrl, rooPointsBalance } = useLoaderData<typeof loader>();
+  const { user, appUser, backendBaseUrl, adminWorkspaceUrl, rooPointsBalance } = useLoaderData<typeof loader>();
+  const userNavigation = getFounderUserNavigation(user, adminWorkspaceUrl);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -145,7 +144,7 @@ export default function VibeRaisingApp() {
     <AuthenticatedLayout
       user={user}
       navigation={BASE_FOUNDER_NAVIGATION}
-      userNavigation={FOUNDER_USER_NAVIGATION}
+      userNavigation={userNavigation}
       rooPointsBalance={rooPointsBalance}
       logoutAction="/founder-tools/logout"
       companySwitcher={companySwitcher}

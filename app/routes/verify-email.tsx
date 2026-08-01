@@ -1,11 +1,12 @@
 import type { Route } from "./+types/verify-email";
 import { useLoaderData } from "react-router";
-import { normalizeAuthNextForApp } from "~/lib/auth-return";
+import { getAuthCompletionLocation, normalizeAuthNextForApp } from "~/lib/auth-return";
 import { getEnv } from "~/lib/env.server";
 import { verifyMagicLinkWithCookies } from "~/lib/auth";
 import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
 const PRODUCTION_BACKEND_BASE_URL = "https://api.mlai.au";
+const MAIN_SITE_AUTH_ORIGIN = "https://mlai.au";
 
 function getLoginHref(app: string | null, next: string): string {
     const params = new URLSearchParams();
@@ -15,7 +16,8 @@ function getLoginHref(app: string | null, next: string): string {
     }
 
     params.set("next", next);
-    return `/platform/login?${params.toString()}`;
+    const path = `/platform/login?${params.toString()}`;
+    return app === "admin" ? `${MAIN_SITE_AUTH_ORIGIN}${path}` : path;
 }
 
 function isLocalhostRequest(request: Request) {
@@ -73,7 +75,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const token = url.searchParams.get("token");
     const app = url.searchParams.get("app");
     assertWattTheHackAuthEnabled(app, url.searchParams.get("next"));
-    const next = normalizeAuthNextForApp(app, url.searchParams.get("next"), { fallback: "/esafety/dashboard" });
+    const fallback = app === "admin" ? "/" : "/esafety/dashboard";
+    const next = normalizeAuthNextForApp(app, url.searchParams.get("next"), { fallback });
+    const completionLocation = getAuthCompletionLocation(app, next, { fallback });
     const loginHref = getLoginHref(app, next);
 
     if (!token) {
@@ -92,7 +96,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             }
         }
 
-        headers.set("Location", next);
+        headers.set("Location", completionLocation);
         return new Response(null, { status: 302, headers });
     } catch (error: any) {
         console.error("Verification failed:", error.message, error.response?.status, error.response?.data);

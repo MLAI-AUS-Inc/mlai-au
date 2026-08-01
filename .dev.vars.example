@@ -5,6 +5,7 @@ VALUE_FROM_CLOUDFLARE=Hello from Cloudflare
 BACKEND_BASE_URL=https://api.mlai.au
 VITE_SITE_URL=http://localhost:5173
 NEXT_PUBLIC_SITE_URL=http://localhost:5173
+VITE_ADMIN_WORKSPACE_URL=https://admin.mlai.au
 VITE_GOOGLE_CLIENT_ID=
 # Local auth bypass: set to true to preview as Dev User without stubbing every backend API call.
 VITE_DEV_AUTH_BYPASS=false

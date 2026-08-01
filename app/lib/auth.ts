@@ -2,7 +2,7 @@ import { axiosInstance, API_URL, shouldUseDevAuthBypass, shouldUseDevBackendFall
 import axios from "axios";
 import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
-export type AuthAppName = "esafety" | "hospital" | "founder-tools" | "vibe-raising" | "watt-the-hack";
+export type AuthAppName = "esafety" | "hospital" | "founder-tools" | "vibe-raising" | "watt-the-hack" | "admin";
 type GetCurrentUserOptions = {
     allowDevBypass?: boolean;
 };

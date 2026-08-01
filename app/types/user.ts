@@ -37,3 +37,9 @@ export interface AuthState {
     isAuthenticated: boolean;
     isLoading: boolean;
 }
+
+export interface UserNavigationItem {
+    name: string;
+    href: string;
+    external?: boolean;
+}

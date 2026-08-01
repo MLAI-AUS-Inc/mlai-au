@@ -13,6 +13,7 @@
   "vars": {
     "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare",
     "BACKEND_BASE_URL": "https://api.mlai.au",
+    "VITE_ADMIN_WORKSPACE_URL": "https://admin.mlai.au",
     "VITE_GOOGLE_CLIENT_ID": "",
     "VITE_ENABLE_FOUNDER_TOOLS_DISCOVER": "false",
     "VIBE_RAISING_ADMIN_EMAILS": "samyang102238188@gmail.com",

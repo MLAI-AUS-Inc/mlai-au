@@ -6,7 +6,7 @@ import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
-import { normalizeAuthNextForApp } from "~/lib/auth-return";
+import { getAuthCompletionLocation, normalizeAuthNextForApp } from "~/lib/auth-return";
 import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
 export const meta: Route.MetaFunction = () => [
@@ -17,9 +17,13 @@ export const meta: Route.MetaFunction = () => [
 
 function parseAuthApp(value: string | null): AuthAppName | null {
     if (value === "vibe-raising") return "founder-tools";
-    return value === "esafety" || value === "hospital" || value === "founder-tools"
+    return value === "esafety" || value === "hospital" || value === "founder-tools" || value === "admin"
         ? value
         : null;
+}
+
+function getLoginFallback(app: AuthAppName | null) {
+    return app === "admin" ? "/" : "/hackathons";
 }
 
 function isLocalBackendUrl(value: string | undefined) {
@@ -97,7 +101,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (appParam && !app) {
         throw new Response("Not Found", { status: 404 });
     }
-    const next = normalizeAuthNextForApp(app, url.searchParams.get("next"), { fallback: "/hackathons" });
+    const fallback = getLoginFallback(app);
+    const next = normalizeAuthNextForApp(app, url.searchParams.get("next"), { fallback });
     let user = null;
 
     try {
@@ -111,7 +116,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     if (user) {
-        return redirect(next);
+        return redirect(getAuthCompletionLocation(app, next, { fallback }));
     }
 
     return { healthHackAccessDenied: false };
@@ -127,12 +132,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (appParam && !app) {
         return { error: "Unsupported app." };
     }
-    const next = normalizeAuthNextForApp(app ?? null, formData.get("next")?.toString(), { fallback: "/hackathons" });
+    const fallback = getLoginFallback(app ?? null);
+    const next = normalizeAuthNextForApp(app ?? null, formData.get("next")?.toString(), { fallback });
     const email = String(formData.get("email") || "").trim();
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
     const adminOnly = app === "hospital";
 
     if (intent === "create") {
+        if (app === "admin") {
+            return { error: "An existing administrator account is required." };
+        }
         if (adminOnly) {
             return { error: "HealthHack has closed. Administrator access only." };
         }
@@ -169,6 +178,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         const userCheck = await checkUser(env, { email, next, app, adminOnly });
 
         if (!userCheck.user_exists) {
+            if (app === "admin") {
+                return { error: "An existing administrator account is required.", email };
+            }
             return { userExists: false, email };
         }
 
@@ -192,7 +204,7 @@ export default function PlatformLogin() {
     const [searchParams] = useSearchParams();
     const app = parseAuthApp(searchParams.get("app"));
     const isFounderTools = app === "founder-tools";
-    const next = normalizeAuthNextForApp(app, searchParams.get("next"), { fallback: "/hackathons" });
+    const next = normalizeAuthNextForApp(app, searchParams.get("next"), { fallback: getLoginFallback(app) });
     const error = searchParams.get("error");
     const submit = useSubmit();
     const navigation = useNavigation();
@@ -243,6 +255,7 @@ export default function PlatformLogin() {
         if (app === "hospital") return "Sign in to HealthHack";
         if (app === "watt-the-hack") return "Sign in to Watt The Hack";
         if (app === "founder-tools") return "Sign in to Founder Tools";
+        if (app === "admin") return "Sign in to MLAI admin";
         return "Welcome!";
     };
 
@@ -255,6 +268,9 @@ export default function PlatformLogin() {
         }
         if (app === "hospital") {
             return "HealthHack has closed. Sign-in is restricted to administrators.";
+        }
+        if (app === "admin") {
+            return "Use your existing MLAI administrator account to continue to the operations workspace.";
         }
 
         return "Provide your email to create your account";
