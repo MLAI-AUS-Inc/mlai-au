@@ -21,6 +21,11 @@
 - [x] Surface scan/setup start failures instead of silently redirecting
 - [x] Run company-context frontend typecheck and build
 
+- [x] Add the public MLAI Chat `/community` entry point
+- [x] Explain Slack bridge scope, privacy, identity, and availability honestly
+- [x] Add configurable web, desktop, iOS, and Android distribution links
+- [x] Run MLAI Chat community-page typecheck, build, and route tests
+
 - [x] Move Article authors ahead of the article-system Danger zone
 - [x] Refresh empty author cards and fields so they look active and editable
 - [x] Add focused layout and author-form render tests
