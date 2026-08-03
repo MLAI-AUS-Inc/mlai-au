@@ -6,7 +6,7 @@ BACKEND_BASE_URL=https://api.mlai.au
 VITE_SITE_URL=http://localhost:5173
 NEXT_PUBLIC_SITE_URL=http://localhost:5173
 # Public MLAI Chat distribution links used by `/community`.
-VITE_MLAI_CHAT_WEB_URL=https://chat.mlai.au/chat
+VITE_MLAI_CHAT_WEB_URL=https://chat.mlai.au/
 VITE_MLAI_CHAT_DESKTOP_URL=https://github.com/MLAI-AUS-Inc/mlai-chat/releases/latest
 VITE_MLAI_CHAT_IOS_URL=
 VITE_MLAI_CHAT_ANDROID_URL=

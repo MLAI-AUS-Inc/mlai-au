@@ -25,7 +25,9 @@ describe("MLAI Chat community entry point", () => {
     expect(page).toContain("VITE_MLAI_CHAT_DESKTOP_URL");
     expect(page).toContain("VITE_MLAI_CHAT_IOS_URL");
     expect(page).toContain("VITE_MLAI_CHAT_ANDROID_URL");
-    expect(page).toContain("https://chat.mlai.au/chat");
+    expect(page).toContain('"https://chat.mlai.au/"');
+    expect(page).not.toContain("https://chat.mlai.au/chat");
+    expect(page).toContain("signed standalone MLAI Chat release");
   });
 
   test("states the bridge trust and privacy boundary", () => {
