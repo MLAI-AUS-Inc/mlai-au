@@ -1,11 +1,20 @@
 import { readFile } from "fs/promises";
 import path from "path";
 
-const SITE_URL = "https://mlai.au";
-const API_KEY = "ba9667289a340eef21f8adbd892cfa24";
+const SITE_URL = process.env.SITE_URL ?? "https://mlai.au";
+// The IndexNow key is public by design (it is served at `keyLocation` as the
+// ownership proof), so this is config hygiene rather than a secret: it lets us
+// rotate the key without a code edit. Set INDEXNOW_KEY in the build env. To
+// rotate, also publish the matching `public/<key>.txt` verification file.
+const API_KEY = process.env.INDEXNOW_KEY ?? "";
 const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 
 async function submitToIndexNow() {
+  if (!API_KEY) {
+    console.log("IndexNow: INDEXNOW_KEY not set, skipping submission.");
+    return;
+  }
+
   const sitemapPath = path.join(process.cwd(), "public", "sitemap.xml");
   const sitemapContent = await readFile(sitemapPath, "utf-8");
 
