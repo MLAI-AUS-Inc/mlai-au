@@ -35,3 +35,35 @@ describe("api client uses the Worker-native fetch adapter", () => {
     expect(client.defaults.adapter).toBe("fetch");
   });
 });
+
+// Cookie-authenticated mutations are made server-side by the Cloudflare Worker.
+// The backend requires the original browser Origin for its CSRF origin check, so
+// the per-request client must preserve that header alongside the cookie.
+describe("api client preserves cookie-authenticated mutation origin", () => {
+  test("forwards the incoming Origin alongside the cookie", () => {
+    const request = new Request("https://mlai.au/founder-tools/marketing/runs/run-1", {
+      method: "POST",
+      headers: {
+        Cookie: "access_token=test-token",
+        Origin: "https://mlai.au",
+      },
+    });
+
+    const client = createApiClient({ BACKEND_BASE_URL: "https://api.mlai.au" }, request);
+
+    expect(client.defaults.headers.Cookie).toBe("access_token=test-token");
+    expect(client.defaults.headers.Origin).toBe("https://mlai.au");
+  });
+
+  test("does not invent an Origin when the incoming request omitted it", () => {
+    const request = new Request("https://mlai.au/founder-tools/marketing/runs/run-1", {
+      method: "POST",
+      headers: { Cookie: "access_token=test-token" },
+    });
+
+    const client = createApiClient({ BACKEND_BASE_URL: "https://api.mlai.au" }, request);
+
+    expect(client.defaults.headers.Cookie).toBe("access_token=test-token");
+    expect(client.defaults.headers.Origin).toBeUndefined();
+  });
+});
