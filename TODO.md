@@ -1,3 +1,7 @@
+- [x] Show retry guidance when the Content Factory configuration service is unavailable
+- [x] Keep genuine missing-configuration guidance distinct from upstream transport failures
+- [x] Add focused failure-guidance tests and run typecheck/build
+
 - [x] Point new-developer Content Factory setup at `drsamdonegan/content-factory`
 
 - [x] Resolve monthly-update reminder links to an explicitly owned Founder Tools company
