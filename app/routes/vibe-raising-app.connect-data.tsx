@@ -32,7 +32,6 @@ import {
   getVibeRaisingGoogleAnalyticsProperties,
   getVibeRaisingInputSourcesStatus,
   getVibeRaisingLinearPreview,
-  getVibeRaisingLinearProjects,
   getVibeRaisingLumaEvents,
   listVibeRaisingManualDocuments,
   uploadVibeRaisingManualDocument,
@@ -43,7 +42,6 @@ import {
   getVibeRaisingXeroPreview,
   requireVibeRaisingFounder,
   saveVibeRaisingGoogleAnalyticsPropertySelections,
-  saveVibeRaisingLinearProjectSelections,
   saveVibeRaisingLumaSelections,
   saveVibeRaisingSlackChannelSelections,
   syncVibeRaisingFinancialSources,
@@ -54,15 +52,12 @@ import type {
   VibeRaisingGmailPreview,
   VibeRaisingGoogleAnalyticsProperty,
   VibeRaisingGoogleAnalyticsPropertiesResponse,
-  VibeRaisingLumaEvent,
   VibeRaisingLumaEventsResponse,
   VibeRaisingLumaMetricOption,
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
   VibeRaisingLinearPreview,
-  VibeRaisingLinearProject,
-  VibeRaisingLinearProjectsResponse,
   VibeRaisingManualDocument,
   VibeRaisingSlackChannel,
   VibeRaisingSlackChannelsResponse,
@@ -80,9 +75,7 @@ const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSource
 const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_analytics", "stripe", "linear", "notion"];
 const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", "slack", "bank_feed", "xero", "luma"];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
-const LINEAR_PROJECT_PAGE_LIMIT = 100;
 const GOOGLE_ANALYTICS_PROPERTY_PAGE_LIMIT = 200;
-const LUMA_EVENT_PAGE_LIMIT = 50;
 const DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_data_sources_mobile_tour_seen_v1";
 const DATA_PRIVACY_POINTS = [
   "Only you can see connected source data in your workspace",
@@ -1237,66 +1230,33 @@ function GoogleAnalyticsPreview({
   );
 }
 
-function mergeLumaEventsById(
-  previous: Record<string, VibeRaisingLumaEvent>,
-  events: VibeRaisingLumaEvent[],
-) {
-  if (events.length === 0) return previous;
-  const next = { ...previous };
-  events.forEach((event) => {
-    next[event.eventId] = { ...next[event.eventId], ...event };
-  });
-  return next;
-}
-
-function getSelectedLumaEventIds(events: VibeRaisingLumaEvent[]) {
-  return events.filter((event) => event.selected).map((event) => event.eventId);
-}
-
-function formatLumaEventDate(startAt: string | null | undefined): string {
-  if (!startAt) return "";
-  const parsed = new Date(startAt);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return parsed.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
-
 function LumaPreview({
-  events,
   accountLabel,
   loading,
   error,
   saving,
-  selectedEventIds,
   selectedMetricKeys,
   availableMetrics,
-  nextCursor,
-  loadingMore,
-  onToggleEvent,
   onToggleMetric,
-  onLoadMore,
   onSave,
 }: {
-  events: VibeRaisingLumaEvent[];
   accountLabel: string | null;
   loading: boolean;
   error: string | null;
   saving: boolean;
-  selectedEventIds: Set<string>;
   selectedMetricKeys: Set<string>;
   availableMetrics: VibeRaisingLumaMetricOption[];
-  nextCursor: string | null;
-  loadingMore: boolean;
-  onToggleEvent: (eventId: string) => void;
   onToggleMetric: (metricKey: string) => void;
-  onLoadMore: () => void;
   onSave: () => void;
 }) {
   return (
     <section className="rounded-xl border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-gray-950">Luma events &amp; metrics</h2>
-          <p className="mt-2 text-sm text-slate-500">Choose which events to track and which metrics to pull from your Luma calendar.</p>
+          <h2 className="text-lg font-black text-gray-950">Luma metrics</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Events are matched automatically to the month you select when creating an update. Choose which metrics to track.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {loading ? (
@@ -1311,7 +1271,7 @@ function LumaPreview({
             disabled={saving}
             className="inline-flex items-center gap-2 rounded-lg bg-[var(--vr-color-primary)] px-3 py-2 text-xs font-extrabold text-white transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving ? "Saving" : "Save selection"}
+            {saving ? "Saving" : "Save metrics"}
           </button>
         </div>
       </div>
@@ -1326,13 +1286,17 @@ function LumaPreview({
           <p className="mt-2 truncate text-sm font-black text-gray-950">{accountLabel || "Connected Luma"}</p>
         </div>
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected events</p>
-          <p className="mt-2 text-sm font-black text-gray-950">{selectedEventIds.size === 0 ? "All" : selectedEventIds.size}</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Event window</p>
+          <p className="mt-2 text-sm font-black text-gray-950">Selected update month</p>
         </div>
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected metrics</p>
           <p className="mt-2 text-sm font-black text-gray-950">{selectedMetricKeys.size}</p>
         </div>
+      </div>
+
+      <div className="mt-5 rounded-lg bg-[rgba(0,255,215,0.08)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+        Only events in the selected calendar month contribute to that update&apos;s event totals. Nearby event history remains available as drafting context.
       </div>
 
       {availableMetrics.length > 0 ? (
@@ -1367,155 +1331,36 @@ function LumaPreview({
           </ul>
         </div>
       ) : null}
-
-      {events.length > 0 ? (
-        <div className="mt-5 rounded-lg border border-gray-100">
-          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
-            <p className="text-sm font-black text-gray-950">Events</p>
-            <p className="mt-1 text-xs font-bold text-slate-500">
-              {selectedEventIds.size === 0 ? "All events are counted until you pick specific ones." : `${selectedEventIds.size} selected`}
-            </p>
-          </div>
-          <ul className="divide-y divide-gray-100 px-2 py-2">
-            {events.map((event) => {
-              const selected = selectedEventIds.has(event.eventId);
-              const dateLabel = formatLumaEventDate(event.startAt);
-              return (
-                <li key={event.eventId}>
-                  <button
-                    type="button"
-                    onClick={() => onToggleEvent(event.eventId)}
-                    className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-3 text-left font-semibold text-gray-800 transition hover:bg-[rgba(0,255,215,0.08)]"
-                  >
-                    <span
-                      className={clsx(
-                        "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
-                        selected ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white" : "border-gray-300 bg-white text-transparent",
-                      )}
-                    >
-                      <CheckIcon className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-black text-gray-950">{event.name}</span>
-                      {dateLabel ? <span className="mt-0.5 block truncate text-xs font-bold text-slate-500">{dateLabel}</span> : null}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          {nextCursor ? (
-            <div className="border-t border-gray-100 p-2">
-              <button
-                type="button"
-                onClick={onLoadMore}
-                disabled={loadingMore}
-                className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <ArrowPathIcon className={clsx("h-4 w-4", loadingMore && "animate-spin")} />
-                {loadingMore ? "Loading events" : "Load more events"}
-              </button>
-            </div>
-          ) : null}
-        </div>
-      ) : !loading ? (
-        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
-          No past Luma events found yet. Once you've run an event, it'll show up here.
-        </div>
-      ) : null}
     </section>
   );
 }
 
-function mergeLinearProjectsById(
-  previous: Record<string, VibeRaisingLinearProject>,
-  projects: VibeRaisingLinearProject[],
-) {
-  if (projects.length === 0) return previous;
-  const next = { ...previous };
-  projects.forEach((project) => {
-    next[project.projectId] = { ...next[project.projectId], ...project };
-  });
-  return next;
-}
-
-function getSelectedLinearProjectIds(projects: VibeRaisingLinearProject[]) {
-  return projects.filter((project) => project.selected).map((project) => project.projectId);
-}
-
 function LinearPreview({
-  projects,
   preview,
-  loadingProjects,
-  loadingPreview,
+  loading,
   error,
-  saving,
   syncing,
-  selectedProjectIds,
-  nextCursor,
-  loadingMoreProjects,
-  onToggleProject,
-  onLoadMoreProjects,
-  onSaveProjects,
   onSync,
 }: {
-  projects: VibeRaisingLinearProject[];
   preview: VibeRaisingLinearPreview | null;
-  loadingProjects: boolean;
-  loadingPreview: boolean;
+  loading: boolean;
   error: string | null;
-  saving: boolean;
   syncing: boolean;
-  selectedProjectIds: Set<string>;
-  nextCursor: string | null;
-  loadingMoreProjects: boolean;
-  onToggleProject: (projectId: string) => void;
-  onLoadMoreProjects: () => void;
-  onSaveProjects: () => void;
   onSync: () => void;
 }) {
-  const [projectQuery, setProjectQuery] = useState("");
-  const projectsById = useMemo(() => new Map(projects.map((project) => [project.projectId, project])), [projects]);
-  const selectedProjects = useMemo(
-    () =>
-      Array.from(selectedProjectIds).map((projectId) => {
-        const project = projectsById.get(projectId);
-        if (project) return project;
-        return {
-          projectId,
-          linearProjectId: projectId,
-          projectName: projectId,
-          name: projectId,
-          selected: true,
-        } satisfies VibeRaisingLinearProject;
-      }),
-    [projectsById, selectedProjectIds],
-  );
-  const filteredProjects = useMemo(() => {
-    const normalizedQuery = projectQuery.trim().toLowerCase();
-    if (!normalizedQuery) return projects;
-    return projects.filter((project) =>
-      [project.projectName, project.name, project.projectId, project.status, project.health]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(normalizedQuery)),
-    );
-  }, [projectQuery, projects]);
-
-  const handleComboboxChange = (project: VibeRaisingLinearProject | null) => {
-    if (!project) return;
-    onToggleProject(project.projectId);
-    setProjectQuery("");
-  };
+  const recentProjects = preview?.selectedProjects ?? [];
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-gray-950">Linear preview</h2>
-          <p className="mt-2 text-sm text-slate-500">Selected project context available for this update.</p>
+          <h2 className="text-lg font-black text-gray-950">Linear activity</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Projects with project, update, or issue activity in the last 30 days are included automatically.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {loadingProjects || loadingPreview ? (
+          {loading ? (
             <span className="inline-flex items-center gap-2 text-sm font-bold text-gray-700">
               <ArrowPathIcon className="h-4 w-4 animate-spin" />
               Loading
@@ -1524,7 +1369,7 @@ function LinearPreview({
           <button
             type="button"
             onClick={onSync}
-            disabled={syncing || selectedProjectIds.size === 0}
+            disabled={syncing}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-extrabold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <ArrowPathIcon className={clsx("h-4 w-4", syncing && "animate-spin")} />
@@ -1543,8 +1388,8 @@ function LinearPreview({
           <p className="mt-2 truncate text-sm font-black text-gray-950">{preview?.accountLabel || "Connected Linear"}</p>
         </div>
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected projects</p>
-          <p className="mt-2 text-sm font-black text-gray-950">{selectedProjectIds.size}</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Active projects (30 days)</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{recentProjects.length}</p>
         </div>
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Cached issues</p>
@@ -1552,111 +1397,30 @@ function LinearPreview({
         </div>
       </div>
 
-      {projects.length > 0 ? (
-        <div className="mt-5 rounded-lg border border-gray-100">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
-            <div>
-              <p className="text-sm font-black text-gray-950">Projects</p>
-              <p className="mt-1 text-xs font-bold text-slate-500">{selectedProjectIds.size} selected</p>
-            </div>
-            <button
-              type="button"
-              onClick={onSaveProjects}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-gray-950 px-3 py-2 text-xs font-extrabold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? "Saving" : "Save selection"}
-            </button>
-          </div>
-          <div className="px-4 py-4">
-            {selectedProjects.length > 0 ? (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {selectedProjects.map((project) => (
-                  <span
-                    key={project.projectId}
-                    className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-extrabold text-gray-800 ring-1 ring-gray-200"
-                  >
-                    <span className="truncate">{project.projectName}</span>
-                    <button
-                      type="button"
-                      onClick={() => onToggleProject(project.projectId)}
-                      className="rounded-full p-0.5 text-gray-600 transition hover:bg-gray-200 hover:text-gray-950"
-                      aria-label={`Remove ${project.projectName}`}
-                    >
-                      <XMarkIcon className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            ) : null}
+      <div className="mt-5 rounded-lg bg-[rgba(0,255,215,0.08)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+        You do not need to choose projects. The 30-day activity window is refreshed before a monthly update is created.
+      </div>
 
-            <Combobox value={null} onChange={handleComboboxChange}>
-              <div className="relative">
-                <div className="relative">
-                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Combobox.Input
-                    className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-9 pr-10 text-sm font-semibold text-gray-950 placeholder:text-slate-400 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-100"
-                    displayValue={() => projectQuery}
-                    onChange={(event) => setProjectQuery(event.target.value)}
-                    placeholder="Search and select Linear projects"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600">
-                    <ChevronDownIcon className="h-4 w-4" />
-                  </Combobox.Button>
-                </div>
-                <Combobox.Options className="absolute z-20 mt-2 max-h-80 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg focus:outline-none">
-                  {filteredProjects.length > 0 ? (
-                    filteredProjects.map((project) => {
-                      const selected = selectedProjectIds.has(project.projectId);
-                      return (
-                        <Combobox.Option
-                          key={project.projectId}
-                          value={project}
-                          className={({ active }) =>
-                            clsx(
-                              "relative flex cursor-pointer select-none items-center gap-3 px-4 py-3 font-semibold",
-                              active ? "bg-gray-50 text-gray-950" : "text-gray-800",
-                            )
-                          }
-                        >
-                          <span
-                            className={clsx(
-                              "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
-                              selected ? "border-gray-950 bg-gray-950 text-white" : "border-gray-300 bg-white text-transparent",
-                            )}
-                          >
-                            <CheckIcon className="h-3.5 w-3.5" />
-                          </span>
-                          <span className="min-w-0 flex-1 truncate">{project.projectName}</span>
-                          {project.health ? <span className="shrink-0 text-xs font-bold text-slate-400">{project.health}</span> : null}
-                        </Combobox.Option>
-                      );
-                    })
-                  ) : (
-                    <div className="px-4 py-4 text-sm font-semibold text-slate-500">No loaded projects match this search.</div>
-                  )}
-                  {nextCursor ? (
-                    <div className="border-t border-gray-100 p-2">
-                      <button
-                        type="button"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={onLoadMoreProjects}
-                        disabled={loadingMoreProjects}
-                        className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <ArrowPathIcon className={clsx("h-4 w-4", loadingMoreProjects && "animate-spin")} />
-                        {loadingMoreProjects ? "Loading projects" : "Load more projects"}
-                      </button>
-                    </div>
-                  ) : null}
-                </Combobox.Options>
-              </div>
-            </Combobox>
+      {recentProjects.length > 0 ? (
+        <div className="mt-5 rounded-lg border border-gray-100">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Projects included automatically</p>
+            <p className="mt-1 text-xs font-bold text-slate-500">{recentProjects.length} with recent activity</p>
+          </div>
+          <div className="flex flex-wrap gap-2 px-4 py-4">
+            {recentProjects.map((project) => (
+              <span
+                key={project.projectId}
+                className="inline-flex max-w-full rounded-full bg-gray-100 px-3 py-1.5 text-xs font-extrabold text-gray-800 ring-1 ring-gray-200"
+              >
+                <span className="truncate">{project.projectName}</span>
+              </span>
+            ))}
           </div>
         </div>
-      ) : !loadingProjects ? (
+      ) : !loading ? (
         <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
-          Linear is connected. Open the project picker again after the workspace project list is available.
+          No Linear projects have activity in the last 30 days, so none will be included right now.
         </div>
       ) : null}
 
@@ -2224,26 +1988,16 @@ export default function ConnectData() {
   const [googleAnalyticsError, setGoogleAnalyticsError] = useState<string | null>(null);
   const [savingGoogleAnalyticsProperties, setSavingGoogleAnalyticsProperties] = useState(false);
   const [selectedGoogleAnalyticsPropertyIds, setSelectedGoogleAnalyticsPropertyIds] = useState<Set<string>>(new Set());
-  const [lumaEventsById, setLumaEventsById] = useState<Record<string, VibeRaisingLumaEvent>>({});
-  const [lumaEventsNextCursor, setLumaEventsNextCursor] = useState<string | null>(null);
   const [loadingLumaEvents, setLoadingLumaEvents] = useState(false);
-  const [loadingMoreLumaEvents, setLoadingMoreLumaEvents] = useState(false);
   const [lumaAccountLabel, setLumaAccountLabel] = useState<string | null>(null);
   const [lumaEventsError, setLumaEventsError] = useState<string | null>(null);
   const [savingLumaSelections, setSavingLumaSelections] = useState(false);
-  const [selectedLumaEventIds, setSelectedLumaEventIds] = useState<Set<string>>(new Set());
   const [selectedLumaMetricKeys, setSelectedLumaMetricKeys] = useState<Set<string>>(new Set());
   const [lumaAvailableMetrics, setLumaAvailableMetrics] = useState<VibeRaisingLumaMetricOption[]>([]);
   const [syncingLinear, setSyncingLinear] = useState(false);
-  const [linearProjectsById, setLinearProjectsById] = useState<Record<string, VibeRaisingLinearProject>>({});
-  const [linearProjectsNextCursor, setLinearProjectsNextCursor] = useState<string | null>(null);
-  const [loadingLinearProjects, setLoadingLinearProjects] = useState(false);
-  const [loadingMoreLinearProjects, setLoadingMoreLinearProjects] = useState(false);
   const [linearPreview, setLinearPreview] = useState<VibeRaisingLinearPreview | null>(null);
   const [loadingLinearPreview, setLoadingLinearPreview] = useState(false);
   const [linearError, setLinearError] = useState<string | null>(null);
-  const [savingLinearProjects, setSavingLinearProjects] = useState(false);
-  const [selectedLinearProjectIds, setSelectedLinearProjectIds] = useState<Set<string>>(new Set());
   const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials());
   const [manualDocuments, setManualDocuments] = useState<VibeRaisingManualDocument[]>(() => readStoredManualMaterials().documents);
   const [loadingManualDocuments, setLoadingManualDocuments] = useState(false);
@@ -2256,9 +2010,8 @@ export default function ConnectData() {
   const manualMaterialsRef = useRef<HTMLDivElement | null>(null);
   const defaultSelectionAppliedRef = useRef(false);
   const slackSelectionTouchedRef = useRef(false);
-  const linearSelectionTouchedRef = useRef(false);
   const googleAnalyticsSelectionTouchedRef = useRef(false);
-  const lumaSelectionTouchedRef = useRef(false);
+  const lumaMetricSelectionTouchedRef = useRef(false);
   const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
   const [showStickyBarOnMobile, setShowStickyBarOnMobile] = useState(false);
   const [mobileTourOpen, setMobileTourOpen] = useState(false);
@@ -2300,7 +2053,6 @@ export default function ConnectData() {
     [],
   );
   const slackChannels = useMemo(() => Object.values(slackChannelsById), [slackChannelsById]);
-  const linearProjects = useMemo(() => Object.values(linearProjectsById), [linearProjectsById]);
   const googleAnalyticsProperties = useMemo(() => Object.values(googleAnalyticsPropertiesById), [googleAnalyticsPropertiesById]);
   const selectedManualDocumentIds = useMemo(() => new Set(manualMaterials.manualDocumentIds), [manualMaterials.manualDocumentIds]);
   const hasManualMaterials = Boolean(manualMaterials.manualDocumentIds.length > 0 || manualMaterials.summary.trim());
@@ -2326,7 +2078,6 @@ export default function ConnectData() {
   const lumaSource = sourceByKey.get("luma");
   const shouldShowLumaPreview =
     lumaSource?.status === "connected" || lumaSource?.status === "syncing" || lumaSource?.status === "error";
-  const lumaEvents = useMemo(() => Object.values(lumaEventsById), [lumaEventsById]);
 
   const refreshStatuses = async () => {
     setLoadingStatus(true);
@@ -2649,56 +2400,8 @@ export default function ConnectData() {
 
   useEffect(() => {
     if (!shouldShowLinearPreview) {
-      setLinearProjectsById({});
-      setLinearProjectsNextCursor(null);
       setLinearPreview(null);
       setLinearError(null);
-      setLoadingLinearProjects(false);
-      setLoadingMoreLinearProjects(false);
-      setLoadingLinearPreview(false);
-      setSelectedLinearProjectIds(new Set());
-      linearSelectionTouchedRef.current = false;
-      return;
-    }
-
-    let cancelled = false;
-    linearSelectionTouchedRef.current = false;
-    setLinearProjectsById({});
-    setLinearProjectsNextCursor(null);
-    setSelectedLinearProjectIds(new Set());
-    setLoadingLinearProjects(true);
-    setLinearError(null);
-    getVibeRaisingLinearProjects(backendBaseUrl, { limit: LINEAR_PROJECT_PAGE_LIMIT })
-      .then((payload: VibeRaisingLinearProjectsResponse) => {
-        if (cancelled) return;
-        setLinearProjectsById((previous) => mergeLinearProjectsById(previous, payload.projects));
-        setLinearProjectsNextCursor(payload.nextCursor ?? null);
-        const selectedProjectIds = getSelectedLinearProjectIds(payload.projects);
-        if (!linearSelectionTouchedRef.current && selectedProjectIds.length > 0) {
-          setSelectedLinearProjectIds((previous) => {
-            const nextSelected = new Set(previous);
-            selectedProjectIds.forEach((projectId) => nextSelected.add(projectId));
-            return nextSelected;
-          });
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setLinearError(error instanceof Error ? error.message : "We couldn't load Linear projects.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingLinearProjects(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [backendBaseUrl, shouldShowLinearPreview, linearSource?.status]);
-
-  useEffect(() => {
-    if (!shouldShowLinearPreview) {
-      setLinearPreview(null);
       setLoadingLinearPreview(false);
       return;
     }
@@ -2709,14 +2412,6 @@ export default function ConnectData() {
       .then((preview) => {
         if (cancelled) return;
         setLinearPreview(preview);
-        setLinearProjectsById((previous) => mergeLinearProjectsById(previous, preview.selectedProjects));
-        if (!linearSelectionTouchedRef.current && preview.selectedProjects.length > 0) {
-          setSelectedLinearProjectIds((previous) => {
-            const nextSelected = new Set(previous);
-            preview.selectedProjects.forEach((project) => nextSelected.add(project.projectId));
-            return nextSelected;
-          });
-        }
       })
       .catch((error) => {
         if (!cancelled) {
@@ -2783,49 +2478,32 @@ export default function ConnectData() {
 
   useEffect(() => {
     if (!shouldShowLumaPreview) {
-      setLumaEventsById({});
-      setLumaEventsNextCursor(null);
       setLumaAccountLabel(null);
       setLumaEventsError(null);
       setLoadingLumaEvents(false);
-      setLoadingMoreLumaEvents(false);
-      setSelectedLumaEventIds(new Set());
       setSelectedLumaMetricKeys(new Set());
       setLumaAvailableMetrics([]);
-      lumaSelectionTouchedRef.current = false;
+      lumaMetricSelectionTouchedRef.current = false;
       return;
     }
 
     let cancelled = false;
-    lumaSelectionTouchedRef.current = false;
-    setLumaEventsById({});
-    setLumaEventsNextCursor(null);
-    setSelectedLumaEventIds(new Set());
+    lumaMetricSelectionTouchedRef.current = false;
     setSelectedLumaMetricKeys(new Set());
     setLoadingLumaEvents(true);
     setLumaEventsError(null);
-    getVibeRaisingLumaEvents(backendBaseUrl, { limit: LUMA_EVENT_PAGE_LIMIT })
+    getVibeRaisingLumaEvents(backendBaseUrl, { limit: 1 })
       .then((payload: VibeRaisingLumaEventsResponse) => {
         if (cancelled) return;
-        setLumaEventsById((previous) => mergeLumaEventsById(previous, payload.events));
-        setLumaEventsNextCursor(payload.nextCursor ?? null);
         setLumaAccountLabel(payload.accountLabel ?? null);
         setLumaAvailableMetrics(payload.availableMetrics);
-        if (!lumaSelectionTouchedRef.current) {
-          const selectedEventIds = getSelectedLumaEventIds(payload.events);
-          if (selectedEventIds.length > 0) {
-            setSelectedLumaEventIds((previous) => {
-              const nextSelected = new Set(previous);
-              selectedEventIds.forEach((eventId) => nextSelected.add(eventId));
-              return nextSelected;
-            });
-          }
+        if (!lumaMetricSelectionTouchedRef.current) {
           setSelectedLumaMetricKeys(new Set(payload.selectedMetrics));
         }
       })
       .catch((error) => {
         if (!cancelled) {
-          setLumaEventsError(error instanceof Error ? error.message : "We couldn't load your Luma events.");
+          setLumaEventsError(error instanceof Error ? error.message : "We couldn't load your Luma settings.");
         }
       })
       .finally(() => {
@@ -2922,10 +2600,6 @@ export default function ConnectData() {
     if (source.status !== "connected" && source.status !== "syncing") return;
     if (source.key === "slack" && selectedSlackChannelIds.size === 0 && !selectedSources.has("slack")) {
       setStatusMessage("Select at least one Slack channel before using Slack in this update.");
-      return;
-    }
-    if (source.key === "linear" && selectedLinearProjectIds.size === 0 && !selectedSources.has("linear")) {
-      setStatusMessage("Select at least one Linear project before using Linear in this update.");
       return;
     }
     if (source.key === "google_analytics" && selectedGoogleAnalyticsPropertyIds.size === 0 && !selectedSources.has("google_analytics")) {
@@ -3173,21 +2847,8 @@ export default function ConnectData() {
     }
   };
 
-  const handleToggleLumaEvent = (eventId: string) => {
-    lumaSelectionTouchedRef.current = true;
-    setSelectedLumaEventIds((previous) => {
-      const nextSelected = new Set(previous);
-      if (nextSelected.has(eventId)) {
-        nextSelected.delete(eventId);
-      } else {
-        nextSelected.add(eventId);
-      }
-      return nextSelected;
-    });
-  };
-
   const handleToggleLumaMetric = (metricKey: string) => {
-    lumaSelectionTouchedRef.current = true;
+    lumaMetricSelectionTouchedRef.current = true;
     setSelectedLumaMetricKeys((previous) => {
       const nextSelected = new Set(previous);
       if (nextSelected.has(metricKey)) {
@@ -3199,120 +2860,27 @@ export default function ConnectData() {
     });
   };
 
-  const handleLoadMoreLumaEvents = async () => {
-    if (!lumaEventsNextCursor || loadingMoreLumaEvents) return;
-    setLoadingMoreLumaEvents(true);
-    setLumaEventsError(null);
-    try {
-      const payload = await getVibeRaisingLumaEvents(backendBaseUrl, {
-        cursor: lumaEventsNextCursor,
-        limit: LUMA_EVENT_PAGE_LIMIT,
-      });
-      setLumaEventsById((previous) => mergeLumaEventsById(previous, payload.events));
-      setLumaEventsNextCursor(payload.nextCursor ?? null);
-      if (!lumaSelectionTouchedRef.current) {
-        const selectedEventIds = getSelectedLumaEventIds(payload.events);
-        if (selectedEventIds.length > 0) {
-          setSelectedLumaEventIds((previous) => {
-            const nextSelected = new Set(previous);
-            selectedEventIds.forEach((eventId) => nextSelected.add(eventId));
-            return nextSelected;
-          });
-        }
-      }
-    } catch (error) {
-      setLumaEventsError(error instanceof Error ? error.message : "We couldn't load more Luma events.");
-    } finally {
-      setLoadingMoreLumaEvents(false);
-    }
-  };
-
   const handleSaveLumaSelections = async () => {
     setSavingLumaSelections(true);
     setStatusMessage(null);
     try {
       await saveVibeRaisingLumaSelections(
         backendBaseUrl,
-        Array.from(selectedLumaEventIds),
+        [],
         Array.from(selectedLumaMetricKeys),
       );
       setStatusMessage("Saved. Updating your Luma metrics…");
       try {
         await syncVibeRaisingInputSources(backendBaseUrl, ["luma"]);
       } catch {
-        // Sync is best-effort; the selection is already saved.
+        // Sync is best-effort; the metric preferences are already saved.
       }
       await refreshStatuses();
       setStatusMessage("Luma metrics updated.");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "We couldn't save your Luma selection.");
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't save your Luma metrics.");
     } finally {
       setSavingLumaSelections(false);
-    }
-  };
-
-  const handleToggleLinearProject = (projectId: string) => {
-    linearSelectionTouchedRef.current = true;
-    setSelectedLinearProjectIds((previous) => {
-      const nextSelected = new Set(previous);
-      if (nextSelected.has(projectId)) {
-        nextSelected.delete(projectId);
-      } else {
-        nextSelected.add(projectId);
-      }
-      return nextSelected;
-    });
-  };
-
-  const handleLoadMoreLinearProjects = async () => {
-    if (!linearProjectsNextCursor || loadingMoreLinearProjects) return;
-    setLoadingMoreLinearProjects(true);
-    setLinearError(null);
-    try {
-      const payload = await getVibeRaisingLinearProjects(backendBaseUrl, {
-        cursor: linearProjectsNextCursor,
-        limit: LINEAR_PROJECT_PAGE_LIMIT,
-      });
-      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, payload.projects));
-      setLinearProjectsNextCursor(payload.nextCursor ?? null);
-      const selectedProjectIds = getSelectedLinearProjectIds(payload.projects);
-      if (!linearSelectionTouchedRef.current && selectedProjectIds.length > 0) {
-        setSelectedLinearProjectIds((previous) => {
-          const nextSelected = new Set(previous);
-          selectedProjectIds.forEach((projectId) => nextSelected.add(projectId));
-          return nextSelected;
-        });
-      }
-    } catch (error) {
-      setLinearError(error instanceof Error ? error.message : "We couldn't load more Linear projects.");
-    } finally {
-      setLoadingMoreLinearProjects(false);
-    }
-  };
-
-  const handleSaveLinearProjects = async () => {
-    setSavingLinearProjects(true);
-    setStatusMessage(null);
-    try {
-      const selectionResponse = await saveVibeRaisingLinearProjectSelections(backendBaseUrl, Array.from(selectedLinearProjectIds));
-      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, selectionResponse.projects));
-      setSelectedSources((previous) => {
-        const nextSelected = new Set(previous);
-        if (selectedLinearProjectIds.size > 0) {
-          nextSelected.add("linear");
-        } else {
-          nextSelected.delete("linear");
-        }
-        return nextSelected;
-      });
-      await Promise.all([
-        refreshStatuses(),
-        getVibeRaisingLinearPreview(backendBaseUrl).then(setLinearPreview),
-      ]);
-    } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "We couldn't save Linear project selection.");
-    } finally {
-      setSavingLinearProjects(false);
     }
   };
 
@@ -3320,11 +2888,9 @@ export default function ConnectData() {
     setSyncingLinear(true);
     setStatusMessage(null);
     try {
-      const selectionResponse = await saveVibeRaisingLinearProjectSelections(backendBaseUrl, Array.from(selectedLinearProjectIds));
-      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, selectionResponse.projects));
       setSelectedSources((previous) => {
         const nextSelected = new Set(previous);
-        if (selectedLinearProjectIds.size > 0) nextSelected.add("linear");
+        nextSelected.add("linear");
         return nextSelected;
       });
       await syncVibeRaisingInputSources(backendBaseUrl, ["linear"]);
@@ -3340,15 +2906,6 @@ export default function ConnectData() {
   };
 
   const navigateToDraft = (includeInputs: boolean) => {
-    if (
-      includeInputs &&
-      selectedSources.has("linear") &&
-      selectedLinearProjectIds.size === 0 &&
-      !(sourceByKey.get("linear")?.selectedProjectCount ?? 0)
-    ) {
-      setStatusMessage("Select at least one Linear project before using Linear in this update.");
-      return;
-    }
     writeStoredManualMaterials(manualMaterials);
     const target = new URL(next, "http://mlai.local");
     const draftSources = new Set(selectedSources);
@@ -3797,19 +3354,13 @@ export default function ConnectData() {
 
       {shouldShowLumaPreview ? (
         <LumaPreview
-          events={lumaEvents}
           accountLabel={lumaAccountLabel ?? lumaSource?.accountLabel ?? null}
           loading={loadingLumaEvents}
           error={lumaEventsError}
           saving={savingLumaSelections}
-          selectedEventIds={selectedLumaEventIds}
           selectedMetricKeys={selectedLumaMetricKeys}
           availableMetrics={lumaAvailableMetrics}
-          nextCursor={lumaEventsNextCursor}
-          loadingMore={loadingMoreLumaEvents}
-          onToggleEvent={handleToggleLumaEvent}
           onToggleMetric={handleToggleLumaMetric}
-          onLoadMore={() => void handleLoadMoreLumaEvents()}
           onSave={() => void handleSaveLumaSelections()}
         />
       ) : null}
@@ -3835,19 +3386,10 @@ export default function ConnectData() {
 
       {shouldShowLinearPreview ? (
         <LinearPreview
-          projects={linearProjects}
           preview={linearPreview}
-          loadingProjects={loadingLinearProjects}
-          loadingPreview={loadingLinearPreview}
+          loading={loadingLinearPreview}
           error={linearError}
-          saving={savingLinearProjects}
           syncing={syncingLinear}
-          selectedProjectIds={selectedLinearProjectIds}
-          nextCursor={linearProjectsNextCursor}
-          loadingMoreProjects={loadingMoreLinearProjects}
-          onToggleProject={handleToggleLinearProject}
-          onLoadMoreProjects={() => void handleLoadMoreLinearProjects()}
-          onSaveProjects={() => void handleSaveLinearProjects()}
           onSync={() => void handleSyncLinear()}
         />
       ) : null}
