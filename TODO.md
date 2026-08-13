@@ -598,3 +598,8 @@
 - [ ] Add attributable founder, investor, adviser, organizer, and attendee interviews called out in the implementation plan
 - [ ] Run and publish the coding-assistant benchmark before reindexing its replacement
 - [ ] Complete editorial, subject-matter, accessibility, and score-gate review before reindexing provisional content
+- [x] Replace manual Luma event selection with automatic selected-month scoping
+- [x] Keep Luma metric preferences editable without showing the event picker
+- [x] Replace manual Linear project selection with automatic 30-day activity scoping
+- [x] Exclude Linear projects without recent project, update, or issue activity
+- [x] Run targeted frontend and backend verification for automatic monthly source inclusion
