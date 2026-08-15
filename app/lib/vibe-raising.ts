@@ -607,8 +607,16 @@ function normalizePastMonthSummary(raw: unknown) {
   };
 }
 
-function normalizeFinancialSnapshot(raw: unknown): VibeRaisingFinancialSnapshot | null {
-  const payload = asRecord(raw);
+export function normalizeFinancialSnapshot(raw: unknown): VibeRaisingFinancialSnapshot | null {
+  let candidate = raw;
+  if (typeof candidate === "string") {
+    try {
+      candidate = JSON.parse(candidate);
+    } catch {
+      return null;
+    }
+  }
+  const payload = asRecord(candidate);
   if (!payload) return null;
   const toNumber = (value: unknown) => {
     const number = Number(value);
@@ -710,8 +718,16 @@ function normalizeFinancialSnapshot(raw: unknown): VibeRaisingFinancialSnapshot 
   };
 }
 
-function normalizeConciseAnalysis(raw: unknown): VibeRaisingConciseAnalysis | null {
-  const payload = asRecord(raw);
+export function normalizeConciseAnalysis(raw: unknown): VibeRaisingConciseAnalysis | null {
+  let candidate = raw;
+  if (typeof candidate === "string") {
+    try {
+      candidate = JSON.parse(candidate);
+    } catch {
+      return null;
+    }
+  }
+  const payload = asRecord(candidate);
   if (!payload) return null;
   const headline = asNullableString(payload.headline) ?? "";
   const bullets = Array.isArray(payload.bullets)

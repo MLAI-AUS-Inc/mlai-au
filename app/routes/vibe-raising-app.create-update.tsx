@@ -23,6 +23,8 @@ import {
     uploadVibeRaisingUpdateVideo,
     resolveActiveCompanyId,
     setVibeRaisingActiveCompany,
+    normalizeConciseAnalysis,
+    normalizeFinancialSnapshot,
 } from "~/lib/vibe-raising";
 import {
     getMonthlyUpdateReminderCompanyId,
@@ -5421,8 +5423,18 @@ export default function CreateUpdate() {
         const reviewPitchDeckPreviewUrl = pitchDeckPreviewUrl || reviewPitchDeckUrl || uploadedPitchDeckUrl;
         const reviewPitchDeckOpenUrl = reviewPitchDeckUrl || uploadedPitchDeckUrl || pitchDeckPreviewUrl;
         const hasReviewPitchDeck = Boolean(reviewPitchDeckPreviewUrl);
-        const reviewFinancialSnapshot = (reviewData?.financialSnapshot || reviewData?.financial_snapshot || financialSnapshot) as VibeRaisingFinancialSnapshot | null;
-        const reviewConciseAnalysis = (reviewData?.conciseAnalysis || reviewData?.concise_analysis || conciseAnalysis) as VibeRaisingConciseAnalysis | null;
+        const reviewFinancialSnapshot = normalizeFinancialSnapshot(
+            reviewData?.financialSnapshot ||
+            reviewData?.financial_snapshot ||
+            reviewActionData?.update?.financialSnapshot ||
+            financialSnapshot,
+        );
+        const reviewConciseAnalysis = normalizeConciseAnalysis(
+            reviewData?.conciseAnalysis ||
+            reviewData?.concise_analysis ||
+            reviewActionData?.update?.conciseAnalysis ||
+            conciseAnalysis,
+        );
         const reviewFounderProfiles = parseFounderProfilesFormValue(reviewData?.founderProfiles ?? null);
         const reviewFounderProfilesForDisplay = uniqueFounderProfiles([
             ...reviewFounderProfiles,
