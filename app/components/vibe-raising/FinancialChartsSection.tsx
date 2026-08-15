@@ -32,6 +32,11 @@ function monthLabel(month: string) {
         : parsed.toLocaleDateString("en-AU", { month: "short", year: "2-digit" });
 }
 
+function chartLabel(value: unknown, maxLength = 30) {
+    const label = String(value || "").replace(/\s+/g, " ").trim();
+    return label.length > maxLength ? `${label.slice(0, maxLength - 1).trimEnd()}…` : label;
+}
+
 function currencyFormatter(currency: string, compact = false) {
     const formatter = new Intl.NumberFormat("en-AU", {
         style: "currency",
@@ -110,7 +115,7 @@ export default function FinancialChartsSection({
                 subtitle={`Trailing 12 months · ${snapshot.currency}${partialLabel ? ` · ${partialLabel}` : ""}`}
             >
                 <div className="mt-4 h-56 w-full" role="img" aria-label="Line chart of monthly income and expenses">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <LineChart data={performance} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" vertical={false} />
                             <XAxis dataKey="month" tickFormatter={monthLabel} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} minTickGap={22} />
@@ -123,7 +128,7 @@ export default function FinancialChartsSection({
                     </ResponsiveContainer>
                 </div>
                 <div className="mt-3 h-40 w-full" role="img" aria-label="Bar chart of monthly net surplus or deficit">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={performance} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" vertical={false} />
                             <XAxis dataKey="month" tickFormatter={monthLabel} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} minTickGap={22} />
@@ -143,7 +148,7 @@ export default function FinancialChartsSection({
             {mixData.length ? (
                 <ChartCard title="Revenue mix by month" subtitle={`Selected month and previous five · ${snapshot.currency}`}>
                     <div className="mt-4 h-72 w-full" role="img" aria-label="Stacked bar chart of monthly revenue by source">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={mixData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" vertical={false} />
                                 <XAxis dataKey="month" tickFormatter={monthLabel} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} />
@@ -161,12 +166,12 @@ export default function FinancialChartsSection({
 
             {eventContribution.length ? (
                 <ChartCard title="Event contribution" subtitle={`${monthLabel(snapshot.targetMonth)} completed event income less attributed costs`}>
-                    <div className="mt-4 w-full" style={{ height: Math.max(220, eventContribution.length * 42) }} role="img" aria-label="Horizontal bar chart of event net contribution">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="mt-4 w-full" style={{ height: Math.max(240, eventContribution.length * 48) }} role="img" aria-label="Horizontal bar chart of event net contribution">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={eventContribution} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 12 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" horizontal={false} />
                                 <XAxis type="number" tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} />
-                                <YAxis type="category" dataKey="label" width={132} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
+                                <YAxis type="category" dataKey="label" width={168} tickFormatter={chartLabel} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
                                 <Tooltip formatter={(value) => [formatMoney(Number(value)), "Net contribution"]} />
                                 <ReferenceLine x={0} stroke="#94A3B8" />
                                 <Bar dataKey="net" name="Net contribution" isAnimationActive={false}>
@@ -183,11 +188,11 @@ export default function FinancialChartsSection({
             {overhead.length ? (
                 <ChartCard title="Central overhead" subtitle={`${monthLabel(snapshot.targetMonth)} · top five unallocated categories plus Other`}>
                     <div className="mt-4 w-full" style={{ height: Math.max(220, overhead.length * 42) }} role="img" aria-label="Horizontal bar chart of central overhead categories">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={overhead} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 12 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" horizontal={false} />
                                 <XAxis type="number" tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} />
-                                <YAxis type="category" dataKey="label" width={132} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
+                                <YAxis type="category" dataKey="label" width={168} tickFormatter={chartLabel} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
                                 <Tooltip formatter={(value) => [formatMoney(Number(value)), "Overhead"]} />
                                 <Bar dataKey="amount" name="Overhead" fill="#087FD4" isAnimationActive={false} />
                             </BarChart>
