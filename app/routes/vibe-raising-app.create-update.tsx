@@ -72,6 +72,7 @@ import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/Mo
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
+import FinancialChartsSection from "~/components/vibe-raising/FinancialChartsSection";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS } from "~/components/VibeRaisingDateTabs";
 import type {
     VibeRaisingInputSourceKey,
@@ -83,6 +84,8 @@ import type {
     VibeRaisingMetricSuggestion,
     VibeRaisingMetricVisibility,
     VibeRaisingMonthlyUpdate,
+    VibeRaisingFinancialSnapshot,
+    VibeRaisingConciseAnalysis,
     VibeRaisingStartupUpdateStatusResponse,
     VibeRaisingVideoCompressionMetadata,
 } from "~/types/vibe-raising";
@@ -413,6 +416,18 @@ function parseDisplayConfigValue(raw: unknown): VibeRaisingMetricDisplayConfig |
     };
 }
 
+function parseJsonObjectValue<T extends Record<string, unknown>>(raw: unknown): T | null {
+    if (!raw) return null;
+    if (typeof raw === "string") {
+        try {
+            return parseJsonObjectValue<T>(JSON.parse(raw));
+        } catch {
+            return null;
+        }
+    }
+    return typeof raw === "object" && !Array.isArray(raw) ? raw as T : null;
+}
+
 function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
     const parsedPeriod = parseVibeRaisingMonthYear(update.month);
     const metrics = update.metrics || {};
@@ -442,6 +457,9 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         metrics,
         metricSuggestions: update.metricSuggestions || [],
         displayConfig: update.displayConfig || null,
+        financialSnapshot: update.financialSnapshot || null,
+        conciseAnalysis: update.conciseAnalysis || null,
+        presentationMode: update.presentationMode || null,
         metricKeys: Object.keys(metrics).join(","),
         ...metrics,
     };
@@ -523,6 +541,12 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     );
     const metricSuggestions = metricSuggestionsFromKeys(selectedMetricKeys, metrics);
     const displayConfig = parseDisplayConfigValue(formData.get("displayConfig"));
+    const financialSnapshot = parseJsonObjectValue<VibeRaisingFinancialSnapshot & Record<string, unknown>>(
+        formData.get("financialSnapshot"),
+    );
+    const conciseAnalysis = parseJsonObjectValue<VibeRaisingConciseAnalysis & Record<string, unknown>>(
+        formData.get("conciseAnalysis"),
+    );
     const rawPitchDeckFileSizeBytes = Number(formData.get("pitchDeckFileSizeBytes") || 0);
     const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
     const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
@@ -558,6 +582,9 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         metrics,
         metricSuggestions,
         displayConfig,
+        financialSnapshot,
+        conciseAnalysis,
+        presentationMode: String(formData.get("presentationMode") || "").trim() || null,
     };
 }
 
@@ -2922,6 +2949,13 @@ export default function CreateUpdate() {
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
     const [learnings, setLearnings] = useState<string>(defaultData?.learnings || "");
     const [next30Days, setNext30Days] = useState<string>(defaultData?.next30Days || "");
+    const [financialSnapshot, setFinancialSnapshot] = useState<VibeRaisingFinancialSnapshot | null>(
+        defaultData?.financialSnapshot || null,
+    );
+    const [conciseAnalysis, setConciseAnalysis] = useState<VibeRaisingConciseAnalysis | null>(
+        defaultData?.conciseAnalysis || null,
+    );
+    const [presentationMode, setPresentationMode] = useState<string>(defaultData?.presentationMode || "");
     const [pastMonthCards, setPastMonthCards] = useState<EditorMonthCard[]>([]);
     const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
@@ -3261,6 +3295,9 @@ export default function CreateUpdate() {
         setAsks(data.asks || "");
         setLearnings(data.learnings || "");
         setNext30Days(data.next30Days || "");
+        setFinancialSnapshot(data.financialSnapshot || data.financial_snapshot || null);
+        setConciseAnalysis(data.conciseAnalysis || data.concise_analysis || null);
+        setPresentationMode(data.presentationMode || data.presentation_mode || "");
         setSummary(data.summary || "");
         setSourceUrl(data.sourceUrl || data.source_url || "");
         if (Array.isArray(data.manualDocuments || data.manual_documents)) {
@@ -4113,6 +4150,9 @@ export default function CreateUpdate() {
                 setAsks("");
                 setLearnings("");
                 setNext30Days("");
+                setFinancialSnapshot(null);
+                setConciseAnalysis(null);
+                setPresentationMode("");
                 setMetricValues({});
                 setSelectedMetrics(new Set());
                 setAwakeMetricCards(new Set());
@@ -4158,6 +4198,9 @@ export default function CreateUpdate() {
         setAsks(existingUpdateForSelectedMonth.asks || "");
         setLearnings(existingUpdateForSelectedMonth.learnings || "");
         setNext30Days(existingUpdateForSelectedMonth.next30Days || "");
+        setFinancialSnapshot(existingUpdateForSelectedMonth.financialSnapshot || null);
+        setConciseAnalysis(existingUpdateForSelectedMonth.conciseAnalysis || null);
+        setPresentationMode(existingUpdateForSelectedMonth.presentationMode || "");
         const nextMetrics = existingUpdateForSelectedMonth.metrics || {};
         setMetricValues(nextMetrics);
         setSelectedMetrics(new Set(Object.keys(nextMetrics).filter((key) => METRIC_OPTION_MAP.has(key))));
@@ -5378,6 +5421,8 @@ export default function CreateUpdate() {
         const reviewPitchDeckPreviewUrl = pitchDeckPreviewUrl || reviewPitchDeckUrl || uploadedPitchDeckUrl;
         const reviewPitchDeckOpenUrl = reviewPitchDeckUrl || uploadedPitchDeckUrl || pitchDeckPreviewUrl;
         const hasReviewPitchDeck = Boolean(reviewPitchDeckPreviewUrl);
+        const reviewFinancialSnapshot = (reviewData?.financialSnapshot || reviewData?.financial_snapshot || financialSnapshot) as VibeRaisingFinancialSnapshot | null;
+        const reviewConciseAnalysis = (reviewData?.conciseAnalysis || reviewData?.concise_analysis || conciseAnalysis) as VibeRaisingConciseAnalysis | null;
         const reviewFounderProfiles = parseFounderProfilesFormValue(reviewData?.founderProfiles ?? null);
         const reviewFounderProfilesForDisplay = uniqueFounderProfiles([
             ...reviewFounderProfiles,
@@ -5703,7 +5748,11 @@ export default function CreateUpdate() {
                                 </div>
                             </div>
 
-                            {hasReviewPitchDeck ? (
+                            {reviewFinancialSnapshot ? (
+                                <FinancialChartsSection snapshot={reviewFinancialSnapshot} analysis={reviewConciseAnalysis} />
+                            ) : null}
+
+                            {!reviewFinancialSnapshot && hasReviewPitchDeck ? (
                                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
                                     <div className="space-y-4">
                                         <div>
@@ -5774,7 +5823,7 @@ export default function CreateUpdate() {
                                         ) : null}
                                     </div>
                                 </div>
-                            ) : (
+                            ) : !reviewFinancialSnapshot ? (
                                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6">
                                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                                         {(() => {
@@ -5822,9 +5871,9 @@ export default function CreateUpdate() {
                                         })()}
                                     </div>
                                 </div>
-                            )}
+                            ) : null}
 
-                            {!hasReviewPitchDeck && reviewVideoUrl ? (
+                            {!reviewFinancialSnapshot && !hasReviewPitchDeck && reviewVideoUrl ? (
                                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
                                     <div className="mb-3">
                                         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
@@ -5860,7 +5909,7 @@ export default function CreateUpdate() {
                             ) : null}
 
                             {/* Content sections */}
-                            <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
+                            {!reviewFinancialSnapshot ? <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
                                 <ReviewSummaryBlock summary={reviewSummary} sourceUrl={reviewSourceUrl} />
                                 <ReviewPreviewSection
                                     label="Key Highlights"
@@ -5882,11 +5931,11 @@ export default function CreateUpdate() {
                                     label="Ask from Investors"
                                     text={(data as any)?.asks}
                                 />
-                            </div>
+                            </div> : null}
                         </div>
 
                         {/* Revenue chart + Past month previews */}
-                        {!hasReviewPitchDeck && (() => {
+                        {!reviewFinancialSnapshot && !hasReviewPitchDeck && (() => {
                             const d = data as any;
                             const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> }> = [];
                             for (let i = 0; d?.[`pastMonth_${i}_month`]; i++) {
@@ -6441,6 +6490,9 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
                                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
+                                    <input type="hidden" name="financialSnapshot" value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""} />
+                                    <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
+                                    <input type="hidden" name="presentationMode" value={presentationMode} />
                                     {audienceVisibility.map((audience) => (
                                         <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
                                     ))}
@@ -6823,6 +6875,9 @@ export default function CreateUpdate() {
                     value={formMetricKeys.join(",")}
                 />
                 <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
+                <input type="hidden" name="financialSnapshot" value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""} />
+                <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
+                <input type="hidden" name="presentationMode" value={presentationMode} />
                 <input type="hidden" name="summary" value={summary} />
                 <input type="hidden" name="sourceUrl" value={sourceUrl} />
                 <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
@@ -6978,8 +7033,11 @@ export default function CreateUpdate() {
                     </div>
                     <div className="relative mt-6">
                     <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
+	                    {financialSnapshot ? (
+	                        <FinancialChartsSection snapshot={financialSnapshot} analysis={conciseAnalysis} />
+	                    ) : null}
 	                        {/* ─── Growth Charts ─── */}
-                        {pastMonthCards.length > 0 && (hasRevenueChart || hasActiveUsersChart) && (
+                        {!financialSnapshot && pastMonthCards.length > 0 && (hasRevenueChart || hasActiveUsersChart) && (
                             <div className={clsx("grid gap-4", hasRevenueChart && hasActiveUsersChart ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
                                 {hasRevenueChart && (
                                     <GrowthChart

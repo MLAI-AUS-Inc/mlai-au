@@ -603,3 +603,10 @@
 - [x] Replace manual Linear project selection with automatic 30-day activity scoping
 - [x] Exclude Linear projects without recent project, update, or issue activity
 - [x] Run targeted frontend and backend verification for automatic monthly source inclusion
+
+## Monthly financial brief (August 2026)
+
+- [x] Add the typed monthly financial snapshot contract and normalizers
+- [x] Build shared income/expense, revenue-mix, event-contribution, and overhead charts
+- [x] Render the concise financial brief consistently in draft review and published updates
+- [x] Run frontend typecheck and production build verification
