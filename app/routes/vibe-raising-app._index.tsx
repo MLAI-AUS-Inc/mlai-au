@@ -48,6 +48,7 @@ import { ROO_POINTS_COIN_URL, ROO_POINTS_FALLBACK_URL, RooPointCost } from "~/co
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import { VibeRaisingHeroExampleUpdatePreview } from "~/components/VibeRaisingFounderOverview";
+import FinancialChartsSection from "~/components/vibe-raising/FinancialChartsSection";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -979,6 +980,7 @@ function VRPreviewUpdateCard({
     const pitchDeckFileSize = formatUpdateFileSize(update.pitchDeckFileSizeBytes);
     const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
     const canExpandSummary = updateSummary.length > 180;
+    const financialSnapshot = update.financialSnapshot || null;
 
     return (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -1034,7 +1036,11 @@ function VRPreviewUpdateCard({
                 </div>
             </div>
 
-            {metrics.length > 0 ? (
+            {financialSnapshot ? (
+                <FinancialChartsSection snapshot={financialSnapshot} analysis={update.conciseAnalysis} />
+            ) : null}
+
+            {!financialSnapshot && metrics.length > 0 ? (
                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                         {metrics.map((metric) => (
@@ -1049,7 +1055,7 @@ function VRPreviewUpdateCard({
                 </div>
             ) : null}
 
-            {pitchDeckUrl ? (
+            {!financialSnapshot && pitchDeckUrl ? (
                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
                     <div className="space-y-4">
                         <div>
@@ -1085,7 +1091,7 @@ function VRPreviewUpdateCard({
                 </div>
             ) : null}
 
-            <div className="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-5">
+            {!financialSnapshot ? <div className="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-5">
                 {(updateSummary || updateSourceUrl) ? (
                     <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-4 py-3 sm:p-4">
                         {updateSummary ? (
@@ -1145,7 +1151,7 @@ function VRPreviewUpdateCard({
                     label="Ask from Investors"
                     text={update.asks}
                 />
-            </div>
+            </div> : null}
         </div>
     );
 }
@@ -1809,4 +1815,3 @@ export default function VibeRaisingHome() {
         </>
     );
 }
-

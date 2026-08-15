@@ -98,6 +98,60 @@ export interface VibeRaisingMetricHistorySeries {
 
 export type VibeRaisingMetricHistory = Record<string, VibeRaisingMetricHistorySeries>;
 
+export interface VibeRaisingFinancialPerformancePoint {
+  month: string;
+  income: number;
+  expenses: number;
+  net: number;
+  isPartial?: boolean;
+  basis?: string | null;
+}
+
+export interface VibeRaisingRevenueMixSegment {
+  key: string;
+  label: string;
+  amount: number;
+}
+
+export interface VibeRaisingRevenueMixPoint {
+  month: string;
+  total: number;
+  segments: VibeRaisingRevenueMixSegment[];
+}
+
+export interface VibeRaisingEventContribution {
+  label: string;
+  income: number;
+  expenses: number;
+  net: number;
+}
+
+export interface VibeRaisingOverheadItem {
+  label: string;
+  amount: number;
+}
+
+export interface VibeRaisingFinancialSnapshot {
+  schemaVersion: string;
+  targetMonth: string;
+  asOfDate?: string | null;
+  currency: string;
+  generatedAt?: string | null;
+  performance: VibeRaisingFinancialPerformancePoint[];
+  revenueMix: VibeRaisingRevenueMixPoint[];
+  eventContribution: VibeRaisingEventContribution[];
+  overhead: VibeRaisingOverheadItem[];
+  dataQuality?: {
+    warnings: string[];
+    calculationBasis?: string | null;
+  } | null;
+}
+
+export interface VibeRaisingConciseAnalysis {
+  headline: string;
+  bullets: string[];
+}
+
 export interface VibeRaisingDraftedContent {
   month?: string;
   year?: number;
@@ -123,6 +177,9 @@ export interface VibeRaisingDraftedContent {
   pastMonths: VibeRaisingPastMonthSummary[];
   metrics?: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
+  financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+  conciseAnalysis?: VibeRaisingConciseAnalysis | null;
+  presentationMode?: string | null;
 }
 
 export interface VibeRaisingMonthlyUpdate {
@@ -158,6 +215,9 @@ export interface VibeRaisingMonthlyUpdate {
   asks: string;
   learnings: string;
   next30Days: string;
+  financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+  conciseAnalysis?: VibeRaisingConciseAnalysis | null;
+  presentationMode?: string | null;
 }
 
 export interface VibeRaisingVideoUploadResponse {

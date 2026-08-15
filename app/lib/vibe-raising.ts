@@ -16,6 +16,8 @@ import type {
   VibeRaisingEmailDraftMonth,
   VibeRaisingFinancialSyncResponse,
   VibeRaisingFinancialSyncRun,
+  VibeRaisingFinancialSnapshot,
+  VibeRaisingConciseAnalysis,
   VibeRaisingFounderProfile,
   VibeRaisingGmailDisconnectResponse,
   VibeRaisingGmailMessagePreview,
@@ -605,6 +607,119 @@ function normalizePastMonthSummary(raw: unknown) {
   };
 }
 
+function normalizeFinancialSnapshot(raw: unknown): VibeRaisingFinancialSnapshot | null {
+  const payload = asRecord(raw);
+  if (!payload) return null;
+  const toNumber = (value: unknown) => {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : 0;
+  };
+  const performance = (Array.isArray(payload.performance) ? payload.performance : [])
+    .map((item) => {
+      const point = asRecord(item);
+      const month = asNullableString(point?.month);
+      if (!point || !month) return null;
+      return {
+        month,
+        income: toNumber(point.income),
+        expenses: toNumber(point.expenses),
+        net: toNumber(point.net),
+        isPartial: Boolean(point.isPartial ?? point.is_partial),
+        basis: asNullableString(point.basis),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+  if (!performance.length) return null;
+
+  const revenueMix = (Array.isArray(payload.revenueMix ?? payload.revenue_mix)
+    ? (payload.revenueMix ?? payload.revenue_mix) as unknown[]
+    : [])
+    .map((item) => {
+      const point = asRecord(item);
+      const month = asNullableString(point?.month);
+      if (!point || !month) return null;
+      const segments = (Array.isArray(point.segments) ? point.segments : [])
+        .map((segment) => {
+          const segmentPayload = asRecord(segment);
+          const key = asNullableString(segmentPayload?.key);
+          const label = asNullableString(segmentPayload?.label);
+          if (!segmentPayload || !key || !label) return null;
+          return { key, label, amount: toNumber(segmentPayload.amount) };
+        })
+        .filter((segment): segment is NonNullable<typeof segment> => segment !== null);
+      return { month, total: toNumber(point.total), segments };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  const eventContribution = (Array.isArray(payload.eventContribution ?? payload.event_contribution)
+    ? (payload.eventContribution ?? payload.event_contribution) as unknown[]
+    : [])
+    .map((item) => {
+      const event = asRecord(item);
+      const label = asNullableString(event?.label);
+      if (!event || !label) return null;
+      return {
+        label,
+        income: toNumber(event.income),
+        expenses: toNumber(event.expenses),
+        net: toNumber(event.net),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  const overhead = (Array.isArray(payload.overhead) ? payload.overhead : [])
+    .map((item) => {
+      const overheadItem = asRecord(item);
+      const label = asNullableString(overheadItem?.label);
+      if (!overheadItem || !label) return null;
+      return { label, amount: toNumber(overheadItem.amount) };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+  const quality = asRecord(payload.dataQuality ?? payload.data_quality);
+
+  return {
+    schemaVersion:
+      asNullableString(payload.schemaVersion) ??
+      asNullableString(payload.schema_version) ??
+      "1",
+    targetMonth:
+      asNullableString(payload.targetMonth) ??
+      asNullableString(payload.target_month) ??
+      performance[performance.length - 1].month,
+    asOfDate:
+      asNullableString(payload.asOfDate) ??
+      asNullableString(payload.as_of_date),
+    currency: asNullableString(payload.currency) ?? "AUD",
+    generatedAt:
+      asNullableString(payload.generatedAt) ??
+      asNullableString(payload.generated_at),
+    performance,
+    revenueMix,
+    eventContribution,
+    overhead,
+    dataQuality: quality
+      ? {
+          warnings: Array.isArray(quality.warnings)
+            ? quality.warnings.map(String).filter(Boolean)
+            : [],
+          calculationBasis:
+            asNullableString(quality.calculationBasis) ??
+            asNullableString(quality.calculation_basis),
+        }
+      : null,
+  };
+}
+
+function normalizeConciseAnalysis(raw: unknown): VibeRaisingConciseAnalysis | null {
+  const payload = asRecord(raw);
+  if (!payload) return null;
+  const headline = asNullableString(payload.headline) ?? "";
+  const bullets = Array.isArray(payload.bullets)
+    ? payload.bullets.map(String).map((item) => item.trim()).filter(Boolean).slice(0, 3)
+    : [];
+  return headline || bullets.length ? { headline, bullets } : null;
+}
+
 function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null {
   if (!raw || typeof raw !== "object") return null;
 
@@ -692,6 +807,16 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
     metricSuggestions: normalizeMetricSuggestions(
       payload.metricSuggestions ?? payload.metric_suggestions,
     ),
+    financialSnapshot: normalizeFinancialSnapshot(
+      payload.financialSnapshot ?? payload.financial_snapshot ?? structuredMemo.financial_snapshot,
+    ),
+    conciseAnalysis: normalizeConciseAnalysis(
+      payload.conciseAnalysis ?? payload.concise_analysis ?? structuredMemo.concise_analysis,
+    ),
+    presentationMode:
+      asNullableString(payload.presentationMode) ??
+      asNullableString(payload.presentation_mode) ??
+      asNullableString(structuredMemo.presentation_mode),
     pastMonths: Array.isArray(payload.pastMonths)
       ? payload.pastMonths.map(normalizePastMonthSummary)
       : [],
@@ -999,6 +1124,11 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
       payload.metricSuggestions ?? payload.metric_suggestions,
     ),
     displayConfig: normalizeDisplayConfig(payload.displayConfig ?? payload.display_config),
+    financialSnapshot: normalizeFinancialSnapshot(payload.financialSnapshot ?? payload.financial_snapshot),
+    conciseAnalysis: normalizeConciseAnalysis(payload.conciseAnalysis ?? payload.concise_analysis),
+    presentationMode:
+      asNullableString(payload.presentationMode) ??
+      asNullableString(payload.presentation_mode),
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
@@ -2524,6 +2654,9 @@ export async function saveVibeRaisingMonthlyUpdate(
     metrics: Record<string, string>;
     metricSuggestions?: VibeRaisingMetricSuggestion[];
     displayConfig?: VibeRaisingMetricDisplayConfig | null;
+    financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+    conciseAnalysis?: VibeRaisingConciseAnalysis | null;
+    presentationMode?: string | null;
     audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
     summary?: string | null;
     sourceUrl?: string | null;
