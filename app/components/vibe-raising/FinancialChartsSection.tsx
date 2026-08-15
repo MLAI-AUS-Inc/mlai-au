@@ -68,15 +68,19 @@ export default function FinancialChartsSection({
     snapshot: VibeRaisingFinancialSnapshot;
     analysis?: VibeRaisingConciseAnalysis | null;
 }) {
+    const performance = Array.isArray(snapshot.performance) ? snapshot.performance : [];
+    const revenueMix = Array.isArray(snapshot.revenueMix) ? snapshot.revenueMix : [];
+    const eventContribution = Array.isArray(snapshot.eventContribution) ? snapshot.eventContribution : [];
+    const overhead = Array.isArray(snapshot.overhead) ? snapshot.overhead : [];
     const formatMoney = currencyFormatter(snapshot.currency);
     const formatCompactMoney = currencyFormatter(snapshot.currency, true);
-    const targetPoint = snapshot.performance.find((point) => point.month === snapshot.targetMonth);
+    const targetPoint = performance.find((point) => point.month === snapshot.targetMonth);
     const mixKeys = Array.from(
         new Map(
-            snapshot.revenueMix.flatMap((point) => point.segments.map((segment) => [segment.key, segment.label] as const)),
+            revenueMix.flatMap((point) => point.segments.map((segment) => [segment.key, segment.label] as const)),
         ).entries(),
     );
-    const mixData = snapshot.revenueMix.map((point) => ({
+    const mixData = revenueMix.map((point) => ({
         month: point.month,
         ...Object.fromEntries(point.segments.map((segment) => [segment.key, segment.amount])),
     }));
@@ -107,7 +111,7 @@ export default function FinancialChartsSection({
             >
                 <div className="mt-4 h-56 w-full" role="img" aria-label="Line chart of monthly income and expenses">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={snapshot.performance} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                        <LineChart data={performance} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" vertical={false} />
                             <XAxis dataKey="month" tickFormatter={monthLabel} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} minTickGap={22} />
                             <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} axisLine={false} width={52} />
@@ -120,14 +124,14 @@ export default function FinancialChartsSection({
                 </div>
                 <div className="mt-3 h-40 w-full" role="img" aria-label="Bar chart of monthly net surplus or deficit">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={snapshot.performance} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                        <BarChart data={performance} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" vertical={false} />
                             <XAxis dataKey="month" tickFormatter={monthLabel} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} minTickGap={22} />
                             <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} axisLine={false} width={52} />
                             <Tooltip labelFormatter={(label) => monthLabel(String(label))} formatter={(value) => [formatMoney(Number(value)), "Net result"]} />
                             <ReferenceLine y={0} stroke="#94A3B8" />
                             <Bar dataKey="net" name="Net result" isAnimationActive={false}>
-                                {snapshot.performance.map((point) => (
+                                {performance.map((point) => (
                                     <Cell key={point.month} fill={point.net >= 0 ? "#087FD4" : "#F43F5E"} />
                                 ))}
                             </Bar>
@@ -155,18 +159,18 @@ export default function FinancialChartsSection({
                 </ChartCard>
             ) : null}
 
-            {snapshot.eventContribution.length ? (
+            {eventContribution.length ? (
                 <ChartCard title="Event contribution" subtitle={`${monthLabel(snapshot.targetMonth)} completed event income less attributed costs`}>
-                    <div className="mt-4 w-full" style={{ height: Math.max(220, snapshot.eventContribution.length * 42) }} role="img" aria-label="Horizontal bar chart of event net contribution">
+                    <div className="mt-4 w-full" style={{ height: Math.max(220, eventContribution.length * 42) }} role="img" aria-label="Horizontal bar chart of event net contribution">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={snapshot.eventContribution} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 12 }}>
+                            <BarChart data={eventContribution} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 12 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" horizontal={false} />
                                 <XAxis type="number" tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} />
                                 <YAxis type="category" dataKey="label" width={132} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
                                 <Tooltip formatter={(value) => [formatMoney(Number(value)), "Net contribution"]} />
                                 <ReferenceLine x={0} stroke="#94A3B8" />
                                 <Bar dataKey="net" name="Net contribution" isAnimationActive={false}>
-                                    {snapshot.eventContribution.map((event) => (
+                                    {eventContribution.map((event) => (
                                         <Cell key={event.label} fill={event.net >= 0 ? "#087FD4" : "#F43F5E"} />
                                     ))}
                                 </Bar>
@@ -176,11 +180,11 @@ export default function FinancialChartsSection({
                 </ChartCard>
             ) : null}
 
-            {snapshot.overhead.length ? (
+            {overhead.length ? (
                 <ChartCard title="Central overhead" subtitle={`${monthLabel(snapshot.targetMonth)} · top five unallocated categories plus Other`}>
-                    <div className="mt-4 w-full" style={{ height: Math.max(220, snapshot.overhead.length * 42) }} role="img" aria-label="Horizontal bar chart of central overhead categories">
+                    <div className="mt-4 w-full" style={{ height: Math.max(220, overhead.length * 42) }} role="img" aria-label="Horizontal bar chart of central overhead categories">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={snapshot.overhead} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 12 }}>
+                            <BarChart data={overhead} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 12 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" horizontal={false} />
                                 <XAxis type="number" tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} />
                                 <YAxis type="category" dataKey="label" width={132} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
@@ -195,13 +199,13 @@ export default function FinancialChartsSection({
             <div className="sr-only">
                 <p>{analysis?.headline}</p>
                 <ul>
-                    {snapshot.performance.map((point) => (
+                    {performance.map((point) => (
                         <li key={point.month}>{monthLabel(point.month)}: income {formatMoney(point.income)}, expenses {formatMoney(point.expenses)}, net {formatMoney(point.net)}.</li>
                     ))}
-                    {snapshot.eventContribution.map((event) => (
+                    {eventContribution.map((event) => (
                         <li key={event.label}>{event.label}: net contribution {formatMoney(event.net)}.</li>
                     ))}
-                    {snapshot.overhead.map((item) => (
+                    {overhead.map((item) => (
                         <li key={item.label}>{item.label}: overhead {formatMoney(item.amount)}.</li>
                     ))}
                 </ul>
