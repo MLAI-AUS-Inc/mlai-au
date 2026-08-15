@@ -171,7 +171,7 @@ export default function FinancialChartsSection({
                             <BarChart data={eventContribution} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 12 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" horizontal={false} />
                                 <XAxis type="number" tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} />
-                                <YAxis type="category" dataKey="label" width={168} tickFormatter={chartLabel} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
+                                <YAxis type="category" dataKey="label" width={168} tickFormatter={(value) => chartLabel(value)} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
                                 <Tooltip formatter={(value) => [formatMoney(Number(value)), "Net contribution"]} />
                                 <ReferenceLine x={0} stroke="#94A3B8" />
                                 <Bar dataKey="net" name="Net contribution" isAnimationActive={false}>
@@ -192,7 +192,7 @@ export default function FinancialChartsSection({
                             <BarChart data={overhead} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 12 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" horizontal={false} />
                                 <XAxis type="number" tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} />
-                                <YAxis type="category" dataKey="label" width={168} tickFormatter={chartLabel} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
+                                <YAxis type="category" dataKey="label" width={168} tickFormatter={(value) => chartLabel(value)} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
                                 <Tooltip formatter={(value) => [formatMoney(Number(value)), "Overhead"]} />
                                 <Bar dataKey="amount" name="Overhead" fill="#087FD4" isAnimationActive={false} />
                             </BarChart>
