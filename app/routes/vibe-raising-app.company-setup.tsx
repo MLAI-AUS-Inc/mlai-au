@@ -1,11 +1,13 @@
-import { redirect, useActionData, useLoaderData } from "react-router";
+import { redirect, useActionData, useLoaderData, useRevalidator } from "react-router";
 import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
+import RooAccountConnectionField from "~/components/RooAccountConnectionField";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { normalizeVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
+import { getRooAccountConnectionStatus } from "~/lib/roo-account-link";
 import {
   getVibeMarketingBootstrap,
   startVibeMarketingAutofill,
@@ -194,8 +196,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
   }
 
+  const rooAccountConnection = await getRooAccountConnectionStatus(env, request);
+
   return {
     bootstrap,
+    rooAccountConnection,
     audienceVisibility: activeCompany?.audienceVisibility ?? ["just_me"],
     isAddingNew,
     isEditingExisting: Boolean(activeCompany && !isAddingNew && activeCompany.registered),
@@ -395,8 +400,9 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function CompanySetup() {
-  const { bootstrap, audienceVisibility, isAddingNew, isEditingExisting } = useLoaderData<typeof loader>();
+  const { bootstrap, rooAccountConnection, audienceVisibility } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const revalidator = useRevalidator();
   const error = actionData && typeof actionData === "object" && "error" in actionData ? String(actionData.error ?? "") : null;
   const domainConflict = domainConflictFromActionData(actionData);
   return (
@@ -420,12 +426,19 @@ export default function CompanySetup() {
             "You can edit these details later",
           ]}
           companySetupExtraFields={
-            <VibeRaisingAudienceVisibilityField
-              name="audienceVisibility"
-              defaultValue={audienceVisibility}
-              title="Update visibility"
-              description="Default for new drafts"
-            />
+            <>
+              <VibeRaisingAudienceVisibilityField
+                name="audienceVisibility"
+                defaultValue={audienceVisibility}
+                title="Update visibility"
+                description="Default for new drafts"
+              />
+              <RooAccountConnectionField
+                connection={rooAccountConnection}
+                isChecking={revalidator.state === "loading"}
+                onCheckConnection={() => revalidator.revalidate()}
+              />
+            </>
           }
           primaryActionLabel="Save and go to Vibe Raising"
           showSecondaryAction={false}
