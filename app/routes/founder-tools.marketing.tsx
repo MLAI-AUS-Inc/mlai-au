@@ -40,6 +40,7 @@ import { clsx } from "clsx";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import AvatarModal from "~/components/AvatarModal";
+import GitHubConnectForm from "~/components/GitHubConnectForm";
 import { RooPointCost } from "~/components/RooPointCost";
 import VibeMarketingAnalyticsSection from "~/components/VibeMarketingAnalyticsSection";
 import VibeMarketingDailyBriefSection from "~/components/VibeMarketingDailyBriefSection";
@@ -973,12 +974,6 @@ function normalizeDashboardDomain(value: string | null | undefined) {
   } catch {
     return raw.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").split(/[/?#]/, 1)[0].replace(/\/+$/, "");
   }
-}
-
-function githubConnectHrefForDashboard(connected: boolean) {
-  const params = new URLSearchParams({ returnTo: "/founder-tools/marketing" });
-  if (connected) params.set("forceReconnect", "true");
-  return `/founder-tools/marketing/github-connect?${params.toString()}`;
 }
 
 function topicChips(bootstrap: VibeMarketingBootstrap) {
@@ -3649,7 +3644,6 @@ function ReturningTopicPickerPage({
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
   const githubConnected = isDashboardGithubConnected(githubRepos, bootstrap);
-  const githubConnectionHref = githubConnectHrefForDashboard(githubConnected);
   const websiteDomainDisplay = normalizeDashboardDomain(domain) || "Add your domain";
   const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
   const companyAvatarUrl = companyAvatarPreviewUrl || savedCompanyAvatarUrl;
@@ -4644,12 +4638,17 @@ function ReturningTopicPickerPage({
                     GitHub connected
                   </span>
                 ) : (
-                  <a
-                    href={githubConnectionHref}
-                    className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                  <GitHubConnectForm
+                    returnTo="/founder-tools/marketing"
+                    className="shrink-0"
                   >
-                    Manage GitHub
-                  </a>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      Manage GitHub
+                    </button>
+                  </GitHubConnectForm>
                 )}
               </div>
             </div>
