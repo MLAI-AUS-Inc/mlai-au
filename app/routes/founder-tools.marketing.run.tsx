@@ -29,6 +29,7 @@ import DailyReminderChannels from "~/components/DailyReminderChannels";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
+import GitHubConnectForm from "~/components/GitHubConnectForm";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { RooPointCost } from "~/components/RooPointCost";
@@ -1745,7 +1746,6 @@ function ArticleSystemSetupPreviewUnavailable({
             ? "Articles setup build did not advance"
             : "Articles setup preview could not be prepared"
         : "Articles setup preview is being built";
-  const githubAccessHref = `/founder-tools/marketing/github-connect?forceReconnect=true&returnTo=${encodeURIComponent(`/founder-tools/marketing/runs/${run.runId}`)}`;
   if (previewUrl) return null;
   return (
     <div className={clsx(
@@ -1799,14 +1799,19 @@ function ArticleSystemSetupPreviewUnavailable({
           </a>
         ) : null}
         {isGithubAppWriteAccessError ? (
-          <Link
-            to={githubAccessHref}
+          <GitHubConnectForm
+            returnTo={`/founder-tools/marketing/runs/${run.runId}`}
+            forceReconnect
             target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100"
+            className="inline-flex"
           >
-            Update GitHub App access
-          </Link>
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100"
+            >
+              Update GitHub App access
+            </button>
+          </GitHubConnectForm>
         ) : null}
         {error ? (
           <Form method="POST">

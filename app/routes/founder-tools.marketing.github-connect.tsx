@@ -7,7 +7,7 @@ import { requireVibeRaisingFounder, resolveActiveCompanyId } from "~/lib/vibe-ra
 
 const DEFAULT_RETURN_TO = "/founder-tools/marketing/create?step=articleSystem";
 
-function boolFromSearch(value: string | null) {
+function boolFromValue(value: FormDataEntryValue | string | null) {
   return value === "1" || value === "true" || value === "yes";
 }
 
@@ -61,13 +61,27 @@ function githubAuthErrorMessage(error: unknown) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
+  await requireVibeRaisingFounder(env, request);
+
+  const url = new URL(request.url);
+  const returnTo = safeReturnTo(url.searchParams.get("returnTo"));
+
+  return redirectWithGithubError(
+    returnTo,
+    "GitHub authorization must be started from the Connect GitHub button.",
+  );
+}
+
+export async function action({ request, context }: Route.ActionArgs) {
+  const env = getEnv(context);
   const { appUser } = await requireVibeRaisingFounder(env, request);
   const companyId = resolveActiveCompanyId(appUser);
 
   const url = new URL(request.url);
-  const returnTo = safeReturnTo(url.searchParams.get("returnTo"));
-  const forceReconnect = boolFromSearch(url.searchParams.get("forceReconnect"));
-  const githubRepo = String(url.searchParams.get("githubRepo") || "").trim();
+  const formData = await request.formData();
+  const returnTo = safeReturnTo(String(formData.get("returnTo") || url.searchParams.get("returnTo") || ""));
+  const forceReconnect = boolFromValue(formData.get("forceReconnect") || url.searchParams.get("forceReconnect"));
+  const githubRepo = String(formData.get("githubRepo") || url.searchParams.get("githubRepo") || "").trim();
 
   // Absolute URL of the page to land back on after the GitHub App install. The
   // backend embeds this in the OAuth state and redirects the browser here once
@@ -85,7 +99,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     });
     const authUrl = response.auth_url ?? response.authUrl;
     if (isGithubAuthUrl(authUrl)) {
-      throw redirect(authUrl);
+      return redirect(authUrl);
     }
 
     const detail =
@@ -94,7 +108,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       "GitHub authorization could not be opened. Check GitHub App configuration.";
     return redirectWithGithubError(returnTo, detail);
   } catch (error) {
-    if (error instanceof Response) throw error;
     return redirectWithGithubError(returnTo, githubAuthErrorMessage(error));
   }
 }
