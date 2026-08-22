@@ -10,12 +10,14 @@ export type RooAccountConnectionStatus =
       connectionType: "direct" | "explicit";
       slackDisplayName: string;
       verifiedAt: string | null;
+      canLinkSeparateAccount: boolean;
     }
   | {
       status: "not_connected" | "unavailable";
       connectionType: null;
       slackDisplayName: null;
       verifiedAt: null;
+      canLinkSeparateAccount: boolean;
     };
 
 export function normalizeRooAccountConnectionStatus(
@@ -32,6 +34,7 @@ export function normalizeRooAccountConnectionStatus(
       connectionType: null,
       slackDisplayName: null,
       verifiedAt: null,
+      canLinkSeparateAccount: true,
     };
   }
 
@@ -48,6 +51,12 @@ export function normalizeRooAccountConnectionStatus(
       connectionType,
       slackDisplayName,
       verifiedAt: verifiedAt || null,
+      // Older backends did not return this capability. Keep the recovery path
+      // visible for legacy direct identities during a rolling deployment.
+      canLinkSeparateAccount:
+        connectionType === "direct"
+          ? payload.can_link_separate_account !== false
+          : payload.can_link_separate_account === true,
     };
   }
 
@@ -60,6 +69,7 @@ function unavailableRooAccountConnectionStatus(): RooAccountConnectionStatus {
     connectionType: null,
     slackDisplayName: null,
     verifiedAt: null,
+    canLinkSeparateAccount: false,
   };
 }
 
@@ -73,6 +83,7 @@ export async function getRooAccountConnectionStatus(
       connectionType: null,
       slackDisplayName: null,
       verifiedAt: null,
+      canLinkSeparateAccount: true,
     };
   }
 

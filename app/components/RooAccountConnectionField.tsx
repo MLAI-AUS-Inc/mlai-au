@@ -51,6 +51,14 @@ export default function RooAccountConnectionField({
                 {connection.slackDisplayName} will be used to recognise eligible
                 monthly updates for future coworking bookings.
               </p>
+              {connection.canLinkSeparateAccount ? (
+                <p className="mt-2 text-sm text-gray-600">
+                  Using a different MLAI account for monthly updates? In Slack,
+                  send Roo{" "}
+                  <code className="font-bold text-gray-900">link</code> and
+                  follow the private confirmation link.
+                </p>
+              ) : null}
             </div>
           ) : (
             <div className="mt-1" aria-live="polite">

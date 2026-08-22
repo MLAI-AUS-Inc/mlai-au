@@ -18,6 +18,7 @@ describe("Roo Founder Tools account-link security helpers", () => {
         status: "connected",
         connection_type: "direct",
         slack_display_name: "Alan Founder",
+        can_link_separate_account: true,
         slack_id: "USHOULDNOTLEAK",
       }),
     ).toEqual({
@@ -25,6 +26,7 @@ describe("Roo Founder Tools account-link security helpers", () => {
       connectionType: "direct",
       slackDisplayName: "Alan Founder",
       verifiedAt: null,
+      canLinkSeparateAccount: true,
     });
 
     expect(
@@ -33,12 +35,14 @@ describe("Roo Founder Tools account-link security helpers", () => {
         connection_type: "explicit",
         slack_display_name: "Alan in Slack",
         verified_at: "2026-08-18T09:00:00Z",
+        can_link_separate_account: false,
       }),
     ).toEqual({
       status: "connected",
       connectionType: "explicit",
       slackDisplayName: "Alan in Slack",
       verifiedAt: "2026-08-18T09:00:00Z",
+      canLinkSeparateAccount: false,
     });
   });
 
@@ -50,6 +54,7 @@ describe("Roo Founder Tools account-link security helpers", () => {
       connectionType: null,
       slackDisplayName: null,
       verifiedAt: null,
+      canLinkSeparateAccount: true,
     });
     expect(
       normalizeRooAccountConnectionStatus({

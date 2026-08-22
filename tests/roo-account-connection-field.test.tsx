@@ -11,6 +11,7 @@ describe("RooAccountConnectionField", () => {
           connectionType: "explicit",
           slackDisplayName: "Alan in Slack",
           verifiedAt: "2026-08-18T09:00:00Z",
+          canLinkSeparateAccount: false,
         }}
       />,
     );
@@ -18,6 +19,25 @@ describe("RooAccountConnectionField", () => {
     expect(html).toContain("Connected");
     expect(html).toContain("Alan in Slack");
     expect(html).not.toContain("Check connection");
+    expect(html).not.toContain("Using a different MLAI account");
+  });
+
+  test("keeps the separate-account recovery path visible for direct identities", () => {
+    const html = renderToStaticMarkup(
+      <RooAccountConnectionField
+        connection={{
+          status: "connected",
+          connectionType: "direct",
+          slackDisplayName: "Alan in Slack",
+          verifiedAt: null,
+          canLinkSeparateAccount: true,
+        }}
+      />,
+    );
+
+    expect(html).toContain("Connected");
+    expect(html).toContain("Using a different MLAI account");
+    expect(html).toContain("send Roo");
   });
 
   test("gives unconnected founders the private Roo linking path without blocking setup", () => {
@@ -28,6 +48,7 @@ describe("RooAccountConnectionField", () => {
           connectionType: null,
           slackDisplayName: null,
           verifiedAt: null,
+          canLinkSeparateAccount: true,
         }}
       />,
     );
@@ -46,6 +67,7 @@ describe("RooAccountConnectionField", () => {
           connectionType: null,
           slackDisplayName: null,
           verifiedAt: null,
+          canLinkSeparateAccount: true,
         }}
         isChecking
       />,

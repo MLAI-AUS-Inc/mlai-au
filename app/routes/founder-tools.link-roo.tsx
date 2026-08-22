@@ -40,7 +40,7 @@ const LINK_ROUTE_CSP = [
 ].join("; ");
 
 type LinkPreview = {
-  status: "ready" | "already_linked";
+  status: "ready" | "already_linked" | "already_connected";
   slack_display_name: string;
   expires_at: string;
 };
@@ -145,7 +145,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   try {
     const client = createApiClient(env, backendRequest);
     const response = await client.post<LinkPreview>(PREVIEW_PATH, { token });
-    if (response.data.status === "already_linked") {
+    if (
+      response.data.status === "already_linked" ||
+      response.data.status === "already_connected"
+    ) {
       return redirectWithClearedToken(request, "already-linked");
     }
     return {
@@ -188,10 +191,9 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   try {
     const client = createApiClient(env, backendRequest);
-    const response = await client.post<{ status: "linked" | "already_linked" }>(
-      COMPLETE_PATH,
-      { token },
-    );
+    const response = await client.post<{
+      status: "linked" | "already_linked" | "already_connected";
+    }>(COMPLETE_PATH, { token });
     return redirectWithClearedToken(
       request,
       response.data.status === "linked" ? "linked" : "already-linked",
