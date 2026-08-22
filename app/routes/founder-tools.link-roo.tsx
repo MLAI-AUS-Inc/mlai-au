@@ -45,6 +45,8 @@ type LinkPreview = {
   expires_at: string;
 };
 
+type LinkCompletionStatus = "linked" | "already_linked" | "already_connected";
+
 type LoaderData =
   | { state: "status"; status: RooAccountLinkPageStatus }
   | {
@@ -92,12 +94,118 @@ function redirectWithClearedToken(
   });
 }
 
-function apiErrorCode(error: unknown): unknown {
-  return (
+function apiErrorData(error: unknown): Record<string, unknown> | null {
+  const data = (
     error as {
-      response?: { data?: { code?: unknown } };
+      response?: { data?: unknown };
     }
-  )?.response?.data?.code;
+  )?.response?.data;
+  return data && typeof data === "object" && !Array.isArray(data)
+    ? (data as Record<string, unknown>)
+    : null;
+}
+
+function consumedTokenMatchesRequestingUser(error: unknown): boolean {
+  const data = apiErrorData(error);
+  return (
+    data?.code === "token_already_used" &&
+    data.connection_matches_requesting_user === true
+  );
+}
+
+function parseLinkPreview(raw: unknown): LinkPreview | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+  const payload = raw as Record<string, unknown>;
+  if (
+    payload.status !== "ready" &&
+    payload.status !== "already_linked" &&
+    payload.status !== "already_connected"
+  ) {
+    return null;
+  }
+
+  const slackDisplayName = String(payload.slack_display_name || "").trim();
+  const expiresAt = String(payload.expires_at || "").trim();
+  if (!slackDisplayName || !expiresAt || !Number.isFinite(Date.parse(expiresAt))) {
+    return null;
+  }
+
+  return {
+    status: payload.status,
+    slack_display_name: slackDisplayName,
+    expires_at: expiresAt,
+  };
+}
+
+function parseLinkCompletionStatus(raw: unknown): LinkCompletionStatus | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const status = (raw as Record<string, unknown>).status;
+  return status === "linked" ||
+    status === "already_linked" ||
+    status === "already_connected"
+    ? status
+    : null;
+}
+
+function canonicalSiteOrigin(env: Env, request: Request): string | null {
+  const configuredSiteUrl = String(
+    env.VITE_SITE_URL || env.NEXT_PUBLIC_SITE_URL || "https://mlai.au",
+  ).trim();
+  try {
+    const configured = new URL(configuredSiteUrl);
+    const incoming = new URL(request.url);
+    const isLocalDevelopment =
+      configured.protocol === "http:" &&
+      ["localhost", "127.0.0.1", "::1"].includes(configured.hostname);
+    if (
+      configured.username ||
+      configured.password ||
+      configured.pathname !== "/" ||
+      configured.search ||
+      configured.hash ||
+      incoming.username ||
+      incoming.password ||
+      (configured.protocol !== "https:" && !isLocalDevelopment) ||
+      (!isLocalDevelopment && configured.port && configured.port !== "443") ||
+      incoming.origin !== configured.origin
+    ) {
+      return null;
+    }
+    return configured.origin;
+  } catch {
+    return null;
+  }
+}
+
+function previewBackendRequest(
+  env: Env,
+  request: Request,
+): Request | null {
+  const trustedOrigin = canonicalSiteOrigin(env, request);
+  if (!trustedOrigin) return null;
+
+  const sanitized = withoutRooAccountLinkCookie(request);
+  const headers = new Headers(sanitized.headers);
+  headers.set("Origin", trustedOrigin);
+  return new Request(sanitized.url, { method: "GET", headers });
+}
+
+function hasTrustedBrowserOrigin(env: Env, request: Request): boolean {
+  const trustedOrigin = canonicalSiteOrigin(env, request);
+  return Boolean(
+    trustedOrigin && request.headers.get("Origin") === trustedOrigin,
+  );
+}
+
+function untrustedOriginResponse() {
+  return Response.json(
+    {
+      error:
+        "We could not verify where this request came from. Refresh this page and try again.",
+    },
+    { status: 403, headers: responseHeaders() },
+  );
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -132,7 +240,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 
   const env = getEnv(context);
-  const backendRequest = withoutRooAccountLinkCookie(request);
+  const backendRequest = previewBackendRequest(env, request);
+  if (!backendRequest) {
+    return {
+      state: "error",
+      message: "We could not verify this Founder Tools page.",
+    } satisfies LoaderData;
+  }
   const user = await getCurrentUser(env, backendRequest, {
     allowDevBypass: false,
   });
@@ -144,21 +258,32 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   try {
     const client = createApiClient(env, backendRequest);
-    const response = await client.post<LinkPreview>(PREVIEW_PATH, { token });
+    const response = await client.post<unknown>(PREVIEW_PATH, { token });
+    const preview = parseLinkPreview(response.data);
+    if (!preview) {
+      return {
+        state: "error",
+        message: "We could not verify this link right now. Please try again.",
+      } satisfies LoaderData;
+    }
     if (
-      response.data.status === "already_linked" ||
-      response.data.status === "already_connected"
+      preview.status === "already_linked" ||
+      preview.status === "already_connected"
     ) {
       return redirectWithClearedToken(request, "already-linked");
     }
     return {
       state: "ready",
-      slackDisplayName: response.data.slack_display_name,
+      slackDisplayName: preview.slack_display_name,
       founderEmail: String(user.email || ""),
-      expiresAt: response.data.expires_at,
+      expiresAt: preview.expires_at,
     } satisfies LoaderData;
   } catch (error) {
-    const terminalStatus = pageStatusForLinkError(apiErrorCode(error));
+    if (consumedTokenMatchesRequestingUser(error)) {
+      return redirectWithClearedToken(request, "already-linked");
+    }
+    const errorCode = apiErrorData(error)?.code;
+    const terminalStatus = pageStatusForLinkError(errorCode);
     if (terminalStatus) {
       return redirectWithClearedToken(request, terminalStatus);
     }
@@ -173,12 +298,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
+  const env = getEnv(context);
+  if (!hasTrustedBrowserOrigin(env, request)) {
+    return untrustedOriginResponse();
+  }
+
   const token = readRooAccountLinkToken(request);
   if (!token) {
     return redirectWithClearedToken(request, "invalid");
   }
 
-  const env = getEnv(context);
   const backendRequest = withoutRooAccountLinkCookie(request);
   const user = await getCurrentUser(env, backendRequest, {
     allowDevBypass: false,
@@ -191,22 +320,31 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   try {
     const client = createApiClient(env, backendRequest);
-    const response = await client.post<{
-      status: "linked" | "already_linked" | "already_connected";
-    }>(COMPLETE_PATH, { token });
+    const response = await client.post<unknown>(COMPLETE_PATH, { token });
+    const completionStatus = parseLinkCompletionStatus(response.data);
+    if (!completionStatus) {
+      return {
+        error:
+          "We could not confirm whether the accounts connected. Refresh this page to verify before trying again.",
+      };
+    }
     return redirectWithClearedToken(
       request,
-      response.data.status === "linked" ? "linked" : "already-linked",
+      completionStatus === "linked" ? "linked" : "already-linked",
     );
   } catch (error) {
-    const terminalStatus = pageStatusForLinkError(apiErrorCode(error));
+    if (consumedTokenMatchesRequestingUser(error)) {
+      return redirectWithClearedToken(request, "already-linked");
+    }
+    const errorCode = apiErrorData(error)?.code;
+    const terminalStatus = pageStatusForLinkError(errorCode);
     if (terminalStatus) {
       return redirectWithClearedToken(request, terminalStatus);
     }
     return {
       error: apiErrorDetail(
         error,
-        "We could not connect the accounts right now. Please try again.",
+        "We could not confirm whether the accounts connected. Refresh this page to verify before trying again.",
       ),
     };
   }

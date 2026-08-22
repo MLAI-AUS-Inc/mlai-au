@@ -26,5 +26,12 @@ jobs:
       - name: Test monthly-update reminder links
         run: bun test tests/monthly-update-reminder-link.test.ts
 
+      - name: Test Roo account-link security
+        run: |
+          bun test \
+            tests/roo-account-link.test.ts \
+            tests/roo-account-link-route.test.ts \
+            tests/roo-account-link-worker.test.ts
+
       - name: Build project
         run: bun run build
