@@ -8,7 +8,6 @@ import {
   ArrowRight,
   BarChart3,
   BookOpen,
-  Brain,
   Camera,
   CheckCircle2,
   ChevronDown,
@@ -32,8 +31,6 @@ import {
   Trash2,
   Undo2,
   UserRound,
-  UsersRound,
-  Wrench,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -44,6 +41,8 @@ import GitHubConnectForm from "~/components/GitHubConnectForm";
 import { RooPointCost } from "~/components/RooPointCost";
 import VibeMarketingAnalyticsSection from "~/components/VibeMarketingAnalyticsSection";
 import VibeMarketingDailyBriefSection from "~/components/VibeMarketingDailyBriefSection";
+import VibeMarketingIslandGraphSection from "~/components/VibeMarketingIslandGraphSection";
+import { PillarIcon } from "~/components/VibeMarketingPillarIcon";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
@@ -3242,20 +3241,6 @@ function pillarProgressTheme(colorKey: string | null | undefined): MarketingRunP
   return pillarTheme(colorKey).progress;
 }
 
-function PillarIcon({ iconKey, className }: { iconKey: string | null | undefined; className?: string }) {
-  const Icon =
-    iconKey === "brain"
-      ? Brain
-      : iconKey === "community"
-        ? UsersRound
-        : iconKey === "rocket"
-          ? Rocket
-          : iconKey === "tools"
-            ? Wrench
-            : Sparkles;
-  return <Icon className={className} />;
-}
-
 const CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS = [
   { key: "queue_research", name: "Queue research run" },
   { key: "load_context", name: "Load startup context" },
@@ -3377,10 +3362,63 @@ function contentIslandDiscoveryStepLabel(run: VibeMarketingRunSummary | null, ac
   return `Researching article ideas for ${islandName}.`;
 }
 
+// Shared by the card grid and the island graph so both variants carry the same header row.
+function ContentIslandsSectionHeader({
+  submitting,
+  discoverySubmitting,
+  helpOpen,
+  onLearnMore,
+}: {
+  submitting: boolean;
+  discoverySubmitting: boolean;
+  helpOpen: boolean;
+  onLearnMore: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-black tracking-normal text-slate-950">
+            Your content islands
+          </h2>
+          <CircleHelp className="h-5 w-5 text-slate-400" />
+        </div>
+        <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+          These are broad content themes based on your business and seed keywords.
+          <br />
+          Click a content island to see topic ideas that live under it.
+        </p>
+      </div>
+      <div className="flex flex-wrap justify-start gap-3 lg:ml-auto lg:justify-end lg:self-start">
+        <Form method="POST">
+          <button
+            type="submit"
+            name="intent"
+            value="start-discovery"
+            disabled={submitting}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Suggest more content islands
+          </button>
+        </Form>
+        <button
+          type="button"
+          onClick={onLearnMore}
+          aria-expanded={helpOpen}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+        >
+          <BookOpen className="h-4 w-4" />
+          Learn more
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TopicPillarsSection({
   pillars,
   submitting,
-  discoverySubmitting,
   generatingPillarSlug,
   confirmingPillarSlug,
   activePillarSlug,
@@ -3389,11 +3427,10 @@ function TopicPillarsSection({
   helpRef,
   onGenerate,
   onAddCustomPillar,
-  onLearnMore,
+  header,
 }: {
   pillars: VibeMarketingTopicPillar[];
   submitting: boolean;
-  discoverySubmitting: boolean;
   generatingPillarSlug?: string | null;
   confirmingPillarSlug?: string | null;
   activePillarSlug: string | null;
@@ -3402,51 +3439,14 @@ function TopicPillarsSection({
   helpRef: RefObject<HTMLDivElement | null>;
   onGenerate: (pillar: VibeMarketingTopicPillar) => void;
   onAddCustomPillar: () => void;
-  onLearnMore: () => void;
+  header: ReactNode;
 }) {
   const visiblePillars = pillars.slice(0, 4);
   const generating = Boolean(generatingPillarSlug);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black tracking-normal text-slate-950">
-              Your content islands
-            </h2>
-            <CircleHelp className="h-5 w-5 text-slate-400" />
-          </div>
-          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-            These are broad content themes based on your business and seed keywords.
-            <br />
-            Click a content island to see topic ideas that live under it.
-          </p>
-        </div>
-        <div className="flex flex-wrap justify-start gap-3 lg:ml-auto lg:justify-end lg:self-start">
-          <Form method="POST">
-            <button
-              type="submit"
-              name="intent"
-              value="start-discovery"
-              disabled={submitting}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Suggest more content islands
-            </button>
-          </Form>
-          <button
-            type="button"
-            onClick={onLearnMore}
-            aria-expanded={helpOpen}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
-          >
-            <BookOpen className="h-4 w-4" />
-            Learn more
-          </button>
-        </div>
-      </div>
+      {header}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {visiblePillars.map((pillar) => {
@@ -3855,7 +3855,12 @@ function ReturningTopicPickerPage({
     formData.set("clientRequestId", `${billingRequestIds.contentIslandTopics}:${pillar.slug}`);
     formData.set("contentIslandSlug", pillar.slug);
     formData.set("contentIslandName", pillar.name);
-    formData.set("contentIslandKeyword", pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ?? pillar.name);
+    formData.set(
+      "contentIslandKeyword",
+      pillar.pillarKeyword ??
+        pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ??
+        pillar.name,
+    );
     formData.set("contentIslandIconKey", pillar.iconKey);
     formData.set("contentIslandColorKey", pillar.colorKey);
     contentIslandDiscoveryFetcher.submit(formData, { method: "POST" });
@@ -4286,6 +4291,31 @@ function ReturningTopicPickerPage({
     setDeclinedFeedback((current) => current.filter((item) => item.id !== data.topicFeedback?.id));
   }, [restoreFetcher.data]);
 
+  const contentIslandsHeader = (
+    <ContentIslandsSectionHeader
+      submitting={isSubmitting || contentIslandDiscoveryBusy}
+      discoverySubmitting={discoverySubmitting}
+      helpOpen={pillarHelpOpen}
+      onLearnMore={handleLearnMorePillars}
+    />
+  );
+  // Also the graph's narrow-viewport fallback: the cards stay the touch-sized surface.
+  const topicPillarsCards = (
+    <TopicPillarsSection
+      pillars={bootstrap.topicPillars}
+      submitting={isSubmitting || contentIslandDiscoveryBusy}
+      generatingPillarSlug={generatingPillarSlug}
+      confirmingPillarSlug={confirmingContentIslandSlug}
+      activePillarSlug={activePillarSlug}
+      customNotice={customPillarNotice}
+      helpOpen={pillarHelpOpen}
+      helpRef={pillarHelpRef}
+      onGenerate={handleContentIslandGenerateClick}
+      onAddCustomPillar={handleAddCustomPillar}
+      header={contentIslandsHeader}
+    />
+  );
+
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
       {setupMergedNotice ? (
@@ -4556,20 +4586,26 @@ function ReturningTopicPickerPage({
 
           </Form>
 
-          <TopicPillarsSection
-            pillars={bootstrap.topicPillars}
-            submitting={isSubmitting || contentIslandDiscoveryBusy}
-            discoverySubmitting={discoverySubmitting}
-            generatingPillarSlug={generatingPillarSlug}
-            confirmingPillarSlug={confirmingContentIslandSlug}
-            activePillarSlug={activePillarSlug}
-            customNotice={customPillarNotice}
-            helpOpen={pillarHelpOpen}
-            helpRef={pillarHelpRef}
-            onGenerate={handleContentIslandGenerateClick}
-            onAddCustomPillar={handleAddCustomPillar}
-            onLearnMore={handleLearnMorePillars}
-          />
+          {bootstrap.islandGraph?.nodes?.length ? (
+            <VibeMarketingIslandGraphSection
+              graph={bootstrap.islandGraph}
+              pillars={bootstrap.topicPillars}
+              submitting={isSubmitting || contentIslandDiscoveryBusy}
+              generatingPillarSlug={generatingPillarSlug}
+              confirmingPillarSlug={confirmingContentIslandSlug}
+              activePillarSlug={activePillarSlug}
+              customNotice={customPillarNotice}
+              helpOpen={pillarHelpOpen}
+              helpRef={pillarHelpRef}
+              onGenerate={handleContentIslandGenerateClick}
+              onSelectIsland={(slug) => setActivePillarSlug(slug)}
+              onAddCustomPillar={handleAddCustomPillar}
+              header={contentIslandsHeader}
+              narrowFallback={topicPillarsCards}
+            />
+          ) : (
+            topicPillarsCards
+          )}
         </div>
 
         <aside className="space-y-5">
