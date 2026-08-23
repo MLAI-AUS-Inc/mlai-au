@@ -1,5 +1,9 @@
 import { createRequestHandler } from "react-router";
 import { isWattTheHackEndpointPath } from "~/lib/watt-the-hack-access";
+import {
+  rejectedRooAccountLinkCapabilityResponse,
+  rooAccountLinkCapabilityDisposition,
+} from "~/lib/roo-account-link-url";
 import { withSessionRefresh } from "./session-refresh";
 
 declare module "react-router" {
@@ -63,6 +67,16 @@ async function renderWithReactRouter(request: Request, env: Env, ctx: ExecutionC
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    // Capability URLs must reach the route that immediately scrubs the token.
+    // Never let them pass through generic permanent redirects.
+    const rooLinkDisposition = rooAccountLinkCapabilityDisposition(url);
+    if (rooLinkDisposition === "reject") {
+      return rejectedRooAccountLinkCapabilityResponse();
+    }
+    if (rooLinkDisposition === "route") {
+      return renderWithReactRouter(request, env, ctx);
+    }
 
     // 1. Redirect www → non-www (301)
     if (url.hostname === "www.mlai.au") {

@@ -120,6 +120,7 @@ export default [
 
   // Founder Tools App routes
   route("/founder-tools/start", "routes/founder-tools-start.tsx"),
+  route("/founder-tools/link-roo", "routes/founder-tools.link-roo.tsx"),
   route("/founder-tools", "routes/vibe-raising-app.tsx", { id: "founder-tools-root" }, [
     index("routes/founder-tools.index.tsx"),
     route("upgrade", "routes/founder-tools.upgrade.tsx"),
