@@ -610,3 +610,13 @@
 - [x] Build shared income/expense, revenue-mix, event-contribution, and overhead charts
 - [x] Render the concise financial brief consistently in draft review and published updates
 - [x] Run frontend typecheck and production build verification
+
+## Content-island UX overhaul (August 2026)
+
+- [x] Audit the production content-island experience at desktop and 390px mobile widths
+- [x] Separate island browsing from the Roo Point generation confirmation
+- [x] Add a responsive all-islands list with complete names, useful metrics, and status
+- [x] Improve map spacing, labels, relationship emphasis, focus states, and touch targets
+- [x] Clarify the section header, legend, selected-island action, help, and custom-island states
+- [x] Add focused accessibility and rendering coverage
+- [x] Run focused tests, typecheck, build, and desktop/mobile visual verification

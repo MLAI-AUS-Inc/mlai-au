@@ -3,13 +3,12 @@ import { forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY
 
 export const ISLAND_MIN_RADIUS = 26;
 export const ISLAND_MAX_RADIUS = 60;
-// Room reserved around a circle for the 12px name label below it and the NEW pill above.
-export const ISLAND_EDGE_PADDING = 26;
+// Room reserved around a circle for the two-line name label placed above or below it.
+export const ISLAND_EDGE_PADDING = 40;
 
 const SIMULATION_TICKS = 300;
-// Wide enough to clear a neighbour's furniture, not just its circle: the name label sits
-// up to 30px below a node and the NEW pill up to 24px above it.
-const COLLIDE_PADDING = 32;
+// Wide enough to clear a neighbour's two-line label, not just its circle.
+const COLLIDE_PADDING = 46;
 const CENTERING_STRENGTH = 0.05;
 // Repulsion scales with the circle so a large island pushes its neighbours proportionally
 // further away instead of swallowing them.
@@ -89,6 +88,24 @@ function round(value: number): number {
 }
 
 /**
+ * Link forces intentionally pull related islands into clusters. Expand small clusters a
+ * little before rendering so the map uses its canvas and labels do not pile up in the
+ * centre. Never shrink a layout: that could reduce the collision gap the simulation made.
+ */
+function expandAxis(values: number[], size: number, padding: number): number[] {
+  if (values.length < 2) return values.map(() => size / 2);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min;
+  const available = Math.max(0, size - padding * 2);
+  if (span <= 0 || available <= span) return values;
+  const scale = Math.min(1.35, available / span);
+  const sourceCenter = (min + max) / 2;
+  const targetCenter = size / 2;
+  return values.map((value) => targetCenter + (value - sourceCenter) * scale);
+}
+
+/**
  * Force-directed positions for the island map, run to completion synchronously so the
  * markup is identical server-side and client-side.
  *
@@ -160,6 +177,18 @@ export function computeIslandLayout<TNode extends IslandLayoutNode>(
     simulation.tick();
   }
 
+  const layoutPadding = ISLAND_MAX_RADIUS + ISLAND_EDGE_PADDING;
+  const expandedX = expandAxis(
+    simulationNodes.map((node) => node.x ?? centerX),
+    width,
+    layoutPadding,
+  );
+  const expandedY = expandAxis(
+    simulationNodes.map((node) => node.y ?? centerY),
+    height,
+    layoutPadding,
+  );
+
   return nodes.map((node, index) => {
     const simulated = simulationNodes[index];
     const bound = simulated.radius + ISLAND_EDGE_PADDING;
@@ -168,8 +197,8 @@ export function computeIslandLayout<TNode extends IslandLayoutNode>(
     return {
       ...node,
       radius: round(simulated.radius),
-      x: round(Math.min(maxX, Math.max(bound, simulated.x ?? centerX))),
-      y: round(Math.min(maxY, Math.max(bound, simulated.y ?? centerY))),
+      x: round(Math.min(maxX, Math.max(bound, expandedX[index] ?? centerX))),
+      y: round(Math.min(maxY, Math.max(bound, expandedY[index] ?? centerY))),
     };
   });
 }

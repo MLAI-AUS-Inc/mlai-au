@@ -11,13 +11,11 @@ import {
   Camera,
   CheckCircle2,
   ChevronDown,
-  CircleHelp,
   ExternalLink,
   FileText,
   Flame,
   Globe2,
   Loader2,
-  MoreHorizontal,
   PenLine,
   Plus,
   Rocket,
@@ -3375,38 +3373,34 @@ function ContentIslandsSectionHeader({
   onLearnMore: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div>
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-black tracking-normal text-slate-950">
-            Your content islands
-          </h2>
-          <CircleHelp className="h-5 w-5 text-slate-400" />
-        </div>
-        <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-          These are broad content themes based on your business and seed keywords.
-          <br />
-          Click a content island to see topic ideas that live under it.
+    <div className="flex flex-col gap-4">
+      <div className="max-w-xl">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">Content strategy</p>
+        <h2 className="mt-1 text-xl font-black tracking-normal text-slate-950">
+          Find your next content opportunity
+        </h2>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+          Explore the themes your audience searches for, compare demand, and generate article ideas when you are ready.
         </p>
       </div>
-      <div className="flex flex-wrap justify-start gap-3 lg:ml-auto lg:justify-end lg:self-start">
+      <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2 sm:self-start">
         <Form method="POST">
           <button
             type="submit"
             name="intent"
             value="start-discovery"
             disabled={submitting}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Suggest more content islands
+            Find more islands
           </button>
         </Form>
         <button
           type="button"
           onClick={onLearnMore}
           aria-expanded={helpOpen}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100"
         >
           <BookOpen className="h-4 w-4" />
           Learn more
@@ -3441,14 +3435,14 @@ function TopicPillarsSection({
   onAddCustomPillar: () => void;
   header: ReactNode;
 }) {
-  const visiblePillars = pillars.slice(0, 4);
+  const visiblePillars = pillars;
   const generating = Boolean(generatingPillarSlug);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       {header}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {visiblePillars.map((pillar) => {
           const theme = pillarTheme(pillar.colorKey);
           const active = pillar.slug === activePillarSlug;
@@ -3458,43 +3452,50 @@ function TopicPillarsSection({
             <article
               key={pillar.id || pillar.slug}
               className={clsx(
-                "relative flex min-h-[220px] flex-col items-center rounded-xl border bg-white px-3 py-5 text-center shadow-sm transition",
+                "flex min-h-[170px] flex-col rounded-xl border bg-white p-4 text-left shadow-sm transition",
                 active ? "border-violet-300 ring-4 ring-violet-50" : "border-slate-200 hover:border-violet-200",
               )}
             >
-              <MoreHorizontal className="absolute right-4 top-4 h-4 w-4 text-slate-400" />
-              <div className={clsx("flex h-12 w-12 items-center justify-center rounded-full shadow-lg", theme.iconWrap)}>
-                <PillarIcon iconKey={pillar.iconKey} className="h-6 w-6" />
+              <div className="flex items-start gap-3">
+                <div className={clsx("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-sm", theme.iconWrap)}>
+                  <PillarIcon iconKey={pillar.iconKey} className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black leading-5 text-slate-950">{pillar.name}</h3>
+                  {pillar.description ? (
+                    <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">{pillar.description}</p>
+                  ) : null}
+                </div>
               </div>
-              <h3 className="mt-6 min-h-[42px] text-balance text-sm font-black leading-5 text-slate-950">
-                {pillar.name}
-              </h3>
-              <div className="mt-2 h-4" aria-hidden="true" />
               <button
                 type="button"
                 onClick={() => onGenerate(pillar)}
                 disabled={submitting || generating}
-                aria-label={confirming ? `Generate topic ideas for ${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point` : undefined}
+                aria-label={
+                  confirming
+                    ? `Confirm topic idea generation for ${pillar.name} for ${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point`
+                    : `Generate topic ideas for ${pillar.name}`
+                }
                 className={clsx(
-                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
+                  "mt-auto inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border text-sm font-black transition focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-60",
                   theme.solidButton,
                 )}
               >
                 {generatingThisPillar ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin text-white" />
-                    loading
+                    Researching ideas…
                   </>
                 ) : (
                   <>
                     {confirming ? (
                       <>
+                        Confirm
                         <RooPointCost points={-VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} />
-                        <span aria-hidden="true">?</span>
                       </>
                     ) : (
                       <>
-                        Generate
+                        Generate topic ideas
                         <ArrowRight className="h-4 w-4 text-white" />
                       </>
                     )}
@@ -3508,33 +3509,40 @@ function TopicPillarsSection({
         <button
           type="button"
           onClick={onAddCustomPillar}
-          className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-violet-300 hover:bg-violet-50/30"
+          className="flex min-h-[170px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-violet-300 hover:bg-violet-50/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100"
         >
           <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-violet-300 text-violet-600">
             <Plus className="h-6 w-6" />
           </span>
-          <span className="mt-5 text-sm font-black text-slate-700">Add custom content island</span>
+          <span className="mt-5 text-sm font-black text-slate-700">Custom island</span>
+          <span className="mt-2 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-violet-700">
+            Coming soon
+          </span>
         </button>
       </div>
 
-      <div
-        ref={helpRef}
-        tabIndex={-1}
-        className={clsx(
-          "mt-5 rounded-lg bg-violet-50 px-4 py-3 text-sm font-black text-violet-700 outline-none transition focus:ring-4 focus:ring-violet-100",
-          helpOpen ? "ring-1 ring-violet-100" : "",
-        )}
-      >
-        <div className="flex items-center gap-3">
-          <Sparkles className="h-5 w-5 shrink-0 text-violet-500" />
-          <p>Content islands organize broad themes. Each content island contains many specific article ideas.</p>
+      {helpOpen || customNotice ? (
+        <div
+          ref={helpRef}
+          tabIndex={-1}
+          role="status"
+          aria-live="polite"
+          className="mt-5 rounded-xl border border-violet-100 bg-violet-50 px-4 py-4 text-sm font-semibold leading-6 text-violet-800 outline-none transition focus:ring-4 focus:ring-violet-100"
+        >
+          <div className="flex items-start gap-3">
+            <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
+            <div>
+              <p className="font-black">How content islands work</p>
+              <p className="mt-1">Each island is a broad audience theme containing many specific article ideas.</p>
+              {customNotice ? (
+                <p className="mt-2 font-bold">
+                  Custom island creation is coming soon. Choose the Custom topic tab above to research a one-off article idea now.
+                </p>
+              ) : null}
+            </div>
+          </div>
         </div>
-        {customNotice ? (
-          <p className="mt-3 pl-8 text-sm font-bold text-violet-600">
-            Custom content island creation is not available yet. Use the Custom topic tab above for one-off article ideas.
-          </p>
-        ) : null}
-      </div>
+      ) : null}
     </section>
   );
 }
@@ -4299,7 +4307,6 @@ function ReturningTopicPickerPage({
       onLearnMore={handleLearnMorePillars}
     />
   );
-  // Also the graph's narrow-viewport fallback: the cards stay the touch-sized surface.
   const topicPillarsCards = (
     <TopicPillarsSection
       pillars={bootstrap.topicPillars}
@@ -4598,10 +4605,12 @@ function ReturningTopicPickerPage({
               helpOpen={pillarHelpOpen}
               helpRef={pillarHelpRef}
               onGenerate={handleContentIslandGenerateClick}
-              onSelectIsland={(slug) => setActivePillarSlug(slug)}
+              onSelectIsland={(slug) => {
+                setActivePillarSlug(slug);
+                setConfirmingContentIslandSlug(null);
+              }}
               onAddCustomPillar={handleAddCustomPillar}
               header={contentIslandsHeader}
-              narrowFallback={topicPillarsCards}
             />
           ) : (
             topicPillarsCards
