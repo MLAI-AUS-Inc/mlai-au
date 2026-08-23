@@ -2,7 +2,7 @@
 
 This is the legacy short path for someone working on the original website,
 backend, and Roo repository group. For the complete platform map—including
-MLAI Chat, Plane, and the Plane edge gateway—start with the
+inactive experiments—start with the
 [`mlai-engineering`](https://github.com/MLAI-AUS-Inc/mlai-engineering)
 repository.
 
@@ -11,9 +11,10 @@ Main repos:
 - `mlai-backend` - Django API and backend jobs
 - `roo` - Roo Slack/agent service
 
-Other active platform repositories are `mlai-chat`, `mlai-plane`, and
-`mlai-plane-edge`. They have distinct toolchains and repository-local setup
-instructions; do not apply the commands in this guide to them.
+`mlai-chat`, `mlai-plane`, and `mlai-plane-edge` are inactive experiments in
+deploying the open-source Buzz and Plane products. They are not part of the
+standard onboarding or supported MLAI architecture. Do not clone or run them
+unless a task explicitly investigates or reactivates an experiment.
 
 Clone `content-factory` too only when working on article/content generation flows. The backend full local stack expects it as a sibling repo.
 
