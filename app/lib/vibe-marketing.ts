@@ -18,6 +18,9 @@ import type {
   VibeMarketingGuidedStep,
   VibeMarketingGithubRepo,
   VibeMarketingGithubReposResponse,
+  VibeMarketingIslandGraph,
+  IslandGraphEdge,
+  IslandGraphNode,
   VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
   VibeMarketingRunSummary,
@@ -455,7 +458,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
   };
 }
 
-function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
+export function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const organization = (payload.organization && typeof payload.organization === "object"
     ? payload.organization
@@ -557,6 +560,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
     topicPillars: Array.isArray(rawTopicPillars)
       ? rawTopicPillars.map(normalizeTopicPillar).filter((pillar): pillar is VibeMarketingTopicPillar => Boolean(pillar))
       : [],
+    islandGraph: normalizeIslandGraph(payload.islandGraph ?? payload.island_graph),
     hiddenTopicCandidates: Array.isArray(payload.hiddenTopicCandidates)
       ? canonicalizeTopicCandidates(payload.hiddenTopicCandidates.map(normalizeTopicCandidate), "hidden")
       : [],
@@ -773,9 +777,77 @@ function normalizeTopicPillar(raw: unknown): VibeMarketingTopicPillar | null {
     iconKey: asNullableString(payload.iconKey) ?? asNullableString(payload.icon_key) ?? "default",
     colorKey: asNullableString(payload.colorKey) ?? asNullableString(payload.color_key) ?? "purple",
     source: asNullableString(payload.source) ?? "semantic_cluster",
+    pillarKeyword: asNullableString(payload.pillarKeyword) ?? asNullableString(payload.pillar_keyword),
     topicCandidates: Array.isArray(rawCandidates)
       ? canonicalizeTopicCandidates(rawCandidates.map(normalizeTopicCandidate), `pillar:${slug}`)
       : [],
+  };
+}
+
+function normalizeIslandGraphNode(raw: unknown): IslandGraphNode | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const slug = asNullableString(payload.slug);
+  const name = asNullableString(payload.name) ?? asNullableString(payload.title);
+  if (!slug || !name) return null;
+  return {
+    id: asNullableString(payload.id) ?? `island:${slug}`,
+    slug,
+    name,
+    description: asNullableString(payload.description) ?? "",
+    pillarKeyword: asNullableString(payload.pillarKeyword) ?? asNullableString(payload.pillar_keyword),
+    iconKey: asNullableString(payload.iconKey) ?? asNullableString(payload.icon_key) ?? "default",
+    colorKey: asNullableString(payload.colorKey) ?? asNullableString(payload.color_key) ?? "purple",
+    status: asNullableString(payload.status) ?? "visible",
+    isNew: asBoolean(payload.isNew ?? payload.is_new),
+    keywordCount: asNumber(payload.keywordCount ?? payload.keyword_count) ?? 0,
+    totalVolume: asNumber(payload.totalVolume ?? payload.total_volume) ?? 0,
+    avgDifficulty: asNumber(payload.avgDifficulty ?? payload.avg_difficulty) ?? 0,
+    opportunityScore: asNumber(payload.opportunityScore ?? payload.opportunity_score) ?? 0,
+    aiSearchVolume: asNumber(payload.aiSearchVolume ?? payload.ai_search_volume) ?? 0,
+    ideaCount: asNumber(payload.ideaCount ?? payload.idea_count) ?? 0,
+    articlesWritten: asNumber(payload.articlesWritten ?? payload.articles_written) ?? 0,
+  };
+}
+
+function normalizeIslandGraphEdge(raw: unknown): IslandGraphEdge | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const source = asNullableString(payload.source) ?? asNullableString(payload.island_a) ?? asNullableString(payload.islandA);
+  const target = asNullableString(payload.target) ?? asNullableString(payload.island_b) ?? asNullableString(payload.islandB);
+  if (!source || !target || source === target) return null;
+  return {
+    source,
+    target,
+    similarity: asNumber(payload.similarity) ?? 0,
+  };
+}
+
+/**
+ * Normalize the bootstrap `islandGraph` payload. Edges join on bare island slugs, so an
+ * edge pointing at a slug that has no node is dropped here — d3's `forceLink` throws at
+ * simulation init on an unresolvable link id.
+ */
+export function normalizeIslandGraph(raw: unknown): VibeMarketingIslandGraph | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const rawNodes = payload.nodes ?? payload.islands;
+  const rawEdges = payload.edges ?? payload.links;
+  const nodes = Array.isArray(rawNodes)
+    ? rawNodes.map(normalizeIslandGraphNode).filter((node): node is IslandGraphNode => Boolean(node))
+    : [];
+  const nodeSlugs = new Set(nodes.map((node) => node.slug));
+  const edges = Array.isArray(rawEdges)
+    ? rawEdges
+        .map(normalizeIslandGraphEdge)
+        .filter((edge): edge is IslandGraphEdge => Boolean(edge))
+        .filter((edge) => nodeSlugs.has(edge.source) && nodeSlugs.has(edge.target))
+    : [];
+  return {
+    updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+    emergingCount: asNumber(payload.emergingCount ?? payload.emerging_count) ?? 0,
+    nodes,
+    edges,
   };
 }
 
