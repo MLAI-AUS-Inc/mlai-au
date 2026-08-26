@@ -186,8 +186,8 @@ const TOPUP_STEPS: Array<{
     title: "Ask Roo for a pack",
     body: (
       <>
-        Try <code>@Roo topup 5 points</code>, <code>@Roo topup 10 points</code>, or{" "}
-        <code>@Roo topup 25 points</code>.
+        Try <code>@Roo topup 10 points</code>, <code>@Roo topup 20 points</code>, or{" "}
+        <code>@Roo topup 50 points</code>.
       </>
     ),
   },
@@ -199,9 +199,9 @@ const TOPUP_STEPS: Array<{
 ];
 
 const TOPUP_PACKS = [
-  { id: "topup_5", label: "5 Top-up Roo Points", price: "A$19.99" },
-  { id: "topup_10", label: "10 Top-up Roo Points", price: "A$36.99" },
-  { id: "topup_25", label: "25 Top-up Roo Points", price: "A$63.99" },
+  { id: "topup_5", label: "10 Top-up Roo Points", price: "A$19.99" },
+  { id: "topup_10", label: "20 Top-up Roo Points", price: "A$36.99" },
+  { id: "topup_25", label: "50 Top-up Roo Points", price: "A$63.99" },
 ] as const;
 
 const SLACK_COMMANDS = [
@@ -245,8 +245,8 @@ const FAQ_ITEMS: Array<{ question: string; answer: ReactNode }> = [
     question: "Can I top up Roo Points?",
     answer: (
       <>
-        Yes. In Slack, ask <code>@Roo topup 5 points</code>,{" "}
-        <code>@Roo topup 10 points</code>, or <code>@Roo topup 25 points</code>. Roo
+        Yes. In Slack, ask <code>@Roo topup 10 points</code>,{" "}
+        <code>@Roo topup 20 points</code>, or <code>@Roo topup 50 points</code>. Roo
         creates a checkout link for a fixed pack, and points are added after payment is
         confirmed. Top-up Roo Points can be spent on eligible rewards, but they do not
         count toward earned contribution status.
