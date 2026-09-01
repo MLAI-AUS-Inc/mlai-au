@@ -1,3 +1,7 @@
+- [x] Restrict worker session refresh to the refresh-token cookie allowlist
+- [x] Add capability-cookie and session-refresh composition coverage
+- [x] Run focused tests, typecheck, and the production build
+
 - [x] Show retry guidance when the Content Factory configuration service is unavailable
 - [x] Keep genuine missing-configuration guidance distinct from upstream transport failures
 - [x] Add focused failure-guidance tests and run typecheck/build
