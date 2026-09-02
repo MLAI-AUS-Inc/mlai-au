@@ -9,7 +9,7 @@ export default function Hero() {
       {/* Main content container with thin border */}
       <div className="w-full min-h-[calc(70vh-1rem)] lg:min-h-[calc(100vh-1.5rem)] border border-gray-400 rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-8 lg:p-12 relative flex flex-col">
         {/* Top row - Action chips */}
-        <div className="grid grid-cols-1 items-start justify-items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
+        <div className="relative z-10 grid grid-cols-1 items-start justify-items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
           {/* Join Slack - Top Left */}
           <a
             href="https://join.slack.com/t/mlai-aus/shared_invite/zt-44ibtpw0j-Bg7wKJaLeDK9n6b0ZxjluQ"
