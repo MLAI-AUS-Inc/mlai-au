@@ -34,6 +34,11 @@ import {
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { normalizeVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
 import {
+    buildVibeRaisingFinancialSurveyQuestion,
+    type VibeRaisingFinancialSurveyContext,
+    type VibeRaisingFinancialSurveyQuestionKey,
+} from "~/lib/vibe-raising-survey";
+import {
     VIBE_METRIC_KEYS,
     VIBE_METRIC_OPTIONS,
     VIBE_METRIC_OPTION_MAP,
@@ -63,7 +68,12 @@ import {
     LinkIcon,
     ArrowTopRightOnSquareIcon,
     CalendarDaysIcon,
+    LockClosedIcon,
 } from "@heroicons/react/24/outline";
+import {
+    HandThumbUpIcon as HandThumbUpSolidIcon,
+    HandThumbDownIcon as HandThumbDownSolidIcon,
+} from "@heroicons/react/24/solid";
 import { useDropzone } from 'react-dropzone';
 import { motion, useInView } from "motion/react";
 import { clsx } from "clsx";
@@ -72,7 +82,6 @@ import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
-import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 import FinancialChartsSection from "~/components/vibe-raising/FinancialChartsSection";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS } from "~/components/VibeRaisingDateTabs";
@@ -138,14 +147,49 @@ const CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_create_update_mobile
 const STORY_MATERIALS_SUGGESTION_SEEN_STORAGE_PREFIX = "vibe_raising_story_materials_suggestion_seen_v1";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
-const PUBLISH_REVIEW_FORM_ID = "vibe-raising-publish-review-form";
+const SEND_TO_MLAI_FORM_ID = "vibe-raising-send-to-mlai-form";
 const BACKEND_DRAFT_ID_PATTERN = /^\d+$/;
+const REQUIRED_FOUNDER_QUESTION_COUNT = 3;
+const FOUNDER_QUESTION_FIELDS = ["highlights", "challenges", "learnings", "next30Days", "asks"] as const;
+const FINANCIAL_METRIC_SOURCE_KEYS = ["stripe", "xero"] as const;
 
 type CreateUpdateMobileTourStep = {
     key: string;
     title: string;
     body: string;
     targetRef: RefObject<Element | null>;
+};
+
+type UpdateCadence = "monthly" | "weekly";
+type MlaiFeedbackPreference = "yes" | "no";
+type BinarySurveyAnswer = "yes" | "no" | null;
+type EndOfFlowSurveyQuestionKey = VibeRaisingFinancialSurveyQuestionKey | "guidedQuestionsUseful" | "previewAccurate";
+
+const END_OF_FLOW_SURVEY_CORE_QUESTIONS: Array<{
+    key: EndOfFlowSurveyQuestionKey;
+    label: string;
+}> = [
+    { key: "guidedQuestionsUseful", label: "Did the guided questions help you explain your progress, challenges, and support needs?" },
+    { key: "previewAccurate", label: "Did the final preview feel accurate enough to send without major edits?" },
+];
+const END_OF_FLOW_SURVEY_STEP_COUNT = END_OF_FLOW_SURVEY_CORE_QUESTIONS.length + 2;
+
+function hasMeaningfulFounderAnswer(value: unknown) {
+    return String(value || "").replace(/[\s\-•]+/g, "").length > 0;
+}
+
+function countAnsweredFounderQuestions(formData: FormData) {
+    return FOUNDER_QUESTION_FIELDS.filter((field) => hasMeaningfulFounderAnswer(formData.get(field))).length;
+}
+
+type WeeklyUpdateOption = {
+    key: string;
+    startIso: string;
+    endIso: string;
+    label: string;
+    month: string;
+    year: number;
+    isCurrent: boolean;
 };
 
 function readStoredManualMaterials(): {
@@ -382,6 +426,50 @@ function getCreateStepMonthOptions(now = new Date()) {
     return [previous, current];
 }
 
+function toLocalIsoDate(value: Date) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function getStartOfWeek(value: Date) {
+    const start = new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    const day = start.getDay() || 7;
+    start.setDate(start.getDate() - day + 1);
+    return start;
+}
+
+function formatWeeklyUpdateLabel(start: Date, end: Date) {
+    const startMonth = start.toLocaleDateString("en-AU", { month: "short" });
+    const endMonth = end.toLocaleDateString("en-AU", { month: "short" });
+    if (start.getMonth() === end.getMonth()) {
+        return `${start.getDate()}–${end.getDate()} ${endMonth}`;
+    }
+    return `${start.getDate()} ${startMonth}–${end.getDate()} ${endMonth}`;
+}
+
+function getCreateStepWeekOptions(now = new Date()): WeeklyUpdateOption[] {
+    const currentWeekStart = getStartOfWeek(now);
+
+    return Array.from({ length: 4 }, (_, index) => {
+        const start = new Date(currentWeekStart);
+        start.setDate(currentWeekStart.getDate() - ((3 - index) * 7));
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+
+        return {
+            key: toLocalIsoDate(start),
+            startIso: toLocalIsoDate(start),
+            endIso: toLocalIsoDate(end),
+            label: formatWeeklyUpdateLabel(start, end),
+            month: VIBE_RAISING_MONTH_OPTIONS[end.getMonth()]?.name || "January",
+            year: end.getFullYear(),
+            isCurrent: index === 3,
+        };
+    });
+}
+
 function getMonthlyUpdateStorageKey(update: VibeRaisingMonthlyUpdate) {
     const isoMonth = String(update.isoMonth || "").trim();
     const isoMatch = isoMonth.match(/^(\d{4})-(\d{2})/);
@@ -556,6 +644,18 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean);
+    const rawMlaiFeedbackOptIn = String(formData.get("mlaiFeedbackOptIn") || "").trim().toLowerCase();
+    const rawSurveyFinancialQuestionContext = String(formData.get("surveyFinancialQuestionContext") || "").trim();
+    const surveyFinancialQuestionContext: VibeRaisingFinancialSurveyContext | null =
+        rawSurveyFinancialQuestionContext === "imported_metrics" || rawSurveyFinancialQuestionContext === "connector_value"
+            ? rawSurveyFinancialQuestionContext
+            : null;
+    const parseSurveyAnswer = (value: FormDataEntryValue | null): boolean | null => {
+        const normalized = String(value || "").trim().toLowerCase();
+        if (normalized === "yes" || normalized === "true") return true;
+        if (normalized === "no" || normalized === "false") return false;
+        return null;
+    };
 
     return {
         audienceVisibility: normalizeAudienceVisibilityValue(formData.getAll("audienceVisibility")),
@@ -587,6 +687,16 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         financialSnapshot,
         conciseAnalysis,
         presentationMode: String(formData.get("presentationMode") || "").trim() || null,
+        mlaiFeedbackOptIn: rawMlaiFeedbackOptIn
+            ? rawMlaiFeedbackOptIn === "yes" || rawMlaiFeedbackOptIn === "true"
+            : null,
+        submissionDestination: String(formData.get("submissionDestination") || "").trim() || null,
+        surveyFinancialQuestionContext,
+        surveyImportedMetricsUseful: parseSurveyAnswer(formData.get("surveyImportedMetricsUseful")),
+        surveyConnectorValueClear: parseSurveyAnswer(formData.get("surveyConnectorValueClear")),
+        surveyGuidedQuestionsUseful: parseSurveyAnswer(formData.get("surveyGuidedQuestionsUseful")),
+        surveyPreviewAccurate: parseSurveyAnswer(formData.get("surveyPreviewAccurate")),
+        surveyComments: String(formData.get("surveyComments") || "").trim() || null,
     };
 }
 
@@ -628,11 +738,46 @@ export async function action({ request, context }: Route.ActionArgs) {
     const activeCompanyId = resolveActiveCompanyId(appUser);
     const formData = await request.formData();
     const intent = formData.get("intent");
+    const answerGatedIntents = new Set(["review", "save-draft", "send-to-mlai", "publish"]);
+    const answeredFounderQuestionCount = countAnsweredFounderQuestions(formData);
+    if (answerGatedIntents.has(String(intent || "")) && answeredFounderQuestionCount < REQUIRED_FOUNDER_QUESTION_COUNT) {
+        return {
+            step: "validation-error",
+            error: `Answer at least ${REQUIRED_FOUNDER_QUESTION_COUNT} founder questions before saving or submitting.`,
+            answeredQuestionCount: answeredFounderQuestionCount,
+        };
+    }
     const savePayload = buildMonthlyUpdateSavePayload(formData);
     const updates: Record<string, unknown> = {
         ...Object.fromEntries(formData),
         audienceVisibility: savePayload.audienceVisibility,
     };
+
+    if (intent === "send-to-mlai") {
+        try {
+            const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
+                ...savePayload,
+                companyId: activeCompanyId,
+                audienceVisibility: ["just_me"],
+                mlaiFeedbackOptIn: savePayload.mlaiFeedbackOptIn,
+                submissionDestination: "mlai",
+                saveMode: "ready",
+            });
+            const cookie = savedUpdate ? createVibeRaisingLocalDraftUpdateCookie(savedUpdate) : null;
+            return redirect(
+                "/founder-tools/updates?sent_to_mlai=1",
+                cookie ? { headers: { "Set-Cookie": cookie } } : undefined,
+            );
+        } catch (error) {
+            const gate = acnGateRedirect(error);
+            if (gate) return gate;
+            return {
+                step: "publish-error",
+                data: updates,
+                error: extractVibeRaisingActionError(error, "We could not send this update to MLAI yet. Please try again."),
+            };
+        }
+    }
 
     if (intent === "publish") {
         const draftId = String(formData.get("draftId") || "").trim();
@@ -802,7 +947,7 @@ export async function action({ request, context }: Route.ActionArgs) {
                     "Consider adding comparison to previous month",
                     "Include customer testimonials or feedback"
                 ],
-                proTip: "Investors appreciate transparency. Don't hide challenges - instead, show how you're actively addressing them. Specific asks get better responses than vague requests."
+                proTip: "Clear updates acknowledge challenges, explain what is changing, and make specific support requests."
             }
         };
     }
@@ -1301,6 +1446,55 @@ function MonthYearTabs({
                     </>
                 )}
             </div>
+        </div>
+    );
+}
+
+function WeeklyUpdateTabs({
+    options,
+    selectedKey,
+    onSelect,
+    isDateEditable = true,
+}: {
+    options: WeeklyUpdateOption[];
+    selectedKey: string;
+    onSelect: (option: WeeklyUpdateOption) => void;
+    isDateEditable?: boolean;
+}) {
+    return (
+        <div
+            role="listbox"
+            aria-label="Update week"
+            className="grid w-full gap-2 sm:grid-cols-4"
+        >
+            {options.map((option) => {
+                const isSelected = option.key === selectedKey;
+                return (
+                    <button
+                        key={option.key}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        disabled={!isDateEditable}
+                        onClick={() => onSelect(option)}
+                        className={clsx(
+                            "flex min-h-[74px] flex-col items-start justify-center rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-[rgba(76,110,245,0.18)]",
+                            !isDateEditable && "cursor-not-allowed opacity-60",
+                            isSelected
+                                ? "border-[var(--vr-palette-blue)] bg-[var(--vr-palette-blue)] text-white shadow-lg shadow-[rgba(76,110,245,0.18)]"
+                                : "border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-gray-950 hover:border-[var(--vr-palette-blue)] hover:bg-white",
+                        )}
+                    >
+                        <span className={clsx(
+                            "text-[10px] font-black uppercase tracking-[0.16em]",
+                            isSelected ? "text-white/75" : "text-slate-500",
+                        )}>
+                            {option.isCurrent ? "Current week" : "Recent week"}
+                        </span>
+                        <span className="mt-1 text-sm font-black">{option.label}</span>
+                    </button>
+                );
+            })}
         </div>
     );
 }
@@ -1957,7 +2151,7 @@ const DRAFT_QUESTION_META = {
     asks: {
         step: "05",
         eyebrow: "Help",
-        prompt: "What should investors help with?",
+        prompt: "Where could MLAI help?",
     },
 } as const;
 
@@ -2322,7 +2516,7 @@ function CollapsibleFeedback({ icon, headline, color, children }: { icon: React.
     );
 }
 
-// Collapsible past month card for investor preview
+// Collapsible past month card for the founder preview
 function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> } }) {
     const [open, setOpen] = useState(false);
     return (
@@ -2419,7 +2613,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         {pm.asks && (
                             <div>
                                 <h5 className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-900">
-                                    Ask from Investors
+                                    Support request
                                 </h5>
                                 <BulletList text={pm.asks} className="text-xs text-gray-600" />
                             </div>
@@ -2841,6 +3035,7 @@ export default function CreateUpdate() {
     const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
     const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
     const shouldOpenDraftTemplate = Boolean(isEdit && existingData);
+    const [updateCadence, setUpdateCadence] = useState<UpdateCadence | null>(() => isEdit ? "monthly" : null);
     const [monthConfirmed, setMonthConfirmed] = useState(() => shouldOpenDraftTemplate);
     const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(() => shouldOpenDraftTemplate ? "reporting" : null);
     const [metricsConfirmed, setMetricsConfirmed] = useState(() => shouldOpenDraftTemplate);
@@ -2853,7 +3048,6 @@ export default function CreateUpdate() {
     const [recordingMode, setRecordingMode] = useState<RecordedMediaKind | null>(null);
     const [recordingError, setRecordingError] = useState<string | null>(null);
     const [draftSaved, setDraftSaved] = useState(false);
-    const [showConfirmPopup, setShowConfirmPopup] = useState(false);
     const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
     const [showReviewLinkedInPopup, setShowReviewLinkedInPopup] = useState(false);
     const [showStoryMaterialsSuggestion, setShowStoryMaterialsSuggestion] = useState(false);
@@ -2863,6 +3057,16 @@ export default function CreateUpdate() {
     const [hasTriggeredStoryMaterialsSuggestion, setHasTriggeredStoryMaterialsSuggestion] = useState(false);
     const [highlightMaterialsSection, setHighlightMaterialsSection] = useState(false);
     const [showAllCreateStepMonths, setShowAllCreateStepMonths] = useState(false);
+    const [mlaiFeedbackPreference, setMlaiFeedbackPreference] = useState<MlaiFeedbackPreference>("yes");
+    const [showSendToMlaiConfirmation, setShowSendToMlaiConfirmation] = useState(false);
+    const [endOfFlowSurveyStep, setEndOfFlowSurveyStep] = useState(0);
+    const [endOfFlowSurvey, setEndOfFlowSurvey] = useState<Record<EndOfFlowSurveyQuestionKey, BinarySurveyAnswer>>({
+        importedMetricsUseful: null,
+        connectorValueClear: null,
+        guidedQuestionsUseful: null,
+        previewAccurate: null,
+    });
+    const [endOfFlowSurveyComments, setEndOfFlowSurveyComments] = useState("");
     const [pendingDraftRequest, setPendingDraftRequest] = useState<{
         forceRegenerate?: boolean;
         clearPersistedRun?: boolean;
@@ -2870,6 +3074,7 @@ export default function CreateUpdate() {
     } | null>(null);
     const currentCreatePeriod = getCurrentMonthlyUpdatePeriod();
     const createStepMonthOptions = getCreateStepMonthOptions();
+    const createStepWeekOptions = useMemo(() => getCreateStepWeekOptions(), []);
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
@@ -2939,9 +3144,7 @@ export default function CreateUpdate() {
         const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
         return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
     });
-    const [audienceVisibility, setAudienceVisibility] = useState<VibeRaisingAudienceVisibilitySelection>(
-        () => normalizeAudienceVisibilityValue(defaultData?.audienceVisibility || user.audienceVisibility),
-    );
+    const privateAudienceVisibility: VibeRaisingAudienceVisibilitySelection = ["just_me"];
     const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
     const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
     const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
@@ -2963,6 +3166,7 @@ export default function CreateUpdate() {
 
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || currentCreatePeriod.month);
     const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || currentCreatePeriod.year);
+    const [selectedWeekKey, setSelectedWeekKey] = useState<string>(() => createStepWeekOptions.at(-1)?.key || "");
     const [activePeriodKey, setActivePeriodKey] = useState("current");
     const createStepVisibleMonthOptions = useMemo(() => {
         if (isEdit || showAllCreateStepMonths || selectedYear === MIN_MONTHLY_UPDATE_YEAR) {
@@ -2973,7 +3177,10 @@ export default function CreateUpdate() {
         }
         return createStepMonthOptions;
     }, [createStepMonthOptions, isEdit, selectedYear, showAllCreateStepMonths]);
+    const isWeeklyUpdate = updateCadence === "weekly";
+    const selectedWeekOption = createStepWeekOptions.find((option) => option.key === selectedWeekKey) ?? null;
     const hasSelectedMonth = Boolean(selectedMonth.trim());
+    const hasSelectedPeriod = isWeeklyUpdate ? Boolean(selectedWeekOption) : hasSelectedMonth;
     const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
     const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
     const targetMonthIso = getMonthlyUpdateIsoMonth(selectedMonth, selectedYear);
@@ -2989,9 +3196,20 @@ export default function CreateUpdate() {
         user.domain,
     );
     const selectedMonthLabel = hasSelectedMonth ? `${selectedMonth} ${selectedYear}` : "Select a month";
+    const selectedPeriodLabel = isWeeklyUpdate
+        ? selectedWeekOption?.label || "Select a week"
+        : selectedMonthLabel;
+    const selectedPeriodName = isWeeklyUpdate ? "week" : "month";
     const catchUpMonthLabel = createStepMonthOptions[0]?.month || "May";
     const currentDraftMonthLabel = createStepMonthOptions[1]?.month || currentCreatePeriod.month;
     const monthSelectionCaption = `Select the month this update covers. ${catchUpMonthLabel} is available if you're catching up; ${currentDraftMonthLabel} is ready for your current draft.`;
+
+    const handleWeekChange = useCallback((option: WeeklyUpdateOption) => {
+        setSelectedWeekKey(option.key);
+        setSelectedMonth(option.month);
+        setSelectedYear(option.year);
+        setActivePeriodKey("current");
+    }, []);
     
     const [metricValues, setMetricValues] = useState<Record<string, string>>(() => {
         const initial: Record<string, string> = {};
@@ -3054,7 +3272,6 @@ export default function CreateUpdate() {
     const [mobileTourOpen, setMobileTourOpen] = useState(false);
     const [mobileTourStepIndex, setMobileTourStepIndex] = useState(0);
     const [mobileTourChecked, setMobileTourChecked] = useState(false);
-    const [mobileReviewHowItWorksSeen, setMobileReviewHowItWorksSeen] = useState(false);
     const showLegacyDraftFlow = false;
     const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
     const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
@@ -3161,6 +3378,18 @@ export default function CreateUpdate() {
             .map((key) => byKey.get(key))
             .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source && isConnectedInputSource(source)));
     }, [compactSources]);
+    const financialMetricSources = useMemo(() => {
+        const byKey = new Map(compactSources.map((source) => [source.key, source]));
+        return FINANCIAL_METRIC_SOURCE_KEYS.map((key): VibeRaisingInputSourceSummary => (
+            byKey.get(key) ?? {
+                key,
+                label: INPUT_SOURCE_LABELS[key],
+                capabilities: ["metrics"],
+                selected: false,
+                status: "not_connected",
+            }
+        ));
+    }, [compactSources]);
     const draftReturnPath = useMemo(() => {
         const params = new URLSearchParams(location.search);
         const selected = Array.from(selectedDraftInputSources);
@@ -3251,6 +3480,7 @@ export default function CreateUpdate() {
 
     useEffect(() => {
         if (isEdit) return;
+        if (isWeeklyUpdate) return;
         if (showAllCreateStepMonths) return;
         if (!selectedMonth.trim()) return;
         const isVisibleCreateStepMonth = (createStepVisibleMonthOptions || []).some(
@@ -3259,7 +3489,7 @@ export default function CreateUpdate() {
         if (isVisibleCreateStepMonth || !isFutureMonthlyUpdate(selectedMonth, selectedYear)) return;
         setSelectedMonth("");
         setSelectedYear(currentCreatePeriod.year);
-    }, [createStepVisibleMonthOptions, currentCreatePeriod.year, isEdit, selectedMonth, selectedYear, showAllCreateStepMonths]);
+    }, [createStepVisibleMonthOptions, currentCreatePeriod.year, isEdit, isWeeklyUpdate, selectedMonth, selectedYear, showAllCreateStepMonths]);
 
     const dismissMetricCard = useCallback((metricKey: string) => {
         setAwakeMetricCards((previous) => {
@@ -3631,29 +3861,6 @@ export default function CreateUpdate() {
     }, []);
 
     useEffect(() => {
-        if (!isMobileTourViewport) {
-            setMobileReviewHowItWorksSeen(false);
-            return;
-        }
-
-        const syncMobileReviewIntro = () => {
-            try {
-                setMobileReviewHowItWorksSeen(window.localStorage.getItem(CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY) === "1");
-            } catch {
-                setMobileReviewHowItWorksSeen(false);
-            }
-        };
-
-        syncMobileReviewIntro();
-        window.addEventListener("focus", syncMobileReviewIntro);
-        document.addEventListener("visibilitychange", syncMobileReviewIntro);
-        return () => {
-            window.removeEventListener("focus", syncMobileReviewIntro);
-            document.removeEventListener("visibilitychange", syncMobileReviewIntro);
-        };
-    }, [isMobileTourViewport]);
-
-    useEffect(() => {
         if (mobileTourChecked || !isMobileTourViewport || monthConfirmed || selectedDraftStage === "reporting") return;
         setMobileTourChecked(true);
 
@@ -3697,13 +3904,13 @@ export default function CreateUpdate() {
             {
                 key: "stepper",
                 title: "Draft first",
-                body: "Pick a month and start from the template. Connected data is optional if you want source-assisted drafting.",
+                body: "Pick a reporting period and start from the template. Connected data is optional if you want source-assisted drafting.",
                 targetRef: draftStepperRef,
             },
             {
-                key: "month",
-                title: "Pick a month, then draft",
-                body: "Choose the update month first. Early stage? No worries. A selfie video or short presentation can still tell the investor story well.",
+                key: "period",
+                title: "Pick a period, then draft",
+                body: "Choose the update period first. Early stage? No worries. A selfie video or short presentation can still tell your founder story well.",
                 targetRef: monthSelectorRef,
             },
         ],
@@ -4255,7 +4462,7 @@ export default function CreateUpdate() {
     const emailDraftButtonTitle = hasNoSourceForAssistedDraft
         ? "Connect one source to unlock AI drafting"
         : emailDraftActionBusy
-        ? `Generating ${selectedMonthLabel} update`
+        ? `Generating ${selectedPeriodLabel} update`
         : `Draft from ${selectedInputSourceDescription}`;
     const emailDraftButtonDescription = hasNoSourceForAssistedDraft
         ? "MLAI needs at least one approved source to generate a draft. You can also skip this and write manually."
@@ -4266,7 +4473,7 @@ export default function CreateUpdate() {
         : isSelectedMonthInFuture
             ? "Choose the current month or a previous month. Future monthly updates can be drafted once that month starts."
         : canGenerateDraftFromEmail
-            ? `Use ${selectedInputSourceDescription} to find key signals, metrics, wins, and asks for ${selectedMonthLabel}, then turn them into a first draft.`
+            ? `Use ${selectedInputSourceDescription} to find key signals, metrics, wins, and asks for ${selectedPeriodLabel}, then turn them into a first draft.`
             : "Add a company domain first so inputs can be matched to the right startup.";
     const isVideoUploadPending = videoUploadStatus === "validating" ||
         videoUploadStatus === "compressing" ||
@@ -4314,6 +4521,19 @@ export default function CreateUpdate() {
         !showEmailWizard;
     const hasAnyMetricValue = Object.values(metricValues).some((value) => String(value || "").trim().length > 0);
     const qualitativeDraftText = [highlights, challenges, learnings, next30Days, asks].join("\n");
+    const answeredFounderQuestionCount = [highlights, challenges, learnings, next30Days, asks]
+        .filter(hasMeaningfulFounderAnswer)
+        .length;
+    const hasMinimumFounderAnswers = answeredFounderQuestionCount >= REQUIRED_FOUNDER_QUESTION_COUNT;
+    const founderQuestionRequirementText = hasMinimumFounderAnswers
+        ? `${answeredFounderQuestionCount} founder questions answered.`
+        : `Answer at least ${REQUIRED_FOUNDER_QUESTION_COUNT} questions before saving (${answeredFounderQuestionCount}/${REQUIRED_FOUNDER_QUESTION_COUNT} complete).`;
+    const founderQuestionGateError =
+        actionData?.step === "validation-error"
+            ? String(actionData.error || "")
+            : saveDraftFetcher.data?.step === "validation-error"
+                ? String(saveDraftFetcher.data.error || "")
+                : "";
     const hasQualitativeDraftText =
         qualitativeDraftText.replace(/[\s\-•]+/g, "").length >= STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD;
     const hasUploadedStoryMaterial = Boolean(
@@ -4395,23 +4615,23 @@ export default function CreateUpdate() {
                 "flex min-h-[5.25rem] w-full items-center rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm sm:min-h-0 sm:px-6 sm:py-4",
                 className,
             )}
-            aria-label={`Selected update month: ${selectedMonthLabel}`}
+            aria-label={`Selected update ${selectedPeriodName}: ${selectedPeriodLabel}`}
         >
             <div className="flex w-full min-w-0 flex-1 items-center justify-between gap-3">
                 <div className="min-w-0">
                     <p className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                        <span>Selected month</span>
-                        <CardInfoTooltip info="This update will be filed under the selected month. Use Edit to choose a different reporting month." />
+                        <span>Selected {selectedPeriodName}</span>
+                        <CardInfoTooltip info={`This update covers the selected ${selectedPeriodName}. Use Edit to choose a different reporting ${selectedPeriodName}.`} />
                     </p>
                     <p className="truncate text-base font-black text-gray-950">
-                        {selectedMonthLabel}
+                        {selectedPeriodLabel}
                     </p>
                 </div>
                 <button
                     type="button"
                     onClick={returnToMonthSelection}
                     className="inline-flex min-h-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-xs font-black text-white shadow-md shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
-                    aria-label={`Edit selected update month: ${selectedMonthLabel}`}
+                    aria-label={`Edit selected update ${selectedPeriodName}: ${selectedPeriodLabel}`}
                 >
                     Edit
                 </button>
@@ -4442,11 +4662,11 @@ export default function CreateUpdate() {
     const draftStickyBar = (() => {
         if (!monthConfirmed) {
             return {
-                statusTitle: "Select month",
-                statusDetail: selectedMonthLabel,
+                statusTitle: isWeeklyUpdate ? "Select week" : "Select month",
+                statusDetail: selectedPeriodLabel,
                 primaryLabel: "Start draft",
                 onPrimary: handleGenerateSelectedMonthUpdate,
-                primaryDisabled: !hasSelectedMonth || isSelectedMonthUnavailable || emailDraftActionBusy,
+                primaryDisabled: !hasSelectedPeriod || isSelectedMonthUnavailable || emailDraftActionBusy,
                 primaryType: "button" as const,
             };
         }
@@ -4457,7 +4677,7 @@ export default function CreateUpdate() {
                     ? "Connect Gmail to continue"
                     : emailDraftCardStatus === "failed"
                         ? "Draft generation needs attention"
-                        : `Generating ${selectedMonthLabel} update`,
+                        : `Generating ${selectedPeriodLabel} update`,
                 statusDetail: showEmailWizard ? "Finish the connection in the popup, then we will generate the draft." : emailDraftCardDisplayStage,
                 primaryLabel: showEmailWizard ? "Waiting..." : emailDraftCardStatus === "failed" ? "Retry" : "Generating...",
                 onPrimary: emailDraftCardStatus === "failed"
@@ -4471,26 +4691,30 @@ export default function CreateUpdate() {
         if (canContinueDraftManually) {
             return {
                 statusTitle: "Continue manually",
-                statusDetail: "Backend drafting is unavailable right now. You can still edit this update and review it when ready.",
+                statusDetail: hasMinimumFounderAnswers
+                    ? "Backend drafting is unavailable right now. You can still edit this update and review it when ready."
+                    : founderQuestionRequirementText,
                 primaryLabel: isSubmitting ? "Saving..." : "Save and review",
                 primaryType: "submit" as const,
                 primaryForm: DRAFT_REVIEW_FORM_ID,
-                primaryDisabled: isSubmitting,
+                primaryDisabled: isSubmitting || !hasMinimumFounderAnswers,
                 onBack: () => setMonthConfirmed(false),
             };
         }
 
         return {
             statusTitle: isManualOnlyDraftFlow ? "Draft template ready" : "AI draft ready",
-            statusDetail: selectedMetricOptions.length > 0
-                ? `AI selected ${selectedMetricOptions.length} metric${selectedMetricOptions.length === 1 ? "" : "s"} for ${selectedMonthLabel}.`
-                : isManualOnlyDraftFlow
-                    ? undefined
-                    : `AI drafted ${selectedMonthLabel}; core metrics are ready to edit below.`,
+            statusDetail: !hasMinimumFounderAnswers
+                ? founderQuestionRequirementText
+                : selectedMetricOptions.length > 0
+                    ? `AI selected ${selectedMetricOptions.length} metric${selectedMetricOptions.length === 1 ? "" : "s"} for ${selectedPeriodLabel}.`
+                    : isManualOnlyDraftFlow
+                        ? undefined
+                        : `AI drafted ${selectedPeriodLabel}; connected metrics are ready below.`,
             primaryLabel: isSubmitting ? "Saving..." : "Save and review",
             primaryType: "submit" as const,
             primaryForm: DRAFT_REVIEW_FORM_ID,
-            primaryDisabled: isSubmitting,
+            primaryDisabled: isSubmitting || !hasMinimumFounderAnswers,
             onBack: () => setMonthConfirmed(false),
         };
     })();
@@ -5388,7 +5612,7 @@ export default function CreateUpdate() {
                 <div>
                     <p className="mlai-vibe-update__kicker">MLAI / Founder Tools</p>
                     <h1 className="mlai-vibe-update__title">Vibe Raising</h1>
-                    <p className="mlai-vibe-update__subtitle">Founder update studio for the progress investors need to see.</p>
+                    <p className="mlai-vibe-update__subtitle">Founder update studio for sharing progress with MLAI.</p>
                 </div>
                 <div className="mlai-vibe-update__graphic" aria-hidden="true">
                     <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--one" />
@@ -5406,8 +5630,12 @@ export default function CreateUpdate() {
 
     if ((reviewActionData?.step === "feedback" || reviewActionData?.step === "publish-error") && !dismissedFeedback) {
         const { feedback, data } = reviewActionData;
-        const publishError = reviewActionData.step === "publish-error" ? String((reviewActionData as any).error || "") : "";
+        const sendError = reviewActionData.step === "publish-error" ? String((reviewActionData as any).error || "") : "";
         const reviewData = data as any;
+        const reviewAnsweredFounderQuestionCount = FOUNDER_QUESTION_FIELDS
+            .filter((field) => hasMeaningfulFounderAnswer(reviewData?.[field]))
+            .length;
+        const canSubmitReviewToMlai = reviewAnsweredFounderQuestionCount >= REQUIRED_FOUNDER_QUESTION_COUNT;
         const rawReviewDraftId = String(reviewData?.draftId || reviewActionData?.update?.id || "").trim();
         const reviewDraftId = BACKEND_DRAFT_ID_PATTERN.test(rawReviewDraftId) ? rawReviewDraftId : "";
         const reviewMonth = String(reviewData?.month || selectedMonth);
@@ -5415,7 +5643,6 @@ export default function CreateUpdate() {
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
         const reviewPitchDeckUrl = String(reviewData?.pitchDeckUrl || "").trim();
-        const reviewPitchDeckStoragePath = String(reviewData?.pitchDeckStoragePath || "").trim();
         const reviewPitchDeckContentType = String(reviewData?.pitchDeckContentType || "").trim();
         const reviewPitchDeckOriginalFilename = String(reviewData?.pitchDeckOriginalFilename || "").trim();
         const reviewPitchDeckSummary = String(reviewData?.pitchDeckSummary || "").trim();
@@ -5464,40 +5691,17 @@ export default function CreateUpdate() {
                         name: user.fullName || "Founder",
                         linkedinUrl: "",
                     }];
-        const reviewManualDocuments = Array.isArray(reviewData?.manualDocuments || reviewData?.manual_documents)
-            ? (reviewData.manualDocuments || reviewData.manual_documents) as VibeRaisingManualDocument[]
-            : manualDocuments;
-        const reviewManualDocumentIds = reviewManualDocuments.map((document) => document.id);
-        const reviewManualSummary = String(reviewData?.manualSummary || reviewData?.manual_summary || manualSummary || "").trim();
         const reviewVideoUrl = String(reviewData?.videoUrl || videoPreviewUrl || "").trim();
-        const reviewVideoStoragePath = String(reviewData?.videoStoragePath || videoStoragePath || "").trim();
         const reviewVideoContentType = String(reviewData?.videoContentType || videoContentType || "").trim();
         const reviewVideoOriginalFilename = String(reviewData?.videoOriginalFilename || videoOriginalFilename || "").trim();
         const reviewVideoFileSizeBytes = Number(reviewData?.videoFileSizeBytes || videoFileSizeBytes || 0) || null;
         const reviewMediaIsAudio = isAudioMedia(reviewVideoContentType, reviewVideoOriginalFilename || reviewVideoUrl);
         const reviewPitchDeckLabel = reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename || "Pitch deck file";
         const reviewVideoLabel = reviewVideoOriginalFilename || (reviewMediaIsAudio ? "Founder voice note" : "Founder walkthrough");
-        const reviewAudienceVisibility = normalizeAudienceVisibilityValue(reviewData?.audienceVisibility || audienceVisibility);
-        const reviewAudienceText = [
-            String(reviewData?.highlights || ""),
-            String(reviewData?.challenges || ""),
-            String(reviewData?.learnings || ""),
-            String(reviewData?.next30Days || ""),
-            String(reviewData?.asks || ""),
-            reviewPitchDeckOriginalFilename,
-            reviewVideoOriginalFilename,
-        ].join(" ").toLowerCase();
-        const reviewAudienceCriteria: string[] = [];
-        if (reviewAudienceText.includes("saas") || reviewAudienceText.includes("software")) reviewAudienceCriteria.push("B2B SaaS");
-        if (reviewAudienceText.includes("health") || reviewAudienceText.includes("medtech") || reviewAudienceText.includes("medical")) reviewAudienceCriteria.push("MedTech");
-        if (reviewAudienceText.includes("agri") || reviewAudienceText.includes("farm") || reviewAudienceText.includes("agriculture")) reviewAudienceCriteria.push("AgTech");
-        if (reviewAudienceText.includes("ai") || reviewAudienceText.includes("machine learning") || reviewAudienceText.includes("artificial intelligence")) reviewAudienceCriteria.push("AI/ML");
-        if (reviewAudienceText.includes("enterprise") || reviewAudienceText.includes("b2b") || reviewAudienceText.includes("fortune 500")) reviewAudienceCriteria.push("Enterprise");
-        if (reviewAudienceText.includes("fintech") || reviewAudienceText.includes("finance") || reviewAudienceText.includes("payment")) reviewAudienceCriteria.push("FinTech");
-        if (reviewAudienceText.includes("consumer") || reviewAudienceText.includes("b2c")) reviewAudienceCriteria.push("Consumer Tech");
-        if (reviewAudienceCriteria.length === 0) reviewAudienceCriteria.push("Sector Agnostic", "Early Stage");
-        const reviewAudienceCount = 18 + (reviewAudienceCriteria.length * 14);
-
+        const selectedFinancialSurveySourceKeys = FINANCIAL_METRIC_SOURCE_KEYS
+            .filter((sourceKey) => selectedDraftInputSources.has(sourceKey));
+        const financialSurveyQuestion = buildVibeRaisingFinancialSurveyQuestion(selectedFinancialSurveySourceKeys);
+        const endOfFlowSurveyQuestions = [financialSurveyQuestion, ...END_OF_FLOW_SURVEY_CORE_QUESTIONS];
         const handleReviewStepperClick = (step: MonthlyUpdateStepKey) => {
             if (step === "connect") {
                 goToConnectDataStep();
@@ -5505,159 +5709,84 @@ export default function CreateUpdate() {
             }
 
             if (step === "draft") {
-                setShowConfirmPopup(false);
                 setDismissedFeedback(true);
                 return;
             }
 
             if (step === "review") {
-                setShowConfirmPopup(false);
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
             }
         };
 
-        const getPublishDebugPayload = () => {
-            const publishForm = document.getElementById(PUBLISH_REVIEW_FORM_ID);
-            const formEntries =
-                publishForm instanceof HTMLFormElement
-                    ? Object.fromEntries(new FormData(publishForm).entries())
-                    : null;
-
-            return {
-                rawReviewDraftId,
-                reviewDraftId,
-                reviewMonth,
-                reviewYear,
-                isSubmitting,
-                formEntries,
-                url: window.location.href,
-                timestamp: new Date().toISOString(),
-            };
+        const handleSendToMlai = () => {
+            setEndOfFlowSurveyStep(0);
+            setShowSendToMlaiConfirmation(true);
         };
 
-        const handlePublishPopupOpen = () => {
-            const payload = getPublishDebugPayload();
-            console.error("[monthly-update:publish] confirmation opened", payload);
-            window.localStorage.setItem("monthly-update-publish-confirmation-debug", JSON.stringify(payload));
-            setShowConfirmPopup(true);
+        const handleConfirmSendToMlai = () => {
+            const sendForm = document.getElementById(SEND_TO_MLAI_FORM_ID);
+            if (!(sendForm instanceof HTMLFormElement)) return;
+
+            const formData = new FormData(sendForm);
+            formData.set("mlaiFeedbackOptIn", mlaiFeedbackPreference);
+            formData.set("submissionDestination", "mlai");
+            formData.set("surveyFinancialQuestionContext", financialSurveyQuestion.context);
+            formData.set("surveyImportedMetricsUseful", endOfFlowSurvey.importedMetricsUseful || "");
+            formData.set("surveyConnectorValueClear", endOfFlowSurvey.connectorValueClear || "");
+            formData.set("surveyGuidedQuestionsUseful", endOfFlowSurvey.guidedQuestionsUseful || "");
+            formData.set("surveyPreviewAccurate", endOfFlowSurvey.previewAccurate || "");
+            formData.set("surveyComments", endOfFlowSurveyComments.trim());
+            submit(formData, {
+                method: "post",
+                action: `${location.pathname}${location.search || ""}`,
+            });
         };
-
-        const handlePublishDebugClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-            event.preventDefault();
-
-            const publishForm = document.getElementById(PUBLISH_REVIEW_FORM_ID);
-            const draftReviewForm = document.getElementById(DRAFT_REVIEW_FORM_ID);
-            const formData =
-                draftReviewForm instanceof HTMLFormElement
-                    ? new FormData(draftReviewForm)
-                    : publishForm instanceof HTMLFormElement
-                        ? new FormData(publishForm)
-                        : null;
-
-            if (formData) {
-                formData.set("intent", "publish");
-                formData.set("month", reviewMonth);
-                formData.set("year", String(reviewYear));
-                if (reviewDraftId) {
-                    formData.set("draftId", reviewDraftId);
-                } else {
-                    formData.delete("draftId");
-                }
-            }
-
-            const payload = {
-                ...getPublishDebugPayload(),
-                willSubmit: Boolean(formData),
-                submitSource: draftReviewForm instanceof HTMLFormElement ? DRAFT_REVIEW_FORM_ID : PUBLISH_REVIEW_FORM_ID,
-                submitEntries: formData ? Object.fromEntries(formData.entries()) : null,
-            };
-            console.error("[monthly-update:publish] popup button clicked", payload);
-            window.localStorage.setItem("monthly-update-publish-submit-debug", JSON.stringify(payload));
-
-            if (!formData) {
-                console.error("[monthly-update:publish] hidden publish form not found", {
-                    formId: PUBLISH_REVIEW_FORM_ID,
-                });
-                setShowConfirmPopup(true);
-                return;
-            }
-
-            const actionPath = `${location.pathname}${location.search || ""}`;
-            console.error("[monthly-update:publish] invoking router submit", JSON.stringify({
-                actionPath,
-                formEntries: Object.fromEntries(formData.entries()),
-                timestamp: new Date().toISOString(),
-            }));
-            submit(formData, { method: "post", action: actionPath });
-            console.error("[monthly-update:publish] router submit invoked", JSON.stringify({
-                actionPath,
-                timestamp: new Date().toISOString(),
-            }));
-        };
+        const activeSurveyQuestion = endOfFlowSurveyQuestions[endOfFlowSurveyStep] ?? null;
+        const isSurveyCommentsStep = endOfFlowSurveyStep === END_OF_FLOW_SURVEY_STEP_COUNT - 1;
 
         return (
             <div className="mlai-vibe-update mx-auto max-w-6xl space-y-10 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:px-6">
                 {mlaiGenerateUpdateBrand}
-                <Form id={PUBLISH_REVIEW_FORM_ID} method="POST" className="hidden">
-                    <input type="hidden" name="intent" value="publish" />
+                <Form id={SEND_TO_MLAI_FORM_ID} method="POST" className="hidden">
+                    <input type="hidden" name="intent" value="send-to-mlai" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
-                    {reviewAudienceVisibility.map((audience) => (
+                    {privateAudienceVisibility.map((audience) => (
                         <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
                     ))}
                     <input type="hidden" name="month" value={reviewMonth} />
                     <input type="hidden" name="year" value={reviewYear} />
+                    <input type="hidden" name="mlaiFeedbackOptIn" value={mlaiFeedbackPreference} />
+                    <input type="hidden" name="submissionDestination" value="mlai" />
+                    <input type="hidden" name="surveyFinancialQuestionContext" value={financialSurveyQuestion.context} />
+                    <input type="hidden" name="surveyImportedMetricsUseful" value={endOfFlowSurvey.importedMetricsUseful || ""} />
+                    <input type="hidden" name="surveyConnectorValueClear" value={endOfFlowSurvey.connectorValueClear || ""} />
+                    <input type="hidden" name="surveyGuidedQuestionsUseful" value={endOfFlowSurvey.guidedQuestionsUseful || ""} />
+                    <input type="hidden" name="surveyPreviewAccurate" value={endOfFlowSurvey.previewAccurate || ""} />
+                    <input type="hidden" name="surveyComments" value={endOfFlowSurveyComments} />
+                    {Object.entries(reviewData || {})
+                        .filter(([key, value]) => (
+                            ![
+                                "intent",
+                                "draftId",
+                                "audienceVisibility",
+                                "month",
+                                "year",
+                                "mlaiFeedbackOptIn",
+                                "submissionDestination",
+                                "surveyFinancialQuestionContext",
+                                "surveyImportedMetricsUseful",
+                                "surveyConnectorValueClear",
+                                "surveyGuidedQuestionsUseful",
+                                "surveyPreviewAccurate",
+                                "surveyComments",
+                            ].includes(key) &&
+                            (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+                        ))
+                        .map(([key, value]) => (
+                            <input key={key} type="hidden" name={key} value={String(value)} />
+                        ))}
                 </Form>
-
-                {showConfirmPopup ? (
-                    <div
-                        className="fixed inset-0 z-[120] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm"
-                        onClick={() => setShowConfirmPopup(false)}
-                    >
-                        <div
-                            className="mlai-vibe-update__publish-dialog relative w-full max-w-3xl overflow-hidden rounded-2xl bg-white p-6 text-center shadow-xl sm:p-10"
-                            onClick={(event) => event.stopPropagation()}
-                        >
-                            <MonthlyUpdateStepper
-                                activeStep="publish"
-                                disableMotion
-                                enabledSteps={["connect", "draft", "review", "publish"]}
-                                onStepClick={handleReviewStepperClick}
-                                expandOnHover
-                                frameless
-                                className="mb-6 text-left"
-                            />
-                            <h2 className="mb-2 text-2xl font-black tracking-tight text-gray-900">Ready to publish?</h2>
-                            <p className="mb-6 text-sm leading-relaxed text-gray-600">
-                                Your update is about to go live on Vibe Raising for <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
-                            </p>
-                            <p className="mb-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-left text-sm leading-relaxed text-[var(--vr-color-text)]">
-                                You do not need to publish this yet. Save it locally first if you want to come back and keep refining the earlier steps.
-                            </p>
-                            <div className="space-y-3">
-                                <button
-                                    type="button"
-                                    disabled
-                                    aria-disabled="true"
-                                    className="w-full cursor-not-allowed rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 shadow-sm"
-                                >
-                                    Publish update coming soon
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        handlePersistDraft();
-                                        setShowConfirmPopup(false);
-                                    }}
-                                    disabled={saveDraftFetcher.state !== "idle"}
-                                    className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-55 active:scale-95"
-                                >
-                                    {saveDraftFetcher.state !== "idle" ? "Saving..." : "Save it locally"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ) : null}
 
                 <MonthlyUpdateStepper
                     activeStep="review"
@@ -5669,35 +5798,62 @@ export default function CreateUpdate() {
                     className="mt-8"
                 />
 
-                <div className={clsx(
-                    "rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5",
-                    isMobileTourViewport && mobileReviewHowItWorksSeen && "hidden sm:block",
-                )}>
+                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
                     <div className="min-w-0">
-                        <h2 className="text-lg font-black text-gray-950">How it works</h2>
+                        <h2 className="text-lg font-black text-gray-950">Send this update to MLAI</h2>
                         <p className="mt-1 text-sm leading-6 text-slate-600">
-                            Review shows exactly what investors will see before you publish this monthly update.
+                            This submission stays private and goes only to the MLAI team.
                         </p>
+                        {!canSubmitReviewToMlai ? (
+                            <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+                                Answer at least {REQUIRED_FOUNDER_QUESTION_COUNT} founder questions before sending this update. You currently have {reviewAnsweredFounderQuestionCount}.
+                            </p>
+                        ) : null}
                     </div>
 
-                    <div className="mt-4 border-t border-[var(--vr-color-border)] pt-4 sm:mt-6 sm:pt-6">
-                        <div className="min-w-0">
-                            <h3 className="text-lg font-black text-gray-950">Your audience</h3>
-                            <p className="mt-1 text-sm leading-6 text-slate-600">
-                                We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{reviewAudienceCount} investors</strong> on Vibe Raising actively looking for updates matching your criteria.
-                            </p>
-                            <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
-                                {reviewAudienceCriteria.map((criteria) => (
-                                    <span key={criteria} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-[rgba(76,110,245,0.08)] px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)]">
-                                        {criteria}
-                                    </span>
-                                ))}
-                            </div>
+                    <fieldset className="mt-4 border-t border-[var(--vr-color-border)] pt-4 sm:mt-6 sm:pt-6">
+                        <legend className="text-base font-black text-gray-950">Would you like feedback from MLAI?</legend>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                            Choose whether the MLAI team may contact you with practical feedback on this update.
+                        </p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            {([
+                                { value: "yes", title: "Yes, send me feedback", description: "MLAI may follow up with suggestions and useful next steps." },
+                                { value: "no", title: "No feedback needed", description: "Submit the update without a follow-up from MLAI." },
+                            ] as const).map((option) => {
+                                const checked = mlaiFeedbackPreference === option.value;
+                                return (
+                                    <label
+                                        key={option.value}
+                                        className={clsx(
+                                            "cursor-pointer rounded-2xl border p-4 transition",
+                                            checked
+                                                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.10)] ring-2 ring-[rgba(0,128,128,0.10)]"
+                                                : "border-[var(--vr-color-border)] bg-white hover:border-[rgba(0,128,128,0.28)]",
+                                        )}
+                                    >
+                                        <span className="flex items-start gap-3">
+                                            <input
+                                                type="radio"
+                                                name="mlaiFeedbackPreference"
+                                                value={option.value}
+                                                checked={checked}
+                                                onChange={() => setMlaiFeedbackPreference(option.value)}
+                                                className="mt-1 h-4 w-4 accent-[var(--vr-color-primary)]"
+                                            />
+                                            <span>
+                                                <span className="block text-sm font-black text-gray-950">{option.title}</span>
+                                                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{option.description}</span>
+                                            </span>
+                                        </span>
+                                    </label>
+                                );
+                            })}
                         </div>
-                    </div>
+                    </fieldset>
                 </div>
 
-                {/* Main layout: investor preview. AI grading/feedback is hidden for now. */}
+                {/* Main layout: founder preview. AI grading/feedback is hidden for now. */}
                 <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
 
                     {/* PREVIEW — dominant, takes most of the width */}
@@ -5806,7 +5962,7 @@ export default function CreateUpdate() {
                                                         Founder {reviewMediaIsAudio ? "audio" : "video"} preview
                                                     </h4>
                                                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                                                        This {reviewMediaIsAudio ? "voice note" : "video"} will appear with the deck so investors can hear the story directly.
+                                                        This {reviewMediaIsAudio ? "voice note" : "video"} will appear with the deck so MLAI can understand the story directly.
                                                     </p>
                                                 </div>
                                                 <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
@@ -5940,7 +6096,7 @@ export default function CreateUpdate() {
                                     text={(data as any)?.next30Days}
                                 />
                                 <ReviewPreviewSection
-                                    label="Ask from Investors"
+                                    label="Support request"
                                     text={(data as any)?.asks}
                                 />
                             </div> : null}
@@ -6008,7 +6164,7 @@ export default function CreateUpdate() {
 
                         <div className="mt-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] p-4">
                             <p className="text-sm font-semibold text-[var(--vr-color-text)]">
-                                This update is saved privately in <Link to="/founder-tools/drafts" className="font-black text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]">My Drafts</Link> until you publish it.
+                                This update is saved privately in <Link to="/founder-tools/drafts" className="font-black text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]">My Drafts</Link> until you send it to MLAI.
                             </p>
                         </div>
 
@@ -6048,7 +6204,7 @@ export default function CreateUpdate() {
 
                                 <div className="space-y-4 px-6 py-6">
                                     <p className="text-sm leading-6 text-[var(--vr-color-text-mid)]">
-                                        Investors use founder LinkedIn as a quick trust signal. Add or update it here and it will be saved with this update.
+                                        A founder LinkedIn link gives MLAI useful company context. Add or update it here and it will be saved with this update.
                                     </p>
                                     {reviewLinkedInDrafts.map((draft) => (
                                         <label key={draft.id} className="block">
@@ -6102,83 +6258,6 @@ export default function CreateUpdate() {
                             </section>
                         </div>
                     ) : null}
-
-                    {/* Pre-Publish Confirmation Popup */}
-                    {false && showConfirmPopup && (
-                            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
-                                <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
-                                    <div className="mb-6 text-left">
-                                        <p className="inline-flex rounded-full border border-gray-200 bg-gray-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-gray-500">
-                                            Coming soon
-                                        </p>
-                                    </div>
-                                    <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
-                                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                                        Your update is about to go live on Vibe Raising for <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
-                                    </p>
-                                    <p className="mb-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-left text-sm leading-relaxed text-[var(--vr-color-text)]">
-                                        You do not need to publish this yet. Save it locally first if you want to come back and keep refining the earlier steps.
-                                    </p>
-
-                                    <Form 
-                                        method="POST" 
-                                        className="space-y-3"
-                                    >
-                                        <input type="hidden" name="intent" value="publish" />
-                                        {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
-                                        <input type="hidden" name="summary" value={reviewSummary} />
-                                        <input type="hidden" name="sourceUrl" value={reviewSourceUrl} />
-                                        <input type="hidden" name="pitchDeckUrl" value={reviewPitchDeckUrl} />
-                                        <input type="hidden" name="pitchDeckStoragePath" value={reviewPitchDeckStoragePath} />
-                                        <input type="hidden" name="pitchDeckContentType" value={reviewPitchDeckContentType} />
-                                        <input type="hidden" name="pitchDeckFileSizeBytes" value={reviewPitchDeckFileSizeBytes ?? ""} />
-                                        <input type="hidden" name="pitchDeckOriginalFilename" value={reviewPitchDeckOriginalFilename} />
-                                        <input type="hidden" name="pitchDeckSummary" value={reviewPitchDeckSummary} />
-                                        <input type="hidden" name="manualDocumentIds" value={reviewManualDocumentIds.join(",")} />
-                                        <input type="hidden" name="manualSummary" value={reviewManualSummary} />
-                                        <input type="hidden" name="videoUrl" value={reviewVideoUrl} />
-                                        <input type="hidden" name="videoStoragePath" value={reviewVideoStoragePath} />
-                                        <input type="hidden" name="videoContentType" value={reviewVideoContentType} />
-                                        <input type="hidden" name="videoFileSizeBytes" value={reviewVideoFileSizeBytes ?? ""} />
-                                        <input type="hidden" name="videoOriginalFilename" value={reviewVideoOriginalFilename} />
-                                        <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
-                                        {Object.entries(data || {})
-                                            .filter(([key]) => !["summary", "sourceUrl", "pitchDeckUrl", "pitchDeckStoragePath", "pitchDeckContentType", "pitchDeckFileSizeBytes", "pitchDeckOriginalFilename", "pitchDeckSummary", "manualDocumentIds", "manualSummary", "manualDocuments", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename", "founderProfiles"].includes(key))
-                                            .map(([key, value]) => (
-                                                <input key={key} type="hidden" name={key} value={value as any} />
-                                            ))}
-                                        
-                                        <div className="group relative">
-                                            <button
-                                                type="submit"
-                                                disabled
-                                                aria-disabled="true"
-                                                className="w-full rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 shadow-sm transition-all cursor-not-allowed"
-                                            >
-                                                Yes, Publish and Send
-                                            </button>
-                                            <div className="pointer-events-none absolute inset-x-0 -top-11 flex justify-center opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                                                <span className="rounded-lg bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-lg">
-                                                    Coming soon
-                                                </span>
-                                            </div>
-                                        </div>
-                                        
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                handlePersistDraft();
-                                                setShowConfirmPopup(false);
-                                            }}
-                                            disabled={saveDraftFetcher.state !== "idle"}
-                                            className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-55 active:scale-95"
-                                        >
-                                            {saveDraftFetcher.state !== "idle" ? "Saving..." : "Save it locally"}
-                                        </button>
-                                    </Form>
-                                </div>
-                            </div>
-                    )}
 
                     {SHOW_AI_REVIEW_FEEDBACK && (
                         <div className="w-full space-y-3 lg:sticky lg:top-6 lg:w-56 lg:flex-shrink-0">
@@ -6268,16 +6347,297 @@ export default function CreateUpdate() {
                     compactOnMobile
                     statusTitle={`Review ${reviewMonth} ${reviewYear} update`}
                     onBack={() => setDismissedFeedback(true)}
-                    primaryLabel="Publish update"
-                    mobilePrimaryLabel="Publish"
-                    onPrimary={handlePublishPopupOpen}
+                    primaryLabel={isSubmitting ? "Sending..." : "Send to MLAI"}
+                    mobilePrimaryLabel={isSubmitting ? "Sending..." : "Send to MLAI"}
+                    primaryDisabled={isSubmitting || !canSubmitReviewToMlai}
+                    onPrimary={handleSendToMlai}
                 />
 
-                {publishError ? (
+                {sendError ? (
                     <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-800 shadow-sm">
-                        {publishError}
+                        {sendError}
                     </div>
                 ) : null}
+
+                {showSendToMlaiConfirmation ? (
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+                        <button
+                            type="button"
+                            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+                            onClick={() => {
+                                if (!isSubmitting) setShowSendToMlaiConfirmation(false);
+                            }}
+                            aria-label="Return to update review"
+                        />
+                        <section
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="send-to-mlai-confirmation-title"
+                            aria-describedby="send-to-mlai-confirmation-description"
+                            className="relative z-[160] max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-[var(--vr-color-border)] bg-white shadow-2xl"
+                        >
+                            <div className="flex items-start justify-between gap-5 border-b border-[var(--vr-color-border)] px-5 py-5 sm:px-7 sm:py-6">
+                                <div>
+                                    <h2 id="send-to-mlai-confirmation-title" className="text-2xl font-black text-gray-950 sm:text-3xl">
+                                        Send this update to MLAI?
+                                    </h2>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSendToMlaiConfirmation(false)}
+                                    disabled={isSubmitting}
+                                    className="rounded-full border border-[var(--vr-color-border)] p-2 text-slate-500 transition hover:border-slate-400 hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
+                                    aria-label="Close confirmation"
+                                >
+                                    <XMarkIcon className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-6 px-5 py-5 sm:px-7 sm:py-6">
+                                <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,128,128,0.24)] bg-[rgba(0,255,215,0.08)] p-4">
+                                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--vr-color-primary)] text-white">
+                                        <LockClosedIcon className="h-5 w-5" />
+                                    </span>
+                                    <div>
+                                        <p id="send-to-mlai-confirmation-description" className="text-sm leading-6 text-slate-600">
+                                            Only members of the Vibe Raising development team can access this submission. It will not be visible to investors or other founders.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div aria-labelledby="end-of-flow-survey-title">
+                                    <h3 id="end-of-flow-survey-title" className="text-xl font-black text-gray-950">Help us improve this flow</h3>
+
+                                    <div className="mt-5 flex items-center justify-between gap-4">
+                                        <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                                            Step {endOfFlowSurveyStep + 1} of {END_OF_FLOW_SURVEY_STEP_COUNT}
+                                        </p>
+                                        <div className="flex flex-1 justify-end gap-1.5" aria-hidden="true">
+                                            {Array.from({ length: END_OF_FLOW_SURVEY_STEP_COUNT }, (_, index) => (
+                                                <span
+                                                    key={index}
+                                                    className={clsx(
+                                                        "h-1.5 w-8 rounded-full transition-colors",
+                                                        index <= endOfFlowSurveyStep ? "bg-[var(--vr-color-primary)]" : "bg-slate-200",
+                                                    )}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 min-h-52 rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-5 sm:p-6">
+                                        {activeSurveyQuestion ? (
+                                            <fieldset>
+                                                <legend className="text-xl font-black leading-7 text-gray-950 sm:text-2xl">
+                                                    {activeSurveyQuestion.label}
+                                                </legend>
+                                                <div className="mt-6 grid grid-cols-2 gap-3 sm:max-w-md">
+                                                    {([
+                                                        { value: "yes", label: "Thumbs up", Icon: HandThumbUpSolidIcon },
+                                                        { value: "no", label: "Thumbs down", Icon: HandThumbDownSolidIcon },
+                                                    ] as const).map(({ value, label, Icon }) => {
+                                                        const checked = endOfFlowSurvey[activeSurveyQuestion.key] === value;
+                                                        const isPositive = value === "yes";
+                                                        return (
+                                                            <label
+                                                                key={value}
+                                                                title={label}
+                                                                className={clsx(
+                                                                    "group relative flex min-h-24 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:scale-[0.98] focus-within:ring-4 focus-within:ring-offset-2",
+                                                                    checked
+                                                                        ? isPositive
+                                                                            ? "border-[#00a98f] bg-[#00bfa5] text-white shadow-teal-900/20 focus-within:ring-[rgba(0,191,165,0.24)]"
+                                                                            : "border-[#f04a23] bg-[#ff5c35] text-white shadow-orange-900/20 focus-within:ring-[rgba(255,92,53,0.22)]"
+                                                                        : isPositive
+                                                                            ? "border-[var(--vr-color-border)] bg-white text-[#008b78] hover:border-[#00bfa5] hover:bg-[rgba(0,255,215,0.12)] hover:shadow-teal-900/15 focus-within:ring-[rgba(0,191,165,0.20)]"
+                                                                            : "border-[var(--vr-color-border)] bg-white text-[#d94928] hover:border-[#ff5c35] hover:bg-[rgba(255,92,53,0.10)] hover:shadow-orange-900/15 focus-within:ring-[rgba(255,92,53,0.18)]",
+                                                                )}
+                                                            >
+                                                                <span
+                                                                    className={clsx(
+                                                                        "pointer-events-none absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-70",
+                                                                        isPositive ? "bg-[#00ffd7]" : "bg-[#ff8a66]",
+                                                                    )}
+                                                                    aria-hidden="true"
+                                                                />
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`survey-${activeSurveyQuestion.key}`}
+                                                                    value={value}
+                                                                    checked={checked}
+                                                                    onChange={() => {
+                                                                        setEndOfFlowSurvey((current) => ({
+                                                                            ...current,
+                                                                            [activeSurveyQuestion.key]: value,
+                                                                        }));
+                                                                        setEndOfFlowSurveyStep((current) => Math.min(
+                                                                            END_OF_FLOW_SURVEY_STEP_COUNT - 1,
+                                                                            current + 1,
+                                                                        ));
+                                                                    }}
+                                                                    className="sr-only"
+                                                                    aria-label={label}
+                                                                />
+                                                                <span
+                                                                    className={clsx(
+                                                                        "relative z-10 flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:bg-white group-hover:shadow-md",
+                                                                        checked
+                                                                            ? "bg-white/20 text-white"
+                                                                            : isPositive
+                                                                                ? "bg-[rgba(0,255,215,0.13)] text-[#008b78]"
+                                                                                : "bg-[rgba(255,92,53,0.11)] text-[#d94928]",
+                                                                    )}
+                                                                    aria-hidden="true"
+                                                                >
+                                                                    <Icon
+                                                                        className={clsx(
+                                                                            "h-8 w-8 transition-transform duration-300",
+                                                                            isPositive ? "group-hover:-rotate-6" : "group-hover:rotate-6",
+                                                                        )}
+                                                                    />
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </fieldset>
+                                        ) : isSurveyCommentsStep ? (
+                                            <label className="block">
+                                                <span className="text-xl font-black leading-7 text-gray-950 sm:text-2xl">What would make your next update faster or more useful?</span>
+                                                <span className="ml-2 text-sm font-semibold text-slate-400">Optional</span>
+                                                <textarea
+                                                    value={endOfFlowSurveyComments}
+                                                    onChange={(event) => setEndOfFlowSurveyComments(event.target.value)}
+                                                    maxLength={1000}
+                                                    rows={4}
+                                                    placeholder="Tell us what worked, what felt unclear, or what would make the next update easier."
+                                                    className="mt-5 w-full resize-y rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-3 text-sm font-medium leading-6 text-gray-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,255,215,0.14)]"
+                                                />
+                                            </label>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col-reverse gap-3 border-t border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-5 py-4 sm:flex-row sm:justify-end sm:px-7">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (endOfFlowSurveyStep === 0) {
+                                            setShowSendToMlaiConfirmation(false);
+                                            return;
+                                        }
+                                        setEndOfFlowSurveyStep((current) => Math.max(0, current - 1));
+                                    }}
+                                    disabled={isSubmitting}
+                                    className="rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-sm font-black text-gray-950 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {endOfFlowSurveyStep === 0 ? "Go back" : "Previous"}
+                                </button>
+                                {isSurveyCommentsStep ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleConfirmSendToMlai}
+                                        disabled={isSubmitting}
+                                        className="rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-lg shadow-teal-900/10 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? "Sending..." : "Confirm and send to MLAI"}
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setEndOfFlowSurveyStep((current) => Math.min(END_OF_FLOW_SURVEY_STEP_COUNT - 1, current + 1))}
+                                        className="rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-lg shadow-teal-900/10 transition hover:brightness-95"
+                                    >
+                                        Skip
+                                    </button>
+                                )}
+                            </div>
+                        </section>
+                    </div>
+                ) : null}
+            </div>
+        );
+    }
+
+    if (!isEdit && updateCadence === null) {
+        const cadenceOptions: Array<{
+            value: UpdateCadence;
+            title: string;
+            description: string;
+            badge?: string;
+            accentClassName: string;
+        }> = [
+            {
+                value: "monthly",
+                title: "Monthly",
+                description: "Share a fuller progress update once each month.",
+                accentClassName: "bg-[var(--vr-palette-black)] text-[var(--vr-palette-paper)]",
+            },
+            {
+                value: "weekly",
+                title: "Weekly",
+                description: "Create a shorter update every week through the Victor AI experience.",
+                badge: "Victor AI-only",
+                accentClassName: "bg-[var(--vr-palette-orange)] text-white",
+            },
+        ];
+
+        return (
+            <div className="mlai-vibe-update mx-auto w-full max-w-6xl space-y-8 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-24 sm:px-6 sm:py-8">
+                {mlaiGenerateUpdateBrand}
+                <section className="w-full rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 sm:p-8 lg:p-10">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-orange)]">
+                        Before you start
+                    </p>
+                    <h1 className="mt-4 text-4xl font-black tracking-tight text-gray-950 sm:text-5xl">
+                        How often do you want to update?
+                    </h1>
+                    <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base sm:leading-7">
+                        Choose the cadence that matches how often you want to share progress with MLAI.
+                    </p>
+
+                    <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                        {cadenceOptions.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                    setUpdateCadence(option.value);
+                                    if (option.value === "weekly" && selectedWeekOption) {
+                                        handleWeekChange(selectedWeekOption);
+                                    }
+                                }}
+                                className="group flex min-h-48 w-full flex-col items-start justify-between rounded-[1.75rem] border-2 border-[var(--vr-palette-black)] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#1a1a1a] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(255,60,0,0.24)]"
+                                aria-label={`Choose ${option.title.toLowerCase()} updates`}
+                            >
+                                <span className={clsx(
+                                    "inline-flex h-12 min-w-12 items-center justify-center rounded-full px-4 text-sm font-black uppercase tracking-[0.12em]",
+                                    option.accentClassName,
+                                )}>
+                                    {option.value === "monthly" ? "M" : "W"}
+                                </span>
+                                <span className="mt-8 block">
+                                    <span className="flex flex-wrap items-center gap-3">
+                                        <span className="block text-3xl font-black text-gray-950">{option.title}</span>
+                                        {option.badge ? (
+                                            <span className="rounded-full border border-[var(--vr-palette-orange)] bg-[rgba(255,60,0,0.10)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--vr-palette-orange)]">
+                                                {option.badge}
+                                            </span>
+                                        ) : null}
+                                    </span>
+                                    <span className="mt-3 block text-sm font-semibold leading-6 text-slate-600">
+                                        {option.description}
+                                    </span>
+                                </span>
+                                <span className="mt-6 inline-flex items-center gap-2 text-sm font-black text-[var(--vr-palette-orange)]">
+                                    Continue
+                                    <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                </section>
             </div>
         );
     }
@@ -6291,6 +6651,23 @@ export default function CreateUpdate() {
             )}
         >
             {mlaiGenerateUpdateBrand}
+            {!isEdit && updateCadence ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-3 sm:px-5">
+                    <p className="text-sm font-semibold text-slate-600">
+                        Update cadence:{" "}
+                        <strong className="font-black text-gray-950">
+                            {updateCadence === "monthly" ? "Monthly" : "Weekly - Victor AI-only"}
+                        </strong>
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setUpdateCadence(null)}
+                        className="text-sm font-black text-[var(--vr-palette-orange)] underline decoration-2 underline-offset-4 transition hover:text-[var(--vr-palette-black)]"
+                    >
+                        Change
+                    </button>
+                </div>
+            ) : null}
             <div className="space-y-4">
                 <div ref={draftStepperRef} className="hidden sm:block">
                     <MonthlyUpdateStepper
@@ -6311,7 +6688,7 @@ export default function CreateUpdate() {
                         <div ref={monthSelectorRef} className="space-y-3">
                             <div className="hidden sm:block">
                                 <h2 className="text-3xl font-black tracking-tight text-gray-950">
-                                    Select month
+                                    {isWeeklyUpdate ? "Select week" : "Select month"}
                                 </h2>
                             </div>
                             <div className="overflow-visible rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm transition-all sm:p-8 lg:p-10">
@@ -6319,21 +6696,34 @@ export default function CreateUpdate() {
                                     <div>
                                         <div className="rounded-3xl bg-white p-4 shadow-sm sm:p-5">
                                             <p className="mb-5 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base sm:leading-7">
-                                                {monthSelectionCaption}
+                                                {isWeeklyUpdate
+                                                    ? "Select the Monday–Sunday period this Victor AI update covers. Choose the current week or catch up on one of the three previous weeks."
+                                                    : monthSelectionCaption}
                                             </p>
-                                            <MonthYearTabs
-                                                month={selectedMonth}
-                                                year={selectedYear}
-                                                onMonthChange={setSelectedMonth}
-                                                onYearChange={setSelectedYear}
-                                                onPeriodChange={setActivePeriodKey}
-                                                monthChoices={createStepVisibleMonthOptions}
-                                                isDateEditable={!isEmailDraftBusy}
-                                            />
+                                            {isWeeklyUpdate ? (
+                                                <WeeklyUpdateTabs
+                                                    options={createStepWeekOptions}
+                                                    selectedKey={selectedWeekKey}
+                                                    onSelect={handleWeekChange}
+                                                    isDateEditable={!isEmailDraftBusy}
+                                                />
+                                            ) : (
+                                                <MonthYearTabs
+                                                    month={selectedMonth}
+                                                    year={selectedYear}
+                                                    onMonthChange={setSelectedMonth}
+                                                    onYearChange={setSelectedYear}
+                                                    onPeriodChange={setActivePeriodKey}
+                                                    monthChoices={createStepVisibleMonthOptions}
+                                                    isDateEditable={!isEmailDraftBusy}
+                                                />
+                                            )}
                                             <p className="mt-4 text-xs font-semibold leading-5 text-slate-500">
-                                                20 Roo Points are awarded only for updates from the last 3 months.
+                                                {isWeeklyUpdate
+                                                    ? "Weekly updates are created through Victor AI only."
+                                                    : "20 Roo Points are awarded only for updates from the last 3 months."}
                                             </p>
-                                            {!isEdit && !showAllCreateStepMonths ? (
+                                            {!isWeeklyUpdate && !isEdit && !showAllCreateStepMonths ? (
                                                 <div className="mt-5 hidden items-center gap-3 text-sm font-semibold text-[var(--vr-color-primary)] sm:flex">
                                                     <span className="text-[var(--vr-color-primary)]">Need an older month?</span>
                                                     <button
@@ -6345,17 +6735,17 @@ export default function CreateUpdate() {
                                                     </button>
                                                 </div>
                                             ) : null}
-                                            {isSelectedMonthBeforeMinimum ? (
+                                            {!isWeeklyUpdate && isSelectedMonthBeforeMinimum ? (
                                                 <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
                                                     Updates before June 2025 are not eligible for scoring or draft rewards.
                                                 </p>
                                             ) : null}
-                                            {isSelectedMonthInFuture && (
+                                            {!isWeeklyUpdate && isSelectedMonthInFuture && (
                                                 <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
                                                     Future monthly updates can be generated once that month starts.
                                                 </p>
                                             )}
-                                            {existingUpdateForSelectedMonth && !isSelectedMonthUnavailable && (
+                                            {!isWeeklyUpdate && existingUpdateForSelectedMonth && !isSelectedMonthUnavailable && (
                                                 <p className="mt-3 rounded-xl border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.12)] px-4 py-3 text-sm font-medium text-[var(--vr-color-primary)]">
                                                     An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
                                                 </p>
@@ -6364,7 +6754,7 @@ export default function CreateUpdate() {
                                     </div>
                                     <button
                                         type="button"
-                                        disabled={!hasSelectedMonth || isSelectedMonthUnavailable || emailDraftActionBusy}
+                                        disabled={!hasSelectedPeriod || isSelectedMonthUnavailable || emailDraftActionBusy}
                                         onClick={() => {
                                             handleGenerateSelectedMonthUpdate();
                                         }}
@@ -6372,22 +6762,22 @@ export default function CreateUpdate() {
                                         onTouchEnd={handleGenerateDraftCardTouchEnd}
                                         className={clsx(
                                             "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 sm:hidden",
-                                            !hasSelectedMonth || isSelectedMonthUnavailable || emailDraftActionBusy
+                                            !hasSelectedPeriod || isSelectedMonthUnavailable || emailDraftActionBusy
                                                 ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
                                                 : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
                                         )}
-                                        aria-label={hasSelectedMonth ? `Start ${selectedMonthLabel} draft` : "Select a month before starting a draft"}
+                                        aria-label={hasSelectedPeriod ? `Start ${selectedPeriodLabel} draft` : `Select a ${selectedPeriodName} before starting a draft`}
                                     >
                                         <div>
                                             <p className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
                                                 Step 1
                                             </p>
                                             <p className="mt-3 text-lg font-black">
-                                                {hasSelectedMonth ? "Start draft" : "Select month first"}
+                                                {hasSelectedPeriod ? "Start draft" : `Select ${selectedPeriodName} first`}
                                             </p>
                                         </div>
                                         <span className="mt-5 flex items-center justify-between text-sm font-black">
-                                            <span>{hasSelectedMonth ? selectedMonthLabel : "Choose a month"}</span>
+                                            <span>{hasSelectedPeriod ? selectedPeriodLabel : `Choose a ${selectedPeriodName}`}</span>
                                             {emailDraftActionBusy ? (
                                                 <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                             ) : (
@@ -6422,7 +6812,7 @@ export default function CreateUpdate() {
                                     displayStage={emailDraftCardDisplayStage}
                                     completedSteps={emailDraftCardCompletedSteps}
                                     totalSteps={emailDraftCardTotalSteps}
-                                    sourceLabel={`${selectedInputSourceDescription} for ${selectedMonthLabel}`}
+                                    sourceLabel={`${selectedInputSourceDescription} for ${selectedPeriodLabel}`}
                                     error={emailDraftCardError}
                                     notice={emailDraftCardNotice}
                                     pollingDegraded={emailDraftPollingDegraded}
@@ -6501,11 +6891,14 @@ export default function CreateUpdate() {
                                 <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
+                                    {formMetricKeys.map((metricKey) => (
+                                        <input key={metricKey} type="hidden" name={metricKey} value={metricValues[metricKey] || ""} />
+                                    ))}
                                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
                                     <input type="hidden" name="financialSnapshot" value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""} />
                                     <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
                                     <input type="hidden" name="presentationMode" value={presentationMode} />
-                                    {audienceVisibility.map((audience) => (
+                                    {privateAudienceVisibility.map((audience) => (
                                         <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
                                     ))}
                                     <input type="hidden" name="summary" value={summary} />
@@ -6526,132 +6919,104 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
                                     <input type="hidden" name="month" value={selectedMonth} />
                                     <input type="hidden" name="year" value={selectedYear} />
+                                    <input type="hidden" name="updateCadence" value={updateCadence || "monthly"} />
+                                    {isWeeklyUpdate && selectedWeekOption ? (
+                                        <>
+                                            <input type="hidden" name="weekStart" value={selectedWeekOption.startIso} />
+                                            <input type="hidden" name="weekEnd" value={selectedWeekOption.endIso} />
+                                        </>
+                                    ) : null}
 
                                     {renderSelectedMonthSummaryCard("hidden sm:block")}
 
-                                    <VibeRaisingAudienceVisibilityField
-                                        name="draftAudienceVisibility"
-                                        value={audienceVisibility}
-                                        onChange={setAudienceVisibility}
-                                        title={(
-                                            <span className="inline-flex items-center gap-2">
-                                                Update visibility
-                                                <CardInfoTooltip info="Choose who can see this update: only you, the MLAI community, or investors." />
-                                            </span>
-                                        )}
-                                        description="For this draft"
-                                    />
+                                    <section className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5" aria-labelledby="financial-metrics-source-title">
+                                        <div>
+                                            <h2 id="financial-metrics-source-title" className="text-base font-black text-gray-950 sm:text-lg">Financial metrics</h2>
+                                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                                                Metrics come from a verified financial connection. Manual metric entry is not available.
+                                            </p>
+                                        </div>
 
-                                    <div className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5">
-                                        {shouldDimMetricsTemplate ? (
-                                            <p className="text-xs font-medium tracking-[0.02em] text-gray-500">
-                                                Click any metric card to start editing.
+                                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                            {financialMetricSources.map((source) => {
+                                                const connected = isConnectedInputSource(source);
+                                                const selected = selectedDraftInputSources.has(source.key);
+                                                const isStripe = source.key === "stripe";
+                                                return (
+                                                    <article key={source.key} className="flex min-h-32 flex-col justify-between rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4">
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="flex min-w-0 items-center gap-3">
+                                                                <DraftSourceLogo sourceKey={source.key} />
+                                                                <div className="min-w-0">
+                                                                    <h3 className="text-base font-black text-gray-950">{source.label}</h3>
+                                                                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                                                                        {isStripe ? "Revenue and subscription metrics" : "Invoices and accounting metrics"}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <span className={clsx(
+                                                                "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em]",
+                                                                connected
+                                                                    ? "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)]"
+                                                                    : "bg-white text-slate-500 ring-1 ring-[var(--vr-color-border)]",
+                                                            )}>
+                                                                {compactSourceStatusLabel(source)}
+                                                            </span>
+                                                        </div>
+
+                                                        {connected ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleDraftInputSource(source)}
+                                                                aria-pressed={selected}
+                                                                className={clsx(
+                                                                    "mt-4 inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-black transition",
+                                                                    selected
+                                                                        ? "bg-[var(--vr-color-primary)] text-white"
+                                                                        : "border border-[var(--vr-color-primary)] bg-white text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.10)]",
+                                                                )}
+                                                            >
+                                                                {selected ? `Using ${source.label}` : `Use ${source.label}`}
+                                                            </button>
+                                                        ) : (
+                                                            <Link
+                                                                to={manageConnectionsHref}
+                                                                className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-black text-white transition hover:bg-[var(--vr-palette-black)]"
+                                                            >
+                                                                Connect {source.label}
+                                                            </Link>
+                                                        )}
+                                                    </article>
+                                                );
+                                            })}
+                                        </div>
+                                        {compactSourcesLoading ? (
+                                            <p className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
+                                                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                                                Checking connector status...
                                             </p>
                                         ) : null}
-                                        <div className="grid grid-cols-2 gap-3 transition duration-200 lg:grid-cols-4">
-                                        {draftMetricOptions.map((metric, metricIndex) => (
-                                                (() => {
-                                                    const hasMetricValue = String(metricValues[metric.key] || "").trim().length > 0;
-                                                    const isMetricCardAwake = !shouldDimMetricsTemplate || awakeMetricCards.has(metric.key) || hasMetricValue;
-                                                    const isHiddenInDropdown = !areDraftMetricsExpanded && metricIndex >= draftMetricInitialCount && !hasMetricValue;
-                                                    return (
-                                                <label
-                                                    key={metric.key}
-                                                    className={clsx(
-                                                        "relative min-w-0 rounded-2xl border p-3 transition duration-200 sm:p-4",
-                                                        isHiddenInDropdown ? "hidden" : null,
-                                                        isMetricCardAwake
-                                                            ? "cursor-pointer border-[rgba(0,128,128,0.12)] bg-[var(--vr-palette-paper)]"
-                                                            : "cursor-pointer border-gray-200/80 bg-[rgba(247,246,242,0.65)] opacity-45 saturate-0",
-                                                    )}
-                                                    onClick={(event) => {
-                                                        if ((event.target as HTMLElement).closest("button")) return;
-                                                        if (isMobileTourViewport && shouldDimMetricsTemplate && isMetricCardAwake) {
-                                                            dismissMetricCard(metric.key);
-                                                            return;
-                                                        }
-                                                        wakeMetricCard(metric.key);
-                                                        focusMetricInput(`draft-metric-${metric.key}`);
-                                                    }}
-                                                >
-                                                    {shouldDimMetricsTemplate && isMetricCardAwake ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={(event) => {
-                                                                event.preventDefault();
-                                                                event.stopPropagation();
-                                                                dismissMetricCard(metric.key);
-                                                            }}
-                                                            className="absolute right-2 top-2 hidden rounded-full p-1 text-gray-400 transition hover:bg-white hover:text-gray-700 sm:inline-flex"
-                                                            aria-label={`Dismiss ${metric.label}`}
-                                                        >
-                                                            <XMarkIcon className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    ) : null}
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={clsx(
-                                                            "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition duration-200",
-                                                            isMetricCardAwake ? "bg-[rgba(0,255,215,0.18)]" : "bg-white text-gray-500",
-                                                        )}>
-                                                            {metric.icon}
-                                                        </span>
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="group/metric-heading relative flex max-w-full flex-wrap items-center gap-1">
-                                                                <span className={clsx(
-                                                                    "min-w-0 cursor-pointer break-words text-left text-[11px] font-black uppercase leading-tight tracking-wide transition duration-200 sm:text-xs",
-                                                                    "text-gray-500",
-                                                                )}>
-                                                                    {metric.label}
-                                                                </span>
-                                                                {metric.info ? (
-                                                                    <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-48 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium normal-case leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover/metric-heading:translate-y-0 group-hover/metric-heading:opacity-100 sm:left-0 sm:w-52 sm:translate-x-0">
-                                                                        {metric.info}
-                                                                        <div className="absolute left-1/2 top-0 h-0 w-0 -translate-x-1/2 -translate-y-full border-b-[5px] border-l-[5px] border-r-[5px] border-b-gray-900 border-l-transparent border-r-transparent sm:left-3 sm:translate-x-0" />
-                                                                    </div>
-                                                                ) : null}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <input
-                                                        id={`draft-metric-${metric.key}`}
-                                                        type="text"
-                                                        name={metric.key}
-                                                        value={metricValues[metric.key] || ""}
-                                                        onFocus={() => wakeMetricCard(metric.key)}
-                                                        onChange={(event) => {
-                                                            wakeMetricCard(metric.key);
-                                                            setMetricValues((previous) => ({ ...previous, [metric.key]: event.target.value }));
-                                                        }}
-                                                        placeholder={metric.prefix ? `${metric.prefix}${metric.placeholder}` : metric.placeholder}
-                                                        className={clsx(
-                                                            "mt-4 w-full min-w-0 border-b-2 bg-transparent py-1 text-base font-black outline-none transition placeholder:text-sm sm:text-lg",
-                                                            isMetricCardAwake
-                                                                ? "border-[rgba(0,128,128,0.26)] text-gray-950 focus:border-[var(--vr-color-primary)]"
-                                                                : "border-gray-200 text-gray-300 opacity-45 saturate-0 placeholder:text-gray-300 focus:border-[var(--vr-color-primary)] focus:opacity-100 focus:saturate-100",
-                                                        )}
-                                                    />
-                                                </label>
-                                                    );
-                                                })()
-                                        ))}
-                                        </div>
-                                        {draftMetricOptions.length > draftMetricInitialCount && (areDraftMetricsExpanded || collapsedHiddenDraftMetricCount > 0) ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => setAreDraftMetricsExpanded((expanded) => !expanded)}
-                                                className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-2 text-sm font-black text-[var(--vr-color-primary)] shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.10)]"
-                                                aria-expanded={areDraftMetricsExpanded}
-                                            >
-                                                {areDraftMetricsExpanded ? "Show less" : "More metrics"}
-                                                {!areDraftMetricsExpanded ? (
-                                                    <span className="rounded-full bg-[rgba(0,128,128,0.08)] px-2 py-0.5 text-xs text-[var(--vr-color-primary)]">
-                                                        {collapsedHiddenDraftMetricCount}
-                                                    </span>
-                                                ) : null}
-                                                <ChevronDownIcon className={clsx("h-4 w-4 transition-transform", areDraftMetricsExpanded && "rotate-180")} />
-                                            </button>
-                                        ) : null}
+                                    </section>
+
+                                    <div
+                                        role="status"
+                                        className={clsx(
+                                            "flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold",
+                                            hasMinimumFounderAnswers
+                                                ? "border-[rgba(0,128,128,0.22)] bg-[rgba(0,255,215,0.10)] text-[var(--vr-color-primary)]"
+                                                : "border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] text-[var(--vr-color-text)]",
+                                        )}
+                                    >
+                                        <span>{founderQuestionRequirementText}</span>
+                                        <span className="rounded-full bg-white px-3 py-1 text-xs font-black">
+                                            {answeredFounderQuestionCount}/5 answered
+                                        </span>
                                     </div>
+                                    {founderQuestionGateError ? (
+                                        <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+                                            {founderQuestionGateError}
+                                        </p>
+                                    ) : null}
 
                                     <div className="space-y-5">
                                         <SectionWithExample
@@ -6691,12 +7056,12 @@ export default function CreateUpdate() {
                                             placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
                                         />
                                         <SectionWithExample
-                                            label="Ask from Investors"
+                                            label="Support request"
                                             name="asks"
                                             value={asks}
                                             onChange={setAsks}
                                             enableMobileAdvance={isMobileTourViewport}
-                                            placeholder="How can your investors help? Introductions, advice, specific expertise..."
+                                            placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
                                         />
                                     </div>
 
@@ -6784,7 +7149,7 @@ export default function CreateUpdate() {
 
                         <div className="px-6 py-6">
                             <p className="text-sm leading-7 text-[var(--vr-color-text-mid)]">
-                                Add a short deck or walkthrough so investors can see the story behind the numbers.
+                                Add a short deck or walkthrough so MLAI can understand the story behind the numbers.
                             </p>
 
                             {missingFounderLinkedInDrafts.length > 0 ? (
@@ -6813,7 +7178,7 @@ export default function CreateUpdate() {
                                 </div>
                             ) : (
                                 <p className="mt-5 rounded-2xl border border-[rgba(0,128,128,0.14)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-primary)]">
-                                    Founder LinkedIn links are already attached. Nice, that gives investors a trust trail.
+                                    Founder LinkedIn links are already attached, giving MLAI useful company context.
                                 </p>
                             )}
                         </div>
@@ -6849,7 +7214,7 @@ export default function CreateUpdate() {
                                 <div>
                                     <h2 className="text-lg font-black text-[var(--vr-color-text)]">Replace this draft?</h2>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong> draft from scratch using your latest data{regenerateDialogSourceLabels.length > 0 ? <> from <strong className="font-bold text-gray-900">{regenerateDialogSourceLabels.join(", ")}</strong></> : null}, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
+                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedPeriodLabel}</strong> draft from scratch using your latest data{regenerateDialogSourceLabels.length > 0 ? <> from <strong className="font-bold text-gray-900">{regenerateDialogSourceLabels.join(", ")}</strong></> : null}, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
                                     </p>
                                 </div>
                             </div>
@@ -6870,7 +7235,7 @@ export default function CreateUpdate() {
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {emailDraftActionBusy ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
-                                Regenerate {selectedMonthLabel}
+                                Regenerate {selectedPeriodLabel}
                             </button>
                         </div>
                     </div>
@@ -6970,7 +7335,7 @@ export default function CreateUpdate() {
                                 displayStage={emailDraftCardDisplayStage}
                                 completedSteps={emailDraftCardCompletedSteps}
                                 totalSteps={emailDraftCardTotalSteps}
-                                sourceLabel={`${selectedInputSourceDescription} for ${selectedMonthLabel}`}
+                                sourceLabel={`${selectedInputSourceDescription} for ${selectedPeriodLabel}`}
                                 error={emailDraftCardError}
                                 notice={emailDraftCardNotice}
                                 pollingDegraded={emailDraftPollingDegraded}
@@ -7039,7 +7404,7 @@ export default function CreateUpdate() {
                         <div>
                             <h2 className="text-xl font-black text-gray-950">Update draft</h2>
                             <p className="mt-3 text-sm text-slate-500">
-                                Edit metrics and investor-facing dot points for {activeDisplayMonth} {activeDisplayYear}.
+                                Edit metrics and submission-ready dot points for {activeDisplayMonth} {activeDisplayYear}.
                             </p>
                         </div>
                     </div>
@@ -7188,7 +7553,7 @@ export default function CreateUpdate() {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1">Asks</label>
-                                            <BulletInput value={card.asks} onChange={(v) => updatePastMonthField(index, "asks", v)} placeholder="Ask from investors..." section="asks" />
+                                            <BulletInput value={card.asks} onChange={(v) => updatePastMonthField(index, "asks", v)} placeholder="Where could MLAI help?" section="asks" />
                                         </div>
                                     </div>
                                 )}
@@ -7327,13 +7692,13 @@ export default function CreateUpdate() {
                                     placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
                                 />
 	                                <SectionWithExample
-	                                    label="Ask from Investors"
+	                                    label="Support request"
 	                                    name={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
 	                                    value={activeAsks}
 	                                    onChange={updateActiveAsks}
                                     enableMobileAdvance={isMobileTourViewport}
                                     rows={3}
-                                    placeholder="How can your investors help? Introductions, advice, specific expertise..."
+                                    placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
                                 />
                             </div>
                         </div>
@@ -7439,11 +7804,11 @@ export default function CreateUpdate() {
                                 placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
                             />
                             <SectionWithExample
-                                label="Ask from Investors"
+                                label="Support request"
                                 name="asks"
                                 value={asks}
                                 onChange={setAsks}
-                                placeholder="How can your investors help? Introductions, advice, specific expertise..."
+                                placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
                             />
                         </div>
                     </div>
