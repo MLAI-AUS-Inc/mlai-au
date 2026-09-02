@@ -28,6 +28,7 @@ describe("homepage donation modal", () => {
     expect(modal).toContain("initialFocus={closeButtonRef}");
     expect(modal).toContain('https://js.stripe.com/v3/buy-button.js');
     expect(modal).toContain('React.createElement("stripe-buy-button"');
+    expect(modal).toContain('className="flex justify-center"');
     expect(modal).toContain('customElements.whenDefined("stripe-buy-button")');
     expect(modal).toContain("STRIPE_LOAD_TIMEOUT_MS");
     expect(modal).toContain("stripeBuyButtonLoad = undefined");

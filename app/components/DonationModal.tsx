@@ -187,10 +187,12 @@ export default function DonationModal() {
                         </p>
                       </div>
                     ) : scriptState === "ready" ? (
-                      React.createElement("stripe-buy-button", {
-                        "buy-button-id": buyButtonId,
-                        "publishable-key": publishableKey,
-                      })
+                      <div className="flex justify-center">
+                        {React.createElement("stripe-buy-button", {
+                          "buy-button-id": buyButtonId,
+                          "publishable-key": publishableKey,
+                        })}
+                      </div>
                     ) : (
                       <div
                         className="flex min-h-32 items-center justify-center text-sm font-medium text-gray-600"
