@@ -26,6 +26,9 @@ jobs:
       - name: Test monthly-update reminder links
         run: bun test tests/monthly-update-reminder-link.test.ts
 
+      - name: Test homepage donation modal
+        run: bun test tests/donation-modal.test.ts
+
       - name: Test Roo account-link security
         run: |
           bun test \
