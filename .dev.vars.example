@@ -16,6 +16,9 @@ VITE_DEV_AUTH_BYPASS=false
 # Local full stub mode: set to true to skip auth and stub backend API responses on localhost.
 VITE_STUB_BACKEND=false
 VITE_ENABLE_FOUNDER_TOOLS_DISCOVER=false
+# Public Stripe Buy Button values for the one-time AUD donation Payment Link.
+VITE_STRIPE_DONATION_BUY_BUTTON_ID=
+VITE_STRIPE_PUBLISHABLE_KEY=
 PRIVATE_HUMANITIX_API_KEY=
 PUBLIC_HUMANITIX_API_KEY=
 LUMA_API_KEY=

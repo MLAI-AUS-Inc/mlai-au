@@ -1,3 +1,5 @@
+- [x] TECH-32: Add a variable-amount Stripe donation modal to the homepage hero.
+
 - [x] Show retry guidance when the Content Factory configuration service is unavailable
 - [x] Keep genuine missing-configuration guidance distinct from upstream transport failures
 - [x] Add focused failure-guidance tests and run typecheck/build
