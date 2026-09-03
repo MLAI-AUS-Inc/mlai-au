@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const TOKEN = "A".repeat(43);
 const apiPost = mock(async (path: string) => ({
@@ -50,6 +52,18 @@ describe("Founder Tools Roo account-link route", () => {
     apiPost.mockClear();
     createApiClient.mockClear();
     getCurrentUser.mockClear();
+  });
+
+  test("discloses every current use of the connected Slack identity", () => {
+    const source = readFileSync(
+      join(process.cwd(), "app/routes/founder-tools.link-roo.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("coworking discount");
+    expect(source).toContain("Founder Tools service");
+    expect(source).toContain("notifications to your Slack account");
+    expect(source).not.toContain("used only for discount eligibility");
   });
 
   test("ordinary Origin-less document GET previews through the trusted site origin", async () => {
