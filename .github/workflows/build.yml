@@ -34,7 +34,8 @@ jobs:
           bun test \
             tests/roo-account-link.test.ts \
             tests/roo-account-link-route.test.ts \
-            tests/roo-account-link-worker.test.ts
+            tests/roo-account-link-worker.test.ts \
+            tests/session-refresh.test.ts
 
       - name: Build project
         run: bun run build
