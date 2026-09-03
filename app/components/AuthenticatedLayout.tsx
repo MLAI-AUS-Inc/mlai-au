@@ -78,7 +78,7 @@ function RooPointsBadge({ balance }: { balance: number }) {
             onPointerLeave={stopAnimation}
             onFocus={startAnimation}
             onBlur={stopAnimation}
-            className="inline-flex h-9 shrink-0 cursor-default select-none items-center gap-2 rounded-full border border-[rgba(15,23,42,0.12)] bg-white/85 px-2.5 text-[var(--vr-color-text)] shadow-sm transition hover:bg-white focus:outline-none focus:ring-4 focus:ring-violet-100"
+            className="inline-flex h-8 shrink-0 cursor-default select-none items-center gap-1.5 rounded-full border border-[rgba(15,23,42,0.12)] bg-white/85 px-2 text-[var(--vr-color-text)] shadow-sm transition hover:bg-white focus:outline-none focus:ring-4 focus:ring-violet-100 sm:h-9 sm:gap-2 sm:px-2.5"
             aria-label={`${formattedBalance} Roo Points`}
             title={`${formattedBalance} Roo Points`}
         >
@@ -90,9 +90,9 @@ function RooPointsBadge({ balance }: { balance: number }) {
                 draggable={false}
                 width={28}
                 height={28}
-                className="pointer-events-none h-7 w-7 shrink-0 rounded-full object-cover"
+                className="pointer-events-none h-6 w-6 shrink-0 rounded-full object-cover sm:h-7 sm:w-7"
             />
-            <span className="pointer-events-none tabular-nums text-sm font-black leading-none">{formattedBalance}</span>
+            <span className="pointer-events-none tabular-nums text-xs font-black leading-none sm:text-sm">{formattedBalance}</span>
         </div>
     );
 }
@@ -491,11 +491,11 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             ) : (
                                 <div />
                             )}
-                            <div className={classNames("ml-auto flex shrink-0 items-center gap-x-2 sm:gap-x-4 lg:gap-x-6", isFounderToolsApp && "hidden sm:flex")}>
+                            <div className="ml-auto flex shrink-0 items-center gap-x-2 sm:gap-x-4 lg:gap-x-6">
                                 {isFounderToolsApp && rooPointsBalance ? (
                                     <RooPointsBadge balance={rooPointsBalance.balance} />
                                 ) : null}
-                                <Menu as="div" className="relative">
+                                <Menu as="div" className={classNames("relative", isFounderToolsApp && "hidden sm:block")}>
                                     <Menu.Button className="-m-1.5 flex items-center p-1.5">
                                         <span className="sr-only">Open user menu</span>
                                         <ImageWithFallback
