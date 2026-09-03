@@ -207,6 +207,16 @@ export default function DonationModal() {
                     One-time donation in Australian dollars. Payment details are handled
                     securely by Stripe.
                   </p>
+                  <p className="mt-2 text-center text-xs leading-5 text-gray-600">
+                    Wish to contribute more than A$10,000? Email{" "}
+                    <a
+                      className="font-semibold text-black underline underline-offset-2 hover:no-underline"
+                      href="mailto:hi@mlai.au"
+                    >
+                      hi@mlai.au
+                    </a>
+                    .
+                  </p>
                 </Dialog.Panel>
               </Transition.Child>
             </div>

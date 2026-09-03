@@ -33,6 +33,8 @@ describe("homepage donation modal", () => {
     expect(modal).toContain("STRIPE_LOAD_TIMEOUT_MS");
     expect(modal).toContain("stripeBuyButtonLoad = undefined");
     expect(modal).toContain("?.remove()");
+    expect(modal).toContain("Wish to contribute more than A$10,000?");
+    expect(modal).toContain('href="mailto:hi@mlai.au"');
   });
 
   test("reads only public Vite configuration and handles missing configuration", () => {
