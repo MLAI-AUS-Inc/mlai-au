@@ -582,6 +582,26 @@
 - [x] Remove the redundant notification-channel email confirmation UI
 - [x] Run focused notification-channel UI verification
 
+## Vibe Raising update cadence pre-step (September 2026)
+
+- [x] Add a create-only cadence pre-step before the update form
+- [x] Offer Monthly and Weekly choices and show the active choice in the form
+- [x] Label Weekly clearly as Victor AI-only while keeping it in the main flow
+- [x] Align the cadence selection card width with the Vibe Raising header
+- [x] Show dated weekly reporting options instead of month tabs for Victor AI weekly updates
+- [x] Remove the fake investor audience and investor-facing visibility controls
+- [x] Replace publishing with one private Send to MLAI action and feedback opt-in
+- [x] Add a three-question end-of-flow survey with optional written feedback
+- [x] Replace manual metric entry with Stripe and Xero connector choices
+- [x] Require at least three founder-question answers before save or submission
+- [x] Move the end-of-flow survey into a private final-confirmation dialog after Send to MLAI is pressed
+- [x] Convert the survey into four one-at-a-time steps with thumbs-up and thumbs-down responses
+- [x] Auto-advance the survey after a thumb selection and remove the rating helper subheading
+- [x] Replace generic survey prompts with connector, guided-question, and final-preview diagnostics
+- [x] Refresh survey reactions with solid thumb icons and distinct animated hover treatments
+- [x] Simplify final survey-dialog headings and supporting copy
+- [x] Run focused update-flow tests and frontend typecheck
+
 ## Article quality remediation (July 2026)
 
 - [x] Confirm Google's latest primary-source guidance on AI-generated and scaled low-value content

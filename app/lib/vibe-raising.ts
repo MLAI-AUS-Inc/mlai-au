@@ -4,6 +4,7 @@ import type { User } from "~/types/user";
 import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 import { parseVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
+import type { VibeRaisingFinancialSurveyContext } from "~/lib/vibe-raising-survey";
 import type {
   VibeRaisingAudienceVisibilitySelection,
   VibeRaisingDraftResultsResponse,
@@ -2690,6 +2691,14 @@ export async function saveVibeRaisingMonthlyUpdate(
     saveMode?: VibeRaisingSaveMode;
     manualDocumentIds?: string[];
     manualSummary?: string | null;
+    mlaiFeedbackOptIn?: boolean | null;
+    submissionDestination?: string | null;
+    surveyFinancialQuestionContext?: VibeRaisingFinancialSurveyContext | null;
+    surveyImportedMetricsUseful?: boolean | null;
+    surveyConnectorValueClear?: boolean | null;
+    surveyGuidedQuestionsUseful?: boolean | null;
+    surveyPreviewAccurate?: boolean | null;
+    surveyComments?: string | null;
   },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
   const buildDevSavedUpdate = () => {
