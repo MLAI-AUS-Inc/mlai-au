@@ -1,7 +1,7 @@
 import { Dialog } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 // Navigation items with section IDs for scroll detection
 const navigation = [
@@ -55,28 +55,20 @@ const navigation = [
   },
 ];
 
+function isTypingTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
+
 export default function Sidebar() {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>("hero");
   const observerRef = useRef<IntersectionObserver | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === "/";
-
-  // Handle scroll state - only on home page
-  useEffect(() => {
-    if (!isHomePage) {
-      setIsScrolled(false);
-      return;
-    }
-
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHomePage]);
 
   // Set up Intersection Observer for section detection
   useEffect(() => {
@@ -114,26 +106,48 @@ export default function Sidebar() {
     };
   }, [isHomePage]);
 
-  // Handle smooth scroll navigation
-  const handleNavClick = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>, item: (typeof navigation)[0]) => {
-      // Only handle internal hash links on homepage
+  const goToItem = useCallback(
+    (item: (typeof navigation)[0]) => {
       if (item.sectionId && isHomePage) {
-        e.preventDefault();
         const element = document.getElementById(item.sectionId);
         if (element) {
           element.scrollIntoView({
             behavior: "smooth",
             block: "start",
           });
-          // Update active section immediately for responsiveness
           setActiveSection(item.sectionId);
         }
+        return;
       }
-      // External links and non-homepage navigation handled by default behavior
+      navigate(item.href);
     },
-    [isHomePage]
+    [isHomePage, navigate]
   );
+
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, item: (typeof navigation)[0]) => {
+      if (item.sectionId && isHomePage) {
+        e.preventDefault();
+        goToItem(item);
+      }
+    },
+    [goToItem, isHomePage]
+  );
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+      const item = navigation.find((entry) => entry.number === event.key);
+      if (!item) return;
+      event.preventDefault();
+      goToItem(item);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [goToItem]);
 
   // Get the index of the active section in navigation
   const getActiveSectionIndex = useCallback(() => {
@@ -142,11 +156,8 @@ export default function Sidebar() {
     return index >= 0 ? index : 0;
   }, [activeSection, isHomePage]);
 
-  const isItemExpanded = (index: number) => {
-    if (!isHomePage) return true;
-    if (!isScrolled) return true;
-    if (hoveredIndex !== null) return index === hoveredIndex;
-    // Expand item based on active section when scrolled
+  const isItemActive = (index: number) => {
+    if (!isHomePage) return false;
     return index === getActiveSectionIndex();
   };
 
@@ -169,7 +180,7 @@ export default function Sidebar() {
         {/* Logo container - Mint background */}
         <a
           href="/"
-          className="block w-full aspect-[2/1] rounded-xl bg-[var(--brutalist-mint)] hover:scale-[1.02] transition-transform duration-200 relative group flex items-end justify-center z-50 mb-4"
+          className="block w-full aspect-[2/1] rounded-xl bg-[var(--brutalist-mint)] hover:scale-[1.02] transition-transform duration-200 relative group flex items-end justify-center mb-4 overflow-hidden"
         >
           {/* Kangaroo image - larger and aligned to bottom, overlapping top */}
           <img
@@ -180,9 +191,9 @@ export default function Sidebar() {
         </a>
 
         {/* Navigation items */}
-        <nav className="flex-1 flex flex-col gap-2">
+        <nav className="grid min-h-0 flex-1 grid-rows-7 gap-2">
           {navigation.map((item, index) => {
-            const expanded = isItemExpanded(index);
+            const active = isItemActive(index);
             const isYellow = item.color === "#fefc22";
             const isMint = item.color === "#00ffd7";
             const useDarkText = isYellow || isMint;
@@ -191,25 +202,21 @@ export default function Sidebar() {
               <a
                 key={item.name}
                 href={item.href}
-                className={`relative rounded-xl overflow-hidden transition-all duration-300 ease-out ${expanded ? "flex-1 min-h-[60px]" : "flex-none h-6"
-                  }`}
+                aria-current={active ? "true" : undefined}
+                aria-keyshortcuts={item.number}
+                className={`flex h-full min-h-0 flex-col justify-between rounded-xl px-3 py-1.5 ${
+                  active ? "shadow-[inset_0_0_0_3px_var(--brutalist-border)]" : ""
+                }`}
                 style={{ backgroundColor: item.color }}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
                 onClick={(e) => handleNavClick(e, item)}
               >
-                {/* Number label - Reduced weight (font-normal) */}
                 <span
-                  className={`absolute top-2 left-3 text-lg font-normal transition-opacity duration-200 ${useDarkText ? "text-black" : "text-white"
-                    } ${expanded ? "opacity-100" : "opacity-0"}`}
+                  className={`block text-lg font-normal leading-none ${useDarkText ? "text-black" : "text-white"}`}
                 >
                   {item.number}
                 </span>
-
-                {/* Text label - Reduced weight (font-normal) */}
                 <span
-                  className={`absolute bottom-2 left-3 text-xl font-normal transition-opacity duration-200 ${useDarkText ? "text-black" : "text-white"
-                    } ${expanded ? "opacity-100" : "opacity-0"}`}
+                  className={`block whitespace-nowrap text-xl font-normal leading-none ${useDarkText ? "text-black" : "text-white"}`}
                 >
                   {item.name}
                 </span>
@@ -255,7 +262,7 @@ export default function Sidebar() {
                 <a
                   key={item.name}
                   href={item.href}
-                  className="relative flex items-center rounded-lg px-4 py-4"
+                  className="relative flex items-center rounded-lg px-4 min-h-[52px]"
                   style={{ backgroundColor: item.color }}
                   onClick={(e) => {
                     setMobileMenuOpen(false);
