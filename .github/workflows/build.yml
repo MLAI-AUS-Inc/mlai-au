@@ -29,6 +29,9 @@ jobs:
       - name: Test homepage donation modal
         run: bun test tests/donation-modal.test.ts
 
+      - name: Test app privacy and support disclosures
+        run: bun test tests/ccc-app-review-privacy.test.ts
+
       - name: Test Roo account-link security
         run: |
           bun test \

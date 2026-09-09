@@ -642,3 +642,6 @@
 - [x] Clarify the section header, legend, selected-island action, help, and custom-island states
 - [x] Add focused accessibility and rendering coverage
 - [x] Run focused tests, typecheck, build, and desktop/mobile visual verification
+- [x] Restore Carbon, Cost & Convenience privacy/support disclosures on current main, preserving newer website changes.
+- [x] Explain optional on-device QR camera processing and current Delete Account controls.
+- [ ] Verify and publish the app-specific privacy/support restoration for App Review.
