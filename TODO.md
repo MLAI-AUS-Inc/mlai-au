@@ -1,3 +1,4 @@
+- [x] Remove public Roo pilot wording and set community event ticket to 15 points
 - [x] TECH-32: Add a variable-amount Stripe donation modal to the homepage hero.
 
 - [x] Show retry guidance when the Content Factory configuration service is unavailable

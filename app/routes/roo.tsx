@@ -36,7 +36,7 @@ const SECTION_ITEMS = [
   { id: "rewards", label: "Rewards" },
   { id: "top-up", label: "Top up" },
   { id: "slack-commands", label: "Slack commands" },
-  { id: "pilot-rules", label: "Pilot rules" },
+  { id: "community-rules", label: "Community rules" },
   { id: "faq", label: "FAQ" },
 ] as const;
 
@@ -154,7 +154,7 @@ const REWARD_GROUPS = [
     title: "Events",
     className: "bg-[var(--brutalist-orange)] text-white",
     items: [
-      ["12 points", "Free community event ticket"],
+      ["15 points", "Free community event ticket"],
       ["30 points", "50% off paid workshop"],
       ["48 points", "Free workshop ticket"],
     ],
@@ -317,7 +317,7 @@ const FAQ_ITEMS: Array<{ question: string; answer: ReactNode }> = [
     answer: (
       <>
         Yes. Clear gaming, spam, or mistaken awards can be denied or reversed, and the
-        pilot keeps a log of changes.
+        programme keeps a log of changes.
       </>
     ),
   },
@@ -325,8 +325,8 @@ const FAQ_ITEMS: Array<{ question: string; answer: ReactNode }> = [
     question: "Where do I give feedback?",
     answer: (
       <>
-        Share feedback with the MLAI Team in Slack. Roo is a pilot, so feedback helps
-        shape what changes next.
+        Share feedback with the MLAI Team in Slack. Your feedback helps
+        improve the programme.
       </>
     ),
   },
@@ -1102,8 +1102,8 @@ export default function RooPage({}: Route.ComponentProps) {
             </SectionCard>
 
             <SectionCard
-              id="pilot-rules"
-              title="Fairness, limits, and pilot notes"
+              id="community-rules"
+              title="Fairness and community rules"
               description="This should feel welcoming, not legalistic. The point is to make the system understandable and fair while MLAI learns."
               className="border-black/6 bg-[var(--brutalist-beige)] text-[var(--brutalist-black)]"
               descriptionClassName="text-black/68"
@@ -1113,11 +1113,11 @@ export default function RooPage({}: Route.ComponentProps) {
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="h-5 w-5 text-[var(--brutalist-purple)]" />
                     <h3 className="text-2xl font-semibold tracking-tight">
-                      Pilot rules
+                      Community rules
                     </h3>
                   </div>
                   <ul className="mt-5 space-y-4 text-base leading-7 text-black/72">
-                    <li>This is a pilot, so values and rules may be adjusted as MLAI learns.</li>
+                    <li>Current rewards and limits are published in the programme guide.</li>
                     <li>Some actions may be auto-recognised, while organised work is approved by the MLAI Team.</li>
                     <li>All changes are logged so the system stays accountable.</li>
                     <li>Clear gaming, spam, or low-effort abuse can be denied or reversed.</li>
