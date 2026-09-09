@@ -64,7 +64,10 @@ import type {
   VibeRaisingSlackPreview,
   VibeRaisingXeroPreview,
 } from "~/types/vibe-raising";
-import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
+import type { MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
+import VibeRaisingWorkflowLayout from "~/components/VibeRaisingWorkflowLayout";
+import { readVibeRaisingDraftReturnState } from "~/lib/vibe-raising-draft-return";
+import { getVibeRaisingDraftProgress } from "~/lib/vibe-raising-progress";
 import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 
 const DEFAULT_NEXT = "/founder-tools/updates/create";
@@ -3067,17 +3070,18 @@ export default function ConnectData() {
   };
 
   return (
+    <VibeRaisingWorkflowLayout
+      activeStep="connect"
+      enabledSteps={["draft", "connect"]}
+      onStepClick={handleStepperClick}
+      progress={{
+        draft: readVibeRaisingDraftReturnState(new URL(next, "http://mlai.local").search) ? getVibeRaisingDraftProgress(true, true, 0) : 0,
+        connect: selectedSourceList.length ? 1 : sources.some((source) => source.status === "connected" || source.status === "syncing") ? 0.5 : 0,
+      }}
+      details={{ draft: "Return to your draft", connect: selectedSourceList.length ? `${selectedSourceList.length} source${selectedSourceList.length === 1 ? "" : "s"} selected` : "Optional · choose your sources" }}
+    >
     <div className="mx-auto max-w-6xl space-y-10 pb-32">
       <div className="space-y-4">
-        <MonthlyUpdateStepper
-          activeStep="connect"
-          disableMotion
-          enabledSteps={["draft", "connect"]}
-          onStepClick={handleStepperClick}
-          expandOnHover
-          frameless
-          className="mt-8"
-        />
 
         {!(isMobileTourViewport && mobilePrivacyNoteSeen) ? (
           <div ref={privacyCardRef} className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
@@ -3428,6 +3432,7 @@ export default function ConnectData() {
       </div>
 
       <VibeRaisingStickyStepBar
+        alignToContent
         className={clsx(isMobileTourViewport && !showStickyBarOnMobile && "hidden sm:block")}
         hideStatusOnMobile
         hideBackOnMobile
@@ -3675,5 +3680,6 @@ export default function ConnectData() {
       ) : null}
 
     </div>
+    </VibeRaisingWorkflowLayout>
   );
 }

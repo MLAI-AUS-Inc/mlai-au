@@ -9,7 +9,7 @@ describe("Vibe Raising founder requirements", () => {
   test("replaces manual financial metric fields with Stripe and Xero connectors", () => {
     expect(routeSource).toContain('const FINANCIAL_METRIC_SOURCE_KEYS = ["stripe", "xero"] as const;');
     expect(routeSource).toContain("financialMetricSources.map");
-    expect(routeSource).toContain("Manual metric entry is not available.");
+    expect(routeSource).toContain("Connect your financial data to generate credible, verifiable metrics.");
     expect(routeSource).toContain("Connect {source.label}");
     expect(routeSource).not.toContain("draft-metric-");
   });
