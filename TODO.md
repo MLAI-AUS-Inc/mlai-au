@@ -656,3 +656,10 @@
 - [x] Restore Carbon, Cost & Convenience privacy/support disclosures on current main, preserving newer website changes.
 - [x] Explain optional on-device QR camera processing and current Delete Account controls.
 - [ ] Verify and publish the app-specific privacy/support restoration for App Review.
+
+## Monthly evidence release — 9 September 2026
+
+- [x] Replace fabricated reporting, carry exact revision receipts, remove investor visibility and configure startup reporting.
+- [x] Integrate with current main while preserving draft-return state and sticky progress navigation.
+- [x] Pass 42 monthly/editor tests, TypeScript and production build.
+- [ ] Merge matching backend/worker/frontend PRs and verify deployment.

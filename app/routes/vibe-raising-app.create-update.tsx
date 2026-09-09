@@ -1,3 +1,4 @@
+import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, useSubmit, redirect } from "react-router";
 import React, { startTransition, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, type RefObject } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
@@ -7,6 +8,7 @@ import {
     requireVibeRaisingFounder,
     bootstrapVibeRaisingStartupUpdate,
     getVibeRaisingDrafts,
+    getStartupHealth,
     getVibeRaisingMonthlyUpdates,
     getVibeRaisingMonthlyUpdateById,
     getVibeRaisingInputSourcesStatus,
@@ -42,6 +44,7 @@ import {
 import {
     VIBE_METRIC_KEYS,
     VIBE_METRIC_OPTIONS,
+    metricOptionsForValues,
     VIBE_METRIC_OPTION_MAP,
     hasDisplayableMetricValue,
     type MetricOption,
@@ -195,7 +198,7 @@ type WeeklyUpdateOption = {
     isCurrent: boolean;
 };
 
-function readStoredManualMaterials(): {
+function readStoredManualMaterials(scope: string): {
     summary: string;
     sourceUrl: string;
     pitchDeckSummary: string;
@@ -206,7 +209,7 @@ function readStoredManualMaterials(): {
     const empty = { summary: "", sourceUrl: "", pitchDeckSummary: "", pitchDeckUrl: "", manualDocumentIds: [], documents: [] };
     if (typeof window === "undefined") return empty;
     try {
-        const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
+        const raw = window.sessionStorage.getItem(`${MANUAL_MATERIALS_STORAGE_KEY}:${scope}`);
         if (!raw) return empty;
         const parsed = JSON.parse(raw) as {
             summary?: unknown;
@@ -526,6 +529,8 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
     const metrics = update.metrics || {};
     return {
         id: update.id,
+        revisionId: update.revisionId,
+        revisionHash: update.revisionHash,
         audienceVisibility: update.audienceVisibility || "",
         month: update.monthName || parsedPeriod.month,
         year: update.year || parsedPeriod.year,
@@ -583,10 +588,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         throw redirect(removeReminderCompanySelector(url));
     }
 
-    // Require company registration before creating updates
-    if (!user.companyRegistered) {
-        throw redirect("/founder-tools/company-setup");
-    }
 
     // Check for edit mode
     const editId = url.searchParams.get("edit");
@@ -615,8 +616,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         return [];
     });
 
+    const health = await getStartupHealth(env, request, resolveActiveCompanyId(user));
     return {
         user,
+        metricDefinitions: health.configuration.metricDefinitions || [],
         existingData,
         isEdit: !!editId,
         backendBaseUrl: String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL),
@@ -631,7 +634,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     const dynamicMetricKeys = String(formData.get("metricKeys") || "")
         .split(",")
         .map((key) => key.trim())
-        .filter((key) => key && METRIC_OPTION_MAP.has(key));
+        .filter((key) => /^[A-Za-z][A-Za-z0-9_.]{0,63}$/.test(key));
     const selectedMetricKeys = Array.from(new Set(dynamicMetricKeys));
     const metricKeys = Array.from(new Set([...METRIC_FORM_KEYS, ...selectedMetricKeys]));
     const metrics = Object.fromEntries(
@@ -745,8 +748,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     const { appUser } = await requireVibeRaisingFounder(env, request);
     // Pin every read and save in this action to the company the page was
     // rendered for, instead of the backend's mutable active_company.
-    const activeCompanyId = resolveActiveCompanyId(appUser);
     const formData = await request.formData();
+    const activeCompanyId = String(formData.get("companyId") || "");
+    if (!activeCompanyId || !appUser.companies.some((company) => company.id === activeCompanyId)) {
+        throw new Response("Select the startup this form belongs to.", { status: 409 });
+    }
     const intent = formData.get("intent");
     const answerGatedIntents = new Set(["review", "save-draft", "send-to-mlai", "publish"]);
     const answeredFounderQuestionCount = countAnsweredFounderQuestions(formData);
@@ -763,136 +769,26 @@ export async function action({ request, context }: Route.ActionArgs) {
         audienceVisibility: savePayload.audienceVisibility,
     };
 
-    if (intent === "send-to-mlai") {
-        try {
-            const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
-                ...savePayload,
-                companyId: activeCompanyId,
-                audienceVisibility: ["just_me"],
-                mlaiFeedbackOptIn: savePayload.mlaiFeedbackOptIn,
-                submissionDestination: "mlai",
-                saveMode: "ready",
-            });
-            const cookie = savedUpdate ? createVibeRaisingLocalDraftUpdateCookie(savedUpdate) : null;
-            return redirect(
-                "/founder-tools/updates?sent_to_mlai=1",
-                cookie ? { headers: { "Set-Cookie": cookie } } : undefined,
-            );
-        } catch (error) {
-            const gate = acnGateRedirect(error);
-            if (gate) return gate;
-            return {
-                step: "publish-error",
-                data: updates,
-                error: extractVibeRaisingActionError(error, "We could not send this update to MLAI yet. Please try again."),
-            };
-        }
-    }
-
     if (intent === "publish") {
-        const draftId = String(formData.get("draftId") || "").trim();
-        console.log("[monthly-update:publish-action] received publish request", JSON.stringify({
-            draftId,
-            month: savePayload.month,
-            year: savePayload.year,
-            formEntries: Object.fromEntries(formData),
-        }));
+        const draftId = String(formData.get("draftId") || "");
+        const revisionId = Number(formData.get("revisionId"));
+        const revisionHash = String(formData.get("revisionHash") || "");
         try {
-            if (BACKEND_DRAFT_ID_PATTERN.test(draftId)) {
-                await publishVibeRaisingMonthlyUpdate(env, request, draftId);
-                console.log("[monthly-update:publish-action] published draft by id", { draftId });
-                return redirect("/founder-tools/updates");
-            }
-
-            const drafts = await getVibeRaisingDrafts(env, request, activeCompanyId);
-            console.log("[monthly-update:publish-action] loaded drafts for fallback", JSON.stringify({
-                draftCount: drafts.length,
-                publishableDrafts: drafts
-                    .filter((draft) => draft.status === "ready" && draft.visibility !== "published")
-                    .map((draft) => ({
-                        id: draft.id,
-                        month: draft.month,
-                        monthName: draft.monthName,
-                        year: draft.year,
-                        status: draft.status,
-                        visibility: draft.visibility,
-                    })),
-            }));
-            const formMonth = savePayload.month;
-            const formYear = savePayload.year;
-            const matchingDraft = drafts.find((draft) => (
-                (!formMonth || draft.monthName === formMonth || draft.month === `${formMonth} ${formYear}`) &&
-                (!Number.isFinite(formYear) || !formYear || draft.year === formYear) &&
-                draft.status === "ready" &&
-                draft.visibility !== "published" &&
-                BACKEND_DRAFT_ID_PATTERN.test(draft.id)
-            ));
-            const fallbackDraft = matchingDraft ?? drafts.find((draft) => (
-                draft.status === "ready" &&
-                draft.visibility !== "published" &&
-                BACKEND_DRAFT_ID_PATTERN.test(draft.id)
-            ));
-
-            if (fallbackDraft) {
-                await publishVibeRaisingMonthlyUpdate(env, request, fallbackDraft.id);
-                console.log("[monthly-update:publish-action] published fallback draft", {
-                    draftId: fallbackDraft.id,
-                });
-                return redirect("/founder-tools/updates");
-            }
-
-            const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
-                ...savePayload,
-                companyId: activeCompanyId,
-                saveMode: "ready",
+            if (!BACKEND_DRAFT_ID_PATTERN.test(draftId) || !revisionId || !revisionHash) throw new Error("Save and review this revision before publishing.");
+            await publishVibeRaisingMonthlyUpdate(env, request, draftId, {
+                companyId: activeCompanyId, revisionId, revisionHash,
+                audienceVisibility: normalizeAudienceVisibilityValue(formData.get("audienceVisibility")),
             });
-            if (savedUpdate?.id && BACKEND_DRAFT_ID_PATTERN.test(savedUpdate.id)) {
-                await publishVibeRaisingMonthlyUpdate(env, request, savedUpdate.id);
-                console.log("[monthly-update:publish-action] saved then published draft", {
-                    draftId: savedUpdate.id,
-                });
-                return redirect("/founder-tools/updates");
-            }
-
-            if (savedUpdate?.id) {
-                const publishedUpdate = {
-                    ...savedUpdate,
-                    status: "ready",
-                    visibility: "published",
-                    publishedAt: new Date().toISOString(),
-                };
-                const cookie = createVibeRaisingLocalPublishedUpdateCookie(publishedUpdate);
-                console.log("[monthly-update:publish-action] using local published update fallback", {
-                    draftId: savedUpdate.id,
-                    hasCookie: Boolean(cookie),
-                });
-                return redirect("/founder-tools/updates", cookie ? { headers: { "Set-Cookie": cookie } } : undefined);
-            }
-
-            console.warn("[monthly-update:publish-action] saved update did not include a backend draft id", JSON.stringify({
-                savedUpdate,
-            }));
+            return redirect("/founder-tools/updates");
         } catch (error) {
-            const gate = acnGateRedirect(error);
-            if (gate) return gate;
-            console.warn("Unable to publish Vibe Raising monthly update.", (error as any)?.response?.data ?? error);
-            return {
-                step: "publish-error",
-                data: updates,
-                error: extractVibeRaisingActionError(error, "We could not publish this update yet. Please check the draft content and try again."),
-            };
+            return { step: "publish-error", data: updates,
+                error: extractVibeRaisingActionError(error, "This revision could not be published. Reload and review the saved update.") };
         }
-
-        return {
-            step: "publish-error",
-            data: updates,
-            error: "We could not find a saved draft to publish. Review the draft once, then publish again.",
-        };
     }
 
     const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
     const activeCompany =
-        appUser.companies.find((company) => company.id === appUser.activeCompanyId) ??
+        appUser.companies.find((company) => company.id === activeCompanyId) ??
         appUser.companies[0] ??
         null;
     const founderProfilesForCompanySave =
@@ -930,6 +826,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
                 ...savePayload,
                 companyId: activeCompanyId,
+                expectedRevision: formData.get("expectedRevision") ? Number(formData.get("expectedRevision")) : null,
                 saveMode: "ready",
             });
         } catch (error) {
@@ -938,27 +835,12 @@ export async function action({ request, context }: Route.ActionArgs) {
             throw error;
         }
 
-        // Mock AI analysis
         return {
             step: "feedback",
-            data: {
-                ...updates,
-                draftId: savedUpdate?.id ?? updates.draftId,
-            },
+            data: { ...updates, ...(savedUpdate ? buildExistingUpdateFormData(savedUpdate) : {}),
+                companyId: activeCompanyId, draftId: savedUpdate?.id,
+                revisionId: savedUpdate?.revisionId, revisionHash: savedUpdate?.revisionHash },
             update: savedUpdate,
-            feedback: {
-                grade: "A+",
-                strengths: [
-                    "Detailed highlights show clear progress",
-                    "Includes quantifiable metrics and data",
-                    "Transparent about challenges facing the business"
-                ],
-                improvements: [
-                    "Consider adding comparison to previous month",
-                    "Include customer testimonials or feedback"
-                ],
-                proTip: "Clear updates acknowledge challenges, explain what is changing, and make specific support requests."
-            }
         };
     }
 
@@ -968,6 +850,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             update = await saveVibeRaisingMonthlyUpdate(env, request, {
                 ...savePayload,
                 companyId: activeCompanyId,
+                expectedRevision: formData.get("expectedRevision") ? Number(formData.get("expectedRevision")) : null,
                 saveMode: "draft",
             });
         } catch (error) {
@@ -1009,7 +892,7 @@ function orderDraftMetricOptions(options: MetricOption[]) {
 
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
     const keys = Object.keys(metrics || {}).filter((key) => hasDisplayableMetricValue(metrics?.[key]));
-    return METRIC_OPTIONS.filter((option) => keys.includes(option.key));
+    return metricOptionsForValues(metrics).filter((option) => keys.includes(option.key));
 }
 
 function getMetricOptionsForDisplay(metrics?: Record<string, string>) {
@@ -1017,7 +900,7 @@ function getMetricOptionsForDisplay(metrics?: Record<string, string>) {
 }
 
 function getEditableMetricOptions(metrics?: Record<string, string>, selected?: Set<string>) {
-    return METRIC_OPTIONS.filter((option) => {
+    return metricOptionsForValues(metrics).filter((option) => {
         const hasKnownValue = Object.prototype.hasOwnProperty.call(metrics || {}, option.key);
         const isSelected = selected?.has(option.key) ?? false;
         return hasKnownValue || isSelected || METRIC_OPTION_MAP.has(option.key);
@@ -3004,6 +2887,7 @@ export default function CreateUpdate() {
         selectedInputSources: initialSelectedInputSources,
         draftReturnState,
         existingMonthlyUpdates,
+        metricDefinitions,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const [activeReviewActionData, setActiveReviewActionData] = useState<any>(null);
@@ -3098,38 +2982,6 @@ export default function CreateUpdate() {
     }, [actionData?.step]);
 
     useEffect(() => {
-        const navigationFormData = navigation.formData;
-        const navigationIntent = navigationFormData?.get("intent");
-        if (!navigationFormData || navigationIntent !== "publish") return;
-
-        const payload = {
-            state: navigation.state,
-            location: navigation.location
-                ? `${navigation.location.pathname}${navigation.location.search || ""}`
-                : null,
-            formEntries: Object.fromEntries(navigationFormData.entries()),
-            url: window.location.href,
-            timestamp: new Date().toISOString(),
-        };
-        console.error("[monthly-update:publish] router submit state", JSON.stringify(payload));
-        window.localStorage.setItem("monthly-update-publish-router-debug", JSON.stringify(payload));
-    }, [navigation.formData, navigation.location, navigation.state]);
-
-    useEffect(() => {
-        if (actionData?.step !== "publish-error") return;
-
-        const payload = {
-            step: actionData.step,
-            error: String((actionData as any).error || ""),
-            data: (actionData as any).data || null,
-            url: window.location.href,
-            timestamp: new Date().toISOString(),
-        };
-        console.error("[monthly-update:publish] action returned publish-error", JSON.stringify(payload));
-        window.localStorage.setItem("monthly-update-publish-action-debug", JSON.stringify(payload));
-    }, [actionData]);
-
-    useEffect(() => {
         if (saveDraftFetcher.data?.step !== "draft-saved") return;
         setDraftSaved(true);
         const timeoutId = window.setTimeout(() => setDraftSaved(false), 2500);
@@ -3139,7 +2991,7 @@ export default function CreateUpdate() {
     // State declarations
     const [isClientMounted, setIsClientMounted] = useState(false);
     const [showEmailWizard, setShowEmailWizard] = useState(false);
-    const storedManualMaterials = useMemo(() => readStoredManualMaterials(), []);
+    const storedManualMaterials = useMemo(() => readStoredManualMaterials(`${user.authUser.id}:${resolveActiveCompanyId(user)}`), [user.authUser.id, user.activeCompanyId]);
     const [manualSummary, setManualSummary] = useState<string>(() => storedManualMaterials.summary || "");
     const [manualDocumentIds, setManualDocumentIds] = useState<string[]>(() => {
         const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
@@ -3150,7 +3002,7 @@ export default function CreateUpdate() {
         const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
         return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
     });
-    const privateAudienceVisibility: VibeRaisingAudienceVisibilitySelection = ["just_me"];
+    const [privateAudienceVisibility, setAudienceVisibility] = useState<VibeRaisingAudienceVisibilitySelection>(() => normalizeAudienceVisibilityValue(defaultData?.audienceVisibility));
     const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
     const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
     const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
@@ -3218,7 +3070,7 @@ export default function CreateUpdate() {
     }, []);
     
     const [metricValues, setMetricValues] = useState<Record<string, string>>(() => {
-        const initial: Record<string, string> = {};
+        const initial: Record<string, string> = Object.fromEntries(metricDefinitions.map(item => [item.key, String(defaultData?.[item.key] || "")]));
         METRIC_OPTIONS.forEach(opt => {
             if (defaultData?.[opt.key]) {
                 initial[opt.key] = defaultData[opt.key];
@@ -3268,7 +3120,7 @@ export default function CreateUpdate() {
     const selectedMetricOptions = Array.from(selectedMetrics)
         .map((key) => METRIC_OPTION_MAP.get(key))
         .filter((metric): metric is MetricOption => Boolean(metric));
-    const draftMetricOptions = orderDraftMetricOptions(METRIC_OPTIONS);
+    const draftMetricOptions = orderDraftMetricOptions(metricOptionsForValues(metricValues));
     const draftMetricInitialCount = PRIMARY_DRAFT_METRIC_KEYS.length;
     const collapsedHiddenDraftMetricCount = draftMetricOptions.filter(
         (metric, index) => index >= draftMetricInitialCount && !String(metricValues[metric.key] || "").trim(),
@@ -3532,7 +3384,9 @@ export default function CreateUpdate() {
         });
     }, []);
 
+    const [generatedRevisionId, setGeneratedRevisionId] = useState<number | null>(null);
     const handleDraftComplete = (data: any) => {
+        setGeneratedRevisionId(data.revisionId || null);
         const resolvedMonth = typeof data.month === "string" && data.month.trim() ? data.month.trim() : selectedMonth;
         const resolvedYear = typeof data.year === "number" && Number.isFinite(data.year) ? data.year : selectedYear;
         const resolvedEditorKey = getMonthlyUpdateKey(resolvedMonth, resolvedYear);
@@ -5058,37 +4912,10 @@ export default function CreateUpdate() {
         setActivePeriodKey("current");
     }, [activePastCard, activePeriodKey]);
 
-    // Prepare chart data — revenue bars with auto-calculated MoM
-    const chartData: ChartData[] = [
-        ...pastMonthCards.map((card, i) => ({
-            month: card.month,
-            value: parseRevenue(card.metrics.revenue || "0"),
-            isSelected: activePeriodKey === `past-${i}`
-        })),
-        {
-            month: selectedMonth,
-            value: parseRevenue(metricValues.revenue || "0"),
-            isCurrent: true,
-            isSelected: activePeriodKey === "current"
-        }
-    ];
-
-    // Active users chart data
-    const activeUsersChartData: ChartData[] = [
-        ...pastMonthCards.map((card, i) => ({
-            month: card.month,
-            value: parseUsers(card.metrics.activeUsers || "0"),
-            isSelected: activePeriodKey === `past-${i}`
-        })),
-        {
-            month: selectedMonth,
-            value: parseUsers(metricValues.activeUsers || "0"),
-            isCurrent: true,
-            isSelected: activePeriodKey === "current"
-        }
-    ];
-    const hasRevenueChart = chartData.some((item) => item.value > 0);
-    const hasActiveUsersChart = activeUsersChartData.some((item) => item.value > 0);
+    const chartData: ChartData[] = [];
+    const activeUsersChartData: ChartData[] = [];
+    const hasRevenueChart = false;
+    const hasActiveUsersChart = false;
 
     // Chart click: always expand + scroll
     const expandCardFromChart = (index: number) => {
@@ -5618,13 +5445,13 @@ export default function CreateUpdate() {
         : actionData;
 
     if ((reviewActionData?.step === "feedback" || reviewActionData?.step === "publish-error") && !dismissedFeedback) {
-        const { feedback, data } = reviewActionData;
+        const { data } = reviewActionData;
         const sendError = reviewActionData.step === "publish-error" ? String((reviewActionData as any).error || "") : "";
         const reviewData = data as any;
         const reviewAnsweredFounderQuestionCount = FOUNDER_QUESTION_FIELDS
             .filter((field) => hasMeaningfulFounderAnswer(reviewData?.[field]))
             .length;
-        const canSubmitReviewToMlai = reviewAnsweredFounderQuestionCount >= REQUIRED_FOUNDER_QUESTION_COUNT;
+        const canSubmitReviewToMlai = reviewAnsweredFounderQuestionCount >= REQUIRED_FOUNDER_QUESTION_COUNT && Boolean(reviewData?.revisionId && reviewData?.revisionHash);
         const rawReviewDraftId = String(reviewData?.draftId || reviewActionData?.update?.id || "").trim();
         const reviewDraftId = BACKEND_DRAFT_ID_PATTERN.test(rawReviewDraftId) ? rawReviewDraftId : "";
         const reviewMonth = String(reviewData?.month || selectedMonth);
@@ -5716,19 +5543,12 @@ export default function CreateUpdate() {
             setShowSendToMlaiConfirmation(true);
         };
 
+        const reviewAudienceVisibility = normalizeAudienceVisibilityValue(reviewData?.audienceVisibility);
         const handleConfirmSendToMlai = () => {
             const sendForm = document.getElementById(SEND_TO_MLAI_FORM_ID);
             if (!(sendForm instanceof HTMLFormElement)) return;
 
             const formData = new FormData(sendForm);
-            formData.set("mlaiFeedbackOptIn", mlaiFeedbackPreference);
-            formData.set("submissionDestination", "mlai");
-            formData.set("surveyFinancialQuestionContext", financialSurveyQuestion.context);
-            formData.set("surveyImportedMetricsUseful", endOfFlowSurvey.importedMetricsUseful || "");
-            formData.set("surveyConnectorValueClear", endOfFlowSurvey.connectorValueClear || "");
-            formData.set("surveyGuidedQuestionsUseful", endOfFlowSurvey.guidedQuestionsUseful || "");
-            formData.set("surveyPreviewAccurate", endOfFlowSurvey.previewAccurate || "");
-            formData.set("surveyComments", endOfFlowSurveyComments.trim());
             submit(formData, {
                 method: "post",
                 action: `${location.pathname}${location.search || ""}`,
@@ -5747,28 +5567,20 @@ export default function CreateUpdate() {
                 details={{
                     draft: `${reviewAnsweredFounderQuestionCount} questions answered`,
                     connect: selectedDraftInputSources.size ? "Sources selected" : "Skipped · optional",
-                    review: showSendToMlaiConfirmation ? "Preview checked" : "Check preview & feedback preference",
-                    publish: showSendToMlaiConfirmation ? `Optional survey · ${endOfFlowSurveyStep + 1} of 4` : "Private submission",
+                    review: showSendToMlaiConfirmation ? "Preview checked" : "Check the saved preview and audience",
+                    publish: showSendToMlaiConfirmation ? "Confirm this revision" : "Founder approval",
                 }}
             >
             <div className="mlai-vibe-update mx-auto max-w-6xl space-y-10 rounded-[32px] bg-[#f5f0e6] px-4 pb-32 sm:px-6">
                 {mlaiGenerateUpdateBrand}
                 <Form id={SEND_TO_MLAI_FORM_ID} method="POST" className="hidden">
-                    <input type="hidden" name="intent" value="send-to-mlai" />
+                    <input type="hidden" name="intent" value="publish" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
-                    {privateAudienceVisibility.map((audience) => (
+                    {reviewAudienceVisibility.map((audience) => (
                         <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
                     ))}
                     <input type="hidden" name="month" value={reviewMonth} />
                     <input type="hidden" name="year" value={reviewYear} />
-                    <input type="hidden" name="mlaiFeedbackOptIn" value={mlaiFeedbackPreference} />
-                    <input type="hidden" name="submissionDestination" value="mlai" />
-                    <input type="hidden" name="surveyFinancialQuestionContext" value={financialSurveyQuestion.context} />
-                    <input type="hidden" name="surveyImportedMetricsUseful" value={endOfFlowSurvey.importedMetricsUseful || ""} />
-                    <input type="hidden" name="surveyConnectorValueClear" value={endOfFlowSurvey.connectorValueClear || ""} />
-                    <input type="hidden" name="surveyGuidedQuestionsUseful" value={endOfFlowSurvey.guidedQuestionsUseful || ""} />
-                    <input type="hidden" name="surveyPreviewAccurate" value={endOfFlowSurvey.previewAccurate || ""} />
-                    <input type="hidden" name="surveyComments" value={endOfFlowSurveyComments} />
                     {Object.entries(reviewData || {})
                         .filter(([key, value]) => (
                             ![
@@ -5795,9 +5607,9 @@ export default function CreateUpdate() {
 
                 <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
                     <div className="min-w-0">
-                        <h2 className="text-lg font-black text-gray-950">Send this update to MLAI</h2>
+                        <h2 className="text-lg font-black text-gray-950">Approve this update</h2>
                         <p className="mt-1 text-sm leading-6 text-slate-600">
-                            This submission stays private and goes only to the MLAI team.
+                            Review the saved content and audience before approving this revision.
                         </p>
                         {!canSubmitReviewToMlai ? (
                             <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
@@ -5806,49 +5618,7 @@ export default function CreateUpdate() {
                         ) : null}
                     </div>
 
-                    <fieldset className="mt-4 border-t border-[var(--vr-color-border)] pt-4 sm:mt-6 sm:pt-6">
-                        <legend className="text-base font-black text-gray-950">Would you like feedback from MLAI?</legend>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">
-                            Choose whether the MLAI team may contact you with practical feedback on this update.
-                        </p>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                            {([
-                                { value: "yes", title: "Yes, send me feedback", description: "MLAI may follow up with suggestions and useful next steps." },
-                                { value: "no", title: "No feedback needed", description: "Submit the update without a follow-up from MLAI." },
-                            ] as const).map((option) => {
-                                const checked = mlaiFeedbackPreference === option.value;
-                                return (
-                                    <label
-                                        key={option.value}
-                                        className={clsx(
-                                            "cursor-pointer rounded-2xl border p-4 transition",
-                                            checked
-                                                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.10)] ring-2 ring-[rgba(0,128,128,0.10)]"
-                                                : "border-[var(--vr-color-border)] bg-white hover:border-[rgba(0,128,128,0.28)]",
-                                        )}
-                                    >
-                                        <span className="flex items-start gap-3">
-                                            <input
-                                                type="radio"
-                                                name="mlaiFeedbackPreference"
-                                                value={option.value}
-                                                checked={checked}
-                                                onChange={() => {
-                                                    setMlaiFeedbackPreference(option.value);
-                                                    setHasReviewedFeedbackPreference(true);
-                                                }}
-                                                className="mt-1 h-4 w-4 accent-[var(--vr-color-primary)]"
-                                            />
-                                            <span>
-                                                <span className="block text-sm font-black text-gray-950">{option.title}</span>
-                                                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{option.description}</span>
-                                            </span>
-                                        </span>
-                                    </label>
-                                );
-                            })}
-                        </div>
-                    </fieldset>
+                    <p className="mt-4 font-semibold">Audience: {reviewAudienceVisibility.includes("community") ? "Community" : "Just for me"}. Return to the draft to change this choice and review a new revision.</p>
                 </div>
 
                 {/* Main layout: founder preview. AI grading/feedback is hidden for now. */}
@@ -6257,72 +6027,7 @@ export default function CreateUpdate() {
                         </div>
                     ) : null}
 
-                    {SHOW_AI_REVIEW_FEEDBACK && (
-                        <div className="w-full space-y-3 lg:sticky lg:top-6 lg:w-56 lg:flex-shrink-0">
-                            <div className="flex flex-col items-center rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
-                                {user.domain ? (
-                                    <img
-                                        src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
-                                        alt={user.companyName}
-                                        className="mb-2 h-12 w-12 rounded-xl bg-gray-50"
-                                    />
-                                ) : (
-                                    <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--vr-palette-teal-soft),var(--vr-palette-mint))]">
-                                        <span className="text-lg font-bold text-[var(--vr-palette-black)]">{user.companyName.charAt(0)}</span>
-                                    </div>
-                                )}
-                                <p className="text-sm font-bold text-gray-900">{user.companyName}</p>
-                                {user.domain && (
-                                    <p className="mt-0.5 text-[11px] text-gray-400">{user.domain}</p>
-                                )}
-                                <StartupRegionBadge location={user.location} className="mt-3" />
-                                {feedback?.grade && (
-                                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(0,255,215,0.28)] bg-[rgba(0,255,215,0.12)] px-2.5 py-1">
-                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--vr-color-primary)]">AI Grade</span>
-                                        <span className="text-sm font-bold leading-none text-[var(--vr-color-primary)]">{feedback.grade}</span>
-                                    </div>
-                                )}
-                            </div>
 
-                            <CollapsibleFeedback
-                                icon={<CheckCircleIcon className="w-3.5 h-3.5" />}
-                                headline={`${feedback?.strengths.length} strengths found`}
-                                color="green"
-                            >
-                                <ul className="space-y-1.5">
-                                    {feedback?.strengths.map((str: string, i: number) => (
-                                        <li key={i} className="flex items-start gap-1.5 text-xs leading-relaxed text-[var(--vr-color-text)]">
-                                            <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--vr-color-primary)]" />
-                                            {str}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CollapsibleFeedback>
-
-                            <CollapsibleFeedback
-                                icon={<ExclamationTriangleIcon className="w-3.5 h-3.5" />}
-                                headline={`${feedback?.improvements.length} areas to improve`}
-                                color="orange"
-                            >
-                                <ul className="space-y-1.5">
-                                    {feedback?.improvements.map((imp: string, i: number) => (
-                                        <li key={i} className="flex items-start gap-1.5 text-xs leading-relaxed text-[var(--vr-color-text)]">
-                                            <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--vr-palette-orange)]" />
-                                            {imp}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CollapsibleFeedback>
-
-                            <CollapsibleFeedback
-                                icon={<LightBulbIcon className="w-3.5 h-3.5" />}
-                                headline="Pro tip from AI"
-                                color="blue"
-                            >
-                                <p className="text-xs leading-relaxed text-[var(--vr-color-text)]">{feedback?.proTip}</p>
-                            </CollapsibleFeedback>
-                        </div>
-                    )}
                 </div>
 
                 <VibeRaisingStickyStepBar
@@ -6331,8 +6036,8 @@ export default function CreateUpdate() {
                     compactOnMobile
                     statusTitle={`Review ${reviewMonth} ${reviewYear} update`}
                     onBack={() => setDismissedFeedback(true)}
-                    primaryLabel={isSubmitting ? "Sending..." : "Send to MLAI"}
-                    mobilePrimaryLabel={isSubmitting ? "Sending..." : "Send to MLAI"}
+                    primaryLabel={isSubmitting ? "Sending..." : "Approve update"}
+                    mobilePrimaryLabel={isSubmitting ? "Sending..." : "Approve update"}
                     primaryDisabled={isSubmitting || !canSubmitReviewToMlai}
                     onPrimary={handleSendToMlai}
                 />
@@ -6344,198 +6049,13 @@ export default function CreateUpdate() {
                 ) : null}
 
                 {showSendToMlaiConfirmation ? (
-                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-                        <button
-                            type="button"
-                            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
-                            onClick={() => {
-                                if (!isSubmitting) setShowSendToMlaiConfirmation(false);
-                            }}
-                            aria-label="Return to update review"
-                        />
-                        <section
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="send-to-mlai-confirmation-title"
-                            aria-describedby="send-to-mlai-confirmation-description"
-                            className="relative z-[160] max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-[var(--vr-color-border)] bg-white shadow-2xl"
-                        >
-                            <div className="flex items-start justify-between gap-5 border-b border-[var(--vr-color-border)] px-5 py-5 sm:px-7 sm:py-6">
-                                <div>
-                                    <h2 id="send-to-mlai-confirmation-title" className="text-2xl font-black text-gray-950 sm:text-3xl">
-                                        Send this update to MLAI?
-                                    </h2>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowSendToMlaiConfirmation(false)}
-                                    disabled={isSubmitting}
-                                    className="rounded-full border border-[var(--vr-color-border)] p-2 text-slate-500 transition hover:border-slate-400 hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
-                                    aria-label="Close confirmation"
-                                >
-                                    <XMarkIcon className="h-5 w-5" />
-                                </button>
-                            </div>
-
-                            <div className="space-y-6 px-5 py-5 sm:px-7 sm:py-6">
-                                <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,128,128,0.24)] bg-[rgba(0,255,215,0.08)] p-4">
-                                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--vr-color-primary)] text-white">
-                                        <LockClosedIcon className="h-5 w-5" />
-                                    </span>
-                                    <div>
-                                        <p id="send-to-mlai-confirmation-description" className="text-sm leading-6 text-slate-600">
-                                            Only members of the Vibe Raising development team can access this submission. It will not be visible to investors or other founders.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div aria-labelledby="end-of-flow-survey-title">
-                                    <h3 id="end-of-flow-survey-title" className="text-xl font-black text-gray-950">Help us improve this flow</h3>
-
-                                    <div className="mt-5 flex items-center justify-between gap-4">
-                                        <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
-                                            Step {endOfFlowSurveyStep + 1} of {END_OF_FLOW_SURVEY_STEP_COUNT}
-                                        </p>
-                                        <div className="flex flex-1 justify-end gap-1.5" aria-hidden="true">
-                                            {Array.from({ length: END_OF_FLOW_SURVEY_STEP_COUNT }, (_, index) => (
-                                                <span
-                                                    key={index}
-                                                    className={clsx(
-                                                        "h-1.5 w-8 rounded-full transition-colors",
-                                                        index <= endOfFlowSurveyStep ? "bg-[var(--vr-color-primary)]" : "bg-slate-200",
-                                                    )}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-4 min-h-52 rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-5 sm:p-6">
-                                        {activeSurveyQuestion ? (
-                                            <fieldset>
-                                                <legend className="text-xl font-black leading-7 text-gray-950 sm:text-2xl">
-                                                    {activeSurveyQuestion.label}
-                                                </legend>
-                                                <div className="mt-6 grid grid-cols-2 gap-3 sm:max-w-md">
-                                                    {([
-                                                        { value: "yes", label: "Thumbs up", Icon: HandThumbUpSolidIcon },
-                                                        { value: "no", label: "Thumbs down", Icon: HandThumbDownSolidIcon },
-                                                    ] as const).map(({ value, label, Icon }) => {
-                                                        const checked = endOfFlowSurvey[activeSurveyQuestion.key] === value;
-                                                        const isPositive = value === "yes";
-                                                        return (
-                                                            <label
-                                                                key={value}
-                                                                title={label}
-                                                                className={clsx(
-                                                                    "group relative flex min-h-24 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:scale-[0.98] focus-within:ring-4 focus-within:ring-offset-2",
-                                                                    checked
-                                                                        ? isPositive
-                                                                            ? "border-[#00a98f] bg-[#00bfa5] text-white shadow-teal-900/20 focus-within:ring-[rgba(0,191,165,0.24)]"
-                                                                            : "border-[#f04a23] bg-[#ff5c35] text-white shadow-orange-900/20 focus-within:ring-[rgba(255,92,53,0.22)]"
-                                                                        : isPositive
-                                                                            ? "border-[var(--vr-color-border)] bg-white text-[#008b78] hover:border-[#00bfa5] hover:bg-[rgba(0,255,215,0.12)] hover:shadow-teal-900/15 focus-within:ring-[rgba(0,191,165,0.20)]"
-                                                                            : "border-[var(--vr-color-border)] bg-white text-[#d94928] hover:border-[#ff5c35] hover:bg-[rgba(255,92,53,0.10)] hover:shadow-orange-900/15 focus-within:ring-[rgba(255,92,53,0.18)]",
-                                                                )}
-                                                            >
-                                                                <span
-                                                                    className={clsx(
-                                                                        "pointer-events-none absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-70",
-                                                                        isPositive ? "bg-[#00ffd7]" : "bg-[#ff8a66]",
-                                                                    )}
-                                                                    aria-hidden="true"
-                                                                />
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`survey-${activeSurveyQuestion.key}`}
-                                                                    value={value}
-                                                                    checked={checked}
-                                                                    onChange={() => {
-                                                                        setEndOfFlowSurvey((current) => ({
-                                                                            ...current,
-                                                                            [activeSurveyQuestion.key]: value,
-                                                                        }));
-                                                                        setEndOfFlowSurveyStep((current) => Math.min(
-                                                                            END_OF_FLOW_SURVEY_STEP_COUNT - 1,
-                                                                            current + 1,
-                                                                        ));
-                                                                    }}
-                                                                    className="sr-only"
-                                                                    aria-label={label}
-                                                                />
-                                                                <span
-                                                                    className={clsx(
-                                                                        "relative z-10 flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:bg-white group-hover:shadow-md",
-                                                                        checked
-                                                                            ? "bg-white/20 text-white"
-                                                                            : isPositive
-                                                                                ? "bg-[rgba(0,255,215,0.13)] text-[#008b78]"
-                                                                                : "bg-[rgba(255,92,53,0.11)] text-[#d94928]",
-                                                                    )}
-                                                                    aria-hidden="true"
-                                                                >
-                                                                    <Icon
-                                                                        className={clsx(
-                                                                            "h-8 w-8 transition-transform duration-300",
-                                                                            isPositive ? "group-hover:-rotate-6" : "group-hover:rotate-6",
-                                                                        )}
-                                                                    />
-                                                                </span>
-                                                            </label>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </fieldset>
-                                        ) : isSurveyCommentsStep ? (
-                                            <label className="block">
-                                                <span className="text-xl font-black leading-7 text-gray-950 sm:text-2xl">What would make your next update faster or more useful?</span>
-                                                <span className="ml-2 text-sm font-semibold text-slate-400">Optional</span>
-                                                <textarea
-                                                    value={endOfFlowSurveyComments}
-                                                    onChange={(event) => setEndOfFlowSurveyComments(event.target.value)}
-                                                    maxLength={1000}
-                                                    rows={4}
-                                                    placeholder="Tell us what worked, what felt unclear, or what would make the next update easier."
-                                                    className="mt-5 w-full resize-y rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-3 text-sm font-medium leading-6 text-gray-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,255,215,0.14)]"
-                                                />
-                                            </label>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col-reverse gap-3 border-t border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-5 py-4 sm:flex-row sm:justify-end sm:px-7">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (endOfFlowSurveyStep === 0) {
-                                            setShowSendToMlaiConfirmation(false);
-                                            return;
-                                        }
-                                        setEndOfFlowSurveyStep((current) => Math.max(0, current - 1));
-                                    }}
-                                    disabled={isSubmitting}
-                                    className="rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-sm font-black text-gray-950 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    {endOfFlowSurveyStep === 0 ? "Go back" : "Previous"}
-                                </button>
-                                {isSurveyCommentsStep ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleConfirmSendToMlai}
-                                        disabled={isSubmitting}
-                                        className="rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-lg shadow-teal-900/10 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        {isSubmitting ? "Sending..." : "Confirm and send to MLAI"}
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => setEndOfFlowSurveyStep((current) => Math.min(END_OF_FLOW_SURVEY_STEP_COUNT - 1, current + 1))}
-                                        className="rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-lg shadow-teal-900/10 transition hover:brightness-95"
-                                    >
-                                        Skip
-                                    </button>
-                                )}
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/70 p-4">
+                        <section role="dialog" aria-modal="true" aria-labelledby="publication-confirmation" className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-xl">
+                            <h2 id="publication-confirmation" className="text-2xl font-bold">Approve this monthly update?</h2>
+                            <p className="mt-4">This approves the exact saved revision shown in the preview for {reviewAudienceVisibility.includes("community") ? "the community" : "your private archive"}.</p>
+                            <div className="mt-6 flex gap-4">
+                                <button type="button" onClick={() => setShowSendToMlaiConfirmation(false)} className="rounded border px-4 py-3">Back to review</button>
+                                <button type="button" onClick={handleConfirmSendToMlai} disabled={isSubmitting || !reviewData?.revisionId} className="rounded bg-teal-700 px-4 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Publishing…" : "Approve this revision"}</button>
                             </div>
                         </section>
                     </div>
@@ -6872,6 +6392,8 @@ export default function CreateUpdate() {
                                         </div>
                                     ) : null}
                                 <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
+<input type="hidden" name="companyId" value={resolveActiveCompanyId(user) || ""} />
+<input type="hidden" name="expectedRevision" value={saveDraftFetcher.data?.update?.revisionId ?? actionData?.update?.revisionId ?? generatedRevisionId ?? existingUpdateForSelectedMonth?.revisionId ?? (existingData as any)?.revisionId ?? ""} />
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
                                     {formMetricKeys.map((metricKey) => (
@@ -6881,9 +6403,7 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="financialSnapshot" value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""} />
                                     <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
                                     <input type="hidden" name="presentationMode" value={presentationMode} />
-                                    {privateAudienceVisibility.map((audience) => (
-                                        <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
-                                    ))}
+                                    <VibeRaisingAudienceVisibilityField name="audienceVisibility" value={privateAudienceVisibility} onChange={setAudienceVisibility} />
                                     <input type="hidden" name="summary" value={summary} />
                                     <input type="hidden" name="sourceUrl" value={sourceUrl} />
                                     <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
@@ -7214,6 +6734,8 @@ export default function CreateUpdate() {
             {showLegacyDraftFlow ? (
             <>
             <Form method="POST" className="space-y-6">
+<input type="hidden" name="companyId" value={resolveActiveCompanyId(user) || ""} />
+<input type="hidden" name="expectedRevision" value={saveDraftFetcher.data?.update?.revisionId ?? actionData?.update?.revisionId ?? generatedRevisionId ?? existingUpdateForSelectedMonth?.revisionId ?? (existingData as any)?.revisionId ?? ""} />
                 <input type="hidden" name="intent" value="review" />
                 <input
                     type="hidden"

@@ -8,24 +8,23 @@ import {
 import { normalizeMonthlyUpdate } from "../app/lib/vibe-raising";
 
 describe("Vibe Raising audience visibility", () => {
-  test("preserves both public audiences in canonical order", () => {
+  test("keeps community disclosure while discarding retired investor options", () => {
     expect(normalizeVibeRaisingAudienceVisibility(["investor", "community"])).toEqual([
       "community",
-      "investors",
     ]);
   });
 
   test("continues to accept legacy scalar responses", () => {
-    expect(parseVibeRaisingAudienceVisibility("investor")).toEqual(["investors"]);
+    expect(normalizeVibeRaisingAudienceVisibility("investor")).toEqual(["just_me"]);
     expect(parseVibeRaisingAudienceVisibility("private")).toEqual(["just_me"]);
   });
 
-  test("keeps private visibility exclusive while allowing both public audiences", () => {
+  test("keeps private visibility exclusive and ignores retired audiences", () => {
     const community = toggleVibeRaisingAudienceVisibility(["just_me"], "community");
     const both = toggleVibeRaisingAudienceVisibility(community, "investors");
 
     expect(community).toEqual(["community"]);
-    expect(both).toEqual(["community", "investors"]);
+    expect(both).toEqual(["community"]);
     expect(toggleVibeRaisingAudienceVisibility(both, "just_me")).toEqual(["just_me"]);
   });
 
@@ -43,6 +42,6 @@ describe("Vibe Raising audience visibility", () => {
     });
 
     expect(update?.id).toBe("517");
-    expect(update?.audienceVisibility).toEqual(["community", "investors"]);
+    expect(update?.audienceVisibility).toEqual(["community"]);
   });
 });

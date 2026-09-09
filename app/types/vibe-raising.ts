@@ -153,6 +153,8 @@ export interface VibeRaisingConciseAnalysis {
 }
 
 export interface VibeRaisingDraftedContent {
+  revisionId?: number | null;
+  revisionHash?: string | null;
   month?: string;
   year?: number;
   summary?: string;
@@ -184,6 +186,11 @@ export interface VibeRaisingDraftedContent {
 
 export interface VibeRaisingMonthlyUpdate {
   id: string;
+  revisionId?: number | null;
+  revisionHash?: string | null;
+  snapshotId?: number | null;
+  evidenceStatus?: string | null;
+  metricEvidence?: Record<string, { quality?: string; source_provider?: string; basis?: string; limitations?: string[] }>;
   isoMonth?: string | null;
   month: string;
   monthName?: string | null;
@@ -712,6 +719,8 @@ export interface VibeRaisingStartupUpdateRunProgress {
   targetMonth?: string | null;
 }
 export interface VibeRaisingEmailDraftMonth {
+  revisionId?: number | null;
+  revisionHash?: string | null;
   draftId?: number;
   isoMonth?: string;
   month: string;

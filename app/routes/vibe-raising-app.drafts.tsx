@@ -233,7 +233,7 @@ export default function VibeRaisingDraftsPage() {
                                         <DraftSection label="Challenges" text={draft.challenges} />
                                         <DraftSection label="Learnings" text={draft.learnings} />
                                         <DraftSection label="Next 30 Days" text={draft.next30Days} />
-                                        <DraftSection label="Ask from Investors" text={draft.asks} />
+                                        <DraftSection label="Ways to help" text={draft.asks} />
                                     </div>
 
                                     <div className="mt-5 flex flex-wrap gap-3">

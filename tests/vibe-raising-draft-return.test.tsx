@@ -20,7 +20,8 @@ function renderDraft(path: string, existingData: Record<string, unknown> | null 
   }], {
     initialEntries: [path],
     hydrationData: { loaderData: { create: {
-      user: { companies: [], companyName: "Test startup", companyRegistered: true },
+      metricDefinitions: [],
+        user: { authUser: { id: "test-founder" }, companies: [], companyName: "Test startup", companyRegistered: true },
       existingData,
       isEdit: Boolean(existingData),
       backendBaseUrl: "http://127.0.0.1:8000",

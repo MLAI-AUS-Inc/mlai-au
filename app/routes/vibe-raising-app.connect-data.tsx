@@ -41,6 +41,7 @@ import {
   getVibeRaisingSlackPreview,
   getVibeRaisingXeroPreview,
   requireVibeRaisingFounder,
+  resolveActiveCompanyId,
   saveVibeRaisingGoogleAnalyticsPropertySelections,
   saveVibeRaisingLumaSelections,
   saveVibeRaisingSlackChannelSelections,
@@ -286,10 +287,10 @@ function isOAuthSourceKey(key: VibeRaisingInputSourceKey): key is OAuthSourceKey
   return key !== "gmail" && key !== "manual_documents" && key !== "luma";
 }
 
-function readStoredManualMaterials(): ManualMaterialsState {
+function readStoredManualMaterials(scope: string): ManualMaterialsState {
   if (typeof window === "undefined") return { summary: "", manualDocumentIds: [], documents: [] };
   try {
-    const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
+    const raw = window.sessionStorage.getItem(`${MANUAL_MATERIALS_STORAGE_KEY}:${scope}`);
     if (!raw) return { summary: "", manualDocumentIds: [], documents: [] };
     const parsed = JSON.parse(raw) as {
       sourceUrl?: unknown;
@@ -314,23 +315,23 @@ function readStoredManualMaterials(): ManualMaterialsState {
   }
 }
 
-function writeStoredManualMaterials(materials: ManualMaterialsState) {
+function writeStoredManualMaterials(materials: ManualMaterialsState, scope: string) {
   if (typeof window === "undefined") return;
   const summary = materials.summary.trim();
   const manualDocumentIds = Array.from(new Set(materials.manualDocumentIds.map((item) => item.trim()).filter(Boolean)));
   const documents = materials.documents.filter((document) => manualDocumentIds.includes(document.id));
   if (manualDocumentIds.length === 0 && !summary) {
-    window.localStorage.removeItem(MANUAL_MATERIALS_STORAGE_KEY);
+    window.sessionStorage.removeItem(`${MANUAL_MATERIALS_STORAGE_KEY}:${scope}`);
     return;
   }
-  window.localStorage.setItem(MANUAL_MATERIALS_STORAGE_KEY, JSON.stringify({ summary, manualDocumentIds, documents }));
+  window.sessionStorage.setItem(`${MANUAL_MATERIALS_STORAGE_KEY}:${scope}`, JSON.stringify({ summary, manualDocumentIds, documents }));
 }
 
 const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; mobileDescription: string; connectedUse: string }> = {
   gmail: {
-    description: "Scan emails for key updates, investor feedback, and important threads.",
-    mobileDescription: "Scan key emails and investor threads.",
-    connectedUse: "Emails, investor threads",
+    description: "Scan emails for key updates, customer feedback, and important threads.",
+    mobileDescription: "Scan key emails and customer threads.",
+    connectedUse: "Emails, customer threads",
   },
   google_analytics: {
     description: "Bring product traffic, acquisition, and engagement metrics into updates.",
@@ -408,9 +409,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const { appUser: user } = await requireVibeRaisingFounder(env, request);
 
-  if (!user.companyRegistered) {
-    throw redirect("/founder-tools/company-setup");
-  }
 
   const url = new URL(request.url);
   return {
@@ -1834,7 +1832,7 @@ function sourceScanSummary(source: VibeRaisingInputSourceSummary) {
     case "notion":
       return "the pages and notes you choose to use as drafting context";
     case "google_drive":
-      return "the files you choose to use as investor-update context";
+      return "the files you choose to use as monthly-update context";
     default:
       return "the selected source data needed for this update";
   }
@@ -1946,7 +1944,8 @@ function GmailManagementModal({
 }
 
 export default function ConnectData() {
-  const { backendBaseUrl, next } = useLoaderData<typeof loader>();
+  const { backendBaseUrl, next, user } = useLoaderData<typeof loader>();
+  const materialsScope = `${user.authUser.id}:${resolveActiveCompanyId(user)}`;
   const navigate = useNavigate();
   const location = useLocation();
   const [sources, setSources] = useState<VibeRaisingInputSourceSummary[]>(EMPTY_SOURCES);
@@ -2001,8 +2000,8 @@ export default function ConnectData() {
   const [linearPreview, setLinearPreview] = useState<VibeRaisingLinearPreview | null>(null);
   const [loadingLinearPreview, setLoadingLinearPreview] = useState(false);
   const [linearError, setLinearError] = useState<string | null>(null);
-  const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials());
-  const [manualDocuments, setManualDocuments] = useState<VibeRaisingManualDocument[]>(() => readStoredManualMaterials().documents);
+  const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials(materialsScope));
+  const [manualDocuments, setManualDocuments] = useState<VibeRaisingManualDocument[]>(() => readStoredManualMaterials(materialsScope).documents);
   const [loadingManualDocuments, setLoadingManualDocuments] = useState(false);
   const [manualDocumentUploadStatus, setManualDocumentUploadStatus] = useState<"idle" | "creating_session" | "uploading" | "finalizing">("idle");
   const [manualDocumentError, setManualDocumentError] = useState<string | null>(null);
@@ -2212,7 +2211,7 @@ export default function ConnectData() {
             manualDocumentIds: selectedDocuments.map((document) => document.id),
             documents: selectedDocuments,
           };
-          writeStoredManualMaterials(nextMaterials);
+          writeStoredManualMaterials(nextMaterials, materialsScope);
           return nextMaterials;
         });
       })
@@ -2909,7 +2908,7 @@ export default function ConnectData() {
   };
 
   const navigateToDraft = (includeInputs: boolean) => {
-    writeStoredManualMaterials(manualMaterials);
+    writeStoredManualMaterials(manualMaterials, materialsScope);
     const target = new URL(next, "http://mlai.local");
     const draftSources = new Set(selectedSources);
     if (includeInputs && hasManualMaterials) {
@@ -2939,7 +2938,7 @@ export default function ConnectData() {
   const updateManualMaterials = (patch: Partial<ManualMaterialsState>) => {
     setManualMaterials((previous) => {
       const nextMaterials = { ...previous, ...patch };
-      writeStoredManualMaterials(nextMaterials);
+      writeStoredManualMaterials(nextMaterials, materialsScope);
       return nextMaterials;
     });
   };
@@ -2960,7 +2959,7 @@ export default function ConnectData() {
           .map((documentId) => documentsById.get(documentId))
           .filter((item): item is VibeRaisingManualDocument => Boolean(item)),
       };
-      writeStoredManualMaterials(nextMaterials);
+      writeStoredManualMaterials(nextMaterials, materialsScope);
       return nextMaterials;
     });
   };
@@ -3330,7 +3329,7 @@ export default function ConnectData() {
                     value={manualMaterials.summary}
                     onChange={(event) => updateManualMaterials({ summary: event.target.value })}
                     rows={4}
-                    placeholder="Topline context investors should read before the detailed sections..."
+                    placeholder="Topline context the community should read before the detailed sections..."
                     className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
                   />
                 </label>
@@ -3524,7 +3523,7 @@ export default function ConnectData() {
                     Connect {pendingConnectSource.label}?
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    We only use the authorized data needed for your investor update workflow. Only you can see this connected data in your workspace until you publish an update.
+                    We only use the authorized data needed for your monthly update workflow. Only you can see this connected data in your workspace until you publish an update.
                   </p>
                 </div>
                 <button

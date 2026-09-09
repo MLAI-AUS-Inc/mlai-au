@@ -24,7 +24,7 @@ export default function VibeRaisingOnboardingCard({
             Vibe Raising
           </h1>
           <p className="text-sm text-[var(--vr-color-text-sub)]">
-            Connect founders with investors through monthly updates
+            Connect founders with the community through monthly updates
           </p>
           <p className="mt-3 text-xs font-medium uppercase tracking-[0.2em] text-[var(--vr-color-text-sub)]">
             Signed in as {email}

@@ -100,7 +100,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   if (
     vibeContext.appUser &&
-    !vibeContext.appUser.companyRegistered &&
+    !vibeContext.appUser.companies.length &&
     !canAccessDuringCompanySetup(pathname)
   ) {
     throw redirect("/founder-tools/company-setup");

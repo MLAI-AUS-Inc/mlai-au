@@ -6,6 +6,7 @@ import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/Vib
 import type { VibeRaisingMetricHistory } from "~/types/vibe-raising";
 import {
     VIBE_METRIC_OPTIONS,
+    metricOptionsForValues,
     VIBE_METRIC_OPTION_MAP,
     hasDisplayableMetricValue,
     formatMetricDisplayValue,
@@ -46,12 +47,12 @@ export default function VRUpdateSnippetCard({
     // The founder's per-update snippet selection; older data without a
     // config falls back to the first few valued metrics.
     const snippetKeys: string[] | null = update.displayConfig?.snippetMetricKeys ?? null;
-    const valuedOptions = VIBE_METRIC_OPTIONS.filter((option) =>
+    const valuedOptions = metricOptionsForValues(update.metrics).filter((option) =>
         hasDisplayableMetricValue(update.metrics?.[option.key]),
     );
     const metrics = (snippetKeys
         ? snippetKeys
-            .map((key) => VIBE_METRIC_OPTION_MAP.get(key))
+            .map((key) => metricOptionsForValues(update.metrics).find(option => option.key === key))
             .filter((option): option is MetricOption => Boolean(option))
             .filter((option) => hasDisplayableMetricValue(update.metrics?.[option.key]))
         : valuedOptions
@@ -59,6 +60,7 @@ export default function VRUpdateSnippetCard({
 
     return (
         <div className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+            {update.evidenceStatus === "legacy_unverified" && <p className="bg-amber-50 px-4 py-2 text-xs text-amber-900">Legacy update · evidence has not been revalidated.</p>}
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 sm:px-5">
                 <h3 className="text-base font-bold text-gray-900">
                     {updatePeriod.month} {updatePeriod.year} Update

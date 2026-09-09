@@ -5,7 +5,7 @@ import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import type { Route } from "./+types/vibe-raising-landing";
 
 const PAGE_DESCRIPTION =
-  "MLAI Vibe Raising helps founders draft monthly investor updates and build investor relationships before they raise.";
+  "Understand business health and share reliable monthly progress from your startup’s connected sources.";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -36,7 +36,6 @@ export default function VibeRaisingLandingPage({}: Route.ComponentProps) {
         firstName="Founder"
         heading="Turn Your Startup Into a Fundable Business"
         showEyebrow={false}
-        showInvestorConnectionSection
         useNumberedSectionHeadings
         bleedToShell={false}
         onCreateFirstUpdate={() => setShowIntroVideo(true)}
