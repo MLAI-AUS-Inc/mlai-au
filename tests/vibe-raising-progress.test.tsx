@@ -8,12 +8,13 @@ import { getVibeRaisingDraftProgress } from "../app/lib/vibe-raising-progress";
 const answerFields = ["highlights", "challenges", "learnings", "next30Days", "asks"];
 
 function renderUpdate(answers: Record<string, string>, review = false) {
-  const data = { month: "August", year: 2026, ...answers };
+  const data = { month: "August", year: 2026, revisionId: 12, revisionHash: "reviewed-hash", companyId: "test-company", ...answers };
   const router = createMemoryRouter([{ id: "update", path: "/create", Component: CreateUpdate }], {
     initialEntries: ["/create?edit=42"],
     hydrationData: {
       loaderData: { update: {
-        user: { companies: [], companyName: "Test startup", companyRegistered: true },
+        metricDefinitions: [],
+        user: { authUser: { id: "test-founder" }, companies: [], companyName: "Test startup", companyRegistered: true },
         existingData: data,
         isEdit: true,
         backendBaseUrl: "http://127.0.0.1:8000",

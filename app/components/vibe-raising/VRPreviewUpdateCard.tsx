@@ -13,6 +13,7 @@ import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
 import { parseVibeRaisingMonthYear } from "~/components/VibeRaisingDateTabs";
 import {
     VIBE_METRIC_OPTIONS,
+    metricOptionsForValues,
     VIBE_METRIC_OPTION_MAP,
     hasDisplayableMetricValue,
     formatMetricDisplayValue,
@@ -62,7 +63,7 @@ function VRPreviewUpdateSection({
     const items = splitItems(normalizedText);
     const [mobileExpanded, setMobileExpanded] = useState(false);
     const shouldClampOnMobile = items.length > 1;
-    const visibleItems = mobileExpanded ? items : items.slice(0, 1);
+    const visibleItems = items;
 
     if (!normalizedText) return null;
 
@@ -73,7 +74,7 @@ function VRPreviewUpdateSection({
             </h4>
             <ul className="list-outside list-disc space-y-2 pl-5 [font-family:var(--vr-font-body)] text-[15px] font-medium leading-7 text-gray-800 marker:text-[var(--vr-color-primary)] sm:text-base">
                 {visibleItems.map((item, index) => (
-                    <li key={`${label}-${index}`}>{item.trim()}</li>
+                    <li className={!mobileExpanded && index > 0 ? "hidden sm:list-item" : undefined} key={`${label}-${index}`}>{item.trim()}</li>
                 ))}
             </ul>
             {shouldClampOnMobile ? (
@@ -156,7 +157,7 @@ function VRPitchDeckPreview({
                     <DocumentArrowUpIcon className="h-10 w-10 text-slate-300" />
                     <p className="mt-3 text-sm font-black text-gray-950">Deck uploaded</p>
                     <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                        The file is attached and ready for investors to open.
+                        The file is attached and ready for the community to open.
                     </p>
                 </div>
             )}
@@ -182,7 +183,7 @@ export function VRPreviewUpdateCard({
         : parseVibeRaisingMonthYear(update.month);
     const updateSummary = update.summary || "";
     const updateSourceUrl = update.sourceUrl || "";
-    const valuedMetricOptions = VIBE_METRIC_OPTIONS.filter((option) =>
+    const valuedMetricOptions = metricOptionsForValues(update.metrics).filter((option) =>
         hasDisplayableMetricValue(update.metrics?.[option.key]),
     );
     // The founder's per-update choice of metrics for the full view; without
@@ -190,7 +191,7 @@ export function VRPreviewUpdateCard({
     const fullMetricKeys: string[] | null = update.displayConfig?.fullMetricKeys ?? null;
     const metrics = fullMetricKeys
         ? fullMetricKeys
-            .map((key) => VIBE_METRIC_OPTION_MAP.get(key))
+            .map((key) => metricOptionsForValues(update.metrics).find(option => option.key === key))
             .filter((option): option is MetricOption => Boolean(option))
             .filter((option) => hasDisplayableMetricValue(update.metrics?.[option.key]))
         : valuedMetricOptions;
@@ -205,6 +206,8 @@ export function VRPreviewUpdateCard({
 
     return (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            {update.evidenceStatus === "legacy_unverified" && <p className="bg-amber-50 px-4 py-2 text-xs text-amber-900">Legacy update · evidence has not been revalidated.</p>}
+            {Object.entries(update.metricEvidence || {}).some(([, item]) => (item as any)?.quality === "partial") && <p className="bg-amber-50 px-4 py-2 text-xs text-amber-900">Revenue has partial source coverage. Paid Stripe invoices exclude tax; other payments and adjustments need confirmation.</p>}
             <div className="relative h-24 w-full overflow-hidden sm:h-32">
                 <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
                 <svg className="absolute inset-0 h-full w-full opacity-[0.12]" viewBox="0 0 800 200">
@@ -379,7 +382,7 @@ export function VRPreviewUpdateCard({
                     text={update.next30Days}
                 />
                 <VRPreviewUpdateSection
-                    label="Ask from Investors"
+                    label="Ways to help"
                     text={update.asks}
                 />
             </div> : null}

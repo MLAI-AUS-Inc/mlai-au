@@ -759,6 +759,8 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   }
 
   return {
+    revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
+    revisionHash: asNullableString(payload.revisionHash),
     month: asNullableString(payload.month) ?? undefined,
     year: yearValue,
     summary: normalizeDraftSummary(payload.summary) ??
@@ -893,6 +895,8 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
         : undefined;
 
   return {
+    revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
+    revisionHash: asNullableString(payload.revisionHash),
     draftId: typeof draftId === "number" && Number.isFinite(draftId) ? draftId : undefined,
     isoMonth:
       asNullableString(payload.isoMonth) ??
@@ -1015,6 +1019,7 @@ export function normalizeMetricHistory(raw: unknown): VibeRaisingMetricHistory {
       if (!rawPoint || typeof rawPoint !== "object") continue;
       const pointPayload = rawPoint as Record<string, unknown>;
       const month = asNullableString(pointPayload.month);
+      if (pointPayload.value === null || pointPayload.value === undefined || pointPayload.value === "") continue;
       const value = Number(pointPayload.value);
       if (!month || !Number.isFinite(value)) continue;
       points.push({
@@ -1072,6 +1077,11 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
 
   return {
     id,
+    revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
+    revisionHash: asNullableString(payload.revisionHash),
+    snapshotId: payload.snapshotId == null ? null : Number(payload.snapshotId),
+    evidenceStatus: asNullableString(payload.evidenceStatus),
+    metricEvidence: (payload.metricEvidence || {}) as VibeRaisingMonthlyUpdate["metricEvidence"],
     isoMonth:
       asNullableString(payload.isoMonth) ??
       asNullableString(payload.iso_month),
@@ -2536,46 +2546,11 @@ export async function getVibeRaisingMonthlyUpdatesBundle(
   request: Request,
   companyId?: string | null,
 ): Promise<VibeRaisingMonthlyUpdatesBundle> {
-  if (shouldUseDevBackendStub()) {
-    return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
-  }
-  const client = createApiClient(env, request);
-
-  try {
-    const response = await client.get(
-      companyId ? `${UPDATES_PATH}?company_id=${encodeURIComponent(companyId)}` : UPDATES_PATH,
-    );
-    const updates: unknown[] = Array.isArray(response.data?.updates) ? response.data.updates : [];
-    return mergeLocalPublishedUpdate({
-      updates: updates
-        .map(normalizeMonthlyUpdate)
-        .filter((value): value is VibeRaisingMonthlyUpdate => value !== null),
-      metricHistory: normalizeMetricHistory(
-        response.data?.metricHistory ?? response.data?.metric_history,
-      ),
-    }, request);
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return mergeLocalPublishedUpdate({ updates: [], metricHistory: {} }, request);
-    }
-
-    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
-      console.warn("No backend monthly update session in local dev; using update stubs.");
-      return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
-    }
-
-    if (shouldUseDevAuthBypass() && !error.response) {
-      console.warn("Backend monthly update lookup failed before returning a response in local dev; using update stubs.");
-      return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
-    }
-
-    if (shouldUseDevBackendFallback(error)) {
-      console.warn("Backend unavailable in local dev; using Vibe Raising monthly update stubs for preview.");
-      return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
-    }
-
-    throw error;
-  }
+  const response = await createApiClient(env, request).get(
+    companyId ? `${UPDATES_PATH}?company_id=${encodeURIComponent(companyId)}` : UPDATES_PATH);
+  const raw: unknown[] = Array.isArray(response.data?.updates) ? response.data.updates : [];
+  return { updates: raw.map(normalizeMonthlyUpdate).filter((item): item is VibeRaisingMonthlyUpdate => item !== null),
+    metricHistory: normalizeMetricHistory(response.data?.metricHistory ?? response.data?.metric_history) };
 }
 
 export async function getVibeRaisingMonthlyUpdates(
@@ -2591,44 +2566,10 @@ export async function getVibeRaisingDrafts(
   request: Request,
   companyId?: string | null,
 ): Promise<VibeRaisingMonthlyUpdate[]> {
-  if (shouldUseDevBackendStub()) {
-    return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
-  }
-
-  const client = createApiClient(env, request);
-  try {
-    const response = await client.get(
-      companyId ? `${DRAFTS_PATH}?company_id=${encodeURIComponent(companyId)}` : DRAFTS_PATH,
-    );
-    const drafts: unknown[] = Array.isArray(response.data?.drafts) ? response.data.drafts : [];
-    return mergeLocalDraftUpdate(
-      drafts
-        .map(normalizeMonthlyUpdate)
-        .filter((value): value is VibeRaisingMonthlyUpdate => value !== null),
-      request,
-    );
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return mergeLocalDraftUpdate([], request);
-    }
-
-    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
-      console.warn("No backend drafts session in local dev; using draft stubs.");
-      return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
-    }
-
-    if (shouldUseDevAuthBypass() && !error.response) {
-      console.warn("Backend draft lookup failed before returning a response in local dev; using draft stubs.");
-      return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
-    }
-
-    if (shouldUseDevBackendFallback(error)) {
-      console.warn("Backend unavailable in local dev; using Vibe Raising draft stubs for preview.");
-      return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
-    }
-
-    throw error;
-  }
+  const response = await createApiClient(env, request).get(
+    companyId ? `${DRAFTS_PATH}?company_id=${encodeURIComponent(companyId)}` : DRAFTS_PATH);
+  const raw: unknown[] = Array.isArray(response.data?.drafts) ? response.data.drafts : [];
+  return raw.map(normalizeMonthlyUpdate).filter((item): item is VibeRaisingMonthlyUpdate => item !== null);
 }
 
 export async function getVibeRaisingMonthlyUpdateById(
@@ -2661,6 +2602,7 @@ export async function saveVibeRaisingMonthlyUpdate(
   request: Request,
   body: {
     companyId?: string | null;
+    expectedRevision?: number | null;
     month: string;
     year: number;
     highlights: string;
@@ -2701,142 +2643,34 @@ export async function saveVibeRaisingMonthlyUpdate(
     surveyComments?: string | null;
   },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
-  const buildDevSavedUpdate = () => {
-    const month = body.month || "Update";
-    const year = body.year || new Date().getFullYear();
-    const parsedMonth = Date.parse(`${month} 1, ${year}`);
-    const date = Number.isNaN(parsedMonth)
-      ? new Date(year, 0, 1)
-      : new Date(parsedMonth);
-    return normalizeMonthlyUpdate({
-      ...body,
-      id: `dev-update-${year}-${month.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-      month,
-      monthName: month,
-      year,
-      date: date.toISOString(),
-      status: body.saveMode === "draft" ? "draft" : "ready",
-      visibility: "private",
-      publishedAt: null,
-    });
-  };
-
-  if (shouldUseDevBackendStub()) {
-    return buildDevSavedUpdate();
-  }
-
-  const client = createApiClient(env, request);
-  try {
-    const response = await client.post(UPDATES_PATH, body);
-    return normalizeMonthlyUpdate(response.data?.update ?? response.data);
-  } catch (error: any) {
-    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
-      console.warn("No backend save session in local dev; returning a saved update stub.");
-      return buildDevSavedUpdate();
-    }
-
-    if (shouldUseDevAuthBypass() && !error.response) {
-      console.warn("Backend save failed before returning a response in local dev; returning a saved update stub.");
-      return buildDevSavedUpdate();
-    }
-
-    const status = error.response?.status;
-    const hasOptionalFields = Boolean(
-        body.summary ||
-        body.sourceUrl ||
-        body.pitchDeckUrl ||
-        body.pitchDeckSummary ||
-        (body.manualDocumentIds || []).length > 0 ||
-        body.manualSummary ||
-        body.videoUrl ||
-        body.learnings ||
-        body.next30Days ||
-        (body.metricSuggestions || []).length > 0,
-    );
-    if (!hasOptionalFields || (status !== 400 && status !== 422)) {
-      if (shouldUseDevBackendFallback(error)) {
-        console.warn("Backend unavailable in local dev; returning a saved update stub.");
-        return buildDevSavedUpdate();
-      }
-      throw error;
-    }
-
-    try {
-      const response = await client.post(UPDATES_PATH, {
-        month: body.month,
-        year: body.year,
-        audienceVisibility: body.audienceVisibility,
-        highlights: body.highlights,
-        challenges: body.challenges,
-        asks: body.asks,
-        learnings: body.learnings,
-        next30Days: body.next30Days,
-        metrics: body.metrics,
-        saveMode: body.saveMode,
-      });
-      return normalizeMonthlyUpdate(response.data?.update ?? response.data);
-    } catch (fallbackError: any) {
-      if (fallbackError.response?.status === 401 && shouldUseDevAuthBypass()) {
-        console.warn("No backend save session in local dev; returning a saved update stub.");
-        return buildDevSavedUpdate();
-      }
-      if (shouldUseDevAuthBypass() && !fallbackError.response) {
-        console.warn("Backend save failed before returning a response in local dev; returning a saved update stub.");
-        return buildDevSavedUpdate();
-      }
-      if (shouldUseDevBackendFallback(fallbackError)) {
-        console.warn("Backend unavailable in local dev; returning a saved update stub.");
-        return buildDevSavedUpdate();
-      }
-      throw fallbackError;
-    }
-  }
+  const response = await createApiClient(env, request).post(UPDATES_PATH, body);
+  return normalizeMonthlyUpdate(response.data?.update ?? response.data);
 }
 
 export async function publishVibeRaisingMonthlyUpdate(
   env: Env,
   request: Request,
   updateId: string,
+  approval: { companyId: string; revisionId: number; revisionHash: string; audienceVisibility: VibeRaisingAudienceVisibilitySelection },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
-  const buildDevPublishedUpdate = () => normalizeMonthlyUpdate({
-    ...(DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId) || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
-    id: updateId,
-    status: "ready",
-    visibility: "published",
-    publishedAt: new Date().toISOString(),
-  });
-
-  if (shouldUseDevBackendStub()) {
-    return buildDevPublishedUpdate();
-  }
-
-  if (import.meta.env.DEV && !/^\d+$/.test(updateId)) {
-    console.warn("Skipping backend publish for local dev update stub.");
-    return buildDevPublishedUpdate();
-  }
-
   const client = createApiClient(env, request);
-  try {
-    const response = await client.post(`${UPDATES_PATH}${encodeURIComponent(updateId)}/publish/`);
-    return normalizeMonthlyUpdate(response.data?.update ?? response.data);
-  } catch (error: any) {
-    if (import.meta.env.DEV && error.response?.status === 404) {
-      console.warn("Backend publish endpoint could not find this local update; returning a published update stub.");
-      return buildDevPublishedUpdate();
-    }
+  const response = await client.post(`${UPDATES_PATH}${encodeURIComponent(updateId)}/publish/`, approval);
+  return normalizeMonthlyUpdate(response.data?.update ?? response.data);
+}
 
-    if (shouldUseDevAuthBypass() && (error.response?.status === 401 || !error.response)) {
-      console.warn("No backend publish session in local dev; returning a published update stub.");
-      return buildDevPublishedUpdate();
-    }
-
-    if (shouldUseDevBackendFallback(error)) {
-      console.warn("Backend unavailable in local dev; returning a published update stub.");
-      return buildDevPublishedUpdate();
-    }
-
-    throw error;
-  }
+export interface StartupHealth {
+  summary: string;
+  period: { as_of: string; is_partial: boolean; timezone: string } | null;
+  metrics: Array<{ key: string; label: string; display_value: string | null; quality: string; source_provider?: string; observed_at?: string; metadata?: { basis?: string; calculation_basis?: string; limitations?: string[] } }>;
+  attention: Array<{ metric_key: string; reason: string }>;
+  configuration: { timezone: string; currency: string; version: number; metricDefinitions?: Array<{ key: string; label: string; definition: string }> };
+}
+export async function getStartupHealth(env: Env, request: Request, companyId?: string | null): Promise<StartupHealth> {
+  const response = await createApiClient(env, request).get(`/api/v1/vibe-raising/business-health/?company_id=${encodeURIComponent(companyId || "")}`);
+  return response.data;
+}
+export async function saveStartupReportingConfig(env: Env, request: Request, body: { companyId: string; timezone: string; currency: string; metricLabel?: string; metricDefinition?: string }) {
+  return createApiClient(env, request).post("/api/v1/vibe-raising/business-health/", body);
 }
 
 export async function uploadVibeRaisingUpdateVideo(

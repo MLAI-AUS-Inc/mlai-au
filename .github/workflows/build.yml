@@ -39,5 +39,8 @@ jobs:
             tests/roo-account-link-route.test.ts \
             tests/roo-account-link-worker.test.ts
 
+      - name: Test monthly update contracts
+        run: bun test tests/monthly-update-evidence.test.tsx tests/monthly-update-reminder-link.test.ts tests/vibe-raising-*.test.*
+
       - name: Build project
         run: bun run build

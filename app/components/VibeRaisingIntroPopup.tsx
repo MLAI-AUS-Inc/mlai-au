@@ -47,7 +47,7 @@ export default function VibeRaisingIntroPopup({
 
                     <div className="mt-4 md:mt-0 md:flex-1 md:px-6 md:py-6">
                         <p className="text-sm leading-relaxed text-[var(--vr-color-text-mid)]">
-                            Watch this short intro on how Vibe Raising connects founders with investors through
+                            Watch this short intro on how Vibe Raising connects founders with the community through
                             consistent, transparent monthly updates.
                         </p>
                     </div>

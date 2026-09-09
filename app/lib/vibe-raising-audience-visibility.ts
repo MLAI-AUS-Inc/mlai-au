@@ -12,7 +12,7 @@ function normalizeAudience(value: unknown): VibeRaisingAudienceVisibility | null
   const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
   if (normalized === "just_me" || normalized === "private") return "just_me";
   if (normalized === "community") return "community";
-  if (normalized === "investors" || normalized === "investor") return "investors";
+  if (normalized === "investors" || normalized === "investor") return null;
   return null;
 }
 
@@ -30,7 +30,7 @@ export function parseVibeRaisingAudienceVisibility(
 
   const selection: VibeRaisingAudienceVisibilitySelection = [];
   if (normalized.includes("community")) selection.push("community");
-  if (normalized.includes("investors")) selection.push("investors");
+
   return selection.length > 0 ? selection : null;
 }
 
