@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowRightIcon } from "@heroicons/react/24/outline";
 
 type VibeRaisingStickyStepBarProps = {
     className?: string;
+    alignToContent?: boolean;
     hideStatusOnMobile?: boolean;
     hideStatus?: boolean;
     hideBackOnMobile?: boolean;
@@ -31,6 +32,7 @@ type VibeRaisingStickyStepBarProps = {
 
 export default function VibeRaisingStickyStepBar({
     className,
+    alignToContent = false,
     hideStatusOnMobile = false,
     hideStatus = false,
     hideBackOnMobile = false,
@@ -56,6 +58,37 @@ export default function VibeRaisingStickyStepBar({
     primaryType = "button",
     primaryForm,
 }: VibeRaisingStickyStepBarProps) {
+    const alignmentRef = useRef<HTMLDivElement>(null);
+    const [contentBounds, setContentBounds] = useState<{ left: number; width: number } | null>(null);
+
+    useEffect(() => {
+        if (!alignToContent || !alignmentRef.current) return;
+        const anchor = alignmentRef.current;
+        let frame = 0;
+        const measure = () => {
+            const { left, width } = anchor.getBoundingClientRect();
+            setContentBounds((previous) => previous?.left === left && previous.width === width ? previous : { left, width });
+        };
+        const scheduleMeasure = () => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(measure);
+        };
+        const observer = new ResizeObserver(scheduleMeasure);
+        observer.observe(anchor);
+        // The app sidebar can move a max-width template without resizing it.
+        const main = anchor.closest("main");
+        if (main) observer.observe(main);
+        window.addEventListener("resize", scheduleMeasure);
+        window.addEventListener("scroll", scheduleMeasure, true);
+        measure();
+        return () => {
+            cancelAnimationFrame(frame);
+            observer.disconnect();
+            window.removeEventListener("resize", scheduleMeasure);
+            window.removeEventListener("scroll", scheduleMeasure, true);
+        };
+    }, [alignToContent]);
+
     const resolvedBackLabel = mobileBackLabel ?? backLabel;
     const resolvedSecondaryLabel = mobileSecondaryLabel ?? secondaryLabel;
     const resolvedTertiaryLabel = mobileTertiaryLabel ?? tertiaryLabel;
@@ -78,8 +111,15 @@ export default function VibeRaisingStickyStepBar({
         onPrimary?.();
     };
 
-    return (
-        <div className={["relative z-40 mt-4 w-full sm:fixed sm:inset-x-4 sm:bottom-4 sm:w-auto lg:left-24", className].filter(Boolean).join(" ")}>
+    const bar = (
+        <div
+            className={["relative z-40 mt-4 w-full sm:fixed sm:inset-x-4 sm:bottom-4 sm:w-auto lg:left-24", alignToContent && "vr-stepbar-content-aligned", className].filter(Boolean).join(" ")}
+            data-positioned={alignToContent ? Boolean(contentBounds) : undefined}
+            style={alignToContent && contentBounds ? {
+                "--vr-stepbar-left": `${contentBounds.left}px`,
+                "--vr-stepbar-width": `${contentBounds.width}px`,
+            } as CSSProperties : undefined}
+        >
             <div
                 className={[
                     "mx-auto flex max-w-6xl flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white/95 shadow-2xl shadow-black/10 backdrop-blur sm:flex-row sm:items-center sm:px-5 sm:py-4",
@@ -170,4 +210,6 @@ export default function VibeRaisingStickyStepBar({
             </div>
         </div>
     );
+
+    return alignToContent ? <div ref={alignmentRef} className="vr-stepbar-anchor w-full">{bar}</div> : bar;
 }

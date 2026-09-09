@@ -33,6 +33,7 @@ import {
 } from "~/lib/monthly-update-reminder-link";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { normalizeVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
+import { buildVibeRaisingDraftReturnPath, readVibeRaisingDraftReturnState } from "~/lib/vibe-raising-draft-return";
 import {
     buildVibeRaisingFinancialSurveyQuestion,
     type VibeRaisingFinancialSurveyContext,
@@ -80,7 +81,9 @@ import { clsx } from "clsx";
 import { useActiveDraftRun } from "~/components/ActiveDraftRunStatus";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
-import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
+import type { MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
+import VibeRaisingWorkflowLayout from "~/components/VibeRaisingWorkflowLayout";
+import { getVibeRaisingDraftProgress } from "~/lib/vibe-raising-progress";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 import FinancialChartsSection from "~/components/vibe-raising/FinancialChartsSection";
@@ -591,6 +594,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         url.searchParams.get("email_draft") === "1" ||
         url.searchParams.get("draft_from_email") === "1";
     const selectedInputSources = parseInputSources(url.searchParams.get("inputs"));
+    const requestedDraftReturn = readVibeRaisingDraftReturnState(url.search);
+    const draftReturnState = requestedDraftReturn &&
+        !isBeforeMinimumMonthlyUpdate(requestedDraftReturn.month, requestedDraftReturn.year) &&
+        !isFutureMonthlyUpdate(requestedDraftReturn.month, requestedDraftReturn.year)
+            ? requestedDraftReturn
+            : null;
 
     let existingData = null;
     if (editId) {
@@ -613,6 +622,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         backendBaseUrl: String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL),
         resumeEmailDrafting,
         selectedInputSources,
+        draftReturnState,
         existingMonthlyUpdates,
     };
 }
@@ -2992,6 +3002,7 @@ export default function CreateUpdate() {
         backendBaseUrl,
         resumeEmailDrafting,
         selectedInputSources: initialSelectedInputSources,
+        draftReturnState,
         existingMonthlyUpdates,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
@@ -3004,20 +3015,6 @@ export default function CreateUpdate() {
     const isSubmitting = navigation.state === "submitting";
     const { activeRun: sharedActiveDraftRun, refreshActiveRun } = useActiveDraftRun();
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
-    const goToConnectDataStep = useCallback(() => {
-        const returnPath = `${location.pathname}${location.search || ""}`;
-        navigate(`/founder-tools/data-sources?next=${encodeURIComponent(returnPath)}`);
-    }, [location.pathname, location.search, navigate]);
-    const handleDraftStepperClick = useCallback((step: MonthlyUpdateStepKey) => {
-        if (step === "connect") {
-            goToConnectDataStep();
-            return;
-        }
-
-        if (step === "draft") {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-    }, [goToConnectDataStep]);
     const defaultData = actionData?.step === "feedback" || actionData?.step === "publish-error" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
@@ -3034,8 +3031,8 @@ export default function CreateUpdate() {
     const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>(defaultData?.videoUrl || "");
     const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
     const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
-    const shouldOpenDraftTemplate = Boolean(isEdit && existingData);
-    const [updateCadence, setUpdateCadence] = useState<UpdateCadence | null>(() => isEdit ? "monthly" : null);
+    const shouldOpenDraftTemplate = Boolean(draftReturnState || (isEdit && existingData));
+    const [updateCadence, setUpdateCadence] = useState<UpdateCadence | null>(() => draftReturnState?.cadence ?? (isEdit ? "monthly" : null));
     const [monthConfirmed, setMonthConfirmed] = useState(() => shouldOpenDraftTemplate);
     const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(() => shouldOpenDraftTemplate ? "reporting" : null);
     const [metricsConfirmed, setMetricsConfirmed] = useState(() => shouldOpenDraftTemplate);
@@ -3058,6 +3055,7 @@ export default function CreateUpdate() {
     const [highlightMaterialsSection, setHighlightMaterialsSection] = useState(false);
     const [showAllCreateStepMonths, setShowAllCreateStepMonths] = useState(false);
     const [mlaiFeedbackPreference, setMlaiFeedbackPreference] = useState<MlaiFeedbackPreference>("yes");
+    const [hasReviewedFeedbackPreference, setHasReviewedFeedbackPreference] = useState(false);
     const [showSendToMlaiConfirmation, setShowSendToMlaiConfirmation] = useState(false);
     const [endOfFlowSurveyStep, setEndOfFlowSurveyStep] = useState(0);
     const [endOfFlowSurvey, setEndOfFlowSurvey] = useState<Record<EndOfFlowSurveyQuestionKey, BinarySurveyAnswer>>({
@@ -3074,7 +3072,15 @@ export default function CreateUpdate() {
     } | null>(null);
     const currentCreatePeriod = getCurrentMonthlyUpdatePeriod();
     const createStepMonthOptions = getCreateStepMonthOptions();
-    const createStepWeekOptions = useMemo(() => getCreateStepWeekOptions(), []);
+    const createStepWeekOptions = useMemo(() => {
+        const options = getCreateStepWeekOptions();
+        // An OAuth round trip can span a new week. Keep the original period selectable.
+        if (draftReturnState?.weekStart && !options.some((option) => option.key === draftReturnState.weekStart)) {
+            const restoredWeek = getCreateStepWeekOptions(new Date(`${draftReturnState.weekStart}T12:00:00`)).at(-1);
+            if (restoredWeek) return [restoredWeek, ...options];
+        }
+        return options;
+    }, [draftReturnState?.weekStart]);
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
@@ -3164,9 +3170,9 @@ export default function CreateUpdate() {
     const [pastMonthCards, setPastMonthCards] = useState<EditorMonthCard[]>([]);
     const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
-    const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || currentCreatePeriod.month);
-    const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || currentCreatePeriod.year);
-    const [selectedWeekKey, setSelectedWeekKey] = useState<string>(() => createStepWeekOptions.at(-1)?.key || "");
+    const [selectedMonth, setSelectedMonth] = useState<string>(draftReturnState?.month || defaultData?.month || currentCreatePeriod.month);
+    const [selectedYear, setSelectedYear] = useState<number>(draftReturnState?.year || defaultData?.year || currentCreatePeriod.year);
+    const [selectedWeekKey, setSelectedWeekKey] = useState<string>(() => draftReturnState?.weekStart || createStepWeekOptions.at(-1)?.key || "");
     const [activePeriodKey, setActivePeriodKey] = useState("current");
     const createStepVisibleMonthOptions = useMemo(() => {
         if (isEdit || showAllCreateStepMonths || selectedYear === MIN_MONTHLY_UPDATE_YEAR) {
@@ -3391,17 +3397,31 @@ export default function CreateUpdate() {
         ));
     }, [compactSources]);
     const draftReturnPath = useMemo(() => {
-        const params = new URLSearchParams(location.search);
-        const selected = Array.from(selectedDraftInputSources);
-        if (selected.length > 0) {
-            params.set("inputs", selected.join(","));
-        } else {
-            params.delete("inputs");
-        }
-        const query = params.toString();
-        return `${location.pathname}${query ? `?${query}` : ""}`;
-    }, [location.pathname, location.search, selectedDraftInputSources]);
+        return buildVibeRaisingDraftReturnPath(
+            location.pathname,
+            location.search,
+            monthConfirmed && updateCadence ? {
+                cadence: updateCadence,
+                month: selectedMonth,
+                year: selectedYear,
+                weekStart: isWeeklyUpdate ? selectedWeekOption?.startIso : undefined,
+            } : null,
+            Array.from(selectedDraftInputSources),
+        );
+    }, [location.pathname, location.search, monthConfirmed, updateCadence, selectedMonth, selectedYear, isWeeklyUpdate, selectedWeekOption?.startIso, selectedDraftInputSources]);
     const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
+    const goToConnectDataStep = useCallback(() => {
+        navigate(manageConnectionsHref);
+    }, [manageConnectionsHref, navigate]);
+    const handleDraftStepperClick = useCallback((step: MonthlyUpdateStepKey) => {
+        if (step === "connect") {
+            goToConnectDataStep();
+            return;
+        }
+        if (step === "draft") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, [goToConnectDataStep]);
     const connectedDraftInputSources = useMemo(
         () => compactOptionalSources.filter(isConnectedInputSource).map((source) => source.key),
         [compactOptionalSources],
@@ -4525,6 +4545,7 @@ export default function CreateUpdate() {
         .filter(hasMeaningfulFounderAnswer)
         .length;
     const hasMinimumFounderAnswers = answeredFounderQuestionCount >= REQUIRED_FOUNDER_QUESTION_COUNT;
+    const draftProgress = getVibeRaisingDraftProgress(Boolean(updateCadence), monthConfirmed, answeredFounderQuestionCount);
     const founderQuestionRequirementText = hasMinimumFounderAnswers
         ? `${answeredFounderQuestionCount} founder questions answered.`
         : `Answer at least ${REQUIRED_FOUNDER_QUESTION_COUNT} questions before saving (${answeredFounderQuestionCount}/${REQUIRED_FOUNDER_QUESTION_COUNT} complete).`;
@@ -5378,7 +5399,7 @@ export default function CreateUpdate() {
 
     const optionalDataSourcesSection = (
         <section className="flex min-h-[5.25rem] w-full flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:min-h-0 sm:rounded-[2rem] sm:p-6">
-            <div className="flex w-full min-w-0 items-center justify-between gap-3 sm:gap-6">
+            <div className="flex w-full min-w-0 flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <div className="min-w-0">
                     <h2 className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
                         <span className="sm:hidden">Connect data</span>
@@ -5390,7 +5411,7 @@ export default function CreateUpdate() {
                     </p>
                 </div>
 
-                <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
+                <div className="flex w-full flex-wrap items-center justify-end gap-3 sm:ml-auto sm:w-auto sm:max-w-[50%] sm:shrink-0">
                     {compactSourcesLoading ? (
                         <ArrowPathIcon className="h-5 w-5 animate-spin text-slate-400" aria-label="Checking connections" />
                     ) : (
@@ -5416,18 +5437,12 @@ export default function CreateUpdate() {
                             );
                         })
                     )}
-                    <div className="flex flex-col items-stretch gap-2 text-center">
-                        <Link
-                            to={manageConnectionsHref}
-                            className="inline-flex min-h-11 cursor-pointer items-center justify-center whitespace-nowrap rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-extrabold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
-                        >
-                            <span className="sm:hidden">Manage</span>
-                            <span className="hidden sm:inline">Manage connections</span>
-                        </Link>
-                        <span className="hidden min-h-11 w-full items-center justify-center rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-sm font-extrabold text-slate-500 sm:inline-flex">
-                            Manual draft only
-                        </span>
-                    </div>
+                    <Link
+                        to={manageConnectionsHref}
+                        className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-6 py-3 text-center text-sm font-extrabold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:-translate-y-0.5 hover:bg-[var(--vr-palette-black)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(0,255,215,0.18)] sm:w-auto sm:min-w-48"
+                    >
+                        Manage connections
+                    </Link>
                 </div>
             </div>
 
@@ -5490,32 +5505,6 @@ export default function CreateUpdate() {
                     line-height: 1.5;
                 }
                 .mlai-vibe-update [class*="shadow"] { box-shadow: none !important; }
-                @media (min-width: 640px) {
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button > div + p + p {
-                        display: none;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button > div + p {
-                        margin-top: 0.9rem;
-                        color: #1a1a1a;
-                        font-size: clamp(1rem, 1.8vw, 1.35rem);
-                        line-height: 1;
-                        white-space: normal;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p) {
-                        min-height: 8.5rem;
-                        padding-bottom: 1rem;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover {
-                        background: transparent !important;
-                        box-shadow: none !important;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover > div {
-                        border-color: #00ffd7 !important;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover > div + p {
-                        color: #00a98f !important;
-                    }
-                }
                 .mlai-vibe-update__identity {
                     position: relative;
                     overflow: hidden;
@@ -5717,6 +5706,9 @@ export default function CreateUpdate() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
             }
+            if (step === "publish" && canSubmitReviewToMlai && !isSubmitting) {
+                handleSendToMlai();
+            }
         };
 
         const handleSendToMlai = () => {
@@ -5746,7 +5738,20 @@ export default function CreateUpdate() {
         const isSurveyCommentsStep = endOfFlowSurveyStep === END_OF_FLOW_SURVEY_STEP_COUNT - 1;
 
         return (
-            <div className="mlai-vibe-update mx-auto max-w-6xl space-y-10 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:px-6">
+            <VibeRaisingWorkflowLayout
+                activeStep={showSendToMlaiConfirmation ? "publish" : "review"}
+                completedSteps={showSendToMlaiConfirmation ? ["draft", "connect", "review"] : ["draft", "connect"]}
+                enabledSteps={isSubmitting || showSendToMlaiConfirmation ? [] : canSubmitReviewToMlai ? ["draft", "connect", "review", "publish"] : ["draft", "connect", "review"]}
+                onStepClick={handleReviewStepperClick}
+                progress={{ review: hasReviewedFeedbackPreference ? 0.75 : 0.4, publish: showSendToMlaiConfirmation ? 0.15 + endOfFlowSurveyStep * 0.2 + (endOfFlowSurveyComments.trim() ? 0.05 : 0) : 0 }}
+                details={{
+                    draft: `${reviewAnsweredFounderQuestionCount} questions answered`,
+                    connect: selectedDraftInputSources.size ? "Sources selected" : "Skipped · optional",
+                    review: showSendToMlaiConfirmation ? "Preview checked" : "Check preview & feedback preference",
+                    publish: showSendToMlaiConfirmation ? `Optional survey · ${endOfFlowSurveyStep + 1} of 4` : "Private submission",
+                }}
+            >
+            <div className="mlai-vibe-update mx-auto max-w-6xl space-y-10 rounded-[32px] bg-[#f5f0e6] px-4 pb-32 sm:px-6">
                 {mlaiGenerateUpdateBrand}
                 <Form id={SEND_TO_MLAI_FORM_ID} method="POST" className="hidden">
                     <input type="hidden" name="intent" value="send-to-mlai" />
@@ -5788,16 +5793,6 @@ export default function CreateUpdate() {
                         ))}
                 </Form>
 
-                <MonthlyUpdateStepper
-                    activeStep="review"
-                    disableMotion
-                    enabledSteps={["connect", "draft", "review"]}
-                    onStepClick={handleReviewStepperClick}
-                    expandOnHover
-                    frameless
-                    className="mt-8"
-                />
-
                 <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
                     <div className="min-w-0">
                         <h2 className="text-lg font-black text-gray-950">Send this update to MLAI</h2>
@@ -5838,7 +5833,10 @@ export default function CreateUpdate() {
                                                 name="mlaiFeedbackPreference"
                                                 value={option.value}
                                                 checked={checked}
-                                                onChange={() => setMlaiFeedbackPreference(option.value)}
+                                                onChange={() => {
+                                                    setMlaiFeedbackPreference(option.value);
+                                                    setHasReviewedFeedbackPreference(true);
+                                                }}
                                                 className="mt-1 h-4 w-4 accent-[var(--vr-color-primary)]"
                                             />
                                             <span>
@@ -6327,22 +6325,8 @@ export default function CreateUpdate() {
                     )}
                 </div>
 
-                <div className="sticky top-[4.5rem] z-30 mb-4 flex min-h-14 items-center sm:hidden" aria-label="Review progress">
-                    <div className="min-w-0 flex-1 rounded-xl border border-[var(--vr-color-border)] bg-white px-3 py-2 shadow-lg shadow-black/10">
-                        <div className="flex items-center justify-between gap-3">
-                            <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[var(--vr-color-primary)]">Draft progress</p>
-                            <p className="shrink-0 text-sm font-black text-gray-950">75%</p>
-                        </div>
-                        <div className="mt-1 flex items-center gap-2">
-                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200/80">
-                                <div className="h-full w-3/4 rounded-full bg-[var(--vr-color-primary)]" />
-                            </div>
-                            <p className="shrink-0 text-[10px] font-bold text-slate-500">Review</p>
-                        </div>
-                    </div>
-                </div>
-
                 <VibeRaisingStickyStepBar
+                    alignToContent
                     hideStatus
                     compactOnMobile
                     statusTitle={`Review ${reviewMonth} ${reviewYear} update`}
@@ -6557,6 +6541,7 @@ export default function CreateUpdate() {
                     </div>
                 ) : null}
             </div>
+            </VibeRaisingWorkflowLayout>
         );
     }
 
@@ -6584,7 +6569,8 @@ export default function CreateUpdate() {
         ];
 
         return (
-            <div className="mlai-vibe-update mx-auto w-full max-w-6xl space-y-8 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-24 sm:px-6 sm:py-8">
+            <VibeRaisingWorkflowLayout activeStep="draft" progress={{ draft: 0 }} details={{ draft: "Choose monthly or weekly" }}>
+            <div className="mlai-vibe-update mx-auto w-full max-w-6xl space-y-8 rounded-[32px] bg-[#f5f0e6] px-4 pb-24 sm:px-6 sm:pb-8">
                 {mlaiGenerateUpdateBrand}
                 <section className="w-full rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 sm:p-8 lg:p-10">
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-orange)]">
@@ -6639,15 +6625,26 @@ export default function CreateUpdate() {
                     </div>
                 </section>
             </div>
+            </VibeRaisingWorkflowLayout>
         );
     }
 
     // 3. Create/Edit Form View
     return (
+        <VibeRaisingWorkflowLayout
+            activeStep="draft"
+            panelRef={draftStepperRef}
+            enabledSteps={isEdit ? ["draft"] : ["draft", "connect"]}
+            onStepClick={handleDraftStepperClick}
+            progress={{ draft: draftProgress, connect: selectedDraftInputSources.size ? 1 : connectedDraftInputSources.length ? 0.5 : 0 }}
+            details={{
+                draft: monthConfirmed ? `${answeredFounderQuestionCount} of 5 answered · 3 required` : `Choose your ${selectedPeriodName}`,
+                connect: selectedDraftInputSources.size ? `${selectedDraftInputSources.size} source${selectedDraftInputSources.size === 1 ? "" : "s"} selected` : "Optional inputs",
+            }}
+        >
         <div
             className={clsx(
-                "mlai-vibe-update mx-auto w-full max-w-6xl space-y-4 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:space-y-10 sm:px-6",
-                isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate && "pt-16 sm:pt-0",
+                "mlai-vibe-update mx-auto w-full max-w-6xl space-y-4 rounded-[32px] bg-[#f5f0e6] px-4 pb-32 sm:space-y-10 sm:px-6",
             )}
         >
             {mlaiGenerateUpdateBrand}
@@ -6668,20 +6665,6 @@ export default function CreateUpdate() {
                     </button>
                 </div>
             ) : null}
-            <div className="space-y-4">
-                <div ref={draftStepperRef} className="hidden sm:block">
-                    <MonthlyUpdateStepper
-                        activeStep={monthConfirmed ? "connect" : "draft"}
-                        disableMotion
-                        enabledSteps={isEdit ? ["draft"] : ["draft", "connect"]}
-                        onStepClick={handleDraftStepperClick}
-                        expandOnHover
-                        frameless
-                        className="mt-8"
-                    />
-                </div>
-            </div>
-
             {!monthConfirmed ? (
             <section>
                 <div className="space-y-4">
@@ -6933,7 +6916,9 @@ export default function CreateUpdate() {
                                         <div>
                                             <h2 id="financial-metrics-source-title" className="text-base font-black text-gray-950 sm:text-lg">Financial metrics</h2>
                                             <p className="mt-1 text-sm leading-6 text-slate-600">
-                                                Metrics come from a verified financial connection. Manual metric entry is not available.
+                                                Connect your financial data to generate credible, verifiable metrics.
+                                                <br />
+                                                We only access the information needed for reporting, and you remain in control of your connected accounts.
                                             </p>
                                         </div>
 
@@ -7075,24 +7060,8 @@ export default function CreateUpdate() {
 
             </section>
 
-            {isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate ? (
-                <div className="pointer-events-none fixed inset-x-4 top-[4.5rem] z-30 flex min-h-14 items-center sm:hidden" aria-label="Draft progress">
-                    <div className="min-w-0 flex-1 rounded-xl border border-[var(--vr-color-border)] bg-white px-3 py-2 shadow-lg shadow-black/10">
-                        <div className="flex items-center justify-between gap-3">
-                            <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[var(--vr-color-primary)]">Draft progress</p>
-                            <p className="shrink-0 text-sm font-black text-gray-950">25%</p>
-                        </div>
-                        <div className="mt-1 flex items-center gap-2">
-                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200/80">
-                                <div className="h-full w-1/4 rounded-full bg-[var(--vr-color-primary)]" />
-                            </div>
-                            <p className="shrink-0 text-[10px] font-bold text-slate-500">Draft</p>
-                        </div>
-                    </div>
-                </div>
-            ) : null}
-
             <VibeRaisingStickyStepBar
+                alignToContent
                 key={monthConfirmed ? "draft-template-actions" : "select-month-actions"}
                 className={clsx(
                     !monthConfirmed && "hidden sm:block",
@@ -7844,5 +7813,6 @@ export default function CreateUpdate() {
             </>
             ) : null}
         </div>
+        </VibeRaisingWorkflowLayout>
     );
 }

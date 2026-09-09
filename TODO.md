@@ -600,6 +600,17 @@
 - [x] Replace generic survey prompts with connector, guided-question, and final-preview diagnostics
 - [x] Refresh survey reactions with solid thumb icons and distinct animated hover treatments
 - [x] Simplify final survey-dialog headings and supporting copy
+- [x] Preserve the selected cadence and reporting period when returning from Stripe/Xero connections to the draft template
+- [x] Remove the Manual draft only label and use a standard Manage connections button with the full label on mobile
+- [x] Replace the horizontal update stepper with a sticky left progress panel across draft, connections and review
+- [x] Animate mint progress for cadence, period, founder answers, connection choices and final confirmation; support reduced motion
+- [x] Verify workflow navigation and milestones with 26 focused tests, frontend typecheck and desktop/mobile browser checks
+- [x] Extend the vertical progress panel to the available desktop height and align the bottom action bar to the template column
+- [x] Verify matching template/action-bar edges on desktop, laptop resize/scroll and mobile; pass typecheck and 26 update-flow tests
+- [x] Align the progress panel and heading card to a shared grid origin across cadence, draft and review; place the mobile caption in a spanning row
+- [x] Measure zero top-edge difference at 2560px, 1024px and 390px; preserve sticky positioning and exact footer/template edges; pass typecheck and 26 tests
+- [x] Replace the financial metrics caption with the supplied reporting-access and connected-account control wording
+- [x] Separate the financial metrics caption sentences with an explicit line break
 - [x] Run focused update-flow tests and frontend typecheck
 
 ## Article quality remediation (July 2026)
