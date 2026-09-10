@@ -399,7 +399,9 @@ export default function FounderToolsRooLinkPage() {
                 />
                 <p className="text-sm font-semibold leading-6">
                   Roo Points, ledger history, and bookings stay on your Slack
-                  account. This connection is used only for discount eligibility.
+                  account. This connection is used for coworking discount
+                  eligibility and may also route Founder Tools service
+                  notifications to your Slack account.
                 </p>
               </div>
 

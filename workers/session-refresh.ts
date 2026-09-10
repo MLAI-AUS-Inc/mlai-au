@@ -150,12 +150,18 @@ type RefreshOutcome =
 
 async function requestRefresh(cookieHeader: string, env: Env): Promise<RefreshOutcome> {
   const baseUrl = String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL);
+  const refreshToken = readCookie(cookieHeader, REFRESH_COOKIE);
+  if (!refreshToken) return { status: "unavailable" };
+
   let response: Response;
   try {
     response = await fetch(new URL(REFRESH_PATH, baseUrl).toString(), {
       method: "POST",
       headers: {
-        Cookie: cookieHeader,
+        // This is an authentication boundary, not a transparent browser proxy.
+        // Forward only the cookie the refresh endpoint needs so route-scoped
+        // capabilities and unrelated browser state cannot cross into it.
+        Cookie: `${REFRESH_COOKIE}=${refreshToken}`,
         "Content-Type": "application/json",
       },
       signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),

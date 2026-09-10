@@ -37,7 +37,8 @@ jobs:
           bun test \
             tests/roo-account-link.test.ts \
             tests/roo-account-link-route.test.ts \
-            tests/roo-account-link-worker.test.ts
+            tests/roo-account-link-worker.test.ts \
+            tests/session-refresh.test.ts
 
       - name: Test monthly update contracts
         run: bun test tests/monthly-update-evidence.test.tsx tests/monthly-update-reminder-link.test.ts tests/vibe-raising-*.test.*

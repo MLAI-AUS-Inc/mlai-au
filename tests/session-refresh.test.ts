@@ -90,11 +90,11 @@ describe("withSessionRefresh", () => {
     expect(await response.text()).toBe("ok");
   });
 
-  test("posts to the backend refresh endpoint with the browser cookies", async () => {
+  test("posts only the refresh cookie to the backend refresh endpoint", async () => {
     const seen = stubRefresh(refreshedResponse());
 
     await withSessionRefresh(
-      requestWithCookies("refresh_token=long-lived"),
+      requestWithCookies("refresh_token=long-lived; theme=dark"),
       ENV,
       async () => new Response("ok"),
     );
@@ -103,6 +103,59 @@ describe("withSessionRefresh", () => {
     expect(seen[0].url).toBe("https://api.mlai.au/api/v1/auth/token/refresh/");
     expect(seen[0].method).toBe("POST");
     expect(seen[0].headers.get("Cookie")).toBe("refresh_token=long-lived");
+  });
+
+  test("keeps an account-link capability isolated across every session state", async () => {
+    const capability = "CAPABILITY_SENTINEL_" + "A".repeat(43);
+    const scenarios = [
+      {
+        name: "fresh",
+        authCookies: `access_token=${tokenExpiringIn(86400)}; refresh_token=long-lived`,
+        refreshCalls: 0,
+      },
+      {
+        name: "stale",
+        authCookies: `access_token=${tokenExpiringIn(60)}; refresh_token=long-lived`,
+        refreshCalls: 1,
+      },
+      { name: "missing", authCookies: "", refreshCalls: 0 },
+      { name: "refreshable", authCookies: "refresh_token=long-lived", refreshCalls: 1 },
+    ];
+
+    for (const scenario of scenarios) {
+      const seen = stubRefresh(refreshedResponse());
+      let renderedCookie: string | null = null;
+      const cookieHeader = [
+        scenario.authCookies,
+        `roo_founder_link_token=${capability}`,
+        "theme=dark",
+      ]
+        .filter(Boolean)
+        .join("; ");
+
+      await withSessionRefresh(
+        requestWithCookies(cookieHeader, "https://mlai.au/founder-tools/link-roo"),
+        ENV,
+        async (request) => {
+          renderedCookie = request.headers.get("Cookie");
+          return new Response("ok");
+        },
+      );
+
+      expect(seen, scenario.name).toHaveLength(scenario.refreshCalls);
+      for (const outboundRequest of seen) {
+        expect(outboundRequest.headers.get("Cookie"), scenario.name).toBe(
+          "refresh_token=long-lived",
+        );
+        expect(outboundRequest.headers.get("Cookie"), scenario.name).not.toContain(
+          capability,
+        );
+      }
+      // The capability still reaches its one approved route after middleware.
+      expect(renderedCookie, scenario.name).toContain(
+        `roo_founder_link_token=${capability}`,
+      );
+    }
   });
 
   test("drops dead session cookies so the render sees an anonymous user", async () => {
