@@ -6252,7 +6252,7 @@ export default function CreateUpdate() {
                                             )}
                                             {!isWeeklyUpdate && existingUpdateForSelectedMonth && !isSelectedMonthUnavailable && (
                                                 <p className="mt-3 rounded-xl border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.12)] px-4 py-3 text-sm font-medium text-[var(--vr-color-primary)]">
-                                                    An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
+                                                    An update already exists for {selectedMonthLabel}. Generate a new private revision from the selected sources, then review it before replacing the published update.
                                                 </p>
                                             )}
                                         </div>
