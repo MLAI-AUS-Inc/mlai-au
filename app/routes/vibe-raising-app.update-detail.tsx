@@ -23,13 +23,13 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
         throw redirect("/founder-tools/updates");
     }
 
-    const { updates, metricHistory } = await getVibeRaisingMonthlyUpdatesBundle(env, request, resolveActiveCompanyId(vibeContext.appUser));
+    const { updates } = await getVibeRaisingMonthlyUpdatesBundle(env, request, resolveActiveCompanyId(vibeContext.appUser));
     const update = updates.find((item) => String(item.id) === String(params.id));
     if (!update) {
         throw new Response("Update not found", { status: 404 });
     }
 
-    return { user: vibeContext.appUser, update, metricHistory };
+    return { user: vibeContext.appUser, update };
 }
 
 function isCurrentMonthUpdate(update: { date?: string | null }): boolean {
@@ -43,7 +43,7 @@ function isCurrentMonthUpdate(update: { date?: string | null }): boolean {
 }
 
 export default function UpdateDetailPage() {
-    const { user, update, metricHistory } = useLoaderData<typeof loader>();
+    const { user, update } = useLoaderData<typeof loader>();
 
     return (
         <div className="vr-scope mx-auto max-w-4xl space-y-4 pb-12">
@@ -60,7 +60,7 @@ export default function UpdateDetailPage() {
                 statusLabel={isCurrentMonthUpdate(update) ? "Current" : "Sent"}
                 trendsSlot={
                     <TrendsSection
-                        metricHistory={metricHistory}
+                        metricHistory={update.metricHistory || {}}
                         displayConfig={update.displayConfig}
                         currentIsoMonth={update.isoMonth}
                     />

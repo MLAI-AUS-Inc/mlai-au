@@ -45,7 +45,8 @@ function currencyFormatter(currency: string, compact = false) {
         notation: compact ? "compact" : "standard",
         maximumFractionDigits: compact ? 1 : 0,
     });
-    return (value: number | string) => formatter.format(Number(value) || 0);
+    return (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value))
+        ? "Unavailable" : formatter.format(Number(value));
 }
 
 function ChartCard({
@@ -110,18 +111,23 @@ export default function FinancialChartsSection({
                 </section>
             ) : null}
 
+            {snapshot.dataQuality?.warnings.length ? <ul className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900" aria-label="Financial evidence limitations">
+                {snapshot.dataQuality.warnings.map(warning => <li key={warning}>{warning}</li>)}
+            </ul> : null}
+            {performance.some(point => point.income == null || point.expenses == null || point.net == null) ?
+                <p className="text-sm text-slate-600">Gaps indicate unavailable values; they do not represent zero.</p> : null}
             <ChartCard
-                title="Monthly income, expenses and net result"
+                title="Monthly revenue, expenses and net result"
                 subtitle={`Trailing 12 months · ${snapshot.currency}${partialLabel ? ` · ${partialLabel}` : ""}`}
             >
-                <div className="mt-4 h-56 w-full" role="img" aria-label="Line chart of monthly income and expenses">
+                <div className="mt-4 h-56 w-full" role="img" aria-label="Line chart of monthly revenue and expenses">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <LineChart data={performance} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" vertical={false} />
                             <XAxis dataKey="month" tickFormatter={monthLabel} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} minTickGap={22} />
                             <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} axisLine={false} width={52} />
-                            <Tooltip labelFormatter={(label) => monthLabel(String(label))} formatter={(value, name) => [formatMoney(Number(value)), name === "income" ? "Income" : "Expenses"]} />
-                            <Legend formatter={(value) => value === "income" ? "Income" : "Expenses"} />
+                            <Tooltip labelFormatter={(label) => monthLabel(String(label))} formatter={(value, name) => [formatMoney(value), name === "income" ? "Revenue" : "Expenses"]} />
+                            <Legend formatter={(value) => value === "income" ? "Revenue" : "Expenses"} />
                             <Line type="monotone" dataKey="income" stroke="#087FD4" strokeWidth={3} dot={{ r: 2 }} isAnimationActive={false} />
                             <Line type="monotone" dataKey="expenses" stroke="#FF5A1F" strokeWidth={3} dot={{ r: 2 }} isAnimationActive={false} />
                         </LineChart>
@@ -133,11 +139,11 @@ export default function FinancialChartsSection({
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" vertical={false} />
                             <XAxis dataKey="month" tickFormatter={monthLabel} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} minTickGap={22} />
                             <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} axisLine={false} width={52} />
-                            <Tooltip labelFormatter={(label) => monthLabel(String(label))} formatter={(value) => [formatMoney(Number(value)), "Net result"]} />
+                            <Tooltip labelFormatter={(label) => monthLabel(String(label))} formatter={(value) => [formatMoney(value), "Net result"]} />
                             <ReferenceLine y={0} stroke="#94A3B8" />
                             <Bar dataKey="net" name="Net result" isAnimationActive={false}>
                                 {performance.map((point) => (
-                                    <Cell key={point.month} fill={point.net >= 0 ? "#087FD4" : "#F43F5E"} />
+                                    <Cell key={point.month} fill={point.net != null && point.net >= 0 ? "#087FD4" : "#F43F5E"} />
                                 ))}
                             </Bar>
                         </BarChart>
@@ -153,7 +159,7 @@ export default function FinancialChartsSection({
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" vertical={false} />
                                 <XAxis dataKey="month" tickFormatter={monthLabel} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} />
                                 <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} axisLine={false} width={52} />
-                                <Tooltip labelFormatter={(label) => monthLabel(String(label))} formatter={(value, name) => [formatMoney(Number(value)), String(name)]} />
+                                <Tooltip labelFormatter={(label) => monthLabel(String(label))} formatter={(value, name) => [formatMoney(value), String(name)]} />
                                 <Legend />
                                 {mixKeys.map(([key, label]) => (
                                     <Bar key={key} dataKey={key} name={label} stackId="revenue" fill={MIX_COLORS[key] || "#94A3B8"} isAnimationActive={false} />
@@ -172,11 +178,11 @@ export default function FinancialChartsSection({
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" horizontal={false} />
                                 <XAxis type="number" tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} />
                                 <YAxis type="category" dataKey="label" width={168} tickFormatter={(value) => chartLabel(value)} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
-                                <Tooltip formatter={(value) => [formatMoney(Number(value)), "Net contribution"]} />
+                                <Tooltip formatter={(value) => [formatMoney(value), "Net contribution"]} />
                                 <ReferenceLine x={0} stroke="#94A3B8" />
                                 <Bar dataKey="net" name="Net contribution" isAnimationActive={false}>
                                     {eventContribution.map((event) => (
-                                        <Cell key={event.label} fill={event.net >= 0 ? "#087FD4" : "#F43F5E"} />
+                                        <Cell key={event.label} fill={event.net != null && event.net >= 0 ? "#087FD4" : "#F43F5E"} />
                                     ))}
                                 </Bar>
                             </BarChart>
@@ -193,7 +199,7 @@ export default function FinancialChartsSection({
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--vr-color-border)" horizontal={false} />
                                 <XAxis type="number" tickFormatter={formatCompactMoney} tick={{ fontSize: 10, fill: "#64748b" }} />
                                 <YAxis type="category" dataKey="label" width={168} tickFormatter={(value) => chartLabel(value)} tick={{ fontSize: 11, fill: "#334155" }} tickLine={false} />
-                                <Tooltip formatter={(value) => [formatMoney(Number(value)), "Overhead"]} />
+                                <Tooltip formatter={(value) => [formatMoney(value), "Overhead"]} />
                                 <Bar dataKey="amount" name="Overhead" fill="#087FD4" isAnimationActive={false} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -205,7 +211,7 @@ export default function FinancialChartsSection({
                 <p>{analysis?.headline}</p>
                 <ul>
                     {performance.map((point) => (
-                        <li key={point.month}>{monthLabel(point.month)}: income {formatMoney(point.income)}, expenses {formatMoney(point.expenses)}, net {formatMoney(point.net)}.</li>
+                        <li key={point.month}>{monthLabel(point.month)}: revenue {formatMoney(point.income)}, expenses {formatMoney(point.expenses)}, net {formatMoney(point.net)}.</li>
                     ))}
                     {eventContribution.map((event) => (
                         <li key={event.label}>{event.label}: net contribution {formatMoney(event.net)}.</li>
