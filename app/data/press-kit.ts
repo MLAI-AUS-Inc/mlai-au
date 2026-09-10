@@ -95,11 +95,20 @@ export const PK_FONTS: PkFont[] = [
 /* ---------- Team ---------- */
 export const PK_TEAM: PkPerson[] = [
   { name: "Sam Donegan", img: "team-sam-donegan.png", role: "President" },
-  { name: "Sonia Kaurah", img: "team-sonia-kaurah.webp", role: "VP External & Growth" },
-  { name: "Alisa Belova", img: "team-alisa-belova.png", role: "VP Community & Operations" },
+  { name: "Sonia Kaurah", img: "team-sonia-kaurah.webp", role: "Vice President" },
+  { name: "Ryan Mouritz", img: "team-ryan-mouritz.jpg", role: "Vice President" },
   { name: "Pegah Khaleghi", img: "team-pegah-khaleghi.png", role: "Treasurer" },
-  { name: "Anjali Singh", img: "team-anjali-singh.jpeg", role: "Head of Marketing" },
+  { name: "Yana Lin", img: "team-yana-lin.jpg", role: "Head of Marketing" },
+  { name: "Anjali Singh", img: "team-anjali-singh.jpeg", role: "Marketing Lead" },
+  { name: "Dr Anu Ganugapati", img: "team-anu-gaunapati.jpg", role: "Social Media Lead" },
+  { name: "Daniel Malkinson", img: "team-daniel-malkinson.jpg", role: "Partnerships Lead" },
+  { name: "Jun Kai Chang", img: "team-jun-kai-chang.jpg", role: "Partnerships Lead" },
+  { name: "Alisa Belova", img: "team-alisa-belova.png", role: "Community Manager" },
+  { name: "Shan Yang", img: "team-shan-yang.png", role: "Community Manager" },
+  { name: "Kang Tan", img: "team-kang-tan.jpg", role: "Community Manager" },
   { name: "Juan Bernal", img: "team-juan-bernal.png", role: "Tech Lead" },
+  { name: "Alan Philip", img: "team-alan-philip.png", role: "Tech Lead" },
+  { name: "Callum Holt", img: "team-callum-holt.jpg", role: "Tech Lead" },
 ];
 
 /* ---------- Press mentions ---------- */
