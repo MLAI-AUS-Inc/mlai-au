@@ -1,3 +1,4 @@
+import UpdateEvidenceText from "~/components/vibe-raising/UpdateEvidenceText";
 import ReportingEvidenceNotice from "~/components/vibe-raising/ReportingEvidenceNotice";
 import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, useSubmit, redirect } from "react-router";
@@ -2601,7 +2602,7 @@ function ReviewPreviewSection({
             </h4>
             <ul className="list-outside list-disc space-y-2 pl-5 [font-family:var(--vr-font-body)] text-[15px] font-medium leading-7 text-gray-800 marker:text-[var(--vr-color-primary)] sm:text-base">
                 {items.map((item, index) => (
-                    <li key={`${label}-${index}`}>{item.trim()}</li>
+                    <li key={`${label}-${index}`}><UpdateEvidenceText text={item.trim()} /></li>
                 ))}
             </ul>
         </div>

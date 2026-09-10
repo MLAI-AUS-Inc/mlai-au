@@ -3,6 +3,18 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 import { formatMetricDisplayValue, hasDisplayableMetricValue, metricOptionsForValues } from "../app/lib/vibe-raising-metrics";
 import VRPreviewUpdateCard from "../app/components/vibe-raising/VRPreviewUpdateCard";
+import UpdateEvidenceText from "../app/components/vibe-raising/UpdateEvidenceText";
+
+it("opens source citations while keeping unsafe links and markup inert", () => {
+  const text = 'Delivered. [Dated source](https://example.com/evidence#message) [Unsafe](javascript:alert(1)) <img src=x onerror=alert(1)>';
+  const html = renderToStaticMarkup(<UpdateEvidenceText text={text} />);
+  expect(html).toContain('href="https://example.com/evidence#message"');
+  expect(html).toContain('rel="noopener noreferrer"');
+  expect(html).toContain('>Dated source</a>');
+  expect(html).not.toContain('href="javascript:');
+  expect(html).not.toContain('<img');
+  expect(html).toContain('&lt;img');
+});
 
 describe("monthly update evidence display", () => {
   it("preserves currency, units, and accounting notation", () => {

@@ -1,3 +1,4 @@
+- [x] Render reviewed source links in monthly-update drafts, preview and detail; 11 evidence tests, typecheck and production build pass.
 - [ ] Reporting canaries: preserve unknown financial values, show complete reviewed narrative and custom metrics, and freeze historical trends.
 - [x] Verify reporting canary render tests, typecheck and production build (10 tests, 2026-09-10).
 

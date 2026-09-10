@@ -1,4 +1,5 @@
 import ReportingEvidenceNotice from "./ReportingEvidenceNotice";
+import UpdateEvidenceText from "./UpdateEvidenceText";
 import { useState } from "react";
 import { Link } from "react-router";
 import { clsx } from "clsx";
@@ -75,7 +76,7 @@ function VRPreviewUpdateSection({
             </h4>
             <ul className="list-outside list-disc space-y-2 pl-5 [font-family:var(--vr-font-body)] text-[15px] font-medium leading-7 text-gray-800 marker:text-[var(--vr-color-primary)] sm:text-base">
                 {visibleItems.map((item, index) => (
-                    <li className={!mobileExpanded && index > 0 ? "hidden sm:list-item" : undefined} key={`${label}-${index}`}>{item.trim()}</li>
+                    <li className={!mobileExpanded && index > 0 ? "hidden sm:list-item" : undefined} key={`${label}-${index}`}><UpdateEvidenceText text={item.trim()} /></li>
                 ))}
             </ul>
             {shouldClampOnMobile ? (
