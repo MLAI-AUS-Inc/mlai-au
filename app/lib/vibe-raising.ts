@@ -619,9 +619,10 @@ export function normalizeFinancialSnapshot(raw: unknown): VibeRaisingFinancialSn
   }
   const payload = asRecord(candidate);
   if (!payload) return null;
-  const toNumber = (value: unknown) => {
+  const toNumber = (value: unknown): number | null => {
+    if (value == null || (typeof value === "string" && !value.trim()) || typeof value === "boolean") return null;
     const number = Number(value);
-    return Number.isFinite(number) ? number : 0;
+    return Number.isFinite(number) ? number : null;
   };
   const performance = (Array.isArray(payload.performance) ? payload.performance : [])
     .map((item) => {
@@ -826,8 +827,13 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
     metricSuggestions: normalizeMetricSuggestions(
       payload.metricSuggestions ?? payload.metric_suggestions,
     ),
+    reportingPeriod: asRecord(payload.reportingPeriod ?? payload.reporting_period),
+    evidenceWarnings: Array.isArray(payload.evidenceWarnings) ? payload.evidenceWarnings.map(String) : [],
+    metricHistory: normalizeMetricHistory(payload.metricHistory ?? payload.metric_history),
     financialSnapshot: normalizeFinancialSnapshot(
-      payload.financialSnapshot ?? payload.financial_snapshot ?? structuredMemo.financial_snapshot,
+      Object.hasOwn(payload, "financialSnapshot") ? payload.financialSnapshot
+        : Object.hasOwn(payload, "financial_snapshot") ? payload.financial_snapshot
+          : structuredMemo.financial_snapshot,
     ),
     conciseAnalysis: normalizeConciseAnalysis(
       payload.conciseAnalysis ?? payload.concise_analysis ?? structuredMemo.concise_analysis,
@@ -1151,6 +1157,9 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
       payload.metricSuggestions ?? payload.metric_suggestions,
     ),
     displayConfig: normalizeDisplayConfig(payload.displayConfig ?? payload.display_config),
+    reportingPeriod: asRecord(payload.reportingPeriod ?? payload.reporting_period),
+    evidenceWarnings: Array.isArray(payload.evidenceWarnings) ? payload.evidenceWarnings.map(String) : [],
+    metricHistory: normalizeMetricHistory(payload.metricHistory ?? payload.metric_history),
     financialSnapshot: normalizeFinancialSnapshot(payload.financialSnapshot ?? payload.financial_snapshot),
     conciseAnalysis: normalizeConciseAnalysis(payload.conciseAnalysis ?? payload.concise_analysis),
     presentationMode:

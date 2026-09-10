@@ -1,3 +1,4 @@
+import ReportingEvidenceNotice from "./ReportingEvidenceNotice";
 import { useState } from "react";
 import { Link } from "react-router";
 import { clsx } from "clsx";
@@ -264,11 +265,12 @@ export function VRPreviewUpdateCard({
                 </div>
             </div>
 
+            <ReportingEvidenceNotice period={update.reportingPeriod} warnings={update.evidenceWarnings} />
             {financialSnapshot ? (
                 <FinancialChartsSection snapshot={financialSnapshot} analysis={update.conciseAnalysis} />
             ) : null}
 
-            {!financialSnapshot && metrics.length > 0 ? (
+            {metrics.length > 0 ? (
                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                         {metrics.map((metric) => (
@@ -289,7 +291,7 @@ export function VRPreviewUpdateCard({
                 </div>
             ) : null}
 
-            {!financialSnapshot && pitchDeckUrl ? (
+            {pitchDeckUrl ? (
                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
                     <div className="space-y-4">
                         <div>
@@ -325,7 +327,7 @@ export function VRPreviewUpdateCard({
                 </div>
             ) : null}
 
-            {!financialSnapshot ? <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
+            <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
                 {(updateSummary || updateSourceUrl) ? (
                     <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-4 py-3 sm:p-4">
                         {updateSummary ? (
@@ -385,7 +387,7 @@ export function VRPreviewUpdateCard({
                     label="Ways to help"
                     text={update.asks}
                 />
-            </div> : null}
+            </div>
         </div>
     );
 }

@@ -100,9 +100,9 @@ export type VibeRaisingMetricHistory = Record<string, VibeRaisingMetricHistorySe
 
 export interface VibeRaisingFinancialPerformancePoint {
   month: string;
-  income: number;
-  expenses: number;
-  net: number;
+  income: number | null;
+  expenses: number | null;
+  net: number | null;
   isPartial?: boolean;
   basis?: string | null;
 }
@@ -110,25 +110,25 @@ export interface VibeRaisingFinancialPerformancePoint {
 export interface VibeRaisingRevenueMixSegment {
   key: string;
   label: string;
-  amount: number;
+  amount: number | null;
 }
 
 export interface VibeRaisingRevenueMixPoint {
   month: string;
-  total: number;
+  total: number | null;
   segments: VibeRaisingRevenueMixSegment[];
 }
 
 export interface VibeRaisingEventContribution {
   label: string;
-  income: number;
-  expenses: number;
-  net: number;
+  income: number | null;
+  expenses: number | null;
+  net: number | null;
 }
 
 export interface VibeRaisingOverheadItem {
   label: string;
-  amount: number;
+  amount: number | null;
 }
 
 export interface VibeRaisingFinancialSnapshot {
@@ -180,6 +180,9 @@ export interface VibeRaisingDraftedContent {
   metrics?: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
   financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+  metricHistory?: VibeRaisingMetricHistory;
+  reportingPeriod?: { start?: string; cutoff?: string; timezone?: string; is_partial?: boolean } | null;
+  evidenceWarnings?: string[];
   conciseAnalysis?: VibeRaisingConciseAnalysis | null;
   presentationMode?: string | null;
 }
@@ -223,6 +226,9 @@ export interface VibeRaisingMonthlyUpdate {
   learnings: string;
   next30Days: string;
   financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+  metricHistory?: VibeRaisingMetricHistory;
+  reportingPeriod?: { start?: string; cutoff?: string; timezone?: string; is_partial?: boolean } | null;
+  evidenceWarnings?: string[];
   conciseAnalysis?: VibeRaisingConciseAnalysis | null;
   presentationMode?: string | null;
 }

@@ -1,3 +1,4 @@
+import ReportingEvidenceNotice from "~/components/vibe-raising/ReportingEvidenceNotice";
 import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, useSubmit, redirect } from "react-router";
 import React, { startTransition, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, type RefObject } from "react";
@@ -5467,9 +5468,9 @@ export default function CreateUpdate() {
         const reviewPitchDeckOpenUrl = reviewPitchDeckUrl || uploadedPitchDeckUrl || pitchDeckPreviewUrl;
         const hasReviewPitchDeck = Boolean(reviewPitchDeckPreviewUrl);
         const reviewFinancialSnapshot = normalizeFinancialSnapshot(
-            reviewData?.financialSnapshot ||
-            reviewData?.financial_snapshot ||
-            reviewActionData?.update?.financialSnapshot ||
+            reviewData && Object.hasOwn(reviewData, "financialSnapshot") ? reviewData.financialSnapshot :
+            reviewData && Object.hasOwn(reviewData, "financial_snapshot") ? reviewData.financial_snapshot :
+            reviewActionData?.update && Object.hasOwn(reviewActionData.update, "financialSnapshot") ? reviewActionData.update.financialSnapshot :
             financialSnapshot,
         );
         const reviewConciseAnalysis = normalizeConciseAnalysis(
@@ -5684,11 +5685,12 @@ export default function CreateUpdate() {
                                 </div>
                             </div>
 
+                            <ReportingEvidenceNotice period={reviewActionData?.update?.reportingPeriod} warnings={reviewActionData?.update?.evidenceWarnings} />
                             {reviewFinancialSnapshot ? (
                                 <FinancialChartsSection snapshot={reviewFinancialSnapshot} analysis={reviewConciseAnalysis} />
                             ) : null}
 
-                            {!reviewFinancialSnapshot && hasReviewPitchDeck ? (
+                            {hasReviewPitchDeck ? (
                                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
                                     <div className="space-y-4">
                                         <div>
@@ -5759,7 +5761,7 @@ export default function CreateUpdate() {
                                         ) : null}
                                     </div>
                                 </div>
-                            ) : !reviewFinancialSnapshot ? (
+                            ) : (
                                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6">
                                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                                         {(() => {
@@ -5807,9 +5809,9 @@ export default function CreateUpdate() {
                                         })()}
                                     </div>
                                 </div>
-                            ) : null}
+                            )}
 
-                            {!reviewFinancialSnapshot && !hasReviewPitchDeck && reviewVideoUrl ? (
+                            {!hasReviewPitchDeck && reviewVideoUrl ? (
                                 <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
                                     <div className="mb-3">
                                         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
@@ -5845,7 +5847,7 @@ export default function CreateUpdate() {
                             ) : null}
 
                             {/* Content sections */}
-                            {!reviewFinancialSnapshot ? <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
+                            <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
                                 <ReviewSummaryBlock summary={reviewSummary} sourceUrl={reviewSourceUrl} />
                                 <ReviewPreviewSection
                                     label="Key Highlights"
@@ -5867,7 +5869,7 @@ export default function CreateUpdate() {
                                     label="Support request"
                                     text={(data as any)?.asks}
                                 />
-                            </div> : null}
+                            </div>
                         </div>
 
                         {/* Revenue chart + Past month previews */}
@@ -6250,7 +6252,7 @@ export default function CreateUpdate() {
                                             )}
                                             {!isWeeklyUpdate && existingUpdateForSelectedMonth && !isSelectedMonthUnavailable && (
                                                 <p className="mt-3 rounded-xl border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.12)] px-4 py-3 text-sm font-medium text-[var(--vr-color-primary)]">
-                                                    An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
+                                                    An update already exists for {selectedMonthLabel}. Generate a new private revision from the selected sources, then review it before replacing the published update.
                                                 </p>
                                             )}
                                         </div>
