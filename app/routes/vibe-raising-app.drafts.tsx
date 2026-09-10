@@ -1,3 +1,4 @@
+import UpdateEvidenceText from "~/components/vibe-raising/UpdateEvidenceText";
 import { Link, redirect, useLoaderData } from "react-router";
 import { formatDistanceToNow } from "date-fns";
 import type { Route } from "./+types/vibe-raising-app.drafts";
@@ -78,7 +79,7 @@ function DraftSection({ label, text }: { label: string; text?: string | null }) 
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
             <ul className="mt-2 list-outside list-disc space-y-1.5 pl-5 text-sm font-medium leading-6 text-slate-700 marker:text-[var(--vr-color-primary)]">
                 {items.map((item, index) => (
-                    <li key={`${label}-${index}`}>{item}</li>
+                    <li key={`${label}-${index}`}><UpdateEvidenceText text={item} /></li>
                 ))}
             </ul>
         </div>
