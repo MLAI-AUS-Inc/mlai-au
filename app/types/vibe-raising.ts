@@ -152,7 +152,18 @@ export interface VibeRaisingConciseAnalysis {
   bullets: string[];
 }
 
+export interface VibeRaisingUpdateCover {
+  url: string;
+  assetToken?: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  source: "upload" | "generated";
+  model?: string | null;
+}
+
 export interface VibeRaisingDraftedContent {
+  coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
   month?: string;
@@ -189,6 +200,10 @@ export interface VibeRaisingDraftedContent {
 
 export interface VibeRaisingMonthlyUpdate {
   id: string;
+  weekStart?: string | null;
+  weekEnd?: string | null;
+  coverImageUrl?: string | null;
+  coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
   snapshotId?: number | null;
@@ -725,6 +740,7 @@ export interface VibeRaisingStartupUpdateRunProgress {
   targetMonth?: string | null;
 }
 export interface VibeRaisingEmailDraftMonth {
+  coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
   draftId?: number;

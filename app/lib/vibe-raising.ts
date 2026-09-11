@@ -1,3 +1,5 @@
+import { normalizeUpdateCover } from "~/lib/update-cover";
+import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
 import { redirect } from "react-router";
 import { normalizeAuthNextForApp } from "~/lib/auth-return";
 import type { User } from "~/types/user";
@@ -764,6 +766,7 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
     revisionHash: asNullableString(payload.revisionHash),
     month: asNullableString(payload.month) ?? undefined,
     year: yearValue,
+    coverImage: normalizeUpdateCover(payload.coverImage ?? structuredMemo.cover_image),
     summary: normalizeDraftSummary(payload.summary) ??
       normalizeDraftSummary(payload.topline) ??
       normalizeDraftSummary(structuredMemo.topline) ??
@@ -910,6 +913,7 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
       undefined,
     month,
     year: typeof year === "number" && Number.isFinite(year) ? year : undefined,
+    coverImage: normalizeUpdateCover(payload.coverImage ?? payload.cover_image),
     summary:
       asNullableString(payload.summary) ??
       asNullableString(payload.topline) ??
@@ -1083,6 +1087,10 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
 
   return {
     id,
+    weekStart: asNullableString(payload.weekStart ?? payload.week_start),
+    weekEnd: asNullableString(payload.weekEnd ?? payload.week_end),
+    coverImage: normalizeUpdateCover(payload.coverImage ?? payload.cover_image),
+    coverImageUrl: normalizeUpdateCover(payload.coverImage ?? payload.cover_image)?.url ?? asNullableString(payload.coverImageUrl ?? payload.cover_image_url),
     revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
     revisionHash: asNullableString(payload.revisionHash),
     snapshotId: payload.snapshotId == null ? null : Number(payload.snapshotId),
@@ -1098,7 +1106,7 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
       asNullableString(payload.date) ??
       asNullableString(payload.updatedAt) ??
       asNullableString(payload.updated_at) ??
-      new Date().toISOString(),
+      "",
     status: asNullableString(payload.status),
     visibility:
       asNullableString(payload.visibility) ??
@@ -1485,7 +1493,7 @@ function withBrowserCompanyScope(path: string): string {
   return `${path}${path.includes("?") ? "&" : "?"}company_id=${encodeURIComponent(browserCompanyScopeId)}`;
 }
 
-async function requestBrowserJson<T>(
+export async function requestBrowserJson<T>(
   backendBaseUrl: string,
   path: string,
   init?: RequestInit,
@@ -2626,6 +2634,7 @@ export async function saveVibeRaisingMonthlyUpdate(
     conciseAnalysis?: VibeRaisingConciseAnalysis | null;
     presentationMode?: string | null;
     audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
+    coverImage?: VibeRaisingUpdateCover | null;
     summary?: string | null;
     sourceUrl?: string | null;
     pitchDeckUrl?: string | null;
@@ -3048,6 +3057,21 @@ export async function getVibeRaisingInputSourcesStatus(
   }
 
   return { sources, financeUnavailable };
+}
+
+/** Read connector status for the company rendered by this server request. */
+export async function getVibeRaisingInputSourcesForRequest(
+  env: Env,
+  request: Request,
+  companyId?: string | null,
+): Promise<VibeRaisingInputSourceSummary[]> {
+  const path = companyId
+    ? `${INPUT_SOURCES_STATUS_PATH}?company_id=${encodeURIComponent(companyId)}`
+    : INPUT_SOURCES_STATUS_PATH;
+  const response = await createApiClient(env, request).get(path, { timeout: 5000 });
+  return Object.values(normalizeInputSourceSummaries(response.data)).filter(
+    (source): source is VibeRaisingInputSourceSummary => Boolean(source),
+  );
 }
 
 // Luma is connected by pasting an API key (see connectVibeRaisingLuma), not via OAuth redirect.
