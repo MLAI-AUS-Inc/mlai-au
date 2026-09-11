@@ -100,9 +100,9 @@ export type VibeRaisingMetricHistory = Record<string, VibeRaisingMetricHistorySe
 
 export interface VibeRaisingFinancialPerformancePoint {
   month: string;
-  income: number;
-  expenses: number;
-  net: number;
+  income: number | null;
+  expenses: number | null;
+  net: number | null;
   isPartial?: boolean;
   basis?: string | null;
 }
@@ -110,25 +110,25 @@ export interface VibeRaisingFinancialPerformancePoint {
 export interface VibeRaisingRevenueMixSegment {
   key: string;
   label: string;
-  amount: number;
+  amount: number | null;
 }
 
 export interface VibeRaisingRevenueMixPoint {
   month: string;
-  total: number;
+  total: number | null;
   segments: VibeRaisingRevenueMixSegment[];
 }
 
 export interface VibeRaisingEventContribution {
   label: string;
-  income: number;
-  expenses: number;
-  net: number;
+  income: number | null;
+  expenses: number | null;
+  net: number | null;
 }
 
 export interface VibeRaisingOverheadItem {
   label: string;
-  amount: number;
+  amount: number | null;
 }
 
 export interface VibeRaisingFinancialSnapshot {
@@ -152,7 +152,18 @@ export interface VibeRaisingConciseAnalysis {
   bullets: string[];
 }
 
+export interface VibeRaisingUpdateCover {
+  url: string;
+  assetToken?: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  source: "upload" | "generated";
+  model?: string | null;
+}
+
 export interface VibeRaisingDraftedContent {
+  coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
   month?: string;
@@ -180,12 +191,19 @@ export interface VibeRaisingDraftedContent {
   metrics?: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
   financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+  metricHistory?: VibeRaisingMetricHistory;
+  reportingPeriod?: { start?: string; cutoff?: string; timezone?: string; is_partial?: boolean } | null;
+  evidenceWarnings?: string[];
   conciseAnalysis?: VibeRaisingConciseAnalysis | null;
   presentationMode?: string | null;
 }
 
 export interface VibeRaisingMonthlyUpdate {
   id: string;
+  weekStart?: string | null;
+  weekEnd?: string | null;
+  coverImageUrl?: string | null;
+  coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
   snapshotId?: number | null;
@@ -223,6 +241,9 @@ export interface VibeRaisingMonthlyUpdate {
   learnings: string;
   next30Days: string;
   financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+  metricHistory?: VibeRaisingMetricHistory;
+  reportingPeriod?: { start?: string; cutoff?: string; timezone?: string; is_partial?: boolean } | null;
+  evidenceWarnings?: string[];
   conciseAnalysis?: VibeRaisingConciseAnalysis | null;
   presentationMode?: string | null;
 }
@@ -719,6 +740,7 @@ export interface VibeRaisingStartupUpdateRunProgress {
   targetMonth?: string | null;
 }
 export interface VibeRaisingEmailDraftMonth {
+  coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
   draftId?: number;

@@ -209,6 +209,7 @@ function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  if (isArticleSystemSetupBlocked(bootstrap)) return "content_only";
   const effective = bootstrap.settings.articleDeliveryModeEffective;
   if (effective === "review_draft" || effective === "publish_code" || effective === "content_only") {
     return effective;
@@ -555,9 +556,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-content-island-discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
-      if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
-      }
       const contentIslandSlug = stringFromForm(formData, "contentIslandSlug");
       const pillar = bootstrap.topicPillars.find((item) => item.slug === contentIslandSlug);
       if (!pillar) {
@@ -601,9 +599,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "research-custom-topic") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
-      if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
-      }
       const customTitle = stringFromForm(formData, "customTitle");
       const targetKeyword = stringFromForm(formData, "targetKeyword");
       const articleContext = stringFromForm(formData, "articleContext");
@@ -640,9 +635,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-discovery" || intent === "discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
-      if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
-      }
       const run = await startVibeMarketingDiscovery(env, request, { companyId: activeCompanyId });
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
@@ -700,9 +692,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId);
-      if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
-      }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
       const candidatePool = [
@@ -3647,7 +3636,9 @@ function ReturningTopicPickerPage({
     ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
     : effectiveDeliveryMode === "review_draft"
       ? "This will generate an article preview for comments before publishing."
-      : "This will generate article copy and images for manual publishing.";
+      : isArticleSystemSetupBlocked(bootstrap)
+        ? "Your draft can be written while website setup finishes. Once setup is ready, review it on your site before publishing."
+        : "This will generate article copy and images for manual publishing.";
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
@@ -4367,9 +4358,7 @@ function ReturningTopicPickerPage({
               What should we write about next?
             </h1>
             <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
-              {directPublishMode
-                ? "Choose a topic and we'll research, write, and prepare a high-performing SEO article for your site."
-                : "Choose a topic and we'll research, write, and package a high-performing SEO article for manual publishing."}
+              Choose a topic and we'll research, write, and check an article that helps your readers complete a useful task.
             </p>
             <p className="mt-3 max-w-2xl text-sm font-bold text-slate-500">{deliveryModeNote}</p>
           </div>

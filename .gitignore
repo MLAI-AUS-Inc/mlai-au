@@ -36,3 +36,48 @@ env/
 *.swp
 *.swo
 *~
+
+# Local task scratchpads, handoffs, and pull-request drafts (at any depth)
+TODO*.md
+todo*.md
+SCRATCHPAD*.md
+scratchpad*.md
+TASK_PLAN.md
+task_plan.md
+findings.md
+progress.md
+*_HANDOFF.md
+handoff*.md
+PR_DESCRIPTION*.md
+PR_BODY*.md
+pr-description*.md
+pr-body*.md
+
+# Local agent permissions; shared launch configuration remains versioned
+.claude/settings.local.json
+
+# Temporary output, browser captures, and build diagnostics
+/tmp/
+/temp/
+/output/
+/artifacts/
+/screenshots/
+/test-results/
+/playwright-report/
+/coverage/
+build_output*.txt
+typecheck_output*.txt
+__pycache__/
+*.pyc
+
+# Dated working audits and implementation plans; maintained docs stay versioned
+/docs/*-audit-*
+/docs/*-implementation-plan-*
+/docs/*-plan-20[0-9][0-9]-*
+
+# Content Factory reports, previews, and drafts are generated working files.
+# Keep the integration configuration, hook code, and its documentation.
+/.content-factory/*
+!/.content-factory/README.md
+!/.content-factory/target.yml
+!/.content-factory/hooks/

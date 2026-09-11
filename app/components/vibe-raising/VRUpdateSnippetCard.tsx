@@ -1,3 +1,4 @@
+import ReportingEvidenceNotice from "./ReportingEvidenceNotice";
 import { Link } from "react-router";
 import { format } from "date-fns";
 import { ArrowRightIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
@@ -24,7 +25,6 @@ const MAX_SNIPPET_METRICS = 4;
 export default function VRUpdateSnippetCard({
     update,
     user,
-    metricHistory,
     statusLabel = "Sent",
 }: {
     update: any;
@@ -87,6 +87,7 @@ export default function VRUpdateSnippetCard({
                 ) : null}
             </div>
 
+            <ReportingEvidenceNotice period={update.reportingPeriod} warnings={update.evidenceWarnings} />
             {excerpt ? (
                 <p className="mt-3 px-4 text-sm font-medium leading-6 text-gray-700 line-clamp-3 sm:px-5">
                     {excerpt}
@@ -96,7 +97,7 @@ export default function VRUpdateSnippetCard({
             {metrics.length > 0 ? (
                 <div className={`mt-4 grid gap-2 px-4 sm:px-5 ${metrics.length > 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
                     {metrics.map((metric) => {
-                        const series = metricHistory[metric.key];
+                        const series = update.metricHistory?.[metric.key];
                         const points = series
                             ? windowPointsToMonth(series.points, update.isoMonth)
                             : [];

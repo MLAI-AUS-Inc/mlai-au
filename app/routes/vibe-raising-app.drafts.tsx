@@ -1,10 +1,10 @@
+import UpdateEvidenceText from "~/components/vibe-raising/UpdateEvidenceText";
 import { Link, redirect, useLoaderData } from "react-router";
 import { formatDistanceToNow } from "date-fns";
 import type { Route } from "./+types/vibe-raising-app.drafts";
 import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
 import {
-    VIBE_METRIC_OPTIONS,
-    VIBE_METRIC_OPTION_MAP,
+    metricOptionsForValues,
     formatMetricDisplayValue,
     hasDisplayableMetricValue,
     metricCardLabel,
@@ -61,11 +61,11 @@ function getDraftMetricOptions(metrics?: Record<string, string>, fullMetricKeys?
     const values = metrics || {};
     const configured = fullMetricKeys
         ? fullMetricKeys
-            .map((key) => VIBE_METRIC_OPTION_MAP.get(key))
+            .map((key) => metricOptionsForValues(values).find(option => option.key === key))
             .filter((option): option is MetricOption => Boolean(option))
         : [];
     const seen = new Set(configured.map((option) => option.key));
-    const remaining = VIBE_METRIC_OPTIONS.filter((option) => !seen.has(option.key));
+    const remaining = metricOptionsForValues(values).filter((option) => !seen.has(option.key));
 
     return [...configured, ...remaining].filter((option) => hasDisplayableMetricValue(values[option.key]));
 }
@@ -79,7 +79,7 @@ function DraftSection({ label, text }: { label: string; text?: string | null }) 
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
             <ul className="mt-2 list-outside list-disc space-y-1.5 pl-5 text-sm font-medium leading-6 text-slate-700 marker:text-[var(--vr-color-primary)]">
                 {items.map((item, index) => (
-                    <li key={`${label}-${index}`}>{item}</li>
+                    <li key={`${label}-${index}`}><UpdateEvidenceText text={item} /></li>
                 ))}
             </ul>
         </div>
@@ -89,10 +89,6 @@ function DraftSection({ label, text }: { label: string; text?: string | null }) 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const { appUser } = await requireVibeRaisingFounder(env, request);
-
-    if (!appUser.companyRegistered) {
-        throw redirect("/founder-tools/company-setup");
-    }
 
     const drafts = await getVibeRaisingDrafts(env, request, resolveActiveCompanyId(appUser));
 
