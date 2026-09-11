@@ -83,7 +83,6 @@ import {
     HandThumbUpIcon as HandThumbUpSolidIcon,
     HandThumbDownIcon as HandThumbDownSolidIcon,
 } from "@heroicons/react/24/solid";
-import { useDropzone } from 'react-dropzone';
 import { motion, useInView } from "motion/react";
 import { clsx } from "clsx";
 import { useActiveDraftRun } from "~/components/ActiveDraftRunStatus";
@@ -155,7 +154,6 @@ const COMPACT_OPTIONAL_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_create_update_mobile_tour_seen_v1";
-const STORY_MATERIALS_SUGGESTION_SEEN_STORAGE_PREFIX = "vibe_raising_story_materials_suggestion_seen_v1";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
 const SEND_TO_MLAI_FORM_ID = "vibe-raising-send-to-mlai-form";
@@ -1426,7 +1424,6 @@ const MAX_SOURCE_VIDEO_BYTES = MAX_VIDEO_UPLOAD_SIZE_MB * 1024 * 1024;
 const MAX_PITCH_DECK_UPLOAD_BYTES = MAX_PITCH_DECK_UPLOAD_SIZE_MB * 1024 * 1024;
 const VIDEO_COMPRESSION_THRESHOLD_BYTES = 75 * 1024 * 1024;
 const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
-const STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD = 4;
 const PITCH_DECK_ACCEPT = {
     "application/pdf": [".pdf"],
     "application/vnd.ms-powerpoint": [".ppt"],
@@ -1468,11 +1465,6 @@ const AUDIO_ACCEPT = {
     "audio/webm": [".webm"],
     "audio/ogg": [".ogg"],
     "audio/*": SUPPORTED_AUDIO_EXTENSIONS,
-};
-const SHARED_MATERIAL_ACCEPT = {
-    ...PITCH_DECK_ACCEPT,
-    ...VIDEO_ACCEPT,
-    ...AUDIO_ACCEPT,
 };
 const VIDEO_EXTENSION_CONTENT_TYPES: Record<string, string> = {
     ".mp4": "video/mp4",
@@ -1873,11 +1865,6 @@ function uniqueFounderProfiles(profiles: VibeRaisingFounderProfile[]) {
 function getEmailDraftStorageKey(domain?: string | null) {
     const normalized = String(domain || "").trim().toLowerCase() || "unknown";
     return `vibe_raising_email_draft:${normalized}`;
-}
-
-function getStoryMaterialsSuggestionSeenStorageKey(activeCompanyId?: string | null, domain?: string | null) {
-    const accountKey = String(activeCompanyId || domain || "unknown").trim().toLowerCase();
-    return `${STORY_MATERIALS_SUGGESTION_SEEN_STORAGE_PREFIX}:${accountKey}`;
 }
 
 function getEmailDraftForceRegenerateKey(domain?: string | null) {
@@ -2913,7 +2900,6 @@ export default function CreateUpdate() {
     const [uploadedPitchDeckUrl, setUploadedPitchDeckUrl] = useState<string>(defaultData?.pitchDeckUrl || "");
     const [pitchDeckUploadStatus, setPitchDeckUploadStatus] = useState<PitchDeckUploadStatus>(defaultData?.pitchDeckUrl ? "ready" : "idle");
     const [pitchDeckUploadError, setPitchDeckUploadError] = useState<string | null>(null);
-    const [materialsUploadError, setMaterialsUploadError] = useState<string | null>(null);
     const [pitchDeckStoragePath, setPitchDeckStoragePath] = useState<string>(defaultData?.pitchDeckStoragePath || "");
     const [pitchDeckContentType, setPitchDeckContentType] = useState<string>(defaultData?.pitchDeckContentType || "");
     const [pitchDeckFileSizeBytes, setPitchDeckFileSizeBytes] = useState<number | null>(defaultData?.pitchDeckFileSizeBytes || null);
@@ -2938,12 +2924,6 @@ export default function CreateUpdate() {
     const [draftSaved, setDraftSaved] = useState(false);
     const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
     const [showReviewLinkedInPopup, setShowReviewLinkedInPopup] = useState(false);
-    const [showStoryMaterialsSuggestion, setShowStoryMaterialsSuggestion] = useState(false);
-    const [dismissedStoryMaterialsSuggestionKey, setDismissedStoryMaterialsSuggestionKey] = useState<string | null>(null);
-    const [hasPreviouslySeenStoryMaterialsSuggestion, setHasPreviouslySeenStoryMaterialsSuggestion] = useState(false);
-    const [hasLoadedStoryMaterialsSuggestionSeenState, setHasLoadedStoryMaterialsSuggestionSeenState] = useState(false);
-    const [hasTriggeredStoryMaterialsSuggestion, setHasTriggeredStoryMaterialsSuggestion] = useState(false);
-    const [highlightMaterialsSection, setHighlightMaterialsSection] = useState(false);
     const [showAllCreateStepMonths, setShowAllCreateStepMonths] = useState(false);
     const [mlaiFeedbackPreference, setMlaiFeedbackPreference] = useState<MlaiFeedbackPreference>("yes");
     const [hasReviewedFeedbackPreference, setHasReviewedFeedbackPreference] = useState(false);
@@ -3065,11 +3045,6 @@ export default function CreateUpdate() {
     const isSelectedMonthUnavailable = isSelectedMonthInFuture || isSelectedMonthBeforeMinimum;
     const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
         (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
-    );
-    const isCreatingFirstMonthlyUpdate = !isEdit && existingMonthlyUpdates.length === 0;
-    const storyMaterialsSuggestionSeenStorageKey = getStoryMaterialsSuggestionSeenStorageKey(
-        user.activeCompanyId,
-        user.domain,
     );
     const selectedMonthLabel = hasSelectedMonth ? `${selectedMonth} ${selectedYear}` : "Select a month";
     const selectedPeriodLabel = isWeeklyUpdate
@@ -3233,7 +3208,6 @@ export default function CreateUpdate() {
     const pitchDeckLinkInputRef = useRef<HTMLInputElement | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
-    const materialsSectionRef = useRef<HTMLElement | null>(null);
     const recordedChunksRef = useRef<BlobPart[]>([]);
     const videoUploadAbortRef = useRef<AbortController | null>(null);
     const videoUploadSequenceRef = useRef(0);
@@ -3516,7 +3490,6 @@ export default function CreateUpdate() {
         setPreviewMediaKind(null);
         setVideoUploadStatus("idle");
         setVideoUploadError(null);
-        setMaterialsUploadError(null);
     }, [revokeVideoPreviewObjectUrl]);
 
     const resetPitchDeckUpload = useCallback(() => {
@@ -3531,14 +3504,7 @@ export default function CreateUpdate() {
         setPitchDeckOriginalFilename("");
         setPitchDeckUploadStatus("idle");
         setPitchDeckUploadError(null);
-        setMaterialsUploadError(null);
     }, [revokePitchDeckPreviewObjectUrl]);
-
-    const removePitchDeck = useCallback(() => {
-        setPitchDeckUrl("");
-        setPitchDeckSummary("");
-        resetPitchDeckUpload();
-    }, [resetPitchDeckUpload]);
 
     const uploadVideoFile = useCallback(async (file: File, options?: { forceCompress?: boolean }) => {
         const sequence = videoUploadSequenceRef.current + 1;
@@ -3547,7 +3513,6 @@ export default function CreateUpdate() {
         const abortController = new AbortController();
         videoUploadAbortRef.current = abortController;
 
-        setMaterialsUploadError(null);
         setVideoUploadStatus("validating");
         setVideoUploadError(null);
         setUploadedVideoUrl("");
@@ -3640,7 +3605,6 @@ export default function CreateUpdate() {
         const abortController = new AbortController();
         pitchDeckUploadAbortRef.current = abortController;
 
-        setMaterialsUploadError(null);
         setPitchDeckUploadError(null);
         setPitchDeckUploadStatus("creating_session");
         setUploadedPitchDeckUrl("");
@@ -4416,8 +4380,6 @@ export default function CreateUpdate() {
         metricsConfirmed &&
         (!isAutoDrafting || canContinueDraftManually) &&
         !showEmailWizard;
-    const hasAnyMetricValue = Object.values(metricValues).some((value) => String(value || "").trim().length > 0);
-    const qualitativeDraftText = [highlights, challenges, learnings, next30Days, asks].join("\n");
     const answeredFounderQuestionCount = [highlights, challenges, learnings, next30Days, asks]
         .filter(hasMeaningfulFounderAnswer)
         .length;
@@ -4432,72 +4394,6 @@ export default function CreateUpdate() {
             : saveDraftFetcher.data?.step === "validation-error"
                 ? String(saveDraftFetcher.data.error || "")
                 : "";
-    const hasQualitativeDraftText =
-        qualitativeDraftText.replace(/[\s\-•]+/g, "").length >= STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD;
-    const hasUploadedStoryMaterial = Boolean(
-        String(uploadedPitchDeckUrl || pitchDeckStoragePath || "").trim() ||
-        (pitchDeckUploadStatus === "ready" && String(pitchDeckPreviewUrl || "").trim()) ||
-        String(uploadedVideoUrl || videoStoragePath || "").trim() ||
-        (videoUploadStatus === "ready" && String(videoPreviewUrl || "").trim())
-    );
-    const shouldSuggestStoryMaterials =
-        hasLoadedStoryMaterialsSuggestionSeenState &&
-        !hasPreviouslySeenStoryMaterialsSuggestion &&
-        isCreatingFirstMonthlyUpdate &&
-        hasDraftTemplate &&
-        hasQualitativeDraftText &&
-        !hasAnyMetricValue &&
-        !hasUploadedStoryMaterial &&
-        dismissedStoryMaterialsSuggestionKey !== selectedMonthUpdateKey;
-
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-
-        try {
-            setHasPreviouslySeenStoryMaterialsSuggestion(
-                window.localStorage.getItem(storyMaterialsSuggestionSeenStorageKey) === "1",
-            );
-        } catch {
-            setHasPreviouslySeenStoryMaterialsSuggestion(false);
-        }
-        setHasLoadedStoryMaterialsSuggestionSeenState(true);
-        setHasTriggeredStoryMaterialsSuggestion(false);
-    }, [storyMaterialsSuggestionSeenStorageKey]);
-
-    useEffect(() => {
-        if (!shouldSuggestStoryMaterials) {
-            setShowStoryMaterialsSuggestion(false);
-            return;
-        }
-        if (hasTriggeredStoryMaterialsSuggestion) return;
-
-        const timeoutId = window.setTimeout(() => {
-            try {
-                window.localStorage.setItem(storyMaterialsSuggestionSeenStorageKey, "1");
-            } catch {
-                // Keep the prompt usable when storage is unavailable.
-            }
-            setHasTriggeredStoryMaterialsSuggestion(true);
-            setShowStoryMaterialsSuggestion(true);
-        }, 900);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [hasTriggeredStoryMaterialsSuggestion, shouldSuggestStoryMaterials, storyMaterialsSuggestionSeenStorageKey]);
-
-    const dismissStoryMaterialsSuggestion = useCallback(() => {
-        setDismissedStoryMaterialsSuggestionKey(selectedMonthUpdateKey);
-        setShowStoryMaterialsSuggestion(false);
-    }, [selectedMonthUpdateKey]);
-
-    const handleAddStoryMaterials = useCallback(() => {
-        dismissStoryMaterialsSuggestion();
-        window.setTimeout(() => {
-            materialsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-            setHighlightMaterialsSection(true);
-            window.setTimeout(() => setHighlightMaterialsSection(false), 2400);
-        }, 80);
-    }, [dismissStoryMaterialsSuggestion]);
-
     const returnToMonthSelection = useCallback(() => {
         setMonthConfirmed(false);
         setSelectedDraftStage(null);
@@ -4710,7 +4606,6 @@ export default function CreateUpdate() {
 
         try {
             setRecordingError(null);
-            setMaterialsUploadError(null);
             setIsRecordingPermissionPending(true);
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .catch(() => navigator.mediaDevices.getUserMedia({ audio: true }));
@@ -4774,18 +4669,6 @@ export default function CreateUpdate() {
         setRecordingMode(null);
         stopMediaStream();
     }, [stopMediaStream]);
-
-    const removeWalkthroughMedia = useCallback(() => {
-        if (mediaRecorderRef.current?.state === "recording") {
-            mediaRecorderRef.current.stop();
-        }
-        setRecordingError(null);
-        setRecordingMode(null);
-        setIsRecording(false);
-        setIsRecordingPermissionPending(false);
-        stopMediaStream();
-        resetVideoUpload();
-    }, [resetVideoUpload, stopMediaStream]);
 
     useEffect(() => {
         return () => {
@@ -5004,261 +4887,6 @@ export default function CreateUpdate() {
             document.getElementById(`past-month-${index}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
         }, 100);
     };
-
-    // Dropzone setup
-    const onMaterialsDrop = useCallback((acceptedFiles: File[]) => {
-        const uploadedFile = acceptedFiles[0];
-        if (!uploadedFile) return;
-        setMaterialsUploadError(null);
-        if (isSupportedPitchDeckFile(uploadedFile)) {
-            void uploadPitchDeckFile(uploadedFile);
-            return;
-        }
-        if (isSupportedVideoFile(uploadedFile)) {
-            void uploadVideoFile(uploadedFile);
-            return;
-        }
-        setMaterialsUploadError("Use a PDF, PPT, PPTX, MP3, or a common video format like MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
-    }, [uploadPitchDeckFile, uploadVideoFile]);
-    const onMaterialsDropRejected = useCallback((fileRejections: any[]) => {
-        setMaterialsUploadError(getDropzoneRejectionMessage(fileRejections));
-    }, []);
-    const { getRootProps: getMaterialsRootProps, getInputProps: getMaterialsInputProps, isDragActive: isMaterialsDragActive, open: openMaterialsPicker } = useDropzone({
-        onDrop: onMaterialsDrop,
-        onDropRejected: onMaterialsDropRejected,
-        maxFiles: 1,
-        multiple: false,
-        noClick: true,
-        maxSize: MAX_SOURCE_VIDEO_BYTES,
-        accept: SHARED_MATERIAL_ACCEPT,
-    });
-
-    const materialsSection = (
-        <section
-            ref={materialsSectionRef}
-            className={clsx(
-                "scroll-mt-28 rounded-[2rem] pt-4 transition-all duration-300 sm:pt-6",
-                highlightMaterialsSection && "ring-4 ring-[rgba(242,114,63,0.28)] ring-offset-4 ring-offset-[var(--vr-palette-paper)]",
-            )}
-        >
-            <div className="flex items-end justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-black text-gray-950">Add a deck or short founder walkthrough.</h2>
-                </div>
-            </div>
-            <div className="relative mt-6">
-                <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
-                    <div className="contents">
-                        <div
-                            {...getMaterialsRootProps()}
-                            className={clsx(
-                                "relative flex flex-col items-center justify-center rounded-[2rem] border p-6 text-center shadow-sm transition-all sm:p-8 lg:p-10",
-                                isMaterialsDragActive
-                                    ? "scale-[1.01] border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)]"
-                                    : "border-[var(--vr-color-border)] bg-white",
-                            )}
-                        >
-                            <input {...getMaterialsInputProps()} />
-                            <div className="w-full max-w-4xl">
-                                <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
-                                    <button
-                                        type="button"
-                                        disabled={isEmailDraftBusy}
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            openMaterialsPicker();
-                                        }}
-                                        className="group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition hover:bg-[rgba(0,128,128,0.05)] focus:outline-none focus:ring-2 focus:ring-[var(--vr-color-primary)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left"
-                                    >
-                                        <p className="text-[1rem] font-black uppercase leading-6 tracking-[0.06em] text-[var(--vr-color-primary)]">
-                                            PITCH DECK
-                                        </p>
-                                        <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
-                                            <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
-                                            Upload deck
-                                        </span>
-                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                                            Slides, bio, market story, traction.
-                                        </p>
-                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
-                                            PDF, PPT, or PPTX
-                                        </p>
-                                        <p className="mt-1 text-[11px] font-bold text-slate-400">
-                                            Up to {MAX_PITCH_DECK_UPLOAD_SIZE_MB} MB
-                                        </p>
-                                    </button>
-
-                                    <div className="h-px w-full bg-[var(--vr-color-border)] md:h-auto md:w-px" aria-hidden />
-
-                                    <button
-                                        type="button"
-                                        disabled={isEmailDraftBusy || isRecordingPermissionPending}
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            if (isRecording) {
-                                                stopRecording();
-                                            } else {
-                                                openMaterialsPicker();
-                                            }
-                                        }}
-                                        className={clsx(
-                                            "group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--vr-palette-coral)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left",
-                                            isRecording ? "bg-[rgba(242,114,63,0.10)]" : "hover:bg-[rgba(242,114,63,0.06)]",
-                                        )}
-                                    >
-                                        <p className="text-[1rem] font-black uppercase leading-6 tracking-[0.06em] text-[var(--vr-palette-coral)]">
-                                            WALKTHROUGH VIDEO
-                                        </p>
-                                        <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
-                                            {isRecording ? (
-                                                <VideoCameraIcon className="h-4 w-4" aria-hidden="true" />
-                                            ) : (
-                                                <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
-                                            )}
-                                            {isRecordingPermissionPending ? "Requesting access" : isRecording ? "Stop recording" : "Upload video"}
-                                        </span>
-                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                                            Useful when metrics are light.
-                                        </p>
-                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
-                                            MP4, MOV, WebM
-                                        </p>
-                                        <p className="mt-1 text-[11px] font-bold text-slate-400">
-                                            Up to {MAX_VIDEO_UPLOAD_SIZE_MB} MB
-                                        </p>
-                                    </button>
-                                </div>
-
-                                {isRecordingPermissionPending ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">
-                                        Waiting for your browser camera and microphone prompt...
-                                    </p>
-                                ) : null}
-                                {isRecording ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">
-                                        Recording {recordingMode === "audio" ? "audio" : "video"} now. Click Stop recording when you are done.
-                                    </p>
-                                ) : null}
-                                {pitchDeckPreviewUrl ? (
-                                    <div
-                                        className="mt-6"
-                                        onClick={(event) => event.stopPropagation()}
-                                    >
-                                        <div className="mb-3 flex items-center justify-between gap-3 text-left">
-                                            <div>
-                                                <p className="text-sm font-black text-gray-950">Pitch deck preview</p>
-                                                <p className="mt-1 text-xs font-semibold text-slate-500">
-                                                    {isPdfPitchDeck(pitchDeckContentType, pitchDeckOriginalFilename, pitchDeckPreviewUrl)
-                                                        ? "Showing the first PDF page."
-                                                        : "PowerPoint file attached."}
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-shrink-0 items-center gap-2">
-                                                {pitchDeckUploadStatusLabel ? (
-                                                    <span className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)]">
-                                                        {pitchDeckUploadStatusLabel}
-                                                    </span>
-                                                ) : null}
-                                                <button
-                                                    type="button"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        removePitchDeck();
-                                                    }}
-                                                    className="flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
-                                                    aria-label="Remove pitch deck"
-                                                >
-                                                    <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <PitchDeckAssetPreview
-                                            src={pitchDeckPreviewUrl}
-                                            openUrl={uploadedPitchDeckUrl || pitchDeckUrl || pitchDeckPreviewUrl}
-                                            contentType={pitchDeckContentType}
-                                            fileName={pitchDeckOriginalFilename}
-                                            fileSizeBytes={pitchDeckFileSizeBytes}
-                                        />
-                                    </div>
-                                ) : null}
-                                {videoPreviewUrl && previewMediaKind ? (
-                                    <div
-                                        className="mt-6 overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4 text-left"
-                                        onClick={(event) => event.stopPropagation()}
-                                    >
-                                        <div className="mb-3 flex items-center justify-between gap-3">
-                                            <div>
-                                                <p className="text-sm font-black text-gray-950">
-                                                    {previewMediaKind === "audio" ? "Recorded audio preview" : "Recorded video preview"}
-                                                </p>
-                                                <p className="mt-1 text-xs font-semibold text-slate-500">
-                                                    Review it here before you continue.
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-shrink-0 items-center gap-2">
-                                                {videoUploadStatusLabel ? (
-                                                    <span className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)]">
-                                                        {videoUploadStatusLabel}
-                                                    </span>
-                                                ) : null}
-                                                <button
-                                                    type="button"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        removeWalkthroughMedia();
-                                                    }}
-                                                    className="flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
-                                                    aria-label="Remove walkthrough media"
-                                                >
-                                                    <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        {previewMediaKind === "audio" ? (
-                                            <audio
-                                                src={videoPreviewUrl}
-                                                controls
-                                                className="w-full"
-                                            />
-                                        ) : (
-                                            <VideoAssetPreview
-                                                src={videoPreviewUrl}
-                                                contentType={videoContentType || "video/webm"}
-                                                fileName={videoOriginalFilename || "Recorded walkthrough"}
-                                                fileSizeBytes={videoFileSizeBytes}
-                                                className="aspect-video w-full rounded-xl"
-                                            />
-                                        )}
-                                    </div>
-                                ) : null}
-                                {recordingError ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{recordingError}</p>
-                                ) : null}
-                                {videoUploadStatusLabel && !videoPreviewUrl ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">{videoUploadStatusLabel}</p>
-                                ) : null}
-                                {videoUploadError ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{videoUploadError}</p>
-                                ) : null}
-                                {pitchDeckUploadStatusLabel && !pitchDeckPreviewUrl ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">{pitchDeckUploadStatusLabel}</p>
-                                ) : null}
-                                {pitchDeckUploadError ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{pitchDeckUploadError}</p>
-                                ) : null}
-                                {materialsUploadError ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{materialsUploadError}</p>
-                                ) : null}
-                            </div>
-                        </div>
-                    </div>
-                </fieldset>
-                {isEmailDraftBusy && (
-                    <div className="absolute inset-0 z-10 cursor-wait rounded-[2rem] bg-white/30" aria-hidden />
-                )}
-            </div>
-        </section>
-    );
 
     const optionalDataSourcesSection = (
         <section className="flex min-h-[5.25rem] w-full flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:min-h-0 sm:rounded-[2rem] sm:p-6">
@@ -6612,7 +6240,6 @@ export default function CreateUpdate() {
 
                                     {coverEditor}
                                 </Form>
-                                    {materialsSection}
                                     </div>
                                 </>
                             ) : null}
@@ -6643,95 +6270,6 @@ export default function CreateUpdate() {
                 primaryType={draftStickyBar.primaryType}
                 primaryForm={draftStickyBar.primaryForm}
             />
-
-            {showStoryMaterialsSuggestion ? (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div
-                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                        onClick={dismissStoryMaterialsSuggestion}
-                        aria-hidden
-                    />
-
-                    <section
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="story-materials-suggestion-title"
-                        className="relative z-[110] w-full max-w-2xl overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl"
-                    >
-                        <div className="flex items-start justify-between gap-4 border-b border-[var(--vr-color-border)] px-6 pb-4 pt-6">
-                            <div>
-                                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                    Founder-first update
-                                </p>
-                                <h2 id="story-materials-suggestion-title" className="mt-2 text-xl font-black leading-tight text-[var(--vr-color-text)]">
-                                    No metrics? Add deck/video.
-                                </h2>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={dismissStoryMaterialsSuggestion}
-                                className="flex-shrink-0 rounded-full p-2 text-[var(--vr-color-text-sub)] transition hover:bg-[var(--vr-color-neutral-100)] hover:text-[var(--vr-color-text)]"
-                                aria-label="Dismiss pitch deck and video suggestion"
-                            >
-                                <XMarkIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <div className="px-6 py-6">
-                            <p className="text-sm leading-7 text-[var(--vr-color-text-mid)]">
-                                Add a short deck or walkthrough so MLAI can understand the story behind the numbers.
-                            </p>
-
-                            {missingFounderLinkedInDrafts.length > 0 ? (
-                                <div className="mt-5 space-y-3 rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4">
-                                    <p className="text-sm font-black text-[var(--vr-color-text)]">Strongly recommended: founder LinkedIn</p>
-                                    {missingFounderLinkedInDrafts.map((draft) => (
-                                        <label key={draft.id} className="block">
-                                            <span className="mb-1 block text-xs font-bold text-[var(--vr-color-text-sub)]">{draft.name}</span>
-                                            <input
-                                                type="url"
-                                                inputMode="url"
-                                                value={draft.linkedinUrl}
-                                                onChange={(event) => {
-                                                    const nextValue = event.target.value;
-                                                    setMissingFounderLinkedInDrafts((current) =>
-                                                        current.map((item) =>
-                                                            item.id === draft.id ? { ...item, linkedinUrl: nextValue } : item,
-                                                        ),
-                                                    );
-                                                }}
-                                                placeholder="https://www.linkedin.com/in/..."
-                                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-300 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
-                                            />
-                                        </label>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="mt-5 rounded-2xl border border-[rgba(0,128,128,0.14)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-primary)]">
-                                    Founder LinkedIn links are already attached, giving MLAI useful company context.
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row">
-                            <button
-                                type="button"
-                                onClick={handleAddStoryMaterials}
-                                className="inline-flex flex-1 items-center justify-center rounded-xl bg-[var(--vr-palette-black)] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-black/10 transition hover:bg-[var(--vr-palette-coral)] active:scale-[0.98]"
-                            >
-                                Add pitch deck or video
-                            </button>
-                            <button
-                                type="button"
-                                onClick={dismissStoryMaterialsSuggestion}
-                                className="inline-flex flex-1 items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3.5 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)] active:scale-[0.98]"
-                            >
-                                Keep writing
-                            </button>
-                        </div>
-                    </section>
-                </div>
-            ) : null}
 
             {showRegenerateConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
@@ -7355,7 +6893,6 @@ export default function CreateUpdate() {
                     </div>
                 </section>
 
-                {materialsSection}
             </Form>
 
             {isClientMounted ? (

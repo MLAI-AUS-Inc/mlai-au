@@ -1,3 +1,4 @@
+- [x] Remove the deck/video section and its suggestion prompt; make cover upload primary and generation secondary, then update PR.
 - [x] Verify updates and cover picker inside the actual Vibe Raising shell and draft/review routes; match existing form styling.
 - [x] Optional update covers: upload, GPT Image 2.5 generation, founder selection, frozen preview/publication, tests and visual QA.
 - [x] Render reviewed source links in monthly-update drafts, preview and detail; 11 evidence tests, typecheck and production build pass.

@@ -137,11 +137,11 @@ export default function UpdateCoverEditor({ backendBaseUrl, companyId, scopeKey,
             </>
           ) : (
             <>
-              <button type="button" disabled={busy || !companyId} onClick={() => fileInput.current?.click()} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:opacity-50"><ArrowUpTrayIcon className="h-4 w-4" />{value ? "Replace image" : "Upload a cover image"}</button>
+              <button type="button" disabled={busy || !companyId} onClick={() => fileInput.current?.click()} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--vr-palette-black)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:opacity-50"><ArrowUpTrayIcon className="h-4 w-4" />{value ? "Replace image" : "Upload a cover image"}</button>
               <p className="mt-2 text-xs text-slate-500">JPG, PNG or WebP · up to 10 MB</p>
             </>
           )}
-          <button type="button" disabled={busy || !canGenerate} onClick={() => void generate()} aria-describedby={`${id}-generation-help`} className={`mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--vr-palette-black)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:opacity-50`}>
+          <button type="button" disabled={busy || !canGenerate} onClick={() => void generate()} aria-describedby={`${id}-generation-help`} className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:opacity-50">
             {busy ? <ArrowPathIcon className="h-4 w-4 motion-safe:animate-spin" /> : <SparklesIcon className="h-4 w-4" />}
             {state === "generating" ? "Creating your image…" : candidate || value ? "Create me another image" : "Create me an image"}
           </button>
