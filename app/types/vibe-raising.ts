@@ -189,6 +189,9 @@ export interface VibeRaisingDraftedContent {
 
 export interface VibeRaisingMonthlyUpdate {
   id: string;
+  weekStart?: string | null;
+  weekEnd?: string | null;
+  coverImageUrl?: string | null;
   revisionId?: number | null;
   revisionHash?: string | null;
   snapshotId?: number | null;

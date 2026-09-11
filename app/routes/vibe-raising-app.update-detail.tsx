@@ -10,6 +10,7 @@ import {
 } from "~/lib/vibe-raising";
 import VRPreviewUpdateCard from "~/components/vibe-raising/VRPreviewUpdateCard";
 import TrendsSection from "~/components/vibe-raising/TrendsSection";
+import { getUpdateTitles } from "~/lib/startup-updates-presentation";
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -29,7 +30,7 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
         throw new Response("Update not found", { status: 404 });
     }
 
-    return { user: vibeContext.appUser, update };
+    return { user: vibeContext.appUser, update, updateTitle: getUpdateTitles(updates).get(update.id) };
 }
 
 function isCurrentMonthUpdate(update: { date?: string | null }): boolean {
@@ -43,7 +44,7 @@ function isCurrentMonthUpdate(update: { date?: string | null }): boolean {
 }
 
 export default function UpdateDetailPage() {
-    const { user, update } = useLoaderData<typeof loader>();
+    const { user, update, updateTitle } = useLoaderData<typeof loader>();
 
     return (
         <div className="vr-scope mx-auto max-w-4xl space-y-4 pb-12">
@@ -57,6 +58,7 @@ export default function UpdateDetailPage() {
             <VRPreviewUpdateCard
                 update={update}
                 user={user}
+                updateTitle={updateTitle}
                 statusLabel={isCurrentMonthUpdate(update) ? "Current" : "Sent"}
                 trendsSlot={
                     <TrendsSection

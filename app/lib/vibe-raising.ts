@@ -1083,6 +1083,9 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
 
   return {
     id,
+    weekStart: asNullableString(payload.weekStart ?? payload.week_start),
+    weekEnd: asNullableString(payload.weekEnd ?? payload.week_end),
+    coverImageUrl: asNullableString(payload.coverImageUrl ?? payload.cover_image_url),
     revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
     revisionHash: asNullableString(payload.revisionHash),
     snapshotId: payload.snapshotId == null ? null : Number(payload.snapshotId),
@@ -1098,7 +1101,7 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
       asNullableString(payload.date) ??
       asNullableString(payload.updatedAt) ??
       asNullableString(payload.updated_at) ??
-      new Date().toISOString(),
+      "",
     status: asNullableString(payload.status),
     visibility:
       asNullableString(payload.visibility) ??
@@ -3048,6 +3051,21 @@ export async function getVibeRaisingInputSourcesStatus(
   }
 
   return { sources, financeUnavailable };
+}
+
+/** Read connector status for the company rendered by this server request. */
+export async function getVibeRaisingInputSourcesForRequest(
+  env: Env,
+  request: Request,
+  companyId?: string | null,
+): Promise<VibeRaisingInputSourceSummary[]> {
+  const path = companyId
+    ? `${INPUT_SOURCES_STATUS_PATH}?company_id=${encodeURIComponent(companyId)}`
+    : INPUT_SOURCES_STATUS_PATH;
+  const response = await createApiClient(env, request).get(path, { timeout: 5000 });
+  return Object.values(normalizeInputSourceSummaries(response.data)).filter(
+    (source): source is VibeRaisingInputSourceSummary => Boolean(source),
+  );
 }
 
 // Luma is connected by pasting an API key (see connectVibeRaisingLuma), not via OAuth redirect.

@@ -173,12 +173,14 @@ export function VRPreviewUpdateCard({
     statusLabel,
     trendsSlot,
     showFounderActions = true,
+    updateTitle,
 }: {
     update: any;
     user: any;
     statusLabel?: string;
     trendsSlot?: React.ReactNode;
     showFounderActions?: boolean;
+    updateTitle?: string;
 }) {
     const updatePeriod = update.year
         ? { month: update.monthName || parseVibeRaisingMonthYear(update.month).month, year: update.year }
@@ -236,7 +238,7 @@ export function VRPreviewUpdateCard({
                                 {companyName}
                             </p>
                             <p className="mt-1 truncate [font-family:var(--vr-font-title)] text-sm font-black uppercase leading-none tracking-normal text-white/85 drop-shadow-sm sm:text-lg">
-                                {updatePeriod.month} {updatePeriod.year} Update
+                                {updateTitle || `${updatePeriod.month} ${updatePeriod.year} Update`}
                             </p>
                         </div>
                     </div>

@@ -667,3 +667,5 @@
 - [x] Integrate with current main while preserving draft-return state and sticky progress navigation.
 - [x] Pass 42 monthly/editor tests, TypeScript and production build.
 - [ ] Merge matching backend/worker/frontend PRs and verify deployment.
+- [x] Implement the editorial startup updates page, richer source-backed chart, date-based titles and all-updates browsing.
+- [x] Verify date grouping, connector/no-revenue states, responsive layout, typecheck and production build (37 focused tests; 11 September 2026).
