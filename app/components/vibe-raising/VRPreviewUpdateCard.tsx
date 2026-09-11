@@ -212,6 +212,7 @@ export function VRPreviewUpdateCard({
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             {update.evidenceStatus === "legacy_unverified" && <p className="bg-amber-50 px-4 py-2 text-xs text-amber-900">Legacy update · evidence has not been revalidated.</p>}
             {Object.entries(update.metricEvidence || {}).some(([, item]) => (item as any)?.quality === "partial") && <p className="bg-amber-50 px-4 py-2 text-xs text-amber-900">Revenue has partial source coverage. Paid Stripe invoices exclude tax; other payments and adjustments need confirmation.</p>}
+            {update.coverImageUrl ? <img src={update.coverImageUrl} alt={update.coverImage?.alt || ""} className="aspect-[16/9] w-full object-cover" /> : null}
             <div className="relative h-24 w-full overflow-hidden sm:h-32">
                 <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
                 <svg className="absolute inset-0 h-full w-full opacity-[0.12]" viewBox="0 0 800 200">

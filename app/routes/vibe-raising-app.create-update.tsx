@@ -1,3 +1,6 @@
+import UpdateCoverEditor from "~/components/vibe-raising/UpdateCoverEditor";
+import { coverUpdateText, normalizeUpdateCover, parseUpdateCoverForm } from "~/lib/update-cover";
+import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
 import UpdateEvidenceText from "~/components/vibe-raising/UpdateEvidenceText";
 import ReportingEvidenceNotice from "~/components/vibe-raising/ReportingEvidenceNotice";
 import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
@@ -536,6 +539,7 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         audienceVisibility: update.audienceVisibility || "",
         month: update.monthName || parsedPeriod.month,
         year: update.year || parsedPeriod.year,
+        coverImage: update.coverImage || null,
         summary: update.summary || "",
         sourceUrl: update.sourceUrl || "",
         pitchDeckUrl: update.pitchDeckUrl || "",
@@ -676,6 +680,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         audienceVisibility: normalizeAudienceVisibilityValue(formData.getAll("audienceVisibility")),
         month: String(formData.get("month") || "").trim(),
         year: Number(formData.get("year") || 0),
+        ...(formData.has("coverImage") ? { coverImage: parseUpdateCoverForm(formData.get("coverImage")) } : {}),
         summary: String(formData.get("summary") || "").trim() || null,
         sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
         manualDocumentIds,
@@ -3005,7 +3010,18 @@ export default function CreateUpdate() {
         return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
     });
     const [privateAudienceVisibility, setAudienceVisibility] = useState<VibeRaisingAudienceVisibilitySelection>(() => normalizeAudienceVisibilityValue(defaultData?.audienceVisibility));
+    const [coverImage, setCoverImage] = useState<VibeRaisingUpdateCover | null>(() => normalizeUpdateCover(defaultData?.coverImage));
     const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
+    const coverEditedRef = useRef(false);
+    const coverCompanyRef = useRef(resolveActiveCompanyId(user));
+    useEffect(() => {
+        const companyId = resolveActiveCompanyId(user);
+        if (coverCompanyRef.current !== companyId) {
+            coverCompanyRef.current = companyId;
+            coverEditedRef.current = false;
+            setCoverImage(normalizeUpdateCover(existingData?.coverImage));
+        }
+    }, [user.activeCompanyId, existingData]);
     const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
     const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
     const [pitchDeckSummary, setPitchDeckSummary] = useState<string>(() => defaultData?.pitchDeckSummary || storedManualMaterials.pitchDeckSummary || "");
@@ -3389,6 +3405,7 @@ export default function CreateUpdate() {
     const [generatedRevisionId, setGeneratedRevisionId] = useState<number | null>(null);
     const handleDraftComplete = (data: any) => {
         setGeneratedRevisionId(data.revisionId || null);
+        if (!coverEditedRef.current && "coverImage" in data) setCoverImage(normalizeUpdateCover(data.coverImage));
         const resolvedMonth = typeof data.month === "string" && data.month.trim() ? data.month.trim() : selectedMonth;
         const resolvedYear = typeof data.year === "number" && Number.isFinite(data.year) ? data.year : selectedYear;
         const resolvedEditorKey = getMonthlyUpdateKey(resolvedMonth, resolvedYear);
@@ -4221,6 +4238,8 @@ export default function CreateUpdate() {
             loadedExistingUpdateKeyRef.current = null;
             if (editorMonthKeyRef.current !== selectedMonthUpdateKey) {
                 editorMonthKeyRef.current = selectedMonthUpdateKey;
+                coverEditedRef.current = false;
+                setCoverImage(null);
                 setSummary("");
                 setSourceUrl("");
                 setPitchDeckUrl("");
@@ -4251,6 +4270,8 @@ export default function CreateUpdate() {
         loadedExistingUpdateKeyRef.current = selectedMonthUpdateKey;
         editorMonthKeyRef.current = selectedMonthUpdateKey;
 
+        coverEditedRef.current = false;
+        setCoverImage(existingUpdateForSelectedMonth.coverImage || null);
         setSummary(existingUpdateForSelectedMonth.summary || "");
         setSourceUrl(existingUpdateForSelectedMonth.sourceUrl || "");
         revokePitchDeckPreviewObjectUrl();
@@ -4883,6 +4904,19 @@ export default function CreateUpdate() {
         focusMetricInput(`active-metric-${key}`);
     };
 
+    const coverScopeKey = `${user.authUser.id}:${resolveActiveCompanyId(user)}:${selectedYear}:${selectedMonth}`;
+    const coverEditor = (
+        <UpdateCoverEditor
+            key={coverScopeKey}
+            scopeKey={coverScopeKey}
+            backendBaseUrl={backendBaseUrl}
+            companyId={resolveActiveCompanyId(user) || ""}
+            updateText={coverUpdateText({ summary, highlights, challenges, learnings, next30Days })}
+            value={coverImage}
+            onChange={(cover) => { coverEditedRef.current = true; setCoverImage(cover); }}
+        />
+    );
+
     const updateActiveHighlights = (value: string) => {
         if (isViewingCurrentUpdate) setHighlights(value);
         else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "highlights", value);
@@ -5509,6 +5543,7 @@ export default function CreateUpdate() {
                         name: user.fullName || "Founder",
                         linkedinUrl: "",
                     }];
+        const reviewCover = normalizeUpdateCover(reviewActionData?.update?.coverImage ?? reviewData?.coverImage);
         const reviewVideoUrl = String(reviewData?.videoUrl || videoPreviewUrl || "").trim();
         const reviewVideoContentType = String(reviewData?.videoContentType || videoContentType || "").trim();
         const reviewVideoOriginalFilename = String(reviewData?.videoOriginalFilename || videoOriginalFilename || "").trim();
@@ -5629,6 +5664,7 @@ export default function CreateUpdate() {
                     {/* PREVIEW — dominant, takes most of the width */}
                     <div className="flex-1 min-w-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            {reviewCover ? <img src={reviewCover.url} alt={reviewCover.alt || ""} className="aspect-[16/9] w-full object-cover" /> : null}
                             {/* Hero banner */}
                             <div className="relative w-full h-24 overflow-hidden sm:h-32">
                                 <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
@@ -6408,6 +6444,7 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="presentationMode" value={presentationMode} />
                                     <VibeRaisingAudienceVisibilityField name="audienceVisibility" value={privateAudienceVisibility} onChange={setAudienceVisibility} />
                                     <input type="hidden" name="summary" value={summary} />
+                                    <input type="hidden" name="coverImage" value={JSON.stringify(coverImage)} />
                                     <input type="hidden" name="sourceUrl" value={sourceUrl} />
                                     <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
                                     <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
@@ -6573,6 +6610,7 @@ export default function CreateUpdate() {
                                         />
                                     </div>
 
+                                    {coverEditor}
                                 </Form>
                                     {materialsSection}
                                     </div>
@@ -6750,6 +6788,7 @@ export default function CreateUpdate() {
                 <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
                 <input type="hidden" name="presentationMode" value={presentationMode} />
                 <input type="hidden" name="summary" value={summary} />
+                <input type="hidden" name="coverImage" value={JSON.stringify(coverImage)} />
                 <input type="hidden" name="sourceUrl" value={sourceUrl} />
                 <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
                 <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
@@ -7308,6 +7347,7 @@ export default function CreateUpdate() {
                     </div>
                 )}
 
+                    {coverEditor}
                     </fieldset>
                     {isEmailDraftBusy && (
                         <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/25" aria-hidden />
