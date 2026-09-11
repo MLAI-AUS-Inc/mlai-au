@@ -66,7 +66,7 @@ describe("update cover contract", () => {
   });
   it("renders an optional cover prompt and disables generation for an empty draft", () => {
     const html = renderToStaticMarkup(<UpdateCoverEditor backendBaseUrl="https://backend.example" companyId="1" scopeKey="1:2026-06" updateText="" value={null} onChange={() => {}} />);
-    expect(html).toContain("Give your update a cover");
+    expect(html).toContain("Cover image");
     expect(html).toContain("Optional");
     expect(html).toContain("Create me an image");
     expect(html).toContain("disabled=");
