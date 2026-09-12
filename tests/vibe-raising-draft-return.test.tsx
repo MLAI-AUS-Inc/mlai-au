@@ -77,10 +77,10 @@ describe("Vibe Raising connection return", () => {
     }
   }
 
-  test("fresh creation and source-only links still start at cadence selection", () => {
+  test("fresh creation and source-only links open a draft immediately", () => {
     for (const search of ["", "?inputs=stripe"]) {
       expect(readVibeRaisingDraftReturnState(search)).toBeNull();
-      expect(renderDraft(`${createPath}${search}`)).toContain("How often do you want to update?");
+      expect(renderDraft(`${createPath}${search}`)).toContain('id="update-summary"');
     }
   });
 

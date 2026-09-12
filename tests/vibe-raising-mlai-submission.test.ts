@@ -26,9 +26,9 @@ describe("Monthly revision publication", () => {
   });
 
   test("explains the exact saved revision in the final confirmation", () => {
-    expect(routeSource).toContain('aria-labelledby="publication-confirmation"');
-    expect(routeSource).toContain('Approve this monthly update?');
-    expect(routeSource).toContain('This approves the exact saved revision shown in the preview');
+    expect(routeSource).toContain('<UpdateDialog title="Approve this update?"');
+    expect(routeSource).toContain('Approve this revision');
+    expect(routeSource).toContain('Approve the saved revision you just reviewed');
     expect(routeSource).not.toContain('Only members of the Vibe Raising development team can access this submission.');
   });
 

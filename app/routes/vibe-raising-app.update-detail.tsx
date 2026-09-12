@@ -8,8 +8,7 @@ import {
     getVibeRaisingMonthlyUpdatesBundle,
     resolveActiveCompanyId,
 } from "~/lib/vibe-raising";
-import VRPreviewUpdateCard from "~/components/vibe-raising/VRPreviewUpdateCard";
-import TrendsSection from "~/components/vibe-raising/TrendsSection";
+import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
 import { getUpdateTitles } from "~/lib/startup-updates-presentation";
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
@@ -33,21 +32,11 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     return { user: vibeContext.appUser, update, updateTitle: getUpdateTitles(updates).get(update.id) };
 }
 
-function isCurrentMonthUpdate(update: { date?: string | null }): boolean {
-    const updateDate = new Date(update.date || "");
-    if (Number.isNaN(updateDate.getTime())) return false;
-    const now = new Date();
-    return (
-        updateDate.getMonth() === now.getMonth() &&
-        updateDate.getFullYear() === now.getFullYear()
-    );
-}
-
 export default function UpdateDetailPage() {
     const { user, update, updateTitle } = useLoaderData<typeof loader>();
 
     return (
-        <div className="vr-scope mx-auto max-w-4xl space-y-4 pb-12">
+        <div className="vr-scope update-reader">
             <Link
                 to="/founder-tools/updates"
                 className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-gray-500 transition hover:text-[var(--vr-color-primary)]"
@@ -55,19 +44,7 @@ export default function UpdateDetailPage() {
                 <ArrowLeftIcon className="h-3.5 w-3.5" />
                 All updates
             </Link>
-            <VRPreviewUpdateCard
-                update={update}
-                user={user}
-                updateTitle={updateTitle}
-                statusLabel={isCurrentMonthUpdate(update) ? "Current" : "Sent"}
-                trendsSlot={
-                    <TrendsSection
-                        metricHistory={update.metricHistory || {}}
-                        displayConfig={update.displayConfig}
-                        currentIsoMonth={update.isoMonth}
-                    />
-                }
-            />
+            <UpdateArticle update={update} companyName={user.companyName} title={updateTitle} editable />
         </div>
     );
 }

@@ -9,7 +9,7 @@ function monthLabel(value: string, long = false) {
   });
 }
 
-export default function UpdatesIncomeChart({ series }: { series: UpdatesFinancialSeries }) {
+export default function UpdatesIncomeChart({ series, showSourceLink = true }: { series: UpdatesFinancialSeries; showSourceLink?: boolean }) {
   const [range, setRange] = useState<6 | 12 | "all">(12);
   const id = useId().replace(/:/g, "");
   const points = range === "all" ? series.points : series.points.slice(-range);
@@ -76,8 +76,8 @@ export default function UpdatesIncomeChart({ series }: { series: UpdatesFinancia
     <div className="border-t border-[#edf1ef] px-5 py-3.5 text-xs text-slate-500 sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span>Complete months{series.basis?.toLowerCase().includes("accrual") ? " · Accrual basis" : ""}{series.partialCoverage ? " · Incomplete source coverage" : ""}{hasGaps ? " · Gaps mean data is unavailable" : ""}</span>
-        <Link className="rounded text-teal-800 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
-          to={`/founder-tools/updates/${encodeURIComponent(series.sourceUpdateId)}`}>Source update ↗</Link>
+        {showSourceLink && <Link className="rounded text-teal-800 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
+          to={`/founder-tools/updates/${encodeURIComponent(series.sourceUpdateId)}`}>Source update ↗</Link>}
       </div>
       <details className="mt-2">
         <summary className="w-fit cursor-pointer rounded py-1 underline-offset-4 hover:text-teal-800 hover:underline focus-visible:outline-2 focus-visible:outline-teal-700">View chart data</summary>

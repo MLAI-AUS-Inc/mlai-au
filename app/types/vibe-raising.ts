@@ -163,6 +163,7 @@ export interface VibeRaisingUpdateCover {
 }
 
 export interface VibeRaisingDraftedContent {
+  metricEvidence?: VibeRaisingMonthlyUpdate["metricEvidence"];
   coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
