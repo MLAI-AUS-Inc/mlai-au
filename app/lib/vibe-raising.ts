@@ -764,6 +764,7 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   return {
     revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
     revisionHash: asNullableString(payload.revisionHash),
+    metricEvidence: asRecord(payload.metricEvidence) as VibeRaisingMonthlyUpdate["metricEvidence"],
     month: asNullableString(payload.month) ?? undefined,
     year: yearValue,
     coverImage: normalizeUpdateCover(payload.coverImage ?? structuredMemo.cover_image),

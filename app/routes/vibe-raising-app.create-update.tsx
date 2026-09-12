@@ -1,3 +1,7 @@
+import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
+import UpdateDialog from "~/components/vibe-raising/UpdateDialog";
+import { isFinancialMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updateWorkingCopyKey } from "~/lib/update-working-copy";
+import "~/styles/update-editor.css";
 import UpdateCoverEditor from "~/components/vibe-raising/UpdateCoverEditor";
 import { coverUpdateText, normalizeUpdateCover, parseUpdateCoverForm } from "~/lib/update-cover";
 import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
@@ -559,6 +563,10 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         metrics,
         metricSuggestions: update.metricSuggestions || [],
         displayConfig: update.displayConfig || null,
+        metricEvidence: update.metricEvidence || {},
+        reportingPeriod: update.reportingPeriod || null,
+        evidenceWarnings: update.evidenceWarnings || [],
+        evidenceStatus: update.evidenceStatus,
         financialSnapshot: update.financialSnapshot || null,
         conciseAnalysis: update.conciseAnalysis || null,
         presentationMode: update.presentationMode || null,
@@ -759,12 +767,12 @@ export async function action({ request, context }: Route.ActionArgs) {
         throw new Response("Select the startup this form belongs to.", { status: 409 });
     }
     const intent = formData.get("intent");
-    const answerGatedIntents = new Set(["review", "save-draft", "send-to-mlai", "publish"]);
+    const answerGatedIntents = new Set(["review", "send-to-mlai", "publish"]);
     const answeredFounderQuestionCount = countAnsweredFounderQuestions(formData);
     if (answerGatedIntents.has(String(intent || "")) && answeredFounderQuestionCount < REQUIRED_FOUNDER_QUESTION_COUNT) {
         return {
             step: "validation-error",
-            error: `Answer at least ${REQUIRED_FOUNDER_QUESTION_COUNT} founder questions before saving or submitting.`,
+            error: `Answer at least ${REQUIRED_FOUNDER_QUESTION_COUNT} founder questions before reviewing or submitting.`,
             answeredQuestionCount: answeredFounderQuestionCount,
         };
     }
@@ -837,7 +845,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         } catch (error) {
             const gate = acnGateRedirect(error);
             if (gate) return gate;
-            throw error;
+            return { step: "validation-error", error: extractVibeRaisingActionError(error, "Your draft is still here. We couldn’t save this revision. Please retry, or reload if another revision was saved.") };
         }
 
         return {
@@ -861,7 +869,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         } catch (error) {
             const gate = acnGateRedirect(error);
             if (gate) return gate;
-            throw error;
+            return { step: "validation-error", error: extractVibeRaisingActionError(error, "Your draft is still here. We couldn’t save this revision. Please retry, or reload if another revision was saved.") };
         }
         const cookie = update ? createVibeRaisingLocalDraftUpdateCookie(update) : null;
 
@@ -2124,9 +2132,15 @@ function BulletTextarea({
     bulletIndex,
     enterKeyHint,
     className,
+    accessibleLabel,
+    id,
+    name,
 }: {
     value: string;
     placeholder: string;
+    accessibleLabel?: string;
+    id?: string;
+    name?: string;
     onChange: (value: string) => void;
     onFocus?: () => void;
     onEnterNewItem?: () => void;
@@ -2144,9 +2158,25 @@ function BulletTextarea({
         textarea.style.height = `${textarea.scrollHeight}px`;
     }, [value]);
 
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea || typeof ResizeObserver === "undefined") return;
+        let width = textarea.clientWidth;
+        const observer = new ResizeObserver(() => {
+            if (textarea.clientWidth === width) return;
+            width = textarea.clientWidth;
+            textarea.style.height = "0px";
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
+        observer.observe(textarea);
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <textarea
             ref={textareaRef}
+            id={id}
+            name={name}
             rows={1}
             value={value}
             onChange={(event) => {
@@ -2166,6 +2196,7 @@ function BulletTextarea({
                 onMobileAdvance?.();
             }}
             enterKeyHint={enterKeyHint}
+            aria-label={accessibleLabel}
             data-bullet-input-index={bulletIndex}
             placeholder={placeholder}
             className={clsx(
@@ -2187,7 +2218,6 @@ function SectionWithExample({
 }: SectionWithExampleProps) {
     const titleId = useId();
     const cardRef = useRef<HTMLElement | null>(null);
-    const cardInView = useInView(cardRef, { amount: 0.15, once: true });
     const { items, commitItems } = useBulletItemsState(value, onChange);
     const questionKey = getDraftQuestionKey(name, label);
     const questionMeta = questionKey ? DRAFT_QUESTION_META[questionKey] : null;
@@ -2226,6 +2256,7 @@ function SectionWithExample({
     const removeItem = (index: number) => {
         const updated = items.filter((_, i) => i !== index);
         commitItems(updated.length ? updated : [""]);
+        focusItem(Math.min(index, Math.max(0, updated.length - 1)));
     };
 
     const focusItem = (index: number) => {
@@ -2247,48 +2278,38 @@ function SectionWithExample({
     };
 
     return (
-        <motion.section
+        <section
             ref={cardRef}
-            className="rounded-2xl border border-[var(--vr-color-border)] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] motion-safe:will-change-transform sm:p-5"
+            className="update-section"
             data-draft-section={name}
             data-draft-question-card="true"
             aria-labelledby={titleId}
-            initial={{ y: 20, opacity: 0 }}
-            animate={cardInView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
-            transition={{ duration: 0.32, ease: "easeOut" }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
         >
             <input type="hidden" name={name} value={value || ""} />
-            <header className="space-y-1.5">
-                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.24em] text-gray-400 sm:hidden">
-                    {questionMeta ? `${questionMeta.step} / 05 - ${questionMeta.eyebrow}` : label}
-                </p>
-                <h3 id={titleId} className="text-[17px] font-black leading-6 text-gray-950 sm:text-lg sm:leading-snug">
-                    {questionPrompt}
-                </h3>
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--vr-color-primary)] sm:hidden">{label}</p>
+            <header>
+                <h3 id={titleId}>{label}</h3>
+                <p className="update-section-help">{questionPrompt}</p>
             </header>
-
-            <ul className="mt-4 space-y-2" aria-labelledby={titleId}>
+            <ul className="update-points" aria-labelledby={titleId}>
                 {items.map((item, i) => (
-                    <li key={i} className="grid grid-cols-[auto_1fr_auto] items-start gap-2 rounded-xl bg-[var(--vr-palette-paper)] px-3 py-2.5 ring-1 ring-[var(--vr-color-border)] focus-within:bg-white focus-within:ring-2 focus-within:ring-[var(--vr-color-primary)]">
-                        <span className="mt-2.5 select-none text-sm font-black text-[var(--vr-color-primary)]" aria-hidden="true">-</span>
+                    <li key={i} className="update-point">
+                        <span className="update-point-marker" aria-hidden="true">•</span>
                         <BulletTextarea
                             value={item}
                             onChange={(text) => updateItem(i, text)}
                             onEnterNewItem={() => addItemAfter(i)}
                             onMobileAdvance={handleMobileAdvance}
                             bulletIndex={i}
+                            accessibleLabel={`${label} point ${i + 1}`}
                             enterKeyHint={enableMobileAdvance ? (mobileAdvanceTo ? "next" : "done") : undefined}
                             placeholder={hints[i % hints.length] || placeholder}
-                            className="min-h-11 flex-1 rounded-none border-0 bg-transparent px-0 py-2 text-[16px] leading-6 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:outline-none focus:ring-0 sm:text-sm"
+                            className="update-point-input"
                         />
                         {(items.length > 1 || item.trim().length > 0) && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-2 flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
+                                className="update-point-remove"
                                 aria-label={`Remove ${label} point ${i + 1}`}
                             >
                                 <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -2298,16 +2319,8 @@ function SectionWithExample({
                 ))}
             </ul>
 
-            <footer className="mt-3 border-t border-dashed border-[var(--vr-color-border)] pt-3">
-                <button
-                    type="button"
-                    onClick={() => addItemAfter(items.length - 1)}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[rgba(0,128,128,0.08)] px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.16)]"
-                >
-                    Add point +
-                </button>
-            </footer>
-        </motion.section>
+            <button type="button" onClick={() => addItemAfter(items.length - 1)} className="update-add-point" aria-label={`Add ${label} point`}><span aria-hidden="true">＋</span> Add point</button>
+        </section>
     );
 }
 
@@ -2872,6 +2885,11 @@ function CreateUpdateMobileTour({
 }
 
 export default function CreateUpdate() {
+    const { user } = useLoaderData<typeof loader>();
+    return <CreateUpdateEditor key={`${user.authUser.id}:${resolveActiveCompanyId(user)}`} />;
+}
+
+function CreateUpdateEditor() {
     const {
         user,
         existingData,
@@ -2908,8 +2926,8 @@ export default function CreateUpdate() {
     const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>(defaultData?.videoUrl || "");
     const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
     const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
-    const shouldOpenDraftTemplate = Boolean(draftReturnState || (isEdit && existingData));
-    const [updateCadence, setUpdateCadence] = useState<UpdateCadence | null>(() => draftReturnState?.cadence ?? (isEdit ? "monthly" : null));
+    const shouldOpenDraftTemplate = true;
+    const [updateCadence, setUpdateCadence] = useState<UpdateCadence | null>(() => draftReturnState?.cadence ?? "monthly");
     const [monthConfirmed, setMonthConfirmed] = useState(() => shouldOpenDraftTemplate);
     const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(() => shouldOpenDraftTemplate ? "reporting" : null);
     const [metricsConfirmed, setMetricsConfirmed] = useState(() => shouldOpenDraftTemplate);
@@ -3063,9 +3081,9 @@ export default function CreateUpdate() {
     }, []);
     
     const [metricValues, setMetricValues] = useState<Record<string, string>>(() => {
-        const initial: Record<string, string> = Object.fromEntries(metricDefinitions.map(item => [item.key, String(defaultData?.[item.key] || "")]));
+        const initial: Record<string, string> = Object.fromEntries(metricDefinitions.map(item => [item.key, String(defaultData?.[item.key] ?? "")]));
         METRIC_OPTIONS.forEach(opt => {
-            if (defaultData?.[opt.key]) {
+            if (defaultData?.[opt.key] != null && String(defaultData[opt.key]).trim()) {
                 initial[opt.key] = defaultData[opt.key];
             }
         });
@@ -3075,7 +3093,7 @@ export default function CreateUpdate() {
     const [selectedMetrics, setSelectedMetrics] = useState<Set<string>>(() => {
         const initial = new Set<string>();
         METRIC_OPTIONS.forEach(opt => {
-            if (defaultData?.[opt.key]) {
+            if (defaultData?.[opt.key] != null && String(defaultData[opt.key]).trim()) {
                 initial.add(opt.key);
             }
         });
@@ -3301,7 +3319,7 @@ export default function CreateUpdate() {
     const didSeedEditSourcesRef = useRef(false);
     useEffect(() => {
         if (didSeedEditSourcesRef.current) return;
-        if (!isEdit || initialSelectedInputSources.length > 0) {
+        if (initialSelectedInputSources.length > 0) {
             didSeedEditSourcesRef.current = true;
             return;
         }
@@ -3377,7 +3395,24 @@ export default function CreateUpdate() {
     }, []);
 
     const [generatedRevisionId, setGeneratedRevisionId] = useState<number | null>(null);
-    const handleDraftComplete = (data: any) => {
+    const [expectedRevision, setExpectedRevision] = useState<number | null>(defaultData?.revisionId || null);
+    const [metricEvidence, setMetricEvidence] = useState<VibeRaisingMonthlyUpdate["metricEvidence"]>(defaultData?.metricEvidence || {});
+    const [reportingPeriod, setReportingPeriod] = useState<VibeRaisingMonthlyUpdate["reportingPeriod"]>(defaultData?.reportingPeriod || null);
+    const [draftCandidate, setDraftCandidate] = useState<any>(null);
+    const [loadedWorkingScope, setLoadedWorkingScope] = useState<string | null>(null);
+    const [localRecoveryAvailable, setLocalRecoveryAvailable] = useState(true);
+    const [lastSavedContent, setLastSavedContent] = useState("");
+    const [saveAttemptContent, setSaveAttemptContent] = useState("");
+    const editorMountedRef = useRef(true);
+    useEffect(() => { editorMountedRef.current = true; return () => { editorMountedRef.current = false; }; }, []);
+
+    const applyDraftCandidate = (data: any, keepWriting = false) => {
+        if (!editorMountedRef.current) return;
+        const ownWriting = { summary, highlights, challenges, learnings, next30Days, asks };
+        setExpectedRevision(data.revisionId || null);
+        setMetricEvidence(data.metricEvidence || {});
+        setReportingPeriod(data.reportingPeriod || null);
+        setDraftCandidate(null);
         setGeneratedRevisionId(data.revisionId || null);
         if (!coverEditedRef.current && "coverImage" in data) setCoverImage(normalizeUpdateCover(data.coverImage));
         const resolvedMonth = typeof data.month === "string" && data.month.trim() ? data.month.trim() : selectedMonth;
@@ -3398,7 +3433,7 @@ export default function CreateUpdate() {
         setConciseAnalysis(data.conciseAnalysis || data.concise_analysis || null);
         setPresentationMode(data.presentationMode || data.presentation_mode || "");
         setSummary(data.summary || "");
-        setSourceUrl(data.sourceUrl || data.source_url || "");
+        if (data.sourceUrl || data.source_url) setSourceUrl(data.sourceUrl || data.source_url);
         if (Array.isArray(data.manualDocuments || data.manual_documents)) {
             const documents = (data.manualDocuments || data.manual_documents) as VibeRaisingManualDocument[];
             setManualDocuments(documents);
@@ -3447,6 +3482,15 @@ export default function CreateUpdate() {
         setMonthConfirmed(true);
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
+        if (keepWriting) {
+            setSummary(ownWriting.summary); setHighlights(ownWriting.highlights); setChallenges(ownWriting.challenges);
+            setLearnings(ownWriting.learnings); setNext30Days(ownWriting.next30Days); setAsks(ownWriting.asks);
+        }
+    };
+    const handleDraftComplete = (data: any) => {
+        if (!editorMountedRef.current) return;
+        // The worker has saved a candidate revision. Keep the working text untouched until the founder chooses.
+        setDraftCandidate(data);
     };
 
     useEffect(() => {
@@ -4195,92 +4239,60 @@ export default function CreateUpdate() {
     ]);
 
     const isEmailDraftBusy = isEmailDraftRunning(emailDraftStatus);
+    const workingScope = updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", isWeeklyUpdate ? selectedWeekKey : `${selectedYear}:${selectedMonth}`);
     useEffect(() => {
-        if (isEmailDraftBusy) return;
-
-        if (!existingUpdateForSelectedMonth) {
-            loadedExistingUpdateKeyRef.current = null;
-            if (editorMonthKeyRef.current !== selectedMonthUpdateKey) {
-                editorMonthKeyRef.current = selectedMonthUpdateKey;
-                coverEditedRef.current = false;
-                setCoverImage(null);
-                setSummary("");
-                setSourceUrl("");
-                setPitchDeckUrl("");
-                setPitchDeckSummary("");
-                resetPitchDeckUpload();
-                setManualDocumentIds([]);
-                setManualDocuments([]);
-                setManualSummary("");
-                resetVideoUpload();
-                setHighlights("");
-                setChallenges("");
-                setAsks("");
-                setLearnings("");
-                setNext30Days("");
-                setFinancialSnapshot(null);
-                setConciseAnalysis(null);
-                setPresentationMode("");
-                setMetricValues({});
-                setSelectedMetrics(new Set());
-                setAwakeMetricCards(new Set());
-                setPastMonthCards([]);
-                setExpandedCards(new Set());
-                setActivePeriodKey("current");
-            }
-            return;
-        }
-        if (loadedExistingUpdateKeyRef.current === selectedMonthUpdateKey) return;
-        loadedExistingUpdateKeyRef.current = selectedMonthUpdateKey;
-        editorMonthKeyRef.current = selectedMonthUpdateKey;
-
-        coverEditedRef.current = false;
-        setCoverImage(existingUpdateForSelectedMonth.coverImage || null);
-        setSummary(existingUpdateForSelectedMonth.summary || "");
-        setSourceUrl(existingUpdateForSelectedMonth.sourceUrl || "");
-        revokePitchDeckPreviewObjectUrl();
-        setPitchDeckUrl(existingUpdateForSelectedMonth.pitchDeckUrl || "");
-        setPitchDeckPreviewUrl(existingUpdateForSelectedMonth.pitchDeckUrl || null);
-        setUploadedPitchDeckUrl(existingUpdateForSelectedMonth.pitchDeckUrl || "");
-        setPitchDeckStoragePath(existingUpdateForSelectedMonth.pitchDeckStoragePath || "");
-        setPitchDeckContentType(existingUpdateForSelectedMonth.pitchDeckContentType || "");
-        setPitchDeckFileSizeBytes(existingUpdateForSelectedMonth.pitchDeckFileSizeBytes || null);
-        setPitchDeckOriginalFilename(existingUpdateForSelectedMonth.pitchDeckOriginalFilename || "");
-        setPitchDeckSummary(existingUpdateForSelectedMonth.pitchDeckSummary || "");
-        setPitchDeckUploadStatus(existingUpdateForSelectedMonth.pitchDeckUrl ? "ready" : "idle");
-        setPitchDeckUploadError(null);
-        setManualDocuments(existingUpdateForSelectedMonth.manualDocuments || []);
-        setManualDocumentIds((existingUpdateForSelectedMonth.manualDocuments || []).map((document) => document.id));
-        setManualSummary("");
-        setUploadedVideoUrl(existingUpdateForSelectedMonth.videoUrl || "");
-        setVideoPreviewUrl(existingUpdateForSelectedMonth.videoUrl || null);
-        setVideoStoragePath(existingUpdateForSelectedMonth.videoStoragePath || "");
-        setVideoContentType(existingUpdateForSelectedMonth.videoContentType || "");
-        setVideoFileSizeBytes(existingUpdateForSelectedMonth.videoFileSizeBytes || null);
-        setVideoOriginalFilename(existingUpdateForSelectedMonth.videoOriginalFilename || "");
-        setPreviewMediaKind(existingUpdateForSelectedMonth.videoUrl
-            ? isAudioMedia(existingUpdateForSelectedMonth.videoContentType, existingUpdateForSelectedMonth.videoOriginalFilename || existingUpdateForSelectedMonth.videoUrl) ? "audio" : "video"
-            : null);
-        setVideoUploadStatus(existingUpdateForSelectedMonth.videoUrl ? "ready" : "idle");
-        setVideoUploadError(null);
-        setHighlights(existingUpdateForSelectedMonth.highlights || "");
-        setChallenges(existingUpdateForSelectedMonth.challenges || "");
-        setAsks(existingUpdateForSelectedMonth.asks || "");
-        setLearnings(existingUpdateForSelectedMonth.learnings || "");
-        setNext30Days(existingUpdateForSelectedMonth.next30Days || "");
-        setFinancialSnapshot(existingUpdateForSelectedMonth.financialSnapshot || null);
-        setConciseAnalysis(existingUpdateForSelectedMonth.conciseAnalysis || null);
-        setPresentationMode(existingUpdateForSelectedMonth.presentationMode || "");
-        const nextMetrics = existingUpdateForSelectedMonth.metrics || {};
-        setMetricValues(nextMetrics);
-        setSelectedMetrics(new Set(Object.keys(nextMetrics).filter((key) => METRIC_OPTION_MAP.has(key))));
-        setAwakeMetricCards(
-            shouldDimMetricsTemplate
-                ? new Set(Object.keys(nextMetrics).filter((key) => String(nextMetrics[key] || "").trim()))
-                : new Set(),
-        );
-        setActivePeriodKey("current");
-    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetPitchDeckUpload, resetVideoUpload, revokePitchDeckPreviewObjectUrl, selectedMonthUpdateKey, shouldDimMetricsTemplate]);
+        const saved = readUpdateWorkingCopy(workingScope);
+        const base: Record<string, any> = existingData && getMonthlyUpdateKey(existingData.month, existingData.year) === selectedMonthUpdateKey ? existingData : existingUpdateForSelectedMonth ? buildExistingUpdateFormData(existingUpdateForSelectedMonth) : {};
+        const restored: Record<string, any> = saved || base;
+        setSummary(restored.summary || ""); setHighlights(restored.highlights || "");
+        setChallenges(restored.challenges || ""); setLearnings(restored.learnings || "");
+        setNext30Days(restored.next30Days || ""); setAsks(restored.asks || "");
+        setCoverImage(normalizeUpdateCover(restored.coverImage));
+        setSourceUrl(restored.sourceUrl || "");
+        setAudienceVisibility(normalizeAudienceVisibilityValue(restored.audienceVisibility));
+        setFinancialSnapshot(restored.financialSnapshot || null);
+        setMetricEvidence(restored.metricEvidence || {}); setReportingPeriod(restored.reportingPeriod || null);
+        setMetricValues(restored.metrics || {}); setSelectedMetrics(new Set(Object.keys(restored.metrics || {})));
+        setExpectedRevision(saved ? saved.expectedRevision ?? null : base.revisionId || null);
+        setDraftCandidate(saved?.candidate || null);
+        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {} }));
+        // Legacy attachments are retained, even though the new form no longer asks for them.
+        setPitchDeckUrl(restored.pitchDeckUrl || ""); setPitchDeckStoragePath(restored.pitchDeckStoragePath || "");
+        setPitchDeckContentType(restored.pitchDeckContentType || ""); setPitchDeckFileSizeBytes(restored.pitchDeckFileSizeBytes || null);
+        setPitchDeckOriginalFilename(restored.pitchDeckOriginalFilename || ""); setPitchDeckSummary(restored.pitchDeckSummary || "");
+        setUploadedVideoUrl(restored.videoUrl || ""); setVideoStoragePath(restored.videoStoragePath || "");
+        setVideoContentType(restored.videoContentType || ""); setVideoFileSizeBytes(restored.videoFileSizeBytes || null);
+        setVideoOriginalFilename(restored.videoOriginalFilename || "");
+        if (saved?.selectedSources && initialSelectedInputSources.length === 0) { setSelectedDraftInputSources(new Set(saved.selectedSources)); didSeedEditSourcesRef.current = true; }
+        setLoadedWorkingScope(workingScope);
+        // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [workingScope]);
+    const workingContent = JSON.stringify({ summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues });
+    const hasUnsavedChanges = workingContent !== lastSavedContent;
+    useEffect(() => {
+        if (loadedWorkingScope !== workingScope) return;
+        const available = writeUpdateWorkingCopy(workingScope, {
+            ...JSON.parse(workingContent), expectedRevision, metricEvidence, reportingPeriod, financialSnapshot,
+            candidate: draftCandidate, selectedSources: selectedInputSources, lastSavedContent, sourceUrl,
+            pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary,
+            videoUrl: uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename,
+        });
+        setLocalRecoveryAvailable(available);
+    }, [workingScope, loadedWorkingScope, workingContent, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
+    useEffect(() => {
+        const saved = saveDraftFetcher.data?.step === "draft-saved" ? saveDraftFetcher.data.update : actionData?.step === "feedback" ? actionData.update : null;
+        if (!saved) return;
+        setExpectedRevision(saved.revisionId || null);
+        setMetricEvidence(saved.metricEvidence || {}); setReportingPeriod(saved.reportingPeriod || null);
+        setLastSavedContent(saveAttemptContent);
+    }, [saveDraftFetcher.data, actionData]);
+    useEffect(() => {
+        if (!hasUnsavedChanges || localRecoveryAvailable) return;
+        const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+        window.addEventListener("beforeunload", warn);
+        return () => window.removeEventListener("beforeunload", warn);
+    }, [hasUnsavedChanges, localRecoveryAvailable]);
 
     const emailDraftCardVisible =
         isEmailDraftBusy ||
@@ -4374,12 +4386,7 @@ export default function CreateUpdate() {
         metricsConfirmed &&
         !showEmailWizard &&
         emailDraftCardStatus === "failed";
-    const hasDraftTemplate =
-        monthConfirmed &&
-        selectedDraftStage === "reporting" &&
-        metricsConfirmed &&
-        (!isAutoDrafting || canContinueDraftManually) &&
-        !showEmailWizard;
+    const hasDraftTemplate = true;
     const answeredFounderQuestionCount = [highlights, challenges, learnings, next30Days, asks]
         .filter(hasMeaningfulFounderAnswer)
         .length;
@@ -4950,159 +4957,10 @@ export default function CreateUpdate() {
         if (!(draftForm instanceof HTMLFormElement)) return;
         const nextFormData = new FormData(draftForm);
         nextFormData.set("intent", "save-draft");
+        setSaveAttemptContent(workingContent);
         saveDraftFetcher.submit(nextFormData, { method: "post" });
-    }, [saveDraftFetcher]);
+    }, [saveDraftFetcher, workingContent]);
 
-    const mlaiGenerateUpdateBrand = (
-        <>
-            <style>{`
-                body:has(.mlai-vibe-update) {
-                    --vr-color-app-bg: #f5f0e6;
-                    background: #f5f0e6;
-                }
-                .mlai-vibe-update {
-                    --vr-font-title: 'Oswald', 'Arial Narrow', sans-serif;
-                    --vr-font-body: 'Roboto', system-ui, sans-serif;
-                    --vr-color-primary: #1a1a1a;
-                    --vr-color-primary-contrast: #f5f0e6;
-                    --vr-color-text: #1a1a1a;
-                    --vr-color-border: #d7cfbf;
-                    --vr-palette-paper: #f5f0e6;
-                    --vr-palette-black: #1a1a1a;
-                    --vr-palette-orange: #ff3c00;
-                    --vr-palette-coral: #ff3c00;
-                    background: #f5f0e6;
-                    color: #1a1a1a;
-                    font-family: 'Roboto', system-ui, sans-serif;
-                }
-                .mlai-vibe-update :is(h1, h2, h3, h4) {
-                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
-                    font-weight: 700;
-                    letter-spacing: -0.01em;
-                    line-height: 0.96;
-                    text-transform: uppercase;
-                }
-                .mlai-vibe-update h2 { font-size: clamp(1.5rem, 2.4vw, 2rem); }
-                .mlai-vibe-update h3 { font-size: clamp(1.2rem, 1.7vw, 1.5rem); }
-                .mlai-vibe-update :is(button, [role="button"]) {
-                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
-                    font-weight: 700;
-                    letter-spacing: 0.025em;
-                    text-transform: uppercase;
-                }
-                .mlai-vibe-update :is(input, textarea, select) {
-                    font-family: 'Roboto', system-ui, sans-serif;
-                    font-size: 0.9375rem;
-                    line-height: 1.5;
-                }
-                .mlai-vibe-update [class*="shadow"] { box-shadow: none !important; }
-                .mlai-vibe-update__identity {
-                    position: relative;
-                    overflow: hidden;
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: space-between;
-                    gap: 1.5rem;
-                    border-radius: 28px;
-                    background: #1a1a1a;
-                    color: #f5f0e6;
-                    padding: clamp(1.5rem, 3vw, 2.5rem);
-                }
-                .mlai-vibe-update__kicker {
-                    position: relative;
-                    z-index: 1;
-                    margin: 0;
-                    font-family: 'Roboto', system-ui, sans-serif;
-                    font-size: 0.7rem;
-                    font-weight: 800;
-                    letter-spacing: 0.18em;
-                    text-transform: uppercase;
-                }
-                .mlai-vibe-update__kicker { color: #00ffd7; }
-                .mlai-vibe-update__graphic {
-                    position: relative;
-                    z-index: 1;
-                    flex: 0 0 auto;
-                    width: clamp(9rem, 17vw, 13rem);
-                    height: clamp(7rem, 13vw, 9.5rem);
-                }
-                .mlai-vibe-update__graphic-block,
-                .mlai-vibe-update__graphic-dot {
-                    position: absolute;
-                    display: block;
-                }
-                .mlai-vibe-update__graphic-block {
-                    bottom: 0;
-                    border-radius: 1.15rem 1.15rem 0.25rem 0.25rem;
-                }
-                .mlai-vibe-update__graphic-block--one {
-                    left: 0;
-                    width: 28%;
-                    height: 39%;
-                    background: #00ffd7;
-                }
-                .mlai-vibe-update__graphic-block--two {
-                    left: 34%;
-                    width: 28%;
-                    height: 64%;
-                    background: #f5f0e6;
-                }
-                .mlai-vibe-update__graphic-block--three {
-                    right: 0;
-                    width: 31%;
-                    height: 91%;
-                    background: #ff3c00;
-                }
-                .mlai-vibe-update__graphic-dot {
-                    top: 0;
-                    left: 42%;
-                    width: 1.25rem;
-                    height: 1.25rem;
-                    border-radius: 999px;
-                    background: #00ffd7;
-                }
-                .mlai-vibe-update__title {
-                    position: relative;
-                    z-index: 1;
-                    margin: 0.5rem 0 0;
-                    color: #f5f0e6;
-                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
-                    font-size: clamp(2.5rem, 7vw, 4.5rem);
-                    font-weight: 700;
-                    letter-spacing: -0.025em;
-                    line-height: 0.86;
-                    text-transform: uppercase;
-                }
-                .mlai-vibe-update__subtitle {
-                    position: relative;
-                    z-index: 1;
-                    max-width: 38rem;
-                    margin: 0.85rem 0 0;
-                    color: #ebe4d4;
-                    font-size: 0.95rem;
-                    font-weight: 500;
-                    line-height: 1.5;
-                }
-                @media (max-width: 640px) {
-                    .mlai-vibe-update__identity { align-items: flex-start; flex-direction: column; gap: 1rem; }
-                    .mlai-vibe-update__graphic { width: 8rem; height: 6rem; }
-                }
-            `}</style>
-            <header className="mlai-vibe-update__identity">
-                <div>
-                    <p className="mlai-vibe-update__kicker">MLAI / Founder Tools</p>
-                    <h1 className="mlai-vibe-update__title">Vibe Raising</h1>
-                    <p className="mlai-vibe-update__subtitle">Founder update studio for sharing progress with MLAI.</p>
-                </div>
-                <div className="mlai-vibe-update__graphic" aria-hidden="true">
-                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--one" />
-                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--two" />
-                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--three" />
-                    <span className="mlai-vibe-update__graphic-dot" />
-                </div>
-            </header>
-        </>
-    );
     // 1. Feedback View — preview-dominant with rating sidebar
     const reviewActionData = activeReviewActionData?.step === "feedback" || activeReviewActionData?.step === "publish-error"
         ? activeReviewActionData
@@ -5223,21 +5081,10 @@ export default function CreateUpdate() {
         const isSurveyCommentsStep = endOfFlowSurveyStep === END_OF_FLOW_SURVEY_STEP_COUNT - 1;
 
         return (
-            <VibeRaisingWorkflowLayout
-                activeStep={showSendToMlaiConfirmation ? "publish" : "review"}
-                completedSteps={showSendToMlaiConfirmation ? ["draft", "connect", "review"] : ["draft", "connect"]}
-                enabledSteps={isSubmitting || showSendToMlaiConfirmation ? [] : canSubmitReviewToMlai ? ["draft", "connect", "review", "publish"] : ["draft", "connect", "review"]}
-                onStepClick={handleReviewStepperClick}
-                progress={{ review: hasReviewedFeedbackPreference ? 0.75 : 0.4, publish: showSendToMlaiConfirmation ? 0.15 + endOfFlowSurveyStep * 0.2 + (endOfFlowSurveyComments.trim() ? 0.05 : 0) : 0 }}
-                details={{
-                    draft: `${reviewAnsweredFounderQuestionCount} questions answered`,
-                    connect: selectedDraftInputSources.size ? "Sources selected" : "Skipped · optional",
-                    review: showSendToMlaiConfirmation ? "Preview checked" : "Check the saved preview and audience",
-                    publish: showSendToMlaiConfirmation ? "Confirm this revision" : "Founder approval",
-                }}
-            >
-            <div className="mlai-vibe-update mx-auto max-w-6xl space-y-10 rounded-[32px] bg-[#f5f0e6] px-4 pb-32 sm:px-6">
-                {mlaiGenerateUpdateBrand}
+            <VibeRaisingWorkflowLayout activeStep={showSendToMlaiConfirmation ? "publish" : "review"} completedSteps={["draft"]} enabledSteps={canSubmitReviewToMlai ? ["draft", "review", "publish"] : ["draft", "review"]} onStepClick={handleReviewStepperClick}>
+                <div className="update-editor update-reader">
+                    <header className="update-editor-header"><div><button type="button" className="update-back" onClick={() => setDismissedFeedback(true)}><ArrowLeftIcon className="h-3.5 w-3.5" />Back to draft</button><h1>Review your update</h1></div><span className="update-editor-status">Saved draft</span></header>
+                    <div className="update-review-note"><span>This is how your update will appear.</span><span>Audience: {reviewAudienceVisibility.includes("community") ? "Community" : "Just for me"}</span></div>
                 <Form id={SEND_TO_MLAI_FORM_ID} method="POST" className="hidden">
                     <input type="hidden" name="intent" value="publish" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
@@ -5269,1652 +5116,545 @@ export default function CreateUpdate() {
                             <input key={key} type="hidden" name={key} value={String(value)} />
                         ))}
                 </Form>
-
-                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
-                    <div className="min-w-0">
-                        <h2 className="text-lg font-black text-gray-950">Approve this update</h2>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">
-                            Review the saved content and audience before approving this revision.
-                        </p>
-                        {!canSubmitReviewToMlai ? (
-                            <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
-                                Answer at least {REQUIRED_FOUNDER_QUESTION_COUNT} founder questions before sending this update. You currently have {reviewAnsweredFounderQuestionCount}.
-                            </p>
-                        ) : null}
-                    </div>
-
-                    <p className="mt-4 font-semibold">Audience: {reviewAudienceVisibility.includes("community") ? "Community" : "Just for me"}. Return to the draft to change this choice and review a new revision.</p>
+                    <UpdateArticle update={{ ...reviewData, ...reviewActionData?.update, monthName: reviewMonth, year: reviewYear, coverImage: reviewCover, financialSnapshot: reviewFinancialSnapshot } as VibeRaisingMonthlyUpdate} companyName={user.companyName} />
+                    {sendError && <p className="update-notice" role="alert">{sendError}</p>}
+                    <div className="update-actions"><span className="update-action-status">Saved privately until you approve.</span><button type="button" className="update-button secondary" onClick={() => setDismissedFeedback(true)}>Keep editing</button><button type="button" className="update-button" disabled={isSubmitting || !canSubmitReviewToMlai} onClick={handleSendToMlai}>Approve update <ArrowRightIcon className="h-4 w-4" /></button></div>
+                    {showSendToMlaiConfirmation && <UpdateDialog title="Approve this update?" onClose={() => setShowSendToMlaiConfirmation(false)}><p>Approve the saved revision you just reviewed for {reviewAudienceVisibility.includes("community") ? "the community" : "your private archive"}.</p><div className="flex flex-wrap justify-end gap-2"><button type="button" className="update-button secondary" onClick={() => setShowSendToMlaiConfirmation(false)}>Back to review</button><button type="button" className="update-button" onClick={handleConfirmSendToMlai} disabled={isSubmitting || !reviewData?.revisionId}>{isSubmitting ? "Approving…" : "Approve this revision"}</button></div></UpdateDialog>}
                 </div>
-
-                {/* Main layout: founder preview. AI grading/feedback is hidden for now. */}
-                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
-
-                    {/* PREVIEW — dominant, takes most of the width */}
-                    <div className="flex-1 min-w-0">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            {reviewCover ? <img src={reviewCover.url} alt={reviewCover.alt || ""} className="aspect-[16/9] w-full object-cover" /> : null}
-                            {/* Hero banner */}
-                            <div className="relative w-full h-24 overflow-hidden sm:h-32">
-                                <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
-                                <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
-                                    <circle cx="120" cy="80" r="100" fill="white" />
-                                    <circle cx="650" cy="140" r="70" fill="white" />
-                                    <circle cx="400" cy="30" r="50" fill="white" />
-                                    <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center px-4 sm:px-6">
-                                    <div className="flex min-w-0 items-center gap-3.5">
-                                        {user.domain ? (
-                                            <img
-                                                src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
-                                                alt=""
-                                                className="h-12 w-12 rounded-xl border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
-                                            />
-                                        ) : (
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/30 bg-white/20 backdrop-blur-sm">
-                                                <span className="text-base font-bold text-white">{user.companyName.charAt(0)}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex min-w-0 flex-col justify-center">
-                                            <p className="truncate [font-family:var(--vr-font-title)] text-3xl font-black uppercase leading-none tracking-normal text-white drop-shadow-sm sm:text-4xl">
-                                                {user.companyName}
-                                            </p>
-                                            <p className="mt-1 truncate [font-family:var(--vr-font-title)] text-sm font-black uppercase leading-none tracking-normal text-white/85 drop-shadow-sm sm:text-lg">
-                                                {reviewMonth} {reviewYear} Update
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Preview header */}
-                            <div className="border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <StartupRegionBadge location={user.location} />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowReviewLinkedInPopup(true)}
-                                        className={clsx(
-                                            "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black shadow-sm ring-1 transition",
-                                            hasReviewLinkedIn
-                                                ? "bg-[#0A66C2] text-white ring-[#0A66C2]/20 hover:bg-[#084f96]"
-                                                : "bg-gray-100 text-gray-400 ring-gray-200 hover:bg-gray-200 hover:text-gray-600",
-                                        )}
-                                        aria-label={hasReviewLinkedIn ? "Edit founder LinkedIn" : "Add founder LinkedIn"}
-                                    >
-                                        LinkedIn
-                                        {hasReviewLinkedIn ? (
-                                            <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
-                                        ) : null}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <ReportingEvidenceNotice period={reviewActionData?.update?.reportingPeriod} warnings={reviewActionData?.update?.evidenceWarnings} />
-                            {reviewFinancialSnapshot ? (
-                                <FinancialChartsSection snapshot={reviewFinancialSnapshot} analysis={reviewConciseAnalysis} />
-                            ) : null}
-
-                            {hasReviewPitchDeck ? (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <div className="mb-3">
-                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
-                                                    Pitch deck
-                                                </p>
-                                            </div>
-                                            <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)]">
-                                                        <CloudArrowUpIcon className="h-5 w-5" />
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="text-sm font-black text-gray-950">Pitch deck attached</p>
-                                                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                            {reviewPitchDeckLabel}{formatFileSize(reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes) ? ` · ${formatFileSize(reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes)}` : ""}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="hidden sm:block">
-                                                <PitchDeckAssetPreview
-                                                    src={reviewPitchDeckPreviewUrl}
-                                                    openUrl={reviewPitchDeckOpenUrl}
-                                                    contentType={reviewPitchDeckContentType || pitchDeckContentType}
-                                                    fileName={reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename}
-                                                    fileSizeBytes={reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes}
-                                                />
-                                            </div>
-                                        </div>
-                                        {reviewVideoUrl ? (
-                                            <div>
-                                                <div className="mb-3">
-                                                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                                        {reviewMediaIsAudio ? "Voice note" : "Walkthrough video"}
-                                                    </p>
-                                                    <h4 className="mt-1 text-base font-black text-gray-950">
-                                                        Founder {reviewMediaIsAudio ? "audio" : "video"} preview
-                                                    </h4>
-                                                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                                                        This {reviewMediaIsAudio ? "voice note" : "video"} will appear with the deck so MLAI can understand the story directly.
-                                                    </p>
-                                                </div>
-                                                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)]">
-                                                            <CloudArrowUpIcon className="h-5 w-5" />
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-sm font-black text-gray-950">{reviewMediaIsAudio ? "Voice note attached" : "Walkthrough video attached"}</p>
-                                                            <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                                {reviewVideoLabel}{formatFileSize(reviewVideoFileSizeBytes) ? ` · ${formatFileSize(reviewVideoFileSizeBytes)}` : ""}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
-                                                    <VideoAssetPreview
-                                                        src={reviewVideoUrl}
-                                                        contentType={reviewVideoContentType}
-                                                        fileName={reviewVideoOriginalFilename || reviewVideoUrl}
-                                                        fileSizeBytes={reviewVideoFileSizeBytes}
-                                                        className="aspect-video w-full rounded-none"
-                                                    />
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6">
-                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-                                        {(() => {
-                                            const metricRecord = (((data as any)?.metrics || data) as Record<string, string>) || {};
-                                            const selectedReviewKeys = String((data as any)?.metricKeys || "")
-                                                .split(",")
-                                                .map((key) => key.trim())
-                                                .filter((key) => hasDisplayableMetricValue(metricRecord[key] ?? (data as any)?.[key]));
-                                            const options = selectedReviewKeys.length > 0
-                                                ? metricOptionsFromKeys(selectedReviewKeys)
-                                                : getMetricOptionsForDisplay(metricRecord);
-                                            return options.map(m => {
-                                            const val = (data as any)?.[m.key] || (data as any)?.metrics?.[m.key];
-                                            if (!hasDisplayableMetricValue(val)) return null;
-                                            return (
-                                                <div
-                                                    key={m.key}
-                                                    className={clsx(
-                                                        "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
-                                                        val
-                                                            ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                            : "border-gray-200 bg-gray-50 opacity-40"
-                                                    )}
-	                                                >
-                                                    <MetricInfoBadge info={m.info} />
-	                                                    <div className={clsx(
-                                                        "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                        val ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                                    )}>
-                                                        {m.icon}
-                                                    </div>
-                                                    <p className={clsx(
-                                                        "text-base font-extrabold leading-tight",
-                                                        val ? "text-gray-900" : "text-gray-300"
-                                                    )}>
-                                                        {val ? `${m.prefix || ""}${val}` : "—"}
-                                                    </p>
-                                                    <p className={clsx(
-                                                        "text-[10px] font-semibold uppercase tracking-wide mt-1",
-                                                        val ? "text-gray-600" : "text-gray-400"
-                                                    )}>{m.label}</p>
-                                                </div>
-                                            );
-                                        });
-                                        })()}
-                                    </div>
-                                </div>
-                            )}
-
-                            {!hasReviewPitchDeck && reviewVideoUrl ? (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
-                                    <div className="mb-3">
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                            {reviewMediaIsAudio ? "Voice note" : "Walkthrough video"}
-                                        </p>
-                                        <h4 className="mt-1 text-base font-black text-gray-950">
-                                            Founder {reviewMediaIsAudio ? "audio" : "video"} preview
-                                        </h4>
-                                    </div>
-                                    <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
-                                        <div className="flex items-start gap-3">
-                                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)]">
-                                                <CloudArrowUpIcon className="h-5 w-5" />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-black text-gray-950">{reviewMediaIsAudio ? "Voice note attached" : "Walkthrough video attached"}</p>
-                                                <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                    {reviewVideoLabel}{formatFileSize(reviewVideoFileSizeBytes) ? ` · ${formatFileSize(reviewVideoFileSizeBytes)}` : ""}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
-                                        <VideoAssetPreview
-                                            src={reviewVideoUrl}
-                                            contentType={reviewVideoContentType}
-                                            fileName={reviewVideoOriginalFilename || reviewVideoUrl}
-                                            fileSizeBytes={reviewVideoFileSizeBytes}
-                                            className="aspect-video w-full rounded-none"
-                                        />
-                                    </div>
-                                </div>
-                            ) : null}
-
-                            {/* Content sections */}
-                            <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
-                                <ReviewSummaryBlock summary={reviewSummary} sourceUrl={reviewSourceUrl} />
-                                <ReviewPreviewSection
-                                    label="Key Highlights"
-                                    text={(data as any)?.highlights}
-                                />
-                                <ReviewPreviewSection
-                                    label="Challenges"
-                                    text={(data as any)?.challenges}
-                                />
-                                <ReviewPreviewSection
-                                    label="Learnings"
-                                    text={(data as any)?.learnings}
-                                />
-                                <ReviewPreviewSection
-                                    label="Next 30 Days"
-                                    text={(data as any)?.next30Days}
-                                />
-                                <ReviewPreviewSection
-                                    label="Support request"
-                                    text={(data as any)?.asks}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Revenue chart + Past month previews */}
-                        {!reviewFinancialSnapshot && !hasReviewPitchDeck && (() => {
-                            const d = data as any;
-                            const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> }> = [];
-                            for (let i = 0; d?.[`pastMonth_${i}_month`]; i++) {
-                                const pm: any = {
-                                    month: d[`pastMonth_${i}_month`],
-                                    highlights: d[`pastMonth_${i}_highlights`] || "",
-                                    challenges: d[`pastMonth_${i}_challenges`] || "",
-                                    asks: d[`pastMonth_${i}_asks`] || "",
-                                    learnings: d[`pastMonth_${i}_learnings`] || "",
-                                    next30Days: d[`pastMonth_${i}_next30Days`] || "",
-                                    metrics: {},
-                                };
-                                for (const m of METRIC_OPTIONS) {
-                                    if (d[`pastMonth_${i}_${m.key}`]) pm.metrics[m.key] = d[`pastMonth_${i}_${m.key}`];
-                                }
-                                pastMonths.push(pm);
-                            }
-
-                            // Build revenue chart data
-                            const reviewChartData: ChartData[] = [
-                                ...pastMonths.map(pm => ({
-                                    month: pm.month,
-                                    value: parseRevenue(pm.metrics.revenue || "0"),
-                                })),
-                                {
-                                    month: d?.month || selectedMonth,
-                                    value: parseRevenue(d?.revenue || "0"),
-                                    isCurrent: true,
-                                }
-                            ];
-
-                            const hasRevenue = reviewChartData.some(r => r.value > 0);
-
-                            return (
-                                <>
-                                    {hasRevenue && (
-                                        <div className="mt-4 hidden grid-cols-1 gap-4 sm:grid">
-                                            <GrowthChart
-                                                data={reviewChartData}
-                                                onSelect={() => {}}
-                                                title="Revenue"
-                                                subtitle="Monthly revenue with MoM growth"
-                                                formatter={formatCompact}
-                                            />
-                                        </div>
-                                    )}
-                                    {pastMonths.length > 0 && (
-                                        <div className="mt-4 hidden space-y-2 sm:block">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Previous Updates</p>
-                                            {pastMonths.map((pm, i) => (
-                                                <PastMonthPreviewCard key={i} pm={pm} />
-                                            ))}
-                                        </div>
-                                    )}
-                                </>
-                            );
-                        })()}
-
-                        <div className="mt-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] p-4">
-                            <p className="text-sm font-semibold text-[var(--vr-color-text)]">
-                                This update is saved privately in <Link to="/founder-tools/drafts" className="font-black text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]">My Drafts</Link> until you send it to MLAI.
-                            </p>
-                        </div>
-
-                    </div>
-
-                    {showReviewLinkedInPopup ? (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                            <div
-                                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                                onClick={() => setShowReviewLinkedInPopup(false)}
-                                aria-hidden
-                            />
-                            <section
-                                role="dialog"
-                                aria-modal="true"
-                                aria-labelledby="review-linkedin-popup-title"
-                                className="relative z-[110] w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl"
-                            >
-                                <div className="flex items-start justify-between gap-4 border-b border-[var(--vr-color-border)] px-6 pb-4 pt-6">
-                                    <div>
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#0A66C2]">
-                                            Founder LinkedIn
-                                        </p>
-                                        <h2 id="review-linkedin-popup-title" className="mt-2 text-xl font-black leading-tight text-[var(--vr-color-text)]">
-                                            Add a founder LinkedIn link
-                                        </h2>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowReviewLinkedInPopup(false)}
-                                        className="flex-shrink-0 rounded-full p-2 text-[var(--vr-color-text-sub)] transition hover:bg-[var(--vr-color-neutral-100)] hover:text-[var(--vr-color-text)]"
-                                        aria-label="Close founder LinkedIn popup"
-                                    >
-                                        <XMarkIcon className="h-5 w-5" />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-4 px-6 py-6">
-                                    <p className="text-sm leading-6 text-[var(--vr-color-text-mid)]">
-                                        A founder LinkedIn link gives MLAI useful company context. Add or update it here and it will be saved with this update.
-                                    </p>
-                                    {reviewLinkedInDrafts.map((draft) => (
-                                        <label key={draft.id} className="block">
-                                            <span className="mb-2 block text-sm font-black text-gray-950">{draft.name || "Founder"}</span>
-                                            <input
-                                                type="url"
-                                                inputMode="url"
-                                                value={draft.linkedinUrl}
-                                                onChange={(event) => {
-                                                    const nextValue = event.target.value;
-                                                    setMissingFounderLinkedInDrafts((current) => {
-                                                        if (current.some((item) => item.id === draft.id)) {
-                                                            return current.map((item) =>
-                                                                item.id === draft.id ? { ...item, linkedinUrl: nextValue } : item,
-                                                            );
-                                                        }
-                                                        return [
-                                                            ...current,
-                                                            {
-                                                                id: draft.id,
-                                                                sourceIndex: draft.sourceIndex,
-                                                                name: draft.name || "Founder",
-                                                                linkedinUrl: nextValue,
-                                                            },
-                                                        ];
-                                                    });
-                                                }}
-                                                placeholder="https://www.linkedin.com/in/founder"
-                                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-300 focus:border-[#0A66C2] focus:ring-4 focus:ring-[#0A66C2]/10"
-                                            />
-                                        </label>
-                                    ))}
-                                </div>
-
-                                <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowReviewLinkedInPopup(false)}
-                                        className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#0A66C2] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#0A66C2]/10 transition hover:bg-[#084f96] active:scale-[0.98]"
-                                    >
-                                        Save LinkedIn
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowReviewLinkedInPopup(false)}
-                                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3.5 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)] active:scale-[0.98]"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </section>
-                        </div>
-                    ) : null}
-
-
-                </div>
-
-                <VibeRaisingStickyStepBar
-                    alignToContent
-                    hideStatus
-                    compactOnMobile
-                    statusTitle={`Review ${reviewMonth} ${reviewYear} update`}
-                    onBack={() => setDismissedFeedback(true)}
-                    primaryLabel={isSubmitting ? "Sending..." : "Approve update"}
-                    mobilePrimaryLabel={isSubmitting ? "Sending..." : "Approve update"}
-                    primaryDisabled={isSubmitting || !canSubmitReviewToMlai}
-                    onPrimary={handleSendToMlai}
-                />
-
-                {sendError ? (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-800 shadow-sm">
-                        {sendError}
-                    </div>
-                ) : null}
-
-                {showSendToMlaiConfirmation ? (
-                    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/70 p-4">
-                        <section role="dialog" aria-modal="true" aria-labelledby="publication-confirmation" className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-xl">
-                            <h2 id="publication-confirmation" className="text-2xl font-bold">Approve this monthly update?</h2>
-                            <p className="mt-4">This approves the exact saved revision shown in the preview for {reviewAudienceVisibility.includes("community") ? "the community" : "your private archive"}.</p>
-                            <div className="mt-6 flex gap-4">
-                                <button type="button" onClick={() => setShowSendToMlaiConfirmation(false)} className="rounded border px-4 py-3">Back to review</button>
-                                <button type="button" onClick={handleConfirmSendToMlai} disabled={isSubmitting || !reviewData?.revisionId} className="rounded bg-teal-700 px-4 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Publishing…" : "Approve this revision"}</button>
-                            </div>
-                        </section>
-                    </div>
-                ) : null}
-            </div>
             </VibeRaisingWorkflowLayout>
         );
     }
 
-    if (!isEdit && updateCadence === null) {
-        const cadenceOptions: Array<{
-            value: UpdateCadence;
-            title: string;
-            description: string;
-            badge?: string;
-            accentClassName: string;
-        }> = [
-            {
-                value: "monthly",
-                title: "Monthly",
-                description: "Share a fuller progress update once each month.",
-                accentClassName: "bg-[var(--vr-palette-black)] text-[var(--vr-palette-paper)]",
-            },
-            {
-                value: "weekly",
-                title: "Weekly",
-                description: "Create a shorter update every week through the Victor AI experience.",
-                badge: "Victor AI-only",
-                accentClassName: "bg-[var(--vr-palette-orange)] text-white",
-            },
-        ];
-
-        return (
-            <VibeRaisingWorkflowLayout activeStep="draft" progress={{ draft: 0 }} details={{ draft: "Choose monthly or weekly" }}>
-            <div className="mlai-vibe-update mx-auto w-full max-w-6xl space-y-8 rounded-[32px] bg-[#f5f0e6] px-4 pb-24 sm:px-6 sm:pb-8">
-                {mlaiGenerateUpdateBrand}
-                <section className="w-full rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 sm:p-8 lg:p-10">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-orange)]">
-                        Before you start
-                    </p>
-                    <h1 className="mt-4 text-4xl font-black tracking-tight text-gray-950 sm:text-5xl">
-                        How often do you want to update?
-                    </h1>
-                    <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base sm:leading-7">
-                        Choose the cadence that matches how often you want to share progress with MLAI.
-                    </p>
-
-                    <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                        {cadenceOptions.map((option) => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => {
-                                    setUpdateCadence(option.value);
-                                    if (option.value === "weekly" && selectedWeekOption) {
-                                        handleWeekChange(selectedWeekOption);
-                                    }
-                                }}
-                                className="group flex min-h-48 w-full flex-col items-start justify-between rounded-[1.75rem] border-2 border-[var(--vr-palette-black)] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#1a1a1a] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(255,60,0,0.24)]"
-                                aria-label={`Choose ${option.title.toLowerCase()} updates`}
-                            >
-                                <span className={clsx(
-                                    "inline-flex h-12 min-w-12 items-center justify-center rounded-full px-4 text-sm font-black uppercase tracking-[0.12em]",
-                                    option.accentClassName,
-                                )}>
-                                    {option.value === "monthly" ? "M" : "W"}
-                                </span>
-                                <span className="mt-8 block">
-                                    <span className="flex flex-wrap items-center gap-3">
-                                        <span className="block text-3xl font-black text-gray-950">{option.title}</span>
-                                        {option.badge ? (
-                                            <span className="rounded-full border border-[var(--vr-palette-orange)] bg-[rgba(255,60,0,0.10)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--vr-palette-orange)]">
-                                                {option.badge}
-                                            </span>
-                                        ) : null}
-                                    </span>
-                                    <span className="mt-3 block text-sm font-semibold leading-6 text-slate-600">
-                                        {option.description}
-                                    </span>
-                                </span>
-                                <span className="mt-6 inline-flex items-center gap-2 text-sm font-black text-[var(--vr-palette-orange)]">
-                                    Continue
-                                    <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </section>
-            </div>
-            </VibeRaisingWorkflowLayout>
-        );
-    }
-
-    // 3. Create/Edit Form View
     return (
         <VibeRaisingWorkflowLayout
             activeStep="draft"
             panelRef={draftStepperRef}
-            enabledSteps={isEdit ? ["draft"] : ["draft", "connect"]}
-            onStepClick={handleDraftStepperClick}
-            progress={{ draft: draftProgress, connect: selectedDraftInputSources.size ? 1 : connectedDraftInputSources.length ? 0.5 : 0 }}
-            details={{
-                draft: monthConfirmed ? `${answeredFounderQuestionCount} of 5 answered · 3 required` : `Choose your ${selectedPeriodName}`,
-                connect: selectedDraftInputSources.size ? `${selectedDraftInputSources.size} source${selectedDraftInputSources.size === 1 ? "" : "s"} selected` : "Optional inputs",
-            }}
+            enabledSteps={["draft"]}
+            progress={{ draft: answeredFounderQuestionCount / 5 }}
         >
-        <div
-            className={clsx(
-                "mlai-vibe-update mx-auto w-full max-w-6xl space-y-4 rounded-[32px] bg-[#f5f0e6] px-4 pb-32 sm:space-y-10 sm:px-6",
-            )}
-        >
-            {mlaiGenerateUpdateBrand}
-            {!isEdit && updateCadence ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-3 sm:px-5">
-                    <p className="text-sm font-semibold text-slate-600">
-                        Update cadence:{" "}
-                        <strong className="font-black text-gray-950">
-                            {updateCadence === "monthly" ? "Monthly" : "Weekly - Victor AI-only"}
-                        </strong>
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => setUpdateCadence(null)}
-                        className="text-sm font-black text-[var(--vr-palette-orange)] underline decoration-2 underline-offset-4 transition hover:text-[var(--vr-palette-black)]"
-                    >
-                        Change
-                    </button>
-                </div>
-            ) : null}
-            {!monthConfirmed ? (
-            <section>
-                <div className="space-y-4">
-                        <div ref={monthSelectorRef} className="space-y-3">
-                            <div className="hidden sm:block">
-                                <h2 className="text-3xl font-black tracking-tight text-gray-950">
-                                    {isWeeklyUpdate ? "Select week" : "Select month"}
-                                </h2>
-                            </div>
-                            <div className="overflow-visible rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm transition-all sm:p-8 lg:p-10">
-                                <div className="grid gap-4">
-                                    <div>
-                                        <div className="rounded-3xl bg-white p-4 shadow-sm sm:p-5">
-                                            <p className="mb-5 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base sm:leading-7">
-                                                {isWeeklyUpdate
-                                                    ? "Select the Monday–Sunday period this Victor AI update covers. Choose the current week or catch up on one of the three previous weeks."
-                                                    : monthSelectionCaption}
-                                            </p>
-                                            {isWeeklyUpdate ? (
-                                                <WeeklyUpdateTabs
-                                                    options={createStepWeekOptions}
-                                                    selectedKey={selectedWeekKey}
-                                                    onSelect={handleWeekChange}
-                                                    isDateEditable={!isEmailDraftBusy}
-                                                />
-                                            ) : (
-                                                <MonthYearTabs
-                                                    month={selectedMonth}
-                                                    year={selectedYear}
-                                                    onMonthChange={setSelectedMonth}
-                                                    onYearChange={setSelectedYear}
-                                                    onPeriodChange={setActivePeriodKey}
-                                                    monthChoices={createStepVisibleMonthOptions}
-                                                    isDateEditable={!isEmailDraftBusy}
-                                                />
-                                            )}
-                                            <p className="mt-4 text-xs font-semibold leading-5 text-slate-500">
-                                                {isWeeklyUpdate
-                                                    ? "Weekly updates are created through Victor AI only."
-                                                    : "20 Roo Points are awarded only for updates from the last 3 months."}
-                                            </p>
-                                            {!isWeeklyUpdate && !isEdit && !showAllCreateStepMonths ? (
-                                                <div className="mt-5 hidden items-center gap-3 text-sm font-semibold text-[var(--vr-color-primary)] sm:flex">
-                                                    <span className="text-[var(--vr-color-primary)]">Need an older month?</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowAllCreateStepMonths(true)}
-                                                        className="font-black underline underline-offset-4 transition hover:text-[var(--vr-palette-black)]"
-                                                    >
-                                                        View all months
-                                                    </button>
-                                                </div>
-                                            ) : null}
-                                            {!isWeeklyUpdate && isSelectedMonthBeforeMinimum ? (
-                                                <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
-                                                    Updates before June 2025 are not eligible for scoring or draft rewards.
-                                                </p>
-                                            ) : null}
-                                            {!isWeeklyUpdate && isSelectedMonthInFuture && (
-                                                <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
-                                                    Future monthly updates can be generated once that month starts.
-                                                </p>
-                                            )}
-                                            {!isWeeklyUpdate && existingUpdateForSelectedMonth && !isSelectedMonthUnavailable && (
-                                                <p className="mt-3 rounded-xl border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.12)] px-4 py-3 text-sm font-medium text-[var(--vr-color-primary)]">
-                                                    An update already exists for {selectedMonthLabel}. Generate a new private revision from the selected sources, then review it before replacing the published update.
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        disabled={!hasSelectedPeriod || isSelectedMonthUnavailable || emailDraftActionBusy}
-                                        onClick={() => {
-                                            handleGenerateSelectedMonthUpdate();
-                                        }}
-                                        onTouchStart={handleGenerateDraftCardTouchStart}
-                                        onTouchEnd={handleGenerateDraftCardTouchEnd}
-                                        className={clsx(
-                                            "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 sm:hidden",
-                                            !hasSelectedPeriod || isSelectedMonthUnavailable || emailDraftActionBusy
-                                                ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
-                                                : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
-                                        )}
-                                        aria-label={hasSelectedPeriod ? `Start ${selectedPeriodLabel} draft` : `Select a ${selectedPeriodName} before starting a draft`}
-                                    >
-                                        <div>
-                                            <p className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
-                                                Step 1
-                                            </p>
-                                            <p className="mt-3 text-lg font-black">
-                                                {hasSelectedPeriod ? "Start draft" : `Select ${selectedPeriodName} first`}
-                                            </p>
-                                        </div>
-                                        <span className="mt-5 flex items-center justify-between text-sm font-black">
-                                            <span>{hasSelectedPeriod ? selectedPeriodLabel : `Choose a ${selectedPeriodName}`}</span>
-                                            {emailDraftActionBusy ? (
-                                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                            ) : (
-                                                <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                                            )}
-                                        </span>
-                                    </button>
-                                </div>
-                            </div>
+            <div className="update-editor">
+                <header className="update-editor-header">
+                    <div>
+                        <Link to="/founder-tools/updates" className="update-back">
+                            <ArrowLeftIcon className="h-3.5 w-3.5" />
+                            All updates
+                        </Link>
+                        <h1>{isEdit ? "Edit your update" : "A little progress, shared."}</h1>
                     </div>
-                </div>
-            </section>
-            ) : (
-                <section id="mobile-selected-month-summary" className="scroll-mt-36 sm:hidden">
-                    <div className="space-y-4">
-                        {renderSelectedMonthSummaryCard()}
-                    </div>
-                </section>
-            )}
-
-            <section
-                className={clsx(
-                    "transition-opacity",
-                    !monthConfirmed && "hidden sm:block",
-                )}
-            >
-                {selectedDraftStage === "reporting" ? (
+                    <span className="update-editor-status" aria-live="polite">
+                        {draftSaved && !hasUnsavedChanges
+                            ? "Draft saved"
+                            : hasUnsavedChanges
+                              ? "Unsaved changes"
+                              : "Your draft"}
+                    </span>
+                </header>
+                <Form
+                    id={DRAFT_REVIEW_FORM_ID}
+                    method="POST"
+                    className="update-form"
+                    onSubmit={() => setSaveAttemptContent(workingContent)}
+                >
+                    <input type="hidden" name="companyId" value={resolveActiveCompanyId(user) || ""} />
+                    <input type="hidden" name="expectedRevision" value={expectedRevision ?? ""} />
+                    <input type="hidden" name="intent" value="review" />
+                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
+                    {formMetricKeys.map((metricKey) => (
+                        <input key={metricKey} type="hidden" name={metricKey} value={metricValues[metricKey] || ""} />
+                    ))}
+                    <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
+                    <input
+                        type="hidden"
+                        name="financialSnapshot"
+                        value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""}
+                    />
+                    <input
+                        type="hidden"
+                        name="conciseAnalysis"
+                        value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""}
+                    />
+                    <input type="hidden" name="presentationMode" value={presentationMode} />
+                    {privateAudienceVisibility.map((audience) => (
+                        <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
+                    ))}
+                    <input type="hidden" name="coverImage" value={JSON.stringify(coverImage)} />
+                    <input type="hidden" name="sourceUrl" value={sourceUrl} />
+                    <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
+                    <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
+                    <input type="hidden" name="pitchDeckContentType" value={pitchDeckContentType} />
+                    <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
+                    <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
+                    <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
+                    <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
+                    <input type="hidden" name="manualSummary" value={manualSummary} />
+                    <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
+                    <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
+                    <input type="hidden" name="videoContentType" value={videoContentType} />
+                    <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
+                    <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
+                    <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
+                    <input type="hidden" name="month" value={selectedMonth} />
+                    <input type="hidden" name="year" value={selectedYear} />
+                    <input type="hidden" name="updateCadence" value={updateCadence || "monthly"} />
+                    {isWeeklyUpdate && selectedWeekOption ? (
                         <>
-                            {shouldShowEmailDraftProgress ? (
-                                <EmailDraftInProgressCard
-                                    status={emailDraftCardStatus}
-                                    displayStage={emailDraftCardDisplayStage}
-                                    completedSteps={emailDraftCardCompletedSteps}
-                                    totalSteps={emailDraftCardTotalSteps}
-                                    sourceLabel={`${selectedInputSourceDescription} for ${selectedPeriodLabel}`}
-                                    error={emailDraftCardError}
-                                    notice={emailDraftCardNotice}
-                                    pollingDegraded={emailDraftPollingDegraded}
-                                    onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
-                                    retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
-                                    onCancel={isEmailDraftBusy ? () => {
-                                        void handleCancelEmailDraft();
-                                    } : undefined}
-                                    cancelDisabled={emailDraftCancelBusy}
-                                    isCancelling={emailDraftCancelBusy}
-                                    manualFallbackMessage={canContinueDraftManually ? "You can keep editing the update below while the backend draft connection is unavailable." : null}
-                                />
-                            ) : null}
-                            {hasDraftTemplate ? (
-                                <>
-                                    <div ref={draftTemplateSectionRef} className="scroll-mt-28 space-y-4 sm:mt-8 sm:space-y-6 lg:mt-10">
-                                    {optionalDataSourcesSection}
-                                    {!shouldShowEmailDraftProgress ? (
-                                        <div className="relative">
-                                        <button
-                                            type="button"
-                                            disabled={emailDraftActionBusy || isSelectedMonthInFuture || selectedInputSources.length === 0}
-                                            onClick={() => {
-                                                void handleGenerateDraftFromEmailClick();
-                                            }}
-                                            className={clsx(
-                                                "group flex min-h-[5.25rem] w-full items-center justify-between gap-3 rounded-2xl border px-5 py-3 text-left shadow-sm transition disabled:cursor-not-allowed sm:min-h-0 sm:gap-4 sm:p-5",
-                                                canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
-                                                    ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
-                                                    : "cursor-not-allowed border-[var(--vr-color-border)] bg-white sm:border-[rgba(0,128,128,0.32)] sm:bg-[rgba(0,255,215,0.08)]",
-                                            )}
-                                        >
-                                            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                                                <div className={clsx(
-                                                    "hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1 sm:flex",
-                                                    hasNoSourceForAssistedDraft
-                                                        ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
-                                                        : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
-                                                )}>
-                                                    {emailDraftActionBusy ? (
-                                                        <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                                    ) : (
-                                                        <SparklesIcon className="h-5 w-5" />
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-base sm:font-bold sm:normal-case sm:tracking-normal sm:text-gray-950">
-                                                        <span className="sm:hidden">AI drafting</span>
-                                                        <span className="hidden sm:inline">{emailDraftButtonTitle}</span>
-                                                        <span className="relative ml-2 hidden align-middle text-[var(--vr-color-primary)] transition group-hover:text-black sm:inline-flex" aria-hidden="true">
-                                                            <InformationCircleIcon className="h-3.5 w-3.5" />
-                                                            <span className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-2rem)] translate-y-1 rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-left text-xs font-medium normal-case leading-5 tracking-normal text-white opacity-0 shadow-[0_14px_30px_-10px_rgba(15,23,42,0.65)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus:translate-y-0 group-focus:opacity-100">
-                                                                {emailDraftButtonDescription}
-                                                                <span className="absolute left-2 top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-slate-950" />
-                                                            </span>
-                                                        </span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <span className={clsx(
-                                                "flex flex-shrink-0 items-center justify-center rounded-full border px-3 py-1 text-xs font-black transition sm:h-10 sm:w-10 sm:rounded-xl sm:px-0 sm:py-0 sm:group-hover:translate-x-1",
-                                                "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:border-[var(--vr-palette-black)] group-hover:bg-[var(--vr-palette-black)]",
-                                            )}>
-                                                <span className="sm:hidden">Draft</span>
-                                                <ArrowRightIcon className={clsx(
-                                                    "hidden h-5 w-5 sm:block",
-                                                    "text-current",
-                                                )} />
-                                            </span>
-                                        </button>
-                                        <div className="absolute left-[6.75rem] top-1/2 z-10 -translate-y-1/2 sm:hidden">
-                                            <CardInfoTooltip info={emailDraftButtonDescription} />
-                                        </div>
-                                        </div>
-                                    ) : null}
-                                <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
-<input type="hidden" name="companyId" value={resolveActiveCompanyId(user) || ""} />
-<input type="hidden" name="expectedRevision" value={saveDraftFetcher.data?.update?.revisionId ?? actionData?.update?.revisionId ?? generatedRevisionId ?? existingUpdateForSelectedMonth?.revisionId ?? (existingData as any)?.revisionId ?? ""} />
-                                    <input type="hidden" name="intent" value="review" />
-                                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
-                                    {formMetricKeys.map((metricKey) => (
-                                        <input key={metricKey} type="hidden" name={metricKey} value={metricValues[metricKey] || ""} />
-                                    ))}
-                                    <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
-                                    <input type="hidden" name="financialSnapshot" value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""} />
-                                    <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
-                                    <input type="hidden" name="presentationMode" value={presentationMode} />
-                                    <VibeRaisingAudienceVisibilityField name="audienceVisibility" value={privateAudienceVisibility} onChange={setAudienceVisibility} />
-                                    <input type="hidden" name="summary" value={summary} />
-                                    <input type="hidden" name="coverImage" value={JSON.stringify(coverImage)} />
-                                    <input type="hidden" name="sourceUrl" value={sourceUrl} />
-                                    <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
-                                    <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
-                                    <input type="hidden" name="pitchDeckContentType" value={pitchDeckContentType} />
-                                    <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
-                                    <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
-                                    <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
-                                    <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
-                                    <input type="hidden" name="manualSummary" value={manualSummary} />
-                                    <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
-                                    <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
-                                    <input type="hidden" name="videoContentType" value={videoContentType} />
-                                    <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
-                                    <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
-                                    <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
-                                    <input type="hidden" name="month" value={selectedMonth} />
-                                    <input type="hidden" name="year" value={selectedYear} />
-                                    <input type="hidden" name="updateCadence" value={updateCadence || "monthly"} />
-                                    {isWeeklyUpdate && selectedWeekOption ? (
-                                        <>
-                                            <input type="hidden" name="weekStart" value={selectedWeekOption.startIso} />
-                                            <input type="hidden" name="weekEnd" value={selectedWeekOption.endIso} />
-                                        </>
-                                    ) : null}
-
-                                    {renderSelectedMonthSummaryCard("hidden sm:block")}
-
-                                    <section className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5" aria-labelledby="financial-metrics-source-title">
-                                        <div>
-                                            <h2 id="financial-metrics-source-title" className="text-base font-black text-gray-950 sm:text-lg">Financial metrics</h2>
-                                            <p className="mt-1 text-sm leading-6 text-slate-600">
-                                                Connect your financial data to generate credible, verifiable metrics.
-                                                <br />
-                                                We only access the information needed for reporting, and you remain in control of your connected accounts.
-                                            </p>
-                                        </div>
-
-                                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                                            {financialMetricSources.map((source) => {
-                                                const connected = isConnectedInputSource(source);
-                                                const selected = selectedDraftInputSources.has(source.key);
-                                                const isStripe = source.key === "stripe";
-                                                return (
-                                                    <article key={source.key} className="flex min-h-32 flex-col justify-between rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4">
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div className="flex min-w-0 items-center gap-3">
-                                                                <DraftSourceLogo sourceKey={source.key} />
-                                                                <div className="min-w-0">
-                                                                    <h3 className="text-base font-black text-gray-950">{source.label}</h3>
-                                                                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                                                                        {isStripe ? "Revenue and subscription metrics" : "Invoices and accounting metrics"}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            <span className={clsx(
-                                                                "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em]",
-                                                                connected
-                                                                    ? "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)]"
-                                                                    : "bg-white text-slate-500 ring-1 ring-[var(--vr-color-border)]",
-                                                            )}>
-                                                                {compactSourceStatusLabel(source)}
-                                                            </span>
-                                                        </div>
-
-                                                        {connected ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => toggleDraftInputSource(source)}
-                                                                aria-pressed={selected}
-                                                                className={clsx(
-                                                                    "mt-4 inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-black transition",
-                                                                    selected
-                                                                        ? "bg-[var(--vr-color-primary)] text-white"
-                                                                        : "border border-[var(--vr-color-primary)] bg-white text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.10)]",
-                                                                )}
-                                                            >
-                                                                {selected ? `Using ${source.label}` : `Use ${source.label}`}
-                                                            </button>
-                                                        ) : (
-                                                            <Link
-                                                                to={manageConnectionsHref}
-                                                                className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-black text-white transition hover:bg-[var(--vr-palette-black)]"
-                                                            >
-                                                                Connect {source.label}
-                                                            </Link>
-                                                        )}
-                                                    </article>
-                                                );
-                                            })}
-                                        </div>
-                                        {compactSourcesLoading ? (
-                                            <p className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
-                                                <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                                                Checking connector status...
-                                            </p>
-                                        ) : null}
-                                    </section>
-
-                                    <div
-                                        role="status"
-                                        className={clsx(
-                                            "flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold",
-                                            hasMinimumFounderAnswers
-                                                ? "border-[rgba(0,128,128,0.22)] bg-[rgba(0,255,215,0.10)] text-[var(--vr-color-primary)]"
-                                                : "border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] text-[var(--vr-color-text)]",
-                                        )}
-                                    >
-                                        <span>{founderQuestionRequirementText}</span>
-                                        <span className="rounded-full bg-white px-3 py-1 text-xs font-black">
-                                            {answeredFounderQuestionCount}/5 answered
-                                        </span>
-                                    </div>
-                                    {founderQuestionGateError ? (
-                                        <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
-                                            {founderQuestionGateError}
-                                        </p>
-                                    ) : null}
-
-                                    <div className="space-y-5">
-                                        <SectionWithExample
-                                            label="Key Highlights"
-                                            name="highlights"
-                                            value={highlights}
-                                            onChange={setHighlights}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            mobileAdvanceTo="challenges"
-                                            placeholder="What went well this month? Major wins, product launches, partnerships..."
-                                        />
-                                        <SectionWithExample
-                                            label="Challenges"
-                                            name="challenges"
-                                            value={challenges}
-                                            onChange={setChallenges}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            mobileAdvanceTo="learnings"
-                                            placeholder="What obstacles are you facing? Where do you need help?"
-                                        />
-                                        <SectionWithExample
-                                            label="Learnings"
-                                            name="learnings"
-                                            value={learnings}
-                                            onChange={setLearnings}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            mobileAdvanceTo="next30Days"
-                                            placeholder="What did you learn from customers, experiments, or execution this month?"
-                                        />
-                                        <SectionWithExample
-                                            label="Next 30 Days"
-                                            name="next30Days"
-                                            value={next30Days}
-                                            onChange={setNext30Days}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            mobileAdvanceTo="asks"
-                                            placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                                        />
-                                        <SectionWithExample
-                                            label="Support request"
-                                            name="asks"
-                                            value={asks}
-                                            onChange={setAsks}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
-                                        />
-                                    </div>
-
-                                    {coverEditor}
-                                </Form>
-                                    </div>
-                                </>
-                            ) : null}
+                            <input type="hidden" name="weekStart" value={selectedWeekOption.startIso} />
+                            <input type="hidden" name="weekEnd" value={selectedWeekOption.endIso} />
                         </>
                     ) : null}
 
-            </section>
-
-            <VibeRaisingStickyStepBar
-                alignToContent
-                key={monthConfirmed ? "draft-template-actions" : "select-month-actions"}
-                className={clsx(
-                    !monthConfirmed && "hidden sm:block",
-                )}
-                hideStatusOnMobile={isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate}
-                hideBackOnMobile
-                statusIcon={draftStickyStatusIcon}
-                statusTitle={draftStickyBar.statusTitle}
-                statusDetail={draftStickyBar.statusDetail}
-                onBack={draftStickyBar.onBack}
-                tertiaryLabel={isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
-                mobileTertiaryLabel={isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
-                onTertiary={isEmailDraftBusy ? () => { void handleCancelEmailDraft(); } : undefined}
-                tertiaryDisabled={emailDraftCancelBusy}
-                primaryLabel={draftStickyBar.primaryLabel}
-                onPrimary={draftStickyBar.onPrimary}
-                primaryDisabled={draftStickyBar.primaryDisabled}
-                primaryType={draftStickyBar.primaryType}
-                primaryForm={draftStickyBar.primaryForm}
-            />
-
-            {showRegenerateConfirm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl ring-1 ring-black/5">
-                        <div className="border-b border-[var(--vr-color-border)] px-6 py-5">
-                            <div className="flex items-start gap-4">
-                                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(255,200,1,0.16)] text-[var(--vr-palette-orange)] ring-1 ring-[rgba(255,200,1,0.30)]">
-                                    <ExclamationTriangleIcon className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-black text-[var(--vr-color-text)]">Replace this draft?</h2>
-                                    <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedPeriodLabel}</strong> draft from scratch using your latest data{regenerateDialogSourceLabels.length > 0 ? <> from <strong className="font-bold text-gray-900">{regenerateDialogSourceLabels.join(", ")}</strong></> : null}, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
-                                    </p>
-                                </div>
+                    <div className="update-form-top">
+                        <label>
+                            For{" "}
+                            <select
+                                aria-label="Update cadence"
+                                value={updateCadence || "monthly"}
+                                disabled={
+                                    isSubmitting ||
+                                    saveDraftFetcher.state !== "idle" ||
+                                    isEmailDraftBusy ||
+                                    emailDraftActionBusy ||
+                                    Boolean(draftCandidate)
+                                }
+                                onChange={(event) => {
+                                    const cadence = event.target.value as UpdateCadence;
+                                    setUpdateCadence(cadence);
+                                    if (cadence === "weekly" && selectedWeekOption)
+                                        handleWeekChange(selectedWeekOption);
+                                }}
+                            >
+                                <option value="monthly">Monthly</option>
+                                <option value="weekly">Weekly · Victor AI</option>
+                            </select>
+                        </label>
+                        {isWeeklyUpdate ? (
+                            <label>
+                                <span className="sr-only">Update week</span>
+                                <select
+                                    aria-label="Update week"
+                                    value={selectedWeekKey}
+                                    disabled={
+                                        isSubmitting ||
+                                        saveDraftFetcher.state !== "idle" ||
+                                        isEmailDraftBusy ||
+                                        emailDraftActionBusy ||
+                                        Boolean(draftCandidate)
+                                    }
+                                    onChange={(event) => {
+                                        const week = createStepWeekOptions.find(
+                                            (option) => option.key === event.target.value,
+                                        );
+                                        if (week) handleWeekChange(week);
+                                    }}
+                                >
+                                    {createStepWeekOptions.map((option) => (
+                                        <option key={option.key} value={option.key}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        ) : (
+                            <label>
+                                <CalendarDaysIcon className="h-4 w-4" />
+                                <select
+                                    aria-label="Update month"
+                                    value={`${selectedMonth}:${selectedYear}`}
+                                    disabled={
+                                        isSubmitting ||
+                                        saveDraftFetcher.state !== "idle" ||
+                                        isEmailDraftBusy ||
+                                        emailDraftActionBusy ||
+                                        Boolean(draftCandidate)
+                                    }
+                                    onChange={(event) => {
+                                        const [month, year] = event.target.value.split(":");
+                                        setSelectedMonth(month);
+                                        setSelectedYear(Number(year));
+                                    }}
+                                >
+                                    {Array.from(
+                                        { length: (currentCreatePeriod.year - MIN_MONTHLY_UPDATE_YEAR + 1) * 12 },
+                                        (_, index) => {
+                                            const year = currentCreatePeriod.year - Math.floor(index / 12);
+                                            const month = VIBE_RAISING_MONTH_OPTIONS[11 - (index % 12)].name;
+                                            return { month, year };
+                                        },
+                                    )
+                                        .filter(
+                                            (option) =>
+                                                !isFutureMonthlyUpdate(option.month, option.year) &&
+                                                !isBeforeMinimumMonthlyUpdate(option.month, option.year),
+                                        )
+                                        .map((option) => (
+                                            <option
+                                                key={`${option.month}:${option.year}`}
+                                                value={`${option.month}:${option.year}`}
+                                            >
+                                                {option.month} {option.year}
+                                            </option>
+                                        ))}
+                                </select>
+                            </label>
+                        )}
+                        <span className="update-period-note">
+                            {reportingPeriod?.is_partial ? "Month to date" : "Make it yours"}
+                        </span>
+                    </div>
+                    <section className="update-ai" aria-labelledby="update-ai-heading">
+                        <div className="update-ai-heading">
+                            <SparklesIcon className="update-ai-icon" />
+                            <div className="update-ai-title">
+                                <h2 id="update-ai-heading">A head start with AI</h2>
+                                <p>Your connected tools, brought into a draft you can make your own.</p>
                             </div>
-                        </div>
-                        <div className="flex flex-col-reverse gap-3 px-6 py-4 sm:flex-row sm:justify-end">
                             <button
                                 type="button"
+                                className="update-button"
+                                disabled={
+                                    emailDraftActionBusy ||
+                                    isEmailDraftBusy ||
+                                    Boolean(draftCandidate) ||
+                                    !selectedInputSources.length ||
+                                    isSelectedMonthUnavailable
+                                }
+                                onClick={handleGenerateDraftFromEmailClick}
+                            >
+                                <SparklesIcon className="h-4 w-4" />
+                                {emailDraftActionBusy || isEmailDraftBusy ? "Drafting…" : "Draft with AI"}
+                            </button>
+                        </div>
+                        <div className="update-connections" aria-label="Connected sources">
+                            {compactSourcesLoading && (
+                                <span className="text-xs text-slate-500">Checking connections…</span>
+                            )}
+                            {compactOptionalSources
+                                .filter(isConnectedInputSource)
+                                .sort(
+                                    (a, b) =>
+                                        Number(["xero", "stripe"].includes(b.key)) -
+                                        Number(["xero", "stripe"].includes(a.key)),
+                                )
+                                .map((source) => (
+                                    <button
+                                        type="button"
+                                        key={source.key}
+                                        className="update-source"
+                                        data-financial={source.key === "xero" || source.key === "stripe"}
+                                        data-selected={selectedDraftInputSources.has(source.key)}
+                                        aria-pressed={selectedDraftInputSources.has(source.key)}
+                                        aria-label={`${selectedDraftInputSources.has(source.key) ? "Exclude" : "Include"} ${source.label} in AI draft`}
+                                        disabled={isEmailDraftBusy || emailDraftActionBusy}
+                                        onClick={() => toggleDraftInputSource(source)}
+                                    >
+                                        <CheckCircleIcon />
+                                        {source.label}
+                                    </button>
+                                ))}
+                            <Link to={manageConnectionsHref}>Manage connections ↗</Link>
+                        </div>
+                        <p className="update-ai-note">
+                            {connectedDraftInputSources.includes("xero") ||
+                            connectedDraftInputSources.includes("stripe")
+                                ? "Financial figures are imported from your connected sources and can’t be edited here."
+                                : "Earning revenue? Connect Xero or Stripe to include reliable financial figures."}{" "}
+                            {!compactSourcesLoading && !connectedDraftInputSources.length
+                                ? "You can start writing below."
+                                : ""}
+                        </p>
+                        {Object.keys(metricValues).length > 0 && (
+                            <details>
+                                <summary>View figures for {selectedMonth}</summary>
+                                <div className="update-metrics">
+                                    {metricOptionsForValues(metricValues)
+                                        .filter((metric) => String(metricValues[metric.key] ?? "").trim())
+                                        .map((metric) => {
+                                            const evidence = metricEvidence?.[metric.key];
+                                            const locked = isFinancialMetric(metric.key, evidence);
+                                            return (
+                                                <div className="update-metric" key={metric.key}>
+                                                    <label htmlFor={`draft-figure-${metric.key}`}>
+                                                        {locked && <LockClosedIcon className="h-3 w-3" />}
+                                                        {metric.label}
+                                                    </label>
+                                                    {locked ? (
+                                                        <output id={`draft-figure-${metric.key}`}>
+                                                            {metricValues[metric.key]}
+                                                        </output>
+                                                    ) : (
+                                                        <input
+                                                            id={`draft-figure-${metric.key}`}
+                                                            value={metricValues[metric.key] ?? ""}
+                                                            onChange={(event) =>
+                                                                setMetricValues((previous) => ({
+                                                                    ...previous,
+                                                                    [metric.key]: event.target.value,
+                                                                }))
+                                                            }
+                                                            className="mt-2 w-full rounded border border-slate-200 bg-white p-2 text-sm"
+                                                        />
+                                                    )}
+                                                    <small>
+                                                        {evidence?.quality === "founder_asserted"
+                                                            ? "Founder reported · historical value"
+                                                            : evidence?.source_provider
+                                                              ? `${INPUT_SOURCE_LABELS[evidence.source_provider as VibeRaisingInputSourceKey] || evidence.source_provider} · ${evidence.quality === "partial" ? "partial coverage" : "imported"}`
+                                                              : "Source unverified"}
+                                                    </small>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                                <p className="update-ai-note">
+                                    {reportingPeriod?.is_partial ? "This month is incomplete. " : ""}Correct imported
+                                    figures at the source, then draft again to refresh them.
+                                </p>
+                            </details>
+                        )}
+                        {(emailDraftActionBusy || emailDraftCardVisible) && (
+                            <div className="update-ai-run" role="status">
+                                <ArrowPathIcon
+                                    className={`h-4 w-4 ${isEmailDraftBusy ? "motion-safe:animate-spin" : ""}`}
+                                />
+                                <span>
+                                    {emailDraftCardStatus === "failed"
+                                        ? emailDraftCardError
+                                        : emailDraftCardDisplayStage}{" "}
+                                    {isEmailDraftBusy ? "Keep writing while we work." : ""}
+                                </span>
+                                {isEmailDraftBusy && (
+                                    <button
+                                        type="button"
+                                        className="underline"
+                                        disabled={emailDraftCancelBusy}
+                                        onClick={() => void handleCancelEmailDraft()}
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                                {emailDraftCardStatus === "failed" && (
+                                    <button type="button" className="underline" onClick={handleRetryEmailDraft}>
+                                        Retry
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                        {compactSourcesError && (
+                            <p className="update-ai-note" role="alert">
+                                {compactSourcesError}
+                            </p>
+                        )}
+                    </section>
+                    {draftCandidate && (
+                        <section className="update-candidate" aria-live="polite">
+                            <h2>Your AI draft is ready</h2>
+                            <p>
+                                Your writing is unchanged. Compare the draft below, then choose which writing to keep.
+                                Both choices use the newly imported figures.
+                            </p>
+                            <details>
+                                <summary>Compare AI draft</summary>
+                                <pre>
+                                    {[
+                                        draftCandidate.summary,
+                                        ...[
+                                            ["Highlights", draftCandidate.highlights],
+                                            ["Challenges", draftCandidate.challenges],
+                                            ["Learnings", draftCandidate.learnings],
+                                            ["Next steps", draftCandidate.next30Days],
+                                            ["How you can help", draftCandidate.asks],
+                                        ].map(([label, text]) => (text ? `${label}\n${text}` : "")),
+                                    ]
+                                        .filter(Boolean)
+                                        .join("\n\n")}
+                                </pre>
+                                <dl className="update-metrics">
+                                    {Object.entries(draftCandidate.metrics || {}).map(([key, value]) => (
+                                        <div className="update-metric" key={key}>
+                                            <dt>{METRIC_OPTION_MAP.get(key)?.label || key}</dt>
+                                            <dd>{String(value)}</dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            </details>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    className="update-button"
+                                    onClick={() => applyDraftCandidate(draftCandidate)}
+                                >
+                                    Use AI draft
+                                </button>
+                                <button
+                                    type="button"
+                                    className="update-button secondary"
+                                    onClick={() => applyDraftCandidate(draftCandidate, true)}
+                                >
+                                    Keep my writing
+                                </button>
+                            </div>
+                        </section>
+                    )}
+                    {founderQuestionGateError && (
+                        <p className="update-notice" role="alert">
+                            {founderQuestionGateError}
+                        </p>
+                    )}
+                    {!localRecoveryAvailable && (
+                        <p className="update-notice" role="alert">
+                            Local recovery is unavailable in this browser. Save your draft before leaving this page.
+                        </p>
+                    )}
+                    <div className="update-writing">
+                        <section className="update-section">
+                            <label htmlFor="update-summary" className="update-summary-label">
+                                The short version
+                            </label>
+                            <p className="update-section-help">
+                                A few lines that capture this period. What should someone remember?
+                            </p>
+                            <BulletTextarea
+                                id="update-summary"
+                                name="summary"
+                                className="update-summary-input"
+                                value={summary}
+                                onChange={setSummary}
+                                placeholder="This month, we…"
+                            />
+                        </section>
+                        <SectionWithExample
+                            label="Highlights"
+                            name="highlights"
+                            value={highlights}
+                            onChange={setHighlights}
+                            placeholder="A win, something shipped, or a moment worth sharing…"
+                        />
+                        <SectionWithExample
+                            label="Challenges"
+                            name="challenges"
+                            value={challenges}
+                            onChange={setChallenges}
+                            placeholder="What’s been difficult, or hasn’t gone to plan?"
+                        />
+                        <SectionWithExample
+                            label="Learnings"
+                            name="learnings"
+                            value={learnings}
+                            onChange={setLearnings}
+                            placeholder="An insight from a customer, an experiment, or the work itself…"
+                        />
+                        <SectionWithExample
+                            label="Next steps"
+                            name="next30Days"
+                            value={next30Days}
+                            onChange={setNext30Days}
+                            placeholder="What are you focusing on next?"
+                        />
+                        <SectionWithExample
+                            label="How you can help"
+                            name="asks"
+                            value={asks}
+                            onChange={setAsks}
+                            placeholder="An introduction, feedback, or a specific skill you’re looking for…"
+                        />
+                    </div>
+                    <div className="update-form-end">
+                        {coverEditor}
+                        <div className="update-audience">
+                            <div>
+                                <strong>Who should see this?</strong>
+                                <p>Your draft stays private until you approve it.</p>
+                            </div>
+                            <label>
+                                <span className="sr-only">Update audience</span>
+                                <select
+                                    aria-label="Update audience"
+                                    value={privateAudienceVisibility.includes("community") ? "community" : "private"}
+                                    onChange={(event) =>
+                                        setAudienceVisibility(normalizeAudienceVisibilityValue(event.target.value))
+                                    }
+                                >
+                                    <option value="private">Just for me</option>
+                                    <option value="community">Community</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                </Form>
+                <div className="update-actions">
+                    <span className="update-action-status" aria-live="polite">
+                        {draftCandidate
+                            ? "Choose a draft above before saving."
+                            : !hasMinimumFounderAnswers
+                              ? "Answer any 3 sections to review."
+                              : "Ready when you are."}
+                    </span>
+                    <button
+                        type="button"
+                        className="update-button secondary"
+                        disabled={
+                            isSubmitting ||
+                            saveDraftFetcher.state !== "idle" ||
+                            isEmailDraftBusy ||
+                            emailDraftActionBusy ||
+                            Boolean(draftCandidate)
+                        }
+                        onClick={handlePersistDraft}
+                    >
+                        {saveDraftFetcher.state !== "idle" ? "Saving…" : "Save draft"}
+                    </button>
+                    <button
+                        type="submit"
+                        form={DRAFT_REVIEW_FORM_ID}
+                        className="update-button"
+                        disabled={
+                            isSubmitting ||
+                            saveDraftFetcher.state !== "idle" ||
+                            !hasMinimumFounderAnswers ||
+                            isEmailDraftBusy ||
+                            emailDraftActionBusy ||
+                            Boolean(draftCandidate)
+                        }
+                    >
+                        {isSubmitting ? "Saving…" : "Save & review"}
+                        <ArrowRightIcon className="h-4 w-4" />
+                    </button>
+                </div>
+                {showRegenerateConfirm && (
+                    <UpdateDialog title="Create a fresh AI draft?" onClose={handleCancelRegenerateDraft}>
+                        <p>
+                            Use the latest data for {selectedPeriodLabel}. You can keep writing while it runs, and
+                            compare the result before choosing your draft.
+                        </p>
+                        <div className="flex flex-wrap justify-end gap-2">
+                            <button
+                                type="button"
+                                className="update-button secondary"
                                 onClick={handleCancelRegenerateDraft}
-                                disabled={emailDraftActionBusy}
-                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
+                                className="update-button"
                                 onClick={handleConfirmRegenerateDraft}
                                 disabled={emailDraftActionBusy}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {emailDraftActionBusy ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
-                                Regenerate {selectedPeriodLabel}
+                                Create draft
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {showLegacyDraftFlow ? (
-            <>
-            <Form method="POST" className="space-y-6">
-<input type="hidden" name="companyId" value={resolveActiveCompanyId(user) || ""} />
-<input type="hidden" name="expectedRevision" value={saveDraftFetcher.data?.update?.revisionId ?? actionData?.update?.revisionId ?? generatedRevisionId ?? existingUpdateForSelectedMonth?.revisionId ?? (existingData as any)?.revisionId ?? ""} />
-                <input type="hidden" name="intent" value="review" />
-                <input
-                    type="hidden"
-                    name="metricKeys"
-                    value={formMetricKeys.join(",")}
-                />
-                <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
-                <input type="hidden" name="financialSnapshot" value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""} />
-                <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
-                <input type="hidden" name="presentationMode" value={presentationMode} />
-                <input type="hidden" name="summary" value={summary} />
-                <input type="hidden" name="coverImage" value={JSON.stringify(coverImage)} />
-                <input type="hidden" name="sourceUrl" value={sourceUrl} />
-                <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
-                <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
-                <input type="hidden" name="pitchDeckContentType" value={pitchDeckContentType} />
-                <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
-                <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
-                <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
-                <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
-                <input type="hidden" name="manualSummary" value={manualSummary} />
-                <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
-                <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
-                <input type="hidden" name="videoContentType" value={videoContentType} />
-                <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
-                <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
-                <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
-
-                <section>
-                    <div className="flex items-end justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-black text-gray-950">Selected inputs</h2>
-                            <p className="mt-3 text-sm text-slate-500">
-                                Sources and materials included in this draft.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="mt-6 rounded-2xl border border-[var(--vr-color-border)] bg-white p-5 shadow-sm">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex flex-wrap gap-2">
-                                {selectedInputSourceLabels.length > 0 ? (
-                                    selectedInputSourceLabels.map((label) => (
-                                        <span key={label} className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
-                                            {label}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-gray-500 ring-1 ring-gray-100">
-                                        Manual materials only
-                                    </span>
-                                )}
-                            </div>
-                            {manualDocuments.length > 0 ? (
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {manualDocuments.map((document) => (
-                                        <span key={document.id} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
-                                            {document.originalFilename}
-                                        </span>
-                                    ))}
-                                </div>
-                            ) : null}
-                        </div>
-                        <div className="flex shrink-0 justify-end">
-                            {!isEdit && (
-                                <Link
-                                    to={manageConnectionsHref}
-                                    className="inline-flex items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
-                                >
-                                    Manage connections
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                </section>
-
-                <section>
-                    <div className="flex items-end justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-black text-gray-950">AI drafting</h2>
-                            <p className="mt-3 text-sm text-slate-500">
-                                Use selected sources to generate a first draft.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="mt-6">
-                        {emailDraftCardVisible ? (
-                            <EmailDraftInProgressCard
-                                status={emailDraftCardStatus}
-                                displayStage={emailDraftCardDisplayStage}
-                                completedSteps={emailDraftCardCompletedSteps}
-                                totalSteps={emailDraftCardTotalSteps}
-                                sourceLabel={`${selectedInputSourceDescription} for ${selectedPeriodLabel}`}
-                                error={emailDraftCardError}
-                                notice={emailDraftCardNotice}
-                                pollingDegraded={emailDraftPollingDegraded}
-                                onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
-                                retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
-                                onCancel={isEmailDraftBusy ? () => {
-                                    void handleCancelEmailDraft();
-                                } : undefined}
-                                cancelDisabled={emailDraftCancelBusy}
-                                isCancelling={emailDraftCancelBusy}
-                            />
-                        ) : (
-                            <button
-                                type="button"
-                                disabled={emailDraftActionBusy || isSelectedMonthUnavailable || selectedInputSources.length === 0}
-                                onClick={() => {
-                                    void handleGenerateDraftFromEmailClick();
-                                }}
-                                className={clsx(
-                                    "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
-                                    canGenerateDraftFromEmail && !isSelectedMonthUnavailable && selectedInputSources.length > 0
-                                        ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
-                                        : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
-                                )}
-                            >
-                                <div className="flex min-w-0 items-center gap-4">
-                                    <div className={clsx(
-                                        "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1",
-                                        hasNoSourceForAssistedDraft
-                                            ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
-                                            : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
-                                    )}>
-                                        {emailDraftActionBusy ? (
-                                            <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                        ) : (
-                                            <SparklesIcon className="h-5 w-5" />
-                                        )}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-base font-bold text-gray-950">
-                                            {emailDraftButtonTitle}
-                                        </p>
-                                        <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                                            {emailDraftButtonDescription}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className={clsx(
-                                    "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition group-hover:translate-x-1",
-                                    hasNoSourceForAssistedDraft
-                                        ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
-                                        : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
-                                )}>
-                                    <ArrowRightIcon className={clsx(
-                                        "h-5 w-5",
-                                        hasNoSourceForAssistedDraft ? "text-gray-300" : "text-current",
-                                    )} />
-                                </span>
-                            </button>
-                        )}
-                    </div>
-                </section>
-
-                <section>
-                    <div className="flex items-end justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-black text-gray-950">Update draft</h2>
-                            <p className="mt-3 text-sm text-slate-500">
-                                Edit metrics and submission-ready dot points for {activeDisplayMonth} {activeDisplayYear}.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="relative mt-6">
-                    <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
-	                    {financialSnapshot ? (
-	                        <FinancialChartsSection snapshot={financialSnapshot} analysis={conciseAnalysis} />
-	                    ) : null}
-	                        {/* ─── Growth Charts ─── */}
-                        {!financialSnapshot && pastMonthCards.length > 0 && (hasRevenueChart || hasActiveUsersChart) && (
-                            <div className={clsx("grid gap-4", hasRevenueChart && hasActiveUsersChart ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
-                                {hasRevenueChart && (
-                                    <GrowthChart
-                                        data={chartData}
-                                        onSelect={expandCardFromChart}
-                                        title="Revenue"
-                                        subtitle="Monthly revenue with MoM growth"
-                                        formatter={formatCompact}
-                                    />
-                                )}
-                                {hasActiveUsersChart && (
-                                    <GrowthChart
-                                        data={activeUsersChartData}
-                                        onSelect={expandCardFromChart}
-                                        title="Active Users"
-                                        subtitle="Monthly active users with MoM growth"
-                                        formatter={formatUsers}
-                                    />
-                                )}
-                            </div>
-                        )}
-
-                {/* ─── Stacked Card Layout ─── */}
-                {pastMonthCards.length > 0 && (
-                    <div className="relative">
-                        {/* Past month cards — grayed-out, peeking behind current */}
-	                        {pastMonthCards.map((card, index) => (
-	                            <div key={index} id={`past-month-${index}`} className="hidden">
-                                {/* Collapsed: gray card strip peeking behind */}
-                                <button
-                                    type="button"
-                                    onClick={() => toggleCardExpand(index)}
-                                    className={clsx(
-                                        "w-full text-left rounded-xl border transition-all",
-                                        expandedCards.has(index)
-                                            ? "border-gray-300 bg-white shadow-sm"
-                                            : "border-gray-200 bg-gray-100/80 hover:bg-gray-100"
-                                    )}
-                                >
-                                    <div className="flex items-center justify-between px-5 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <h4 className="text-sm font-bold text-gray-600">{card.month}</h4>
-                                            {!expandedCards.has(index) && (
-                                                <>
-                                                    {getMetricOptionsForMetrics(card.metrics).length > 0 && (
-                                                        <span className="flex items-center gap-2 text-xs text-gray-400">
-                                                            {getMetricOptionsForMetrics(card.metrics).map(m => (
-                                                                <span key={m.key} className="whitespace-nowrap">{m.label}: {m.prefix || ""}{card.metrics[m.key]}</span>
-                                                            ))}
-                                                        </span>
-                                                    )}
-                                                    {getMetricOptionsForMetrics(card.metrics).length === 0 && (
-                                                        <span className="text-xs text-gray-400 truncate max-w-[300px]">{(card.highlights || "").slice(0, 80)}...</span>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-gray-400 font-medium bg-gray-200/60 px-2 py-0.5 rounded-full">Past</span>
-                                            <ChevronDownIcon className={clsx("w-4 h-4 text-gray-400 transition-transform", expandedCards.has(index) && "rotate-180")} />
-                                        </div>
-                                    </div>
-                                </button>
-
-                                {/* Expanded: full editable content */}
-                                {expandedCards.has(index) && (
-                                    <div className="border border-t-0 border-gray-300 rounded-b-xl bg-white px-5 py-4 space-y-3 -mt-1">
-                                        {/* Metrics — square boxes */}
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Metrics</label>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                                                {getEditableMetricOptions(card.metrics, new Set(Object.keys(card.metrics))).map(m => {
-                                                    const active = m.key in card.metrics;
-                                                    return (
-                                                        <div
-                                                            key={m.key}
-                                                            onClick={() => {
-                                                                if (active) {
-                                                                    const updated = { ...card.metrics };
-                                                                    delete updated[m.key];
-                                                                    setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: updated } : c));
-                                                                } else {
-                                                                    updatePastMonthMetric(index, m.key, "");
-                                                                }
-                                                            }}
-                                                            className={clsx(
-                                                                "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
-                                                                active
-                                                                    ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                                    : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
-                                                            )}
-	                                                        >
-                                                            <MetricInfoBadge info={m.info} />
-	                                                            <div className={clsx(
-                                                                "w-5 h-5 rounded-full flex items-center justify-center mb-1",
-                                                                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                                            )}>
-                                                                {m.icon}
-                                                            </div>
-                                                            {active ? (
-                                                                <input
-                                                                    type="text"
-                                                                    value={card.metrics[m.key] || ""}
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                    onChange={(e) => updatePastMonthMetric(index, m.key, e.target.value)}
-                                                                    placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-xs font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
-                                                                />
-                                                            ) : (
-                                                                <p className="text-xs font-extrabold text-gray-300">—</p>
-                                                            )}
-                                                            <p className={clsx(
-                                                                "text-[8px] font-semibold uppercase tracking-wide mt-0.5",
-                                                                active ? "text-gray-600" : "text-gray-400"
-                                                            )}>{m.label}</p>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Highlights</label>
-                                            <BulletInput value={card.highlights} onChange={(v) => updatePastMonthField(index, "highlights", v)} placeholder="Key highlight..." section="highlights" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Challenges</label>
-                                            <BulletInput value={card.challenges} onChange={(v) => updatePastMonthField(index, "challenges", v)} placeholder="Challenge faced..." section="challenges" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Learnings</label>
-                                            <BulletInput value={card.learnings} onChange={(v) => updatePastMonthField(index, "learnings", v)} placeholder="Learning from this month..." section="learnings" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Next 30 Days</label>
-                                            <BulletInput value={card.next30Days} onChange={(v) => updatePastMonthField(index, "next30Days", v)} placeholder="Priority for the next month..." section="next30Days" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Asks</label>
-                                            <BulletInput value={card.asks} onChange={(v) => updatePastMonthField(index, "asks", v)} placeholder="Where could MLAI help?" section="asks" />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Hidden inputs for included past months */}
-                                <input type="hidden" name={`pastMonth_${index}_month`} value={card.month} />
-                                <input type="hidden" name={`pastMonth_${index}_highlights`} value={card.highlights} />
-                                <input type="hidden" name={`pastMonth_${index}_challenges`} value={card.challenges} />
-                                <input type="hidden" name={`pastMonth_${index}_asks`} value={card.asks} />
-                                <input type="hidden" name={`pastMonth_${index}_learnings`} value={card.learnings} />
-                                <input type="hidden" name={`pastMonth_${index}_next30Days`} value={card.next30Days} />
-                                {Object.entries(card.metrics).map(([key, value]) => (
-                                    <input key={key} type="hidden" name={`pastMonth_${index}_${key}`} value={value} />
-                                ))}
-                            </div>
-                        ))}
-
-                        {/* Current month card — prominent, always visible */}
-                        <div
-                            id="current-month-card"
-                            className={clsx(
-	                                "rounded-xl border-2 bg-white p-6 space-y-5 shadow-md ring-1 scroll-mt-24",
-	                                activeMonthTheme.borderClass,
-	                                activeMonthTheme.ringClass,
-	                            )}
-	                        >
-	                            {!isViewingCurrentUpdate && (
-	                                <>
-	                                    <input type="hidden" name="month" value={selectedMonth} />
-	                                    <input type="hidden" name="year" value={selectedYear} />
-	                                    <input type="hidden" name="highlights" value={highlights} />
-	                                    <input type="hidden" name="challenges" value={challenges} />
-	                                    <input type="hidden" name="asks" value={asks} />
-	                                    <input type="hidden" name="learnings" value={learnings} />
-	                                    <input type="hidden" name="next30Days" value={next30Days} />
-	                                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
-	                                    {getMetricOptionsForMetrics(metricValues).map((metric) => (
-	                                        <input key={metric.key} type="hidden" name={metric.key} value={metricValues[metric.key] || ""} />
-	                                    ))}
-	                                </>
-	                            )}
-
-                            {/* Metrics — square boxes, click to activate */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
-                                </label>
-	                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-	                                    {getEditableMetricOptions(activeMetricValues, activeSelectedMetrics).map((m) => {
-	                                        const active = activeSelectedMetrics.has(m.key);
-	                                        return (
-	                                            <div
-	                                                key={m.key}
-	                                                onClick={(event) => {
-	                                                    if ((event.target as HTMLElement).closest("input,button,a,textarea,select")) return;
-	                                                    activateActiveMetric(m.key);
-	                                                }}
-                                                className={clsx(
-                                                    "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
-                                                    active
-                                                        ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                        : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
-                                                )}
-	                                            >
-                                                <MetricInfoBadge info={m.info} />
-	                                                <div className={clsx(
-                                                    "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                                )}>
-                                                    {m.icon}
-                                                </div>
-                                                {active ? (
-                                                    <input
-	                                                        id={`active-metric-${m.key}`}
-	                                                        type="text"
-	                                                        name={isViewingCurrentUpdate ? m.key : undefined}
-	                                                        value={activeMetricValues[m.key] || ""}
-	                                                        onClick={(e) => e.stopPropagation()}
-	                                                        onChange={(e) => updateActiveMetric(m.key, e.target.value)}
-                                                        placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                        className="w-full min-w-0 border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-sm font-extrabold text-gray-900 placeholder:text-xs focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-base"
-                                                    />
-                                                ) : (
-                                                    <p className="text-base font-extrabold text-gray-300">—</p>
-                                                )}
-                                                <p className={clsx(
-                                                    "mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-tight tracking-wide",
-                                                    active ? "text-gray-600" : "text-gray-400"
-                                                )}>{m.label}</p>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Qualitative fields — auto-expanding, no scroll */}
-                            <div className="space-y-4">
-	                                <SectionWithExample
-	                                    label="Key Highlights"
-	                                    name={isViewingCurrentUpdate ? "highlights" : `pastMonth_${activePastIndex}_highlights`}
-	                                    value={activeHighlights}
-	                                    onChange={updateActiveHighlights}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    mobileAdvanceTo={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
-                                    rows={3}
-                                    placeholder="What went well this month? Major wins, product launches, partnerships..."
-                                />
-	                                <SectionWithExample
-	                                    label="Challenges"
-	                                    name={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
-	                                    value={activeChallenges}
-	                                    onChange={updateActiveChallenges}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    mobileAdvanceTo={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
-                                    rows={3}
-                                    placeholder="What obstacles are you facing? Where do you need help?"
-                                />
-	                                <SectionWithExample
-	                                    label="Learnings"
-	                                    name={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
-	                                    value={activeLearnings}
-	                                    onChange={updateActiveLearnings}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    mobileAdvanceTo={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
-                                    rows={3}
-                                    placeholder="What did you learn from customers, experiments, or execution this month?"
-                                />
-	                                <SectionWithExample
-	                                    label="Next 30 Days"
-	                                    name={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
-	                                    value={activeNext30Days}
-	                                    onChange={updateActiveNext30Days}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    mobileAdvanceTo={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
-                                    rows={3}
-                                    placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                                />
-	                                <SectionWithExample
-	                                    label="Support request"
-	                                    name={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
-	                                    value={activeAsks}
-	                                    onChange={updateActiveAsks}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    rows={3}
-                                    placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    </UpdateDialog>
                 )}
-
-                {/* ─── Default Form (when no email draft) ─── */}
-                {pastMonthCards.length === 0 && (
-                    <div
-                        className={clsx(
-                            "rounded-xl border bg-white p-6 space-y-5 ring-1",
-                            selectedMonthTheme.borderClass,
-                            selectedMonthTheme.ringClass,
-                        )}
-                    >
-                        {/* Metrics — square boxes, click to activate */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
-                            </label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                {getEditableMetricOptions(metricValues, selectedMetrics).map((m) => {
-                                    const active = selectedMetrics.has(m.key);
-                                    return (
-                                        <div
-                                            key={m.key}
-                                            onClick={(event) => {
-                                                if ((event.target as HTMLElement).closest("input,button,a,textarea,select")) return;
-                                                setSelectedMetrics((previous) => {
-                                                    if (previous.has(m.key)) return previous;
-                                                    const next = new Set(previous);
-                                                    next.add(m.key);
-                                                    return next;
-                                                });
-                                                focusMetricInput(`default-metric-${m.key}`);
-                                            }}
-                                            className={clsx(
-                                                "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
-                                                active
-                                                    ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                    : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
-                                            )}
-	                                        >
-                                            <MetricInfoBadge info={m.info} />
-	                                            <div className={clsx(
-                                                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                            )}>
-                                                {m.icon}
-                                            </div>
-                                            {active ? (
-                                                <input
-                                                    id={`default-metric-${m.key}`}
-                                                    type="text"
-                                                    name={m.key}
-                                                    value={metricValues[m.key] || ""}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
-                                                    placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                    className="w-full min-w-0 border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-sm font-extrabold text-gray-900 placeholder:text-xs focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-base"
-                                                />
-                                            ) : (
-                                                <p className="text-base font-extrabold text-gray-300">—</p>
-                                            )}
-                                            <p className={clsx(
-                                                "mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-tight tracking-wide",
-                                                active ? "text-gray-600" : "text-gray-400"
-                                            )}>{m.label}</p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Qualitative Sections */}
-                        <div className="space-y-5">
-                            <SectionWithExample
-                                label="Key Highlights"
-                                name="highlights"
-                                value={highlights}
-                                onChange={setHighlights}
-                                placeholder="What went well this month? Major wins, product launches, partnerships..."
-                            />
-                            <SectionWithExample
-                                label="Challenges"
-                                name="challenges"
-                                value={challenges}
-                                onChange={setChallenges}
-                                placeholder="What obstacles are you facing? Where do you need help?"
-                            />
-                            <SectionWithExample
-                                label="Learnings"
-                                name="learnings"
-                                value={learnings}
-                                onChange={setLearnings}
-                                placeholder="What did you learn from customers, experiments, or execution this month?"
-                            />
-                            <SectionWithExample
-                                label="Next 30 Days"
-                                name="next30Days"
-                                value={next30Days}
-                                onChange={setNext30Days}
-                                placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                            />
-                            <SectionWithExample
-                                label="Support request"
-                                name="asks"
-                                value={asks}
-                                onChange={setAsks}
-                                placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
-                            />
-                        </div>
-                    </div>
+                {showEmailWizard && isClientMounted && (
+                    <DraftFromEmailWizard
+                        isOpen={showEmailWizard}
+                        onClose={handleEmailWizardClose}
+                        onGoogleConnected={handleEmailWizardConnected}
+                        backendBaseUrl={backendBaseUrl}
+                        companyDomain={user.domain}
+                    />
                 )}
-
-                    {coverEditor}
-                    </fieldset>
-                    {isEmailDraftBusy && (
-                        <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/25" aria-hidden />
-                    )}
-                    </div>
-                </section>
-
-            </Form>
-
-            {isClientMounted ? (
-                <DraftFromEmailWizard
-                    isOpen={showEmailWizard}
-                    onClose={handleEmailWizardClose}
-                    onGoogleConnected={handleEmailWizardConnected}
-                    backendBaseUrl={backendBaseUrl}
-                    companyDomain={user.domain}
-                />
-            ) : null}
-            <CreateUpdateMobileTour
-                open={mobileTourOpen}
-                stepIndex={mobileTourStepIndex}
-                steps={mobileTourSteps}
-                onBack={goToPreviousMobileTourStep}
-                onClose={closeMobileTour}
-                onNext={goToNextMobileTourStep}
-            />
-            </>
-            ) : null}
-        </div>
+            </div>
         </VibeRaisingWorkflowLayout>
     );
 }
