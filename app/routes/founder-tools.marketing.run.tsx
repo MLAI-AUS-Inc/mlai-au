@@ -3558,7 +3558,7 @@ function PublishDailyResearchReminderCard({
       </div>
 
       <p className="mt-6 max-w-xl text-base font-semibold leading-6 text-slate-600">
-        Get a daily research prompt for the next article via your preferred channels.
+        Get daily research topics on WhatsApp or Slack, and an email when an article draft is ready to review.
       </p>
 
       <div className="mt-6">
@@ -3754,7 +3754,7 @@ function PublishAndAutomateDetail({
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish publishing this article</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Publish the article — the PR merges to main automatically once checks pass — then turn on daily research prompts (Slack, email or WhatsApp) for the next article.
+              Publish the article — the PR merges to main automatically once checks pass — then choose WhatsApp or Slack for daily research topics and email for completed drafts.
             </p>
             {canViewArticle ? (
               <Link
