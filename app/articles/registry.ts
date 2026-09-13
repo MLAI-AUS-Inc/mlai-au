@@ -79,6 +79,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/startups-in-melbourne-for-ai-builders-and-new-founders': {
+        title: "Startups in Melbourne for AI Builders and New Founders",
+        date: "2026-09-13",
+        description: "Start with LaunchVic\u2019s event listings, find AI peers, test a customer problem and use official business setup guidance to begin building in Melbourne.",
+        author: "Dr Sam Donegan",
+        slug: "featured/startups-in-melbourne-for-ai-builders-and-new-founders",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-da78dd9e-bd65-48aa-819c-f49377d96b65.jpg?alt=media&token=84ba0b79-1709-4762-9d04-036b2fb60b08",
+        imageAlt: "Close-up of Melbourne AI founders testing a startup idea at a LaunchVic networking event",
+    },
     'featured/how-to-start-a-startup-as-an-ai-builder': {
         title: "How to Start a Startup as an AI Builder",
         date: "2026-08-01",
