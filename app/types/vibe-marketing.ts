@@ -453,6 +453,7 @@ export interface IslandGraphNode {
   colorKey: string;
   status: string;
   isNew: boolean;
+  researchPending?: boolean;
   keywordCount: number;
   totalVolume: number;
   avgDifficulty: number;

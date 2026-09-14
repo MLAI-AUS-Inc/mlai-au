@@ -800,6 +800,7 @@ function normalizeIslandGraphNode(raw: unknown): IslandGraphNode | null {
     colorKey: asNullableString(payload.colorKey) ?? asNullableString(payload.color_key) ?? "purple",
     status: asNullableString(payload.status) ?? "visible",
     isNew: asBoolean(payload.isNew ?? payload.is_new),
+    researchPending: asBoolean(payload.researchPending ?? payload.research_pending),
     keywordCount: asNumber(payload.keywordCount ?? payload.keyword_count) ?? 0,
     totalVolume: asNumber(payload.totalVolume ?? payload.total_volume) ?? 0,
     avgDifficulty: asNumber(payload.avgDifficulty ?? payload.avg_difficulty) ?? 0,
@@ -2029,6 +2030,14 @@ export async function disconnectVibeMarketingArticleScaffold(env: Env, request: 
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/article-setup/disconnect`, body);
   return response.data as Record<string, unknown>;
+}
+
+export async function createCustomContentIsland(env: Env, request: Request, body: Record<string, unknown>) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/islands/custom`, body);
+  const pillar = normalizeTopicPillar(response.data?.island);
+  if (!pillar) throw new Error("The island could not be confirmed. Try saving again.");
+  return pillar;
 }
 
 export function startVibeMarketingDiscovery(env: Env, request: Request, body: Record<string, unknown>) {
