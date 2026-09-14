@@ -213,7 +213,8 @@ describe("VibeMarketingIslandGraph", () => {
 
     expect(markup).toContain("Content island map:");
     expect(markup).toContain("Custom island");
-    expect(markup).toContain("Coming soon");
+    expect(markup).not.toContain("Coming soon");
+    expect(markup).toContain("Explore a new content theme");
   });
 
   test("renders every island with full names and useful metrics in list view", () => {
@@ -243,7 +244,7 @@ describe("VibeMarketingIslandGraph", () => {
     const custom = renderToStaticMarkup(
       createElement(VibeMarketingIslandGraph, props({ customNotice: true })),
     );
-    expect(custom).toContain("Custom island creation is coming soon");
+    expect(custom).toContain("Create a custom island around any subject or audience need.");
   });
 
   test("stays renderable when a global window exists but carries no browser APIs", () => {

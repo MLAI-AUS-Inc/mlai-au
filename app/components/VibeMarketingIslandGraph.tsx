@@ -245,8 +245,9 @@ export function computeIslandLabelLayouts(
 }
 
 function islandAccessibleLabel(node: IslandGraphNode): string {
+  if (node.researchPending) return `${node.name}: custom island. Search demand and opportunity are not researched yet. Select to generate topic ideas.`;
   const articleLabel = node.articlesWritten === 1 ? "article" : "articles";
-  return `${node.name}: ${formatMetric(node.keywordCount)} keywords, ${formatMetric(node.totalVolume)} monthly searches, opportunity score ${formatMetric(node.opportunityScore)}, ${formatMetric(node.aiSearchVolume)} AI searches, ${formatMetric(node.articlesWritten)} ${articleLabel} written. Select to review this island.`;
+  return `${node.name}: ${(node.researchPending ? "Not researched" : formatMetric(node.keywordCount))} keywords, ${(node.researchPending ? "Not researched" : formatMetric(node.totalVolume))} monthly searches, opportunity score ${(node.researchPending ? "Not researched" : formatMetric(node.opportunityScore))}, ${(node.researchPending ? "Not researched" : formatMetric(node.aiSearchVolume))} AI searches, ${formatMetric(node.articlesWritten)} ${articleLabel} written. Select to review this island.`;
 }
 
 export interface VibeMarketingIslandGraphProps {
@@ -677,8 +678,8 @@ export default function VibeMarketingIslandGraph({
                           />
                         </div>
                         <span className="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3">
-                          <ListMetric label="Searches/mo" value={formatMetric(node.totalVolume)} />
-                          <ListMetric label="Opportunity" value={formatMetric(node.opportunityScore)} />
+                          <ListMetric label="Searches/mo" value={(node.researchPending ? "Not researched" : formatMetric(node.totalVolume))} />
+                          <ListMetric label="Opportunity" value={(node.researchPending ? "Not researched" : formatMetric(node.opportunityScore))} />
                           <ListMetric label="Articles" value={formatMetric(node.articlesWritten)} />
                         </span>
                       </button>
@@ -703,22 +704,19 @@ export default function VibeMarketingIslandGraph({
 
           <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-black text-slate-900">Need a different content theme?</p>
+              <p className="text-sm font-black text-slate-900">Explore a new content theme</p>
               <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                Use the Custom topic tab above for a one-off idea while custom islands are being built.
+                Start with a topic, audience need, service, product or feature and make an island of your own.
               </p>
             </div>
             <button
               type="button"
               onClick={onAddCustomPillar}
-              aria-describedby="custom-island-status"
               className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100"
             >
               <Plus className="h-4 w-4" />
               Custom island
-              <span id="custom-island-status" className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] uppercase tracking-wide">
-                Coming soon
-              </span>
+
             </button>
           </div>
 
@@ -739,7 +737,7 @@ export default function VibeMarketingIslandGraph({
                   </p>
                   {customNotice ? (
                     <p className="mt-2 font-bold">
-                      Custom island creation is coming soon. Choose the Custom topic tab above to research a one-off article idea now.
+                      Create a custom island around any subject or audience need. Its saved brief guides every round of topic research.
                     </p>
                   ) : null}
                 </div>
@@ -831,10 +829,10 @@ function SelectedIslandPanel({
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-        <IslandMetric label="Keywords" value={formatMetric(node.keywordCount)} />
-        <IslandMetric label="Searches / month" value={formatMetric(node.totalVolume)} />
-        <IslandMetric label="Opportunity" value={formatMetric(node.opportunityScore)} />
-        <IslandMetric label="AI searches" value={formatMetric(node.aiSearchVolume)} />
+        <IslandMetric label="Keywords" value={(node.researchPending ? "Not researched" : formatMetric(node.keywordCount))} />
+        <IslandMetric label="Searches / month" value={(node.researchPending ? "Not researched" : formatMetric(node.totalVolume))} />
+        <IslandMetric label="Opportunity" value={(node.researchPending ? "Not researched" : formatMetric(node.opportunityScore))} />
+        <IslandMetric label="AI searches" value={(node.researchPending ? "Not researched" : formatMetric(node.aiSearchVolume))} />
         <IslandMetric label="Articles written" value={formatMetric(node.articlesWritten)} />
       </dl>
 
@@ -908,10 +906,10 @@ function IslandTooltip({
     ? preferredY
     : Math.min(GRAPH_HEIGHT - TOOLTIP_HEIGHT - 8, position.y + position.radius + 14);
   const rows = [
-    `Keywords: ${formatMetric(node.keywordCount)}`,
-    `Monthly searches: ${formatMetric(node.totalVolume)}`,
-    `Opportunity: ${formatMetric(node.opportunityScore)}`,
-    `AI searches: ${formatMetric(node.aiSearchVolume)}`,
+    `Keywords: ${(node.researchPending ? "Not researched" : formatMetric(node.keywordCount))}`,
+    `Monthly searches: ${(node.researchPending ? "Not researched" : formatMetric(node.totalVolume))}`,
+    `Opportunity: ${(node.researchPending ? "Not researched" : formatMetric(node.opportunityScore))}`,
+    `AI searches: ${(node.researchPending ? "Not researched" : formatMetric(node.aiSearchVolume))}`,
     `Articles written: ${formatMetric(node.articlesWritten)}`,
   ];
   return (
