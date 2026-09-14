@@ -5,6 +5,7 @@ import {
   Outlet,
   redirect,
   useLoaderData,
+  useNavigation,
 } from "react-router";
 import {
   ActiveDraftRunBanner,
@@ -119,6 +120,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export default function VibeRaisingApp() {
   const { user, appUser, backendBaseUrl, rooPointsBalance } = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
+  const loadingMarketingPage = navigation.state === "loading" &&
+    (navigation.location?.pathname === "/founder-tools/marketing" ||
+      navigation.location?.pathname.startsWith("/founder-tools/marketing/"));
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -158,6 +163,12 @@ export default function VibeRaisingApp() {
       ) : null}
 
       <div className="vr-scope">
+        {loadingMarketingPage ? (
+          <div role="status" className="fixed right-4 top-20 z-50 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
+            <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-slate-700 motion-reduce:animate-none" />
+            Loading marketing…
+          </div>
+        ) : null}
         <ActiveDraftRunProvider backendBaseUrl={backendBaseUrl}>
           <ActiveDraftRunBanner />
           <Outlet context={{ triggerAnnouncement }} />

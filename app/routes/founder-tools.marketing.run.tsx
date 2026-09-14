@@ -368,28 +368,32 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { authUser, appUser } = await requireVibeRaisingFounder(env, request);
   const companyId = resolveActiveCompanyId(appUser);
   const runId = params.runId ?? "";
-  const bootstrap = await getVibeMarketingBootstrap(env, request, companyId, "summary");
-  const run = await getVibeMarketingRun(env, request, runId, companyId).catch(async (error: unknown) => {
-    if (isApiNotFoundError(error)) {
-      // Daily-reminder links carry no company hint, so a run belonging to one
-      // of the founder's OTHER companies 404s under the active one. Find the
-      // owner, switch to it, and re-enter the page instead of dropping the
-      // deep link.
-      for (const company of appUser.companies ?? []) {
-        if (!company.id || company.id === companyId) continue;
-        const found = await getVibeMarketingRun(env, request, runId, company.id, "status").catch(() => null);
-        if (found) {
-          await setVibeRaisingActiveCompany(env, request, company.id);
-          throw redirect(new URL(request.url).pathname + new URL(request.url).search);
+  // These reads share company scope but do not depend on one another. Keep
+  // bootstrap out of the critical path to the full run (including 404 recovery).
+  const [bootstrap, run] = await Promise.all([
+    getVibeMarketingBootstrap(env, request, companyId, "summary"),
+    getVibeMarketingRun(env, request, runId, companyId).catch(async (error: unknown) => {
+      if (isApiNotFoundError(error)) {
+        // Daily-reminder links carry no company hint, so a run belonging to one
+        // of the founder's OTHER companies 404s under the active one. Find the
+        // owner, switch to it, and re-enter the page instead of dropping the
+        // deep link.
+        for (const company of appUser.companies ?? []) {
+          if (!company.id || company.id === companyId) continue;
+          const found = await getVibeMarketingRun(env, request, runId, company.id, "status").catch(() => null);
+          if (found) {
+            await setVibeRaisingActiveCompany(env, request, company.id);
+            throw redirect(new URL(request.url).pathname + new URL(request.url).search);
+          }
         }
+        // A deleted/reset run (e.g. after an article-setup teardown) 404s here while a stale
+        // wizard session still links to it. Redirect to the wizard instead of letting the 404
+        // throw and SSR-500 the marketing page. (run-status.tsx handles the status-poll path.)
+        throw redirect("/founder-tools/marketing");
       }
-      // A deleted/reset run (e.g. after an article-setup teardown) 404s here while a stale
-      // wizard session still links to it. Redirect to the wizard instead of letting the 404
-      // throw and SSR-500 the marketing page. (run-status.tsx handles the status-poll path.)
-      throw redirect("/founder-tools/marketing");
-    }
-    throw error;
-  });
+      throw error;
+    }),
+  ]);
   let githubRepos: VibeMarketingGithubReposResponse = { status: "unavailable", repos: [], repositories: [] };
   const shouldLoadGithubRepos = ["repo_scan", "content_factory_scan"].includes(run.workflow) && !setupRunIdForRun(run);
   if (shouldLoadGithubRepos) {

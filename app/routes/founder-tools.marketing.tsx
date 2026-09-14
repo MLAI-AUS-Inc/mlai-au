@@ -50,7 +50,7 @@ import {
   autofillStartErrorsForDisplay,
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
-import { shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
+import { isDashboardGithubConnected, shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
 import { findRecoverableDiscoveryRun } from "~/lib/vibe-marketing-discovery-recovery";
 import {
   VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
@@ -75,7 +75,6 @@ import {
   controlVibeMarketingRun,
   discardVibeMarketingWrittenArticle,
   getVibeMarketingBootstrap,
-  getVibeMarketingGithubRepos,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
   recordVibeMarketingTopicFeedback,
@@ -105,7 +104,6 @@ import type {
   VibeMarketingAutofillResult,
   VibeMarketingBootstrap,
   VibeMarketingDraftArticle,
-  VibeMarketingGithubReposResponse,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
@@ -169,30 +167,6 @@ function founderNamesFromForm(formData: FormData) {
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
-}
-
-function unavailableGithubRepos(): VibeMarketingGithubReposResponse {
-  return { status: "unavailable", repos: [], repositories: [] };
-}
-
-function dashboardGithubConnectionState(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
-  return String(
-    githubRepos.connectionState ??
-      githubRepos.connection_state ??
-      bootstrap.settings.githubConnectionState ??
-      githubRepos.status ??
-      "",
-  ).trim().toLowerCase();
-}
-
-function isDashboardGithubConnected(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
-  const state = dashboardGithubConnectionState(githubRepos, bootstrap);
-  return (
-    isGithubPublishingReady(bootstrap) ||
-    state === "connected" ||
-    state === "already_connected" ||
-    Boolean(githubRepos.repos?.length || githubRepos.repositories?.length)
-  );
 }
 
 function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
@@ -334,7 +308,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (!vibeContext.appUser) {
     return {
       bootstrap: emptyBootstrapFromProfile(vibeContext.profile),
-      githubRepos: unavailableGithubRepos(),
       hasFounderCompany: false,
       billingRequestIds: {
         articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
@@ -344,13 +317,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 
   const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
-  const [bootstrap, githubRepos] = await Promise.all([
-    getVibeMarketingBootstrap(env, request, activeCompanyId, "summary"),
-    getVibeMarketingGithubRepos(env, request, activeCompanyId).catch(() => unavailableGithubRepos()),
-  ]);
+  const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
   return {
     bootstrap,
-    githubRepos,
     hasFounderCompany: true,
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
@@ -3539,14 +3508,12 @@ function TopicPillarsSection({
 function ReturningTopicPickerPage({
   bootstrap,
   billingRequestIds,
-  githubRepos,
   error,
   errorIntent,
   setupMergedNotice = false,
 }: {
   bootstrap: VibeMarketingBootstrap;
   billingRequestIds: { articleJob: string; contentIslandTopics: string };
-  githubRepos: VibeMarketingGithubReposResponse;
   error: string | null;
   errorIntent?: string | null;
   setupMergedNotice?: boolean;
@@ -3642,7 +3609,7 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
-  const githubConnected = isDashboardGithubConnected(githubRepos, bootstrap);
+  const githubConnected = isDashboardGithubConnected(bootstrap);
   const websiteDomainDisplay = normalizeDashboardDomain(domain) || "Add your domain";
   const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
   const companyAvatarUrl = companyAvatarPreviewUrl || savedCompanyAvatarUrl;
@@ -3772,14 +3739,15 @@ function ReturningTopicPickerPage({
   const revalidatorRef = useRef(revalidator);
   revalidatorRef.current = revalidator;
   useEffect(() => {
-    if (!hasInFlightWork) return;
+    // A poll must not restart a route loader while the user is leaving it.
+    if (!hasInFlightWork || navigation.state !== "idle") return;
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       const current = revalidatorRef.current;
       if (current.state === "idle") current.revalidate();
     }, 15000);
     return () => clearInterval(interval);
-  }, [hasInFlightWork]);
+  }, [hasInFlightWork, navigation.state]);
 
   const submitSelectedTopic = useCallback(() => {
     if (articleSubmitting || !selectedTopic) return;
@@ -4818,7 +4786,7 @@ function ReturningTopicPickerPage({
 }
 
 export default function FounderToolsMarketing() {
-  const { bootstrap, billingRequestIds, githubRepos } = useLoaderData<typeof loader>();
+  const { bootstrap, billingRequestIds } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const location = useLocation();
   const error = actionError(actionData);
@@ -4833,7 +4801,6 @@ export default function FounderToolsMarketing() {
         <ReturningTopicPickerPage
           bootstrap={bootstrap}
           billingRequestIds={billingRequestIds}
-          githubRepos={githubRepos}
           error={error}
           errorIntent={errorIntent}
           setupMergedNotice={setupMergedNotice}
