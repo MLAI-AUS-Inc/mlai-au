@@ -43,7 +43,7 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
-    '/articles/featured/startups-in-melbourne-for-ai-builders-and-new-founders': {
+    '/articles/featured/how-australian-ai-founders-can-prepare-for-angel-investors': {
         toc: true,
         howTo: false,
         mediaObject: false,

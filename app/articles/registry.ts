@@ -79,15 +79,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
-    'featured/startups-in-melbourne-for-ai-builders-and-new-founders': {
-        title: "Startups in Melbourne for AI Builders and New Founders",
-        date: "2026-09-13",
-        description: "Start with LaunchVic\u2019s event listings, find AI peers, test a customer problem and use official business setup guidance to begin building in Melbourne.",
+    'featured/how-australian-ai-founders-can-prepare-for-angel-investors': {
+        title: "How Australian AI Founders Can Prepare for Angel Investors",
+        date: "2026-09-14",
+        description: "Prepare for Australian angel investors with customer evidence, credible AI performance, a milestone-based funding ask and a targeted investor shortlist.",
         author: "Dr Sam Donegan",
-        slug: "featured/startups-in-melbourne-for-ai-builders-and-new-founders",
+        slug: "featured/how-australian-ai-founders-can-prepare-for-angel-investors",
         analyticsArticleId: "",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-da78dd9e-bd65-48aa-819c-f49377d96b65.jpg?alt=media&token=84ba0b79-1709-4762-9d04-036b2fb60b08",
-        imageAlt: "Close-up of Melbourne AI founders testing a startup idea at a LaunchVic networking event",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-87346dd5-d5fc-465b-9f3e-d4a34cf5e2fe.jpg?alt=media&token=69b3d9a2-4058-441e-86bc-dd83aa86edb1",
+        imageAlt: "Australian AI founder showing investor metrics to an angel investor across a caf\u00e9 table",
     },
     'featured/how-to-start-a-startup-as-an-ai-builder': {
         title: "How to Start a Startup as an AI Builder",
