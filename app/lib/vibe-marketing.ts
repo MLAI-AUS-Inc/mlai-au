@@ -2044,6 +2044,18 @@ export function startVibeMarketingDiscovery(env: Env, request: Request, body: Re
   return startMarketingRun(env, request, "discovery", body);
 }
 
+export function startContentIslandResearch(env: Env, request: Request, body: Record<string, unknown>) {
+  return startMarketingRun(env, request, "islands/research", body);
+}
+
+export async function adoptResearchedContentIsland(env: Env, request: Request, runId: string, body: Record<string, unknown>) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/islands/research/${encodeURIComponent(runId)}/adopt`, body);
+  const pillar = normalizeTopicPillar(response.data?.island);
+  if (!pillar) throw new Error("The island could not be confirmed. Please try adding it again.");
+  return pillar;
+}
+
 export function startVibeMarketingArticle(env: Env, request: Request, body: Record<string, unknown>) {
   return startMarketingRun(env, request, "article", body);
 }

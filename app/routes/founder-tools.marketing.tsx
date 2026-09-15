@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
-  BookOpen,
   Camera,
   CheckCircle2,
   ChevronDown,
@@ -35,7 +34,6 @@ import { clsx } from "clsx";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import CustomContentIslandBuilder from "~/components/CustomContentIslandBuilder";
-import type { CustomIslandBrief } from "~/lib/custom-content-island";
 import AvatarModal from "~/components/AvatarModal";
 import GitHubConnectForm from "~/components/GitHubConnectForm";
 import { RooPointCost } from "~/components/RooPointCost";
@@ -75,7 +73,6 @@ import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions"
 import { articleRunPathAfterStart } from "~/lib/vibe-marketing-run-view";
 import {
   controlVibeMarketingRun,
-  createCustomContentIsland,
   discardVibeMarketingWrittenArticle,
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
@@ -524,14 +521,6 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "scan") {
       const run = await startVibeMarketingScan(env, request, { companyId: activeCompanyId });
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
-    }
-
-    if (intent === "create-custom-island") {
-      const island = await createCustomContentIsland(env, request, {
-        companyId: stringFromForm(formData, "companyId") || activeCompanyId,
-        ...Object.fromEntries(["subject", "description", "audience", "focus", "name", "keyword"].map((key) => [key, stringFromForm(formData, key)])),
-      });
-      return { intent, island, companyId: stringFromForm(formData, "companyId") || activeCompanyId, error: null };
     }
 
     if (intent === "start-content-island-discovery") {
@@ -3329,59 +3318,22 @@ function contentIslandDiscoveryStepLabel(run: VibeMarketingRunSummary | null, ac
   return `Researching article ideas for ${islandName}.`;
 }
 
-// Shared by the card grid and the island graph so both variants carry the same header row.
-function ContentIslandsSectionHeader({
-  submitting,
-  discoverySubmitting,
-  helpOpen,
-  onLearnMore,
-  onCreateIsland,
-}: {
-  submitting: boolean;
-  discoverySubmitting: boolean;
-  helpOpen: boolean;
-  onLearnMore: () => void;
-  onCreateIsland: () => void;
+// Both the map and fallback cards use the same heading and action toolbar.
+function ContentIslandsSectionHeader() {
+  return <div className="max-w-xl">
+    <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">Content strategy</p>
+    <h2 className="mt-1 text-xl font-black tracking-normal text-slate-950">Find your next content opportunity</h2>
+    <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">Explore the themes your audience searches for, compare demand, and generate article ideas when you are ready.</p>
+  </div>;
+}
+
+function ContentIslandActions({ submitting, discoverySubmitting, onCreateIsland }: {
+  submitting: boolean; discoverySubmitting: boolean; onCreateIsland: () => void;
 }) {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="max-w-xl">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">Content strategy</p>
-        <h2 className="mt-1 text-xl font-black tracking-normal text-slate-950">
-          Find your next content opportunity
-        </h2>
-        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
-          Explore the themes your audience searches for, compare demand, and generate article ideas when you are ready.
-        </p>
-      </div>
-      <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3 sm:self-start">
-        <button type="button" onClick={onCreateIsland} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-black text-white hover:bg-violet-800 focus-visible:ring-4 focus-visible:ring-violet-200">
-          <Plus className="h-4 w-4" />Create an island
-        </button>
-        <Form method="POST">
-          <button
-            type="submit"
-            name="intent"
-            value="start-discovery"
-            disabled={submitting}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Find more islands
-          </button>
-        </Form>
-        <button
-          type="button"
-          onClick={onLearnMore}
-          aria-expanded={helpOpen}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100"
-        >
-          <BookOpen className="h-4 w-4" />
-          Learn more
-        </button>
-      </div>
-    </div>
-  );
+  return <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+    <button type="button" onClick={onCreateIsland} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-black text-white hover:bg-violet-800 focus-visible:ring-4 focus-visible:ring-violet-200"><Plus className="h-4 w-4" />Create an island</button>
+    <Form method="POST"><button type="submit" name="intent" value="start-discovery" disabled={submitting} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 hover:bg-violet-50 focus-visible:ring-4 focus-visible:ring-violet-100 disabled:opacity-50">{discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}Find more islands</button></Form>
+  </div>;
 }
 
 function TopicPillarsSection({
@@ -3390,24 +3342,18 @@ function TopicPillarsSection({
   generatingPillarSlug,
   confirmingPillarSlug,
   activePillarSlug,
-  customNotice,
-  helpOpen,
-  helpRef,
   onGenerate,
-  onAddCustomPillar,
   header,
+  actions,
 }: {
   pillars: VibeMarketingTopicPillar[];
   submitting: boolean;
   generatingPillarSlug?: string | null;
   confirmingPillarSlug?: string | null;
   activePillarSlug: string | null;
-  customNotice: boolean;
-  helpOpen: boolean;
-  helpRef: RefObject<HTMLDivElement | null>;
   onGenerate: (pillar: VibeMarketingTopicPillar) => void;
-  onAddCustomPillar: () => void;
   header: ReactNode;
+  actions: ReactNode;
 }) {
   const visiblePillars = pillars;
   const generating = Boolean(generatingPillarSlug);
@@ -3415,6 +3361,7 @@ function TopicPillarsSection({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       {header}
+      <div className="mt-5">{actions}</div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {visiblePillars.map((pillar) => {
@@ -3480,41 +3427,8 @@ function TopicPillarsSection({
           );
         })}
 
-        <button
-          type="button"
-          onClick={onAddCustomPillar}
-          className="flex min-h-[170px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-violet-300 hover:bg-violet-50/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100"
-        >
-          <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-violet-300 text-violet-600">
-            <Plus className="h-6 w-6" />
-          </span>
-          <span className="mt-5 text-sm font-black text-slate-700">Custom island</span>
-          <span className="mt-2 text-xs font-semibold leading-5 text-slate-500">Start with any topic, audience need or idea you want to explore.</span>
-        </button>
       </div>
 
-      {helpOpen || customNotice ? (
-        <div
-          ref={helpRef}
-          tabIndex={-1}
-          role="status"
-          aria-live="polite"
-          className="mt-5 rounded-xl border border-violet-100 bg-violet-50 px-4 py-4 text-sm font-semibold leading-6 text-violet-800 outline-none transition focus:ring-4 focus:ring-violet-100"
-        >
-          <div className="flex items-start gap-3">
-            <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
-            <div>
-              <p className="font-black">How content islands work</p>
-              <p className="mt-1">Each island is a broad audience theme containing many specific article ideas.</p>
-              {customNotice ? (
-                <p className="mt-2 font-bold">
-                  Describe any subject to create a lasting content island, then generate ideas around its audience and purpose.
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -3542,7 +3456,6 @@ function ReturningTopicPickerPage({
   const customResearchFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "custom-research" });
   const companyAvatarFetcher = useFetcher<CompanyAvatarActionData>({ key: "company-avatar" });
   const topicListRef = useRef<HTMLDivElement | null>(null);
-  const pillarHelpRef = useRef<HTMLDivElement | null>(null);
   const baseTopics = useMemo(
     () => bootstrap.topicCandidates.filter((topic) => !topic.alreadyWritten).slice(0, 8),
     [bootstrap.topicCandidates],
@@ -3553,26 +3466,8 @@ function ReturningTopicPickerPage({
   const [toast, setToast] = useState<TopicToast | null>(null);
   const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
   const [confirmingContentIslandSlug, setConfirmingContentIslandSlug] = useState<string | null>(null);
-  const customPillarNotice = false;
   const [customIslandOpen, setCustomIslandOpen] = useState(false);
-  const [customIslandKey, setCustomIslandKey] = useState(0);
-  const [customIslandResult, setCustomIslandResult] = useState<{ island?: VibeMarketingTopicPillar; error?: string | null } | null>(null);
-  const customIslandFetcher = useFetcher<{ companyId?: string; intent?: string; island?: VibeMarketingTopicPillar; error?: string | null }>();
-  const handledCustomIslandResponse = useRef<unknown>(null);
-  const customIslandCompanyRef = useRef(bootstrap.company.id);
-  useEffect(() => {
-    setCustomIslandOpen(false);
-    setCustomIslandResult(null);
-  }, [bootstrap.company.id]);
-  useEffect(() => {
-    if (!customIslandFetcher.data || customIslandFetcher.data === handledCustomIslandResponse.current) return;
-    handledCustomIslandResponse.current = customIslandFetcher.data;
-    if (customIslandFetcher.data.companyId && customIslandFetcher.data.companyId !== bootstrap.company.id) return;
-    if (customIslandCompanyRef.current !== bootstrap.company.id) return;
-    setCustomIslandResult(customIslandFetcher.data);
-    if (customIslandFetcher.data.island) setActivePillarSlug(customIslandFetcher.data.island.slug);
-  }, [customIslandFetcher.data, bootstrap.company.id]);
-  const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
+  useEffect(() => { setCustomIslandOpen(false); }, [bootstrap.company.id]);
   const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<ContentIslandDiscoveryRunState | null>(null);
   const [contentIslandRefreshRunId, setContentIslandRefreshRunId] = useState<string | null>(null);
   const [companyAvatarModalOpen, setCompanyAvatarModalOpen] = useState(false);
@@ -3893,21 +3788,7 @@ function ReturningTopicPickerPage({
     customResearchFetcher.submit(formData, { method: "POST" });
   }
 
-  function handleAddCustomPillar() {
-    if (customIslandResult?.island) {
-      setCustomIslandKey((key) => key + 1);
-      setCustomIslandResult(null);
-    }
-    setCustomIslandOpen(true);
-  }
-
-  function handleLearnMorePillars() {
-    setPillarHelpOpen((open) => !open);
-    window.setTimeout(() => {
-      pillarHelpRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      pillarHelpRef.current?.focus({ preventScroll: true });
-    }, 0);
-  }
+  function handleAddCustomPillar() { setCustomIslandOpen(true); }
 
   const handleCompanyAvatarSave = useCallback(
     (file: File) => {
@@ -4291,15 +4172,12 @@ function ReturningTopicPickerPage({
     setDeclinedFeedback((current) => current.filter((item) => item.id !== data.topicFeedback?.id));
   }, [restoreFetcher.data]);
 
-  const contentIslandsHeader = (
-    <ContentIslandsSectionHeader
-      submitting={isSubmitting || contentIslandDiscoveryBusy}
-      discoverySubmitting={discoverySubmitting}
-      helpOpen={pillarHelpOpen}
-      onLearnMore={handleLearnMorePillars}
-      onCreateIsland={handleAddCustomPillar}
-    />
-  );
+  const contentIslandsHeader = <ContentIslandsSectionHeader />;
+  const contentIslandActions = <ContentIslandActions
+    submitting={isSubmitting || contentIslandDiscoveryBusy}
+    discoverySubmitting={discoverySubmitting}
+    onCreateIsland={handleAddCustomPillar}
+  />;
   const topicPillarsCards = (
     <TopicPillarsSection
       pillars={bootstrap.topicPillars}
@@ -4307,34 +4185,20 @@ function ReturningTopicPickerPage({
       generatingPillarSlug={generatingPillarSlug}
       confirmingPillarSlug={confirmingContentIslandSlug}
       activePillarSlug={activePillarSlug}
-      customNotice={customPillarNotice}
-      helpOpen={pillarHelpOpen}
-      helpRef={pillarHelpRef}
       onGenerate={handleContentIslandGenerateClick}
-      onAddCustomPillar={handleAddCustomPillar}
       header={contentIslandsHeader}
+      actions={contentIslandActions}
     />
   );
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
       <CustomContentIslandBuilder
-        key={`${bootstrap.company.id}:${customIslandKey}`}
+        key={bootstrap.company.id}
+        companyId={bootstrap.company.id}
         open={customIslandOpen}
         onClose={() => setCustomIslandOpen(false)}
-        saving={customIslandFetcher.state !== "idle"}
-        error={customIslandResult?.error}
-        savedIsland={customIslandResult?.island}
-        researchBusy={contentIslandDiscoveryBusy}
-        onSave={(brief: CustomIslandBrief) => {
-          customIslandCompanyRef.current = bootstrap.company.id;
-          setCustomIslandResult(null);
-          customIslandFetcher.submit({ intent: "create-custom-island", companyId: bootstrap.company.id, ...brief }, { method: "POST" });
-        }}
-        onGenerate={(island) => {
-          setCustomIslandOpen(false);
-          handleGenerateContentIslandIdeas(island);
-        }}
+        onAdded={(island) => { setActivePillarSlug(island.slug); revalidator.revalidate(); }}
       />
       {setupMergedNotice ? (
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
@@ -4610,16 +4474,13 @@ function ReturningTopicPickerPage({
               generatingPillarSlug={generatingPillarSlug}
               confirmingPillarSlug={confirmingContentIslandSlug}
               activePillarSlug={activePillarSlug}
-              customNotice={customPillarNotice}
-              helpOpen={pillarHelpOpen}
-              helpRef={pillarHelpRef}
-              onGenerate={handleContentIslandGenerateClick}
+                                      onGenerate={handleContentIslandGenerateClick}
               onSelectIsland={(slug) => {
                 setActivePillarSlug(slug);
                 setConfirmingContentIslandSlug(null);
               }}
-              onAddCustomPillar={handleAddCustomPillar}
-              header={contentIslandsHeader}
+                      header={contentIslandsHeader}
+              actions={contentIslandActions}
             />
           ) : (
             topicPillarsCards
