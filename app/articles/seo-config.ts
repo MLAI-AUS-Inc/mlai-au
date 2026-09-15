@@ -161,20 +161,39 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         conversion: { primary: "founder-tools", secondary: "events", version: "urgent-v1" },
     },
     '/articles/featured/what-is-artificial-intelligence-in-simple-words': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: false,
-        internalLinks: [],
-        conversion: { primary: "events", secondary: "studio-project", version: "urgent-v1" },
+    "toc": true,
+    "howTo": false,
+    "mediaObject": false,
+    "citations": false,
+    "internalLinks": [],
+    "conversion": {
+        "primary": "events",
+        "version": "article-pilot-2026-09"
     },
+    "structuredData": {
+        "article": true,
+        "faq": {
+            "enabled": true
+        }
+    }
+},
     '/articles/featured/what-is-an-agent-in-artificial-intelligence': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: true,
-        internalLinks: [],
+    "toc": true,
+    "howTo": false,
+    "mediaObject": false,
+    "citations": true,
+    "internalLinks": [],
+    "conversion": {
+        "primary": "events",
+        "version": "article-pilot-2026-09"
     },
+    "structuredData": {
+        "article": true,
+        "faq": {
+            "enabled": true
+        }
+    }
+},
     '/articles/featured/how-to-startup-a-small-business-in-australia': {
         toc: true,
         howTo: false,
@@ -240,12 +259,22 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         internalLinks: [],
     },
     '/articles/featured/go-to-market-for-startups': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: true,
-        internalLinks: [],
+    "toc": true,
+    "howTo": false,
+    "mediaObject": false,
+    "citations": true,
+    "internalLinks": [],
+    "conversion": {
+        "primary": "events",
+        "version": "article-pilot-2026-09"
     },
+    "structuredData": {
+        "article": true,
+        "faq": {
+            "enabled": true
+        }
+    }
+},
     '/articles/featured/how-to-assess-cofounder-values-match-before-you-commit': {
         toc: true,
         howTo: false,
@@ -304,13 +333,22 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         internalLinks: [],
     },
     '/articles/featured/startup-accelerator-australia': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: false,
-        internalLinks: [],
-        conversion: { primary: "founder-tools", secondary: "events", version: "accelerator-finder-v1" },
+    "toc": true,
+    "howTo": false,
+    "mediaObject": false,
+    "citations": false,
+    "internalLinks": [],
+    "conversion": {
+        "primary": "events",
+        "version": "article-pilot-2026-09"
     },
+    "structuredData": {
+        "article": true,
+        "faq": {
+            "enabled": true
+        }
+    }
+},
     '/articles/featured/how-to-find-networking-events': {
         toc: true,
         howTo: false,
@@ -319,12 +357,22 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         internalLinks: [],
     },
     '/articles/featured/how-modern-technology-affects-education-today-and-in-the-fut': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: true,
-        internalLinks: [],
+    "toc": true,
+    "howTo": false,
+    "mediaObject": false,
+    "citations": true,
+    "internalLinks": [],
+    "conversion": {
+        "primary": "events",
+        "version": "article-pilot-2026-09"
     },
+    "structuredData": {
+        "article": true,
+        "faq": {
+            "enabled": true
+        }
+    }
+},
     '/articles/featured/how-technology-has-changed-education': {
         toc: true,
         howTo: false,
@@ -376,19 +424,39 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         internalLinks: [],
     },
     '/articles/featured/the-best-startup-pitch-deck-ever': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: true,
-        internalLinks: [],
+    "toc": true,
+    "howTo": false,
+    "mediaObject": false,
+    "citations": true,
+    "internalLinks": [],
+    "conversion": {
+        "primary": "events",
+        "version": "article-pilot-2026-09"
     },
+    "structuredData": {
+        "article": true,
+        "faq": {
+            "enabled": true
+        }
+    }
+},
     '/articles/featured/how-to-get-data-science-job': {
-        toc: true,
-        howTo: false,
-        mediaObject: false,
-        citations: true,
-        internalLinks: [],
+    "toc": true,
+    "howTo": false,
+    "mediaObject": false,
+    "citations": true,
+    "internalLinks": [],
+    "conversion": {
+        "primary": "events",
+        "version": "article-pilot-2026-09"
     },
+    "structuredData": {
+        "article": true,
+        "faq": {
+            "enabled": true
+        }
+    }
+},
     '/articles/featured/how-much-do-data-scientists-make': {
         toc: true,
         howTo: false,
@@ -677,6 +745,19 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         internalLinks: [],
         conversion: { primary: "studio-builder", secondary: "events", version: "urgent-v1" },
     },
+"/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5": {
+    "howTo": false,
+    "conversion": {
+        "primary": "events",
+        "version": "article-pilot-2026-09"
+    },
+    "structuredData": {
+        "article": true,
+        "faq": {
+            "enabled": true
+        }
+    }
+},
 };
 
 export const canonical = (path: string) => {

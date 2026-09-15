@@ -626,7 +626,7 @@ export function ArticleLayout({
                   /> */}
                 </div>
               ) : null}
-              <div data-article-content className="[overflow-wrap:anywhere]">{children}</div>
+              <div data-article-content className="[overflow-wrap:anywhere] [&_table]:[overflow-wrap:normal]">{children}</div>
               {showDisclaimer && !isUnderEditorialReview ? <ArticleDisclaimer /> : null}
               <div className="not-prose my-12">
                 {/* <FindProfessionalsCTA

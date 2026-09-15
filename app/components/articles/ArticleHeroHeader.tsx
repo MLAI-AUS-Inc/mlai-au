@@ -14,7 +14,7 @@ export interface ArticleHeroHeaderProps {
     breadcrumbs?: BreadcrumbItem[]
     /** The main title - plain text */
     title: string
-    /** Optional highlighted portion of title that will be styled in orange (e.g., "Use AI to Make It Easy (2026)") */
+    /** Optional highlighted portion of title with a contrasting accent (e.g., "Use AI to Make It Easy (2026)") */
     titleHighlight?: string
     /** Background color for the hero banner */
     headerBgColor?: 'cyan' | 'purple' | 'blue' | 'orange'
@@ -58,21 +58,23 @@ export function ArticleHeroHeader({
         cyan: 'text-black',
         purple: 'text-white',
         blue: 'text-white',
-        orange: 'text-white',
+        orange: 'text-black',
     }
 
     const breadcrumbLinkColor = {
-        cyan: 'text-black/70 hover:text-black',
-        purple: 'text-white/70 hover:text-white',
-        blue: 'text-white/70 hover:text-white',
-        orange: 'text-white/70 hover:text-white',
+        cyan: 'text-black hover:underline',
+        purple: 'text-white hover:underline',
+        blue: 'text-white hover:underline',
+        orange: 'text-black hover:underline',
     }
 
     // Article content is cast past these prop types, so an unknown color
     // can reach us at runtime and must not render "undefined" classes.
     const heroColor: keyof typeof bgColorMap = bgColorMap[headerBgColor] ? headerBgColor : 'cyan'
 
-    const highlightColor = heroColor === 'cyan' ? 'text-[#ff3d00]' : 'text-[#ff3d00]'
+    const highlightColor = heroColor === 'purple' || heroColor === 'blue'
+        ? 'text-[#fefc22]'
+        : 'text-black underline decoration-current decoration-2 underline-offset-4'
 
     return (
         <div
@@ -87,26 +89,27 @@ export function ArticleHeroHeader({
                 {breadcrumbs && breadcrumbs.length > 0 && (
                     <nav
                         aria-label="Breadcrumb"
-                        className="mb-4"
+                        className="mb-4 pl-8 lg:pl-0"
                         data-cf-component-id="breadcrumb"
                         data-cf-component-type="breadcrumb"
                         data-cf-component-label="Breadcrumb"
                     >
-                        <ol className="flex items-center gap-2 text-sm font-medium">
+                        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium">
                             {breadcrumbs.map((item, index) => (
-                                <li key={index} className="flex items-center gap-2">
+                                <li key={index} className={`items-center gap-2 ${item.current ? "hidden min-w-0 sm:flex sm:basis-full" : "flex shrink-0"}`}>
                                     {index > 0 && (
                                         <span className={`${textColorMap[heroColor]} opacity-50`}>/</span>
                                     )}
                                     {item.href && !item.current ? (
                                         <Link
                                             to={item.href}
-                                            className={`${breadcrumbLinkColor[heroColor]} transition-colors underline-offset-4 hover:underline flex items-center gap-1`}
+                                            aria-label={item.icon ? item.label : undefined}
+                                            className={`${breadcrumbLinkColor[heroColor]} whitespace-nowrap transition-colors underline-offset-4 hover:underline flex items-center gap-1`}
                                         >
                                             {item.icon ? <item.icon className="h-4 w-4" /> : item.label}
                                         </Link>
                                     ) : (
-                                        <span className={`${textColorMap[heroColor]} ${item.current ? 'font-semibold' : ''} flex items-center gap-1`}>
+                                        <span aria-current={item.current ? "page" : undefined} className={`${textColorMap[heroColor]} ${item.current ? 'font-semibold' : ''} flex items-center gap-1`}>
                                             {item.icon ? <item.icon className="h-4 w-4" /> : item.label}
                                         </span>
                                     )}
@@ -137,14 +140,14 @@ export function ArticleHeroHeader({
 
             {/* Quick Look Summary + Hero Image Grid */}
             {(summary || heroImage) && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                <div className={`grid grid-cols-1 ${summary && heroImage ? "lg:grid-cols-2" : ""} gap-4 mt-4`}>
                     {/* Orange Summary Card */}
                     {summary && (
-                        <div className="bg-[#ff3d00] rounded-2xl p-6 sm:p-8 text-white">
+                        <div className="bg-[#ff3d00] rounded-2xl p-6 sm:p-8 text-black">
                             <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider mb-3">
                                 {summary.heading}
                             </h2>
-                            <p className="text-sm sm:text-base leading-relaxed mb-4 opacity-90">
+                            <p className="text-sm sm:text-base leading-relaxed mb-4">
                                 {summary.intro}
                             </p>
                             <ul className="space-y-3">
@@ -156,7 +159,7 @@ export function ArticleHeroHeader({
                                         />
                                         <div>
                                             <p className="font-semibold m-0">{item.label}</p>
-                                            <p className="m-0 mt-0.5 opacity-85 text-sm leading-snug">
+                                            <p className="m-0 mt-0.5 text-sm leading-snug">
                                                 {item.description}
                                             </p>
                                         </div>

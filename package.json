@@ -10,7 +10,7 @@
   "scripts": {
     "check:article-internal-links": "bunx --yes tsx scripts/check-article-internal-links.ts",
     "generate:sitemap": "bunx --yes tsx scripts/generate-sitemap.ts",
-    "prebuild": "bun run check:article-integrity && bun test tests/article-integrity.test.ts tests/article-resource-integrity.test.tsx tests/article-review-disclosure.test.tsx tests/article-schema-ownership.test.tsx tests/reader-document-ssr.test.ts && bun run check:article-downloads && bun run generate:sitemap",
+    "prebuild": "bun run check:article-integrity && bun test tests/article-integrity.test.ts tests/article-resource-integrity.test.tsx tests/article-review-disclosure.test.tsx tests/article-schema-ownership.test.tsx tests/reader-document-ssr.test.ts tests/article-pilot-evidence.test.tsx && bun run check:article-downloads && bun run generate:sitemap",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' react-router build",
     "cf-typegen": "bunx --yes wrangler types",
     "deploy": "bun run build && bunx --yes wrangler deploy",
@@ -23,7 +23,8 @@
     "submit:indexnow": "bun scripts/submit-indexnow.ts",
     "check:article-downloads": "bun scripts/check-article-downloads.tsx",
     "test:articles:browser": "playwright test",
-    "postbuild": "bun scripts/check-article-downloads.tsx --built"
+    "postbuild": "bun scripts/check-article-downloads.tsx --built",
+    "test": "bun test ./tests"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
