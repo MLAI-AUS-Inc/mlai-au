@@ -1,0 +1,176 @@
+MLAI PITCH DECK EVIDENCE REVIEW — 11 September 2026
+
+https://mlai.au/articles/featured/the-best-startup-pitch-deck-ever
+
+Entirely fictional teaching example, not an MLAI client result. These twenty rows are authored arithmetic inputs. No customer, model run, timed trial or independent review produced them.
+
+AI-assisted editorial exercise; independent founder/source and appropriate financial review pending. Retest not run.
+
+Use one record per consequential claim. Complete real-case fields from your own evidence or an explicit unknown. Do not manufacture a source, measurement, permission or testimonial. This download contains no original third-party deck images.
+
+BLANK TEN-FIELD RECORD
+
+1. Reader and intended decision:
+
+
+2. Slide claim in plain language:
+
+
+3. Evidence status:
+
+
+4. Source record, owner and measurement date:
+
+
+5. Sample, denominator, period, currency and exclusions:
+
+
+6. What the evidence supports:
+
+
+7. What it does not support or contradicts:
+
+
+8. Permission and redaction before sharing:
+
+
+9. Replacement wording with limitations:
+
+
+10. Unanswered question and next test:
+
+
+SYNTHETIC TIMING INPUTS
+ID | Baseline minutes | Review minutes | Extra correction minutes | Correction reference
+
+Q01 | 8 | 5 | 0 | No output supplied
+
+Q02 | 9 | 5 | 0 | No output supplied
+
+Q03 | 10 | 6 | 0 | No output supplied
+
+Q04 | 11 | 6 | 5 | C1
+
+Q05 | 12 | 8 | 0 | No output supplied
+
+Q06 | 8 | 5 | 0 | No output supplied
+
+Q07 | 9 | 5 | 0 | No output supplied
+
+Q08 | 10 | 6 | 0 | No output supplied
+
+Q09 | 11 | 6 | 5 | C2
+
+Q10 | 12 | 8 | 0 | No output supplied
+
+Q11 | 8 | 5 | 0 | No output supplied
+
+Q12 | 9 | 5 | 0 | No output supplied
+
+Q13 | 10 | 6 | 0 | No output supplied
+
+Q14 | 11 | 6 | 5 | C3
+
+Q15 | 12 | 8 | 0 | No output supplied
+
+Q16 | 8 | 5 | 0 | No output supplied
+
+Q17 | 9 | 5 | 0 | No output supplied
+
+Q18 | 10 | 6 | 0 | No output supplied
+
+Q19 | 11 | 6 | 5 | C4
+
+Q20 | 12 | 8 | 0 | No output supplied
+
+Totals: 200 baseline; 120 review + 20 correction + 50 setup = 190 assisted minutes. Difference 10 minutes (5%). Invented inputs, not a measured outcome.
+
+SENSITIVITY: with 60 setup minutes the totals tie at 200; with 80 setup minutes assisted time is 220, 10% more than baseline. These change an assumption, not the recorded example. No cash-saving claim follows.
+
+FOUR SCRIPTED CORRECTIONS
+
+C1 / Q04
+Input: Two pumps for three days at an illustrative AUD 50 per pump per day. Delivery and taxes are outside this arithmetic example.
+Draft: Hire subtotal: AUD 150.
+Edited: Hire subtotal: 2 × 3 × AUD 50 = AUD 300. Confirm all other charges separately.
+Boundary: The scripted draft omitted the second unit. The five correction minutes are invented, not timed.
+
+C2 / Q09
+Input: One unit for four days at an illustrative AUD 30 per day. Other charges are outside this exercise.
+Draft: Hire subtotal: AUD 30.
+Edited: Hire subtotal: 1 × 4 × AUD 30 = AUD 120. Confirm all other charges separately.
+Boundary: The scripted draft omitted the duration. Price arithmetic does not establish quote accuracy for a real customer.
+
+C3 / Q14
+Input: Prepare an estimate only. No stock has been reserved and availability has not been checked.
+Draft: Your booking is confirmed.
+Edited: This is an estimate only. Availability is unconfirmed and no stock is reserved.
+Boundary: A fluent reply changed the transaction status. Review must check commitments as well as numbers.
+
+C4 / Q19
+Input: Requested pickup location: Depot A. This is a synthetic location label.
+Draft: Collect from Depot B.
+Edited: Requested pickup location: Depot A. Confirm collection arrangements before committing.
+Boundary: The draft changed a supplied fact. The correction is scripted and is not evidence that a deployed system catches this error.
+
+THREE CLAIM REVISIONS
+
+D1
+Before: AI cut our costs by 40%.
+Replacement: Synthetic 20-draft example: 200 manual minutes versus 190 assisted minutes, including 50 setup and 20 correction minutes. The 5% task-time difference comes from invented inputs. Software costs, maintenance and cash savings are unmeasured.
+Boundary: A 40% reduction in the review subtotal excludes setup and correction. Minutes cannot establish cost savings or causation.
+
+D2
+Before: Customers love our product.
+Replacement: This teaching scenario supplies no customer interview, payment, repeat-use or retention evidence.
+Boundary: Twenty drafts are tasks, not twenty customers. Churn is unknown because no paying cohort or period is supplied.
+
+D3
+Before: Production-ready AI automation.
+Replacement: Draft-only concept illustrated with four scripted corrections. No live quote was sent and no safety, reliability or production-readiness test ran.
+Boundary: The other sixteen timing rows have no supplied output or correctness review. Zero correction time does not mean an output was correct.
+
+COMPLETED TEN-FIELD RECORD
+
+1. Reader and intended decision:
+A willing community peer checking whether the written D1 claim accurately describes this fictional example. No investment or purchase requested.
+
+2. Slide claim in plain language:
+AI cut our costs by 40%.
+
+3. Evidence status:
+Illustrative arithmetic from invented inputs. It is neither an observed pilot result nor a forecast of a real business.
+
+4. Source record, owner and measurement date:
+Q01–Q20, C1–C4 and one 50-minute setup assumption, authored by MLAI for this exercise on 11 September 2026. Measurement date: none; no timed test occurred.
+
+5. Sample, denominator, period, currency and exclusions:
+20 synthetic draft rows; comparison denominator 200 baseline minutes. One imagined test batch with no observed calendar period. Inputs are in minutes, not currency. Software charges, maintenance, downstream work, taxes and cash effects are unmeasured.
+
+6. What the evidence supports:
+The supplied arithmetic totals 120 review + 20 correction + 50 setup = 190 assisted minutes. Against 200 baseline minutes, the difference is 10 minutes or 5% of baseline.
+
+7. What it does not support or contradicts:
+No 40% cost saving, real time saving, causal benefit, customer count, churn, production readiness or safety conclusion. A higher setup assumption can erase the illustrated difference.
+
+8. Permission and redaction before sharing:
+The supplied text and numbers are fiction. For an actual case, obtain permission for the specific material, minimise identifiers and use approved storage. Public access to a third-party deck does not authorise copying its assets.
+
+9. Replacement wording with limitations:
+Synthetic 20-draft example: 200 manual minutes versus 190 assisted minutes, including 50 setup and 20 correction minutes. The 5% task-time difference comes from invented inputs. Software costs, maintenance and cash savings are unmeasured.
+
+10. Unanswered question and next test:
+Why do quantity, duration, booking status and location errors occur? A real test needs comparable cases, observed timings and reviewed outputs. Retest not run; do not turn this plan into a claim of measured improvement.
+
+SUPPLIED FICTIONAL READ-THROUGH
+
+S1: One permitted written review
+Fictional peer agrees to read one anonymised teaching slide. The writer shows D1’s replacement wording and the calculation, with no customer data or external deck images.
+
+S2: An incomplete retelling
+Scripted response: “You ran an AI pilot and saved five per cent of costs.” The peer lost both the synthetic status and the distinction between time and money.
+
+S3: A changed slide title and an open retest
+Writer changes the title to “Invented timing example” and places “No real pilot or cash-saving measurement” beside the comparison. Retest not run. The change may help but no actual comprehension improvement has been established.
+
+NEXT STEP: identify one weak claim before choosing an appropriate MLAI event. Check whether the listing offers relevant discussion. Attendance does not guarantee deck review, investor access or funding. Event preferences do not upload this worksheet. Independent source/founder review and appropriate real-case permissions remain required.

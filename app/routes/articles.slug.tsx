@@ -8,6 +8,7 @@ import {
 } from "~/articles/registry";
 import { ArticleLayout } from "~/components/articles/ArticleLayout";
 import { ArticleHydrationCommit, ArticleHydrationScope } from "~/components/articles/ArticleHydration";
+import { ArticleReadTime } from "~/components/articles/ArticleReadTime";
 import ContentFactoryArticleAnalytics from "~/articles/ContentFactoryArticleAnalytics";
 import { fetchEvents, type Event } from "~/lib/events";
 import { getEnv } from "~/lib/env.server";
@@ -132,6 +133,7 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
         faqItems,
         upcomingEvents,
         useCustomHeader,
+        readAt: new Date().toISOString(),
     };
 }
 
@@ -263,7 +265,7 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
 }
 
 export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
-    const { article, faqItems, upcomingEvents, useCustomHeader } = loaderData;
+    const { article, faqItems, upcomingEvents, useCustomHeader, readAt } = loaderData;
 
     const breadcrumbs = [
         { label: 'Articles', href: '/articles' },
@@ -271,6 +273,7 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
     ];
 
     return (
+        <ArticleReadTime.Provider value={readAt}>
         <ArticleHydrationScope key={article.slug}>
         <ArticleLayout
             article={article}
@@ -294,5 +297,6 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             </div>
         </ArticleLayout>
         </ArticleHydrationScope>
+        </ArticleReadTime.Provider>
     );
 }

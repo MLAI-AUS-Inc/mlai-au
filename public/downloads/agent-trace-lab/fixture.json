@@ -1,0 +1,16 @@
+{
+  "provenance": "synthetic",
+  "window": {"start": "2026-09-10T00:00:00.000Z", "end": "2026-09-10T00:05:00.000Z", "bucketSeconds": 60},
+  "thresholdSeconds": [1, 10, 60],
+  "attempts": [
+    {"id":"p1","at":"2026-09-10T00:00:00.000Z","account":"alpha","content":"Weekly fixture update","outcome":"published","retryAfterSeconds":null,"moderation":"cleared"},
+    {"id":"p2","at":"2026-09-10T00:00:00.500Z","account":"alpha","content":"Weekly fixture update","outcome":"published","retryAfterSeconds":null,"moderation":"flagged"},
+    {"id":"p3","at":"2026-09-10T00:00:01.000Z","account":"alpha","content":"Weekly fixture update","outcome":"rate-limited","retryAfterSeconds":5,"moderation":"not-reviewed"},
+    {"id":"p4","at":"2026-09-10T00:00:02.000Z","account":"alpha","content":"Weekly fixture update","outcome":"rate-limited","retryAfterSeconds":10,"moderation":"not-reviewed"},
+    {"id":"p5","at":"2026-09-10T00:00:12.000Z","account":"alpha","content":"Another fictional message","outcome":"published","retryAfterSeconds":null,"moderation":"not-reviewed"},
+    {"id":"p6","at":"2026-09-10T00:01:00.000Z","account":"beta","content":"Fictional service status","outcome":"error","retryAfterSeconds":null,"moderation":"not-reviewed"},
+    {"id":"p7","at":"2026-09-10T00:02:00.000Z","account":"beta","content":"Weekly fixture update","outcome":"published","retryAfterSeconds":null,"moderation":"not-reviewed"},
+    {"id":"p8","at":"2026-09-10T00:02:10.000Z","account":"beta","content":"Unique fixture message","outcome":"published","retryAfterSeconds":null,"moderation":"cleared"},
+    {"id":"p9","at":"2026-09-10T00:03:00.000Z","account":"alpha","content":"Weekly fixture update","outcome":"published","retryAfterSeconds":null,"moderation":"not-reviewed"}
+  ]
+}

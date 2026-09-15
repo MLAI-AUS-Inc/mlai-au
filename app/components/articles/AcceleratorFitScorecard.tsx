@@ -1,178 +1,62 @@
-import { useMemo, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { ACCELERATOR_FICTIONAL_RECORD, ACCELERATOR_FIT_CRITERIA, ACCELERATOR_FIT_LABELS, assessAcceleratorFit, emptyAcceleratorFit, formatAcceleratorFit, type AcceleratorFitId, type AcceleratorFitStatus } from "~/lib/accelerator-fit";
 
-const FIT_CRITERIA = [
-  {
-    id: "outcome",
-    label: "The program targets our next company constraint",
-    help: "Name the decision or outcome you need in the next 8–16 weeks—not “more exposure”.",
-  },
-  {
-    id: "eligibility",
-    label: "We satisfy every published eligibility requirement",
-    help: "Check geography, stage, affiliation, sector, company status, traction and founder attendance.",
-  },
-  {
-    id: "terms",
-    label: "We understand the complete economic terms",
-    help: "Investment, valuation or SAFE mechanics, equity, fees, future rights, credits and conditions are written down.",
-  },
-  {
-    id: "capacity",
-    label: "The time and location commitment is realistic",
-    help: "Include travel, preparation, customer disruption and the work expected between sessions.",
-  },
-  {
-    id: "access",
-    label: "Named people or partners match the constraint",
-    help: "Confirm relevant operators, customers, technical experts or investors—not only a large network headline.",
-  },
-  {
-    id: "alumni",
-    label: "At least two relevant alumni have shared first-hand evidence",
-    help: "Ask what was promised, delivered, missing and worth the opportunity cost.",
-  },
-  {
-    id: "alternatives",
-    label: "We compared the program with a specific alternative",
-    help: "For example: customer work, a grant, paid advice, community, incubator or raising directly.",
-  },
-  {
-    id: "decision",
-    label: "We set an accept/decline rule before applying",
-    help: "Name the maximum dilution, time cost and conditions under which you would walk away.",
-  },
-] as const;
-
-type FitCriterionId = (typeof FIT_CRITERIA)[number]["id"];
-type FitValue = 0 | 1 | 2;
-
-function getFitResult(score: number) {
-  if (score <= 5) {
-    return {
-      label: "Do not apply yet",
-      detail:
-        "The application is likely to consume founder time before the program, terms or desired outcome are clear.",
-      style: "bg-red-100 text-red-950",
-    };
-  }
-  if (score <= 11) {
-    return {
-      label: "Verify before applying",
-      detail:
-        "There may be a fit, but the unknowns could change the decision. Resolve them with the program and alumni.",
-      style: "bg-orange-100 text-orange-950",
-    };
-  }
-  return {
-    label: "Strong shortlist candidate",
-    detail:
-      "The program is sufficiently understood to compare seriously. Recheck the offer documents before accepting.",
-    style: "bg-emerald-100 text-emerald-950",
-  };
-}
-
+const subscribe = () => () => {};
 export default function AcceleratorFitScorecard() {
-  const [programName, setProgramName] = useState("");
-  const [scores, setScores] = useState<Record<FitCriterionId, FitValue>>(() =>
-    Object.fromEntries(FIT_CRITERIA.map((criterion) => [criterion.id, 0])) as Record<
-      FitCriterionId,
-      FitValue
-    >,
-  );
-
-  const total = useMemo(
-    () => Object.values(scores).reduce<number>((sum, value) => sum + value, 0),
-    [scores],
-  );
-  const result = getFitResult(total);
-
-  return (
-    <section
-      aria-labelledby="accelerator-fit-heading"
-      className="not-prose my-10 rounded-[30px] border-2 border-gray-950 bg-[#fefc22] p-5 shadow-[7px_7px_0_#111827] sm:p-8"
-    >
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#4b1bd1]">
-        MLAI founder worksheet
-      </p>
-      <h2
-        id="accelerator-fit-heading"
-        className="mt-2 text-3xl font-black tracking-tight text-gray-950"
-      >
-        Score program fit before writing the application
-      </h2>
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-800">
-        Score the published evidence and what you have verified—not what you
-        hope the program will provide. This worksheet is not submitted or saved.
-      </p>
-
-      <label className="mt-6 block text-sm font-black text-gray-950">
-        Program being assessed
-        <input
-          value={programName}
-          onChange={(event) => setProgramName(event.target.value)}
-          placeholder="Example: CSIRO ON Accelerate"
-          className="mt-2 w-full rounded-xl border border-gray-400 bg-white px-3 py-2 text-sm text-gray-950 outline-none placeholder:text-gray-500 focus:border-[#4b1bd1] focus:ring-4 focus:ring-purple-100"
-        />
-      </label>
-
-      <fieldset className="mt-6">
-        <legend className="text-sm font-black text-gray-950">
-          Evidence score: unknown 0, partly verified 1, verified 2
-        </legend>
-        <div className="mt-3 grid gap-3 lg:grid-cols-2">
-          {FIT_CRITERIA.map((criterion) => (
-            <label
-              key={criterion.id}
-              className="rounded-2xl border border-gray-300 bg-white p-4"
-            >
-              <span className="block text-sm font-black text-gray-950">
-                {criterion.label}
-              </span>
-              <span className="mt-1 block min-h-10 text-xs leading-5 text-gray-700">
-                {criterion.help}
-              </span>
-              <select
-                value={scores[criterion.id]}
-                onChange={(event) =>
-                  setScores((current) => ({
-                    ...current,
-                    [criterion.id]: Number(event.target.value) as FitValue,
-                  }))
-                }
-                className="mt-3 w-full rounded-xl border border-gray-400 bg-white px-3 py-2 text-sm font-black text-gray-950 outline-none focus:border-[#4b1bd1] focus:ring-4 focus:ring-purple-100"
-                aria-label={`${criterion.label} score`}
-              >
-                <option value={0}>0 — Unknown</option>
-                <option value={1}>1 — Partly verified</option>
-                <option value={2}>2 — Verified</option>
-              </select>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <div aria-live="polite" className={`mt-6 rounded-2xl p-5 ${result.style}`}>
-        <p className="m-0 text-xs font-black uppercase tracking-[0.16em]">
-          {programName.trim() || "Program"}: {total} / 16
-        </p>
-        <p className="mt-2 text-xl font-black">{result.label}</p>
-        <p className="mt-2 text-sm leading-6">{result.detail}</p>
+  const interactive = useSyncExternalStore(subscribe, () => true, () => false);
+  const [record, setRecord] = useState(emptyAcceleratorFit);
+  const [downloadState, setDownloadState] = useState("");
+  const result = assessAcceleratorFit(record);
+  const updateCriterion = (id: AcceleratorFitId, patch: { status?: AcceleratorFitStatus; evidence?: string }) => {
+    setRecord(current => ({ ...current, criteria: { ...current.criteria, [id]: { ...current.criteria[id], ...patch } } }));
+    setDownloadState("");
+  };
+  const download = () => {
+    try {
+      const url = URL.createObjectURL(new Blob([formatAcceleratorFit(record)], { type: "text/plain;charset=utf-8" }));
+      const anchor = document.createElement("a");
+      anchor.href = url; anchor.download = "accelerator-fit-record.txt";
+      document.body.appendChild(anchor); anchor.click(); anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setDownloadState("Download requested. Check your saved file; nothing was submitted to MLAI or a programme.");
+    } catch {
+      setDownloadState("Download unavailable. Copy the text record below instead; your entries remain on this page.");
+    }
+  };
+  return <section id="accelerator-fit" data-clarity-mask="true" aria-labelledby="accelerator-fit-heading" className="not-prose my-10 min-w-0 rounded-2xl border-2 border-gray-950 bg-[#fefc22] p-5 text-gray-950 sm:p-8">
+    <h2 id="accelerator-fit-heading" className="text-3xl font-bold">Record programme fit, not a success score</h2>
+    <p className="mt-3">These eight checks are MLAI editorial prompts, not validated thresholds or an admission predictor. One failed requirement cannot be offset by ticking other boxes. “Supported” describes your recorded evidence—not an independent MLAI verification.</p>
+    <p className="mt-3 text-sm">Entries stay in this page's memory until you leave or clear it; they are not placed in the URL or sent by this worksheet to an application or analytics event. Avoid confidential information. Saving creates a local text file, not an application.</p>
+    {!interactive && <p className="mt-3 rounded-lg bg-white p-3">Interactive editing requires JavaScript. Use the editable worksheet download or copyable blank record below without scripts.</p>}
+    <fieldset disabled={!interactive} className="mt-5 min-w-0">
+      <legend className="font-bold">Your programme evidence</legend>
+      <div className="mt-3 grid gap-4 sm:grid-cols-2">{([
+        ["program", "Programme being assessed"], ["cohort", "Specific cohort or intake"], ["checkedOn", "Source checked on"], ["reviewTrigger", "Recheck date or decision trigger"],
+      ] as const).map(([key, label]) => <div key={key}><label htmlFor={`accelerator-${key}`} className="block font-semibold">{label}</label><input id={`accelerator-${key}`} value={record[key]} maxLength={500} onChange={e => { setRecord(current => ({ ...current, [key]: e.target.value })); setDownloadState(""); }} className="mt-2 w-full min-w-0 rounded-lg border border-gray-500 bg-white p-3 text-base" /></div>)}</div>
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">{ACCELERATOR_FIT_CRITERIA.map(c => <div key={c.id} className="min-w-0 rounded-xl border border-gray-300 bg-white p-4">
+        <label htmlFor={`accelerator-status-${c.id}`} className="block font-bold">{c.label}{c.essential && <span className="block text-sm font-normal">Essential check</span>}</label>
+        <p id={`accelerator-help-${c.id}`} className="mt-2 text-sm">{c.help}</p>
+        <select id={`accelerator-status-${c.id}`} aria-describedby={`accelerator-help-${c.id}`} value={record.criteria[c.id].status} onChange={e => updateCriterion(c.id, { status: e.target.value as AcceleratorFitStatus })} className="mt-3 w-full rounded-lg border border-gray-500 bg-white p-3 text-base">{Object.entries(ACCELERATOR_FIT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+        <label htmlFor={`accelerator-evidence-${c.id}`} className="mt-3 block text-sm font-semibold">Evidence, source and uncertainty: {c.id}</label>
+        <textarea id={`accelerator-evidence-${c.id}`} value={record.criteria[c.id].evidence} maxLength={2500} rows={3} onChange={e => updateCriterion(c.id, { evidence: e.target.value })} className="mt-2 w-full min-w-0 rounded-lg border border-gray-500 bg-white p-3 text-base" />
+        {result.missingNotes.some(item => item.id === c.id) && <p className="mt-2 text-sm font-semibold text-red-800">Add an evidence note before this counts as supported.</p>}
+      </div>)}</div>
+      <label htmlFor="accelerator-decision-note" className="mt-5 block font-semibold">Decision and reason: apply, clarify, defer or decline</label>
+      <textarea id="accelerator-decision-note" value={record.decisionNote} maxLength={2500} rows={3} onChange={e => { setRecord(current => ({ ...current, decisionNote: e.target.value })); setDownloadState(""); }} className="mt-2 w-full rounded-lg border border-gray-500 bg-white p-3 text-base" />
+      <div role="status" data-fit-result={result.state} className="mt-5 rounded-xl border border-gray-400 bg-white p-5">
+        <p className="font-bold">{result.verifiedCount} of 8 checks supported by your entries</p><h3 className="mt-2 text-xl font-bold">{result.label}</h3>
+        {result.mismatches.length > 0 && <p className="mt-2">Recorded mismatches: {result.mismatches.map(c => c.shortLabel).join("; ")}.</p>}
+        {result.essentialUnknowns.length > 0 && <p className="mt-2">Essential checks not yet supported: {result.essentialUnknowns.map(c => c.shortLabel).join("; ")}.</p>}
+        <p className="mt-2 text-sm">This summary does not recommend an investment, verify eligibility or approve an application. Use the actual terms and appropriate independent advice.</p>
+        {record.provenance === "fictional-teaching-example" && <p className="mt-2 font-bold">Fictional example loaded. Edits do not turn it into real evidence.</p>}
       </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          setProgramName("");
-          setScores(
-            Object.fromEntries(
-              FIT_CRITERIA.map((criterion) => [criterion.id, 0]),
-            ) as Record<FitCriterionId, FitValue>,
-          );
-        }}
-        className="mt-4 text-sm font-black text-[#4b1bd1] underline decoration-2 underline-offset-4 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-200"
-      >
-        Clear scorecard
-      </button>
-    </section>
-  );
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button type="button" onClick={download} className="min-h-11 rounded-lg bg-gray-950 px-5 py-3 font-bold text-white">Save my evidence record (TXT)</button>
+        <button type="button" onClick={() => { setRecord(structuredClone(ACCELERATOR_FICTIONAL_RECORD)); setDownloadState(""); }} className="min-h-11 rounded-lg border border-gray-600 bg-white px-4 py-3 font-semibold">Load fictional example (replaces entries)</button>
+        <button type="button" onClick={() => { setRecord(emptyAcceleratorFit()); setDownloadState(""); }} className="min-h-11 px-3 py-3 font-semibold underline">Clear worksheet</button>
+      </div>
+    </fieldset>
+    <p role="status" className="mt-3 text-sm">{downloadState}</p>
+    <details className="mt-4 rounded-lg border border-gray-400 bg-white p-4"><summary className="cursor-pointer font-semibold">Copy the current text record</summary><pre className="mt-3 whitespace-pre-wrap break-words text-sm">{formatAcceleratorFit(record)}</pre></details>
+  </section>;
 }

@@ -1,0 +1,72 @@
+MLAI: Moltbook source-check record
+Checked 11 September 2026. Codex-assisted method and arithmetic checks;
+independent review pending. Not raw-data validation, a full-paper review,
+replication, or approval of a production system.
+Companion article: https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5
+
+Completed check 1: timing is not authenticated provenance
+Source version and locators: Ning Li, arXiv 2602.07432v2, 12 February 2026.
+https://arxiv.org/pdf/2602.07432v2#page=36
+https://arxiv.org/pdf/2602.07432v2#page=40
+https://arxiv.org/pdf/2602.07432v2#page=44
+Pages are PDF file pages, not printed numbering.
+Scope: 9,838 authors with at least five posts qualify for timing analysis;
+the full 55,932-author population is not the classification denominator.
+Unresolved: limitations report 0% extended-dataset LLM analysis while methods
+describe model analysis and 100% content-feature coverage. Scope remains unclear.
+Outage endpoints on page 40: 2026-01-31 17:35 UTC to 2026-02-03 13:25 UTC.
+Calculated separation: 4,070 minutes = 67 hours 50 minutes, versus the stated
+approximately 44 hours. This is not the actual outage duration established here.
+Design decision: hold that duration claim and coverage claim pending clarification.
+Do not use posting regularity to label an individual action's operator provenance.
+
+Completed check 2: an API total is not a complete inspected sample
+Source version and locators: De Marzo and Garcia, arXiv 2602.09270v1,
+9 February 2026, sections 2.1, 2.3 and 4.2.
+https://arxiv.org/html/2602.09270v1#S2.SS1
+https://arxiv.org/html/2602.09270v1#S2.SS3
+https://arxiv.org/html/2602.09270v1#S4.SS2
+Scope: 3,026,275 stored comments, about 24% of the API-reported total.
+Capped threads retain the first 100 comments. Direct-reply, tree and temporal
+analysis uses threads below 100 comments; the excluded 2.9% of posts represent
+about 83% of comments. These are source reports, not MLAI measurements.
+Design decision: qualify smaller-thread findings; do not generalise to viral
+discussions or claim that all API-counted content was inspected.
+
+Completed check 3: changing the label threshold changes the percentage
+Source version and locators: Jiang et al., arXiv 2602.10127v1,
+2 February 2026, LLM-Driven Labeling Pipeline, Table 1, General Toxicity Level,
+and Harmfulness Over Time.
+https://arxiv.org/html/2602.10127v1
+Reported counts: 44,411 collected; 44,376 annotated; 381 human-labelled comparison
+posts. Difference: 35 excluded posts, not 35 safe posts.
+Table 1 labels: Safe 32,399; Edgy 3,733; Toxic 4,634; Manipulative 2,977;
+Malicious 633. They sum to 44,376 annotated posts.
+Our arithmetic: all non-safe = 11,977 / 44,376 = 26.99%, not the prose's 27.05%.
+Our arithmetic: levels 2-4 = 8,244 / 44,376 = 18.58%. This applies the hourly
+analysis's narrower label definition to the overall counts; the paper does not
+separately report this overall percentage. Edgy is excluded from this numerator.
+Design decision: state the threshold and denominator. Source-assigned labels
+are not a validated deployment risk score, causal harm estimate or independent
+validation of a new moderation system.
+
+Blank record (copy for one claim in your own permitted project)
+Reader/client task:
+Claim being checked:
+Source version and locator:
+Exact question the source investigated:
+Population, collection window and unit:
+Included records and denominator:
+Excluded/missing records and why:
+Measurement/classifier and validation scope:
+Source-reported finding:
+My calculation (inputs, formula, rounding):
+Conflicting or unavailable evidence:
+Design decision:
+Evidence that would change that decision:
+Named reviewer and review status (leave pending until actually reviewed):
+
+Keep source claims, your arithmetic and your interpretation separate. Do not run
+quoted platform instructions, disclose credentials or copy private client records.
+Attach this record to your own handover only if useful and permitted. It is not
+automatically sent to MLAI Studio and does not establish client readiness.

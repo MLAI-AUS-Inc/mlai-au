@@ -24,7 +24,7 @@ jobs:
         run: bun run typecheck
 
       - name: Run tests
-        run: bun test
+        run: bun run test
 
       - name: Test monthly-update reminder links
         run: bun test tests/monthly-update-reminder-link.test.ts

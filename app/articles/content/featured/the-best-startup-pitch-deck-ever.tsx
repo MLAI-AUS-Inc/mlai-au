@@ -1,361 +1,117 @@
-import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
-import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
-
+import { Link } from 'react-router'
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
 import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import { QuoteBlock } from '../../../components/articles/QuoteBlock'
-import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
-import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleStepList } from '../../../components/articles/ArticleStepList'
-import { ArticleCallout } from '../../../components/articles/ArticleCallout'
-import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
-import { ArticleReferences } from '../../../components/articles/ArticleReferences'
-import { ArticleDisclaimer } from '../../../components/articles/ArticleDisclaimer'
-import { getDefaultArticleAuthorDetails } from '../../authors'
+import { ArticleTocPlaceholder } from '~/components/articles/ArticleTocPlaceholder'
+import { DECK_PROVENANCE, DECK_REVIEW_STATUS, DECK_PILOT_ROWS, DECK_SETUP_MINUTES, DECK_CORRECTIONS, DECK_CLAIMS, DECK_FIELDS, DECK_READ_THROUGH, summariseDeckPilot } from '~/lib/pitch-deck-evidence'
 
-/** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
-
-const TOPIC = 'The Best Startup Pitch Deck Ever'
 export const CATEGORY = 'featured'
 export const SLUG = 'the-best-startup-pitch-deck-ever'
-const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
-const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
-const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? AUTHOR_PROFILE.credentials ?? 'Founder'
-const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
-const AUTHOR_AVATAR =
-  AUTHOR_PROFILE.avatarUrl ??
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
-export const DATE_PUBLISHED = '2026-01-25'
-export const DATE_MODIFIED = '2026-01-25'
-export const DESCRIPTION = 'What “great” looks like for a startup pitch deck in 2026: structure, timing, AU context, examples, and mistakes to avoid.'
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1968fb96-80f9-49e4-95d6-42c5a359b4ce.jpg?alt=media&token=2884e0cc-4793-4155-a69c-0468133ece8b"
-const HERO_IMAGE_ALT = 'Founder presenting a slide deck to an audience in a modern workspace'
+export const DATE_PUBLISHED = '2025-11-23'
+export const DATE_MODIFIED = '2026-09-15'
+export const DESCRIPTION = 'Review startup deck claims using founder-published examples, twenty synthetic timing records, scripted corrections and a completed downloadable evidence worksheet.'
 export const FEATURED_FOCUS = 'funding'
-
-/** ===== FAQ ===== */
-interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
-}
-
-export const faqItems: FAQ[] = [
-  {
-    id: 1,
-    question: 'How many slides should a pitch deck have in 2026?',
-    answer:
-      'Aim for 10–12 slides for a live meeting and 12–15 for an “email deck”. If you routinely need more than 15, you likely have multiple ideas per slide—split and simplify.'
-  },
-  {
-    id: 2,
-    question: 'What’s the best slide order for early‑stage rounds?',
-    answer: (
-      <>
-        Problem → Audience → Solution/Product → Why now → Market size → Traction → Business model → Go‑to‑market → Competition & moat → Team → Financials (one‑page) → The ask & use of funds. Adjust for stage (e.g., pre‑seed may shrink financials, seed/Series A will expand traction and GTM).
-      </>
-    )
-  },
-  {
-    id: 3,
-    question: 'Do I need a full financial model in the deck?',
-    answer:
-      'No. Put a one‑page high‑level view (revenue drivers, unit economics, runway post‑raise). Keep the detailed model for diligence/data room.'
-  },
-  {
-    id: 4,
-    question: 'Should I include AI safety or privacy content for an AI startup?',
-    answer: (
-      <>
-        Yes—briefly. In Australia, investors will expect clear data handling and privacy practices (see the Australian Privacy Principles). Add a short line on model risks, evaluation, and human‑in‑the‑loop where relevant, with a link to policy docs.
-      </>
-    )
-  },
-  {
-    id: 5,
-    question: 'Do I need different versions for email and live presentations?',
-    answer:
-      'Yes. Email decks must be self‑contained (a touch more text and annotated visuals). Live decks should be visual and lightweight, leaving narrative to you.'
-  },
-  {
-    id: 6,
-    question: 'PDF, PowerPoint, Google Slides, or Canva—what do AU investors prefer?',
-    answer:
-      'Use PDF for sharing reliability (16:9, <10 MB). Building in Google Slides or Canva is fine—export to PDF. For live, bring the editable version as backup.'
-  },
-  {
-    id: 7,
-    question: 'How do I reference non‑dilutive funding like the R&D Tax Incentive?',
-    answer:
-      'Include a single slide bullet noting confirmed grants/credits and their timing (e.g., R&D Tax Incentive eligibility, expected cashflow impact). Keep claims conservative and link to source policies.'
-  }
+const TITLE = 'A startup pitch deck you can defend: an evidence-first review'
+const PATH = '/articles/' + CATEGORY + '/' + SLUG
+export const articleMeta = { title: TITLE, topic: TITLE, category: CATEGORY, slug: SLUG, description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, author: 'Dr Sam Donegan' }
+export const faqItems = [
+ { id: 1, question: 'Is there a best startup pitch deck?', answer: 'Not independently of its audience, stage and purpose. This guide offers an editorial review process, not a ranking of decks or a structure proven to raise money.' },
+ { id: 2, question: 'How many slides should I use?', answer: 'Check the recipient or organiser’s requirements, available time and sharing format. Keep enough context to understand each claim; no universal slide count is established here.' },
+ { id: 3, question: 'Can I include a forecast before I have revenue?', answer: 'Label it as a forecast, state its assumptions and keep it separate from actual results. A possible future customer, letter of intent or unpaid trial is not recorded revenue.' },
+ { id: 4, question: 'Can AI write my pitch deck?', answer: 'AI can help organise your notes or suggest wording, but check every number, quote and source yourself. Do not ask it to invent traction, customer testimonials or research. Only use information you have permission to share with the tool.' },
+ { id: 5, question: 'Will an MLAI event provide investor feedback?', answer: 'Check the specific event listing. Attendance does not guarantee pitch review, investor access, funding or commercial advice. Ask another participant before sharing a deck or requesting feedback.' },
 ]
-
-export const summaryHighlights = {
-  heading: `Key facts: ${TOPIC}`,
-  intro:
-    "Build a clear pitch around the customer problem, the evidence you have and the next milestone. Keep assumptions visible and make every slide earn its place.",
-  items: [
-    {
-      label: 'How many slides should a startup pitch deck have?',
-      description: '10–12 for live, 12–15 for email; keep it skimmable in 3–5 minutes for demo‑style pitches.'
-    },
-    {
-      label: 'What makes a pitch deck stand out to investors?',
-      description: 'Clear problem, evidence of demand/traction, credible “why now”, crisp model and a specific ask.'
-    },
-    {
-      label: 'Do I need separate email and live versions?',
-      description: 'Yes. Email decks are self‑contained with brief annotations; live decks are visual and minimal.'
-    }
-  ]
-}
-
-const references = [
-  {
-    id: 1,
-    href: 'https://slidebean.com/pitch-deck-examples',
-    title: 'Pitch Deck Examples from 35+ Startups',
-    publisher: 'Slidebean',
-    description: 'Gallery of well‑known decks; helpful for pattern recognition and inspiration.',
-    category: 'industry'
-  },
-  {
-    id: 2,
-    href: 'https://www.failory.com/pitch-deck',
-    title: 'The +500 Most Successful Startup Pitch Decks',
-    publisher: 'Failory',
-    description: 'Large list of pitch deck examples across stages and sectors.',
-    category: 'industry'
-  },
-  {
-    id: 3,
-    href: 'https://sequoiacap.com/article/writing-a-business-plan/',
-    title: 'Writing a Business Plan (Pitch Deck Template)',
-    publisher: 'Sequoia Capital',
-    description: 'Canonical investor‑oriented outline for early‑stage pitch decks.',
-    category: 'guide'
-  },
-  {
-    id: 4,
-    href: 'https://guykawasaki.com/the_102030_rule/',
-    title: 'The 10/20/30 Rule of PowerPoint',
-    publisher: 'Guy Kawasaki',
-    description: 'Guideline for slide count, time, and font size that remains influential.',
-    category: 'guide'
-  },
-  {
-    id: 5,
-    href: 'https://www.asic.gov.au/regulatory-resources/fundraising/',
-    title: 'Fundraising Guidance',
-    publisher: 'Australian Securities and Investments Commission (ASIC)',
-    description: 'Official Australian guidance on fundraising and disclosure obligations.',
-    category: 'government'
-  },
-  {
-    id: 6,
-    href: 'https://www.oaic.gov.au/privacy/australian-privacy-principles',
-    title: 'Australian Privacy Principles',
-    publisher: 'Office of the Australian Information Commissioner (OAIC)',
-    description: 'Privacy requirements relevant to data handling claims in AI decks.',
-    category: 'government'
-  },
-  {
-    id: 7,
-    href: 'https://business.gov.au/grants-and-programs/research-and-development-tax-incentive',
-    title: 'Research and Development Tax Incentive',
-    publisher: 'Australian Taxation Office',
-    description: 'Information on Australia’s R&D Tax Incentive and eligibility.',
-    category: 'government'
-  }
-]
-
 export default function ArticlePage() {
-  const breadcrumbs = [
-    { label: 'Home', href: '/', icon: Home },
-    { label: 'Articles', href: '/articles' },
-    { label: TOPIC, current: true }
-  ]
+ const total = summariseDeckPilot(DECK_PILOT_ROWS, DECK_SETUP_MINUTES)
+ return <div data-cf-article-body>
+  <ArticleHeroHeader
+   breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: TITLE, current: true }]}
+   title={TITLE} titleHighlight="evidence-first review" headerBgColor="purple"
+   summary={{ heading: 'Before you share the deck', intro: 'For Australian founders preparing a learning or funding conversation: make the business understandable without turning assumptions into achievements.', items: [
+    { label: 'Start with the reader’s decision', description: 'A request for product feedback is different from an investment discussion.' },
+    { label: 'Check claims before polishing slides', description: 'Record the source, period, sample and limits of each consequential claim.' },
+    { label: 'End with an appropriate next step', description: 'Ask for a specific conversation, not an implied commitment.' },
+   ] }}
+  />
+  <div className="prose prose-lg prose-slate max-w-none">
+   <p>Searching for the “best startup pitch deck ever” can lead you to copy a successful company’s slides without knowing what evidence or relationships sat behind them. A template cannot prove demand for your business. This guide helps you produce a defensible draft and a focused feedback question; it does not establish a winning deck or offer financial advice.</p>
+   <p>Check claims in a document that may be forwarded without you. For a short spoken explanation and a consent-based rehearsal, use the separate <Link to="/articles/featured/how-to-pitch-your-idea">early idea pitch guide</Link>.</p>
+   <ArticleTocPlaceholder />
+   <h2 id="purpose" className="scroll-mt-28">Name the decision before choosing slides</h2>
+   <p>Write down who will read the deck, what they already know and what you want them to do next. Use a different request for a customer discovery conversation, a community practice session or an investment discussion. Do not treat an event attendee as a prospective investor without asking.</p>
+   <p><a href="https://sequoiacap.com/article/writing-a-business-plan">Sequoia’s business-plan guide</a>, published 15 March 2019, offers prompts covering purpose, customer problem, solution, timing, market, alternatives, business model, team, financials and vision. It is one investor’s outline, not a mandatory slide count or evidence that this sequence causes funding. The review process below is MLAI’s editorial exercise, not Sequoia’s certification.</p>
+   <h2 id="original-decks" className="scroll-mt-28">Read original decks alongside their authors’ corrections</h2>
+   <p>The following are founder-published historical examples. Their authors made the material public, but we have not verified a licence to reproduce their images. Open the original pages for the slides; the annotations here are our written interpretations. These examples do not establish current Australian investor preferences or a deck structure that causes funding.</p>
+   <h3 className="scroll-mt-28" id="buffer-example">Buffer: the competition slide answers a recurring question</h3>
+   <p><a href="https://buffer.com/resources/the-slide-deck-we-used-to-raise-half-a-million-dollars/">Leo Widrich’s Buffer seed-deck retrospective</a>, 23 May 2013, describes repeated confusion about competitors and a revised positioning slide. His commentary explains how the revised competition slide addressed that confusion.</p>
+   <p><strong>Our annotation:</strong> identify the specific alternative your reader is comparing you with, then show the relevant distinction. A diagram of logos does not prove superiority, and this historical market map cannot establish who competes with your product today. The author’s account of fundraising does not isolate the slide’s effect.</p>
+   <h3 className="scroll-mt-28" id="linkedin-example">LinkedIn: customer quotations can still be weak evidence</h3>
+   <p><a href="https://www.reidhoffman.org/linkedin-pitch-to-greylock/">Reid Hoffman’s annotated LinkedIn Series B deck</a> revisits his 2004 pitch. In his commentary on customer feedback, Hoffman says he would delete the slide that used quotations as evidence of product-market fit, explaining why it added little to the argument.</p>
+   <p><strong>Our annotation:</strong> a quotation needs context and permission, and may still fail to support the claim you want to make. Separate customer reports from measured results. Do not borrow the old slide’s savings figures or treat a successful company’s deck as evidence that every slide worked.</p>
+   <p>These annotations use selected passages in the authors’ commentary; the underlying business records were not checked. The original slides remain on their sites. No third-party deck images are reproduced in this article or its download.</p>
 
-  const authorDetails = {
-    name: AUTHOR,
-    role: AUTHOR_ROLE,
-    bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR
-  }
+   <h2 id="review" className="scroll-mt-28">Build an evidence map before a slide order</h2>
+   <p>Wide tables scroll sideways. Focus a table region and use arrow keys on a keyboard, or read the same worked record in the text download below.</p>
+   <div role="region" aria-label="Deck evidence map" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4"><table className="min-w-[42rem]"><caption>What each consequential claim needs</caption><thead><tr><th scope="col">What the reader needs to understand</th><th scope="col">Evidence to inspect</th><th scope="col">Do not substitute</th></tr></thead><tbody>
+    <tr><td>Who experiences the problem?</td><td>Permission-cleared observations, interview notes and the current workaround</td><td>An invented persona presented as customer research</td></tr>
+    <tr><td>What works today?</td><td>A dated demonstration and its operating limits</td><td>A mockup described as a deployed product</td></tr>
+    <tr><td>What demand exists?</td><td>Separate records of interviews, trials, paying accounts and repeat use</td><td>A waitlist or non-binding expression of interest labelled as revenue</td></tr>
+    <tr><td>How might the business work?</td><td>Actual prices and costs, with forecasts in a separate scenario</td><td>An addressable-market headline treated as achievable sales</td></tr>
+    <tr><td>What is the next request?</td><td>A specific discussion or milestone, dependencies and unresolved questions</td><td>A promised return or an assumed commitment from the reader</td></tr>
+   </tbody></table></div>
+   <p>For each claim, attach a source record you can inspect, not merely a website that mentions the topic. Keep dates, currency, denominators and exclusions next to the number where possible. Redact identifying information and obtain permission before sharing customer material. A missing source is a reason to qualify or remove a claim, not generate a citation.</p>
+   <h2 id="worked-example" className="scroll-mt-28">Inspect a fictional quote-drafting example</h2>
+   <p><strong>{DECK_PROVENANCE}</strong> The imagined task is preparing draft estimates for an equipment-hire business. There is no live integration or automatic sending. The twenty rows below make the arithmetic inspectable; they do not become real pilot evidence because the sums reconcile.</p>
+   <details className="my-6 rounded-xl border border-gray-300 p-4"><summary className="cursor-pointer font-semibold">Inspect all twenty synthetic timing rows</summary>
+    <p>Setup is a separate, one-time assumption of {total.setup} minutes. Review and extra correction are separate columns. A zero correction entry has no supplied output or correctness review; it must not be counted as an accurate model result.</p>
+    <div role="region" aria-label="Synthetic deck timing records" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4"><table className="min-w-[40rem]">
+     <caption>Invented minute inputs for Q01–Q20</caption>
+     <thead><tr><th scope="col">Draft</th><th scope="col">Baseline</th><th scope="col">Review</th><th scope="col">Extra correction</th><th scope="col">Supplied correction</th></tr></thead>
+     <tbody>{DECK_PILOT_ROWS.map(row => <tr key={row.id} data-deck-pilot-row={row.id}><th scope="row">{row.id}</th><td>{row.baselineMinutes}</td><td>{row.reviewMinutes}</td><td>{row.correctionMinutes}</td><td>{row.correctionRef ?? 'No output supplied'}</td></tr>)}</tbody>
+     <tfoot><tr><th scope="row">Totals</th><td>{total.baseline}</td><td>{total.review}</td><td>{total.corrections}</td><td>{total.correctedRows} scripted corrections</td></tr></tfoot>
+    </table></div>
+   </details>
+   <p><strong>Calculation:</strong> {total.review} review + {total.corrections} correction + {total.setup} setup = {total.assisted} assisted minutes, compared with {total.baseline} baseline minutes. The {total.difference}-minute difference is {total.differencePercent}% of baseline. This illustrated 5% task-time difference does not establish cash savings or causation. It excludes software charges, maintenance and other work.</p>
+   <p><strong>Sensitivity:</strong> changing setup to 60 minutes makes the totals equal at 200 minutes. At 80 setup minutes, assisted time becomes 220 minutes, 10% more than baseline. These are alternative assumptions, not later observed tests. Do not quietly remove setup or correction from the displayed result.</p>
+   <h3 id="corrections" className="scroll-mt-28">Read what the four corrections actually change</h3>
+   <p>The following inputs, bad drafts and edits are scripted teaching material. They illustrate different failure types without claiming an AI system generated or caught them.</p>
+   <details className="my-6 rounded-xl border border-gray-300 p-4"><summary className="cursor-pointer font-semibold">Inspect the four scripted corrections</summary>
+    <dl className="space-y-6">{DECK_CORRECTIONS.map(c => <div key={c.id} data-deck-correction={c.id}><dt className="font-bold">{c.id} / {c.row}</dt><dd className="ml-0"><p><strong>Input:</strong> {c.input}</p><p><strong>Draft:</strong> {c.draft}</p><p><strong>Edited:</strong> {c.edit}</p><p>{c.lesson}</p></dd></div>)}</dl>
+   </details>
+   <p>A real follow-up would define comparable work, record observed timings and preserve outputs for review. Check quantity and duration errors separately from changes to booking status or pickup location. Human review is a proposed operating boundary here, not demonstrated safety.</p>
 
-  return (
-    <div className="bg-transparent">
-      <ArticleHeroHeader
-        breadcrumbs={breadcrumbs}
-        title={`${TOPIC} (2026)`}
-        titleHighlight={TOPIC}
-        headerBgColor="purple"
-        summary={summaryHighlights}
-        heroImage={HERO_IMAGE}
-        heroImageAlt={HERO_IMAGE_ALT}
-      />
+   <h2 id="claim-revisions" className="scroll-mt-28">Revise the claim, keeping its limits attached</h2>
+   <dl className="space-y-6">{DECK_CLAIMS.map(claim => <div key={claim.id} data-deck-claim={claim.id}><dt className="font-bold">{claim.id}: “{claim.before}”</dt><dd className="ml-0"><p><strong>Replacement:</strong> {claim.replacement}</p><p><strong>Why:</strong> {claim.boundary}</p></dd></div>)}</dl>
+   <p>These replacements describe the supplied evidence. No retention percentage or churn figure belongs in D2 until a real cohort, time period and method exist. Do not turn one customer’s reported experience into a company-wide result.</p>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <ArticleTocPlaceholder />
-
-        <div className="prose prose-lg prose-indigo max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
-          <p>
-            <strong>{TOPIC}</strong> is less about a “perfect” template and more about telling a crisp, de‑risked story. Top lists like Slidebean and Failory showcase great examples, but the pattern that wins in 2026 is consistent: one problem, one audience, clear traction, and a specific ask—delivered in 3–5 minutes.
-          </p>
-
-          <ArticleImageBlock
-            src={HERO_IMAGE}
-            alt={HERO_IMAGE_ALT}
-            width={1200}
-            height={630}
-            containerClassName="my-10"
-          />
-
-          <h2>What “best” actually means in a pitch deck</h2>
-          <p>
-            The best decks do three things quickly: (1) prove there’s real pain and willingness to pay, (2) show why your timing and approach give you an unfair shot, and (3) make it obvious how the funds convert into milestones. Design matters, but evidence beats polish—screenshots of live usage, cohort retention, unit economics, and short customer quotes are stronger than mockups.
-          </p>
-          <p>
-            Keep one idea per slide. Use natural language headings like “Customers churned 12% → 6% after automation” rather than generic labels. For AI products, add one line on model choice, evaluation, and human oversight so investors don’t need to guess about safety and reliability.
-          </p>
-
-
-
-          <QuoteBlock title="Two versions win" variant="purple" icon={<span className="text-xl">💡</span>}>
-            Maintain a concise live deck (visual, 10–12 slides) and a self‑contained email deck (annotated, ~12–15 slides). The former supports your narrative; the latter must survive forwarding without you.
-          </QuoteBlock>
-
-          <h2>Investor‑validated structure: the 12‑slide flow</h2>
-          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-66a7f9bf-370f-4830-a630-d91009a58e79.jpg?alt=media&token=e0341765-316f-4b19-b047-caa45e3ca173" alt="Vibrant 90s tech scene featuring diverse individuals collaborating in a startup environment." className="w-full rounded-lg my-8" />
-
-          <p>
-            A structure adapted from widely used investor templates (e.g., Sequoia) works across most sectors:
-            Problem → Audience → Solution/Product → Why now → Market size → Traction → Business model → Go‑to‑market → Competition & moat → Team → Financials (one page) → The ask & use of funds.
-          </p>
-
-          <h3>Optional slides by stage or sector</h3>
-          <p>
-            Pre‑seed: compress financials and expand founder–market fit. Seed/Series A: expand traction (retention, payback) and GTM (pipeline, sales motion). AI: add a brief note on data sources, evaluation metrics, and safety guardrails; link to a longer policy if asked.
-          </p>
-
-          <ArticleStepList
-            title="Build your deck in this order"
-            steps={[
-              'Write your one‑sentence narrative: Problem → Why now → Why us → What’s the ask',
-              'Assemble slides following the 12‑slide flow; keep one idea per slide',
-              'Cut words by half; add real evidence (metrics, screenshots, customer quotes)'
-            ]}
-            accent="indigo"
-          />
-
-          <QuoteBlock title="Key takeaway" variant="purple">
-            “Investors skim first, then engage. Make the skim undeniable: a clear why‑now, real traction, and a precise use‑of‑funds.”
-          </QuoteBlock>
-
-          <AudienceGrid
-            heading="Who this helps"
-            cards={[
-              {
-                title: 'Founders & Teams',
-                description: 'For leaders validating ideas, seeking funding, or managing teams.',
-                icon: <RocketLaunchIcon className="h-6 w-6" />,
-                variant: 'orange'
-              },
-              {
-                title: 'Students & Switchers',
-                description: 'For those building portfolios, learning new skills, or changing careers.',
-                icon: <AcademicCapIcon className="h-6 w-6" />,
-                variant: 'purple'
-              },
-              {
-                title: 'Community Builders',
-                description: 'For workshop facilitators, mentors, and ecosystem supporters.',
-                icon: <UsersIcon className="h-6 w-6" />,
-                variant: 'yellow'
-              }
-            ]}
-          />
-
-          <MLAITemplateResourceCTA />
-
-          <h2>Formats and timing: slides, minutes, and file type</h2>
-          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f6b7cf59-6964-4301-93fa-f123a3742617.jpg?alt=media&token=a80ad5ed-844c-4e99-a3c6-98f50ca366c2" alt="90s film aesthetic scene showing diverse team collaborating in a tech startup office, surrounded by gadgets and notes." className="w-full rounded-lg my-8" />
-
-          <p>
-            For live sessions, 10–12 slides and ~10 minutes is a safe default; demo days often compress to 3–5 minutes. The classic 10/20/30 guideline remains useful: ~10 slides, ≤20 minutes, ≥30‑point text for readability. Share a PDF (16:9, under 10 MB) and carry an editable backup for live.
-          </p>
-          <p>
-            Email decks need short annotations because they travel without you. Avoid auto‑playing videos; link to a 60–90 second demo and include a static screenshot so the message still lands if the link is skipped.
-          </p>
-
-          <h2>The Australian context in 2026: local expectations for AI startups</h2>
-          <p>
-            AU investors will expect awareness of privacy and responsible AI. If you touch personal data, align your claims with the Australian Privacy Principles and be ready to discuss data storage, consent, and deletion. For AI safety, state your approach to evaluation, bias mitigation, and human oversight in one concise slide note.
-          </p>
-          <p>
-            If you rely on non‑dilutive funding (e.g., the R&D Tax Incentive), mention it briefly as part of runway planning—conservatively and with timing caveats. For fundraising mechanics, ensure you understand local disclosure rules and investor norms before circulating widely.
-          </p>
-
-          <h2>Mistakes that stall a raise (and how to fix them)</h2>
-          <p>
-            Common blockers include: too many ideas per slide, no traction proxy (e.g., waitlist growth, LOIs), unclear go‑to‑market, and a vague ask. Fix by tightening to one message per slide, adding simple evidence (screenshots, metrics), naming your first distribution channel and early ICP, and stating an explicit use‑of‑funds with milestone dates.
-          </p>
-
-          <h2>Examples to study (and what to copy, not clone)</h2>
-          <p>
-            Browse curated galleries (Slidebean, Failory) to see patterns: strong title slides, crisp problem framing, traction visualisation, and short asks. Copy the principles (clarity, evidence, pacing), not the aesthetics of a different business model or market. When in doubt, prioritise proof over polish.
-          </p>
-
-          <h2>Ship your v1 deck this week</h2>
-          <p>
-            Draft your narrative in plain language, map to the 12‑slide flow, add real evidence, and produce both a live and email version. Share with 3–5 trusted reviewers for a “skim test” before sending to investors. Small, fast iterations beat long internal debates.
-          </p>
-
-          <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Your Next Steps</h3>
-            <ul className="space-y-3">
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">1</span>
-                <span>List the claims your slides need to support.</span>
-              </li>
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">2</span>
-                <span>Mark each claim as observed evidence, an assumption or an unanswered question.</span>
-              </li>
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">3</span>
-                <span>Discuss with your team or mentor.</span>
-              </li>
-            </ul>
-          </div>
-
-          <ArticleCompanyCTA
-            title={`Need help with ${TOPIC}?`}
-            body="MLAI is a not‑for‑profit community empowering the Australian AI community. Join peers to workshop your deck and get practical feedback."
-            buttonText="Join the MLAI community"
-            buttonHref="/contact"
-            note="Friendly, community‑first support."
-          />
-        </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ArticleDisclaimer className="mt-8" />
-
-        <ArticleReferences references={references} />
-
-        <ArticleFAQ items={faqItems} />
-
-        <AuthorBio author={authorDetails} />
-
-        <ArticleFooterNav backHref="/articles" topHref="#" />
-      </div>
-    </div>
-  )
+   <h2 id="record" className="scroll-mt-28">Save a completed claim record and make your own</h2>
+   <p><a href="/downloads/pitch-deck-evidence-review.txt" download="pitch-deck-evidence-review.txt">Download the editable deck evidence review</a>. The actual text file contains the ten blank/completed fields, twenty timing rows, four corrections, three claim revisions and fictional read-through. No signup is required. It contains no copied third-party deck assets.</p>
+   <nav aria-label="Deck evidence sections"><ul className="flex list-none flex-wrap gap-x-6 gap-y-2 pl-0"><li><a href="#corrections">Scripted corrections</a></li><li><a href="#completed-record">Completed claim record</a></li><li><a href="#read-through">Read-through</a></li></ul></nav>
+   <p>Use one record per consequential claim. Keep enough context on the slide for someone receiving it without your explanation.</p>
+   <pre className="whitespace-pre-wrap" aria-label="Pitch slide evidence record">{DECK_FIELDS.map((field, index) => `${index + 1}. ${field.label}:`).join('\n')}</pre>
+   <details className="my-6 rounded-xl border border-gray-300 p-4"><summary id="completed-record" className="cursor-pointer font-semibold scroll-mt-28">Completed ten-field record for claim D1</summary>
+    <dl className="space-y-5">{DECK_FIELDS.map((field, index) => <div key={field.label} data-deck-claim-field={index + 1}><dt className="font-bold">{field.label}</dt><dd className="ml-0 mt-1">{field.value}</dd></div>)}</dl>
+   </details>
+   <h2 id="read-through" className="scroll-mt-28">Test whether the deck survives being read without you</h2>
+   <ol>
+    <li>Ask a willing reviewer to explain the intended customer, current product and next request in their own words before you explain the slides.</li>
+    <li>Ask which statements they interpreted as measured results. Compare their answers with your evidence records.</li>
+    <li>Record unanswered questions and misunderstood claims. Revise those passages rather than treating praise as validation.</li>
+    <li>Check the actual sharing format: text legibility, chart labels, permissions, links and any organiser requirements. Keep a static explanation if a demo cannot load.</li>
+   </ol>
+   <p>This is a comprehension check, not an investor approval score. A live presentation can use spoken explanation; a forwarded deck needs necessary context in the document itself. Do not remove limitations merely to shorten it.</p>
+   <p>Here is a supplied fictional read-through, including the misleading interpretation it catches. No actual reviewer took part.</p>
+   <ol className="list-none pl-0 space-y-5">{DECK_READ_THROUGH.map(step => <li key={step.id} data-deck-read-through={step.id}><p><strong>{step.id}: {step.action}</strong></p><p>{step.material}</p></li>)}</ol>
+   <h2 id="next-step" className="scroll-mt-28">Bring one evidence question to an MLAI event</h2>
+   <p>Choose a relevant MLAI founder event and ask whether a participant is willing to discuss one anonymised slide. For example: “Does this sentence make clear what we measured and what remains untested?” Check the event’s topic, format and participation rules; a listing is not a promise of deck review or investor access.</p>
+   <p>For this example, the useful question is “Can you tell that these are invented timings rather than measured cash savings?” Pick an event whose actual programme matches the discussion you want. You can attend to learn without pitching or sharing your deck.</p>
+   <p>If your separate task is reporting progress to existing stakeholders, <Link to="/vibe-raising">Vibe Raising</Link> is an optional way to prepare an update. Opening the workspace requires an account; this worksheet is not imported automatically, and the tool does not verify your claims or endorse a valuation. For share-count assumptions, see the <Link to="/articles/featured/how-vcs-value-startups">valuation evidence guide</Link>.</p>
+    <p><Link to="/events">Explore upcoming MLAI events</Link> and check the listing for its topic, format and participation requirements.</p>
+   <h2 id="sources" className="scroll-mt-28">Sources and editorial limits</h2>
+   <p>The Sequoia, Buffer and Reid Hoffman pages were checked on 15 September 2026. The linked founder retrospectives provide historical author accounts, not current market research or independent fundraising attribution. Independent source review remains pending. A future reproduction of third-party deck images would require a separate rights and accessibility check.</p>
+   <p>{DECK_REVIEW_STATUS} The evidence map, fictional records and read-through are teaching material. No deck outcome, Australian investor preference or legal eligibility is inferred. Seek qualified advice for an actual fundraising transaction. The original publication date is preserved; this revision adds supplied source material and a completed record.</p>
+   <ArticleFAQ items={faqItems} />
+  </div>
+ </div>
 }

@@ -13,13 +13,13 @@ const TOPIC = "What Is Artificial Intelligence in Simple Words?";
 export const CATEGORY = "featured";
 export const SLUG = "what-is-artificial-intelligence-in-simple-words";
 export const DATE_PUBLISHED = "2026-04-18";
-export const DATE_MODIFIED = "2026-07-28";
+export const DATE_MODIFIED = "2026-09-15";
 export const DESCRIPTION =
   "A plain-English guide to AI, machine learning and generative AI, with an interactive AI-or-not exercise and a practical human-check workflow.";
 const HERO_IMAGE =
   "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aabcc5ca-e159-4024-b1c7-baf0b68dc947.jpg?alt=media&token=a5c618e2-f10a-4f7a-8bc3-5a0702cf9959";
 const HERO_IMAGE_ALT =
-  "Person using a voice assistant on a smartphone, an everyday example of an AI-enabled interface";
+  "Illustrative image of two people";
 
 interface FAQ {
   id: number;
@@ -109,8 +109,8 @@ const REFERENCES = [
   },
   {
     id: 4,
-    href: "https://www.industry.gov.au/sites/default/files/2025-10/guidance-for-ai-adoption-implementation-practices.pdf",
-    title: "Guidance for AI Adoption: Implementation practices",
+    href: "https://www.ai.gov.au/staying-safe-and-responsible/essential-ai-practices/guidance-ai-adoption-implementation-guidance",
+    title: "Guidance for AI adoption: implementation guidance",
     publisher: "Australian Government National AI Centre",
     description:
       "Six responsible-AI practices for organisations developing or deploying AI.",
@@ -440,7 +440,7 @@ export default function ArticleContent() {
             <li>
               <strong className="text-white">Source method:</strong> the
               definition and safety sections use OECD, OAIC, NIST and Australian
-              Government primary guidance, checked 28 July 2026.
+              Government primary guidance, checked 15 September 2026.
             </li>
             <li>
               <strong className="text-white">Original asset:</strong> MLAI
@@ -476,10 +476,17 @@ export default function ArticleContent() {
           output, human decision and success measure before choosing a model.
         </p>
 
+        <p>
+          If your next step is learning rather than commissioning software,
+          choose an MLAI event suited to your experience. Bring an example you
+          can discuss without sharing private information, and ask what the
+          system gets wrong as well as what it can do.
+        </p>
+
         <ArticleReferences
           references={[...REFERENCES]}
           heading="Primary sources and further reading"
-          description="Definitions and guidance used for this 28 July 2026 revision."
+          description="Definitions and guidance used for this 15 September 2026 revision."
           previewCount={4}
         />
 

@@ -43,11 +43,17 @@ Use the pinned Bun runtime and the frozen lockfile:
 ```sh
 bun install --frozen-lockfile
 bun run typecheck
-bun test
+bun run test
 bun run build
 bunx playwright install chromium
 bun run test:articles:browser
 ```
+
+The unit command scopes discovery to `tests/` so generated build copies are not
+counted as additional tests. Executable article labs run through their resource
+verification tests in Node. Those checks also compare the ZIP with its individually
+served files, preserve the recorded losing forecast, and retain unknown or failed
+evidence instead of producing a positive decision.
 
 The build checks known drafting residue and resource placeholders, then verifies
 local download files before and after bundling. The browser suite opens every
