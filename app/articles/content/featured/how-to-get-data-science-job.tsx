@@ -17,7 +17,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { ArticleCallout } from '../../../components/articles/ArticleCallout'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
@@ -66,7 +65,7 @@ export const faqItems: FAQ[] = [
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
   intro:
-    'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
+    "Choose a target role, identify the skills it asks for and prepare work that demonstrates how you handle data, evaluate results and explain limitations.",
   items: [
     {
       label: 'How do I get a data science job with no experience?',
@@ -140,7 +139,7 @@ export default function ArticlePage() {
         <ArticleTocPlaceholder />
 
         <div className="prose prose-lg prose-indigo max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
-          {/* 
+          {/*
             ⚠️ IMPORTANT: CONTENT STRUCTURE INSTRUCTIONS
 
             The sections below are EXAMPLES ONLY showing component usage patterns.
@@ -157,7 +156,7 @@ export default function ArticlePage() {
           */}
 
           <p>
-            <strong>{TOPIC}</strong> – If you\'re aiming for your first (or next) role, Australian hiring in 2026 still centres on demonstrable skills, clear project outcomes, and the ability to communicate with stakeholders. This guide distils what top-ranking career pages emphasise (skills, pathways, and roles) and answers People‑Also‑Ask queries with an Australian lens.
+            <strong>{TOPIC}</strong> — Start with a role you want to understand, then compare its responsibilities with work you can show. This guide covers learning routes, project evidence and preparation for explaining your decisions to a hiring team. Check current role descriptions instead of assuming every data science job asks for the same skills.
           </p>
 
           <ArticleImageBlock
@@ -177,14 +176,7 @@ export default function ArticlePage() {
             For most junior roles, depth beats breadth. Show you can take a messy dataset, ask a useful question, create a clean pipeline, test a model/baseline, and present trade‑offs in plain English.
           </p>
 
-          <ArticleResourceCTA
-            eyebrow="Download"
-            title={`Get the checklist for ${TOPIC}`}
-            description="Practical template to apply the concepts immediately."
-            buttonLabel="Download now"
-            buttonHref="#"
-            accent="purple"
-          />
+
 
           <QuoteBlock
             title="Proof beats promises: ship small, show outcomes"
@@ -309,11 +301,11 @@ export default function ArticlePage() {
             <ul className="space-y-3">
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">1</span>
-                <span>Download the checklist mentioned above.</span>
+                <span>Choose one target role and list the evidence it asks you to demonstrate.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">2</span>
-                <span>Draft your initial goals based on the template.</span>
+                <span>Select a project and explain your data choices, evaluation and limitations.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">3</span>

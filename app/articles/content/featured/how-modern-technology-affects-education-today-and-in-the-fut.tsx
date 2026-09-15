@@ -12,7 +12,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -88,7 +87,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Compare educational uses of technology by setting and learning goal. Distinguish observed findings from predictions about what may happen next.",
   items: [
     { label: 'What are the biggest benefits of technology in education today?', description: 'Personalised learning, better access/inclusion, faster feedback and richer collaboration.' },
     { label: 'What risks should schools manage with edtech?', description: 'Digital divide, distraction/wellbeing, privacy/data handling, academic integrity, vendor lock‑in.' },
@@ -346,14 +345,7 @@ export default function ArticleContent() {
           accent="teal"
         />
 
-        <ArticleResourceCTA
-          eyebrow="Resources"
-          title={`Get templates for ${TOPIC}`}
-          description="Download checklists, worksheets, and example documents tailored to this guide."
-          buttonLabel="Download now"
-          buttonHref="#"
-          accent="purple"
-        />
+
 
         <QuoteBlock title="Pro tip" variant="purple">
           Pilot one workflow at a time. Evidence from a small, well‑run pilot beats a

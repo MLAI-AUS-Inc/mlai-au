@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -109,9 +108,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -197,14 +194,7 @@ export default function ArticleContent() {
           <p>{"Google AI's build tools separate lighter-weight starting points from Vertex AI, which is presented as an enterprise platform with access to many models and development features."}</p>
           <p>{"If you need wider model choice, enterprise features, or stronger support for production workflows, a developer platform is the safer option. It is typically slower to set up than a no-code builder, but it gives technical teams more control over how the AI system is built, tested, and scaled."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the build ai checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -259,15 +249,15 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://buildai.space/", title: "BuildAI - Build AI Apps In Minutes, No Coding Required", publisher: "buildai.space", description: "Authoritative reference supporting BuildAI - Build AI Apps In Minutes, No Coding Required.", category: "guide"},
-          {id: 2, href: "https://ai.google/build/", title: "Tools for developers to get started \u2014 Google AI", publisher: "ai.google", description: "Authoritative reference supporting Tools for developers to get started \u2014 Google AI.", category: "guide"},
-          {id: 3, href: "https://business.gov.au/online-and-digital/artificial-intelligence", title: "Artificial intelligence (AI) | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Artificial intelligence (AI) | business.gov.au.", category: "guide"},
-          {id: 4, href: "https://www.smallbusiness.nsw.gov.au/help/common-questions/can-artificial-intelligence-help-your-business", title: "Can Artificial Intelligence help your business? | NSW Small Business Commissioner", publisher: "smallbusiness.nsw.gov.au", description: "Authoritative reference supporting Can Artificial Intelligence help your business? | NSW Small Business Commissioner.", category: "guide"},
-          {id: 5, href: "https://www.clarifai.com/blog/build-an-ai-model/", title: "How to Build an AI Model Step by Step (2025 Guide) | Clarifai", publisher: "clarifai.com", description: "Authoritative reference supporting How to Build an AI Model Step by Step (2025 Guide) | Clarifai.", category: "guide"},
-          {id: 6, href: "https://bolt.new/", title: "Bolt AI builder: Websites, apps & prototypes", publisher: "bolt.new", description: "Authoritative reference supporting Bolt AI builder: Websites, apps & prototypes.", category: "guide"},
-          {id: 7, href: "https://www.anz.com.au/business/business-hub/grow-business/grow/small-business-ai/", title: "Getting started with AI for your small business | ANZ", publisher: "anz.com.au", description: "Authoritative reference supporting Getting started with AI for your small business | ANZ.", category: "guide"},
-          {id: 8, href: "https://cloud.google.com/transform/how-to-build-an-effective-ai-strategy", title: "An effective AI strategy: How to build one | Google Cloud Blog", publisher: "cloud.google.com", description: "Authoritative reference supporting An effective AI strategy: How to build one | Google Cloud Blog.", category: "guide"},
-          {id: 9, href: "https://www.digital.nsw.gov.au/policy/artificial-intelligence/artificial-intelligence-strategy", title: "Artificial Intelligence Strategy | Digital NSW", publisher: "digital.nsw.gov.au", description: "Authoritative reference supporting Artificial Intelligence Strategy | Digital NSW.", category: "guide"},
+          {id: 1, href: "https://buildai.space/", title: "BuildAI - Build AI Apps In Minutes, No Coding Required", publisher: "buildai.space", description: "", category: "guide"},
+          {id: 2, href: "https://ai.google/build/", title: "Tools for developers to get started \u2014 Google AI", publisher: "ai.google", description: "", category: "guide"},
+          {id: 3, href: "https://business.gov.au/online-and-digital/artificial-intelligence", title: "Artificial intelligence (AI) | business.gov.au", publisher: "business.gov.au", description: "", category: "guide"},
+          {id: 4, href: "https://www.smallbusiness.nsw.gov.au/help/common-questions/can-artificial-intelligence-help-your-business", title: "Can Artificial Intelligence help your business? | NSW Small Business Commissioner", publisher: "smallbusiness.nsw.gov.au", description: "", category: "guide"},
+          {id: 5, href: "https://www.clarifai.com/blog/build-an-ai-model/", title: "How to Build an AI Model Step by Step (2025 Guide) | Clarifai", publisher: "clarifai.com", description: "", category: "guide"},
+          {id: 6, href: "https://bolt.new/", title: "Bolt AI builder: Websites, apps & prototypes", publisher: "bolt.new", description: "", category: "guide"},
+          {id: 7, href: "https://www.anz.com.au/business/business-hub/grow-business/grow/small-business-ai/", title: "Getting started with AI for your small business | ANZ", publisher: "anz.com.au", description: "", category: "guide"},
+          {id: 8, href: "https://cloud.google.com/transform/how-to-build-an-effective-ai-strategy", title: "An effective AI strategy: How to build one | Google Cloud Blog", publisher: "cloud.google.com", description: "", category: "guide"},
+          {id: 9, href: "https://www.digital.nsw.gov.au/policy/artificial-intelligence/artificial-intelligence-strategy", title: "Artificial Intelligence Strategy | Digital NSW", publisher: "digital.nsw.gov.au", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

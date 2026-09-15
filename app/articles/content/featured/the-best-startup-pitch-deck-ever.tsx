@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { ArticleCallout } from '../../../components/articles/ArticleCallout'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
@@ -100,7 +99,7 @@ export const faqItems: FAQ[] = [
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
   intro:
-    'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
+    "Build a clear pitch around the customer problem, the evidence you have and the next milestone. Keep assumptions visible and make every slide earn its place.",
   items: [
     {
       label: 'How many slides should a startup pitch deck have?',
@@ -226,14 +225,7 @@ export default function ArticlePage() {
             Keep one idea per slide. Use natural language headings like “Customers churned 12% → 6% after automation” rather than generic labels. For AI products, add one line on model choice, evaluation, and human oversight so investors don’t need to guess about safety and reliability.
           </p>
 
-          <ArticleResourceCTA
-            eyebrow="Download"
-            title={`Get the checklist for ${TOPIC}`}
-            description="Practical template to apply the concepts immediately."
-            buttonLabel="Download now"
-            buttonHref="#"
-            accent="purple"
-          />
+
 
           <QuoteBlock title="Two versions win" variant="purple" icon={<span className="text-xl">💡</span>}>
             Maintain a concise live deck (visual, 10–12 slides) and a self‑contained email deck (annotated, ~12–15 slides). The former supports your narrative; the latter must survive forwarding without you.
@@ -330,11 +322,11 @@ export default function ArticlePage() {
             <ul className="space-y-3">
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">1</span>
-                <span>Download the checklist mentioned above.</span>
+                <span>List the claims your slides need to support.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">2</span>
-                <span>Draft your initial goals based on the template.</span>
+                <span>Mark each claim as observed evidence, an assumption or an unanswered question.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">3</span>

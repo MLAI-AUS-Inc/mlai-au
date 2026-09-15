@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -109,9 +108,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -192,14 +189,7 @@ export default function ArticleContent() {
           <p>{"Consumer-facing AI often falls into a few simple categories. Recognition tools help devices identify faces, objects, or speech. Language-based tools support translation, voice commands, and question answering. Navigation and mapping tools use prediction to improve routing and travel estimates."}</p>
           <p>{"These examples matter because they make AI concrete. Many readers may think of AI only as chatbots, but the broader picture is much more ordinary. AI is built into phones, inboxes, search, media platforms, and smart home features. That is why the best way to understand what artificial intelligence is used for in daily life is to look at the small decisions and predictions happening behind familiar digital services."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the what is artificial intelligence used for checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -233,7 +223,7 @@ export default function ArticleContent() {
           <h2>{"The best way to think about what artificial intelligence is used for"}</h2>
           <p>{"A practical way to answer what artificial intelligence is used for is this: AI helps machines do tasks that depend on patterns, predictions, language, perception, and decisions. Across the main sources, AI is described as helping systems learn from data, understand inputs, respond to human language, perceive parts of their environment, and act toward a defined goal."}</p>
           <p>{"The broad range of AI uses can make it seem like a tool for everything, but the more useful view is narrower. AI tends to work best when the problem is specific, repeatable, and supported by enough data or clear examples. For most people and teams, the next step is not to ask where AI can replace all human work. It is to find one repetitive or data-heavy workflow where AI can support people with faster analysis, better recommendations, or simpler automation, then test that use carefully and build from there."}</p>
-          <p>{"In practice, the best way to think about what artificial intelligence is used for works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+          <p>{"Start with the task rather than the label: what input does the system receive, what output does it produce and how will someone check whether that output is useful? Keep a manual alternative for cases the system cannot handle."}</p>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9c4bcad0-f88e-4a1e-a7b2-4364a8bc68e9.jpg?alt=media&token=24290bd9-8afc-4178-810c-f19ecd4ac318"
             alt="Team reviewing AI"
@@ -250,16 +240,16 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://www.ibm.com/think/topics/artificial-intelligence-business", title: "What is Artificial Intelligence (AI) in Business? | IBM", publisher: "ibm.com", description: "Authoritative reference supporting What is Artificial Intelligence (AI) in Business? | IBM.", category: "guide"},
-          {id: 2, href: "https://www.ibm.com/think/topics/artificial-intelligence", title: "What Is Artificial Intelligence (AI)? | IBM", publisher: "ibm.com", description: "Authoritative reference supporting What Is Artificial Intelligence (AI)? | IBM.", category: "guide"},
-          {id: 3, href: "https://www.europarl.europa.eu/topics/en/article/20200827STO85804/what-is-artificial-intelligence-and-how-is-it-used", title: "What is artificial intelligence and how is it used? | Topics | European Parliament", publisher: "europarl.europa.eu", description: "Authoritative reference supporting What is artificial intelligence and how is it used? | Topics | European Parliament.", category: "guide"},
-          {id: 4, href: "https://www.digital.nsw.gov.au/policy/artificial-intelligence/artificial-intelligence-strategy", title: "Artificial Intelligence Strategy | Digital NSW", publisher: "digital.nsw.gov.au", description: "Authoritative reference supporting Artificial Intelligence Strategy | Digital NSW.", category: "guide"},
-          {id: 5, href: "https://en.wikipedia.org/wiki/Artificial_intelligence", title: "Artificial intelligence - Wikipedia", publisher: "en.wikipedia.org", description: "Authoritative reference supporting Artificial intelligence - Wikipedia.", category: "guide"},
-          {id: 6, href: "https://cloud.google.com/learn/what-is-artificial-intelligence", title: "What is Artificial Intelligence (AI)? | Google Cloud", publisher: "cloud.google.com", description: "Authoritative reference supporting What is Artificial Intelligence (AI)? | Google Cloud.", category: "guide"},
-          {id: 7, href: "https://business.gov.au/online-and-digital/artificial-intelligence", title: "Artificial intelligence (AI) | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Artificial intelligence (AI) | business.gov.au.", category: "guide"},
-          {id: 8, href: "https://www.iso.org/artificial-intelligence", title: "ISO - Artificial intelligence: What it is, how it works and why it matters", publisher: "iso.org", description: "Authoritative reference supporting ISO - Artificial intelligence: What it is, how it works and why it matters.", category: "guide"},
-          {id: 9, href: "https://www.microchannel.com.au/articles/7-examples-of-how-ai-is-helping-small-businesses/", title: "7 Ways AI for Small Business Is Driving Growth and Efficiency", publisher: "microchannel.com.au", description: "Authoritative reference supporting 7 Ways AI for Small Business Is Driving Growth and Efficiency.", category: "guide"},
-          {id: 10, href: "https://quantive.com/resources/articles/what-is-the-best-ai-for-strategic-management", title: "What is the best AI tool for strategic planning?", publisher: "quantive.com", description: "Authoritative reference supporting What is the best AI tool for strategic planning?.", category: "guide"},
+          {id: 1, href: "https://www.ibm.com/think/topics/artificial-intelligence-business", title: "What is Artificial Intelligence (AI) in Business? | IBM", publisher: "ibm.com", description: "", category: "guide"},
+          {id: 2, href: "https://www.ibm.com/think/topics/artificial-intelligence", title: "What Is Artificial Intelligence (AI)? | IBM", publisher: "ibm.com", description: "", category: "guide"},
+          {id: 3, href: "https://www.europarl.europa.eu/topics/en/article/20200827STO85804/what-is-artificial-intelligence-and-how-is-it-used", title: "What is artificial intelligence and how is it used? | Topics | European Parliament", publisher: "europarl.europa.eu", description: "", category: "guide"},
+          {id: 4, href: "https://www.digital.nsw.gov.au/policy/artificial-intelligence/artificial-intelligence-strategy", title: "Artificial Intelligence Strategy | Digital NSW", publisher: "digital.nsw.gov.au", description: "", category: "guide"},
+          {id: 5, href: "https://en.wikipedia.org/wiki/Artificial_intelligence", title: "Artificial intelligence - Wikipedia", publisher: "en.wikipedia.org", description: "", category: "guide"},
+          {id: 6, href: "https://cloud.google.com/learn/what-is-artificial-intelligence", title: "What is Artificial Intelligence (AI)? | Google Cloud", publisher: "cloud.google.com", description: "", category: "guide"},
+          {id: 7, href: "https://business.gov.au/online-and-digital/artificial-intelligence", title: "Artificial intelligence (AI) | business.gov.au", publisher: "business.gov.au", description: "", category: "guide"},
+          {id: 8, href: "https://www.iso.org/artificial-intelligence", title: "ISO - Artificial intelligence: What it is, how it works and why it matters", publisher: "iso.org", description: "", category: "guide"},
+          {id: 9, href: "https://www.microchannel.com.au/articles/7-examples-of-how-ai-is-helping-small-businesses/", title: "7 Ways AI for Small Business Is Driving Growth and Efficiency", publisher: "microchannel.com.au", description: "", category: "guide"},
+          {id: 10, href: "https://quantive.com/resources/articles/what-is-the-best-ai-for-strategic-management", title: "What is the best AI tool for strategic planning?", publisher: "quantive.com", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />
