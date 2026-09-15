@@ -1,3 +1,4 @@
+import { getUpdateTitles, sortStartupUpdates } from "~/lib/startup-updates-presentation";
 import UpdateEvidenceText from "~/components/vibe-raising/UpdateEvidenceText";
 import { Link, redirect, useLoaderData } from "react-router";
 import { formatDistanceToNow } from "date-fns";
@@ -98,7 +99,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function VibeRaisingDraftsPage() {
-    const { drafts } = useLoaderData<typeof loader>();
+    const { drafts: rawDrafts } = useLoaderData<typeof loader>();
+    const drafts = sortStartupUpdates(rawDrafts);
+    const titles = getUpdateTitles(drafts);
     const readyDrafts = drafts.filter((draft) => draft.status === "ready").length;
     const inProgressDrafts = drafts.filter((draft) => draft.status !== "ready").length;
 
@@ -194,7 +197,7 @@ export default function VibeRaisingDraftsPage() {
                                                     {isReady ? "Ready" : "In progress"}
                                                 </span>
                                             </div>
-                                            <h3 className="mt-3 text-2xl font-black text-gray-950">{draft.month}</h3>
+                                            <h3 className="mt-3 text-2xl font-black text-gray-950">{titles.get(draft.id)}</h3>
                                         </div>
                                         <div className="inline-flex items-center gap-2 rounded-full bg-[var(--vr-palette-paper)] px-3 py-2 text-xs font-bold text-slate-500">
                                             <ClockIcon className="h-4 w-4" />

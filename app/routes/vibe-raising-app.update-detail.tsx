@@ -9,7 +9,7 @@ import {
     resolveActiveCompanyId,
 } from "~/lib/vibe-raising";
 import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
-import { getUpdateTitles } from "~/lib/startup-updates-presentation";
+import { getUpdateTitles, getUpdateTimeLabels } from "~/lib/startup-updates-presentation";
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -29,11 +29,11 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
         throw new Response("Update not found", { status: 404 });
     }
 
-    return { user: vibeContext.appUser, update, updateTitle: getUpdateTitles(updates).get(update.id) };
+    return { user: vibeContext.appUser, update, updateTitle: getUpdateTitles(updates).get(update.id), timeLabel: getUpdateTimeLabels(updates).get(update.id) };
 }
 
 export default function UpdateDetailPage() {
-    const { user, update, updateTitle } = useLoaderData<typeof loader>();
+    const { user, update, updateTitle, timeLabel } = useLoaderData<typeof loader>();
 
     return (
         <div className="vr-scope update-reader">
@@ -44,7 +44,7 @@ export default function UpdateDetailPage() {
                 <ArrowLeftIcon className="h-3.5 w-3.5" />
                 All updates
             </Link>
-            <UpdateArticle update={update} companyName={user.companyName} title={updateTitle} editable />
+            <UpdateArticle update={update} companyName={user.companyName} title={updateTitle} timeLabel={timeLabel} editable />
         </div>
     );
 }

@@ -27,6 +27,7 @@ export function renderUpdateEditor(
         loaderData: {
           update: {
             metricDefinitions: [],
+            creationKey: null, today: "2026-09-15", reportingTimezone: "Australia/Melbourne",
             user: {
               authUser: { id: 1 },
               activeCompanyId: "test-company",

@@ -1,3 +1,5 @@
+import { getUpdatePeriod, updateCalendarDate, getUpdateTitles } from "~/lib/startup-updates-presentation";
+import { defaultUpdateSourceWindow, toLocalDateTime, fromLocalDateTime } from "~/lib/update-source-window";
 import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
 import UpdateDialog from "~/components/vibe-raising/UpdateDialog";
 import { isFinancialMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updateWorkingCopyKey } from "~/lib/update-working-copy";
@@ -536,6 +538,9 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
     const metrics = update.metrics || {};
     return {
         id: update.id,
+        updateDate: update.updateDate ?? getUpdatePeriod(update).date,
+        creationKey: update.creationKey,
+        narrativePeriod: update.narrativePeriod,
         revisionId: update.revisionId,
         revisionHash: update.revisionHash,
         audienceVisibility: update.audienceVisibility || "",
@@ -603,6 +608,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     // Check for edit mode
     const editId = url.searchParams.get("edit");
+    const creationKey = url.searchParams.get("draft");
+    if (!editId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(creationKey || "")) {
+        url.searchParams.set("draft", crypto.randomUUID());
+        throw redirect(`${url.pathname}${url.search}`);
+    }
     const resumeEmailDrafting =
         url.searchParams.get("email_draft") === "1" ||
         url.searchParams.get("draft_from_email") === "1";
@@ -628,10 +638,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         return [];
     });
 
+    if (!editId && creationKey) {
+        const drafts = await getVibeRaisingDrafts(env, request, resolveActiveCompanyId(user));
+        const matching = [...drafts, ...existingMonthlyUpdates].find(update => update.creationKey === creationKey);
+        if (matching) existingData = buildExistingUpdateFormData(matching);
+    }
+    if (editId && !existingData) throw new Response("Update not found", { status: 404 });
     const health = await getStartupHealth(env, request, resolveActiveCompanyId(user));
     return {
         user,
         metricDefinitions: health.configuration.metricDefinitions || [],
+        creationKey: creationKey || existingData?.creationKey || null,
+        reportingTimezone: health.configuration.timezone || "UTC",
+        today: updateCalendarDate(new Date().toISOString(), health.configuration.timezone || "UTC")!,
         existingData,
         isEdit: !!editId,
         backendBaseUrl: String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL),
@@ -683,6 +702,9 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     };
 
     return {
+        updateId: String(formData.get("updateId") || "") || null,
+        creationKey: String(formData.get("creationKey") || "") || null,
+        updateDate: String(formData.get("updateDate") || "") || null,
         audienceVisibility: normalizeAudienceVisibilityValue(formData.getAll("audienceVisibility")),
         month: String(formData.get("month") || "").trim(),
         year: Number(formData.get("year") || 0),
@@ -2885,8 +2907,10 @@ function CreateUpdateMobileTour({
 }
 
 export default function CreateUpdate() {
-    const { user } = useLoaderData<typeof loader>();
-    return <CreateUpdateEditor key={`${user.authUser.id}:${resolveActiveCompanyId(user)}`} />;
+    const { user, creationKey } = useLoaderData<typeof loader>();
+    const location = useLocation();
+    const identity = new URLSearchParams(location.search).get("edit") || creationKey;
+    return <CreateUpdateEditor key={`${user.authUser.id}:${resolveActiveCompanyId(user)}:${identity}`} />;
 }
 
 function CreateUpdateEditor() {
@@ -2899,7 +2923,7 @@ function CreateUpdateEditor() {
         selectedInputSources: initialSelectedInputSources,
         draftReturnState,
         existingMonthlyUpdates,
-        metricDefinitions,
+        metricDefinitions, creationKey, reportingTimezone, today,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const [activeReviewActionData, setActiveReviewActionData] = useState<any>(null);
@@ -2927,7 +2951,7 @@ function CreateUpdateEditor() {
     const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
     const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
     const shouldOpenDraftTemplate = true;
-    const [updateCadence, setUpdateCadence] = useState<UpdateCadence | null>(() => draftReturnState?.cadence ?? "monthly");
+    const updateCadence: UpdateCadence = "monthly";
     const [monthConfirmed, setMonthConfirmed] = useState(() => shouldOpenDraftTemplate);
     const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(() => shouldOpenDraftTemplate ? "reporting" : null);
     const [metricsConfirmed, setMetricsConfirmed] = useState(() => shouldOpenDraftTemplate);
@@ -3038,6 +3062,11 @@ function CreateUpdateEditor() {
     const [pastMonthCards, setPastMonthCards] = useState<EditorMonthCard[]>([]);
     const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
+    const [updateDate, setUpdateDate] = useState<string>(defaultData?.updateDate ?? (existingData ? "" : today));
+    const [activeUpdateId, setActiveUpdateId] = useState<string | null>(defaultData?.id ? String(defaultData.id) : null);
+    const [narrativeStart, setNarrativeStart] = useState("");
+    const [narrativeEnd, setNarrativeEnd] = useState("");
+    const proposedSourceWindow = defaultUpdateSourceWindow(existingMonthlyUpdates, updateDate || "", reportingTimezone || "UTC", activeUpdateId);
     const [selectedMonth, setSelectedMonth] = useState<string>(draftReturnState?.month || defaultData?.month || currentCreatePeriod.month);
     const [selectedYear, setSelectedYear] = useState<number>(draftReturnState?.year || defaultData?.year || currentCreatePeriod.year);
     const [selectedWeekKey, setSelectedWeekKey] = useState<string>(() => draftReturnState?.weekStart || createStepWeekOptions.at(-1)?.key || "");
@@ -3051,7 +3080,7 @@ function CreateUpdateEditor() {
         }
         return createStepMonthOptions;
     }, [createStepMonthOptions, isEdit, selectedYear, showAllCreateStepMonths]);
-    const isWeeklyUpdate = updateCadence === "weekly";
+    const isWeeklyUpdate = false;
     const selectedWeekOption = createStepWeekOptions.find((option) => option.key === selectedWeekKey) ?? null;
     const hasSelectedMonth = Boolean(selectedMonth.trim());
     const hasSelectedPeriod = isWeeklyUpdate ? Boolean(selectedWeekOption) : hasSelectedMonth;
@@ -3061,9 +3090,7 @@ function CreateUpdateEditor() {
     const isSelectedMonthInFuture = hasSelectedMonth && isFutureMonthlyUpdate(selectedMonth, selectedYear);
     const isSelectedMonthBeforeMinimum = hasSelectedMonth && isBeforeMinimumMonthlyUpdate(selectedMonth, selectedYear);
     const isSelectedMonthUnavailable = isSelectedMonthInFuture || isSelectedMonthBeforeMinimum;
-    const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
-        (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
-    );
+    const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(update => update.id === activeUpdateId);
     const selectedMonthLabel = hasSelectedMonth ? `${selectedMonth} ${selectedYear}` : "Select a month";
     const selectedPeriodLabel = isWeeklyUpdate
         ? selectedWeekOption?.label || "Select a week"
@@ -3073,6 +3100,12 @@ function CreateUpdateEditor() {
     const currentDraftMonthLabel = createStepMonthOptions[1]?.month || currentCreatePeriod.month;
     const monthSelectionCaption = `Select the month this update covers. ${catchUpMonthLabel} is available if you're catching up; ${currentDraftMonthLabel} is ready for your current draft.`;
 
+    useEffect(() => {
+        if (!updateDate || activeUpdateId) return;
+        const date = new Date(`${updateDate}T12:00:00Z`);
+        setSelectedMonth(VIBE_RAISING_MONTH_OPTIONS[date.getUTCMonth()].name);
+        setSelectedYear(date.getUTCFullYear());
+    }, [updateDate, activeUpdateId]);
     const handleWeekChange = useCallback((option: WeeklyUpdateOption) => {
         setSelectedWeekKey(option.key);
         setSelectedMonth(option.month);
@@ -3212,8 +3245,8 @@ function CreateUpdateEditor() {
     }, [activeUserCompany?.founderProfiles, founderProfiles, missingFounderLinkedInDrafts]);
     const isEarlyStageCompany = ["idea", "pre-seed"].includes(String(user.stage || "").trim().toLowerCase());
     const canGenerateDraftFromEmail = Boolean((user.domain || "").trim());
-    const emailDraftStorageKey = getEmailDraftStorageKey(user.domain);
-    const emailDraftForceRegenerateKey = getEmailDraftForceRegenerateKey(user.domain);
+    const emailDraftStorageKey = `${getEmailDraftStorageKey(user.domain)}:${creationKey || existingData?.id}`;
+    const emailDraftForceRegenerateKey = `${getEmailDraftForceRegenerateKey(user.domain)}:${creationKey || existingData?.id}`;
     const [emailDraftStatus, setEmailDraftStatus] = useState<VibeRaisingStartupUpdateStatusResponse | null>(null);
     const [emailDraftUiError, setEmailDraftUiError] = useState<string | null>(null);
     const [emailDraftActionBusy, setEmailDraftActionBusy] = useState(false);
@@ -3259,18 +3292,12 @@ function CreateUpdateEditor() {
         ));
     }, [compactSources]);
     const draftReturnPath = useMemo(() => {
-        return buildVibeRaisingDraftReturnPath(
-            location.pathname,
-            location.search,
-            monthConfirmed && updateCadence ? {
-                cadence: updateCadence,
-                month: selectedMonth,
-                year: selectedYear,
-                weekStart: isWeeklyUpdate ? selectedWeekOption?.startIso : undefined,
-            } : null,
-            Array.from(selectedDraftInputSources),
-        );
-    }, [location.pathname, location.search, monthConfirmed, updateCadence, selectedMonth, selectedYear, isWeeklyUpdate, selectedWeekOption?.startIso, selectedDraftInputSources]);
+        const params = new URLSearchParams(location.search);
+        for (const key of ["cadence", "month", "year", "weekStart", "step"]) params.delete(key);
+        if (updateDate) params.set("date", updateDate); else params.delete("date");
+        if (selectedInputSources.length) params.set("inputs", selectedInputSources.join(",")); else params.delete("inputs");
+        return `${location.pathname}?${params}`;
+    }, [location.pathname, location.search, updateDate, selectedInputSources]);
     const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
     const goToConnectDataStep = useCallback(() => {
         navigate(manageConnectionsHref);
@@ -3409,6 +3436,7 @@ function CreateUpdateEditor() {
     const applyDraftCandidate = (data: any, keepWriting = false) => {
         if (!editorMountedRef.current) return;
         const ownWriting = { summary, highlights, challenges, learnings, next30Days, asks };
+        if (data.updateId || data.id) setActiveUpdateId(String(data.updateId || data.id));
         setExpectedRevision(data.revisionId || null);
         setMetricEvidence(data.metricEvidence || {});
         setReportingPeriod(data.reportingPeriod || null);
@@ -3422,8 +3450,7 @@ function CreateUpdateEditor() {
         loadedExistingUpdateKeyRef.current = resolvedEditorKey;
         editorMonthKeyRef.current = resolvedEditorKey;
         setActivePeriodKey("current");
-        if (data.month) setSelectedMonth(resolvedMonth);
-        if (data.year) setSelectedYear(resolvedYear);
+
         setHighlights(data.highlights);
         setChallenges(data.challenges);
         setAsks(data.asks || "");
@@ -3820,6 +3847,9 @@ function CreateUpdateEditor() {
 
     const hydrateCompletedEmailDraft = useEffectEvent(async (runId?: string | null) => {
         const results = await getVibeRaisingStartupUpdateDraftResults(backendBaseUrl, runId);
+        if (results.draft && (activeUpdateId ? String(results.draft.updateId) !== activeUpdateId : results.draft.creationKey !== creationKey)) {
+            throw new Error("These draft results belong to another update.");
+        }
         if (!results.draft) {
             throw new Error("Draft generation completed, but no draft payload was returned.");
         }
@@ -3832,6 +3862,9 @@ function CreateUpdateEditor() {
     });
 
     const processEmailDraftStatus = useEffectEvent(async (statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
+        const matches = activeUpdateId ? String(statusResponse.updateId) === activeUpdateId : Boolean(creationKey && statusResponse.creationKey === creationKey);
+        if (!matches) return;
+        if (statusResponse.updateId) setActiveUpdateId(String(statusResponse.updateId));
         if (
             statusResponse.runId &&
             emailDraftIgnoredRunIdRef.current === statusResponse.runId &&
@@ -3848,7 +3881,7 @@ function CreateUpdateEditor() {
         if (statusResponse.targetMonthConflict) {
             startTransition(() => {
                 setEmailDraftStatus(statusResponse);
-                setEmailDraftUiError(statusResponse.error ?? "Another monthly update is already generating.");
+                setEmailDraftUiError(statusResponse.error ?? "Another update is already generating.");
             });
             return;
         }
@@ -3859,11 +3892,6 @@ function CreateUpdateEditor() {
                 // progress card renders even on a fresh page load (refresh
                 // recovery), where monthConfirmed / selectedDraftStage would
                 // otherwise still be at their defaults and hide it.
-                const parsedMonth = monthYearFromIso(statusResponse.targetMonth);
-                if (parsedMonth) {
-                    setSelectedMonth(parsedMonth.month);
-                    setSelectedYear(parsedMonth.year);
-                }
                 const runInputSources = (statusResponse.run?.inputSources || []).filter(
                     (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
                 );
@@ -3960,6 +3988,9 @@ function CreateUpdateEditor() {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
                     inputSources: options?.inputSources?.length ? options.inputSources : selectedInputSources,
                     targetMonth: targetMonthIso,
+                    companyId: resolveActiveCompanyId(user) || undefined,
+                    updateId: activeUpdateId, creationKey, updateDate, expectedRevision,
+                    narrativeStart: narrativeStart || undefined, narrativeEnd: narrativeEnd || undefined,
                     manualDocumentIds,
                     manualSummary,
                 },
@@ -3982,7 +4013,7 @@ function CreateUpdateEditor() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso, activeUpdateId, creationKey, updateDate, expectedRevision, narrativeStart, narrativeEnd, user.activeCompanyId]);
 
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         const effectiveInputSources = options?.inputSources?.length ? options.inputSources : selectedInputSources;
@@ -3994,7 +4025,7 @@ function CreateUpdateEditor() {
             navigate("/founder-tools/companies");
             return;
         }
-        if (isSelectedMonthUnavailable || !targetMonthIso) {
+        if (isSelectedMonthUnavailable || !targetMonthIso || !updateDate) {
             setEmailDraftUiError("Choose the current month or a previous month before generating an update.");
             return;
         }
@@ -4146,14 +4177,8 @@ function CreateUpdateEditor() {
     const runEmailDraftRecovery = useEffectEvent(async () => {
         setEmailDraftActionBusy(true);
         try {
-            if (!resumeEmailDrafting) {
-                clearPersistedEmailDraftRun();
-                resetEmailDraftUi();
-                return;
-            }
-
             const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
-            if (activeRun) {
+            if (activeRun && (activeUpdateId ? String(activeRun.updateId) === activeUpdateId : activeRun.creationKey === creationKey)) {
                 await processEmailDraftStatus(activeRun);
                 return;
             }
@@ -4177,14 +4202,7 @@ function CreateUpdateEditor() {
                 return;
             }
 
-            try {
-                await hydrateCompletedEmailDraft();
-                return;
-            } catch (error) {
-                if ((error as { status?: number })?.status !== 404) {
-                    throw error;
-                }
-            }
+
         } catch (error) {
             startTransition(() => {
                 setEmailDraftUiError(getEmailDraftErrorMessage(error));
@@ -4239,11 +4257,17 @@ function CreateUpdateEditor() {
     ]);
 
     const isEmailDraftBusy = isEmailDraftRunning(emailDraftStatus);
-    const workingScope = updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", isWeeklyUpdate ? selectedWeekKey : `${selectedYear}:${selectedMonth}`);
+    const visibleSourceWindow = (isEmailDraftBusy ? emailDraftStatus?.narrativePeriod : null) || draftCandidate?.narrativePeriod || proposedSourceWindow;
+    const [workingIdentity] = useState(() => existingData?.id ? `id:${existingData.id}` : `new:${creationKey}`);
+    const workingScope = updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", workingIdentity);
     useEffect(() => {
-        const saved = readUpdateWorkingCopy(workingScope);
-        const base: Record<string, any> = existingData && getMonthlyUpdateKey(existingData.month, existingData.year) === selectedMonthUpdateKey ? existingData : existingUpdateForSelectedMonth ? buildExistingUpdateFormData(existingUpdateForSelectedMonth) : {};
+        const saved = readUpdateWorkingCopy(workingScope) || (creationKey ? readUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `new:${creationKey}`)) : null);
+        const base: Record<string, any> = existingData || {};
         const restored: Record<string, any> = saved || base;
+        if (restored.activeUpdateId || base.id) setActiveUpdateId(String(restored.activeUpdateId || base.id));
+        if ("updateDate" in restored) setUpdateDate(restored.updateDate || "");
+        else if (new URLSearchParams(location.search).get("date")) setUpdateDate(new URLSearchParams(location.search).get("date")!);
+        setNarrativeStart(restored.narrativeStart || ""); setNarrativeEnd(restored.narrativeEnd || "");
         setSummary(restored.summary || ""); setHighlights(restored.highlights || "");
         setChallenges(restored.challenges || ""); setLearnings(restored.learnings || "");
         setNext30Days(restored.next30Days || ""); setAsks(restored.asks || "");
@@ -4255,7 +4279,7 @@ function CreateUpdateEditor() {
         setMetricValues(restored.metrics || {}); setSelectedMetrics(new Set(Object.keys(restored.metrics || {})));
         setExpectedRevision(saved ? saved.expectedRevision ?? null : base.revisionId || null);
         setDraftCandidate(saved?.candidate || null);
-        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {} }));
+        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ updateDate: base.updateDate ?? (existingData ? "" : today), narrativeStart: "", narrativeEnd: "", summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {} }));
         // Legacy attachments are retained, even though the new form no longer asks for them.
         setPitchDeckUrl(restored.pitchDeckUrl || ""); setPitchDeckStoragePath(restored.pitchDeckStoragePath || "");
         setPitchDeckContentType(restored.pitchDeckContentType || ""); setPitchDeckFileSizeBytes(restored.pitchDeckFileSizeBytes || null);
@@ -4268,21 +4292,26 @@ function CreateUpdateEditor() {
         // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [workingScope]);
-    const workingContent = JSON.stringify({ summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues });
+    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues });
     const hasUnsavedChanges = workingContent !== lastSavedContent;
     useEffect(() => {
         if (loadedWorkingScope !== workingScope) return;
         const available = writeUpdateWorkingCopy(workingScope, {
-            ...JSON.parse(workingContent), expectedRevision, metricEvidence, reportingPeriod, financialSnapshot,
+            ...JSON.parse(workingContent), activeUpdateId, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot,
             candidate: draftCandidate, selectedSources: selectedInputSources, lastSavedContent, sourceUrl,
             pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary,
             videoUrl: uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename,
         });
+        if (available && activeUpdateId) {
+            const copy = readUpdateWorkingCopy(workingScope);
+            if (copy) writeUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `id:${activeUpdateId}`), copy);
+        }
         setLocalRecoveryAvailable(available);
-    }, [workingScope, loadedWorkingScope, workingContent, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
+    }, [activeUpdateId, workingScope, loadedWorkingScope, workingContent, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
     useEffect(() => {
         const saved = saveDraftFetcher.data?.step === "draft-saved" ? saveDraftFetcher.data.update : actionData?.step === "feedback" ? actionData.update : null;
         if (!saved) return;
+        setActiveUpdateId(String(saved.id));
         setExpectedRevision(saved.revisionId || null);
         setMetricEvidence(saved.metricEvidence || {}); setReportingPeriod(saved.reportingPeriod || null);
         setLastSavedContent(saveAttemptContent);
@@ -4537,7 +4566,7 @@ function CreateUpdateEditor() {
         if (!runId) return;
         if (typeof window !== "undefined") {
             const confirmed = window.confirm(
-                "Cancel this draft run and reset the monthly update so you can try again?",
+                "Cancel AI drafting for this update so you can try again?",
             );
             if (!confirmed) {
                 return;
@@ -5116,7 +5145,7 @@ function CreateUpdateEditor() {
                             <input key={key} type="hidden" name={key} value={String(value)} />
                         ))}
                 </Form>
-                    <UpdateArticle update={{ ...reviewData, ...reviewActionData?.update, monthName: reviewMonth, year: reviewYear, coverImage: reviewCover, financialSnapshot: reviewFinancialSnapshot } as VibeRaisingMonthlyUpdate} companyName={user.companyName} />
+                    <UpdateArticle title={getUpdateTitles([...existingMonthlyUpdates.filter(item => item.id !== String(reviewActionData?.update?.id || reviewData.id)), { ...reviewData, ...reviewActionData?.update } as VibeRaisingMonthlyUpdate]).get(String(reviewActionData?.update?.id || reviewData.id))} update={{ ...reviewData, ...reviewActionData?.update, monthName: reviewMonth, year: reviewYear, coverImage: reviewCover, financialSnapshot: reviewFinancialSnapshot } as VibeRaisingMonthlyUpdate} companyName={user.companyName} />
                     {sendError && <p className="update-notice" role="alert">{sendError}</p>}
                     <div className="update-actions"><span className="update-action-status">Saved privately until you approve.</span><button type="button" className="update-button secondary" onClick={() => setDismissedFeedback(true)}>Keep editing</button><button type="button" className="update-button" disabled={isSubmitting || !canSubmitReviewToMlai} onClick={handleSendToMlai}>Approve update <ArrowRightIcon className="h-4 w-4" /></button></div>
                     {showSendToMlaiConfirmation && <UpdateDialog title="Approve this update?" onClose={() => setShowSendToMlaiConfirmation(false)}><p>Approve the saved revision you just reviewed for {reviewAudienceVisibility.includes("community") ? "the community" : "your private archive"}.</p><div className="flex flex-wrap justify-end gap-2"><button type="button" className="update-button secondary" onClick={() => setShowSendToMlaiConfirmation(false)}>Back to review</button><button type="button" className="update-button" onClick={handleConfirmSendToMlai} disabled={isSubmitting || !reviewData?.revisionId}>{isSubmitting ? "Approving…" : "Approve this revision"}</button></div></UpdateDialog>}
@@ -5157,6 +5186,9 @@ function CreateUpdateEditor() {
                 >
                     <input type="hidden" name="companyId" value={resolveActiveCompanyId(user) || ""} />
                     <input type="hidden" name="expectedRevision" value={expectedRevision ?? ""} />
+                    <input type="hidden" name="updateId" value={activeUpdateId || ""} />
+                    <input type="hidden" name="creationKey" value={creationKey || ""} />
+                    <input type="hidden" name="updateDate" value={updateDate || ""} />
                     <input type="hidden" name="intent" value="review" />
                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
                     {formMetricKeys.map((metricKey) => (
@@ -5195,111 +5227,14 @@ function CreateUpdateEditor() {
                     <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
                     <input type="hidden" name="month" value={selectedMonth} />
                     <input type="hidden" name="year" value={selectedYear} />
-                    <input type="hidden" name="updateCadence" value={updateCadence || "monthly"} />
-                    {isWeeklyUpdate && selectedWeekOption ? (
-                        <>
-                            <input type="hidden" name="weekStart" value={selectedWeekOption.startIso} />
-                            <input type="hidden" name="weekEnd" value={selectedWeekOption.endIso} />
-                        </>
-                    ) : null}
-
                     <div className="update-form-top">
-                        <label>
-                            For{" "}
-                            <select
-                                aria-label="Update cadence"
-                                value={updateCadence || "monthly"}
-                                disabled={
-                                    isSubmitting ||
-                                    saveDraftFetcher.state !== "idle" ||
-                                    isEmailDraftBusy ||
-                                    emailDraftActionBusy ||
-                                    Boolean(draftCandidate)
-                                }
-                                onChange={(event) => {
-                                    const cadence = event.target.value as UpdateCadence;
-                                    setUpdateCadence(cadence);
-                                    if (cadence === "weekly" && selectedWeekOption)
-                                        handleWeekChange(selectedWeekOption);
-                                }}
-                            >
-                                <option value="monthly">Monthly</option>
-                                <option value="weekly">Weekly · Victor AI</option>
-                            </select>
+                        <label htmlFor="update-date"><CalendarDaysIcon className="h-4 w-4" />Update date
+                            <input id="update-date" type="date" value={updateDate || ""} max={today} min="2025-01-01"
+                                disabled={isSubmitting || saveDraftFetcher.state !== "idle" || isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)}
+                                required={!existingData}
+                                onChange={event => setUpdateDate(event.target.value)} />
                         </label>
-                        {isWeeklyUpdate ? (
-                            <label>
-                                <span className="sr-only">Update week</span>
-                                <select
-                                    aria-label="Update week"
-                                    value={selectedWeekKey}
-                                    disabled={
-                                        isSubmitting ||
-                                        saveDraftFetcher.state !== "idle" ||
-                                        isEmailDraftBusy ||
-                                        emailDraftActionBusy ||
-                                        Boolean(draftCandidate)
-                                    }
-                                    onChange={(event) => {
-                                        const week = createStepWeekOptions.find(
-                                            (option) => option.key === event.target.value,
-                                        );
-                                        if (week) handleWeekChange(week);
-                                    }}
-                                >
-                                    {createStepWeekOptions.map((option) => (
-                                        <option key={option.key} value={option.key}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                        ) : (
-                            <label>
-                                <CalendarDaysIcon className="h-4 w-4" />
-                                <select
-                                    aria-label="Update month"
-                                    value={`${selectedMonth}:${selectedYear}`}
-                                    disabled={
-                                        isSubmitting ||
-                                        saveDraftFetcher.state !== "idle" ||
-                                        isEmailDraftBusy ||
-                                        emailDraftActionBusy ||
-                                        Boolean(draftCandidate)
-                                    }
-                                    onChange={(event) => {
-                                        const [month, year] = event.target.value.split(":");
-                                        setSelectedMonth(month);
-                                        setSelectedYear(Number(year));
-                                    }}
-                                >
-                                    {Array.from(
-                                        { length: (currentCreatePeriod.year - MIN_MONTHLY_UPDATE_YEAR + 1) * 12 },
-                                        (_, index) => {
-                                            const year = currentCreatePeriod.year - Math.floor(index / 12);
-                                            const month = VIBE_RAISING_MONTH_OPTIONS[11 - (index % 12)].name;
-                                            return { month, year };
-                                        },
-                                    )
-                                        .filter(
-                                            (option) =>
-                                                !isFutureMonthlyUpdate(option.month, option.year) &&
-                                                !isBeforeMinimumMonthlyUpdate(option.month, option.year),
-                                        )
-                                        .map((option) => (
-                                            <option
-                                                key={`${option.month}:${option.year}`}
-                                                value={`${option.month}:${option.year}`}
-                                            >
-                                                {option.month} {option.year}
-                                            </option>
-                                        ))}
-                                </select>
-                            </label>
-                        )}
-                        <span className="update-period-note">
-                            {reportingPeriod?.is_partial ? "Month to date" : "Make it yours"}
-                        </span>
+                        <span className="update-period-note">{!updateDate && existingData ? `${selectedMonthLabel} · exact date not recorded` : "Share progress whenever it happens"}</span>
                     </div>
                     <section className="update-ai" aria-labelledby="update-ai-heading">
                         <div className="update-ai-heading">
@@ -5444,6 +5379,14 @@ function CreateUpdateEditor() {
                                 {compactSourcesError}
                             </p>
                         )}
+                        <details className="update-source-range">
+                            <summary>Source dates{visibleSourceWindow ? ` · ${new Date(narrativeStart || visibleSourceWindow.start).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: reportingTimezone || "UTC" })}–${new Date(narrativeEnd || visibleSourceWindow.end).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: reportingTimezone || "UTC" })}` : ""}</summary>
+                            <p className="update-section-help">{proposedSourceWindow?.previous ? "Progress since your previous update." : "Progress from the start of this month."} Financial figures keep their own reporting period.</p>
+                            <label>From <input type="datetime-local" aria-label="Source range start" value={toLocalDateTime(narrativeStart || visibleSourceWindow?.start || "")} disabled={isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)} onChange={event => setNarrativeStart(fromLocalDateTime(event.target.value))} /></label>
+                            <label>To <input type="datetime-local" aria-label="Source range end" value={toLocalDateTime(narrativeEnd || visibleSourceWindow?.end || "")} disabled={isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)} onChange={event => setNarrativeEnd(fromLocalDateTime(event.target.value))} /></label>
+                            <small>Times use your device timezone. The end time is exclusive.</small>
+                            {(narrativeStart || narrativeEnd) && <button type="button" disabled={isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)} onClick={() => { setNarrativeStart(""); setNarrativeEnd(""); }}>Reset dates</button>}
+                        </details>
                     </section>
                     {draftCandidate && (
                         <section className="update-candidate" aria-live="polite">
@@ -5519,7 +5462,7 @@ function CreateUpdateEditor() {
                                 className="update-summary-input"
                                 value={summary}
                                 onChange={setSummary}
-                                placeholder="This month, we…"
+                                placeholder="Recently, we…"
                             />
                         </section>
                         <SectionWithExample

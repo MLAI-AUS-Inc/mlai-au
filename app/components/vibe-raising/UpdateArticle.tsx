@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { PencilSquareIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import UpdateEvidenceText from "./UpdateEvidenceText";
 import UpdatesIncomeChart from "./UpdatesIncomeChart";
-import { getUpdatesFinancialSeries } from "~/lib/startup-updates-presentation";
+import { getUpdatesFinancialSeries, getUpdatePeriod } from "~/lib/startup-updates-presentation";
 import {
   metricOptionsForValues,
   formatMetricDisplayValue,
@@ -49,11 +49,13 @@ export default function UpdateArticle({
   companyName,
   title,
   editable = false,
+  timeLabel,
 }: {
   update: VibeRaisingMonthlyUpdate;
   companyName: string;
   title?: string;
   editable?: boolean;
+  timeLabel?: string;
 }) {
   const period = update.reportingPeriod;
   const cutoff = period?.cutoff ? new Date(period.cutoff) : null;
@@ -67,7 +69,7 @@ export default function UpdateArticle({
         }).format(cutoff)
       : null;
   const month =
-    update.monthName || String(update.month || "").replace(/\s+\d{4}$/, "");
+    getUpdatePeriod(update).monthName || update.monthName || String(update.month || "").replace(/\s+\d{4}$/, "");
   const cover = update.coverImage?.url || update.coverImageUrl;
   // Historical articles use their frozen evidence even if a connector is later disconnected.
   const providers = Object.values(update.metricEvidence || {}).map((item) => ({
@@ -114,7 +116,8 @@ export default function UpdateArticle({
         </div>
         <h1>{title || `${month} Update`}</h1>
         <div className="update-article-meta">
-          <span>{update.year || ""}</span>
+          <span>{getUpdatePeriod(update).year || update.year || ""}</span>
+          {timeLabel && <span>{timeLabel}</span>}
           {period?.is_partial && (
             <span>
               Month to date

@@ -742,3 +742,14 @@
   .update-summary-label { margin-bottom: 12px; }
   .update-summary-input { font-size: 16px; }
 }
+
+.update-form-top input[type="date"], .update-source-range input {
+  border: 1px solid #dce5df; border-radius: 8px; background: #f6f8f5;
+  color: #183c36; padding: 9px 12px; font-size: 14px; min-height: 40px; max-width: 100%;
+}
+.update-source-range label { display: inline-flex; align-items: center; gap: 8px; margin: 8px 16px 8px 0; font-size: 13px; }
+.update-source-range small { display: block; color: #64766d; }
+@media (max-width: 640px) {
+  .update-form-top label:first-child { font-size: 13px; gap: 10px; }
+  .update-source-range label { display: flex; justify-content: space-between; margin-right: 0; }
+}

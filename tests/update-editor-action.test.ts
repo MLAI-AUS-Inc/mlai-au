@@ -26,6 +26,9 @@ async function submit(intent: string, extra: Record<string, string> = {}) {
     month: "September",
     year: "2026",
     expectedRevision: "11",
+    updateId: "42",
+    creationKey: "15f58a09-65b6-41e5-bfc3-0b43f3a5f8e1",
+    updateDate: "2026-09-15",
     ...extra,
   }).forEach(([key, value]) => form.set(key, value));
   const response = await action({
@@ -47,6 +50,9 @@ describe("editor save and review action", () => {
     expect(save.mock.calls[0][2]).toMatchObject({
       companyId: "startup-1",
       expectedRevision: 11,
+      updateId: "42",
+      creationKey: "15f58a09-65b6-41e5-bfc3-0b43f3a5f8e1",
+      updateDate: "2026-09-15",
       saveMode: "draft",
       summary: "An unfinished thought",
     });
