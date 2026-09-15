@@ -12,7 +12,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -88,7 +87,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Choose a learning route that fits your starting skills, time and goals. Check the provider’s current prerequisites, delivery mode and fees before enrolling.",
   items: [
     { label: 'Where can I study AI in Melbourne?', description: 'Universities and TAFE (e.g., Victoria University, Holmesglen) plus short courses and bootcamps; confirm current intakes on provider sites.' },
     { label: 'How long do AI courses take?', description: 'Short courses: weeks; grad certs: 6–12 months part‑time; bachelor’s degrees: 3+ years. Timelines vary by provider.' },
@@ -245,14 +244,7 @@ export default function ArticleContent() {
           accent="teal"
         />
 
-        <ArticleResourceCTA
-          eyebrow="Resources"
-          title={`Get templates for ${TOPIC}`}
-          description="Download a course-comparison worksheet and a one‑page project brief to keep your learning focused."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <QuoteBlock title="Pro tip" variant="orange">
           Treat every subject or short course as fuel for one portfolio project. Ship a tiny improvement each week and write two paragraphs explaining what you learned.

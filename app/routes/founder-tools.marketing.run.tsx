@@ -368,28 +368,32 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { authUser, appUser } = await requireVibeRaisingFounder(env, request);
   const companyId = resolveActiveCompanyId(appUser);
   const runId = params.runId ?? "";
-  const bootstrap = await getVibeMarketingBootstrap(env, request, companyId, "summary");
-  const run = await getVibeMarketingRun(env, request, runId, companyId).catch(async (error: unknown) => {
-    if (isApiNotFoundError(error)) {
-      // Daily-reminder links carry no company hint, so a run belonging to one
-      // of the founder's OTHER companies 404s under the active one. Find the
-      // owner, switch to it, and re-enter the page instead of dropping the
-      // deep link.
-      for (const company of appUser.companies ?? []) {
-        if (!company.id || company.id === companyId) continue;
-        const found = await getVibeMarketingRun(env, request, runId, company.id, "status").catch(() => null);
-        if (found) {
-          await setVibeRaisingActiveCompany(env, request, company.id);
-          throw redirect(new URL(request.url).pathname + new URL(request.url).search);
+  // These reads share company scope but do not depend on one another. Keep
+  // bootstrap out of the critical path to the full run (including 404 recovery).
+  const [bootstrap, run] = await Promise.all([
+    getVibeMarketingBootstrap(env, request, companyId, "summary"),
+    getVibeMarketingRun(env, request, runId, companyId).catch(async (error: unknown) => {
+      if (isApiNotFoundError(error)) {
+        // Daily-reminder links carry no company hint, so a run belonging to one
+        // of the founder's OTHER companies 404s under the active one. Find the
+        // owner, switch to it, and re-enter the page instead of dropping the
+        // deep link.
+        for (const company of appUser.companies ?? []) {
+          if (!company.id || company.id === companyId) continue;
+          const found = await getVibeMarketingRun(env, request, runId, company.id, "status").catch(() => null);
+          if (found) {
+            await setVibeRaisingActiveCompany(env, request, company.id);
+            throw redirect(new URL(request.url).pathname + new URL(request.url).search);
+          }
         }
+        // A deleted/reset run (e.g. after an article-setup teardown) 404s here while a stale
+        // wizard session still links to it. Redirect to the wizard instead of letting the 404
+        // throw and SSR-500 the marketing page. (run-status.tsx handles the status-poll path.)
+        throw redirect("/founder-tools/marketing");
       }
-      // A deleted/reset run (e.g. after an article-setup teardown) 404s here while a stale
-      // wizard session still links to it. Redirect to the wizard instead of letting the 404
-      // throw and SSR-500 the marketing page. (run-status.tsx handles the status-poll path.)
-      throw redirect("/founder-tools/marketing");
-    }
-    throw error;
-  });
+      throw error;
+    }),
+  ]);
   let githubRepos: VibeMarketingGithubReposResponse = { status: "unavailable", repos: [], repositories: [] };
   const shouldLoadGithubRepos = ["repo_scan", "content_factory_scan"].includes(run.workflow) && !setupRunIdForRun(run);
   if (shouldLoadGithubRepos) {
@@ -3558,7 +3562,7 @@ function PublishDailyResearchReminderCard({
       </div>
 
       <p className="mt-6 max-w-xl text-base font-semibold leading-6 text-slate-600">
-        Get a daily research prompt for the next article via your preferred channels.
+        Get daily research topics on WhatsApp or Slack, and an email when an article draft is ready to review.
       </p>
 
       <div className="mt-6">
@@ -3754,7 +3758,7 @@ function PublishAndAutomateDetail({
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish publishing this article</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Publish the article — the PR merges to main automatically once checks pass — then turn on daily research prompts (Slack, email or WhatsApp) for the next article.
+              Publish the article — the PR merges to main automatically once checks pass — then choose WhatsApp or Slack for daily research topics and email for completed drafts.
             </p>
             {canViewArticle ? (
               <Link

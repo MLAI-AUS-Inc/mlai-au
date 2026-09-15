@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -157,14 +156,7 @@ export default function ArticleContent() {
           <p>{"That includes contractors, early hires, customers, and community members."}</p>
           <p>{"At the end of the trial, run a structured debrief. Each person should answer the same questions about what worked, what created friction, where trust increased, and what felt misaligned. If the output was decent but the working experience felt brittle or one-sided, that is a warning sign."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the how to test for cofounder values match checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -194,17 +186,17 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://www.mentessa.com/7-best-practices-for-a-cofounder-matching-service-online/", title: "7 Best Practices for a Cofounder Matching Service Online", publisher: "mentessa.com", description: "Authoritative reference supporting 7 Best Practices for a Cofounder Matching Service Online.", category: "guide"},
-          {id: 2, href: "https://findskill.ai/skills/productivity/co-founder-vetting-checklist/", title: "Co-Founder Vetting Checklist | FindSkill.ai \u2014 Master Any Skill with AI", publisher: "findskill.ai", description: "Authoritative reference supporting Co-Founder Vetting Checklist | FindSkill.ai \u2014 Master Any Skill with AI.", category: "guide"},
-          {id: 3, href: "https://onlyfounders.app/all-blogs/cofounder-compatibility-testing-your-cofounder-s-compatibility", title: "Cofounder Compatibility: Testing your CoFounder's Compatibility ! - OnlyFounders App", publisher: "onlyfounders.app", description: "Authoritative reference supporting Cofounder Compatibility: Testing your CoFounder's Compatibility ! - OnlyFounders App.", category: "guide"},
-          {id: 4, href: "https://blackbird.vc/blog/the-cofounder-question", title: "The cofounder question | Blackbird", publisher: "blackbird.vc", description: "Authoritative reference supporting The cofounder question | Blackbird.", category: "guide"},
-          {id: 5, href: "https://www.nfx.com/post/the-pyramid-of-cofounder-success", title: "The Pyramid of Co-Founder Success", publisher: "nfx.com", description: "Authoritative reference supporting The Pyramid of Co-Founder Success.", category: "guide"},
-          {id: 6, href: "https://www.fwdstart.me/p/how-to-test-for-co-founder-compatibility-and-alignment", title: "How to test for co-founder compatibility and alignment", publisher: "fwdstart.me", description: "Authoritative reference supporting How to test for co-founder compatibility and alignment.", category: "guide"},
-          {id: 7, href: "https://www.charityentrepreneurship.com/post/how-to-successfully-pick-a-co-founder", title: "How to Successfully Pick a Co-Founder", publisher: "charityentrepreneurship.com", description: "Authoritative reference supporting How to Successfully Pick a Co-Founder.", category: "guide"},
-          {id: 8, href: "https://blog.foundersbase.com/how-can-i-vet-or-evaluate-a-potential-co-founders-compatibility/", title: "How can I vet or evaluate a potential co-founder\u2019s compatibility?", publisher: "blog.foundersbase.com", description: "Authoritative reference supporting How can I vet or evaluate a potential co-founder\u2019s compatibility?.", category: "guide"},
-          {id: 9, href: "https://www.linkedin.com/posts/jmiddleton_choosing-a-co-founder-is-not-like-choosing-activity-7331680314664103936-s2B7", title: "How to find co-founder fit: 4 tests to pass | Jesse Middleton posted on the topic | LinkedIn", publisher: "linkedin.com", description: "Authoritative reference supporting How to find co-founder fit: 4 tests to pass | Jesse Middleton posted on the topic | LinkedIn.", category: "guide"},
-          {id: 10, href: "https://www.antler.co/blog/find-a-co-founder-with-antler", title: "How Antler facilitates co-founder matching", publisher: "antler.co", description: "Authoritative reference supporting How Antler facilitates co-founder matching.", category: "guide"},
-          {id: 11, href: "https://www.library.hbs.edu/working-knowledge/cofounder-courtship-how-to-find-the-right-mate-for-your-startup", title: "Cofounder Courtship: How to Find the Right Mate\u2014for Your Startup | Working Knowledge", publisher: "library.hbs.edu", description: "Authoritative reference supporting Cofounder Courtship: How to Find the Right Mate\u2014for Your Startup | Working Knowledge.", category: "guide"},
+          {id: 1, href: "https://www.mentessa.com/7-best-practices-for-a-cofounder-matching-service-online/", title: "7 Best Practices for a Cofounder Matching Service Online", publisher: "mentessa.com", description: "", category: "guide"},
+          {id: 2, href: "https://findskill.ai/skills/productivity/co-founder-vetting-checklist/", title: "Co-Founder Vetting Checklist | FindSkill.ai \u2014 Master Any Skill with AI", publisher: "findskill.ai", description: "", category: "guide"},
+          {id: 3, href: "https://onlyfounders.app/all-blogs/cofounder-compatibility-testing-your-cofounder-s-compatibility", title: "Cofounder Compatibility: Testing your CoFounder's Compatibility ! - OnlyFounders App", publisher: "onlyfounders.app", description: "", category: "guide"},
+          {id: 4, href: "https://blackbird.vc/blog/the-cofounder-question", title: "The cofounder question | Blackbird", publisher: "blackbird.vc", description: "", category: "guide"},
+          {id: 5, href: "https://www.nfx.com/post/the-pyramid-of-cofounder-success", title: "The Pyramid of Co-Founder Success", publisher: "nfx.com", description: "", category: "guide"},
+          {id: 6, href: "https://www.fwdstart.me/p/how-to-test-for-co-founder-compatibility-and-alignment", title: "How to test for co-founder compatibility and alignment", publisher: "fwdstart.me", description: "", category: "guide"},
+          {id: 7, href: "https://www.charityentrepreneurship.com/post/how-to-successfully-pick-a-co-founder", title: "How to Successfully Pick a Co-Founder", publisher: "charityentrepreneurship.com", description: "", category: "guide"},
+          {id: 8, href: "https://blog.foundersbase.com/how-can-i-vet-or-evaluate-a-potential-co-founders-compatibility/", title: "How can I vet or evaluate a potential co-founder\u2019s compatibility?", publisher: "blog.foundersbase.com", description: "", category: "guide"},
+          {id: 9, href: "https://www.linkedin.com/posts/jmiddleton_choosing-a-co-founder-is-not-like-choosing-activity-7331680314664103936-s2B7", title: "How to find co-founder fit: 4 tests to pass | Jesse Middleton posted on the topic | LinkedIn", publisher: "linkedin.com", description: "", category: "guide"},
+          {id: 10, href: "https://www.antler.co/blog/find-a-co-founder-with-antler", title: "How Antler facilitates co-founder matching", publisher: "antler.co", description: "", category: "guide"},
+          {id: 11, href: "https://www.library.hbs.edu/working-knowledge/cofounder-courtship-how-to-find-the-right-mate-for-your-startup", title: "Cofounder Courtship: How to Find the Right Mate\u2014for Your Startup | Working Knowledge", publisher: "library.hbs.edu", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />
@@ -213,9 +205,9 @@ export default function ArticleContent() {
 
         <div className="my-12 not-prose">
           <ArticleCompanyCTA
-            title="Use a founder-fit checklist before you split equity"
-            body="If you are weighing a potential cofounder, use a simple framework to document values, pressure-test alignment, and run better trial projects before making a long-term commitment."
-            buttonText="Get the founder alignment template"
+            title="Continue exploring cofounder decisions"
+            body="Browse MLAI’s startup guides for related questions about founding a company, finding customers and working with others."
+            buttonText="Browse startup and AI guides"
             buttonHref="/articles"
           />
         </div>

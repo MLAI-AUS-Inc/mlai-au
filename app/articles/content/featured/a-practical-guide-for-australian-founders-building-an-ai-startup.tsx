@@ -159,7 +159,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: faqStructuredData }} /> : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -260,15 +260,15 @@ export default function ArticleContent() {
 
         <ArticleReferences
           references={[
-            { id: 1, href: 'https://www.angelinvestmentnetwork.net/over-three-quarters-of-australian-startup-founders-are-over-45-challenging-silicon-valleys-youth-obsessed-narrative/', title: 'Australian Startup Founders Defy Global Trends - Angel Investment Network Blog', publisher: 'angelinvestmentnetwork.net', description: 'Authoritative reference supporting Australian Startup Founders Defy Global Trends - Angel Investment Network Blog.', category: 'guide' },
-            { id: 2, href: 'https://www.codegeeks.solutions/blog/from-idea-to-impact-what-makes-ai-startups-succeed', title: 'How to Start an AI Startup: Practical Guide for Founders | CodeGeeks Solutions', publisher: 'codegeeks.solutions', description: 'Authoritative reference supporting How to Start an AI Startup: Practical Guide for Founders | CodeGeeks Solutions.', category: 'guide' },
-            { id: 3, href: 'https://corvana.com.au/blog/ai-for-australian-businesses-a-practical-starting-guide', title: 'AI for Australian Businesses: A Practical Starting Guide', publisher: 'corvana.com.au', description: 'Authoritative reference supporting AI for Australian Businesses: A Practical Starting Guide.', category: 'guide' },
-            { id: 4, href: 'https://www.australiansmallbusiness.com.au/how-to-set-up-your-first-ai-agent-a-practical-guide-for-small-business-owners/', title: 'How to Set Up Your First AI Agent: A Practical Guide for Small Business Owners | Online Business Admin Courses & AI Assistants for Small Business', publisher: 'australiansmallbusiness.com.au', description: 'Authoritative reference supporting How to Set Up Your First AI Agent: A Practical Guide for Small Business Owners | Online Business Admin Courses & AI Assistants for Small Business.', category: 'guide' },
-            { id: 5, href: 'https://www.businessthink.unsw.edu.au/articles/business-ai-efficiency-innovation-automation', title: 'A practical guide to getting started with Business AI - UNSW BusinessThink', publisher: 'businessthink.unsw.edu.au', description: 'Authoritative reference supporting A practical guide to getting started with Business AI - UNSW BusinessThink.', category: 'guide' },
-            { id: 6, href: 'https://officeproconsulting.com.au/ai-for-business/', title: 'AI for Business: A Practical Guide for Australian SMEs', publisher: 'officeproconsulting.com.au', description: 'Authoritative reference supporting AI for Business: A Practical Guide for Australian SMEs.', category: 'guide' },
-            { id: 7, href: 'https://appoly.com.au/resources/practical-guide-to-ai-agents-for-australian-businesses/', title: 'A practical guide to AI agents for Australian businesses | Appoly Australia', publisher: 'appoly.com.au', description: 'Authoritative reference supporting A practical guide to AI agents for Australian businesses | Appoly Australia.', category: 'guide' },
-            { id: 8, href: 'https://business.gov.au/', title: 'Support for businesses in Australia | business.gov.au', publisher: 'business.gov.au', description: 'Authoritative reference supporting Support for businesses in Australia | business.gov.au.', category: 'guide' },
-            { id: 9, href: 'https://au.linkedin.com/company/aussiefoundersclub', title: 'Aussie Founders Club | LinkedIn', publisher: 'au.linkedin.com', description: 'Authoritative reference supporting Aussie Founders Club | LinkedIn.', category: 'guide' },
+            { id: 1, href: 'https://www.angelinvestmentnetwork.net/over-three-quarters-of-australian-startup-founders-are-over-45-challenging-silicon-valleys-youth-obsessed-narrative/', title: 'Australian Startup Founders Defy Global Trends - Angel Investment Network Blog', publisher: 'angelinvestmentnetwork.net', description: "", category: 'guide' },
+            { id: 2, href: 'https://www.codegeeks.solutions/blog/from-idea-to-impact-what-makes-ai-startups-succeed', title: 'How to Start an AI Startup: Practical Guide for Founders | CodeGeeks Solutions', publisher: 'codegeeks.solutions', description: "", category: 'guide' },
+            { id: 3, href: 'https://corvana.com.au/blog/ai-for-australian-businesses-a-practical-starting-guide', title: 'AI for Australian Businesses: A Practical Starting Guide', publisher: 'corvana.com.au', description: "", category: 'guide' },
+            { id: 4, href: 'https://www.australiansmallbusiness.com.au/how-to-set-up-your-first-ai-agent-a-practical-guide-for-small-business-owners/', title: 'How to Set Up Your First AI Agent: A Practical Guide for Small Business Owners | Online Business Admin Courses & AI Assistants for Small Business', publisher: 'australiansmallbusiness.com.au', description: "", category: 'guide' },
+            { id: 5, href: 'https://www.businessthink.unsw.edu.au/articles/business-ai-efficiency-innovation-automation', title: 'A practical guide to getting started with Business AI - UNSW BusinessThink', publisher: 'businessthink.unsw.edu.au', description: "", category: 'guide' },
+            { id: 6, href: 'https://officeproconsulting.com.au/ai-for-business/', title: 'AI for Business: A Practical Guide for Australian SMEs', publisher: 'officeproconsulting.com.au', description: "", category: 'guide' },
+            { id: 7, href: 'https://appoly.com.au/resources/practical-guide-to-ai-agents-for-australian-businesses/', title: 'A practical guide to AI agents for Australian businesses | Appoly Australia', publisher: 'appoly.com.au', description: "", category: 'guide' },
+            { id: 8, href: 'https://business.gov.au/', title: 'Support for businesses in Australia | business.gov.au', publisher: 'business.gov.au', description: "", category: 'guide' },
+            { id: 9, href: 'https://au.linkedin.com/company/aussiefoundersclub', title: 'Aussie Founders Club | LinkedIn', publisher: 'au.linkedin.com', description: "", category: 'guide' },
           ]}
           heading='Sources & further reading'
         />

@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -106,9 +105,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -192,14 +189,7 @@ export default function ArticleContent() {
           <p>{"Talk through how each of you thinks about uncertainty, financial pressure, and the tradeoffs between startup demands and life outside work."}</p>
           <p>{"The fourth conversation is about communication, feedback, and conflict resolution. The sources emphasise that values show up most clearly when people disagree. Ask how they like to give feedback, how they prefer to handle tension, and what they do when trust takes a hit. A healthy cofounder match is not one with no conflict. It is one where both people can handle disagreement in a way that protects the relationship and the company."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the how to assess cofounder values match checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -250,15 +240,15 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://www.mentessa.com/7-best-practices-for-a-cofounder-matching-service-online/", title: "7 Best Practices for a Cofounder Matching Service Online", publisher: "mentessa.com", description: "Authoritative reference supporting 7 Best Practices for a Cofounder Matching Service Online.", category: "guide"},
-          {id: 2, href: "https://foundingjourney.com/p/cofounder-mistakes", title: "8 Common Mistakes When Choosing a Co-Founder", publisher: "foundingjourney.com", description: "Authoritative reference supporting 8 Common Mistakes When Choosing a Co-Founder.", category: "guide"},
-          {id: 3, href: "https://www.ycombinator.com/blog/10-questions-to-discuss-with-a-potential-co-founder", title: "10 Questions to Discuss with a Potential Co-founder | Y Combinator", publisher: "ycombinator.com", description: "Authoritative reference supporting 10 Questions to Discuss with a Potential Co-founder | Y Combinator.", category: "guide"},
-          {id: 4, href: "https://onlyfounders.app/all-blogs/cofounder-compatibility-testing-your-cofounder-s-compatibility", title: "Cofounder Compatibility: Testing your CoFounder's Compatibility ! - OnlyFounders App", publisher: "onlyfounders.app", description: "Authoritative reference supporting Cofounder Compatibility: Testing your CoFounder's Compatibility ! - OnlyFounders App.", category: "guide"},
-          {id: 5, href: "https://www.nfx.com/post/the-pyramid-of-cofounder-success", title: "The Pyramid of Co-Founder Success", publisher: "nfx.com", description: "Authoritative reference supporting The Pyramid of Co-Founder Success.", category: "guide"},
-          {id: 6, href: "https://www.linkedin.com/posts/the-startup-pod_the-ultimate-co-founder-vetting-checklist-activity-7268049878226714624-xUKx", title: "The Ultimate Co-Founder Vetting Checklist | The Startup Podcast", publisher: "linkedin.com", description: "Authoritative reference supporting The Ultimate Co-Founder Vetting Checklist | The Startup Podcast.", category: "guide"},
-          {id: 7, href: "https://blog.foundersbase.com/how-can-i-vet-or-evaluate-a-potential-co-founders-compatibility/", title: "How can I vet or evaluate a potential co-founder\u2019s compatibility?", publisher: "blog.foundersbase.com", description: "Authoritative reference supporting How can I vet or evaluate a potential co-founder\u2019s compatibility?.", category: "guide"},
-          {id: 8, href: "https://www.nascent.live/post/why-finding-the-right-co-founder-match-is-critical-for-your-startup", title: "Why finding the right co-founder match is critical for your startup", publisher: "nascent.live", description: "Authoritative reference supporting Why finding the right co-founder match is critical for your startup.", category: "guide"},
-          {id: 9, href: "https://www.startuplinkx.com/post/find-startup-cofounder-guide", title: "How to Find the Perfect Cofounder: Matchmaking Guide for Startups| Blog | StartupLinkX", publisher: "startuplinkx.com", description: "Authoritative reference supporting How to Find the Perfect Cofounder: Matchmaking Guide for Startups| Blog | StartupLinkX.", category: "guide"},
+          {id: 1, href: "https://www.mentessa.com/7-best-practices-for-a-cofounder-matching-service-online/", title: "7 Best Practices for a Cofounder Matching Service Online", publisher: "mentessa.com", description: "", category: "guide"},
+          {id: 2, href: "https://foundingjourney.com/p/cofounder-mistakes", title: "8 Common Mistakes When Choosing a Co-Founder", publisher: "foundingjourney.com", description: "", category: "guide"},
+          {id: 3, href: "https://www.ycombinator.com/blog/10-questions-to-discuss-with-a-potential-co-founder", title: "10 Questions to Discuss with a Potential Co-founder | Y Combinator", publisher: "ycombinator.com", description: "", category: "guide"},
+          {id: 4, href: "https://onlyfounders.app/all-blogs/cofounder-compatibility-testing-your-cofounder-s-compatibility", title: "Cofounder Compatibility: Testing your CoFounder's Compatibility ! - OnlyFounders App", publisher: "onlyfounders.app", description: "", category: "guide"},
+          {id: 5, href: "https://www.nfx.com/post/the-pyramid-of-cofounder-success", title: "The Pyramid of Co-Founder Success", publisher: "nfx.com", description: "", category: "guide"},
+          {id: 6, href: "https://www.linkedin.com/posts/the-startup-pod_the-ultimate-co-founder-vetting-checklist-activity-7268049878226714624-xUKx", title: "The Ultimate Co-Founder Vetting Checklist | The Startup Podcast", publisher: "linkedin.com", description: "", category: "guide"},
+          {id: 7, href: "https://blog.foundersbase.com/how-can-i-vet-or-evaluate-a-potential-co-founders-compatibility/", title: "How can I vet or evaluate a potential co-founder\u2019s compatibility?", publisher: "blog.foundersbase.com", description: "", category: "guide"},
+          {id: 8, href: "https://www.nascent.live/post/why-finding-the-right-co-founder-match-is-critical-for-your-startup", title: "Why finding the right co-founder match is critical for your startup", publisher: "nascent.live", description: "", category: "guide"},
+          {id: 9, href: "https://www.startuplinkx.com/post/find-startup-cofounder-guide", title: "How to Find the Perfect Cofounder: Matchmaking Guide for Startups| Blog | StartupLinkX", publisher: "startuplinkx.com", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

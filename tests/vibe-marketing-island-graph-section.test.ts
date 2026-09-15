@@ -75,12 +75,8 @@ function props(overrides: Partial<VibeMarketingIslandGraphProps> = {}): VibeMark
     generatingPillarSlug: null,
     confirmingPillarSlug: null,
     activePillarSlug: null,
-    customNotice: false,
-    helpOpen: false,
-    helpRef: { current: null },
     onGenerate: () => {},
     onSelectIsland: () => {},
-    onAddCustomPillar: () => {},
     header: createElement("h2", null, "Your content islands"),
     ...overrides,
   };
@@ -151,21 +147,15 @@ describe("VibeMarketingIslandGraph", () => {
     expect(markup).toContain('fill="#6d28d9"');
   });
 
-  test("shows a quiet new-island marker and the emerging-islands summary", () => {
-    const markup = renderToStaticMarkup(createElement(VibeMarketingIslandGraph, props()));
-
+  test("keeps the new-island legend and replaces summary chips with actions", () => {
+    const markup = renderToStaticMarkup(createElement(VibeMarketingIslandGraph, props({
+      actions: createElement("button", null, "Create an island"),
+    })));
     expect(markup).toContain("New this cycle");
-    expect(markup).toContain("2 islands forming");
-
-    const quiet = renderToStaticMarkup(
-      createElement(VibeMarketingIslandGraph, props({ graph: { ...graph, emergingCount: 0 } })),
-    );
-    expect(quiet).not.toContain("islands forming");
-
-    const single = renderToStaticMarkup(
-      createElement(VibeMarketingIslandGraph, props({ graph: { ...graph, emergingCount: 1 } })),
-    );
-    expect(single).toContain("1 island forming");
+    expect(markup).toContain("Create an island");
+    expect(markup).not.toContain("islands forming");
+    expect(markup).not.toContain("active islands");
+    expect(markup).not.toContain("Ranked by opportunity");
   });
 
   test("renders the selected island action card with its metrics and the arm/fire button", () => {
@@ -208,12 +198,13 @@ describe("VibeMarketingIslandGraph", () => {
     expect(markup).toContain("Browsing is free.");
   });
 
-  test("renders the map by default with a clear custom-island status", () => {
+  test("renders the map without the redundant custom-island section", () => {
     const markup = renderToStaticMarkup(createElement(VibeMarketingIslandGraph, props()));
 
     expect(markup).toContain("Content island map:");
-    expect(markup).toContain("Custom island");
-    expect(markup).toContain("Coming soon");
+    expect(markup).not.toContain("Custom island");
+    expect(markup).not.toContain("Coming soon");
+    expect(markup).not.toContain("Explore a new content theme");
   });
 
   test("renders every island with full names and useful metrics in list view", () => {
@@ -228,22 +219,6 @@ describe("VibeMarketingIslandGraph", () => {
     expect(markup).toContain("Searches/mo");
     expect(markup).toContain("Opportunity");
     expect(markup).toContain("Articles");
-  });
-
-  test("only expands the contextual help when requested", () => {
-    const quiet = renderToStaticMarkup(createElement(VibeMarketingIslandGraph, props()));
-    expect(quiet).not.toContain("How content islands work");
-
-    const expanded = renderToStaticMarkup(
-      createElement(VibeMarketingIslandGraph, props({ helpOpen: true })),
-    );
-    expect(expanded).toContain("How content islands work");
-    expect(expanded).toContain("Larger circles have more search opportunity");
-
-    const custom = renderToStaticMarkup(
-      createElement(VibeMarketingIslandGraph, props({ customNotice: true })),
-    );
-    expect(custom).toContain("Custom island creation is coming soon");
   });
 
   test("stays renderable when a global window exists but carries no browser APIs", () => {

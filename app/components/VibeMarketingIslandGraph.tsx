@@ -1,4 +1,4 @@
-import type { KeyboardEvent, ReactNode, RefObject } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -9,7 +9,6 @@ import {
   List,
   Loader2,
   Network,
-  Plus,
   Sparkles,
   X,
 } from "lucide-react";
@@ -245,8 +244,9 @@ export function computeIslandLabelLayouts(
 }
 
 function islandAccessibleLabel(node: IslandGraphNode): string {
+  if (node.researchPending) return `${node.name}: custom island. Search demand and opportunity are not researched yet. Select to generate topic ideas.`;
   const articleLabel = node.articlesWritten === 1 ? "article" : "articles";
-  return `${node.name}: ${formatMetric(node.keywordCount)} keywords, ${formatMetric(node.totalVolume)} monthly searches, opportunity score ${formatMetric(node.opportunityScore)}, ${formatMetric(node.aiSearchVolume)} AI searches, ${formatMetric(node.articlesWritten)} ${articleLabel} written. Select to review this island.`;
+  return `${node.name}: ${(node.researchPending ? "Not researched" : formatMetric(node.keywordCount))} keywords, ${(node.researchPending ? "Not researched" : formatMetric(node.totalVolume))} monthly searches, opportunity score ${(node.researchPending ? "Not researched" : formatMetric(node.opportunityScore))}, ${(node.researchPending ? "Not researched" : formatMetric(node.aiSearchVolume))} AI searches, ${formatMetric(node.articlesWritten)} ${articleLabel} written. Select to review this island.`;
 }
 
 export interface VibeMarketingIslandGraphProps {
@@ -256,14 +256,11 @@ export interface VibeMarketingIslandGraphProps {
   generatingPillarSlug?: string | null;
   confirmingPillarSlug?: string | null;
   activePillarSlug: string | null;
-  customNotice: boolean;
-  helpOpen: boolean;
-  helpRef: RefObject<HTMLDivElement | null>;
   onGenerate: (pillar: VibeMarketingTopicPillar) => void;
   onSelectIsland: (slug: string | null) => void;
-  onAddCustomPillar: () => void;
   /** Shared with the no-graph fallback so both variants carry the same section header. */
   header?: ReactNode;
+  actions?: ReactNode;
   /** Used by focused rendering tests; normal product behavior starts in map view. */
   defaultView?: "map" | "list";
 }
@@ -275,13 +272,10 @@ export default function VibeMarketingIslandGraph({
   generatingPillarSlug,
   confirmingPillarSlug,
   activePillarSlug,
-  customNotice,
-  helpOpen,
-  helpRef,
   onGenerate,
   onSelectIsland,
-  onAddCustomPillar,
   header,
+  actions,
   defaultView = "map",
 }: VibeMarketingIslandGraphProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -394,9 +388,6 @@ export default function VibeMarketingIslandGraph({
     return slugs;
   }, [emphasisSlug, graph.edges]);
 
-  const emergingCaption = graph.emergingCount > 0
-    ? `${formatMetric(graph.emergingCount)} island${graph.emergingCount === 1 ? "" : "s"} forming`
-    : null;
   const graphLabel = `Content island map: ${graph.nodes
     .map((node) => node.name)
     .join(", ")}. Circle size shows opportunity, lines show related islands.`;
@@ -422,19 +413,7 @@ export default function VibeMarketingIslandGraph({
 
         <div className="mt-5 border-y border-slate-100 bg-slate-50/70 px-4 py-3 sm:px-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-extrabold text-slate-600">
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                {formatMetric(graph.nodes.length)} active island{graph.nodes.length === 1 ? "" : "s"}
-              </span>
-              {emergingCaption ? (
-                <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-violet-700">
-                  {emergingCaption}
-                </span>
-              ) : null}
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                Ranked by opportunity
-              </span>
-            </div>
+            {actions}
 
             {!narrow ? (
               <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Content island view">
@@ -677,8 +656,8 @@ export default function VibeMarketingIslandGraph({
                           />
                         </div>
                         <span className="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3">
-                          <ListMetric label="Searches/mo" value={formatMetric(node.totalVolume)} />
-                          <ListMetric label="Opportunity" value={formatMetric(node.opportunityScore)} />
+                          <ListMetric label="Searches/mo" value={(node.researchPending ? "Not researched" : formatMetric(node.totalVolume))} />
+                          <ListMetric label="Opportunity" value={(node.researchPending ? "Not researched" : formatMetric(node.opportunityScore))} />
                           <ListMetric label="Articles" value={formatMetric(node.articlesWritten)} />
                         </span>
                       </button>
@@ -701,51 +680,6 @@ export default function VibeMarketingIslandGraph({
             </div>
           )}
 
-          <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-black text-slate-900">Need a different content theme?</p>
-              <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                Use the Custom topic tab above for a one-off idea while custom islands are being built.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onAddCustomPillar}
-              aria-describedby="custom-island-status"
-              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100"
-            >
-              <Plus className="h-4 w-4" />
-              Custom island
-              <span id="custom-island-status" className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] uppercase tracking-wide">
-                Coming soon
-              </span>
-            </button>
-          </div>
-
-          {helpOpen || customNotice ? (
-            <div
-              ref={helpRef}
-              tabIndex={-1}
-              role="status"
-              aria-live="polite"
-              className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-4 text-sm font-semibold leading-6 text-violet-800 outline-none transition focus:ring-4 focus:ring-violet-100"
-            >
-              <div className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
-                <div>
-                  <p className="font-black">How content islands work</p>
-                  <p className="mt-1">
-                    Each island is a broad audience theme containing many specific article ideas. Larger circles have more search opportunity; connecting lines show overlapping audiences.
-                  </p>
-                  {customNotice ? (
-                    <p className="mt-2 font-bold">
-                      Custom island creation is coming soon. Choose the Custom topic tab above to research a one-off article idea now.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          ) : null}
         </div>
       </section>
     </div>
@@ -831,10 +765,10 @@ function SelectedIslandPanel({
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-        <IslandMetric label="Keywords" value={formatMetric(node.keywordCount)} />
-        <IslandMetric label="Searches / month" value={formatMetric(node.totalVolume)} />
-        <IslandMetric label="Opportunity" value={formatMetric(node.opportunityScore)} />
-        <IslandMetric label="AI searches" value={formatMetric(node.aiSearchVolume)} />
+        <IslandMetric label="Keywords" value={(node.researchPending ? "Not researched" : formatMetric(node.keywordCount))} />
+        <IslandMetric label="Searches / month" value={(node.researchPending ? "Not researched" : formatMetric(node.totalVolume))} />
+        <IslandMetric label="Opportunity" value={(node.researchPending ? "Not researched" : formatMetric(node.opportunityScore))} />
+        <IslandMetric label="AI searches" value={(node.researchPending ? "Not researched" : formatMetric(node.aiSearchVolume))} />
         <IslandMetric label="Articles written" value={formatMetric(node.articlesWritten)} />
       </dl>
 
@@ -908,10 +842,10 @@ function IslandTooltip({
     ? preferredY
     : Math.min(GRAPH_HEIGHT - TOOLTIP_HEIGHT - 8, position.y + position.radius + 14);
   const rows = [
-    `Keywords: ${formatMetric(node.keywordCount)}`,
-    `Monthly searches: ${formatMetric(node.totalVolume)}`,
-    `Opportunity: ${formatMetric(node.opportunityScore)}`,
-    `AI searches: ${formatMetric(node.aiSearchVolume)}`,
+    `Keywords: ${(node.researchPending ? "Not researched" : formatMetric(node.keywordCount))}`,
+    `Monthly searches: ${(node.researchPending ? "Not researched" : formatMetric(node.totalVolume))}`,
+    `Opportunity: ${(node.researchPending ? "Not researched" : formatMetric(node.opportunityScore))}`,
+    `AI searches: ${(node.researchPending ? "Not researched" : formatMetric(node.aiSearchVolume))}`,
     `Articles written: ${formatMetric(node.articlesWritten)}`,
   ];
   return (

@@ -1,0 +1,123 @@
+.vr-workflow-layout {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 940px);
+  align-items: start;
+  gap: 40px;
+  max-width: 1130px;
+  margin: 20px auto 0;
+}
+.vr-workflow-content {
+  min-width: 0;
+}
+.vr-workflow-sidebar {
+  align-self: stretch;
+}
+.vr-workflow-sticky {
+  position: sticky;
+  top: 115px;
+  padding-top: 102px;
+}
+.vr-workflow-panel {
+  color: #789083;
+  font-family: "Roboto", system-ui, sans-serif;
+}
+.vr-workflow-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  padding-left: 10px;
+  margin-bottom: 18px;
+  color: #849487;
+}
+.vr-workflow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  list-style: none;
+  padding: 0;
+}
+.vr-workflow-step-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+}
+.vr-workflow-step-button:not(:disabled):hover {
+  background: #eaf0e9;
+}
+.vr-workflow-step-button:focus-visible {
+  outline: 2px solid #087f75;
+  outline-offset: 3px;
+}
+.vr-workflow-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid #d1ddd2;
+  border-radius: 50%;
+  color: #8c9d90;
+  font-size: 10px;
+}
+.vr-workflow-step[data-active="true"] .vr-workflow-step-button {
+  background: #e7f0e7;
+  color: #28644c;
+  font-weight: 500;
+}
+.vr-workflow-step[data-active="true"] .vr-workflow-node {
+  background: #28866a;
+  border-color: #28866a;
+  color: white;
+}
+.vr-workflow-step[data-complete="true"] .vr-workflow-node {
+  border-color: #b4d3c0;
+  color: #28866a;
+}
+.vr-workflow-small-progress {
+  height: 3px;
+  border-radius: 3px;
+  background: #e7ece5;
+  margin: 23px 10px;
+  overflow: hidden;
+}
+.vr-workflow-small-progress span {
+  display: block;
+  background: #79aa8e;
+  height: 100%;
+  transition: width 0.2s;
+}
+@media (max-width: 1023px) {
+  .vr-workflow-layout {
+    display: block;
+    margin-top: 8px;
+  }
+  .vr-workflow-sticky {
+    position: static;
+    padding: 0;
+  }
+  .vr-workflow-panel {
+    margin-bottom: 24px;
+  }
+  .vr-workflow-eyebrow,
+  .vr-workflow-small-progress {
+    display: none;
+  }
+  .vr-workflow-steps {
+    flex-direction: row;
+    gap: 8px;
+  }
+  .vr-workflow-step {
+    flex: 1;
+  }
+  .vr-workflow-step-button {
+    justify-content: center;
+    font-size: 12px;
+    gap: 8px;
+  }
+}

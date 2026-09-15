@@ -16,8 +16,11 @@ const apiPost = mock(async (path: string) => ({
 const createApiClient = mock(() => ({ post: apiPost }));
 const getCurrentUser = mock(async () => ({ email: "founder@example.com" }));
 
+// Preserve real pure helpers. Replacing apiErrorDetail made unrelated tests
+// observe this route fixture when Bun discovered these files in another order.
+const realApi = { ...await import("../app/lib/api") };
 mock.module("../app/lib/api", () => ({
-  apiErrorDetail: (_error: unknown, fallback: string) => fallback,
+  ...realApi,
   createApiClient,
   shouldUseDevBackendStub: () => false,
 }));

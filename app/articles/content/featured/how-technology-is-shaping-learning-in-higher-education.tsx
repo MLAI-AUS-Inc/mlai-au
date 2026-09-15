@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -87,7 +86,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Examine how digital tools affect university learning and assessment, including access, evidence of learning and the limits of automated feedback.",
   items: [
     { label: 'How is AI changing higher education learning?', description: 'AI supports drafting, feedback, and practice; policies prioritise transparency and assessment redesign.' },
     { label: 'What does blended or hybrid delivery look like in 2026?', description: 'Recorded lectures + LMS modules with on‑campus workshops, labs, and authentic assessments.' },
@@ -301,14 +300,7 @@ export default function ArticleContent() {
           accent="teal"
         />
 
-        <ArticleResourceCTA
-          eyebrow="Resources"
-          title={`Get templates for ${TOPIC}`}
-          description="Download a study log template, an assessment checklist, and a micro‑credential planning worksheet."
-          buttonLabel="Download now"
-          buttonHref="#"
-          accent="purple"
-        />
+
 
         <QuoteBlock title="Pro tip" variant="orange">
           Treat every assignment as a portfolio piece. Capture process evidence and
