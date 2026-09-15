@@ -1,4 +1,4 @@
-import type { KeyboardEvent, ReactNode, RefObject } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -9,7 +9,6 @@ import {
   List,
   Loader2,
   Network,
-  Plus,
   Sparkles,
   X,
 } from "lucide-react";
@@ -257,14 +256,11 @@ export interface VibeMarketingIslandGraphProps {
   generatingPillarSlug?: string | null;
   confirmingPillarSlug?: string | null;
   activePillarSlug: string | null;
-  customNotice: boolean;
-  helpOpen: boolean;
-  helpRef: RefObject<HTMLDivElement | null>;
   onGenerate: (pillar: VibeMarketingTopicPillar) => void;
   onSelectIsland: (slug: string | null) => void;
-  onAddCustomPillar: () => void;
   /** Shared with the no-graph fallback so both variants carry the same section header. */
   header?: ReactNode;
+  actions?: ReactNode;
   /** Used by focused rendering tests; normal product behavior starts in map view. */
   defaultView?: "map" | "list";
 }
@@ -276,13 +272,10 @@ export default function VibeMarketingIslandGraph({
   generatingPillarSlug,
   confirmingPillarSlug,
   activePillarSlug,
-  customNotice,
-  helpOpen,
-  helpRef,
   onGenerate,
   onSelectIsland,
-  onAddCustomPillar,
   header,
+  actions,
   defaultView = "map",
 }: VibeMarketingIslandGraphProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -395,9 +388,6 @@ export default function VibeMarketingIslandGraph({
     return slugs;
   }, [emphasisSlug, graph.edges]);
 
-  const emergingCaption = graph.emergingCount > 0
-    ? `${formatMetric(graph.emergingCount)} island${graph.emergingCount === 1 ? "" : "s"} forming`
-    : null;
   const graphLabel = `Content island map: ${graph.nodes
     .map((node) => node.name)
     .join(", ")}. Circle size shows opportunity, lines show related islands.`;
@@ -423,19 +413,7 @@ export default function VibeMarketingIslandGraph({
 
         <div className="mt-5 border-y border-slate-100 bg-slate-50/70 px-4 py-3 sm:px-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-extrabold text-slate-600">
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                {formatMetric(graph.nodes.length)} active island{graph.nodes.length === 1 ? "" : "s"}
-              </span>
-              {emergingCaption ? (
-                <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-violet-700">
-                  {emergingCaption}
-                </span>
-              ) : null}
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                Ranked by opportunity
-              </span>
-            </div>
+            {actions}
 
             {!narrow ? (
               <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Content island view">
@@ -702,48 +680,6 @@ export default function VibeMarketingIslandGraph({
             </div>
           )}
 
-          <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-black text-slate-900">Explore a new content theme</p>
-              <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                Start with a topic, audience need, service, product or feature and make an island of your own.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onAddCustomPillar}
-              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100"
-            >
-              <Plus className="h-4 w-4" />
-              Custom island
-
-            </button>
-          </div>
-
-          {helpOpen || customNotice ? (
-            <div
-              ref={helpRef}
-              tabIndex={-1}
-              role="status"
-              aria-live="polite"
-              className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-4 text-sm font-semibold leading-6 text-violet-800 outline-none transition focus:ring-4 focus:ring-violet-100"
-            >
-              <div className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
-                <div>
-                  <p className="font-black">How content islands work</p>
-                  <p className="mt-1">
-                    Each island is a broad audience theme containing many specific article ideas. Larger circles have more search opportunity; connecting lines show overlapping audiences.
-                  </p>
-                  {customNotice ? (
-                    <p className="mt-2 font-bold">
-                      Create a custom island around any subject or audience need. Its saved brief guides every round of topic research.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          ) : null}
         </div>
       </section>
     </div>

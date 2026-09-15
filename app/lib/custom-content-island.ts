@@ -1,43 +1,49 @@
-export type IslandFocus = "start" | "implement" | "choose" | "custom";
+export type IslandFocus = "any" | "informational" | "commercial" | "transactional" | "navigational" | "custom";
 
 export interface CustomIslandBrief {
   subject: string;
   description: string;
   audience: string;
+  searchIntent: IslandFocus;
   focus: string;
-  name: string;
-  keyword: string;
 }
+
+export interface ResearchedIsland {
+  id: string;
+  name: string;
+  description: string;
+  pillar_keyword: string;
+  metrics: { keyword_count: number; total_volume: number; avg_difficulty: number; opportunity_score: number };
+  keywords: { keyword: string; volume: number; difficulty: number }[];
+}
+
+export const EMPTY_ISLAND_BRIEF: CustomIslandBrief = { subject: "", description: "", audience: "", searchIntent: "any", focus: "" };
 
 export const ISLAND_FOCUSES = [
-  { id: "start", label: "Explain and explore", summary: "Answer questions, introduce ideas and help people understand a topic.", detail: "Help this audience understand the subject, explore different perspectives and answer their questions." },
-  { id: "implement", label: "Share practical guidance", summary: "Teach useful skills, solve problems and share step-by-step advice.", detail: "Help this audience put ideas into practice, develop useful skills, solve relevant problems and learn from examples." },
-  { id: "choose", label: "Compare options", summary: "Help people weigh up approaches and make informed choices.", detail: "Help this audience compare relevant options, understand their differences and trade-offs, and decide what fits their needs." },
-  { id: "custom", label: "Define my own direction", summary: "Describe exactly what you want your content to achieve.", detail: "" },
+  { id: "any", label: "Explore all opportunities", summary: "Find relevant themes across all search intents." },
+  { id: "informational", label: "Informational", summary: "Help people learn, answer questions or solve a problem." },
+  { id: "commercial", label: "Commercial", summary: "Help people compare options before they decide." },
+  { id: "transactional", label: "Transactional", summary: "Reach people ready to buy, book or take action." },
+  { id: "navigational", label: "Navigational", summary: "Help people find a specific brand, service or resource." },
+  { id: "custom", label: "My own direction", summary: "Describe what you want your content to help people do." },
 ] as const;
-
-export function islandFocusBrief(focus: IslandFocus, customDirection = ""): string {
-  return focus === "custom" ? customDirection.trim() : ISLAND_FOCUSES.find((option) => option.id === focus)!.detail;
-}
-
-export function suggestIslandName(theme: string, focus: IslandFocus): string {
-  if (focus === "custom") return theme.trim().slice(0, 160);
-  const suffix = { start: "explained", implement: "in practice", choose: "comparing options" }[focus];
-  return `${theme.trim()}: ${suffix}`.slice(0, 160);
-}
-
-export function islandExampleAngles(theme: string, focus: IslandFocus): string[] {
-  const subject = theme.trim() || "your topic";
-  switch (focus) {
-    case "start": return [`Where to start with ${subject}`, `Common mistakes to avoid with ${subject}`, `Your first steps towards ${subject}`];
-    case "implement": return [`${subject}: a practical guide`, `${subject}: common problems and how to solve them`, `${subject}: lessons from real examples`];
-    case "choose": return [`${subject}: comparing your options`, `${subject}: trade-offs to consider`, `${subject}: questions to ask before you decide`];
-    case "custom": return [];
-  }
-}
 
 export const ISLAND_BRIEF_EXAMPLES = [
-  { label: "A topic", subject: "Small-space gardening", description: "Explore growing herbs and vegetables on balconies and small patios, including planting, seasonal care and common problems.", audience: "People who want to grow food at home with limited outdoor space." },
-  { label: "A service", subject: "Home energy improvements", description: "Explain ways to reduce household energy use, compare upgrades and understand what to expect from a home energy assessment.", audience: "Homeowners looking for a more comfortable, energy-efficient home." },
-  { label: "A product or feature", subject: "Automated invoice reminders", description: "Help freelancers understand how automated reminders work, plan useful follow-ups and spend less time chasing overdue invoices.", audience: "Freelancers and small teams who manage their own invoicing." },
+  { label: "A topic", subject: "Growing vegetables on a small balcony", audience: "People with limited outdoor space" },
+  { label: "A service", subject: "Home energy assessments and reducing electricity bills", audience: "Homeowners" },
+  { label: "A product or feature", subject: "Automated invoice reminders for freelancers", audience: "Freelancers and small teams" },
 ] as const;
+
+export function researchIsTerminal(status?: string) {
+  return ["completed", "failed", "blocked", "cancelled", "canceled", "not_found"].includes(status || "");
+}
+
+export function researchedIslands(result?: Record<string, unknown>): ResearchedIsland[] {
+  if (!Array.isArray(result?.suggested_islands)) return [];
+  return result.suggested_islands.filter((value): value is ResearchedIsland => {
+    const item = value as ResearchedIsland;
+    return Boolean(item && typeof item.id === "string" && typeof item.name === "string" && item.metrics &&
+      Number.isFinite(item.metrics.total_volume) && item.metrics.total_volume > 0 &&
+      Number.isFinite(item.metrics.avg_difficulty) && Array.isArray(item.keywords) && item.keywords.length >= 3);
+  });
+}

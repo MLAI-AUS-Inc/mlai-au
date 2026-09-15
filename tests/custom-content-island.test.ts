@@ -1,30 +1,23 @@
 import { describe, expect, test } from "bun:test";
-import { ISLAND_BRIEF_EXAMPLES, ISLAND_FOCUSES, islandExampleAngles, islandFocusBrief, suggestIslandName } from "../app/lib/custom-content-island";
+import { ISLAND_BRIEF_EXAMPLES, ISLAND_FOCUSES, EMPTY_ISLAND_BRIEF, researchedIslands, researchIsTerminal } from "../app/lib/custom-content-island";
 import { normalizeIslandGraph } from "../app/lib/vibe-marketing";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import VibeMarketingIslandGraph from "../app/components/VibeMarketingIslandGraph";
 
 describe("custom content island", () => {
-  test("supports unrelated subjects without requiring a product or launch", () => {
-    for (const subject of ["Bird migration", "Local history", "Community volunteering", "AI transformation", "Invoice reminders"]) {
-      for (const focus of ISLAND_FOCUSES.filter((option) => option.id !== "custom")) {
-        const angles = islandExampleAngles(subject, focus.id);
-        expect(angles).toHaveLength(3);
-        expect(angles.every((angle) => angle.includes(subject))).toBe(true);
-        expect(suggestIslandName(subject, focus.id)).toStartWith(`${subject}:`);
-        expect(islandFocusBrief(focus.id)).not.toMatch(/product|purchase|business/);
-      }
-    }
-    expect(ISLAND_BRIEF_EXAMPLES.map((example) => example.label)).toEqual(["A topic", "A service", "A product or feature"]);
+  test("supports arbitrary topics and explicit intent without user-selected keywords", () => {
+    expect(ISLAND_FOCUSES.map(item => item.id)).toEqual(["any", "informational", "commercial", "transactional", "navigational", "custom"]);
+    expect(ISLAND_BRIEF_EXAMPLES.map(item => item.label)).toEqual(["A topic", "A service", "A product or feature"]);
+    expect(EMPTY_ISLAND_BRIEF).not.toHaveProperty("keyword");
+    expect(EMPTY_ISLAND_BRIEF).not.toHaveProperty("name");
   });
-
-  test("preserves a user's own direction without forcing a suggested purpose", () => {
-    const direction = "Tell the stories of local volunteers and invite readers to share their own experiences.";
-    expect(islandFocusBrief("custom", `  ${direction}  `)).toBe(direction);
-    expect(suggestIslandName("Community stories", "custom")).toBe("Community stories");
-    expect(islandExampleAngles("Community stories", "custom")).toEqual([]);
-    expect(islandFocusBrief("custom", "   ")).toBe("");
+  test("shows only measured proposals and recognises terminal research states", () => {
+    const island = { id: "one", name: "Gardening", metrics: { total_volume: 600, avg_difficulty: 20 }, keywords: [{}, {}, {}] };
+    expect(researchedIslands({suggested_islands: [island, {...island, metrics: {total_volume: 0}}, {name: "Made up"}]})).toEqual([island]);
+    expect(researchIsTerminal("completed")).toBe(true);
+    expect(researchIsTerminal("failed")).toBe(true);
+    expect(researchIsTerminal("queued")).toBe(false);
   });
 
   test("keeps unknown search demand distinct from measured zero", () => {
@@ -33,8 +26,8 @@ describe("custom content island", () => {
     const pillar = { ...graph.nodes[0], source: "content_island", topicCandidates: [] };
     const markup = renderToStaticMarkup(createElement(VibeMarketingIslandGraph, {
       graph, pillars: [pillar], activePillarSlug: "custom-ai", submitting: false,
-      customNotice: false, helpOpen: false, helpRef: {current: null}, header: null,
-      onGenerate() {}, onSelectIsland() {}, onAddCustomPillar() {},
+      header: null,
+      onGenerate() {}, onSelectIsland() {},
     }));
     expect(markup).toContain("Not researched");
     expect(markup).toContain("Search demand and opportunity are not researched yet");

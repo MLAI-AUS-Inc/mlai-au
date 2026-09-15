@@ -134,6 +134,7 @@ export default [
     route("companies", "routes/vibe-raising-app.companies.tsx"),
     route("switch-company", "routes/founder-tools.switch-company.tsx"),
     route("marketing", "routes/founder-tools.marketing.tsx"),
+    route("marketing/island-research", "routes/founder-tools.marketing.island-research.tsx"),
     route("marketing/create", "routes/founder-tools.marketing.create.tsx"),
     route("marketing/github-connect", "routes/founder-tools.marketing.github-connect.tsx"),
     route("marketing/autofill-runs/:runId", "routes/founder-tools.marketing.autofill-run.tsx"),

@@ -1,0 +1,119 @@
+import { useEffect, useRef, useState } from "react";
+import { createVibeMarketingClientRequestId } from "~/lib/vibe-marketing-billing";
+import { EMPTY_ISLAND_BRIEF, researchIsTerminal } from "~/lib/custom-content-island";
+import type { CustomIslandBrief } from "~/lib/custom-content-island";
+import type { VibeMarketingRunSummary, VibeMarketingTopicPillar } from "~/types/vibe-marketing";
+
+const endpoint = "/founder-tools/marketing/island-research";
+
+export function useIslandResearch(companyId: string, onAdded: (island: VibeMarketingTopicPillar) => void) {
+  const [brief, setBrief] = useState<CustomIslandBrief>(EMPTY_ISLAND_BRIEF);
+  const [step, setStep] = useState(0);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [run, setRun] = useState<VibeMarketingRunSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [adding, setAdding] = useState<string | null>(null);
+  const [saved, setSaved] = useState<VibeMarketingTopicPillar | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const requestId = useRef(createVibeMarketingClientRequestId("island-research"));
+  const mounted = useRef(true);
+  const posting = useRef(false);
+  const abort = useRef<AbortController | null>(null);
+  const storageKey = `island-research:v2:${companyId}`;
+  const terminal = researchIsTerminal(run?.status);
+
+  useEffect(() => {
+    mounted.current = true;
+    try {
+      const stored = JSON.parse(sessionStorage.getItem(storageKey) || "null");
+      if (stored?.brief && typeof stored.brief.subject === "string") {
+        setBrief({ ...EMPTY_ISLAND_BRIEF, ...stored.brief });
+        setStep(Math.max(0, Math.min(2, Number(stored.step) || 0)));
+        if (typeof stored.runId === "string") setRunId(stored.runId);
+        if (typeof stored.requestId === "string") requestId.current = stored.requestId;
+      }
+    } catch { /* Session storage can be unavailable. The in-page draft still works. */ }
+    setHydrated(true);
+    return () => { mounted.current = false; abort.current?.abort(); };
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try { sessionStorage.setItem(storageKey, JSON.stringify({ brief, step, runId, requestId: requestId.current })); } catch { /* Optional persistence. */ }
+  }, [brief, step, runId, hydrated, storageKey]);
+
+  useEffect(() => {
+    if (!runId || terminal) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const controller = new AbortController();
+    async function poll() {
+      try {
+        const response = await fetch(`${endpoint}?${new URLSearchParams({ runId: runId!, companyId })}`, { signal: controller.signal });
+        const data = await response.json() as VibeMarketingRunSummary;
+        if (stopped) return;
+        if (response.status === 404) {
+          setRun({ runId: runId!, status: "not_found" } as VibeMarketingRunSummary);
+          setError("This research is no longer available. Your topic brief is still here.");
+          return;
+        }
+        if (!response.ok || !data.runId) throw new Error("We’re having trouble getting a progress update. We’ll keep checking; you won’t be charged again.");
+        setRun(data);
+        setError(null);
+        if (researchIsTerminal(data.status)) return;
+      } catch (failure) {
+        if (stopped) return;
+        setError(failure instanceof Error ? failure.message : "Progress updates are temporarily unavailable.");
+      }
+      if (!stopped) timer = setTimeout(poll, 4000);
+    }
+    void poll();
+    return () => { stopped = true; clearTimeout(timer); controller.abort(); };
+  }, [runId, companyId, terminal]);
+
+  async function post(body: Record<string, unknown>) {
+    abort.current = new AbortController();
+    const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, companyId }), signal: abort.current.signal });
+    const data = await response.json() as { runId?: string; island?: VibeMarketingTopicPillar; error?: string; paymentRequired?: boolean };
+    if (!mounted.current) return null;
+    if (!response.ok && !data.runId) {
+      setPaymentRequired(Boolean(data.paymentRequired));
+      throw new Error(data.error || "We couldn’t complete this request. Your brief is saved; please try again.");
+    }
+    return data;
+  }
+
+  async function research() {
+    if (posting.current || runId) return;
+    posting.current = true;
+    setBusy(true); setError(null); setPaymentRequired(false);
+    try {
+      const data = await post({ action: "research", ...brief, clientRequestId: requestId.current });
+      if (data?.runId) { setRun(null); setRunId(data.runId); }
+      else if (data) throw new Error("Research could not be confirmed. Try again to check the same request.");
+    } catch (failure) {
+      if (mounted.current) setError(failure instanceof Error ? failure.message : "Research could not start. Please try again.");
+    } finally { posting.current = false; if (mounted.current) setBusy(false); }
+  }
+
+  async function adopt(proposalId: string) {
+    if (posting.current || !runId) return;
+    posting.current = true; setAdding(proposalId); setError(null);
+    try {
+      const data = await post({ action: "adopt", runId, proposalId });
+      if (data?.island) { setSaved(data.island); onAdded(data.island); }
+    } catch (failure) {
+      if (mounted.current) setError(failure instanceof Error ? failure.message : "The island could not be added. Please try again.");
+    } finally { posting.current = false; if (mounted.current) setAdding(null); }
+  }
+
+  function refine() {
+    if (!terminal) return;
+    requestId.current = createVibeMarketingClientRequestId("island-research");
+    setRunId(null); setRun(null); setSaved(null); setError(null); setStep(0);
+  }
+  return { brief, setBrief, step, setStep, runId, run, error, paymentRequired, busy, adding, saved, terminal, research, adopt, refine };
+}
