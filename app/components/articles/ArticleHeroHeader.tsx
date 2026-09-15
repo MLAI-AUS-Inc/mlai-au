@@ -89,7 +89,7 @@ export function ArticleHeroHeader({
                 {breadcrumbs && breadcrumbs.length > 0 && (
                     <nav
                         aria-label="Breadcrumb"
-                        className="mb-4"
+                        className="mb-4 pl-8 lg:pl-0"
                         data-cf-component-id="breadcrumb"
                         data-cf-component-type="breadcrumb"
                         data-cf-component-label="Breadcrumb"
