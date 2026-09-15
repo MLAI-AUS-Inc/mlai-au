@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterAll, describe, expect, mock, test } from "bun:test";
 
 import { DEFAULT_CONTROLLER_SOURCE } from "../app/lib/watt-the-hack-sandbox/default-controller";
 
@@ -6,6 +6,11 @@ import { DEFAULT_CONTROLLER_SOURCE } from "../app/lib/watt-the-hack-sandbox/defa
 // (no DOM). The store guards on `typeof window`, so defining it activates the
 // real read/write code.
 const ls = new Map<string, string>();
+const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+afterAll(() => {
+  if (originalWindow) Object.defineProperty(globalThis, "window", originalWindow);
+  else Reflect.deleteProperty(globalThis, "window");
+});
 (globalThis as unknown as { window: unknown }).window = {
   localStorage: {
     getItem: (k: string) => (ls.has(k) ? (ls.get(k) as string) : null),

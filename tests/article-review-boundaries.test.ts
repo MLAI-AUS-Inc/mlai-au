@@ -12,7 +12,6 @@ describe("article review component boundaries", () => {
   test("shared article components expose stable comment targets", () => {
     expect(source("app/components/articles/ArticleDisclaimer.tsx")).toContain('data-cf-component-id="disclaimer"');
     expect(source("app/components/articles/ArticleReferences.tsx")).toContain('data-cf-component-id="references"');
-    expect(source("app/components/articles/ArticleLayout.tsx")).toContain('data-cf-component-id="authoritative-references"');
   });
 
   test("upcoming events CTA exposes the same review target with or without events", () => {

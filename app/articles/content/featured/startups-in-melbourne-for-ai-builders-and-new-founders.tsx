@@ -20,7 +20,7 @@ const TOPIC = "Startups in Melbourne for AI Builders and New Founders"
 export const CATEGORY = "featured"
 export const SLUG = "startups-in-melbourne-for-ai-builders-and-new-founders"
 export const DATE_PUBLISHED = "2026-09-13"
-export const DATE_MODIFIED = "2026-09-13"
+export const DATE_MODIFIED = '2026-09-15'
 export const DESCRIPTION = "Start with LaunchVic\u2019s event listings, find AI peers, test a customer problem and use official business setup guidance to begin building in Melbourne."
 const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-da78dd9e-bd65-48aa-819c-f49377d96b65.jpg?alt=media&token=84ba0b79-1709-4762-9d04-036b2fb60b08"
 const HERO_IMAGE_ALT = "Close-up of Melbourne AI founders testing a startup idea at a LaunchVic networking event"
@@ -80,7 +80,7 @@ export const summaryHighlights = {
   heading: "Key facts: Startups in Melbourne for AI Builders and New Founders",
   intro: "Start with LaunchVic\u2019s event listings, find AI peers, test a customer problem and use official business setup guidance to begin building in Melbourne.",
   items: [
-    { label: "Where can Melbourne founders find connections?", description: "LaunchVic\u2019s Events & Networking page helps founders find Melbourne startup connections through topic, location and event-type filters. Customer research\u2014not meetup attendance or peer enthusiasm\u2014provides evidence of demand." },
+    { label: "Where can Melbourne founders find connections?", description: "Use official event listings to find relevant conversations, then check the organiser’s current audience, date, location, cost and booking details. Customer research, rather than meetup attendance or peer enthusiasm, provides evidence about demand." },
     { label: "What belongs in an AI startup brief?", description: "A startup\u2019s business proposition needs a defined customer problem, a revenue approach, startup and monthly costs, and a customer-acquisition plan. An interesting AI demonstration alone does not establish customer demand." },
     { label: "Where can founders find official setup guidance?", description: "Business.gov.au provides Australian founders with guidance on defining and planning a business, registration and finance. Business structure affects registration requirements and legal and tax obligations." },
   ],
@@ -101,7 +101,7 @@ export const articleMeta = {
 }
 
 const faqSchemaItems = [
-  { question: "Where can Melbourne founders find connections?", answer: "LaunchVic\u2019s Events & Networking page helps founders find Melbourne startup connections through topic, location and event-type filters. Customer research\u2014not meetup attendance or peer enthusiasm\u2014provides evidence of demand." },
+  { question: "Where can Melbourne founders find connections?", answer: "Use official event listings to find relevant conversations, then check the organiser’s current audience, date, location, cost and booking details. Customer research, rather than meetup attendance or peer enthusiasm, provides evidence about demand." },
   { question: "What belongs in an AI startup brief?", answer: "A startup\u2019s business proposition needs a defined customer problem, a revenue approach, startup and monthly costs, and a customer-acquisition plan. An interesting AI demonstration alone does not establish customer demand." },
   { question: "Where can founders find official setup guidance?", answer: "Business.gov.au provides Australian founders with guidance on defining and planning a business, registration and finance. Business structure affects registration requirements and legal and tax obligations." },
 ]
@@ -148,9 +148,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -170,14 +168,14 @@ export default function ArticleContent() {
 
       <div className="prose prose-lg prose-slate max-w-none bg-transparent">
         <div id="intro" data-cf-component-id={"section:intro"} data-cf-component-type={"section"} data-cf-component-label={"Where should a new Melbourne founder start?"} data-cf-source-section-id={"intro"}>
-        <p><strong>{TOPIC}</strong> — {"Start with the gap you need to close. To meet other founders, technical peers and potential collaborators, use LaunchVic\u2019s events calendar and community-group listings. It includes Melbourne meetups, pitch nights, workshops and investor sessions, with filters for topic, location and event type."}</p>
+        <p><strong>{TOPIC}</strong> — {"Start with the gap you need to close. To find founder or technical conversations, browse LaunchVic’s event and community listings, then verify each event with its organiser. LaunchVic’s site now directs readers to Innovation Victoria, so follow current official links rather than relying on an old directory description."}</p>
         <p>{"For AI-focused learning and peer connections, MLAI is an Australian not-for-profit, volunteer community that runs events and offers founder-oriented tools. Check its current event calendar rather than assuming a particular Melbourne event or venue will be available."}</p>
         <p>{"Community participation is different from setting up a business. When you are ready to operate, use business.gov.au\u2019s starting-a-business guide to work through readiness, your customer and market, planning, business structure, registration, finances and getting customers. The best first move is the one that addresses your immediate uncertainty: the problem, the people needed to build, or the practical steps to trade."}</p>
         </div>
         <div id="launchvic-events" data-cf-component-id={"section:launchvic-events"} data-cf-component-type={"section"} data-cf-component-label={"Find Melbourne startup events through LaunchVic"} data-cf-source-section-id={"launchvic-events"}>
           <h2>{"Find Melbourne startup events through LaunchVic"}</h2>
           <p>{"LaunchVic\u2019s Events & Networking page is a useful starting point for finding startup events in Victoria. Its calendar includes founder meetups, pitch nights, workshops and investor sessions in Melbourne and regional locations, as well as online events. Treat it as a statewide discovery tool rather than assuming every listing is in Melbourne."}</p>
-          <p>{"Use the calendar filters for topic, location and event type to narrow the options. Select Melbourne when an in-person local event is needed, or choose an online format when that better suits your circumstances. Then read the organiser\u2019s own listing to understand who the event is for and whether it fits your current startup stage or industry."}</p>
+          <p>{"Open the organiser’s listing and check the audience, current date, location or online format, cost and booking availability. Choose an event because it helps answer your question. If you need to understand a customer’s actual work, a direct conversation may be more useful than a general founder meetup."}</p>
           <p>{"Choose the format based on the conversation you need. A founder meetup may suit peer discussion, while a workshop can be useful when you want to learn around a defined topic. Pitch nights and investor sessions are different settings again, so it helps to arrive with a clear question rather than treating every event as the same networking opportunity."}</p>
           <p>{"For contact that continues after a single event, look at specialised community groups. LaunchVic describes these groups as networks organised around shared industries, experiences or startup stages, with regular meetups and ongoing peer support. A group that matches your immediate question is likely to make follow-up conversations more relevant."}</p>
           <div data-cf-component-id={"image:launchvic-events"} data-cf-component-type={"image"} data-cf-component-label={"Image: Find Melbourne startup events through LaunchVic"} data-cf-source-section-id={"launchvic-events"}>
@@ -205,7 +203,7 @@ export default function ArticleContent() {
             cards={[
             {
               title: "Have a prototype? Seek customer insight",
-              description: "Use LaunchVic\u2019s topic and location filters to find relevant industry or founder conversations. Bring a question about the customer\u2019s existing workflow, then distinguish peer feedback from direct customer research.",
+              description: "Find a relevant organiser listing and verify its audience and location. Bring a question about the customer’s existing workflow, then distinguish peer feedback from direct customer research.",
               variant: "orange",
             },
             {
@@ -278,20 +276,20 @@ export default function ArticleContent() {
             eyebrow="Free worksheet"
             title={"Melbourne AI Startup Discovery Worksheet"}
             description="A fill-in worksheet for clarifying an AI startup idea, choosing relevant Melbourne or online events, preparing customer conversations and tracking setup questions."
-            buttonLabel="Download the PDF"
-            buttonHref="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-resources%2Fstartups-in-melbourne-for-ai-builders-and-new-founders-worksheet-840ec247.pdf?alt=media&token=48697220-d17e-4b8c-989e-c1286b9df479"
+            buttonLabel="Download editable worksheet (Markdown)"
+            buttonHref="/downloads/melbourne-startup-discovery.md"
             accent="purple"
             previewCards={[
               {
                 title: "Customer Brief Prompts",
-                subtitle: 'PDF',
+                subtitle: "Markdown",
                 color: "bg-[#ff3d00]",
                 textColor: "text-white",
                 rotationClass: "rotate-[-6deg]",
               },
               {
                 title: "Event Planning",
-                subtitle: 'PDF',
+                subtitle: "Markdown",
                 color: "bg-[#00ffd7]",
                 textColor: "text-black",
                 rotationClass: "rotate-[7deg]",
@@ -302,7 +300,7 @@ export default function ArticleContent() {
 
       <ArticleReferences
           references={[
-            {id: 1, href: "https://launchvic.org/events-and-networking/", title: "Events & Networking | LaunchVic", publisher: "launchvic.org", category: "guide"},
+            {id: 1, href: "https://launchvic.org/featured-events/", title: "Featured Events | LaunchVic", publisher: "launchvic.org", category: "guide"},
             {id: 2, href: "https://sprintlaw.com.au/articles/business-startup-checklist/", title: "Business Startup Checklist Australia | Sprintlaw Australia", publisher: "sprintlaw.com.au", category: "guide"},
             {id: 3, href: "https://business.gov.au/guide/starting", title: "Guide to starting a business | business.gov.au", publisher: "business.gov.au", category: "guide"},
             {id: 4, href: "https://mlai.au/", title: "MLAI | Empowering Australia's AI Community", publisher: "mlai.au", category: "guide"},

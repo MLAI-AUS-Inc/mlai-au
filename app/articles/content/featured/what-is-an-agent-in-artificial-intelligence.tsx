@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -109,9 +108,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -199,14 +196,7 @@ export default function ArticleContent() {
           <p>{"Once it has enough context, the agent selects a next step. IBM describes AI agents as systems that autonomously perform tasks by designing workflows with available tools, while AWS notes that humans set goals but the agent independently chooses the best actions to pursue them."}</p>
           <p>{"The action is not the end of the loop. If the tool returns useful information, the agent can continue. If the result is incomplete, it may try a different action or ask for more input. This repeated observe-decide-act pattern is what gives AI agents their practical value: they can move through a task in stages instead of stopping at a single answer."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the what is agent in artificial intelligence checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -245,7 +235,7 @@ export default function ArticleContent() {
           <h2>{"How to Tell if a System Is Really an AI Agent"}</h2>
           <p>{"The stronger definitions of AI agents describe software that can interact with its environment, gather information, pursue a goal, and choose actions with some autonomy. So when you evaluate a product demo or an internal idea, look for three signs together: it can perceive relevant context, it can decide what to do next in service of a goal, and it can take actions across steps rather than stopping at one answer."}</p>
           <p>{"A system may sound agentic in marketing copy, but the better signal is bounded autonomy in a real workflow: using tools, retrieving information, keeping useful memory, and adjusting based on feedback or changing inputs. In practice, the safest path is to start with a narrow task, define clear goals and limits, watch how it behaves over multiple steps, and then expand only when the results are reliable enough for responsible use."}</p>
-          <p>{"In practice, how to Tell if a System Is Really an AI Agent works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+          <p>{"Ask to see one task from input to action: what the system observed, which action it selected, which tools it could use and where it stopped for approval. A conversational interface alone does not establish how the system makes decisions."}</p>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-069eb546-1a19-4325-b05b-233d80121ab9.jpg?alt=media&token=4bca5480-80a5-47b8-a517-7bba2c8b00f4"
             alt="How to Tell if a System Is Really an AI Agent"
@@ -262,18 +252,18 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://aws.amazon.com/what-is/ai-agents/", title: "What are AI Agents?- Agents in Artificial Intelligence Explained - AWS", publisher: "aws.amazon.com", description: "Authoritative reference supporting What are AI Agents?- Agents in Artificial Intelligence Explained - AWS.", category: "guide"},
-          {id: 2, href: "https://www.decidr.ai/blog/the-sme-superpower-how-agentic-ai-levels-the-playing-field-for-small-businesses", title: "Agentic AI: The secret edge for small business success", publisher: "decidr.ai", description: "Authoritative reference supporting Agentic AI: The secret edge for small business success.", category: "guide"},
-          {id: 3, href: "https://mitsloan.mit.edu/ideas-made-to-matter/agentic-ai-explained", title: "Agentic AI, explained | MIT Sloan", publisher: "mitsloan.mit.edu", description: "Authoritative reference supporting Agentic AI, explained | MIT Sloan.", category: "guide"},
-          {id: 4, href: "https://cloud.google.com/discover/what-are-ai-agents", title: "What are AI agents? Definition, examples, and types | Google Cloud", publisher: "cloud.google.com", description: "Authoritative reference supporting What are AI agents? Definition, examples, and types | Google Cloud.", category: "guide"},
-          {id: 5, href: "https://www.ibm.com/think/topics/ai-agents", title: "What Are AI Agents? | IBM", publisher: "ibm.com", description: "Authoritative reference supporting What Are AI Agents? | IBM.", category: "guide"},
-          {id: 6, href: "https://www.databricks.com/blog/types-ai-agents-definitions-roles-and-examples", title: "Types of AI Agents: Definitions, Roles, and Examples | Databricks Blog", publisher: "databricks.com", description: "Authoritative reference supporting Types of AI Agents: Definitions, Roles, and Examples | Databricks Blog.", category: "guide"},
-          {id: 7, href: "https://www.habitat3.com.au/single-post/ai-agents-what-are-they-how-do-they-help-small-business", title: "AI Agents: What are they and why should small businesses care? How can AI agents help small business?", publisher: "habitat3.com.au", description: "Authoritative reference supporting AI Agents: What are they and why should small businesses care? How can AI agents help small business?.", category: "guide"},
-          {id: 8, href: "https://www.geeksforgeeks.org/artificial-intelligence/agents-artificial-intelligence/", title: "Agents in AI - GeeksforGeeks", publisher: "geeksforgeeks.org", description: "Authoritative reference supporting Agents in AI - GeeksforGeeks.", category: "guide"},
-          {id: 9, href: "https://ioni.ai/post/what-are-agents-in-artificial-intelligence", title: "What Are Agents in Artificial Intelligence? | Feb 19, 2025", publisher: "ioni.ai", description: "Authoritative reference supporting What Are Agents in Artificial Intelligence? | Feb 19, 2025.", category: "guide"},
-          {id: 10, href: "https://www.databricks.com/blog/what-is-agent-evaluation", title: "What is AI Agent Evaluation? | Databricks", publisher: "databricks.com", description: "Authoritative reference supporting What is AI Agent Evaluation? | Databricks.", category: "guide"},
-          {id: 11, href: "https://en.wikipedia.org/wiki/AI_agent", title: "AI agent - Wikipedia", publisher: "en.wikipedia.org", description: "Authoritative reference supporting AI agent - Wikipedia.", category: "guide"},
-          {id: 12, href: "https://www.jotform.com/agent-templates/category/checklist-ai-agents", title: "Checklist AI Agents | Jotform", publisher: "jotform.com", description: "Authoritative reference supporting Checklist AI Agents | Jotform.", category: "guide"},
+          {id: 1, href: "https://aws.amazon.com/what-is/ai-agents/", title: "What are AI Agents?- Agents in Artificial Intelligence Explained - AWS", publisher: "aws.amazon.com", description: "", category: "guide"},
+          {id: 2, href: "https://www.decidr.ai/blog/the-sme-superpower-how-agentic-ai-levels-the-playing-field-for-small-businesses", title: "Agentic AI: The secret edge for small business success", publisher: "decidr.ai", description: "", category: "guide"},
+          {id: 3, href: "https://mitsloan.mit.edu/ideas-made-to-matter/agentic-ai-explained", title: "Agentic AI, explained | MIT Sloan", publisher: "mitsloan.mit.edu", description: "", category: "guide"},
+          {id: 4, href: "https://cloud.google.com/discover/what-are-ai-agents", title: "What are AI agents? Definition, examples, and types | Google Cloud", publisher: "cloud.google.com", description: "", category: "guide"},
+          {id: 5, href: "https://www.ibm.com/think/topics/ai-agents", title: "What Are AI Agents? | IBM", publisher: "ibm.com", description: "", category: "guide"},
+          {id: 6, href: "https://www.databricks.com/blog/types-ai-agents-definitions-roles-and-examples", title: "Types of AI Agents: Definitions, Roles, and Examples | Databricks Blog", publisher: "databricks.com", description: "", category: "guide"},
+          {id: 7, href: "https://www.habitat3.com.au/single-post/ai-agents-what-are-they-how-do-they-help-small-business", title: "AI Agents: What are they and why should small businesses care? How can AI agents help small business?", publisher: "habitat3.com.au", description: "", category: "guide"},
+          {id: 8, href: "https://www.geeksforgeeks.org/artificial-intelligence/agents-artificial-intelligence/", title: "Agents in AI - GeeksforGeeks", publisher: "geeksforgeeks.org", description: "", category: "guide"},
+          {id: 9, href: "https://ioni.ai/post/what-are-agents-in-artificial-intelligence", title: "What Are Agents in Artificial Intelligence? | Feb 19, 2025", publisher: "ioni.ai", description: "", category: "guide"},
+          {id: 10, href: "https://www.databricks.com/blog/what-is-agent-evaluation", title: "What is AI Agent Evaluation? | Databricks", publisher: "databricks.com", description: "", category: "guide"},
+          {id: 11, href: "https://en.wikipedia.org/wiki/AI_agent", title: "AI agent - Wikipedia", publisher: "en.wikipedia.org", description: "", category: "guide"},
+          {id: 12, href: "https://www.jotform.com/agent-templates/category/checklist-ai-agents", title: "Checklist AI Agents | Jotform", publisher: "jotform.com", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

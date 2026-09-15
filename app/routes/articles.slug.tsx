@@ -7,6 +7,7 @@ import {
     type ArticleWithSlug,
 } from "~/articles/registry";
 import { ArticleLayout } from "~/components/articles/ArticleLayout";
+import { ArticleHydrationCommit, ArticleHydrationScope } from "~/components/articles/ArticleHydration";
 import ContentFactoryArticleAnalytics from "~/articles/ContentFactoryArticleAnalytics";
 import { fetchEvents, type Event } from "~/lib/events";
 import { getEnv } from "~/lib/env.server";
@@ -256,7 +257,7 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
 
     return (
         <Suspense fallback={<div className="animate-pulse h-96 bg-gray-100 rounded-lg" />}>
-            <ContentComponent />
+            <ArticleHydrationCommit><ContentComponent /></ArticleHydrationCommit>
         </Suspense>
     );
 }
@@ -270,6 +271,7 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
     ];
 
     return (
+        <ArticleHydrationScope key={article.slug}>
         <ArticleLayout
             article={article}
             breadcrumbItems={useCustomHeader ? undefined : breadcrumbs}
@@ -291,5 +293,6 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
                 </div>
             </div>
         </ArticleLayout>
+        </ArticleHydrationScope>
     );
 }

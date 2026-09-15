@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -111,9 +110,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -133,7 +130,7 @@ export default function ArticleContent() {
       <div className="prose prose-lg prose-slate max-w-none bg-transparent">
         <p><strong>{TOPIC}</strong> — {"A go-to-market plan is the practical plan a startup uses to bring a product or service to market and reach the right customers. It is not just a launch announcement or a list of marketing tasks. The plan usually connects customer research, target audience choices, messaging, pricing, sales activity, and distribution channels so the business knows how it will win attention and convert that attention into early revenue."}</p>
         <p>{"For an early startup, this matters because time, budget, and team capacity are limited. A weak go-to-market approach can push a founder toward the wrong audience, the wrong channel, or a sales process that does not fit the product. In simple terms, go to market for startups is about making a few clear decisions early so growth efforts are tied to real customers, not guesswork."}</p>
-        <p>{"In practice, what a go-to-market plan does for an early startup works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+        <p>{"Write the plan as a testable set of choices: one customer group, one problem, one offer and a way to reach that group. Define what you need to learn before expanding."}</p>
         <ArticleImageBlock
           src={HERO_IMAGE}
           alt={HERO_IMAGE_ALT}
@@ -196,14 +193,7 @@ export default function ArticleContent() {
           <h3>{"After early proof: make the motion more repeatable"}</h3>
           <p>{"Once early customer proof points start to appear, GTM can become more structured. It means turning what worked into a repeatable process: a clearer target customer, sharper messaging, better-defined sales and marketing plans, and more deliberate channel choices. That progression fits both Stone & Chalk\u2019s move from product-market fit into the go-to-market phase and Stripe\u2019s view of GTM as a practical plan for how a business reaches customers."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the go to market for startups checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -216,8 +206,8 @@ export default function ArticleContent() {
           <h2>{"Choose channels, pricing, and positioning as one system"}</h2>
           <p>{"A startup should choose channels based on how its target customer already discovers and evaluates solutions, not on what feels exciting to the founding team. A go-to-market strategy usually covers the target customer, sales and marketing plans, pricing, and distribution channels because these decisions affect each other. Asana\u2019s Oatly example shows this logic clearly: the company went to coffee shops because that was where likely customers were already making choices about dairy alternatives."}</p>
           <p>{"Positioning needs to match that same buying context. The message should explain the product in terms the buyer already understands, with clear value instead of internal product language. If the route to market asks for a quick, low-friction decision, pricing should feel easy to try and easy to justify. If the product needs more buyer confidence, education, or stakeholder approval, the pricing and distribution model should support a longer sales motion rather than fight it."}</p>
-          <p>{"In practice, choose channels, pricing, and positioning as one system works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
-          <p>{"The goal is to keep choose channels, pricing, and positioning as one system concrete enough to guide action, while still tying each detail back to the main point of the section."}</p>
+          <p>{"Check that the message, price and channel address the same buyer and problem. Track the number approached as well as responses, trials and payments so a promising anecdote is not mistaken for a repeatable result."}</p>
+          <p>{"Review the result against the decision you set before the test. Record what remains uncertain and change the next test deliberately rather than increasing activity without a reason."}</p>
           <h2>{"Build a short test plan for first customer traction"}</h2>
           <p>{"A strong early test plan is short on purpose. Instead of trying many channels, messages, and offers at once, pick a small number of experiments that match your target customer and your current stage. That fits the basic GTM guidance from Asana and the startup-focused advice from Stone & Chalk: start with clear audience, messaging, channels, and goals, then execute in a way that is manageable with limited time and money. For a startup, the goal is not a perfect launch."}</p>
           <p>{"You might be testing whether a specific customer segment responds to your message, whether a direct outreach approach gets more useful conversations than a broader awareness push, or whether your first sales motion can move someone to a next step. Startmate and Stone & Chalk both point to the need for founders to focus on essentials in the early stage. That means choosing a few tests you can actually run well, not building a long checklist of activity that spreads your attention too thin."}</p>
@@ -258,16 +248,16 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://xgrowth.com.au/blogs/go-to-market-strategy-examples/", title: "Go-to-Market Strategy Examples - xGrowth", publisher: "xgrowth.com.au", description: "Authoritative reference supporting Go-to-Market Strategy Examples - xGrowth.", category: "guide"},
-          {id: 2, href: "https://stripe.com/resources/more/what-is-a-go-to-market-strategy-a-quick-gtm-guide-for-startups", title: "What is a go-to-market strategy? A quick GTM guide | Stripe", publisher: "stripe.com", description: "Authoritative reference supporting What is a go-to-market strategy? A quick GTM guide | Stripe.", category: "guide"},
-          {id: 3, href: "https://www.stoneandchalk.com.au/articles/go-to-market-strategy-guide-for-saas-startups", title: "Go-to-market strategy guide for SaaS startups | Stone & Chalk", publisher: "stoneandchalk.com.au", description: "Authoritative reference supporting Go-to-market strategy guide for SaaS startups | Stone & Chalk.", category: "guide"},
-          {id: 4, href: "https://xgrowth.com.au/blogs/go-to-market-checklist/", title: "Go-to-Market Checklist - xGrowth", publisher: "xgrowth.com.au", description: "Authoritative reference supporting Go-to-Market Checklist - xGrowth.", category: "guide"},
-          {id: 5, href: "https://aws.amazon.com/startups/learn/prove-whats-possible-make-your-idea-success-solid-go-to-market-strategy", title: "Make your idea a success with a solid go-to-market strategy | AWS Startups", publisher: "aws.amazon.com", description: "Authoritative reference supporting Make your idea a success with a solid go-to-market strategy | AWS Startups.", category: "guide"},
-          {id: 6, href: "https://arisegtm.com/blog/go-to-market-strategy-for-startups", title: "Go-To-Market Strategy for Startups", publisher: "arisegtm.com", description: "Authoritative reference supporting Go-To-Market Strategy for Startups.", category: "guide"},
-          {id: 7, href: "https://www.upliftgtm.com/blog/gtm-checklist", title: "GTM Checklist: 50-Point Go-to-Market Launch Checklist", publisher: "upliftgtm.com", description: "Authoritative reference supporting GTM Checklist: 50-Point Go-to-Market Launch Checklist.", category: "guide"},
-          {id: 8, href: "https://asana.com/resources/go-to-market-gtm-strategy", title: "Go to market GTM strategy: definition & 9-step guide [2026] \u2022 Asana", publisher: "asana.com", description: "Authoritative reference supporting Go to market GTM strategy: definition & 9-step guide [2026] \u2022 Asana.", category: "guide"},
-          {id: 9, href: "https://www.wrike.com/go-to-market-guide/", title: "Beginner's Guide to Go-To-Market Strategy | Wrike", publisher: "wrike.com", description: "Authoritative reference supporting Beginner's Guide to Go-To-Market Strategy | Wrike.", category: "guide"},
-          {id: 10, href: "https://workdash.com.au/go-to-market-strategies/", title: "Go to Market Strategy: What Startups Need to Know", publisher: "workdash.com.au", description: "Authoritative reference supporting Go to Market Strategy: What Startups Need to Know.", category: "guide"},
+          {id: 1, href: "https://xgrowth.com.au/blogs/go-to-market-strategy-examples/", title: "Go-to-Market Strategy Examples - xGrowth", publisher: "xgrowth.com.au", description: "", category: "guide"},
+          {id: 2, href: "https://stripe.com/resources/more/what-is-a-go-to-market-strategy-a-quick-gtm-guide-for-startups", title: "What is a go-to-market strategy? A quick GTM guide | Stripe", publisher: "stripe.com", description: "", category: "guide"},
+          {id: 3, href: "https://www.stoneandchalk.com.au/articles/go-to-market-strategy-guide-for-saas-startups", title: "Go-to-market strategy guide for SaaS startups | Stone & Chalk", publisher: "stoneandchalk.com.au", description: "", category: "guide"},
+          {id: 4, href: "https://xgrowth.com.au/blogs/go-to-market-checklist/", title: "Go-to-Market Checklist - xGrowth", publisher: "xgrowth.com.au", description: "", category: "guide"},
+          {id: 5, href: "https://aws.amazon.com/startups/learn/prove-whats-possible-make-your-idea-success-solid-go-to-market-strategy", title: "Make your idea a success with a solid go-to-market strategy | AWS Startups", publisher: "aws.amazon.com", description: "", category: "guide"},
+          {id: 6, href: "https://arisegtm.com/blog/go-to-market-strategy-for-startups", title: "Go-To-Market Strategy for Startups", publisher: "arisegtm.com", description: "", category: "guide"},
+          {id: 7, href: "https://www.upliftgtm.com/blog/gtm-checklist", title: "GTM Checklist: 50-Point Go-to-Market Launch Checklist", publisher: "upliftgtm.com", description: "", category: "guide"},
+          {id: 8, href: "https://asana.com/resources/go-to-market-gtm-strategy", title: "Go to market GTM strategy: definition & 9-step guide [2026] \u2022 Asana", publisher: "asana.com", description: "", category: "guide"},
+          {id: 9, href: "https://www.wrike.com/go-to-market-guide/", title: "Beginner's Guide to Go-To-Market Strategy | Wrike", publisher: "wrike.com", description: "", category: "guide"},
+          {id: 10, href: "https://workdash.com.au/go-to-market-strategies/", title: "Go to Market Strategy: What Startups Need to Know", publisher: "workdash.com.au", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

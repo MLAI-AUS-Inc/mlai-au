@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -105,7 +104,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Follow the relationship between investors, funds and startups, then consider what accepting equity investment means for ownership and expectations.",
   items: [
     { label: 'How do venture capitalists make money?', description: 'Mainly via management fees (often ~2% p.a.) and carried interest (commonly ~20%) on profits after returning capital to LPs.' },
     { label: 'What are the stages of VC funding?', description: 'Pre‑seed, seed, Series A–C+. Each round funds new milestones with higher expectations for traction, governance, and scale.' },
@@ -308,14 +307,7 @@ export default function ArticleContent() {
           accent="teal"
         />
 
-        <ArticleResourceCTA
-          eyebrow="Resources"
-          title={`Get templates for ${TOPIC}`}
-          description="Download checklists, worksheets, and example documents tailored to this guide."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <h2>Pros, cons, and realistic alternatives</h2>
         <ul>

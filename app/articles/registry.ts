@@ -82,6 +82,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/startups-in-melbourne-for-ai-builders-and-new-founders': {
         title: "Startups in Melbourne for AI Builders and New Founders",
         date: "2026-09-13",
+        dateModified: "2026-09-15",
         description: "Start with LaunchVic\u2019s event listings, find AI peers, test a customer problem and use official business setup guidance to begin building in Melbourne.",
         author: "Dr Sam Donegan",
         slug: "featured/startups-in-melbourne-for-ai-builders-and-new-founders",
@@ -102,6 +103,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/startup-company-investment-for-ai-founders': {
         title: "Startup Company Investment for AI Founders",
         date: "2026-07-27",
+        dateModified: "2026-09-15",
         description: "Startup company investment essentials for AI founders: set a clear milestone, plan runway and build an evidence-based funding case.",
         author: "Dr Sam Donegan",
         slug: "featured/startup-company-investment-for-ai-founders",
@@ -122,6 +124,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup': {
         title: "What Is an Accelerator and Is It Right for Your AI Startup?",
         date: "2026-07-26",
+        dateModified: "2026-09-15",
         description: "What is an accelerator for AI startups? Assess program fit.",
         author: "Dr Sam Donegan",
         slug: "featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup",

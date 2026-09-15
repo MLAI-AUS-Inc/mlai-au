@@ -216,8 +216,8 @@ export default function ArticleContent() {
 
   return (
     <>
-      <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: articleStructuredData }} />
-      <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
+
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeaderComponent
         breadcrumbs={[
@@ -389,17 +389,17 @@ export default function ArticleContent() {
         </div>
         <ArticleReferencesComponent
           references={[
-            { id: 1, href: 'https://www.stoneandchalk.com.au/articles/the-time-for-australian-ai-is-now', title: 'The time for Australian AI is now | Stone & Chalk', publisher: 'stoneandchalk.com.au', description: 'Authoritative reference supporting The time for Australian AI is now | Stone & Chalk.', category: 'guide' },
-            { id: 2, href: 'https://www.ai.gov.au/news-and-insights/reports/australias-artificial-intelligence-ecosystem-growth-and-opportunities', title: 'Australia’s artificial intelligence ecosystem: growth and opportunities | National AI Centre', publisher: 'ai.gov.au', description: 'Authoritative reference supporting Australia’s artificial intelligence ecosystem: growth and opportunities | National AI Centre.', category: 'guide' },
-            { id: 3, href: 'https://fullstack.com.au/startup-funding-in-australia/', title: 'Startup Funding in Australia: A Fullstack Guide - Fullstack', publisher: 'fullstack.com.au', description: 'Authoritative reference supporting Startup Funding in Australia: A Fullstack Guide - Fullstack.', category: 'guide' },
-            { id: 4, href: 'https://enosta.com/insights/how-to-structure-a-startup-in-australia', title: 'How to Structure a Startup in Australia: A Practical Guide for Founders | Enosta', publisher: 'enosta.com', description: 'Authoritative reference supporting How to Structure a Startup in Australia: A Practical Guide for Founders | Enosta.', category: 'guide' },
-            { id: 5, href: 'https://awaydigitalteams.com/blog/winning-strategies-for-australian-startups-in-a-competitive-market/', title: 'Thriving in a competitive market: Tips for Australian startups', publisher: 'awaydigitalteams.com', description: 'Authoritative reference supporting Thriving in a competitive market: Tips for Australian startups.', category: 'guide' },
-            { id: 6, href: 'https://www.smartcompany.com.au/startupsmart/24-aussie-startups-raised-91-million-this-week/', title: '24 Aussie startups that raised $91 million this week', publisher: 'smartcompany.com.au', description: 'Authoritative reference supporting 24 Aussie startups that raised $91 million this week.', category: 'guide' },
-            { id: 7, href: 'https://www.linkedin.com/hubs/top-startups/au/', title: 'Top Startups to work for in Australia (2025) | LinkedIn', publisher: 'linkedin.com', description: 'Authoritative reference supporting Top Startups to work for in Australia (2025) | LinkedIn.', category: 'guide' },
-            { id: 8, href: 'https://sprintlaw.com.au/articles/7-legal-strategies-that-give-australian-startups-a-competitive-edge/', title: '7 Legal Strategies That Give Australian Startups | Sprintlaw Australia', publisher: 'sprintlaw.com.au', description: 'Authoritative reference supporting 7 Legal Strategies That Give Australian Startups | Sprintlaw Australia.', category: 'guide' },
-            { id: 9, href: 'https://legalvision.com.au/setting-up-in-australia/', title: '10 Tips: Bring Your Startup to Australia: 8 - Setting Up In Australia', publisher: 'legalvision.com.au', description: 'Authoritative reference supporting 10 Tips: Bring Your Startup to Australia: 8 - Setting Up In Australia', category: 'guide' },
-            { id: 10, href: 'https://business.gov.au/guide/starting', title: 'Guide to starting a business | business.gov.au', publisher: 'business.gov.au', description: 'Authoritative reference supporting Guide to starting a business | business.gov.au.', category: 'guide' },
-            { id: 11, href: 'https://www.wholesaleinvestor.com/australian-startups-key-advice-for-explosive-growth-in-2025/', title: 'Australian Startups: Key Advice for Explosive Growth in 2025 - Wholesale Investor', publisher: 'wholesaleinvestor.com', description: 'Authoritative reference supporting Australian Startups: Key Advice for Explosive Growth in 2025 - Wholesale Investor.', category: 'guide' },
+            { id: 1, href: 'https://www.stoneandchalk.com.au/articles/the-time-for-australian-ai-is-now', title: 'The time for Australian AI is now | Stone & Chalk', publisher: 'stoneandchalk.com.au', description: "", category: 'guide' },
+            { id: 2, href: 'https://www.ai.gov.au/news-and-insights/reports/australias-artificial-intelligence-ecosystem-growth-and-opportunities', title: 'Australia’s artificial intelligence ecosystem: growth and opportunities | National AI Centre', publisher: 'ai.gov.au', description: "", category: 'guide' },
+            { id: 3, href: 'https://fullstack.com.au/startup-funding-in-australia/', title: 'Startup Funding in Australia: A Fullstack Guide - Fullstack', publisher: 'fullstack.com.au', description: "", category: 'guide' },
+            { id: 4, href: 'https://enosta.com/insights/how-to-structure-a-startup-in-australia', title: 'How to Structure a Startup in Australia: A Practical Guide for Founders | Enosta', publisher: 'enosta.com', description: "", category: 'guide' },
+            { id: 5, href: 'https://awaydigitalteams.com/blog/winning-strategies-for-australian-startups-in-a-competitive-market/', title: 'Thriving in a competitive market: Tips for Australian startups', publisher: 'awaydigitalteams.com', description: "", category: 'guide' },
+            { id: 6, href: 'https://www.smartcompany.com.au/startupsmart/24-aussie-startups-raised-91-million-this-week/', title: '24 Aussie startups that raised $91 million this week', publisher: 'smartcompany.com.au', description: "", category: 'guide' },
+            { id: 7, href: 'https://www.linkedin.com/hubs/top-startups/au/', title: 'Top Startups to work for in Australia (2025) | LinkedIn', publisher: 'linkedin.com', description: "", category: 'guide' },
+            { id: 8, href: 'https://sprintlaw.com.au/articles/7-legal-strategies-that-give-australian-startups-a-competitive-edge/', title: '7 Legal Strategies That Give Australian Startups | Sprintlaw Australia', publisher: 'sprintlaw.com.au', description: "", category: 'guide' },
+            { id: 9, href: 'https://legalvision.com.au/setting-up-in-australia/', title: '10 Tips: Bring Your Startup to Australia: 8 - Setting Up In Australia', publisher: 'legalvision.com.au', description: "", category: 'guide' },
+            { id: 10, href: 'https://business.gov.au/guide/starting', title: 'Guide to starting a business | business.gov.au', publisher: 'business.gov.au', description: "", category: 'guide' },
+            { id: 11, href: 'https://www.wholesaleinvestor.com/australian-startups-key-advice-for-explosive-growth-in-2025/', title: 'Australian Startups: Key Advice for Explosive Growth in 2025 - Wholesale Investor', publisher: 'wholesaleinvestor.com', description: "", category: 'guide' },
           ]}
           heading='Sources & further reading'
         />

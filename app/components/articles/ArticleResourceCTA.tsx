@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { isUsableArticleResourceHref } from '~/lib/article-resource'
 
 type ResourceCTAPreviewCard = {
     title: string
@@ -65,8 +66,10 @@ export function ArticleResourceCTA({
     accent = 'purple',
     previewCards = DEFAULT_PREVIEW_CARDS,
 }: ArticleResourceCTAProps) {
-    // Article content is cast past these prop types, so an unknown
-    // accent can reach us at runtime and must not crash SSR.
+    // Do not advertise an unavailable worksheet. Keep this guard even after
+    // repairing existing articles, because generated legacy modules use it too.
+    if (!isUsableArticleResourceHref(buttonHref)) return null
+    // Generated modules can bypass the prop type; preserve SSR for unknown accents.
     const styles = ACCENT_STYLES[accent] ?? ACCENT_STYLES.purple
 
     return (
@@ -86,6 +89,7 @@ export function ArticleResourceCTA({
                     <div className="pt-2">
                         <a
                             href={buttonHref}
+                            download={buttonHref.startsWith("/downloads/") || undefined}
                             className={`inline-flex items-center justify-center rounded-full px-7 sm:px-8 py-3.5 text-lg font-black shadow-[0_16px_40px_-18px_rgba(0,0,0,0.7)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 ${styles.button}`}
                         >
                             {buttonLabel}

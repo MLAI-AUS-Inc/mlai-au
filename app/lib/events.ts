@@ -91,6 +91,9 @@ async function fetchLumaEvents(apiKey: string): Promise<Event[]> {
   const allEntries: LumaEventEntry[] = [];
   let cursor: string | undefined;
   let pageCount = 0;
+  // One budget covers the complete paginated read, including response bodies.
+  // An unavailable optional events feed must not hold article rendering open.
+  const signal = AbortSignal.timeout(8000);
 
   do {
     pageCount++;
@@ -103,6 +106,7 @@ async function fetchLumaEvents(apiKey: string): Promise<Event[]> {
 
     const response = await fetch(url.toString(), {
       method: "GET",
+      signal,
       headers: {
         "x-luma-api-key": apiKey,
         "Content-Type": "application/json",
