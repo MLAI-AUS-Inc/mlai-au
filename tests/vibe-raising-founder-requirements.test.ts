@@ -1,25 +1,28 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { renderUpdateEditor } from "./helpers/update-editor-render";
 
-const routePath = fileURLToPath(new URL("../app/routes/vibe-raising-app.create-update.tsx", import.meta.url));
-const routeSource = readFileSync(routePath, "utf8");
-
-describe("Vibe Raising founder requirements", () => {
-  test("replaces manual financial metric fields with Stripe and Xero connectors", () => {
-    expect(routeSource).toContain('const FINANCIAL_METRIC_SOURCE_KEYS = ["stripe", "xero"] as const;');
-    expect(routeSource).toContain("financialMetricSources.map");
-    expect(routeSource).toContain("Connect your financial data to generate credible, verifiable metrics.");
-    expect(routeSource).toContain("Connect {source.label}");
-    expect(routeSource).not.toContain("draft-metric-");
+describe("founder form requirements", () => {
+  test("shows the saved narrative as individually editable points", () => {
+    const html = renderUpdateEditor({ highlights:"First thing shipped.\nSecond thing shipped." });
+    expect(html).toContain('aria-label="Highlights point 1"');
+    expect(html).toContain('aria-label="Highlights point 2"');
+    expect(html).toContain('aria-label="Add Highlights point"');
+    expect(html).toContain('aria-label="Remove Highlights point 2"');
+    expect(html).not.toContain("founder questions answered.");
+    expect(html).not.toContain("Connect data for AI drafting");
+    expect(html).not.toContain("Financial metrics</h2>");
   });
-
-  test("requires three founder-question answers in the UI and action", () => {
-    expect(routeSource).toContain("const REQUIRED_FOUNDER_QUESTION_COUNT = 3;");
-    expect(routeSource).toContain('new Set(["review", "save-draft", "send-to-mlai", "publish"])');
-    expect(routeSource).toContain("countAnsweredFounderQuestions(formData)");
-    expect(routeSource).toContain("isSubmitting || !hasMinimumFounderAnswers");
-    expect(routeSource).toContain("isSubmitting || !canSubmitReviewToMlai");
-    expect(routeSource).toContain("before saving or submitting");
+  test("financial values render as outputs, preserving zero and their form values", () => {
+    const html = renderUpdateEditor({ revenue:"AUD 100",monthlyCosts:"AUD 0",metrics:{revenue:"AUD 100",monthlyCosts:"AUD 0"},metricEvidence:{revenue:{source_provider:"xero",quality:"verified"}} });
+    expect(html).toContain('<output id="draft-figure-revenue">AUD 100</output>');
+    expect(html).toContain('<output id="draft-figure-monthlyCosts">AUD 0</output>');
+    expect(html).toContain('type="hidden" name="revenue" value="AUD 100"');
+    expect(html).not.toContain('<input id="draft-figure-revenue"');
+  });
+  test("an incomplete draft can be saved, but needs three answers for review", () => {
+    const html = renderUpdateEditor({ highlights: "Shipped a trial." });
+    expect(html).toMatch(/<button type="button" class="update-button secondary">Save draft<\/button>/);
+    expect(html).toMatch(/<button type="submit"[^>]*disabled=""/);
+    expect(html).toContain("Answer any 3 sections to review.");
   });
 });

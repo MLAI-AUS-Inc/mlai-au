@@ -163,6 +163,14 @@ export interface VibeRaisingUpdateCover {
 }
 
 export interface VibeRaisingDraftedContent {
+  updateId?: string | number | null;
+  creationKey?: string | null;
+  updateDate?: string | null;
+  datePrecision?: "day" | "month";
+  firstPublishedAt?: string | null;
+  narrativePeriod?: { start: string; end: string; timezone: string; end_exclusive?: boolean } | null;
+
+  metricEvidence?: VibeRaisingMonthlyUpdate["metricEvidence"];
   coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
@@ -199,6 +207,13 @@ export interface VibeRaisingDraftedContent {
 }
 
 export interface VibeRaisingMonthlyUpdate {
+  updateId?: string | number | null;
+  creationKey?: string | null;
+  updateDate?: string | null;
+  datePrecision?: "day" | "month";
+  firstPublishedAt?: string | null;
+  narrativePeriod?: { start: string; end: string; timezone: string; end_exclusive?: boolean } | null;
+
   id: string;
   weekStart?: string | null;
   weekEnd?: string | null;
@@ -739,7 +754,7 @@ export interface VibeRaisingStartupUpdateRunProgress {
   generatedDraftMonths: string[];
   targetMonth?: string | null;
 }
-export interface VibeRaisingEmailDraftMonth {
+export interface VibeRaisingEmailDraftMonth extends Pick<VibeRaisingMonthlyUpdate, "updateId" | "creationKey" | "updateDate" | "datePrecision" | "firstPublishedAt" | "narrativePeriod"> {
   coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;
@@ -778,6 +793,13 @@ export interface VibeRaisingStartupUpdateBootstrapResponse {
 }
 
 export interface VibeRaisingStartupUpdateStatusResponse {
+  updateId?: string | number | null;
+  creationKey?: string | null;
+  updateDate?: string | null;
+  datePrecision?: "day" | "month";
+  firstPublishedAt?: string | null;
+  narrativePeriod?: { start: string; end: string; timezone: string; end_exclusive?: boolean } | null;
+
   state: VibeRaisingStartupUpdateState;
   gmailConnected: boolean;
   authUrl?: string | null;

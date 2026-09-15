@@ -40,11 +40,11 @@ describe("updates remain inside the existing Vibe Raising application", () => {
     expect(html).toContain("See all updates");
   });
 
-  it("keeps the optional cover in the existing draft form and four-step workflow", () => {
+  it("keeps the optional cover in the existing draft form and three-step workflow", () => {
     const html = renderPage("/founder-tools/updates/create?edit=1");
     expect(html).toContain('title="Active company: MLAI"');
     expect(html).toContain('aria-label="Update progress"');
-    for (const label of ["Draft update", "Connect data", "Review", "Send to MLAI", "Cover image", "Create me an image"]) expect(html).toContain(label);
+    for (const label of ["Draft", "A head start with AI", "Review", "Send", "Cover image", "Create me an image"]) expect(html).toContain(label);
     expect(html).toContain('name="companyId" value="startup-1"');
     expect(html).toContain('name="coverImage" value="null"');
     expect(html).toContain('name="expectedRevision" value="1"');

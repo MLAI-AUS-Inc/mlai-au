@@ -20,7 +20,7 @@ function renderDraft(path: string, existingData: Record<string, unknown> | null 
   }], {
     initialEntries: [path],
     hydrationData: { loaderData: { create: {
-      metricDefinitions: [],
+      metricDefinitions: [], today: "2026-09-15", reportingTimezone: "Australia/Melbourne", creationKey: null,
         user: { authUser: { id: "test-founder" }, companies: [], companyName: "Test startup", companyRegistered: true },
       existingData,
       isEdit: Boolean(existingData),
@@ -61,26 +61,28 @@ describe("Vibe Raising connection return", () => {
         expect(markup).toContain('id="vibe-raising-draft-review-form"');
         expect(markup).toContain(`name="month" value="${period.month}"`);
         expect(markup).toContain(`name="year" value="${period.year}"`);
-        expect(markup).toContain(`name="updateCadence" value="${period.cadence}"`);
+        expect(markup).not.toContain('name="updateCadence"');
+        expect(markup).toContain('id="update-date"');
         expect(markup).not.toContain("How often do you want to update?");
         expect(markup).not.toContain("Select the month this update covers.");
-        if (period.weekStart) expect(markup).toContain(`name="weekStart" value="${period.weekStart}"`);
+        expect(markup).not.toContain('aria-label="Update week"');
 
         // Leaving for another connection must keep restoring the same template.
         const connectHref = markup.match(/href="(\/founder-tools\/data-sources\?next=[^"]+)"/)?.[1];
         expect(connectHref).toBeDefined();
         const nextConnection = new URL(connectHref!.replaceAll("&amp;", "&"), "http://mlai.local");
         const repeatedTarget = new URL(nextConnection.searchParams.get("next")!, "http://mlai.local");
-        expect(readVibeRaisingDraftReturnState(repeatedTarget.search)).toEqual(period);
+        expect(readVibeRaisingDraftReturnState(repeatedTarget.search)).toBeNull();
+        expect(repeatedTarget.searchParams.get("edit")).toBe("42");
         expect(repeatedTarget.searchParams.get("inputs")).toBe(source);
       });
     }
   }
 
-  test("fresh creation and source-only links still start at cadence selection", () => {
+  test("fresh creation and source-only links open a draft immediately", () => {
     for (const search of ["", "?inputs=stripe"]) {
       expect(readVibeRaisingDraftReturnState(search)).toBeNull();
-      expect(renderDraft(`${createPath}${search}`)).toContain("How often do you want to update?");
+      expect(renderDraft(`${createPath}${search}`)).toContain('id="update-summary"');
     }
   });
 

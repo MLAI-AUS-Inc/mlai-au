@@ -24,9 +24,9 @@ export function updateCalendarDate(value?: string | null, timezone = "UTC"): str
 
 export function getUpdatePeriod(update: VibeRaisingMonthlyUpdate) {
   const timezone = update.reportingPeriod?.timezone || "UTC";
-  const candidates = [update.weekEnd, update.reportingPeriod?.cutoff, update.date, update.publishedAt, update.reportingPeriod?.start]
+  const candidates = [update.updateDate, update.weekEnd, update.reportingPeriod?.cutoff, update.date, update.publishedAt, update.reportingPeriod?.start]
     .map(value => updateCalendarDate(value, timezone)).filter((value): value is string => Boolean(value));
-  const explicitMonth = updateCalendarDate(update.weekEnd, timezone)?.slice(0, 7) || update.isoMonth?.slice(0, 7);
+  const explicitMonth = updateCalendarDate(update.updateDate, timezone)?.slice(0, 7) || updateCalendarDate(update.weekEnd, timezone)?.slice(0, 7) || update.isoMonth?.slice(0, 7);
   const namedMonth = MONTHS.findIndex(month => (update.monthName || update.month).toLowerCase().startsWith(month.toLowerCase()));
   const namedYear = update.year || Number(update.month.match(/\b(\d{4})\b/)?.[1]);
   const month = explicitMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(explicitMonth)
@@ -35,7 +35,7 @@ export function getUpdatePeriod(update: VibeRaisingMonthlyUpdate) {
       ? `${namedYear}-${String(namedMonth + 1).padStart(2, "0")}`
       : candidates[0]?.slice(0, 7) || null;
   // Backfilled updates can all be published today. Keep their reporting month.
-  const date = candidates.find(value => value.slice(0, 7) === month) || null;
+  const date = update.datePrecision === "month" && !update.updateDate ? null : candidates.find(value => value.slice(0, 7) === month) || null;
   return { month, date, monthName: month ? MONTHS[Number(month.slice(5, 7)) - 1] : null, year: month?.slice(0, 4) || null };
 }
 
@@ -49,7 +49,7 @@ export function sortStartupUpdates(updates: VibeRaisingMonthlyUpdate[]) {
     const left = getUpdatePeriod(a);
     const right = getUpdatePeriod(b);
     return (right.date || right.month || "").localeCompare(left.date || left.month || "")
-      || (b.publishedAt || b.date || "").localeCompare(a.publishedAt || a.date || "")
+      || (b.firstPublishedAt || b.publishedAt || "").localeCompare(a.firstPublishedAt || a.publishedAt || "")
       || a.id.localeCompare(b.id);
   });
 }
@@ -104,7 +104,7 @@ export function getUpdatesFinancialSeries(
       const month = point.month.slice(0, 7);
       return /^\d{4}-(0[1-9]|1[0-2])$/.test(month) && !point.isPartial
         && (!targetMonth || month <= targetMonth)
-        && !(update.reportingPeriod?.is_partial && month === period.month);
+        && !(update.reportingPeriod?.is_partial && month === (targetMonth || update.isoMonth?.slice(0, 7)));
     }).map(point => [point.month.slice(0, 7), {
       ...point, month: point.month.slice(0, 7),
       // A payments connector does not establish the startup's total costs.
@@ -129,4 +129,41 @@ export function getUpdatesFinancialSeries(
     };
   }
   return null;
+}
+
+
+export function groupStartupUpdatesByMonth(updates: VibeRaisingMonthlyUpdate[]) {
+  const groups = new Map<string, { key: string; label: string; updates: VibeRaisingMonthlyUpdate[] }>();
+  for (const update of sortStartupUpdates(updates)) {
+    const period = getUpdatePeriod(update);
+    const key = period.month || "undated";
+    if (!groups.has(key)) groups.set(key, { key, label: period.monthName ? `${period.monthName} ${period.year}` : "Earlier updates", updates: [] });
+    groups.get(key)!.updates.push(update);
+  }
+  return [...groups.values()];
+}
+
+/** Same-day posts keep their date title, with a stable publication-time detail. */
+export function getUpdateTimeLabels(updates: VibeRaisingMonthlyUpdate[]) {
+  const labels = new Map<string, string>();
+  for (const group of groupStartupUpdatesByMonth(updates)) {
+    const byDay = new Map<string, VibeRaisingMonthlyUpdate[]>();
+    for (const update of group.updates) {
+      const day = getUpdatePeriod(update).date;
+      if (day) byDay.set(day, [...(byDay.get(day) || []), update]);
+    }
+    for (const entries of byDay.values()) {
+      if (entries.length < 2) continue;
+      const times = entries.map(update => {
+        const stamp = update.firstPublishedAt || update.publishedAt;
+        if (!stamp || !Number.isFinite(new Date(stamp).getTime())) return "";
+        try { return new Intl.DateTimeFormat("en-AU", { hour: "numeric", minute: "2-digit", timeZone: update.reportingPeriod?.timezone || "UTC" }).format(new Date(stamp)); }
+        catch { return ""; }
+      });
+      entries.forEach((entry, index) => labels.set(entry.id,
+        times[index] && times.filter(time => time === times[index]).length === 1
+          ? times[index] : `${times[index] ? `${times[index]} · ` : ""}Update ${entries.length - index}`));
+    }
+  }
+  return labels;
 }
