@@ -4,6 +4,11 @@ import { EMPTY_ISLAND_BRIEF, researchIsTerminal } from "~/lib/custom-content-isl
 import type { CustomIslandBrief } from "~/lib/custom-content-island";
 import type { VibeMarketingRunSummary, VibeMarketingTopicPillar } from "~/types/vibe-marketing";
 
+export interface IslandSelectionPreview {
+  groups: { name: string; proposal_ids: string[]; metrics: { keyword_count: number; total_volume: number } }[];
+  already_added: string[];
+}
+
 const endpoint = "/founder-tools/marketing/island-research";
 
 export function useIslandResearch(companyId: string, onAdded: (island: VibeMarketingTopicPillar) => void) {
@@ -14,8 +19,10 @@ export function useIslandResearch(companyId: string, onAdded: (island: VibeMarke
   const [error, setError] = useState<string | null>(null);
   const [paymentRequired, setPaymentRequired] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [adding, setAdding] = useState<string | null>(null);
-  const [saved, setSaved] = useState<VibeMarketingTopicPillar | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [saved, setSaved] = useState<VibeMarketingTopicPillar[] | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [preview, setPreview] = useState<IslandSelectionPreview | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const requestId = useRef(createVibeMarketingClientRequestId("island-research"));
   const mounted = useRef(true);
@@ -32,6 +39,7 @@ export function useIslandResearch(companyId: string, onAdded: (island: VibeMarke
         setBrief({ ...EMPTY_ISLAND_BRIEF, ...stored.brief });
         setStep(Math.max(0, Math.min(2, Number(stored.step) || 0)));
         if (typeof stored.runId === "string") setRunId(stored.runId);
+        if (Array.isArray(stored.selected)) setSelected(stored.selected.filter((id: unknown) => typeof id === "string"));
         if (typeof stored.requestId === "string") requestId.current = stored.requestId;
       }
     } catch { /* Session storage can be unavailable. The in-page draft still works. */ }
@@ -41,8 +49,8 @@ export function useIslandResearch(companyId: string, onAdded: (island: VibeMarke
 
   useEffect(() => {
     if (!hydrated) return;
-    try { sessionStorage.setItem(storageKey, JSON.stringify({ brief, step, runId, requestId: requestId.current })); } catch { /* Optional persistence. */ }
-  }, [brief, step, runId, hydrated, storageKey]);
+    try { sessionStorage.setItem(storageKey, JSON.stringify({ brief, step, runId, selected, requestId: requestId.current })); } catch { /* Optional persistence. */ }
+  }, [brief, step, runId, selected, hydrated, storageKey]);
 
   useEffect(() => {
     if (!runId || terminal) return;
@@ -73,11 +81,17 @@ export function useIslandResearch(companyId: string, onAdded: (island: VibeMarke
     return () => { stopped = true; clearTimeout(timer); controller.abort(); };
   }, [runId, companyId, terminal]);
 
+  useEffect(() => {
+    const adopted = run?.result?.adopted_proposal_ids;
+    if (Array.isArray(adopted)) setSelected(current => current.some(id => adopted.includes(id))
+      ? current.filter(id => !adopted.includes(id)) : current);
+  }, [run?.result?.adopted_proposal_ids]);
+
   async function post(body: Record<string, unknown>) {
     abort.current = new AbortController();
     const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...body, companyId }), signal: abort.current.signal });
-    const data = await response.json() as { runId?: string; island?: VibeMarketingTopicPillar; error?: string; paymentRequired?: boolean };
+    const data = await response.json() as { runId?: string; islands?: VibeMarketingTopicPillar[]; groups?: IslandSelectionPreview["groups"]; already_added?: string[]; error?: string; paymentRequired?: boolean };
     if (!mounted.current) return null;
     if (!response.ok && !data.runId) {
       setPaymentRequired(Boolean(data.paymentRequired));
@@ -99,21 +113,39 @@ export function useIslandResearch(companyId: string, onAdded: (island: VibeMarke
     } finally { posting.current = false; if (mounted.current) setBusy(false); }
   }
 
-  async function adopt(proposalId: string) {
-    if (posting.current || !runId) return;
-    posting.current = true; setAdding(proposalId); setError(null);
+  function select(ids: string[]) { setSelected(ids); setPreview(null); setError(null); }
+
+  async function reviewSelection() {
+    if (posting.current || !runId || !selected.length) return;
+    posting.current = true; setAdding(true); setError(null);
     try {
-      const data = await post({ action: "adopt", runId, proposalId });
-      if (data?.island) { setSaved(data.island); onAdded(data.island); }
+      const data = await post({ action: "preview", runId, proposalIds: selected });
+      if (data?.groups) setPreview({ groups: data.groups, already_added: data.already_added || [] });
     } catch (failure) {
-      if (mounted.current) setError(failure instanceof Error ? failure.message : "The island could not be added. Please try again.");
-    } finally { posting.current = false; if (mounted.current) setAdding(null); }
+      if (mounted.current) setError(failure instanceof Error ? failure.message : "Your selection could not be reviewed. Please try again.");
+    } finally { posting.current = false; if (mounted.current) setAdding(false); }
+  }
+
+  async function adopt() {
+    if (posting.current || !runId || !selected.length || !preview) return;
+    posting.current = true; setAdding(true); setError(null);
+    try {
+      const data = await post({ action: "adopt", runId, proposalIds: selected });
+      if (data?.islands?.length) {
+        setSaved(data.islands); onAdded(data.islands[0]);
+        setRun(current => current ? { ...current, result: { ...current.result,
+          adopted_proposal_ids: [...new Set([...(Array.isArray(current.result?.adopted_proposal_ids) ? current.result.adopted_proposal_ids as string[] : []), ...selected])] } } : current);
+        setSelected([]); setPreview(null);
+      }
+    } catch (failure) {
+      if (mounted.current) setError(failure instanceof Error ? failure.message : "The islands could not be added. Please try again.");
+    } finally { posting.current = false; if (mounted.current) setAdding(false); }
   }
 
   function refine() {
     if (!terminal) return;
     requestId.current = createVibeMarketingClientRequestId("island-research");
-    setRunId(null); setRun(null); setSaved(null); setError(null); setStep(0);
+    setRunId(null); setRun(null); setSaved(null); setSelected([]); setPreview(null); setError(null); setStep(0);
   }
-  return { brief, setBrief, step, setStep, runId, run, error, paymentRequired, busy, adding, saved, terminal, research, adopt, refine };
+  return { brief, setBrief, step, setStep, runId, run, error, paymentRequired, busy, adding, saved, terminal, research, adopt, refine, selected, select, preview, setPreview, reviewSelection, setSaved };
 }

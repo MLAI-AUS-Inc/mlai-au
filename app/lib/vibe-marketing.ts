@@ -2056,6 +2056,14 @@ export async function adoptResearchedContentIsland(env: Env, request: Request, r
   return pillar;
 }
 
+export async function selectResearchedContentIslands(env: Env, request: Request, runId: string, body: Record<string, unknown>) {
+  const response = await createApiClient(env, request).post(`${BASE_PATH}/islands/research/${encodeURIComponent(runId)}/adopt`, body);
+  if (body.preview) return response.data;
+  const islands = (response.data?.islands || []).map(normalizeTopicPillar).filter(Boolean);
+  if (!islands.length) throw new Error("Your islands could not be confirmed. Please try adding them again.");
+  return { islands };
+}
+
 export function startVibeMarketingArticle(env: Env, request: Request, body: Record<string, unknown>) {
   return startMarketingRun(env, request, "article", body);
 }
