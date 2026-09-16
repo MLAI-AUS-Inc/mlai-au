@@ -1,599 +1,117 @@
-import type { ReactNode } from "react";
 import { Home } from "lucide-react";
 import { Link } from "react-router";
-
 import AcceleratorFitScorecard from "~/components/articles/AcceleratorFitScorecard";
+import AcceleratorIntakeNotice from "~/components/articles/AcceleratorIntakeNotice";
 import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
 import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
 import { ArticleReferences } from "~/components/articles/ArticleReferences";
-import {
-  ACCELERATOR_DATASET_OWNER,
-  ACCELERATOR_DATASET_REVIEW_CADENCE,
-  ACCELERATOR_DATASET_VERIFIED_AT,
-  AUSTRALIAN_ACCELERATOR_PROGRAMS,
-} from "~/lib/australian-accelerator-programs";
+import ArticleTocPlaceholder from "~/components/articles/ArticleTocPlaceholder";
+import { ACCELERATOR_DATASET_OWNER, ACCELERATOR_DATASET_REVIEW_CADENCE, ACCELERATOR_DATASET_VERIFIED_AT, AUSTRALIAN_ACCELERATOR_PROGRAMS } from "~/lib/australian-accelerator-programs";
+import { ACCELERATOR_FICTIONAL_RECORD, ACCELERATOR_FIT_CRITERIA, ACCELERATOR_FIT_LABELS, emptyAcceleratorFit, formatAcceleratorFit } from "~/lib/accelerator-fit";
 
 export const useCustomHeader = true;
-
-const TOPIC = "Australian Startup Accelerators: A Verified 2026 Program Finder";
+const TOPIC = "Australian startup accelerators: eligibility, intakes and terms";
 export const CATEGORY = "featured";
 export const SLUG = "startup-accelerator-australia";
 export const DATE_PUBLISHED = "2026-01-10";
-export const DATE_MODIFIED = "2026-07-29";
-export const DESCRIPTION =
-  "Compare verified Australian startup accelerators by stage, format, duration, published terms and intake status, then use MLAI’s interactive fit scorecard.";
-const HERO_IMAGE =
-  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b4a9a55e-4254-4bb3-9eed-5b80dfbc4432.jpg?alt=media&token=54ee6558-bb42-4528-812c-7377691e9f9f";
-const HERO_IMAGE_ALT =
-  "Australian founders comparing accelerator eligibility, terms and program commitments";
-
-interface FAQ {
-  id: number;
-  question: string;
-  answer: ReactNode;
-}
-
-export const faqItems: FAQ[] = [
-  {
-    id: 1,
-    question: "Which startup accelerator is best in Australia?",
-    answer:
-      "There is no universal best program. The useful comparison is whether a program matches your current constraint, stage, eligibility, sector, time capacity and acceptable economic terms. The finder and scorecard on this page make those trade-offs explicit.",
-  },
-  {
-    id: 2,
-    question: "Do Australian startup accelerators take equity?",
-    answer:
-      "Some do and some do not. Google’s Australia and New Zealand program publishes equity-free support, while Startmate, UNSW 10x and EnergyLab publish investment structures. Read the current offer documents because a headline amount does not show every right, condition or future dilution effect.",
-  },
-  {
-    id: 3,
-    question: "Can I join an accelerator before I have a company?",
-    answer:
-      "It depends. Antler targets founders around inception and pre-seed, while programs such as UNSW 10x and CSIRO ON publish specific company, research, affiliation or intellectual-property conditions. Check every eligibility rule before investing time in an application.",
-  },
-  {
-    id: 4,
-    question: "Are Australian accelerators online or in person?",
-    answer:
-      "Both models exist, and “hybrid” can still include mandatory travel or workshops. Confirm the exact attendance calendar, city, travel cost and founder-time expectation directly with the program.",
-  },
-  {
-    id: 5,
-    question: "How should I compare accelerator investment terms?",
-    answer:
-      "Separate cash, valuation or SAFE mechanics, estimated ownership, fees, follow-on rights, participation conditions and the cost of founder time. Have qualified legal and financial advisers review the actual documents for your company.",
-  },
-  {
-    id: 6,
-    question: "Does this page count every Australian accelerator?",
-    answer:
-      "No. It is a verified shortlist, not a national census or ranking. MLAI includes programs with a live first-party page, clear Australian eligibility and structured founder or research-commercialisation support. The method and current limitations are published below.",
-  },
-  {
-    id: 7,
-    question: "What about accelerators in Singapore?",
-    answer:
-      "Use Singapore’s official Startup SG program and ecosystem directories, then verify the current program site and eligibility. Do not rely on an unsourced total: accelerator, incubator, venture studio, investor and coworking listings use different inclusion rules.",
-  },
-];
-
-export const articleMeta = {
-  title: TOPIC,
-  topic: TOPIC,
-  category: CATEGORY,
-  slug: SLUG,
-  description: DESCRIPTION,
-  datePublished: DATE_PUBLISHED,
-  dateModified: DATE_MODIFIED,
-  image: HERO_IMAGE,
-  imageAlt: HERO_IMAGE_ALT,
-  featuredFocus: "startups",
+export const DATE_MODIFIED = "2026-09-15";
+export const DESCRIPTION = "Compare seven Australian accelerator source records, distinguish applications from expressions of interest, and record eligibility, terms and founder-time trade-offs before deciding.";
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b4a9a55e-4254-4bb3-9eed-5b80dfbc4432.jpg?alt=media&token=54ee6558-bb42-4528-812c-7377691e9f9f";
+const HERO_IMAGE_ALT = "Hands using a laptop at a shared table (illustrative image)";
+export const articleMeta = { title: TOPIC, topic: TOPIC, category: CATEGORY, slug: SLUG, description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, image: HERO_IMAGE, imageAlt: HERO_IMAGE_ALT, featuredFocus: "startups" };
+export const summaryHighlights = {
+  heading: "Shortlist support for a constraint you can name",
+  intro: "Seven selected programme records checked 15 September 2026, with source-access limits and unanswered questions retained.",
+  items: [
+    { label: "An EOI is not an application", description: "A date, link or programme already running does not establish that you can join." },
+    { label: "A failed requirement stays a failed requirement", description: "The evidence worksheet has no points-based recommendation that can outweigh eligibility or capacity." },
+    { label: "Keep the decision in your hands", description: "Use the completed fictional choice and editable record before choosing a community event or contacting a provider." },
+  ],
 };
-
-const REFERENCES = [
-  {
-    id: 1,
-    href: "https://www.startmate.com/accelerator/program",
-    title: "Startmate Accelerator",
-    publisher: "Startmate",
-    description:
-      "Current program duration, published investment structure, selection process and next cohort information.",
-    category: "industry",
-  },
-  {
-    id: 2,
-    href: "https://startup.google.com/programs/accelerator/australia-new-zealand/",
-    title: "Google for Startups Accelerator: Australia and New Zealand",
-    publisher: "Google for Startups",
-    description:
-      "Current stage, format, duration, equity position, benefits and 2026 cohort dates.",
-    category: "industry",
-  },
-  {
-    id: 3,
-    href: "https://unswfounders.com/10x-accelerator",
-    title: "UNSW Founders 10x Accelerator",
-    publisher: "UNSW Founders",
-    description:
-      "Current eligibility, investment structure, program benefits and 2026/2027 application status.",
-    category: "industry",
-  },
-  {
-    id: 4,
-    href: "https://www.csiro.au/en/work-with-us/funding-programs/Innovation-programs/ON-Accelerate",
-    title: "CSIRO ON Accelerate",
-    publisher: "CSIRO",
-    description:
-      "Official research-commercialisation eligibility, program design, non-dilutive support and current application dates.",
-    category: "government",
-  },
-  {
-    id: 5,
-    href: "https://energylab.org.au/programs/acceleration/",
-    title: "Climate Solutions Accelerator",
-    publisher: "EnergyLab",
-    description:
-      "Current climate-tech criteria, program calendar, investment range and 2027 expression-of-interest status.",
-    category: "industry",
-  },
-  {
-    id: 6,
-    href: "https://www.unimelb.edu.au/mec/MECPrograms/melbourne-accelerator-program",
-    title: "MAP Accelerator",
-    publisher: "University of Melbourne",
-    description:
-      "Current published funding, support and three eligibility pathways.",
-    category: "guide",
-  },
-  {
-    id: 7,
-    href: "https://www.antler.co/location/australia",
-    title: "Antler in Australia",
-    publisher: "Antler",
-    description:
-      "Current Australian residency duration, stage, cadence and application path.",
-    category: "industry",
-  },
-  {
-    id: 8,
-    href: "https://launchvic.org/programs/",
-    title: "LaunchVic programs",
-    publisher: "LaunchVic",
-    description:
-      "Victorian Government-backed discovery point for startup programs and current opportunities.",
-    category: "government",
-  },
-  {
-    id: 9,
-    href: "https://www.startupsg.gov.sg/programmes",
-    title: "Startup SG programmes",
-    publisher: "Startup SG",
-    description:
-      "Official Singapore program discovery page for founders comparing market-entry or local support.",
-    category: "government",
-  },
-  {
-    id: 10,
-    href: "https://startup.google.com/programs/accelerator/singapore/",
-    title: "Google for Startups Accelerator: Singapore",
-    publisher: "Google for Startups",
-    description:
-      "Example of a current Singapore program whose official page publishes local-base, stage, format and equity requirements.",
-    category: "industry",
-  },
-] as const;
+export const faqItems = [
+  { id: 1, question: "Which Australian accelerator is best for my startup?", answer: "There is no universal best programme. Compare your current constraint with its support, complete eligibility rules, terms and attendance commitment. This is a selected source directory, not a national census, quality ranking or independently evaluated outcome study." },
+  { id: 2, question: "Does an expression of interest mean applications are open?", answer: "No. An EOI may only register interest in a future or unspecified intake. A published opening date or Apply link also does not confirm a place, eligibility or acceptance. Check the specific current cohort and actual application route." },
+  { id: 3, question: "Do accelerators take equity?", answer: "Offers differ: some provide equity-free support; others publish an investment instrument. Cash, credits, fees, rights, ownership and founder time are different things. Use actual offer documents and appropriate independent advice, not a headline amount or this worksheet, to assess legal and financial consequences." },
+  { id: 4, question: "Can a solo or pre-revenue founder participate?", answer: "Check programme-specific criteria. Joining a residency solo is different from receiving investment as a solo founder. A pre-revenue company is not automatically eligible or ineligible everywhere; affiliation, stage, team and commitment requirements can still rule it out." },
+  { id: 5, question: "Does a complete worksheet predict acceptance or success?", answer: "No. The checks are MLAI editorial prompts. Your evidence notes are not independently verified, and the count of completed items is not a probability or recommendation to invest. An unmet requirement or material unknown remains visible even when other items are supported." },
+  { id: 6, question: "How current are the programme records?", answer: "Each has a source-check and recheck date. The page compares calendar dates using Sydney time, not an assumed provider closing hour. Overdue evidence is marked for review; historical dates remain historical and a later cohort is never inferred from recurring cadence." },
+];
+const REFERENCES = AUSTRALIAN_ACCELERATOR_PROGRAMS.flatMap((p, index) => [
+  { id: index * 2 + 1, href: p.sourceUrl, title: p.sourceLabel, publisher: p.name, description: `Programme and intake source snapshot checked ${p.lastVerified}. ${p.sourceLimit ?? "See the record for scope and unverified details."}`, category: "industry" },
+  ...(p.termsSourceUrl ? [{ id: index * 2 + 2, href: p.termsSourceUrl, title: "Startmate investment terms guide", publisher: "Startmate", description: "Public guide dated 28 August 2025, read 15 September 2026; not the offer documents for your company.", category: "industry" }] : []),
+]);
 
 export default function ArticleContent() {
-  return (
-    <>
-      <ArticleHeroHeader
-        breadcrumbs={[
-          { label: "Home", href: "/", icon: Home },
-          { label: "Articles", href: "/articles" },
-          { label: TOPIC, current: true },
-        ]}
-        title={TOPIC}
-        titleHighlight="Startup Accelerators"
-        headerBgColor="cyan"
-        summary={{
-          heading: "Choose on evidence, not reputation",
-          intro:
-            "A useful accelerator should remove a specific company constraint at acceptable economic and time cost.",
-          items: [
-            {
-              label: "Seven verified pathways",
-              description:
-                "The current dataset spans generalist, AI, university, research, climate and inception-stage programs.",
-            },
-            {
-              label: "Terms are not comparable headlines",
-              description:
-                "Equity-free support, post-money investment and uncapped discounted SAFEs create different trade-offs.",
-            },
-            {
-              label: "Status changes quickly",
-              description:
-                "Every row links to the first-party source and shows when MLAI last checked it.",
-            },
-          ],
-        }}
-        heroImage={HERO_IMAGE}
-        heroImageAlt={HERO_IMAGE_ALT}
-      />
+  return <>
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: TOPIC, current: true }]} title={TOPIC} titleHighlight="eligibility, intakes and terms" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO_IMAGE} heroImageAlt={HERO_IMAGE_ALT} />
+    <ArticleTocPlaceholder className="bg-transparent" />
+    <div data-cf-article-body className="prose prose-lg prose-slate mx-auto min-w-0 max-w-5xl px-4 py-8 [&_h2]:scroll-mt-28 [&_section]:scroll-mt-28">
+      <section id="choose-support">
+        <p><strong>Choose a programme that addresses your next company constraint—not the most impressive investment headline.</strong> This guide is for Australian founders comparing named programmes. If you have not decided whether a programme is useful at all, start with the <Link to="/articles/featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup">accelerator decision explainer</Link>.</p>
+        <p>The directory covers generalist, AI, university, research, climate and inception-stage pathways. It is not exhaustive, a recommendation to invest, or evidence that every listed programme accepts your company. A provider's stated benefit is not a measured return on participation.</p>
+        <aside className="not-prose my-6 rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950"><h2 className="text-xl font-bold">Source checks and intake status are different facts</h2><p className="mt-2">Sources were reviewed on <time dateTime={ACCELERATOR_DATASET_VERIFIED_AT}>15 September 2026</time>. Recheck is due <time dateTime="2026-09-22">22 September</time> at 00:00 Sydney time, or sooner if details change. Date comparisons use Australia/Sydney; provider deadline hours/timezones remain unverified unless explicitly stated. No application, private portal, alumni interview or investment document was submitted or accepted.</p></aside>
+      </section>
 
-      <div className="prose prose-lg prose-slate max-w-none bg-transparent">
-        <section
-          aria-labelledby="accelerator-direct-answer"
-          className="not-prose my-8 rounded-[28px] border-2 border-gray-950 bg-[#fefc22] p-6 sm:p-8"
-        >
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-700">
-            Direct answer
-          </p>
-          <h2
-            id="accelerator-direct-answer"
-            className="mt-3 text-3xl font-black tracking-tight text-gray-950"
-          >
-            Shortlist the program that matches your next constraint.
-          </h2>
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-900">
-            Startmate may suit an early startup seeking capital and fundraising
-            access; Google’s program targets Seed-to-Series-A AI/ML companies;
-            CSIRO ON targets research translation; EnergyLab targets climate
-            solutions; Antler starts around company formation. Those are
-            different jobs. Apply only when the program’s job matches yours.
-          </p>
-        </section>
+      <section id="programme-directory">
+        <h2>Seven programme source records</h2>
+        <p>Compare eligibility first, then the relevant support, costs and calendar. “Within published programme dates” means a schedule comparison—not independently confirmed activity or permission to join late. The former July snapshot is retained in the change history; it does not renew current details.</p>
+        <div className="not-prose my-8 space-y-5">{AUSTRALIAN_ACCELERATOR_PROGRAMS.map(program => <section key={program.id} id={`programme-${program.id}`} data-accelerator-program={program.id} className="min-w-0 rounded-2xl border border-gray-300 bg-white p-5 text-gray-950 sm:p-6">
+          <p className="text-sm font-semibold text-purple-800">{program.kind}</p><h3 className="mt-2 text-2xl font-bold">{program.name}</h3>
+          <p className="mt-2 text-sm">Source checked <time dateTime={program.lastVerified}>{program.lastVerified}</time>; previous full snapshot <time dateTime={program.previousFullCheck}>{program.previousFullCheck}</time>.</p>
+          <dl className="mt-5 grid gap-4 text-sm leading-6 md:grid-cols-2">{[
+            ["Potential reader fit", program.bestFor], ["Location and format", program.locationFormat], ["Published duration", program.duration], ["Published cash/equity position", program.publishedTerms], ["Eligibility signals — not the full rules", program.eligibilitySignal], ["Dated intake and programme schedule", program.currentIntake],
+          ].map(([label, value]) => <div key={label}><dt className="font-bold">{label}</dt><dd className="mt-1">{value}</dd></div>)}</dl>
+          <AcceleratorIntakeNotice program={program} />
+          {program.sourceLimit && <p className="mt-3 text-sm"><strong>Source limitation:</strong> {program.sourceLimit}</p>}
+          <a href={program.sourceUrl} className="mt-4 inline-flex min-h-11 items-center font-bold text-purple-800 underline">Check {program.sourceLabel}</a>
+          {program.termsSourceUrl && <p className="mt-2 text-sm"><a href={program.termsSourceUrl} className="font-semibold text-purple-800 underline">Read the separate public investment-terms guide</a>; request current documents before relying on it.</p>}
+        </section>)}</div>
+        <p><strong>Some details remain unavailable.</strong> MAP's programme text was retrievable, but a direct browser check received a challenge and its Key Dates banner was not verified. Its former five-month duration is not retained as a current fact. Antler's eight-week overview and an older ten-week cohort news card should not be combined into a made-up next schedule. A generic UNSW EOI link is not relabelled “2027 applications”.</p>
+      </section>
 
-        <p>
-          This page is a maintained shortlist, not a ranking of the “best”
-          accelerators and not a claim to count every program in Australia. The
-          old version mixed stale descriptions with instructions to “check the
-          official page”. The replacement records what the official page
-          actually said, when it was checked and which important facts remain
-          unstated.
-        </p>
+      <section id="terms-and-costs">
+        <h2>Compare cash, ownership and founder time separately</h2>
+        <p>The <a href="https://www.startmate.com/writing/startmate-accelerator-investment-terms-101">Startmate public terms guide</a> specifies a post-money SAFE cap, not merely an agreed priced-round valuation. The simple ratio A$120,000 ÷ A$1.5 million = 8% is arithmetic for asking a question, not a complete ownership forecast. Other securities, financing and actual instrument terms matter.</p>
+        <p>UNSW's published uncapped discounted pre-money SAFE cannot produce a final ownership percentage from the cash and discount alone. Equity-free support is also not the same as unrestricted cash: product credits have separate eligibility and usage conditions. Programme support, investment selection and follow-on funding must not be collapsed into a guaranteed cheque.</p>
+        <ul><li><strong>Cash:</strong> application/participation fees, travel, accommodation and expenses. Unknown amounts stay unknown.</li><li><strong>Founder time:</strong> application work, sessions, travel, preparation and displaced customer/product work. Hours are not automatically a cash expense.</li><li><strong>Rights and obligations:</strong> the full instrument, future rights, IP, attendance and any conditions. Ask suitably qualified advisers to review the actual offer.</li></ul>
+        <p>This is general educational information, not legal, tax, financial or investment advice. Provider materials are not an independent assessment of what is appropriate for your company.</p>
+      </section>
 
-        <h2>Verified Australian accelerator finder</h2>
-        <p>
-          The table was checked on 29 July 2026. Application windows and offer
-          terms can change without notice, so open the source before applying
-          or accepting. “Published terms” is not a substitute for the legal
-          documents offered to your company.
-        </p>
+      <AcceleratorFitScorecard />
 
-        <div className="not-prose my-8 space-y-5">
-          {AUSTRALIAN_ACCELERATOR_PROGRAMS.map((program) => (
-            <section
-              key={program.name}
-              className="rounded-[24px] border border-gray-300 bg-white p-5 sm:p-6"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#4b1bd1]">
-                    {program.kind}
-                  </p>
-                  <h3 className="mt-2 text-xl font-black text-gray-950">
-                    {program.name}
-                  </h3>
-                </div>
-                <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-900">
-                  Checked {program.lastVerified}
-                </span>
-              </div>
+      <section id="worked-shortlist">
+        <h2>Worked choice: why this team defers</h2>
+        <p><strong>Fictional teaching case, not an MLAI client, applicant or interview.</strong> HarbourBrief is a Sydney AI quoting-workflow prototype. Both founders intend to retain full-time outside jobs. Their next question is whether a target buyer can provide suitable data; no buyer commitment, dataset permission or test outcome is invented.</p>
+        <p>At the dated source check, Startmate's full-time-founder requirement and three in-person weeks conflict with these assumptions. That is a reason to defer, even if its generalist support and investment headline look attractive. Submitting an EOI would not cure the mismatch. The team could investigate buyer/data access within its existing capacity and revisit programme selection if its commitment changes.</p>
+        <p><strong>Illustrative planning arithmetic:</strong> two founders × four hours × twelve weeks = 96 founder-hours; adding eight application hours and 24 travel hours gives 128. These are hypothetical inputs, not a Startmate workload estimate, a measured result or a complete cost. Cash expenses and actual required hours are unknown.</p>
+        <div role="region" aria-label="Fictional accelerator evidence comparison; scroll horizontally if needed" tabIndex={0} className="not-prose my-6 max-w-full overflow-x-auto rounded-xl border border-gray-300 focus:outline-2 focus:outline-purple-700"><table className="w-full min-w-[40rem] text-left text-sm"><caption className="bg-gray-950 p-4 text-left font-bold text-white">Completed fictional evidence record — not independently verified</caption><thead className="bg-gray-100"><tr><th scope="col" className="p-4">Check</th><th scope="col" className="p-4">Status</th><th scope="col" className="p-4">Recorded evidence and uncertainty</th></tr></thead><tbody>{ACCELERATOR_FIT_CRITERIA.map(c => <tr key={c.id} className="border-t border-gray-300 align-top"><th scope="row" className="p-4 font-semibold">{c.label}</th><td className="p-4">{ACCELERATOR_FIT_LABELS[ACCELERATOR_FICTIONAL_RECORD.criteria[c.id].status]}</td><td className="break-words p-4">{ACCELERATOR_FICTIONAL_RECORD.criteria[c.id].evidence}</td></tr>)}</tbody></table></div>
+        <p><a href="/downloads/accelerator-decision/evidence-worksheet.txt" download>Download the completed example and blank evidence worksheet (TXT)</a>. Open it in a text editor. It is a dated planning aid, not a saved application or a promise of current intake availability.</p>
+        <details className="my-5 rounded-xl border border-gray-300 p-4"><summary className="cursor-pointer font-semibold">Copy a blank record without JavaScript</summary><pre className="whitespace-pre-wrap break-words">{formatAcceleratorFit(emptyAcceleratorFit())}</pre></details>
+      </section>
 
-              <dl className="mt-5 grid gap-4 text-sm leading-6 md:grid-cols-2">
-                <div>
-                  <dt className="font-black text-gray-950">Best for</dt>
-                  <dd className="mt-1 text-gray-700">{program.bestFor}</dd>
-                </div>
-                <div>
-                  <dt className="font-black text-gray-950">
-                    Location and format
-                  </dt>
-                  <dd className="mt-1 text-gray-700">
-                    {program.locationFormat}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-black text-gray-950">Duration</dt>
-                  <dd className="mt-1 text-gray-700">{program.duration}</dd>
-                </div>
-                <div>
-                  <dt className="font-black text-gray-950">
-                    Published cash/equity position
-                  </dt>
-                  <dd className="mt-1 text-gray-700">
-                    {program.publishedTerms}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-black text-gray-950">Current intake</dt>
-                  <dd className="mt-1 text-gray-700">
-                    {program.currentIntake}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-black text-gray-950">
-                    Eligibility signal
-                  </dt>
-                  <dd className="mt-1 text-gray-700">
-                    {program.eligibilitySignal}
-                  </dd>
-                </div>
-              </dl>
+      <section id="alumni-evidence">
+        <h2>Ask for experience without inventing proof of impact</h2>
+        <p>Ask willing alumni at a comparable stage what support they actually used, what was missing, what work was displaced, and which terms they misunderstood. Record how they were recruited and any connection to the provider. Seek a range of experiences where available; do not assume a testimonial is typical or that a fixed number of interviews proves a return.</p>
+        <p>A portfolio logo shows participation, not causation. Ask what changed and what other explanations are plausible; an alumnus cannot establish with certainty what would have happened without the programme. Obtain permission before identifying people or sharing quotations/private terms. This guide contains no newly conducted alumni interviews.</p>
+      </section>
 
-              <a
-                href={program.sourceUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="mt-5 inline-block text-sm font-black text-[#4b1bd1] underline decoration-2 underline-offset-4"
-              >
-                Verify at {program.sourceLabel}
-              </a>
-            </section>
-          ))}
-        </div>
+      <section id="decision-sequence">
+        <h2>A decision sequence, paced around the evidence</h2>
+        <ol><li>Name the company constraint and check whether a programme is the appropriate kind of support.</li><li>Eliminate known mismatches in eligibility, sector, commitment or timing; keep unknowns separate.</li><li>Request current terms, attendance and the specific support you need.</li><li>Seek relevant provider/alumni clarification when it could change the decision. Do not invent responses to fill a schedule.</li><li>Compare one realistic alternative using the same time and resources.</li><li>Record apply, clarify, defer or decline, with a reason and review trigger.</li></ol>
+        <p>You might organise this over a week, but seven days is not an evidence-based deadline. Replies, advisers and founder availability determine the actual pace. Bring one non-confidential unresolved question to a relevant community conversation; event attendance does not guarantee alumni access, funding or admission.</p>
+      </section>
+    <p><Link to="/events">Explore upcoming MLAI events</Link> and check the listing for its topic, format and participation requirements.</p>
 
-        <aside className="not-prose my-8 rounded-2xl border border-gray-300 bg-white p-5 text-sm text-gray-700">
-          <p className="font-black text-gray-950">Dataset maintenance</p>
-          <p className="mt-2 leading-6">
-            Owner: {ACCELERATOR_DATASET_OWNER}. Last verified:{" "}
-            {ACCELERATOR_DATASET_VERIFIED_AT}. Planned review cadence:{" "}
-            {ACCELERATOR_DATASET_REVIEW_CADENCE}. A row is retained only while
-            its first-party source remains live and the program’s Australian
-            eligibility can be verified.
-          </p>
-        </aside>
-
-        <h2>How to compare terms that look similar</h2>
-        <p>
-          Do not compare programs using the cheque alone. Startmate currently
-          publishes A$120,000 at a A$1.5 million post-money valuation for
-          founders without a qualifying previous raise. In a deliberately
-          simplified calculation, A$120,000 divided by A$1.5 million is 8%.
-          That helps a founder ask the right question, but the SAFE, other
-          securities and future financing can change the final ownership
-          outcome.
-        </p>
-        <p>
-          UNSW 10x publishes a different instrument: a A$100,000 pre-money SAFE
-          with a 15% discount and no valuation cap. You cannot derive a final
-          ownership percentage from those three facts alone because the future
-          priced round and the complete SAFE terms matter. Google and MAP
-          publish equity-free support, while CSIRO describes non-dilutive
-          support and retained IP. These offers solve different problems and
-          create different obligations.
-        </p>
-
-        <div className="not-prose my-8 grid gap-4 md:grid-cols-3">
-          {[
-            {
-              title: "Economic cost",
-              body: "Cash, equity or SAFE mechanics, fees, follow-on rights, pro-rata rights, credits and conditions.",
-            },
-            {
-              title: "Operating cost",
-              body: "Founder weeks, travel, preparation, customer disruption and work expected outside sessions.",
-            },
-            {
-              title: "Opportunity value",
-              body: "Specific access to customers, expertise, infrastructure, co-founders or capital you cannot obtain more efficiently elsewhere.",
-            },
-          ].map((item) => (
-            <section
-              key={item.title}
-              className="rounded-[22px] border border-gray-300 bg-white p-5"
-            >
-              <h3 className="m-0 text-lg font-black text-gray-950">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-gray-700">
-                {item.body}
-              </p>
-            </section>
-          ))}
-        </div>
-
-        <p>
-          This is general educational information, not legal, tax, financial or
-          investment advice. Have qualified advisers review the actual offer
-          documents and cap-table consequences for your company.
-        </p>
-
-        <AcceleratorFitScorecard />
-
-        <h2>Use alumni evidence before accepting</h2>
-        <p>
-          A portfolio logo shows that a company participated; it does not prove
-          the program created the outcome. Find alumni at a similar stage and
-          in a similar sector, including at least one founder who did not become
-          a headline success. Ask:
-        </p>
-        <ol>
-          <li>What was your company’s main constraint before the program?</li>
-          <li>
-            Which promised introductions, coaching or technical support
-            materially happened?
-          </li>
-          <li>
-            What did founders have to do between sessions, and what customer
-            work was displaced?
-          </li>
-          <li>
-            What did you misunderstand about the investment, equity, SAFE,
-            follow-on rights or fundraising process?
-          </li>
-          <li>
-            Which measurable result would probably not have happened without
-            the program?
-          </li>
-          <li>Knowing the outcome, would you accept the same terms again?</li>
-        </ol>
-        <p>
-          Record the answer as evidence, not a testimonial. If every
-          introduction is vague, every outcome is attributed to the program and
-          no alumnus will discuss trade-offs, keep investigating.
-        </p>
-
-        <h2>What an AI startup should verify</h2>
-        <p>
-          AI startups need the ordinary commercial fit plus technical and
-          governance fit. Before applying, identify the specific help you need:
-          evaluation design, infrastructure cost, data access, security,
-          deployment, sales, regulation or hiring. A broad promise of “AI
-          mentors” is not enough.
-        </p>
-        <ul>
-          <li>
-            Name the model or system constraint the program could help remove.
-          </li>
-          <li>
-            Ask which technical experts and customer partners are committed to
-            the cohort.
-          </li>
-          <li>
-            Confirm whether cloud credits have separate eligibility, expiry or
-            product restrictions.
-          </li>
-          <li>
-            Keep customer, personal, confidential and proprietary data out of
-            unapproved application or mentor tools.
-          </li>
-          <li>
-            Set one verified product or customer outcome for the program—not
-            simply a demo-day pitch.
-          </li>
-        </ul>
-
-        <h2>Singapore and overseas programs: verify access, not a count</h2>
-        <p>
-          The retired audit target asked how many accelerators and incubators
-          operate in Singapore, then published an unsupported range. MLAI has
-          removed that number from this maintained resource. Counts change with
-          the definition of accelerator, incubator, investor, venture studio,
-          university program and coworking hub.
-        </p>
-        <p>
-          An Australian founder considering Singapore should start with the{" "}
-          <a
-            href="https://www.startupsg.gov.sg/programmes"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            official Startup SG programmes page
-          </a>{" "}
-          and its ecosystem directory, then verify the program itself. For
-          example, Google’s current Singapore accelerator page describes a
-          three-month, mostly in-person, equity-free program for Singapore-based
-          Seed-to-Series-B technology startups. “Available in Singapore” does
-          not mean an Australian company is eligible without a local base or
-          other conditions.
-        </p>
-
-        <h2>A seven-day accelerator decision process</h2>
-        <ol>
-          <li>
-            <strong>Day 1:</strong> write the one company constraint the program
-            must change.
-          </li>
-          <li>
-            <strong>Day 2:</strong> eliminate programs that fail a published
-            eligibility, timing or sector requirement.
-          </li>
-          <li>
-            <strong>Day 3:</strong> obtain the complete current terms and
-            attendance calendar.
-          </li>
-          <li>
-            <strong>Days 4–5:</strong> interview two relevant alumni and one
-            founder who chose another path.
-          </li>
-          <li>
-            <strong>Day 6:</strong> compare the program with spending the same
-            time on customers, a grant, advice or fundraising.
-          </li>
-          <li>
-            <strong>Day 7:</strong> set the accept/decline rule, then decide
-            whether the application is worth completing.
-          </li>
-        </ol>
-        <p>
-          Use MLAI’s{" "}
-          <Link to="/articles/featured/what-an-entrepreneur-does-and-how-to-start-well">
-            first-founder experiment ledger
-          </Link>{" "}
-          to record the constraint, evidence and decision. Founder Tools can
-          then turn the company evidence into a plan and stakeholder update,
-          while MLAI events provide a place to compare first-hand experiences
-          with other Australian founders.
-        </p>
-
-        <aside className="not-prose my-10 rounded-[28px] bg-gray-950 p-6 text-white sm:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#00ffd7]">
-            Method, changelog, limitations and disclosure
-          </p>
-          <h2 className="mt-3 text-2xl font-black">
-            A verified shortlist, not a ranking or national census
-          </h2>
-          <ul className="mt-4 space-y-3 text-sm leading-6 text-gray-200">
-            <li>
-              <strong className="text-white">Inclusion rule:</strong> a live
-              first-party page, clear Australian eligibility and structured
-              cohort, residency or research-commercialisation support for
-              founders.
-            </li>
-            <li>
-              <strong className="text-white">Exclusions:</strong> generic
-              coworking, venture funds without a structured program, dormant
-              pages, short competitions and programs whose current Australian
-              access could not be verified.
-            </li>
-            <li>
-              <strong className="text-white">Verification:</strong> all seven
-              rows were checked against program-owned or government/university
-              pages on 29 July 2026. Unstated format or investment details are
-              labelled rather than inferred.
-            </li>
-            <li>
-              <strong className="text-white">Changelog:</strong> this revision
-              replaces the four-name list, removes the fake download and
-              unsupported Singapore count, adds a typed program dataset and
-              publishes the maintenance owner and cadence.
-            </li>
-            <li>
-              <strong className="text-white">Original asset:</strong> MLAI built
-              the program dataset and eight-factor fit scorecard for this page.
-              The scorecard does not submit or store responses.
-            </li>
-            <li>
-              <strong className="text-white">Current limit:</strong> MLAI has not
-              yet completed the required interviews with accelerator alumni or
-              obtained a named human subject review. This page should not be
-              declared final or scored 80+ until those gates are complete.
-            </li>
-            <li>
-              <strong className="text-white">AI assistance:</strong> AI tools
-              assisted research, drafting and code generation. Each volatile
-              program claim was checked against the linked first-party source.
-            </li>
-          </ul>
-        </aside>
-
-        <ArticleReferences
-          references={[...REFERENCES]}
-          heading="First-party program sources"
-          description="Sources checked for the 29 July 2026 dataset."
-          previewCount={5}
-        />
-
-        <div className="mt-12">
-          <ArticleFAQ
-            items={faqItems}
-            heading="Australian accelerator questions"
-          />
-        </div>
-      </div>
-    </>
-  );
+      <section id="method-and-changes">
+        <h2>Method, changelog, limitations and disclosure</h2>
+        <p><strong>Scope:</strong> seven selected provider-owned records connecting structured founder/research support to Australia. They are source leads, not endorsements, a complete census or an audited comparison of outcomes. Antler is retained as a distinct residency pathway, not relabelled a conventional accelerator.</p>
+        <p><strong>Maintenance:</strong> {ACCELERATOR_DATASET_OWNER}. {ACCELERATOR_DATASET_REVIEW_CADENCE}. Source status uses the reader's calendar date on server render and updates in an open scripted tab. Invalid dates/clocks cannot certify a recent check. A review deadline does not perform a new check automatically.</p>
+        <p><strong>10 September changes:</strong> refreshed seven records, retained MAP's access limit, separated EOI/closing/start/phase facts, corrected the undated UNSW EOI and removed unverified duration/attendance assumptions. The July 29 baseline and September 9 Startmate/CSIRO intake corrections are historical snapshots; the previous CSIRO 31 August deadline is not reused as a new round.</p>
+        <p><strong>Worksheet change:</strong> the previous 0–16 tally and “strong shortlist” threshold could outweigh missing eligibility. The replacement records evidence and unresolved requirements without an additive recommendation. Its worked case is fictional and its maths uses stated assumptions.</p>
+        <p><strong>Review and assistance:</strong> AI tools assisted source discovery, drafting and implementation. No independent named programme/financial reviewer, private offer review, alumni interviews or causal outcome study is claimed. The illustration is not programme-attendance evidence. Send a <Link to="/contact">source-backed correction</Link> if a provider detail has changed; use the provider for application questions.</p>
+      </section>
+      <ArticleReferences references={REFERENCES} heading="First-party programme sources" description="Dated source checks from 15 September 2026; read the adjacent record for unresolved details and access limits." previewCount={5} />
+      <ArticleFAQ items={faqItems} heading="Australian accelerator questions" />
+    </div>
+  </>;
 }

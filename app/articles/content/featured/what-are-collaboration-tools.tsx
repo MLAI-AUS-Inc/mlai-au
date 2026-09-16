@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -107,7 +106,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Choose tools around the work people need to coordinate: conversations, shared documents, decisions and handovers. Agree how the team will use them before adding another app.",
   items: [
     { label: 'What is a collaboration tool?', description: 'Software that helps people work together by combining communication, shared content, and task coordination (real-time or async).' },
     { label: 'What types exist?', description: 'Communication (chat/video), content/knowledge (docs/wikis), coordination (tasks/issues), whiteboards, and integrations/automation.' },
@@ -302,14 +301,7 @@ export default function ArticleContent() {
           <li>Meetings: Zoom, Google Meet, Teams</li>
         </ul>
 
-        <ArticleResourceCTA
-          eyebrow="Resources"
-          title={`Get templates for ${TOPIC}`}
-          description="Download checklists and a short pilot plan to evaluate tools with your team."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <h2>How to choose a collaboration tool (short framework)</h2>
         <p>Use a lightweight, evidence‑based selection process before you commit org‑wide.</p>

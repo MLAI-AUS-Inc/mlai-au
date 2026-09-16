@@ -418,7 +418,7 @@ export default function CompanySetup() {
           setupTitle="Tell us about your startup"
           setupDescription="This shared profile is used across Vibe Raising and Vibe Marketing."
           guidanceTitle="Shared profile"
-          guidanceBody="The same company details will be reused for investor updates, marketing research, and article generation."
+          guidanceBody="The same company details will be reused for monthly updates, marketing research, and article generation."
           guidanceTips={[
             "Use the public website domain",
             "Add LinkedIn if the company name is ambiguous",

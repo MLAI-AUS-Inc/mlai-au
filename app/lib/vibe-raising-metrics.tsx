@@ -25,14 +25,9 @@ export interface MetricOption {
 }
 
 export const VIBE_METRIC_OPTIONS: MetricOption[] = [
-    { key: "revenue", label: "Revenue this month", placeholder: "50,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Your total income this month." },
+    { key: "revenue", label: "Revenue", placeholder: "50,000", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Revenue for this reporting period, from your accounting source or paid sales." },
     { key: "activeUsers", label: "Active users this month", placeholder: "1,500", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Unique users who engaged with your product this month." },
-    { key: "mrr", label: "MRR (AUD)", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Monthly recurring revenue from active subscriptions." },
-    { key: "burnRate", label: "Burn Rate (AUD)", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" />, info: "How much capital the company is spending per month." },
-    { key: "runway", label: "Runway", placeholder: "18 months", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Estimated time before the company needs more funding." },
-    { key: "monthlyCosts", label: "Cost", placeholder: "25,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Total monthly costs from Xero Profit and Loss expense rows." },
-    { key: "invoiceRevenue", label: "Invoice Revenue", placeholder: "45,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice revenue from accounting data." },
-    { key: "cashCollected", label: "Cash Collected", placeholder: "42,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Cash received from accounting payments." },
+    { key: "monthlyCosts", label: "Cost", placeholder: "25,000", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Total monthly costs from Xero Profit and Loss expense rows." },
     { key: "revenueGrowthRate", label: "MoM growth", placeholder: "12%", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "How much revenue grows from one month to the next." },
     { key: "customerCount", label: "Customers", placeholder: "24", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Number of active or paying customers when source data supports it." },
     { key: "churn", label: "Churn", placeholder: "2%", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Customer or revenue churn when source data supports it." },
@@ -44,7 +39,7 @@ export const VIBE_METRIC_OPTIONS: MetricOption[] = [
     { key: "customerInterviews", label: "Customer Interviews", placeholder: "10", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Potential or current customers interviewed this month." },
     { key: "experimentsRun", label: "Experiments Run", placeholder: "4", icon: <LightBulbIcon className="w-4 h-4 text-gray-400" />, info: "Validation, growth, product, or pricing experiments completed." },
     { key: "pilotCount", label: "Pilots", placeholder: "3", icon: <SparklesIcon className="w-4 h-4 text-gray-400" />, info: "Active pilots, design partners, or trials." },
-    { key: "qualifiedPipeline", label: "Qualified Pipeline", placeholder: "250,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Qualified sales pipeline with customer intent." },
+    { key: "qualifiedPipeline", label: "Qualified Pipeline", placeholder: "250,000", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Qualified sales pipeline with customer intent." },
     { key: "eventsRun", label: "Events Run", placeholder: "8", icon: <CalendarDaysIcon className="w-4 h-4 text-gray-400" />, info: "Events you ran through Luma this month." },
     { key: "eventRegistrations", label: "Event Registrations", placeholder: "350", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Total registrations across your Luma events this month." },
     { key: "eventAttendees", label: "Checked-in Attendees", placeholder: "280", icon: <CheckCircleIcon className="w-4 h-4 text-gray-400" />, info: "People who checked in to your Luma events this month." },
@@ -66,11 +61,7 @@ export function formatMetricDisplayValue(value: unknown): string {
     const rawValue = String(value ?? "").trim();
     if (!rawValue) return "";
 
-    const normalizedValue = rawValue.replace(/[−–—]/g, "-");
-    const match = normalizedValue.match(/[+-]?\d[\d,]*(?:\.\d+)?\s*(?:[kKmMbB])?\s*(?:%|\+)?/);
-    if (!match) return "";
-
-    return match[0].replace(/\s+/g, "");
+    return rawValue.replace(/[−–]/g, "-");
 }
 
 export function hasDisplayableMetricValue(value: unknown): boolean {
@@ -83,4 +74,9 @@ export function hasDisplayableMetricValue(value: unknown): boolean {
     if (["null", "undefined", "-", "—"].includes(lowerValue)) return false;
 
     return Boolean(formatMetricDisplayValue(rawValue));
+}
+
+export function metricOptionsForValues(metrics: Record<string, unknown> = {}): MetricOption[] {
+    const extra = Object.keys(metrics).filter(key => !VIBE_METRIC_OPTION_MAP.has(key));
+    return [...VIBE_METRIC_OPTIONS, ...extra.map(key => ({ key, label: key.replace(/^custom_/, "").replace(/_/g, " "), placeholder: "Not recorded", icon: <ChartBarIcon className="h-4 w-4" /> }))];
 }

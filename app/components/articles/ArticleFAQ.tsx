@@ -36,7 +36,9 @@ export function ArticleFAQ({
           return (
             <div key={key}>
               <h3 className="text-base font-semibold text-gray-900">{question}</h3>
-              <p className="mt-2 text-sm text-gray-700">{answer}</p>
+              {/* Answers may contain lists or paragraphs. A p wrapper makes the
+                  browser repair the HTML before React can hydrate it. */}
+              <div className="mt-2 text-sm text-gray-700">{answer}</div>
             </div>
           )
         })}

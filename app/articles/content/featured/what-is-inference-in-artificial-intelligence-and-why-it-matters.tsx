@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -111,9 +110,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -203,14 +200,7 @@ export default function ArticleContent() {
           <h3>{"What the output can look like"}</h3>
           <p>{"The same inference flow can end in different kinds of answers. A classification model may return a label such as spam or not spam. A prediction model may return a score or probability. A generative model may return new text or an image. Across these cases, the core idea stays the same: new data goes in, the trained model applies what it learned, and the system returns an answer that can be shown to a user or used by another part of the application."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the what is inference in artificial intelligence checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -267,17 +257,17 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://www.ovhcloud.com/en-au/learn/what-is-ai-inference/", title: "What is ai inference? | OVHcloud Australia", publisher: "ovhcloud.com", description: "Authoritative reference supporting What is ai inference? | OVHcloud Australia.", category: "guide"},
-          {id: 2, href: "https://cloud.google.com/discover/what-is-ai-inference", title: "What is AI inference? How it works and examples | Google Cloud", publisher: "cloud.google.com", description: "Authoritative reference supporting What is AI inference? How it works and examples | Google Cloud.", category: "guide"},
-          {id: 3, href: "https://www.suse.com/c/ai-inference-everything-you-need-to-know/", title: "AI Inference: Everything You Need To Know | SUSE Communities", publisher: "suse.com", description: "Authoritative reference supporting AI Inference: Everything You Need To Know | SUSE Communities.", category: "guide"},
-          {id: 4, href: "https://www.ibm.com/think/topics/ai-inference", title: "What is AI Inference? | IBM", publisher: "ibm.com", description: "Authoritative reference supporting What is AI Inference? | IBM.", category: "guide"},
-          {id: 5, href: "https://groq.com/blog/understanding-ai-101-what-is-inference-in-machine-learning-and-ai-applications", title: "What is AI Inference? ML Basics Explained | Groq is fast, low cost inference.", publisher: "groq.com", description: "Authoritative reference supporting What is AI Inference? ML Basics Explained | Groq is fast, low cost inference..", category: "guide"},
-          {id: 6, href: "https://www.redhat.com/en/topics/ai/what-is-ai-inference", title: "What is AI inference?", publisher: "redhat.com", description: "Authoritative reference supporting What is AI inference?.", category: "guide"},
-          {id: 7, href: "https://nebius.com/blog/posts/difference-between-ai-training-and-inference", title: "The difference between AI training and inference", publisher: "nebius.com", description: "Authoritative reference supporting The difference between AI training and inference.", category: "guide"},
-          {id: 8, href: "https://www.arm.com/glossary/ai-inference", title: "What is AI Inference \u2013 Arm\u00ae", publisher: "arm.com", description: "Authoritative reference supporting What is AI Inference \u2013 Arm\u00ae.", category: "guide"},
-          {id: 9, href: "https://www.redhat.com/en/blog/strategic-approach-ai-inference-performance", title: "A strategic approach to AI inference performance", publisher: "redhat.com", description: "Authoritative reference supporting A strategic approach to AI inference performance.", category: "guide"},
-          {id: 10, href: "https://www.azion.com/en/learning/ai/what-is-ai-inference/", title: "What is AI inference? (+ When to Use It and How to Run It in Production) | Azion", publisher: "azion.com", description: "Authoritative reference supporting What is AI inference? (+ When to Use It and How to Run It in Production) | Azion.", category: "guide"},
-          {id: 11, href: "https://www.geeksforgeeks.org/artificial-intelligence/inference-in-ai/", title: "Inference in AI - GeeksforGeeks", publisher: "geeksforgeeks.org", description: "Authoritative reference supporting Inference in AI - GeeksforGeeks.", category: "guide"},
+          {id: 1, href: "https://www.ovhcloud.com/en-au/learn/what-is-ai-inference/", title: "What is ai inference? | OVHcloud Australia", publisher: "ovhcloud.com", description: "", category: "guide"},
+          {id: 2, href: "https://cloud.google.com/discover/what-is-ai-inference", title: "What is AI inference? How it works and examples | Google Cloud", publisher: "cloud.google.com", description: "", category: "guide"},
+          {id: 3, href: "https://www.suse.com/c/ai-inference-everything-you-need-to-know/", title: "AI Inference: Everything You Need To Know | SUSE Communities", publisher: "suse.com", description: "", category: "guide"},
+          {id: 4, href: "https://www.ibm.com/think/topics/ai-inference", title: "What is AI Inference? | IBM", publisher: "ibm.com", description: "", category: "guide"},
+          {id: 5, href: "https://groq.com/blog/understanding-ai-101-what-is-inference-in-machine-learning-and-ai-applications", title: "What is AI Inference? ML Basics Explained | Groq is fast, low cost inference.", publisher: "groq.com", description: "", category: "guide"},
+          {id: 6, href: "https://www.redhat.com/en/topics/ai/what-is-ai-inference", title: "What is AI inference?", publisher: "redhat.com", description: "", category: "guide"},
+          {id: 7, href: "https://nebius.com/blog/posts/difference-between-ai-training-and-inference", title: "The difference between AI training and inference", publisher: "nebius.com", description: "", category: "guide"},
+          {id: 8, href: "https://www.arm.com/glossary/ai-inference", title: "What is AI Inference \u2013 Arm\u00ae", publisher: "arm.com", description: "", category: "guide"},
+          {id: 9, href: "https://www.redhat.com/en/blog/strategic-approach-ai-inference-performance", title: "A strategic approach to AI inference performance", publisher: "redhat.com", description: "", category: "guide"},
+          {id: 10, href: "https://www.azion.com/en/learning/ai/what-is-ai-inference/", title: "What is AI inference? (+ When to Use It and How to Run It in Production) | Azion", publisher: "azion.com", description: "", category: "guide"},
+          {id: 11, href: "https://www.geeksforgeeks.org/artificial-intelligence/inference-in-ai/", title: "Inference in AI - GeeksforGeeks", publisher: "geeksforgeeks.org", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

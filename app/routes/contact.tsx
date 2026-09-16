@@ -24,7 +24,7 @@ export default function Contact() {
               <div className="max-w-xl">
                 <p className="mt-6 font-bold">MLAI Aus Inc.</p>
                 <p className="mt-2">
-                  7 Curran Street, North Melbourne, 3051, Australia
+                  Suite 350, 585 Little Collins Street, Melbourne VIC 3000, Australia
                 </p>
                 <p className="mt-2">ABN: 94 807 394 137</p>
                 <p className="mt-2">
@@ -34,6 +34,9 @@ export default function Contact() {
                   >
                     hi@mlai.au
                   </a>
+                </p>
+                <p className="mt-4 text-sm text-gray-600">
+                  For Carbon, Cost &amp; Convenience app support, include the app name and a short description of the issue in your email.
                 </p>
                 <div className="flex justify-left items-center space-x-4 pt-12 pb-32">
                   <div className="flex items-center space-x-3 p-1 border border-gray-300 rounded-md">

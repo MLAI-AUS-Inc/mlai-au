@@ -164,8 +164,7 @@ app/components/logo-shooter/
 ├── logoData.ts                # Sponsor logo data & config
 ├── utils.ts                   # Helper functions
 ├── types.ts                   # TypeScript interfaces
-├── README.md                  # This file
-└── PR_DESCRIPTION.md          # Pull request template
+└── README.md                  # This file
 ```
 
 ---

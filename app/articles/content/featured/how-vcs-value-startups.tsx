@@ -18,7 +18,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { ArticleCallout } from '../../../components/articles/ArticleCallout'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
@@ -103,7 +102,7 @@ export const faqItems: FAQ[] = [
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
   intro:
-    'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
+    "Understand the assumptions behind a valuation, how funding changes ownership and why a negotiated price is different from cash available to the business.",
   items: [
     {
       label: 'How do VCs value pre‑revenue startups?',
@@ -169,14 +168,7 @@ export default function ArticlePage() {
             Investors almost always start from target ownership and a risk‑adjusted view of outcomes. Post‑money equals pre‑money plus new capital; ownership sold equals new capital divided by post‑money. Pool expansions and preferences change the <em>effective</em> price you are accepting. Model valuation as a range, then check whether the round delivers enough runway and leaves founders with sufficient ownership for later stages.
           </p>
 
-          <ArticleResourceCTA
-            eyebrow='Download'
-            title={`Get the checklist for ${TOPIC}`}
-            description='Practical template to apply the concepts immediately.'
-            buttonLabel='Download now'
-            buttonHref='/articles'
-            accent='purple'
-          />
+
 
           <ArticleCallout
             title='Quick definitions VCs assume you know'

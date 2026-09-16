@@ -1,0 +1,164 @@
+GTM CHANNEL TEST — EDITABLE PLANNING RECORD
+MLAI editorial aid, 11 September 2026
+Synthetic results for teaching only. Every ID, status, price, cost and date below is author-created, not an observed customer result. No campaign or pilot has run.
+AI-assisted editorial example; independent founder/source review pending.
+Not a validated score, commercial quote, legal/accounting advice or proof of profitable acquisition.
+
+BLANK RECORD
+Reader segment, geography and buying role:
+[Your evidence, assumption or explicit unknown]
+Observed problem and source of that observation:
+[Your evidence, assumption or explicit unknown]
+Current alternative, including doing nothing:
+[Your evidence, assumption or explicit unknown]
+Offer, deliverable, exclusions and price conditions:
+[Your evidence, assumption or explicit unknown]
+Single question this test should answer:
+[Your evidence, assumption or explicit unknown]
+Channel and permission/organiser conditions:
+[Your evidence, assumption or explicit unknown]
+Message and next action offered:
+[Your evidence, assumption or explicit unknown]
+Fit rule and denominator for each stage:
+[Your evidence, assumption or explicit unknown]
+Time, cash and delivery-capacity limits:
+[Your evidence, assumption or explicit unknown]
+Start, end, follow-up and decision dates:
+[Your evidence, assumption or explicit unknown]
+Observed counts, costs, objections and missing data:
+[Your evidence, assumption or explicit unknown]
+Repeat / change / stop decision and next uncertainty:
+[Your evidence, assumption or explicit unknown]
+
+COMPLETED FICTIONAL EXAMPLE — NOT OBSERVED CUSTOMER RESULTS
+Reader segment, geography and buying role:
+A Melbourne early-stage founder testing an offer for commercial-maintenance owners who approve quote follow-ups. This is the hypothetical buyer, not the audience of a contractor-recruitment article.
+
+Observed problem and source of that observation:
+Delayed quote follow-ups are the assumed problem. No interviews or customer records were supplied. Qualification statuses below are author-assigned for the exercise, not validated demand.
+
+Current alternative, including doing nothing:
+Spreadsheet plus manually written emails, or leaving follow-up unchanged; both are assumptions to check.
+
+Offer, deliverable, exclusions and price conditions:
+A synthetic demonstration, then optional AUD 600 total review-only pilot: one workflow, ten synthetic records, one buyer review session, no live integration or sends. Assume one full payment before the pilot review. Price and terms are invented, not an MLAI offer or proof of profitability; real scope, delivery costs, tax/payment/refund terms and permission need agreement.
+
+Single question this test should answer:
+Will verified-fit owners take the next step on this specific demonstration and pilot offer through either accessible route? The example cannot determine a causal channel winner or product-market fit.
+
+Channel and permission/organiser conditions:
+Recipient-agreed introductions; a separate organiser-approved opt-in session. The 28 fictional IDs do not overlap. In a real test, deduplicate recipients and record appropriate permission and follow-up limits; community attendance is not blanket contact consent.
+
+Message and next action offered:
+See how a draft follow-up is checked against the quote before anyone sends it. Invite a demonstration first; show the same pilot scope and price at every attended demo. Acceptance of an introduction is not acceptance of this offer.
+
+Fit rule and denominator for each stage:
+Verify owner role, a recent quote-follow-up problem and authority to consider a pilot. Individually invite only verified-fit people. Count yes/no replies per invitee, attended demos per invitee, accepted terms per terms shown, payments per accepted offer, and completed ten-record reviews per paid buyer. Unknown fit, pending replies, pending terms and pending payments stay separate.
+
+Time, cash and delivery-capacity limits:
+Across both routes: at most 12 acquisition hours, AUD 250 acquisition cash and two accepted pilot commitments. Invented planning value: AUD 60 per founder hour. Pilot delivery and support effort are outside that acquisition budget and remain unestimated; two slots are a promise ceiling, not proof the founder can deliver them.
+
+Start, end, follow-up and decision dates:
+Fictional future schedule: test 14–25 September 2026; appropriately agreed follow-up until 2 October; decision on 5 October. Statuses below are an author-created snapshot at that fictional decision, not events that have happened or a forecast.
+
+Observed counts, costs, objections and missing data:
+Use the 28 synthetic status rows below. Introductions: 5 of 8 fit, 4 of 5 invitees replied, 3 demos, 1 accepted pilot, 1 payment, 0 completed reviews. Session: 4 of 20 fit, 3 of 4 invitees replied, 2 demos, 1 accepted pilot, payment pending, 0 completed reviews. Acquisition: AUD 40 / 4 hours and AUD 180 / 8 hours. Objection reasons and delivery economics are not supplied; see the stage definitions and cost limits, not an invented customer story.
+
+Repeat / change / stop decision and next uncertainty:
+Pause new acquisition. The test has 0 hours remaining, AUD 30 cash remaining and no capacity for new pilot commitments under its two-commitment limit. Resolve the delivery plan for existing commitments before making new promises. Any further outreach needs newly agreed capacity and an appropriate contact basis; the fictional follow-up window has ended. Do not treat a pause in acquisition as cancellation of accepted terms. Delivery effort, actual operating costs, refunds, support, continued use, repeat demand and demand beyond personal contacts remain unknown. These counts cannot establish product-market fit, a profitable offer or a winning channel.
+
+STAGE DEFINITIONS AND DENOMINATORS
+People reached in the defined route
+An agreed introduction or an attendee; these are differently selected groups.
+Introductions: 8 recipient-agreed introductions
+Session: 20 session attendees
+
+Verified fit / people reached
+Owner reports a recent quote-follow-up problem and can consider a pilot.
+Introductions: 5 / 8 (63%)
+Session: 4 / 20 (20%)
+
+Not fit / fit unknown
+Missing qualification is unknown, not a rejection.
+Introductions: 2 not fit; 1 unknown
+Session: 5 not fit; 11 unknown
+
+Replies to demo invitations
+Yes or no reply / individually invited verified-fit people. Not event attendance.
+Introductions: 4 / 5 (80%); 1 pending
+Session: 3 / 4 (75%); 1 pending
+
+Demonstrations attended / invitees
+An attended demo, not a booking or a message reply.
+Introductions: 3 / 5 (60%)
+Session: 2 / 4 (50%)
+
+Pilot terms accepted / terms shown
+Same AUD 600 terms shown to every demo attendee.
+Introductions: 1 / 3 (33%); 1 declined, 1 pending
+Session: 1 / 2 (50%); 1 declined, 0 pending
+
+Payment received / accepted offers
+Full payment recorded separately; pending is not a lost sale.
+Introductions: 1 / 1 (100%); 0 payment pending
+Session: 0 / 1 (0%); 1 payment pending
+
+Pilot review completed / paid buyers
+Activation here means the buyer completed the agreed ten-record review. Payment or a demo alone is not activation.
+Introductions: 0 / 1 (0%)
+Session: 0 / 0 — not calculable
+
+SYNTHETIC RECORD LOG
+ID | Route | Fit | Demo reply | Demo | Pilot terms | Payment | Pilot review
+I01 | Agreed introductions | yes | yes | attended | accepted | received | not completed
+I02 | Agreed introductions | yes | yes | attended | declined | not-due | not completed
+I03 | Agreed introductions | yes | yes | attended | pending | not-due | not completed
+I04 | Agreed introductions | yes | no | not attended | not-shown | not-due | not completed
+I05 | Agreed introductions | yes | pending | not attended | not-shown | not-due | not completed
+I06 | Agreed introductions | no | not-invited | not attended | not-shown | not-due | not completed
+I07 | Agreed introductions | no | not-invited | not attended | not-shown | not-due | not completed
+I08 | Agreed introductions | unknown | not-invited | not attended | not-shown | not-due | not completed
+S01 | Opt-in session | yes | yes | attended | accepted | pending | not completed
+S02 | Opt-in session | yes | yes | attended | declined | not-due | not completed
+S03 | Opt-in session | yes | no | not attended | not-shown | not-due | not completed
+S04 | Opt-in session | yes | pending | not attended | not-shown | not-due | not completed
+S05 | Opt-in session | no | not-invited | not attended | not-shown | not-due | not completed
+S06 | Opt-in session | no | not-invited | not attended | not-shown | not-due | not completed
+S07 | Opt-in session | no | not-invited | not attended | not-shown | not-due | not completed
+S08 | Opt-in session | no | not-invited | not attended | not-shown | not-due | not completed
+S09 | Opt-in session | no | not-invited | not attended | not-shown | not-due | not completed
+S10 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S11 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S12 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S13 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S14 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S15 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S16 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S17 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S18 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S19 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+S20 | Opt-in session | unknown | not-invited | not attended | not-shown | not-due | not completed
+
+Objection reasons are not supplied. A declined invitation or offer does not tell us why; do not invent a customer explanation.
+
+COST AND CAPACITY CHECK
+Introductions: AUD 40 cash + (4 hours × AUD 60/hour) = AUD 280 cash plus valued time.
+Session: AUD 180 cash + (8 hours × AUD 60/hour) = AUD 660 cash plus valued time.
+Combined: AUD 220 cash + AUD 720 valued time = AUD 940. Only AUD 220 is cash spending.
+Founder time is an opportunity-cost assumption, not a salary payment. Development, delivery, ongoing support, refunds, taxes and other overhead are excluded. These totals are not fully loaded CAC or a profit calculation.
+One fictional AUD 600 payment is not proof of profit. Zero payments so far does not make acquisition cost zero. No stable acquisition forecast follows from this small, differently selected sample.
+Pause new acquisition. The test has 0 hours remaining, AUD 30 cash remaining and no capacity for new pilot commitments under its two-commitment limit. Resolve the delivery plan for existing commitments before making new promises. Any further outreach needs newly agreed capacity and an appropriate contact basis; the fictional follow-up window has ended. Do not treat a pause in acquisition as cancellation of accepted terms.
+Delivery effort, actual operating costs, refunds, support, continued use, repeat demand and demand beyond personal contacts remain unknown. These counts cannot establish product-market fit, a profitable offer or a winning channel.
+
+ACTUAL FOLLOW-UP RECORD — LEAVE UNKNOWN UNTIL OBSERVED
+Internal ID / route / contact basis and expiry / stage / date / actual outcome / source / next allowed action:
+[Use an approved private system; do not put names, emails or prospect notes in analytics.]
+Any new acquisition hours/cash / delivery capacity / approval owner and date:
+[Record a new bounded decision, not an automatic extension of this fictional test.]
+
+EVENT DISCUSSION
+Bring one anonymised or synthetic question about the test decision. The event format control transfers only online/in-person preference, not this record. No automatic upload, booking, customer introduction or sales review is promised.
+Sources checked 15 September 2026; practical guidance, not endorsement of this fixture:
+https://startups.aws.com/learn/prove-whats-possible-make-your-idea-success-solid-go-to-market-strategy
+https://business.gov.au/planning/business-plans/develop-your-marketing-plan
+Full explanation: https://mlai.au/articles/featured/go-to-market-for-startups

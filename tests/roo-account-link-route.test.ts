@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const TOKEN = "A".repeat(43);
 const apiPost = mock(async (path: string) => ({
@@ -14,8 +16,11 @@ const apiPost = mock(async (path: string) => ({
 const createApiClient = mock(() => ({ post: apiPost }));
 const getCurrentUser = mock(async () => ({ email: "founder@example.com" }));
 
+// Preserve real pure helpers. Replacing apiErrorDetail made unrelated tests
+// observe this route fixture when Bun discovered these files in another order.
+const realApi = { ...await import("../app/lib/api") };
 mock.module("../app/lib/api", () => ({
-  apiErrorDetail: (_error: unknown, fallback: string) => fallback,
+  ...realApi,
   createApiClient,
   shouldUseDevBackendStub: () => false,
 }));
@@ -50,6 +55,18 @@ describe("Founder Tools Roo account-link route", () => {
     apiPost.mockClear();
     createApiClient.mockClear();
     getCurrentUser.mockClear();
+  });
+
+  test("discloses every current use of the connected Slack identity", () => {
+    const source = readFileSync(
+      join(process.cwd(), "app/routes/founder-tools.link-roo.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("coworking discount");
+    expect(source).toContain("Founder Tools service");
+    expect(source).toContain("notifications to your Slack account");
+    expect(source).not.toContain("used only for discount eligibility");
   });
 
   test("ordinary Origin-less document GET previews through the trusted site origin", async () => {

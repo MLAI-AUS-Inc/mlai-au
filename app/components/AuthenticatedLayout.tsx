@@ -33,7 +33,7 @@ interface AuthenticatedLayoutProps {
 type NavigationItem = { name: string; href: string; icon: any; exact?: boolean; matchPaths?: string[] };
 
 const VIBE_RAISING_TOP_NAVIGATION = [
-    { name: 'My Update', href: '/founder-tools/updates' },
+    { name: 'Updates', href: '/founder-tools/updates' },
     { name: 'Data Sources', href: '/founder-tools/data-sources' },
     { name: 'My Companies', href: '/founder-tools/companies' },
 ];

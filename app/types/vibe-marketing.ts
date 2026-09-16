@@ -350,7 +350,7 @@ export interface VibeMarketingNotificationChannel {
   routeId: string;
   displayName: string;
   consentState: VibeMarketingNotificationConsentState;
-  /** Whether this channel receives the daily research reminder + topics. */
+  /** Whether this channel receives its supported Content Factory notifications. */
   deliveryEnabled: boolean;
   verifiedAt: string | null;
   isPrimary: boolean;
@@ -453,6 +453,7 @@ export interface IslandGraphNode {
   colorKey: string;
   status: string;
   isNew: boolean;
+  researchPending?: boolean;
   keywordCount: number;
   totalVolume: number;
   avgDifficulty: number;

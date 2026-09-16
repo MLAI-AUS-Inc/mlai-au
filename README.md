@@ -96,9 +96,10 @@ from other frontend projects.
 
 - [`docs/NEW_DEVELOPER_SETUP.md`](docs/NEW_DEVELOPER_SETUP.md): onboarding for
   the original website/backend/Roo repository group
-- [`BACKEND_HANDOFF.md`](BACKEND_HANDOFF.md): frontend/backend handoff context
 - [`docs/features/valley.md`](docs/features/valley.md): Valley prototype
 - [`AGENTS.md`](AGENTS.md): repository rules for AI coding agents
 
-Implementation plans and dated audits are context, not automatically current
-architecture. Verify them against the code and this README before acting.
+Keep task scratchpads, handoff notes, PR drafts, dated audits, and generated
+reports local. Common filenames and output directories are gitignored; use
+`.local/` for other working files. Commit maintained documentation and shared
+configuration, and put review summaries in the pull request itself.

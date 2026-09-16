@@ -136,7 +136,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: faqStructuredData }} /> : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -197,7 +197,7 @@ export default function ArticleContent() {
         <div id='test-problem-market-and-traction' data-cf-component-id={'section:test-problem-market-and-traction'} data-cf-component-type={'section'} data-cf-component-label={'Test the Problem, Market and Early Customer Evidence'} data-cf-source-section-id={'test-problem-market-and-traction'}>
           <h2>{'Test the Problem, Market and Early Customer Evidence'}</h2>
           <p>{'A practical way to think about test the problem, market and early customer evidence is through Start with the customer problem and Connect early demand to a scalable market.'}</p>
-          <p>{'In practice, test the Problem, Market and Early Customer Evidence works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler.'}</p>
+          <p>{"Separate customer interviews, expressions of interest, paid trials and repeat sales in the evidence record. They describe different levels of commitment; none should be relabelled as another."}</p>
           <div data-cf-component-id={'image:test-problem-market-and-traction'} data-cf-component-type={'image'} data-cf-component-label={'Image: Test the Problem, Market and Early Customer Evidence'} data-cf-source-section-id={'test-problem-market-and-traction'}>
             <ArticleImageBlock
               src='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-0c9f4344-3f46-48b7-8d99-912684987ff9.jpg?alt=media&token=84609ad2-ac35-4d82-9f06-520799e4fcf3'
@@ -291,16 +291,16 @@ export default function ArticleContent() {
 
         <ArticleReferences
           references={[
-            { id: 1, href: 'https://www.svb.com/startup-insights/startup-strategy/what-investors-look-for-povs-from-the-other-side-of-the-table/', title: 'What Investors Look For & Questions They Will Ask', publisher: 'svb.com', description: 'Authoritative reference supporting What Investors Look For & Questions They Will Ask.', category: 'guide' },
-            { id: 2, href: 'https://vivatech.com/news/investment-checklist-for-startups-what-investors-want-to-see', title: 'Startup Investment Checklist: A Guide to Securing Funding', publisher: 'vivatech.com', description: 'Authoritative reference supporting Startup Investment Checklist: A Guide to Securing Funding.', category: 'guide' },
-            { id: 3, href: 'https://www.forumvc.com/thought-pieces/what-vcs-look-for-early-stage-investment', title: 'What VCs Look for in Early-Stage Startups: Key Criteria', publisher: 'forumvc.com', description: 'Authoritative reference supporting What VCs Look for in Early-Stage Startups: Key Criteria.', category: 'guide' },
-            { id: 4, href: 'https://www.linkedin.com/posts/gregmoran_how-to-evaluate-a-startups-valuation-before-activity-7277084309407055873-KmLY', title: 'How to Evaluate a Startup’s Valuation Before You Invest 💡 Startup investing is about more than just numbers—it’s about making informed decisions based on the right frameworks. Here’s how to… | Greg Moran', publisher: 'linkedin.com', description: 'Authoritative reference supporting How to Evaluate a Startup’s Valuation Before You Invest 💡 Startup investing is about more than just numbers—it’s about making informed decisions based on the right frameworks. Here’s how to… | Greg Moran.', category: 'guide' },
-            { id: 5, href: 'https://www.brex.com/journal/startup-valuation', title: 'How to do a startup valuation: 8 different methods', publisher: 'brex.com', description: 'Authoritative reference supporting How to do a startup valuation: 8 different methods.', category: 'guide' },
-            { id: 6, href: 'https://sprintlaw.com.au/articles/startup-investment-in-australia-essential-legal-and-business-guide/', title: 'Startup Investment in Australia | Sprintlaw Australia', publisher: 'sprintlaw.com.au', description: 'Authoritative reference supporting Startup Investment in Australia | Sprintlaw Australia.', category: 'guide' },
-            { id: 7, href: 'https://europe.republic.com/investors-site/guides/how-to-select-startups-to-invest-in/', title: 'How To Select Startups To Invest In - Republic Europe Investor Resources', publisher: 'europe.republic.com', description: 'Authoritative reference supporting How To Select Startups To Invest In - Republic Europe Investor Resources.', category: 'guide' },
-            { id: 8, href: 'https://www.bentleys.com.au/resources/startup-funding-strategy-advising-australian-entrepreneurs-on-how-to-get-capital-growth/', title: 'Startup Funding Australia: Get Capital & Grow Your Business', publisher: 'bentleys.com.au', description: 'Authoritative reference supporting Startup Funding Australia: Get Capital & Grow Your Business.', category: 'guide' },
-            { id: 9, href: 'https://sprintlaw.com.au/articles/small-business-investment-in-australia-essential-legal-guide/', title: 'Small Business Investment in Australia: Guide | Sprintlaw Australia', publisher: 'sprintlaw.com.au', description: 'Authoritative reference supporting Small Business Investment in Australia: Guide | Sprintlaw Australia.', category: 'guide' },
-            { id: 10, href: 'https://aerion.com.au/blog/investing-in-startups-rewards-and-risks/', title: 'Investing in Startups: Rewards and Risks Guide', publisher: 'aerion.com.au', description: 'Authoritative reference supporting Investing in Startups: Rewards and Risks Guide.', category: 'guide' },
+            { id: 1, href: 'https://www.svb.com/startup-insights/startup-strategy/what-investors-look-for-povs-from-the-other-side-of-the-table/', title: 'What Investors Look For & Questions They Will Ask', publisher: 'svb.com', description: "", category: 'guide' },
+            { id: 2, href: 'https://vivatech.com/news/investment-checklist-for-startups-what-investors-want-to-see', title: 'Startup Investment Checklist: A Guide to Securing Funding', publisher: 'vivatech.com', description: "", category: 'guide' },
+            { id: 3, href: 'https://www.forumvc.com/thought-pieces/what-vcs-look-for-early-stage-investment', title: 'What VCs Look for in Early-Stage Startups: Key Criteria', publisher: 'forumvc.com', description: "", category: 'guide' },
+            { id: 4, href: 'https://www.linkedin.com/posts/gregmoran_how-to-evaluate-a-startups-valuation-before-activity-7277084309407055873-KmLY', title: 'How to Evaluate a Startup’s Valuation Before You Invest 💡 Startup investing is about more than just numbers—it’s about making informed decisions based on the right frameworks. Here’s how to… | Greg Moran', publisher: 'linkedin.com', description: "", category: 'guide' },
+            { id: 5, href: 'https://www.brex.com/journal/startup-valuation', title: 'How to do a startup valuation: 8 different methods', publisher: 'brex.com', description: "", category: 'guide' },
+            { id: 6, href: 'https://sprintlaw.com.au/articles/startup-investment-in-australia-essential-legal-and-business-guide/', title: 'Startup Investment in Australia | Sprintlaw Australia', publisher: 'sprintlaw.com.au', description: "", category: 'guide' },
+            { id: 7, href: 'https://europe.republic.com/investors-site/guides/how-to-select-startups-to-invest-in/', title: 'How To Select Startups To Invest In - Republic Europe Investor Resources', publisher: 'europe.republic.com', description: "", category: 'guide' },
+            { id: 8, href: 'https://www.bentleys.com.au/resources/startup-funding-strategy-advising-australian-entrepreneurs-on-how-to-get-capital-growth/', title: 'Startup Funding Australia: Get Capital & Grow Your Business', publisher: 'bentleys.com.au', description: "", category: 'guide' },
+            { id: 9, href: 'https://sprintlaw.com.au/articles/small-business-investment-in-australia-essential-legal-guide/', title: 'Small Business Investment in Australia: Guide | Sprintlaw Australia', publisher: 'sprintlaw.com.au', description: "", category: 'guide' },
+            { id: 10, href: 'https://aerion.com.au/blog/investing-in-startups-rewards-and-risks/', title: 'Investing in Startups: Rewards and Risks Guide', publisher: 'aerion.com.au', description: "", category: 'guide' },
           ]}
           heading='Sources & further reading'
         />

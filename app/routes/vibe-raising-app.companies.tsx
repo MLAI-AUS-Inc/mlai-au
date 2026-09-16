@@ -151,7 +151,7 @@ function MonthlyUpdatesToggle({ company }: { company: { id: string; monthlyUpdat
                 <div className="min-w-0">
                     <div className="text-sm font-black text-slate-950">Automated monthly updates</div>
                     <div className="vr-text-caption" style={{ color: "var(--vr-color-text-sub)" }}>
-                        Generate an investor update for this company every month. You still review before it&apos;s sent.
+                        Generate an monthly update for this company every month. You still review before it&apos;s sent.
                     </div>
                     {error ? <div className="mt-1 text-xs font-bold text-red-600">{error}</div> : null}
                 </div>
@@ -374,7 +374,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                             </Link>
                         </div>
 
-                        {/* Automated monthly investor updates opt-in */}
+                        {/* Automated monthly monthly updates opt-in */}
                         <MonthlyUpdatesToggle company={activeCompany} />
                     </div>
                 </div>

@@ -1,3 +1,15 @@
+import { getUpdatePeriod, updateCalendarDate, getUpdateTitles } from "~/lib/startup-updates-presentation";
+import { defaultUpdateSourceWindow, toLocalDateTime, fromLocalDateTime } from "~/lib/update-source-window";
+import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
+import UpdateDialog from "~/components/vibe-raising/UpdateDialog";
+import { isFinancialMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updateWorkingCopyKey } from "~/lib/update-working-copy";
+import "~/styles/update-editor.css";
+import UpdateCoverEditor from "~/components/vibe-raising/UpdateCoverEditor";
+import { coverUpdateText, normalizeUpdateCover, parseUpdateCoverForm } from "~/lib/update-cover";
+import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
+import UpdateEvidenceText from "~/components/vibe-raising/UpdateEvidenceText";
+import ReportingEvidenceNotice from "~/components/vibe-raising/ReportingEvidenceNotice";
+import VibeRaisingAudienceVisibilityField from "~/components/VibeRaisingAudienceVisibilityField";
 import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, useSubmit, redirect } from "react-router";
 import React, { startTransition, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, type RefObject } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
@@ -7,6 +19,7 @@ import {
     requireVibeRaisingFounder,
     bootstrapVibeRaisingStartupUpdate,
     getVibeRaisingDrafts,
+    getStartupHealth,
     getVibeRaisingMonthlyUpdates,
     getVibeRaisingMonthlyUpdateById,
     getVibeRaisingInputSourcesStatus,
@@ -33,6 +46,7 @@ import {
 } from "~/lib/monthly-update-reminder-link";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { normalizeVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
+import { buildVibeRaisingDraftReturnPath, readVibeRaisingDraftReturnState } from "~/lib/vibe-raising-draft-return";
 import {
     buildVibeRaisingFinancialSurveyQuestion,
     type VibeRaisingFinancialSurveyContext,
@@ -41,6 +55,7 @@ import {
 import {
     VIBE_METRIC_KEYS,
     VIBE_METRIC_OPTIONS,
+    metricOptionsForValues,
     VIBE_METRIC_OPTION_MAP,
     hasDisplayableMetricValue,
     type MetricOption,
@@ -74,13 +89,14 @@ import {
     HandThumbUpIcon as HandThumbUpSolidIcon,
     HandThumbDownIcon as HandThumbDownSolidIcon,
 } from "@heroicons/react/24/solid";
-import { useDropzone } from 'react-dropzone';
 import { motion, useInView } from "motion/react";
 import { clsx } from "clsx";
 import { useActiveDraftRun } from "~/components/ActiveDraftRunStatus";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
-import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
+import type { MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
+import VibeRaisingWorkflowLayout from "~/components/VibeRaisingWorkflowLayout";
+import { getVibeRaisingDraftProgress } from "~/lib/vibe-raising-progress";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 import FinancialChartsSection from "~/components/vibe-raising/FinancialChartsSection";
@@ -144,7 +160,6 @@ const COMPACT_OPTIONAL_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_create_update_mobile_tour_seen_v1";
-const STORY_MATERIALS_SUGGESTION_SEEN_STORAGE_PREFIX = "vibe_raising_story_materials_suggestion_seen_v1";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
 const SEND_TO_MLAI_FORM_ID = "vibe-raising-send-to-mlai-form";
@@ -192,7 +207,7 @@ type WeeklyUpdateOption = {
     isCurrent: boolean;
 };
 
-function readStoredManualMaterials(): {
+function readStoredManualMaterials(scope: string): {
     summary: string;
     sourceUrl: string;
     pitchDeckSummary: string;
@@ -203,7 +218,7 @@ function readStoredManualMaterials(): {
     const empty = { summary: "", sourceUrl: "", pitchDeckSummary: "", pitchDeckUrl: "", manualDocumentIds: [], documents: [] };
     if (typeof window === "undefined") return empty;
     try {
-        const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
+        const raw = window.sessionStorage.getItem(`${MANUAL_MATERIALS_STORAGE_KEY}:${scope}`);
         if (!raw) return empty;
         const parsed = JSON.parse(raw) as {
             summary?: unknown;
@@ -523,9 +538,15 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
     const metrics = update.metrics || {};
     return {
         id: update.id,
+        updateDate: update.updateDate ?? getUpdatePeriod(update).date,
+        creationKey: update.creationKey,
+        narrativePeriod: update.narrativePeriod,
+        revisionId: update.revisionId,
+        revisionHash: update.revisionHash,
         audienceVisibility: update.audienceVisibility || "",
         month: update.monthName || parsedPeriod.month,
         year: update.year || parsedPeriod.year,
+        coverImage: update.coverImage || null,
         summary: update.summary || "",
         sourceUrl: update.sourceUrl || "",
         pitchDeckUrl: update.pitchDeckUrl || "",
@@ -547,6 +568,10 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         metrics,
         metricSuggestions: update.metricSuggestions || [],
         displayConfig: update.displayConfig || null,
+        metricEvidence: update.metricEvidence || {},
+        reportingPeriod: update.reportingPeriod || null,
+        evidenceWarnings: update.evidenceWarnings || [],
+        evidenceStatus: update.evidenceStatus,
         financialSnapshot: update.financialSnapshot || null,
         conciseAnalysis: update.conciseAnalysis || null,
         presentationMode: update.presentationMode || null,
@@ -580,17 +605,24 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         throw redirect(removeReminderCompanySelector(url));
     }
 
-    // Require company registration before creating updates
-    if (!user.companyRegistered) {
-        throw redirect("/founder-tools/company-setup");
-    }
 
     // Check for edit mode
     const editId = url.searchParams.get("edit");
+    const creationKey = url.searchParams.get("draft");
+    if (!editId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(creationKey || "")) {
+        url.searchParams.set("draft", crypto.randomUUID());
+        throw redirect(`${url.pathname}${url.search}`);
+    }
     const resumeEmailDrafting =
         url.searchParams.get("email_draft") === "1" ||
         url.searchParams.get("draft_from_email") === "1";
     const selectedInputSources = parseInputSources(url.searchParams.get("inputs"));
+    const requestedDraftReturn = readVibeRaisingDraftReturnState(url.search);
+    const draftReturnState = requestedDraftReturn &&
+        !isBeforeMinimumMonthlyUpdate(requestedDraftReturn.month, requestedDraftReturn.year) &&
+        !isFutureMonthlyUpdate(requestedDraftReturn.month, requestedDraftReturn.year)
+            ? requestedDraftReturn
+            : null;
 
     let existingData = null;
     if (editId) {
@@ -606,13 +638,25 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         return [];
     });
 
+    if (!editId && creationKey) {
+        const drafts = await getVibeRaisingDrafts(env, request, resolveActiveCompanyId(user));
+        const matching = [...drafts, ...existingMonthlyUpdates].find(update => update.creationKey === creationKey);
+        if (matching) existingData = buildExistingUpdateFormData(matching);
+    }
+    if (editId && !existingData) throw new Response("Update not found", { status: 404 });
+    const health = await getStartupHealth(env, request, resolveActiveCompanyId(user));
     return {
         user,
+        metricDefinitions: health.configuration.metricDefinitions || [],
+        creationKey: creationKey || existingData?.creationKey || null,
+        reportingTimezone: health.configuration.timezone || "UTC",
+        today: updateCalendarDate(new Date().toISOString(), health.configuration.timezone || "UTC")!,
         existingData,
         isEdit: !!editId,
         backendBaseUrl: String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL),
         resumeEmailDrafting,
         selectedInputSources,
+        draftReturnState,
         existingMonthlyUpdates,
     };
 }
@@ -621,7 +665,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     const dynamicMetricKeys = String(formData.get("metricKeys") || "")
         .split(",")
         .map((key) => key.trim())
-        .filter((key) => key && METRIC_OPTION_MAP.has(key));
+        .filter((key) => /^[A-Za-z][A-Za-z0-9_.]{0,63}$/.test(key));
     const selectedMetricKeys = Array.from(new Set(dynamicMetricKeys));
     const metricKeys = Array.from(new Set([...METRIC_FORM_KEYS, ...selectedMetricKeys]));
     const metrics = Object.fromEntries(
@@ -658,9 +702,13 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     };
 
     return {
+        updateId: String(formData.get("updateId") || "") || null,
+        creationKey: String(formData.get("creationKey") || "") || null,
+        updateDate: String(formData.get("updateDate") || "") || null,
         audienceVisibility: normalizeAudienceVisibilityValue(formData.getAll("audienceVisibility")),
         month: String(formData.get("month") || "").trim(),
         year: Number(formData.get("year") || 0),
+        ...(formData.has("coverImage") ? { coverImage: parseUpdateCoverForm(formData.get("coverImage")) } : {}),
         summary: String(formData.get("summary") || "").trim() || null,
         sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
         manualDocumentIds,
@@ -735,15 +783,18 @@ export async function action({ request, context }: Route.ActionArgs) {
     const { appUser } = await requireVibeRaisingFounder(env, request);
     // Pin every read and save in this action to the company the page was
     // rendered for, instead of the backend's mutable active_company.
-    const activeCompanyId = resolveActiveCompanyId(appUser);
     const formData = await request.formData();
+    const activeCompanyId = String(formData.get("companyId") || "");
+    if (!activeCompanyId || !appUser.companies.some((company) => company.id === activeCompanyId)) {
+        throw new Response("Select the startup this form belongs to.", { status: 409 });
+    }
     const intent = formData.get("intent");
-    const answerGatedIntents = new Set(["review", "save-draft", "send-to-mlai", "publish"]);
+    const answerGatedIntents = new Set(["review", "send-to-mlai", "publish"]);
     const answeredFounderQuestionCount = countAnsweredFounderQuestions(formData);
     if (answerGatedIntents.has(String(intent || "")) && answeredFounderQuestionCount < REQUIRED_FOUNDER_QUESTION_COUNT) {
         return {
             step: "validation-error",
-            error: `Answer at least ${REQUIRED_FOUNDER_QUESTION_COUNT} founder questions before saving or submitting.`,
+            error: `Answer at least ${REQUIRED_FOUNDER_QUESTION_COUNT} founder questions before reviewing or submitting.`,
             answeredQuestionCount: answeredFounderQuestionCount,
         };
     }
@@ -753,136 +804,26 @@ export async function action({ request, context }: Route.ActionArgs) {
         audienceVisibility: savePayload.audienceVisibility,
     };
 
-    if (intent === "send-to-mlai") {
-        try {
-            const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
-                ...savePayload,
-                companyId: activeCompanyId,
-                audienceVisibility: ["just_me"],
-                mlaiFeedbackOptIn: savePayload.mlaiFeedbackOptIn,
-                submissionDestination: "mlai",
-                saveMode: "ready",
-            });
-            const cookie = savedUpdate ? createVibeRaisingLocalDraftUpdateCookie(savedUpdate) : null;
-            return redirect(
-                "/founder-tools/updates?sent_to_mlai=1",
-                cookie ? { headers: { "Set-Cookie": cookie } } : undefined,
-            );
-        } catch (error) {
-            const gate = acnGateRedirect(error);
-            if (gate) return gate;
-            return {
-                step: "publish-error",
-                data: updates,
-                error: extractVibeRaisingActionError(error, "We could not send this update to MLAI yet. Please try again."),
-            };
-        }
-    }
-
     if (intent === "publish") {
-        const draftId = String(formData.get("draftId") || "").trim();
-        console.log("[monthly-update:publish-action] received publish request", JSON.stringify({
-            draftId,
-            month: savePayload.month,
-            year: savePayload.year,
-            formEntries: Object.fromEntries(formData),
-        }));
+        const draftId = String(formData.get("draftId") || "");
+        const revisionId = Number(formData.get("revisionId"));
+        const revisionHash = String(formData.get("revisionHash") || "");
         try {
-            if (BACKEND_DRAFT_ID_PATTERN.test(draftId)) {
-                await publishVibeRaisingMonthlyUpdate(env, request, draftId);
-                console.log("[monthly-update:publish-action] published draft by id", { draftId });
-                return redirect("/founder-tools/updates");
-            }
-
-            const drafts = await getVibeRaisingDrafts(env, request, activeCompanyId);
-            console.log("[monthly-update:publish-action] loaded drafts for fallback", JSON.stringify({
-                draftCount: drafts.length,
-                publishableDrafts: drafts
-                    .filter((draft) => draft.status === "ready" && draft.visibility !== "published")
-                    .map((draft) => ({
-                        id: draft.id,
-                        month: draft.month,
-                        monthName: draft.monthName,
-                        year: draft.year,
-                        status: draft.status,
-                        visibility: draft.visibility,
-                    })),
-            }));
-            const formMonth = savePayload.month;
-            const formYear = savePayload.year;
-            const matchingDraft = drafts.find((draft) => (
-                (!formMonth || draft.monthName === formMonth || draft.month === `${formMonth} ${formYear}`) &&
-                (!Number.isFinite(formYear) || !formYear || draft.year === formYear) &&
-                draft.status === "ready" &&
-                draft.visibility !== "published" &&
-                BACKEND_DRAFT_ID_PATTERN.test(draft.id)
-            ));
-            const fallbackDraft = matchingDraft ?? drafts.find((draft) => (
-                draft.status === "ready" &&
-                draft.visibility !== "published" &&
-                BACKEND_DRAFT_ID_PATTERN.test(draft.id)
-            ));
-
-            if (fallbackDraft) {
-                await publishVibeRaisingMonthlyUpdate(env, request, fallbackDraft.id);
-                console.log("[monthly-update:publish-action] published fallback draft", {
-                    draftId: fallbackDraft.id,
-                });
-                return redirect("/founder-tools/updates");
-            }
-
-            const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
-                ...savePayload,
-                companyId: activeCompanyId,
-                saveMode: "ready",
+            if (!BACKEND_DRAFT_ID_PATTERN.test(draftId) || !revisionId || !revisionHash) throw new Error("Save and review this revision before publishing.");
+            await publishVibeRaisingMonthlyUpdate(env, request, draftId, {
+                companyId: activeCompanyId, revisionId, revisionHash,
+                audienceVisibility: normalizeAudienceVisibilityValue(formData.get("audienceVisibility")),
             });
-            if (savedUpdate?.id && BACKEND_DRAFT_ID_PATTERN.test(savedUpdate.id)) {
-                await publishVibeRaisingMonthlyUpdate(env, request, savedUpdate.id);
-                console.log("[monthly-update:publish-action] saved then published draft", {
-                    draftId: savedUpdate.id,
-                });
-                return redirect("/founder-tools/updates");
-            }
-
-            if (savedUpdate?.id) {
-                const publishedUpdate = {
-                    ...savedUpdate,
-                    status: "ready",
-                    visibility: "published",
-                    publishedAt: new Date().toISOString(),
-                };
-                const cookie = createVibeRaisingLocalPublishedUpdateCookie(publishedUpdate);
-                console.log("[monthly-update:publish-action] using local published update fallback", {
-                    draftId: savedUpdate.id,
-                    hasCookie: Boolean(cookie),
-                });
-                return redirect("/founder-tools/updates", cookie ? { headers: { "Set-Cookie": cookie } } : undefined);
-            }
-
-            console.warn("[monthly-update:publish-action] saved update did not include a backend draft id", JSON.stringify({
-                savedUpdate,
-            }));
+            return redirect("/founder-tools/updates");
         } catch (error) {
-            const gate = acnGateRedirect(error);
-            if (gate) return gate;
-            console.warn("Unable to publish Vibe Raising monthly update.", (error as any)?.response?.data ?? error);
-            return {
-                step: "publish-error",
-                data: updates,
-                error: extractVibeRaisingActionError(error, "We could not publish this update yet. Please check the draft content and try again."),
-            };
+            return { step: "publish-error", data: updates,
+                error: extractVibeRaisingActionError(error, "This revision could not be published. Reload and review the saved update.") };
         }
-
-        return {
-            step: "publish-error",
-            data: updates,
-            error: "We could not find a saved draft to publish. Review the draft once, then publish again.",
-        };
     }
 
     const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
     const activeCompany =
-        appUser.companies.find((company) => company.id === appUser.activeCompanyId) ??
+        appUser.companies.find((company) => company.id === activeCompanyId) ??
         appUser.companies[0] ??
         null;
     const founderProfilesForCompanySave =
@@ -920,35 +861,21 @@ export async function action({ request, context }: Route.ActionArgs) {
             savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
                 ...savePayload,
                 companyId: activeCompanyId,
+                expectedRevision: formData.get("expectedRevision") ? Number(formData.get("expectedRevision")) : null,
                 saveMode: "ready",
             });
         } catch (error) {
             const gate = acnGateRedirect(error);
             if (gate) return gate;
-            throw error;
+            return { step: "validation-error", error: extractVibeRaisingActionError(error, "Your draft is still here. We couldn’t save this revision. Please retry, or reload if another revision was saved.") };
         }
 
-        // Mock AI analysis
         return {
             step: "feedback",
-            data: {
-                ...updates,
-                draftId: savedUpdate?.id ?? updates.draftId,
-            },
+            data: { ...updates, ...(savedUpdate ? buildExistingUpdateFormData(savedUpdate) : {}),
+                companyId: activeCompanyId, draftId: savedUpdate?.id,
+                revisionId: savedUpdate?.revisionId, revisionHash: savedUpdate?.revisionHash },
             update: savedUpdate,
-            feedback: {
-                grade: "A+",
-                strengths: [
-                    "Detailed highlights show clear progress",
-                    "Includes quantifiable metrics and data",
-                    "Transparent about challenges facing the business"
-                ],
-                improvements: [
-                    "Consider adding comparison to previous month",
-                    "Include customer testimonials or feedback"
-                ],
-                proTip: "Clear updates acknowledge challenges, explain what is changing, and make specific support requests."
-            }
         };
     }
 
@@ -958,12 +885,13 @@ export async function action({ request, context }: Route.ActionArgs) {
             update = await saveVibeRaisingMonthlyUpdate(env, request, {
                 ...savePayload,
                 companyId: activeCompanyId,
+                expectedRevision: formData.get("expectedRevision") ? Number(formData.get("expectedRevision")) : null,
                 saveMode: "draft",
             });
         } catch (error) {
             const gate = acnGateRedirect(error);
             if (gate) return gate;
-            throw error;
+            return { step: "validation-error", error: extractVibeRaisingActionError(error, "Your draft is still here. We couldn’t save this revision. Please retry, or reload if another revision was saved.") };
         }
         const cookie = update ? createVibeRaisingLocalDraftUpdateCookie(update) : null;
 
@@ -999,7 +927,7 @@ function orderDraftMetricOptions(options: MetricOption[]) {
 
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
     const keys = Object.keys(metrics || {}).filter((key) => hasDisplayableMetricValue(metrics?.[key]));
-    return METRIC_OPTIONS.filter((option) => keys.includes(option.key));
+    return metricOptionsForValues(metrics).filter((option) => keys.includes(option.key));
 }
 
 function getMetricOptionsForDisplay(metrics?: Record<string, string>) {
@@ -1007,7 +935,7 @@ function getMetricOptionsForDisplay(metrics?: Record<string, string>) {
 }
 
 function getEditableMetricOptions(metrics?: Record<string, string>, selected?: Set<string>) {
-    return METRIC_OPTIONS.filter((option) => {
+    return metricOptionsForValues(metrics).filter((option) => {
         const hasKnownValue = Object.prototype.hasOwnProperty.call(metrics || {}, option.key);
         const isSelected = selected?.has(option.key) ?? false;
         return hasKnownValue || isSelected || METRIC_OPTION_MAP.has(option.key);
@@ -1526,7 +1454,6 @@ const MAX_SOURCE_VIDEO_BYTES = MAX_VIDEO_UPLOAD_SIZE_MB * 1024 * 1024;
 const MAX_PITCH_DECK_UPLOAD_BYTES = MAX_PITCH_DECK_UPLOAD_SIZE_MB * 1024 * 1024;
 const VIDEO_COMPRESSION_THRESHOLD_BYTES = 75 * 1024 * 1024;
 const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
-const STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD = 4;
 const PITCH_DECK_ACCEPT = {
     "application/pdf": [".pdf"],
     "application/vnd.ms-powerpoint": [".ppt"],
@@ -1568,11 +1495,6 @@ const AUDIO_ACCEPT = {
     "audio/webm": [".webm"],
     "audio/ogg": [".ogg"],
     "audio/*": SUPPORTED_AUDIO_EXTENSIONS,
-};
-const SHARED_MATERIAL_ACCEPT = {
-    ...PITCH_DECK_ACCEPT,
-    ...VIDEO_ACCEPT,
-    ...AUDIO_ACCEPT,
 };
 const VIDEO_EXTENSION_CONTENT_TYPES: Record<string, string> = {
     ".mp4": "video/mp4",
@@ -1975,11 +1897,6 @@ function getEmailDraftStorageKey(domain?: string | null) {
     return `vibe_raising_email_draft:${normalized}`;
 }
 
-function getStoryMaterialsSuggestionSeenStorageKey(activeCompanyId?: string | null, domain?: string | null) {
-    const accountKey = String(activeCompanyId || domain || "unknown").trim().toLowerCase();
-    return `${STORY_MATERIALS_SUGGESTION_SEEN_STORAGE_PREFIX}:${accountKey}`;
-}
-
 function getEmailDraftForceRegenerateKey(domain?: string | null) {
     const normalized = String(domain || "").trim().toLowerCase() || "unknown";
     return `vibe_raising_email_draft_force_regenerate:${normalized}`;
@@ -2237,9 +2154,15 @@ function BulletTextarea({
     bulletIndex,
     enterKeyHint,
     className,
+    accessibleLabel,
+    id,
+    name,
 }: {
     value: string;
     placeholder: string;
+    accessibleLabel?: string;
+    id?: string;
+    name?: string;
     onChange: (value: string) => void;
     onFocus?: () => void;
     onEnterNewItem?: () => void;
@@ -2257,9 +2180,25 @@ function BulletTextarea({
         textarea.style.height = `${textarea.scrollHeight}px`;
     }, [value]);
 
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea || typeof ResizeObserver === "undefined") return;
+        let width = textarea.clientWidth;
+        const observer = new ResizeObserver(() => {
+            if (textarea.clientWidth === width) return;
+            width = textarea.clientWidth;
+            textarea.style.height = "0px";
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
+        observer.observe(textarea);
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <textarea
             ref={textareaRef}
+            id={id}
+            name={name}
             rows={1}
             value={value}
             onChange={(event) => {
@@ -2279,6 +2218,7 @@ function BulletTextarea({
                 onMobileAdvance?.();
             }}
             enterKeyHint={enterKeyHint}
+            aria-label={accessibleLabel}
             data-bullet-input-index={bulletIndex}
             placeholder={placeholder}
             className={clsx(
@@ -2300,7 +2240,6 @@ function SectionWithExample({
 }: SectionWithExampleProps) {
     const titleId = useId();
     const cardRef = useRef<HTMLElement | null>(null);
-    const cardInView = useInView(cardRef, { amount: 0.15, once: true });
     const { items, commitItems } = useBulletItemsState(value, onChange);
     const questionKey = getDraftQuestionKey(name, label);
     const questionMeta = questionKey ? DRAFT_QUESTION_META[questionKey] : null;
@@ -2339,6 +2278,7 @@ function SectionWithExample({
     const removeItem = (index: number) => {
         const updated = items.filter((_, i) => i !== index);
         commitItems(updated.length ? updated : [""]);
+        focusItem(Math.min(index, Math.max(0, updated.length - 1)));
     };
 
     const focusItem = (index: number) => {
@@ -2360,48 +2300,38 @@ function SectionWithExample({
     };
 
     return (
-        <motion.section
+        <section
             ref={cardRef}
-            className="rounded-2xl border border-[var(--vr-color-border)] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] motion-safe:will-change-transform sm:p-5"
+            className="update-section"
             data-draft-section={name}
             data-draft-question-card="true"
             aria-labelledby={titleId}
-            initial={{ y: 20, opacity: 0 }}
-            animate={cardInView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
-            transition={{ duration: 0.32, ease: "easeOut" }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
         >
             <input type="hidden" name={name} value={value || ""} />
-            <header className="space-y-1.5">
-                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.24em] text-gray-400 sm:hidden">
-                    {questionMeta ? `${questionMeta.step} / 05 - ${questionMeta.eyebrow}` : label}
-                </p>
-                <h3 id={titleId} className="text-[17px] font-black leading-6 text-gray-950 sm:text-lg sm:leading-snug">
-                    {questionPrompt}
-                </h3>
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--vr-color-primary)] sm:hidden">{label}</p>
+            <header>
+                <h3 id={titleId}>{label}</h3>
+                <p className="update-section-help">{questionPrompt}</p>
             </header>
-
-            <ul className="mt-4 space-y-2" aria-labelledby={titleId}>
+            <ul className="update-points" aria-labelledby={titleId}>
                 {items.map((item, i) => (
-                    <li key={i} className="grid grid-cols-[auto_1fr_auto] items-start gap-2 rounded-xl bg-[var(--vr-palette-paper)] px-3 py-2.5 ring-1 ring-[var(--vr-color-border)] focus-within:bg-white focus-within:ring-2 focus-within:ring-[var(--vr-color-primary)]">
-                        <span className="mt-2.5 select-none text-sm font-black text-[var(--vr-color-primary)]" aria-hidden="true">-</span>
+                    <li key={i} className="update-point">
+                        <span className="update-point-marker" aria-hidden="true">•</span>
                         <BulletTextarea
                             value={item}
                             onChange={(text) => updateItem(i, text)}
                             onEnterNewItem={() => addItemAfter(i)}
                             onMobileAdvance={handleMobileAdvance}
                             bulletIndex={i}
+                            accessibleLabel={`${label} point ${i + 1}`}
                             enterKeyHint={enableMobileAdvance ? (mobileAdvanceTo ? "next" : "done") : undefined}
                             placeholder={hints[i % hints.length] || placeholder}
-                            className="min-h-11 flex-1 rounded-none border-0 bg-transparent px-0 py-2 text-[16px] leading-6 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:outline-none focus:ring-0 sm:text-sm"
+                            className="update-point-input"
                         />
                         {(items.length > 1 || item.trim().length > 0) && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-2 flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
+                                className="update-point-remove"
                                 aria-label={`Remove ${label} point ${i + 1}`}
                             >
                                 <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -2411,16 +2341,8 @@ function SectionWithExample({
                 ))}
             </ul>
 
-            <footer className="mt-3 border-t border-dashed border-[var(--vr-color-border)] pt-3">
-                <button
-                    type="button"
-                    onClick={() => addItemAfter(items.length - 1)}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[rgba(0,128,128,0.08)] px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.16)]"
-                >
-                    Add point +
-                </button>
-            </footer>
-        </motion.section>
+            <button type="button" onClick={() => addItemAfter(items.length - 1)} className="update-add-point" aria-label={`Add ${label} point`}><span aria-hidden="true">＋</span> Add point</button>
+        </section>
     );
 }
 
@@ -2707,7 +2629,7 @@ function ReviewPreviewSection({
             </h4>
             <ul className="list-outside list-disc space-y-2 pl-5 [font-family:var(--vr-font-body)] text-[15px] font-medium leading-7 text-gray-800 marker:text-[var(--vr-color-primary)] sm:text-base">
                 {items.map((item, index) => (
-                    <li key={`${label}-${index}`}>{item.trim()}</li>
+                    <li key={`${label}-${index}`}><UpdateEvidenceText text={item.trim()} /></li>
                 ))}
             </ul>
         </div>
@@ -2985,6 +2907,13 @@ function CreateUpdateMobileTour({
 }
 
 export default function CreateUpdate() {
+    const { user, creationKey } = useLoaderData<typeof loader>();
+    const location = useLocation();
+    const identity = new URLSearchParams(location.search).get("edit") || creationKey;
+    return <CreateUpdateEditor key={`${user.authUser.id}:${resolveActiveCompanyId(user)}:${identity}`} />;
+}
+
+function CreateUpdateEditor() {
     const {
         user,
         existingData,
@@ -2992,7 +2921,9 @@ export default function CreateUpdate() {
         backendBaseUrl,
         resumeEmailDrafting,
         selectedInputSources: initialSelectedInputSources,
+        draftReturnState,
         existingMonthlyUpdates,
+        metricDefinitions, creationKey, reportingTimezone, today,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const [activeReviewActionData, setActiveReviewActionData] = useState<any>(null);
@@ -3004,20 +2935,6 @@ export default function CreateUpdate() {
     const isSubmitting = navigation.state === "submitting";
     const { activeRun: sharedActiveDraftRun, refreshActiveRun } = useActiveDraftRun();
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
-    const goToConnectDataStep = useCallback(() => {
-        const returnPath = `${location.pathname}${location.search || ""}`;
-        navigate(`/founder-tools/data-sources?next=${encodeURIComponent(returnPath)}`);
-    }, [location.pathname, location.search, navigate]);
-    const handleDraftStepperClick = useCallback((step: MonthlyUpdateStepKey) => {
-        if (step === "connect") {
-            goToConnectDataStep();
-            return;
-        }
-
-        if (step === "draft") {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-    }, [goToConnectDataStep]);
     const defaultData = actionData?.step === "feedback" || actionData?.step === "publish-error" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
@@ -3025,7 +2942,6 @@ export default function CreateUpdate() {
     const [uploadedPitchDeckUrl, setUploadedPitchDeckUrl] = useState<string>(defaultData?.pitchDeckUrl || "");
     const [pitchDeckUploadStatus, setPitchDeckUploadStatus] = useState<PitchDeckUploadStatus>(defaultData?.pitchDeckUrl ? "ready" : "idle");
     const [pitchDeckUploadError, setPitchDeckUploadError] = useState<string | null>(null);
-    const [materialsUploadError, setMaterialsUploadError] = useState<string | null>(null);
     const [pitchDeckStoragePath, setPitchDeckStoragePath] = useState<string>(defaultData?.pitchDeckStoragePath || "");
     const [pitchDeckContentType, setPitchDeckContentType] = useState<string>(defaultData?.pitchDeckContentType || "");
     const [pitchDeckFileSizeBytes, setPitchDeckFileSizeBytes] = useState<number | null>(defaultData?.pitchDeckFileSizeBytes || null);
@@ -3034,8 +2950,8 @@ export default function CreateUpdate() {
     const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>(defaultData?.videoUrl || "");
     const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
     const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
-    const shouldOpenDraftTemplate = Boolean(isEdit && existingData);
-    const [updateCadence, setUpdateCadence] = useState<UpdateCadence | null>(() => isEdit ? "monthly" : null);
+    const shouldOpenDraftTemplate = true;
+    const updateCadence: UpdateCadence = "monthly";
     const [monthConfirmed, setMonthConfirmed] = useState(() => shouldOpenDraftTemplate);
     const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(() => shouldOpenDraftTemplate ? "reporting" : null);
     const [metricsConfirmed, setMetricsConfirmed] = useState(() => shouldOpenDraftTemplate);
@@ -3050,14 +2966,9 @@ export default function CreateUpdate() {
     const [draftSaved, setDraftSaved] = useState(false);
     const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
     const [showReviewLinkedInPopup, setShowReviewLinkedInPopup] = useState(false);
-    const [showStoryMaterialsSuggestion, setShowStoryMaterialsSuggestion] = useState(false);
-    const [dismissedStoryMaterialsSuggestionKey, setDismissedStoryMaterialsSuggestionKey] = useState<string | null>(null);
-    const [hasPreviouslySeenStoryMaterialsSuggestion, setHasPreviouslySeenStoryMaterialsSuggestion] = useState(false);
-    const [hasLoadedStoryMaterialsSuggestionSeenState, setHasLoadedStoryMaterialsSuggestionSeenState] = useState(false);
-    const [hasTriggeredStoryMaterialsSuggestion, setHasTriggeredStoryMaterialsSuggestion] = useState(false);
-    const [highlightMaterialsSection, setHighlightMaterialsSection] = useState(false);
     const [showAllCreateStepMonths, setShowAllCreateStepMonths] = useState(false);
     const [mlaiFeedbackPreference, setMlaiFeedbackPreference] = useState<MlaiFeedbackPreference>("yes");
+    const [hasReviewedFeedbackPreference, setHasReviewedFeedbackPreference] = useState(false);
     const [showSendToMlaiConfirmation, setShowSendToMlaiConfirmation] = useState(false);
     const [endOfFlowSurveyStep, setEndOfFlowSurveyStep] = useState(0);
     const [endOfFlowSurvey, setEndOfFlowSurvey] = useState<Record<EndOfFlowSurveyQuestionKey, BinarySurveyAnswer>>({
@@ -3074,7 +2985,15 @@ export default function CreateUpdate() {
     } | null>(null);
     const currentCreatePeriod = getCurrentMonthlyUpdatePeriod();
     const createStepMonthOptions = getCreateStepMonthOptions();
-    const createStepWeekOptions = useMemo(() => getCreateStepWeekOptions(), []);
+    const createStepWeekOptions = useMemo(() => {
+        const options = getCreateStepWeekOptions();
+        // An OAuth round trip can span a new week. Keep the original period selectable.
+        if (draftReturnState?.weekStart && !options.some((option) => option.key === draftReturnState.weekStart)) {
+            const restoredWeek = getCreateStepWeekOptions(new Date(`${draftReturnState.weekStart}T12:00:00`)).at(-1);
+            if (restoredWeek) return [restoredWeek, ...options];
+        }
+        return options;
+    }, [draftReturnState?.weekStart]);
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
@@ -3092,38 +3011,6 @@ export default function CreateUpdate() {
     }, [actionData?.step]);
 
     useEffect(() => {
-        const navigationFormData = navigation.formData;
-        const navigationIntent = navigationFormData?.get("intent");
-        if (!navigationFormData || navigationIntent !== "publish") return;
-
-        const payload = {
-            state: navigation.state,
-            location: navigation.location
-                ? `${navigation.location.pathname}${navigation.location.search || ""}`
-                : null,
-            formEntries: Object.fromEntries(navigationFormData.entries()),
-            url: window.location.href,
-            timestamp: new Date().toISOString(),
-        };
-        console.error("[monthly-update:publish] router submit state", JSON.stringify(payload));
-        window.localStorage.setItem("monthly-update-publish-router-debug", JSON.stringify(payload));
-    }, [navigation.formData, navigation.location, navigation.state]);
-
-    useEffect(() => {
-        if (actionData?.step !== "publish-error") return;
-
-        const payload = {
-            step: actionData.step,
-            error: String((actionData as any).error || ""),
-            data: (actionData as any).data || null,
-            url: window.location.href,
-            timestamp: new Date().toISOString(),
-        };
-        console.error("[monthly-update:publish] action returned publish-error", JSON.stringify(payload));
-        window.localStorage.setItem("monthly-update-publish-action-debug", JSON.stringify(payload));
-    }, [actionData]);
-
-    useEffect(() => {
         if (saveDraftFetcher.data?.step !== "draft-saved") return;
         setDraftSaved(true);
         const timeoutId = window.setTimeout(() => setDraftSaved(false), 2500);
@@ -3133,7 +3020,7 @@ export default function CreateUpdate() {
     // State declarations
     const [isClientMounted, setIsClientMounted] = useState(false);
     const [showEmailWizard, setShowEmailWizard] = useState(false);
-    const storedManualMaterials = useMemo(() => readStoredManualMaterials(), []);
+    const storedManualMaterials = useMemo(() => readStoredManualMaterials(`${user.authUser.id}:${resolveActiveCompanyId(user)}`), [user.authUser.id, user.activeCompanyId]);
     const [manualSummary, setManualSummary] = useState<string>(() => storedManualMaterials.summary || "");
     const [manualDocumentIds, setManualDocumentIds] = useState<string[]>(() => {
         const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
@@ -3144,8 +3031,19 @@ export default function CreateUpdate() {
         const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
         return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
     });
-    const privateAudienceVisibility: VibeRaisingAudienceVisibilitySelection = ["just_me"];
+    const [privateAudienceVisibility, setAudienceVisibility] = useState<VibeRaisingAudienceVisibilitySelection>(() => normalizeAudienceVisibilityValue(defaultData?.audienceVisibility));
+    const [coverImage, setCoverImage] = useState<VibeRaisingUpdateCover | null>(() => normalizeUpdateCover(defaultData?.coverImage));
     const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
+    const coverEditedRef = useRef(false);
+    const coverCompanyRef = useRef(resolveActiveCompanyId(user));
+    useEffect(() => {
+        const companyId = resolveActiveCompanyId(user);
+        if (coverCompanyRef.current !== companyId) {
+            coverCompanyRef.current = companyId;
+            coverEditedRef.current = false;
+            setCoverImage(normalizeUpdateCover(existingData?.coverImage));
+        }
+    }, [user.activeCompanyId, existingData]);
     const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
     const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
     const [pitchDeckSummary, setPitchDeckSummary] = useState<string>(() => defaultData?.pitchDeckSummary || storedManualMaterials.pitchDeckSummary || "");
@@ -3164,9 +3062,14 @@ export default function CreateUpdate() {
     const [pastMonthCards, setPastMonthCards] = useState<EditorMonthCard[]>([]);
     const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
-    const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || currentCreatePeriod.month);
-    const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || currentCreatePeriod.year);
-    const [selectedWeekKey, setSelectedWeekKey] = useState<string>(() => createStepWeekOptions.at(-1)?.key || "");
+    const [updateDate, setUpdateDate] = useState<string>(defaultData?.updateDate ?? (existingData ? "" : today));
+    const [activeUpdateId, setActiveUpdateId] = useState<string | null>(defaultData?.id ? String(defaultData.id) : null);
+    const [narrativeStart, setNarrativeStart] = useState("");
+    const [narrativeEnd, setNarrativeEnd] = useState("");
+    const proposedSourceWindow = defaultUpdateSourceWindow(existingMonthlyUpdates, updateDate || "", reportingTimezone || "UTC", activeUpdateId);
+    const [selectedMonth, setSelectedMonth] = useState<string>(draftReturnState?.month || defaultData?.month || currentCreatePeriod.month);
+    const [selectedYear, setSelectedYear] = useState<number>(draftReturnState?.year || defaultData?.year || currentCreatePeriod.year);
+    const [selectedWeekKey, setSelectedWeekKey] = useState<string>(() => draftReturnState?.weekStart || createStepWeekOptions.at(-1)?.key || "");
     const [activePeriodKey, setActivePeriodKey] = useState("current");
     const createStepVisibleMonthOptions = useMemo(() => {
         if (isEdit || showAllCreateStepMonths || selectedYear === MIN_MONTHLY_UPDATE_YEAR) {
@@ -3177,7 +3080,7 @@ export default function CreateUpdate() {
         }
         return createStepMonthOptions;
     }, [createStepMonthOptions, isEdit, selectedYear, showAllCreateStepMonths]);
-    const isWeeklyUpdate = updateCadence === "weekly";
+    const isWeeklyUpdate = false;
     const selectedWeekOption = createStepWeekOptions.find((option) => option.key === selectedWeekKey) ?? null;
     const hasSelectedMonth = Boolean(selectedMonth.trim());
     const hasSelectedPeriod = isWeeklyUpdate ? Boolean(selectedWeekOption) : hasSelectedMonth;
@@ -3187,14 +3090,7 @@ export default function CreateUpdate() {
     const isSelectedMonthInFuture = hasSelectedMonth && isFutureMonthlyUpdate(selectedMonth, selectedYear);
     const isSelectedMonthBeforeMinimum = hasSelectedMonth && isBeforeMinimumMonthlyUpdate(selectedMonth, selectedYear);
     const isSelectedMonthUnavailable = isSelectedMonthInFuture || isSelectedMonthBeforeMinimum;
-    const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
-        (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
-    );
-    const isCreatingFirstMonthlyUpdate = !isEdit && existingMonthlyUpdates.length === 0;
-    const storyMaterialsSuggestionSeenStorageKey = getStoryMaterialsSuggestionSeenStorageKey(
-        user.activeCompanyId,
-        user.domain,
-    );
+    const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(update => update.id === activeUpdateId);
     const selectedMonthLabel = hasSelectedMonth ? `${selectedMonth} ${selectedYear}` : "Select a month";
     const selectedPeriodLabel = isWeeklyUpdate
         ? selectedWeekOption?.label || "Select a week"
@@ -3204,6 +3100,12 @@ export default function CreateUpdate() {
     const currentDraftMonthLabel = createStepMonthOptions[1]?.month || currentCreatePeriod.month;
     const monthSelectionCaption = `Select the month this update covers. ${catchUpMonthLabel} is available if you're catching up; ${currentDraftMonthLabel} is ready for your current draft.`;
 
+    useEffect(() => {
+        if (!updateDate || activeUpdateId) return;
+        const date = new Date(`${updateDate}T12:00:00Z`);
+        setSelectedMonth(VIBE_RAISING_MONTH_OPTIONS[date.getUTCMonth()].name);
+        setSelectedYear(date.getUTCFullYear());
+    }, [updateDate, activeUpdateId]);
     const handleWeekChange = useCallback((option: WeeklyUpdateOption) => {
         setSelectedWeekKey(option.key);
         setSelectedMonth(option.month);
@@ -3212,9 +3114,9 @@ export default function CreateUpdate() {
     }, []);
     
     const [metricValues, setMetricValues] = useState<Record<string, string>>(() => {
-        const initial: Record<string, string> = {};
+        const initial: Record<string, string> = Object.fromEntries(metricDefinitions.map(item => [item.key, String(defaultData?.[item.key] ?? "")]));
         METRIC_OPTIONS.forEach(opt => {
-            if (defaultData?.[opt.key]) {
+            if (defaultData?.[opt.key] != null && String(defaultData[opt.key]).trim()) {
                 initial[opt.key] = defaultData[opt.key];
             }
         });
@@ -3224,7 +3126,7 @@ export default function CreateUpdate() {
     const [selectedMetrics, setSelectedMetrics] = useState<Set<string>>(() => {
         const initial = new Set<string>();
         METRIC_OPTIONS.forEach(opt => {
-            if (defaultData?.[opt.key]) {
+            if (defaultData?.[opt.key] != null && String(defaultData[opt.key]).trim()) {
                 initial.add(opt.key);
             }
         });
@@ -3262,7 +3164,7 @@ export default function CreateUpdate() {
     const selectedMetricOptions = Array.from(selectedMetrics)
         .map((key) => METRIC_OPTION_MAP.get(key))
         .filter((metric): metric is MetricOption => Boolean(metric));
-    const draftMetricOptions = orderDraftMetricOptions(METRIC_OPTIONS);
+    const draftMetricOptions = orderDraftMetricOptions(metricOptionsForValues(metricValues));
     const draftMetricInitialCount = PRIMARY_DRAFT_METRIC_KEYS.length;
     const collapsedHiddenDraftMetricCount = draftMetricOptions.filter(
         (metric, index) => index >= draftMetricInitialCount && !String(metricValues[metric.key] || "").trim(),
@@ -3343,8 +3245,8 @@ export default function CreateUpdate() {
     }, [activeUserCompany?.founderProfiles, founderProfiles, missingFounderLinkedInDrafts]);
     const isEarlyStageCompany = ["idea", "pre-seed"].includes(String(user.stage || "").trim().toLowerCase());
     const canGenerateDraftFromEmail = Boolean((user.domain || "").trim());
-    const emailDraftStorageKey = getEmailDraftStorageKey(user.domain);
-    const emailDraftForceRegenerateKey = getEmailDraftForceRegenerateKey(user.domain);
+    const emailDraftStorageKey = `${getEmailDraftStorageKey(user.domain)}:${creationKey || existingData?.id}`;
+    const emailDraftForceRegenerateKey = `${getEmailDraftForceRegenerateKey(user.domain)}:${creationKey || existingData?.id}`;
     const [emailDraftStatus, setEmailDraftStatus] = useState<VibeRaisingStartupUpdateStatusResponse | null>(null);
     const [emailDraftUiError, setEmailDraftUiError] = useState<string | null>(null);
     const [emailDraftActionBusy, setEmailDraftActionBusy] = useState(false);
@@ -3357,7 +3259,6 @@ export default function CreateUpdate() {
     const pitchDeckLinkInputRef = useRef<HTMLInputElement | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
-    const materialsSectionRef = useRef<HTMLElement | null>(null);
     const recordedChunksRef = useRef<BlobPart[]>([]);
     const videoUploadAbortRef = useRef<AbortController | null>(null);
     const videoUploadSequenceRef = useRef(0);
@@ -3392,16 +3293,24 @@ export default function CreateUpdate() {
     }, [compactSources]);
     const draftReturnPath = useMemo(() => {
         const params = new URLSearchParams(location.search);
-        const selected = Array.from(selectedDraftInputSources);
-        if (selected.length > 0) {
-            params.set("inputs", selected.join(","));
-        } else {
-            params.delete("inputs");
-        }
-        const query = params.toString();
-        return `${location.pathname}${query ? `?${query}` : ""}`;
-    }, [location.pathname, location.search, selectedDraftInputSources]);
+        for (const key of ["cadence", "month", "year", "weekStart", "step"]) params.delete(key);
+        if (updateDate) params.set("date", updateDate); else params.delete("date");
+        if (selectedInputSources.length) params.set("inputs", selectedInputSources.join(",")); else params.delete("inputs");
+        return `${location.pathname}?${params}`;
+    }, [location.pathname, location.search, updateDate, selectedInputSources]);
     const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
+    const goToConnectDataStep = useCallback(() => {
+        navigate(manageConnectionsHref);
+    }, [manageConnectionsHref, navigate]);
+    const handleDraftStepperClick = useCallback((step: MonthlyUpdateStepKey) => {
+        if (step === "connect") {
+            goToConnectDataStep();
+            return;
+        }
+        if (step === "draft") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, [goToConnectDataStep]);
     const connectedDraftInputSources = useMemo(
         () => compactOptionalSources.filter(isConnectedInputSource).map((source) => source.key),
         [compactOptionalSources],
@@ -3437,7 +3346,7 @@ export default function CreateUpdate() {
     const didSeedEditSourcesRef = useRef(false);
     useEffect(() => {
         if (didSeedEditSourcesRef.current) return;
-        if (!isEdit || initialSelectedInputSources.length > 0) {
+        if (initialSelectedInputSources.length > 0) {
             didSeedEditSourcesRef.current = true;
             return;
         }
@@ -3512,7 +3421,28 @@ export default function CreateUpdate() {
         });
     }, []);
 
-    const handleDraftComplete = (data: any) => {
+    const [generatedRevisionId, setGeneratedRevisionId] = useState<number | null>(null);
+    const [expectedRevision, setExpectedRevision] = useState<number | null>(defaultData?.revisionId || null);
+    const [metricEvidence, setMetricEvidence] = useState<VibeRaisingMonthlyUpdate["metricEvidence"]>(defaultData?.metricEvidence || {});
+    const [reportingPeriod, setReportingPeriod] = useState<VibeRaisingMonthlyUpdate["reportingPeriod"]>(defaultData?.reportingPeriod || null);
+    const [draftCandidate, setDraftCandidate] = useState<any>(null);
+    const [loadedWorkingScope, setLoadedWorkingScope] = useState<string | null>(null);
+    const [localRecoveryAvailable, setLocalRecoveryAvailable] = useState(true);
+    const [lastSavedContent, setLastSavedContent] = useState("");
+    const [saveAttemptContent, setSaveAttemptContent] = useState("");
+    const editorMountedRef = useRef(true);
+    useEffect(() => { editorMountedRef.current = true; return () => { editorMountedRef.current = false; }; }, []);
+
+    const applyDraftCandidate = (data: any, keepWriting = false) => {
+        if (!editorMountedRef.current) return;
+        const ownWriting = { summary, highlights, challenges, learnings, next30Days, asks };
+        if (data.updateId || data.id) setActiveUpdateId(String(data.updateId || data.id));
+        setExpectedRevision(data.revisionId || null);
+        setMetricEvidence(data.metricEvidence || {});
+        setReportingPeriod(data.reportingPeriod || null);
+        setDraftCandidate(null);
+        setGeneratedRevisionId(data.revisionId || null);
+        if (!coverEditedRef.current && "coverImage" in data) setCoverImage(normalizeUpdateCover(data.coverImage));
         const resolvedMonth = typeof data.month === "string" && data.month.trim() ? data.month.trim() : selectedMonth;
         const resolvedYear = typeof data.year === "number" && Number.isFinite(data.year) ? data.year : selectedYear;
         const resolvedEditorKey = getMonthlyUpdateKey(resolvedMonth, resolvedYear);
@@ -3520,8 +3450,7 @@ export default function CreateUpdate() {
         loadedExistingUpdateKeyRef.current = resolvedEditorKey;
         editorMonthKeyRef.current = resolvedEditorKey;
         setActivePeriodKey("current");
-        if (data.month) setSelectedMonth(resolvedMonth);
-        if (data.year) setSelectedYear(resolvedYear);
+
         setHighlights(data.highlights);
         setChallenges(data.challenges);
         setAsks(data.asks || "");
@@ -3531,7 +3460,7 @@ export default function CreateUpdate() {
         setConciseAnalysis(data.conciseAnalysis || data.concise_analysis || null);
         setPresentationMode(data.presentationMode || data.presentation_mode || "");
         setSummary(data.summary || "");
-        setSourceUrl(data.sourceUrl || data.source_url || "");
+        if (data.sourceUrl || data.source_url) setSourceUrl(data.sourceUrl || data.source_url);
         if (Array.isArray(data.manualDocuments || data.manual_documents)) {
             const documents = (data.manualDocuments || data.manual_documents) as VibeRaisingManualDocument[];
             setManualDocuments(documents);
@@ -3580,6 +3509,15 @@ export default function CreateUpdate() {
         setMonthConfirmed(true);
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
+        if (keepWriting) {
+            setSummary(ownWriting.summary); setHighlights(ownWriting.highlights); setChallenges(ownWriting.challenges);
+            setLearnings(ownWriting.learnings); setNext30Days(ownWriting.next30Days); setAsks(ownWriting.asks);
+        }
+    };
+    const handleDraftComplete = (data: any) => {
+        if (!editorMountedRef.current) return;
+        // The worker has saved a candidate revision. Keep the working text untouched until the founder chooses.
+        setDraftCandidate(data);
     };
 
     useEffect(() => {
@@ -3623,7 +3561,6 @@ export default function CreateUpdate() {
         setPreviewMediaKind(null);
         setVideoUploadStatus("idle");
         setVideoUploadError(null);
-        setMaterialsUploadError(null);
     }, [revokeVideoPreviewObjectUrl]);
 
     const resetPitchDeckUpload = useCallback(() => {
@@ -3638,14 +3575,7 @@ export default function CreateUpdate() {
         setPitchDeckOriginalFilename("");
         setPitchDeckUploadStatus("idle");
         setPitchDeckUploadError(null);
-        setMaterialsUploadError(null);
     }, [revokePitchDeckPreviewObjectUrl]);
-
-    const removePitchDeck = useCallback(() => {
-        setPitchDeckUrl("");
-        setPitchDeckSummary("");
-        resetPitchDeckUpload();
-    }, [resetPitchDeckUpload]);
 
     const uploadVideoFile = useCallback(async (file: File, options?: { forceCompress?: boolean }) => {
         const sequence = videoUploadSequenceRef.current + 1;
@@ -3654,7 +3584,6 @@ export default function CreateUpdate() {
         const abortController = new AbortController();
         videoUploadAbortRef.current = abortController;
 
-        setMaterialsUploadError(null);
         setVideoUploadStatus("validating");
         setVideoUploadError(null);
         setUploadedVideoUrl("");
@@ -3747,7 +3676,6 @@ export default function CreateUpdate() {
         const abortController = new AbortController();
         pitchDeckUploadAbortRef.current = abortController;
 
-        setMaterialsUploadError(null);
         setPitchDeckUploadError(null);
         setPitchDeckUploadStatus("creating_session");
         setUploadedPitchDeckUrl("");
@@ -3919,6 +3847,9 @@ export default function CreateUpdate() {
 
     const hydrateCompletedEmailDraft = useEffectEvent(async (runId?: string | null) => {
         const results = await getVibeRaisingStartupUpdateDraftResults(backendBaseUrl, runId);
+        if (results.draft && (activeUpdateId ? String(results.draft.updateId) !== activeUpdateId : results.draft.creationKey !== creationKey)) {
+            throw new Error("These draft results belong to another update.");
+        }
         if (!results.draft) {
             throw new Error("Draft generation completed, but no draft payload was returned.");
         }
@@ -3931,6 +3862,9 @@ export default function CreateUpdate() {
     });
 
     const processEmailDraftStatus = useEffectEvent(async (statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
+        const matches = activeUpdateId ? String(statusResponse.updateId) === activeUpdateId : Boolean(creationKey && statusResponse.creationKey === creationKey);
+        if (!matches) return;
+        if (statusResponse.updateId) setActiveUpdateId(String(statusResponse.updateId));
         if (
             statusResponse.runId &&
             emailDraftIgnoredRunIdRef.current === statusResponse.runId &&
@@ -3947,7 +3881,7 @@ export default function CreateUpdate() {
         if (statusResponse.targetMonthConflict) {
             startTransition(() => {
                 setEmailDraftStatus(statusResponse);
-                setEmailDraftUiError(statusResponse.error ?? "Another monthly update is already generating.");
+                setEmailDraftUiError(statusResponse.error ?? "Another update is already generating.");
             });
             return;
         }
@@ -3958,11 +3892,6 @@ export default function CreateUpdate() {
                 // progress card renders even on a fresh page load (refresh
                 // recovery), where monthConfirmed / selectedDraftStage would
                 // otherwise still be at their defaults and hide it.
-                const parsedMonth = monthYearFromIso(statusResponse.targetMonth);
-                if (parsedMonth) {
-                    setSelectedMonth(parsedMonth.month);
-                    setSelectedYear(parsedMonth.year);
-                }
                 const runInputSources = (statusResponse.run?.inputSources || []).filter(
                     (key): key is VibeRaisingInputSourceKey => VALID_INPUT_SOURCE_KEYS.has(key as VibeRaisingInputSourceKey),
                 );
@@ -4059,6 +3988,9 @@ export default function CreateUpdate() {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
                     inputSources: options?.inputSources?.length ? options.inputSources : selectedInputSources,
                     targetMonth: targetMonthIso,
+                    companyId: resolveActiveCompanyId(user) || undefined,
+                    updateId: activeUpdateId, creationKey, updateDate, expectedRevision,
+                    narrativeStart: narrativeStart || undefined, narrativeEnd: narrativeEnd || undefined,
                     manualDocumentIds,
                     manualSummary,
                 },
@@ -4081,7 +4013,7 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso, activeUpdateId, creationKey, updateDate, expectedRevision, narrativeStart, narrativeEnd, user.activeCompanyId]);
 
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
         const effectiveInputSources = options?.inputSources?.length ? options.inputSources : selectedInputSources;
@@ -4093,7 +4025,7 @@ export default function CreateUpdate() {
             navigate("/founder-tools/companies");
             return;
         }
-        if (isSelectedMonthUnavailable || !targetMonthIso) {
+        if (isSelectedMonthUnavailable || !targetMonthIso || !updateDate) {
             setEmailDraftUiError("Choose the current month or a previous month before generating an update.");
             return;
         }
@@ -4245,14 +4177,8 @@ export default function CreateUpdate() {
     const runEmailDraftRecovery = useEffectEvent(async () => {
         setEmailDraftActionBusy(true);
         try {
-            if (!resumeEmailDrafting) {
-                clearPersistedEmailDraftRun();
-                resetEmailDraftUi();
-                return;
-            }
-
             const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
-            if (activeRun) {
+            if (activeRun && (activeUpdateId ? String(activeRun.updateId) === activeUpdateId : activeRun.creationKey === creationKey)) {
                 await processEmailDraftStatus(activeRun);
                 return;
             }
@@ -4276,14 +4202,7 @@ export default function CreateUpdate() {
                 return;
             }
 
-            try {
-                await hydrateCompletedEmailDraft();
-                return;
-            } catch (error) {
-                if ((error as { status?: number })?.status !== 404) {
-                    throw error;
-                }
-            }
+
         } catch (error) {
             startTransition(() => {
                 setEmailDraftUiError(getEmailDraftErrorMessage(error));
@@ -4338,88 +4257,71 @@ export default function CreateUpdate() {
     ]);
 
     const isEmailDraftBusy = isEmailDraftRunning(emailDraftStatus);
+    const visibleSourceWindow = (isEmailDraftBusy ? emailDraftStatus?.narrativePeriod : null) || draftCandidate?.narrativePeriod || proposedSourceWindow;
+    const [workingIdentity] = useState(() => existingData?.id ? `id:${existingData.id}` : `new:${creationKey}`);
+    const workingScope = updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", workingIdentity);
     useEffect(() => {
-        if (isEmailDraftBusy) return;
-
-        if (!existingUpdateForSelectedMonth) {
-            loadedExistingUpdateKeyRef.current = null;
-            if (editorMonthKeyRef.current !== selectedMonthUpdateKey) {
-                editorMonthKeyRef.current = selectedMonthUpdateKey;
-                setSummary("");
-                setSourceUrl("");
-                setPitchDeckUrl("");
-                setPitchDeckSummary("");
-                resetPitchDeckUpload();
-                setManualDocumentIds([]);
-                setManualDocuments([]);
-                setManualSummary("");
-                resetVideoUpload();
-                setHighlights("");
-                setChallenges("");
-                setAsks("");
-                setLearnings("");
-                setNext30Days("");
-                setFinancialSnapshot(null);
-                setConciseAnalysis(null);
-                setPresentationMode("");
-                setMetricValues({});
-                setSelectedMetrics(new Set());
-                setAwakeMetricCards(new Set());
-                setPastMonthCards([]);
-                setExpandedCards(new Set());
-                setActivePeriodKey("current");
-            }
-            return;
+        const saved = readUpdateWorkingCopy(workingScope) || (creationKey ? readUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `new:${creationKey}`)) : null);
+        const base: Record<string, any> = existingData || {};
+        const restored: Record<string, any> = saved || base;
+        if (restored.activeUpdateId || base.id) setActiveUpdateId(String(restored.activeUpdateId || base.id));
+        if ("updateDate" in restored) setUpdateDate(restored.updateDate || "");
+        else if (new URLSearchParams(location.search).get("date")) setUpdateDate(new URLSearchParams(location.search).get("date")!);
+        setNarrativeStart(restored.narrativeStart || ""); setNarrativeEnd(restored.narrativeEnd || "");
+        setSummary(restored.summary || ""); setHighlights(restored.highlights || "");
+        setChallenges(restored.challenges || ""); setLearnings(restored.learnings || "");
+        setNext30Days(restored.next30Days || ""); setAsks(restored.asks || "");
+        setCoverImage(normalizeUpdateCover(restored.coverImage));
+        setSourceUrl(restored.sourceUrl || "");
+        setAudienceVisibility(normalizeAudienceVisibilityValue(restored.audienceVisibility));
+        setFinancialSnapshot(restored.financialSnapshot || null);
+        setMetricEvidence(restored.metricEvidence || {}); setReportingPeriod(restored.reportingPeriod || null);
+        setMetricValues(restored.metrics || {}); setSelectedMetrics(new Set(Object.keys(restored.metrics || {})));
+        setExpectedRevision(saved ? saved.expectedRevision ?? null : base.revisionId || null);
+        setDraftCandidate(saved?.candidate || null);
+        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ updateDate: base.updateDate ?? (existingData ? "" : today), narrativeStart: "", narrativeEnd: "", summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {} }));
+        // Legacy attachments are retained, even though the new form no longer asks for them.
+        setPitchDeckUrl(restored.pitchDeckUrl || ""); setPitchDeckStoragePath(restored.pitchDeckStoragePath || "");
+        setPitchDeckContentType(restored.pitchDeckContentType || ""); setPitchDeckFileSizeBytes(restored.pitchDeckFileSizeBytes || null);
+        setPitchDeckOriginalFilename(restored.pitchDeckOriginalFilename || ""); setPitchDeckSummary(restored.pitchDeckSummary || "");
+        setUploadedVideoUrl(restored.videoUrl || ""); setVideoStoragePath(restored.videoStoragePath || "");
+        setVideoContentType(restored.videoContentType || ""); setVideoFileSizeBytes(restored.videoFileSizeBytes || null);
+        setVideoOriginalFilename(restored.videoOriginalFilename || "");
+        if (saved?.selectedSources && initialSelectedInputSources.length === 0) { setSelectedDraftInputSources(new Set(saved.selectedSources)); didSeedEditSourcesRef.current = true; }
+        setLoadedWorkingScope(workingScope);
+        // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [workingScope]);
+    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues });
+    const hasUnsavedChanges = workingContent !== lastSavedContent;
+    useEffect(() => {
+        if (loadedWorkingScope !== workingScope) return;
+        const available = writeUpdateWorkingCopy(workingScope, {
+            ...JSON.parse(workingContent), activeUpdateId, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot,
+            candidate: draftCandidate, selectedSources: selectedInputSources, lastSavedContent, sourceUrl,
+            pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary,
+            videoUrl: uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename,
+        });
+        if (available && activeUpdateId) {
+            const copy = readUpdateWorkingCopy(workingScope);
+            if (copy) writeUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `id:${activeUpdateId}`), copy);
         }
-        if (loadedExistingUpdateKeyRef.current === selectedMonthUpdateKey) return;
-        loadedExistingUpdateKeyRef.current = selectedMonthUpdateKey;
-        editorMonthKeyRef.current = selectedMonthUpdateKey;
-
-        setSummary(existingUpdateForSelectedMonth.summary || "");
-        setSourceUrl(existingUpdateForSelectedMonth.sourceUrl || "");
-        revokePitchDeckPreviewObjectUrl();
-        setPitchDeckUrl(existingUpdateForSelectedMonth.pitchDeckUrl || "");
-        setPitchDeckPreviewUrl(existingUpdateForSelectedMonth.pitchDeckUrl || null);
-        setUploadedPitchDeckUrl(existingUpdateForSelectedMonth.pitchDeckUrl || "");
-        setPitchDeckStoragePath(existingUpdateForSelectedMonth.pitchDeckStoragePath || "");
-        setPitchDeckContentType(existingUpdateForSelectedMonth.pitchDeckContentType || "");
-        setPitchDeckFileSizeBytes(existingUpdateForSelectedMonth.pitchDeckFileSizeBytes || null);
-        setPitchDeckOriginalFilename(existingUpdateForSelectedMonth.pitchDeckOriginalFilename || "");
-        setPitchDeckSummary(existingUpdateForSelectedMonth.pitchDeckSummary || "");
-        setPitchDeckUploadStatus(existingUpdateForSelectedMonth.pitchDeckUrl ? "ready" : "idle");
-        setPitchDeckUploadError(null);
-        setManualDocuments(existingUpdateForSelectedMonth.manualDocuments || []);
-        setManualDocumentIds((existingUpdateForSelectedMonth.manualDocuments || []).map((document) => document.id));
-        setManualSummary("");
-        setUploadedVideoUrl(existingUpdateForSelectedMonth.videoUrl || "");
-        setVideoPreviewUrl(existingUpdateForSelectedMonth.videoUrl || null);
-        setVideoStoragePath(existingUpdateForSelectedMonth.videoStoragePath || "");
-        setVideoContentType(existingUpdateForSelectedMonth.videoContentType || "");
-        setVideoFileSizeBytes(existingUpdateForSelectedMonth.videoFileSizeBytes || null);
-        setVideoOriginalFilename(existingUpdateForSelectedMonth.videoOriginalFilename || "");
-        setPreviewMediaKind(existingUpdateForSelectedMonth.videoUrl
-            ? isAudioMedia(existingUpdateForSelectedMonth.videoContentType, existingUpdateForSelectedMonth.videoOriginalFilename || existingUpdateForSelectedMonth.videoUrl) ? "audio" : "video"
-            : null);
-        setVideoUploadStatus(existingUpdateForSelectedMonth.videoUrl ? "ready" : "idle");
-        setVideoUploadError(null);
-        setHighlights(existingUpdateForSelectedMonth.highlights || "");
-        setChallenges(existingUpdateForSelectedMonth.challenges || "");
-        setAsks(existingUpdateForSelectedMonth.asks || "");
-        setLearnings(existingUpdateForSelectedMonth.learnings || "");
-        setNext30Days(existingUpdateForSelectedMonth.next30Days || "");
-        setFinancialSnapshot(existingUpdateForSelectedMonth.financialSnapshot || null);
-        setConciseAnalysis(existingUpdateForSelectedMonth.conciseAnalysis || null);
-        setPresentationMode(existingUpdateForSelectedMonth.presentationMode || "");
-        const nextMetrics = existingUpdateForSelectedMonth.metrics || {};
-        setMetricValues(nextMetrics);
-        setSelectedMetrics(new Set(Object.keys(nextMetrics).filter((key) => METRIC_OPTION_MAP.has(key))));
-        setAwakeMetricCards(
-            shouldDimMetricsTemplate
-                ? new Set(Object.keys(nextMetrics).filter((key) => String(nextMetrics[key] || "").trim()))
-                : new Set(),
-        );
-        setActivePeriodKey("current");
-    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetPitchDeckUpload, resetVideoUpload, revokePitchDeckPreviewObjectUrl, selectedMonthUpdateKey, shouldDimMetricsTemplate]);
+        setLocalRecoveryAvailable(available);
+    }, [activeUpdateId, workingScope, loadedWorkingScope, workingContent, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
+    useEffect(() => {
+        const saved = saveDraftFetcher.data?.step === "draft-saved" ? saveDraftFetcher.data.update : actionData?.step === "feedback" ? actionData.update : null;
+        if (!saved) return;
+        setActiveUpdateId(String(saved.id));
+        setExpectedRevision(saved.revisionId || null);
+        setMetricEvidence(saved.metricEvidence || {}); setReportingPeriod(saved.reportingPeriod || null);
+        setLastSavedContent(saveAttemptContent);
+    }, [saveDraftFetcher.data, actionData]);
+    useEffect(() => {
+        if (!hasUnsavedChanges || localRecoveryAvailable) return;
+        const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+        window.addEventListener("beforeunload", warn);
+        return () => window.removeEventListener("beforeunload", warn);
+    }, [hasUnsavedChanges, localRecoveryAvailable]);
 
     const emailDraftCardVisible =
         isEmailDraftBusy ||
@@ -4513,18 +4415,12 @@ export default function CreateUpdate() {
         metricsConfirmed &&
         !showEmailWizard &&
         emailDraftCardStatus === "failed";
-    const hasDraftTemplate =
-        monthConfirmed &&
-        selectedDraftStage === "reporting" &&
-        metricsConfirmed &&
-        (!isAutoDrafting || canContinueDraftManually) &&
-        !showEmailWizard;
-    const hasAnyMetricValue = Object.values(metricValues).some((value) => String(value || "").trim().length > 0);
-    const qualitativeDraftText = [highlights, challenges, learnings, next30Days, asks].join("\n");
+    const hasDraftTemplate = true;
     const answeredFounderQuestionCount = [highlights, challenges, learnings, next30Days, asks]
         .filter(hasMeaningfulFounderAnswer)
         .length;
     const hasMinimumFounderAnswers = answeredFounderQuestionCount >= REQUIRED_FOUNDER_QUESTION_COUNT;
+    const draftProgress = getVibeRaisingDraftProgress(Boolean(updateCadence), monthConfirmed, answeredFounderQuestionCount);
     const founderQuestionRequirementText = hasMinimumFounderAnswers
         ? `${answeredFounderQuestionCount} founder questions answered.`
         : `Answer at least ${REQUIRED_FOUNDER_QUESTION_COUNT} questions before saving (${answeredFounderQuestionCount}/${REQUIRED_FOUNDER_QUESTION_COUNT} complete).`;
@@ -4534,72 +4430,6 @@ export default function CreateUpdate() {
             : saveDraftFetcher.data?.step === "validation-error"
                 ? String(saveDraftFetcher.data.error || "")
                 : "";
-    const hasQualitativeDraftText =
-        qualitativeDraftText.replace(/[\s\-•]+/g, "").length >= STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD;
-    const hasUploadedStoryMaterial = Boolean(
-        String(uploadedPitchDeckUrl || pitchDeckStoragePath || "").trim() ||
-        (pitchDeckUploadStatus === "ready" && String(pitchDeckPreviewUrl || "").trim()) ||
-        String(uploadedVideoUrl || videoStoragePath || "").trim() ||
-        (videoUploadStatus === "ready" && String(videoPreviewUrl || "").trim())
-    );
-    const shouldSuggestStoryMaterials =
-        hasLoadedStoryMaterialsSuggestionSeenState &&
-        !hasPreviouslySeenStoryMaterialsSuggestion &&
-        isCreatingFirstMonthlyUpdate &&
-        hasDraftTemplate &&
-        hasQualitativeDraftText &&
-        !hasAnyMetricValue &&
-        !hasUploadedStoryMaterial &&
-        dismissedStoryMaterialsSuggestionKey !== selectedMonthUpdateKey;
-
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-
-        try {
-            setHasPreviouslySeenStoryMaterialsSuggestion(
-                window.localStorage.getItem(storyMaterialsSuggestionSeenStorageKey) === "1",
-            );
-        } catch {
-            setHasPreviouslySeenStoryMaterialsSuggestion(false);
-        }
-        setHasLoadedStoryMaterialsSuggestionSeenState(true);
-        setHasTriggeredStoryMaterialsSuggestion(false);
-    }, [storyMaterialsSuggestionSeenStorageKey]);
-
-    useEffect(() => {
-        if (!shouldSuggestStoryMaterials) {
-            setShowStoryMaterialsSuggestion(false);
-            return;
-        }
-        if (hasTriggeredStoryMaterialsSuggestion) return;
-
-        const timeoutId = window.setTimeout(() => {
-            try {
-                window.localStorage.setItem(storyMaterialsSuggestionSeenStorageKey, "1");
-            } catch {
-                // Keep the prompt usable when storage is unavailable.
-            }
-            setHasTriggeredStoryMaterialsSuggestion(true);
-            setShowStoryMaterialsSuggestion(true);
-        }, 900);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [hasTriggeredStoryMaterialsSuggestion, shouldSuggestStoryMaterials, storyMaterialsSuggestionSeenStorageKey]);
-
-    const dismissStoryMaterialsSuggestion = useCallback(() => {
-        setDismissedStoryMaterialsSuggestionKey(selectedMonthUpdateKey);
-        setShowStoryMaterialsSuggestion(false);
-    }, [selectedMonthUpdateKey]);
-
-    const handleAddStoryMaterials = useCallback(() => {
-        dismissStoryMaterialsSuggestion();
-        window.setTimeout(() => {
-            materialsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-            setHighlightMaterialsSection(true);
-            window.setTimeout(() => setHighlightMaterialsSection(false), 2400);
-        }, 80);
-    }, [dismissStoryMaterialsSuggestion]);
-
     const returnToMonthSelection = useCallback(() => {
         setMonthConfirmed(false);
         setSelectedDraftStage(null);
@@ -4736,7 +4566,7 @@ export default function CreateUpdate() {
         if (!runId) return;
         if (typeof window !== "undefined") {
             const confirmed = window.confirm(
-                "Cancel this draft run and reset the monthly update so you can try again?",
+                "Cancel AI drafting for this update so you can try again?",
             );
             if (!confirmed) {
                 return;
@@ -4812,7 +4642,6 @@ export default function CreateUpdate() {
 
         try {
             setRecordingError(null);
-            setMaterialsUploadError(null);
             setIsRecordingPermissionPending(true);
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .catch(() => navigator.mediaDevices.getUserMedia({ audio: true }));
@@ -4876,18 +4705,6 @@ export default function CreateUpdate() {
         setRecordingMode(null);
         stopMediaStream();
     }, [stopMediaStream]);
-
-    const removeWalkthroughMedia = useCallback(() => {
-        if (mediaRecorderRef.current?.state === "recording") {
-            mediaRecorderRef.current.stop();
-        }
-        setRecordingError(null);
-        setRecordingMode(null);
-        setIsRecording(false);
-        setIsRecordingPermissionPending(false);
-        stopMediaStream();
-        resetVideoUpload();
-    }, [resetVideoUpload, stopMediaStream]);
 
     useEffect(() => {
         return () => {
@@ -5006,6 +4823,19 @@ export default function CreateUpdate() {
         focusMetricInput(`active-metric-${key}`);
     };
 
+    const coverScopeKey = `${user.authUser.id}:${resolveActiveCompanyId(user)}:${selectedYear}:${selectedMonth}`;
+    const coverEditor = (
+        <UpdateCoverEditor
+            key={coverScopeKey}
+            scopeKey={coverScopeKey}
+            backendBaseUrl={backendBaseUrl}
+            companyId={resolveActiveCompanyId(user) || ""}
+            updateText={coverUpdateText({ summary, highlights, challenges, learnings, next30Days })}
+            value={coverImage}
+            onChange={(cover) => { coverEditedRef.current = true; setCoverImage(cover); }}
+        />
+    );
+
     const updateActiveHighlights = (value: string) => {
         if (isViewingCurrentUpdate) setHighlights(value);
         else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "highlights", value);
@@ -5037,37 +4867,10 @@ export default function CreateUpdate() {
         setActivePeriodKey("current");
     }, [activePastCard, activePeriodKey]);
 
-    // Prepare chart data — revenue bars with auto-calculated MoM
-    const chartData: ChartData[] = [
-        ...pastMonthCards.map((card, i) => ({
-            month: card.month,
-            value: parseRevenue(card.metrics.revenue || "0"),
-            isSelected: activePeriodKey === `past-${i}`
-        })),
-        {
-            month: selectedMonth,
-            value: parseRevenue(metricValues.revenue || "0"),
-            isCurrent: true,
-            isSelected: activePeriodKey === "current"
-        }
-    ];
-
-    // Active users chart data
-    const activeUsersChartData: ChartData[] = [
-        ...pastMonthCards.map((card, i) => ({
-            month: card.month,
-            value: parseUsers(card.metrics.activeUsers || "0"),
-            isSelected: activePeriodKey === `past-${i}`
-        })),
-        {
-            month: selectedMonth,
-            value: parseUsers(metricValues.activeUsers || "0"),
-            isCurrent: true,
-            isSelected: activePeriodKey === "current"
-        }
-    ];
-    const hasRevenueChart = chartData.some((item) => item.value > 0);
-    const hasActiveUsersChart = activeUsersChartData.some((item) => item.value > 0);
+    const chartData: ChartData[] = [];
+    const activeUsersChartData: ChartData[] = [];
+    const hasRevenueChart = false;
+    const hasActiveUsersChart = false;
 
     // Chart click: always expand + scroll
     const expandCardFromChart = (index: number) => {
@@ -5121,264 +4924,9 @@ export default function CreateUpdate() {
         }, 100);
     };
 
-    // Dropzone setup
-    const onMaterialsDrop = useCallback((acceptedFiles: File[]) => {
-        const uploadedFile = acceptedFiles[0];
-        if (!uploadedFile) return;
-        setMaterialsUploadError(null);
-        if (isSupportedPitchDeckFile(uploadedFile)) {
-            void uploadPitchDeckFile(uploadedFile);
-            return;
-        }
-        if (isSupportedVideoFile(uploadedFile)) {
-            void uploadVideoFile(uploadedFile);
-            return;
-        }
-        setMaterialsUploadError("Use a PDF, PPT, PPTX, MP3, or a common video format like MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
-    }, [uploadPitchDeckFile, uploadVideoFile]);
-    const onMaterialsDropRejected = useCallback((fileRejections: any[]) => {
-        setMaterialsUploadError(getDropzoneRejectionMessage(fileRejections));
-    }, []);
-    const { getRootProps: getMaterialsRootProps, getInputProps: getMaterialsInputProps, isDragActive: isMaterialsDragActive, open: openMaterialsPicker } = useDropzone({
-        onDrop: onMaterialsDrop,
-        onDropRejected: onMaterialsDropRejected,
-        maxFiles: 1,
-        multiple: false,
-        noClick: true,
-        maxSize: MAX_SOURCE_VIDEO_BYTES,
-        accept: SHARED_MATERIAL_ACCEPT,
-    });
-
-    const materialsSection = (
-        <section
-            ref={materialsSectionRef}
-            className={clsx(
-                "scroll-mt-28 rounded-[2rem] pt-4 transition-all duration-300 sm:pt-6",
-                highlightMaterialsSection && "ring-4 ring-[rgba(242,114,63,0.28)] ring-offset-4 ring-offset-[var(--vr-palette-paper)]",
-            )}
-        >
-            <div className="flex items-end justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-black text-gray-950">Add a deck or short founder walkthrough.</h2>
-                </div>
-            </div>
-            <div className="relative mt-6">
-                <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
-                    <div className="contents">
-                        <div
-                            {...getMaterialsRootProps()}
-                            className={clsx(
-                                "relative flex flex-col items-center justify-center rounded-[2rem] border p-6 text-center shadow-sm transition-all sm:p-8 lg:p-10",
-                                isMaterialsDragActive
-                                    ? "scale-[1.01] border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)]"
-                                    : "border-[var(--vr-color-border)] bg-white",
-                            )}
-                        >
-                            <input {...getMaterialsInputProps()} />
-                            <div className="w-full max-w-4xl">
-                                <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
-                                    <button
-                                        type="button"
-                                        disabled={isEmailDraftBusy}
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            openMaterialsPicker();
-                                        }}
-                                        className="group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition hover:bg-[rgba(0,128,128,0.05)] focus:outline-none focus:ring-2 focus:ring-[var(--vr-color-primary)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left"
-                                    >
-                                        <p className="text-[1rem] font-black uppercase leading-6 tracking-[0.06em] text-[var(--vr-color-primary)]">
-                                            PITCH DECK
-                                        </p>
-                                        <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
-                                            <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
-                                            Upload deck
-                                        </span>
-                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                                            Slides, bio, market story, traction.
-                                        </p>
-                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
-                                            PDF, PPT, or PPTX
-                                        </p>
-                                        <p className="mt-1 text-[11px] font-bold text-slate-400">
-                                            Up to {MAX_PITCH_DECK_UPLOAD_SIZE_MB} MB
-                                        </p>
-                                    </button>
-
-                                    <div className="h-px w-full bg-[var(--vr-color-border)] md:h-auto md:w-px" aria-hidden />
-
-                                    <button
-                                        type="button"
-                                        disabled={isEmailDraftBusy || isRecordingPermissionPending}
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            if (isRecording) {
-                                                stopRecording();
-                                            } else {
-                                                openMaterialsPicker();
-                                            }
-                                        }}
-                                        className={clsx(
-                                            "group flex min-h-44 cursor-pointer flex-col items-center rounded-2xl p-4 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--vr-palette-coral)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:items-start md:text-left",
-                                            isRecording ? "bg-[rgba(242,114,63,0.10)]" : "hover:bg-[rgba(242,114,63,0.06)]",
-                                        )}
-                                    >
-                                        <p className="text-[1rem] font-black uppercase leading-6 tracking-[0.06em] text-[var(--vr-palette-coral)]">
-                                            WALKTHROUGH VIDEO
-                                        </p>
-                                        <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
-                                            {isRecording ? (
-                                                <VideoCameraIcon className="h-4 w-4" aria-hidden="true" />
-                                            ) : (
-                                                <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
-                                            )}
-                                            {isRecordingPermissionPending ? "Requesting access" : isRecording ? "Stop recording" : "Upload video"}
-                                        </span>
-                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                                            Useful when metrics are light.
-                                        </p>
-                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
-                                            MP4, MOV, WebM
-                                        </p>
-                                        <p className="mt-1 text-[11px] font-bold text-slate-400">
-                                            Up to {MAX_VIDEO_UPLOAD_SIZE_MB} MB
-                                        </p>
-                                    </button>
-                                </div>
-
-                                {isRecordingPermissionPending ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">
-                                        Waiting for your browser camera and microphone prompt...
-                                    </p>
-                                ) : null}
-                                {isRecording ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">
-                                        Recording {recordingMode === "audio" ? "audio" : "video"} now. Click Stop recording when you are done.
-                                    </p>
-                                ) : null}
-                                {pitchDeckPreviewUrl ? (
-                                    <div
-                                        className="mt-6"
-                                        onClick={(event) => event.stopPropagation()}
-                                    >
-                                        <div className="mb-3 flex items-center justify-between gap-3 text-left">
-                                            <div>
-                                                <p className="text-sm font-black text-gray-950">Pitch deck preview</p>
-                                                <p className="mt-1 text-xs font-semibold text-slate-500">
-                                                    {isPdfPitchDeck(pitchDeckContentType, pitchDeckOriginalFilename, pitchDeckPreviewUrl)
-                                                        ? "Showing the first PDF page."
-                                                        : "PowerPoint file attached."}
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-shrink-0 items-center gap-2">
-                                                {pitchDeckUploadStatusLabel ? (
-                                                    <span className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)]">
-                                                        {pitchDeckUploadStatusLabel}
-                                                    </span>
-                                                ) : null}
-                                                <button
-                                                    type="button"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        removePitchDeck();
-                                                    }}
-                                                    className="flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
-                                                    aria-label="Remove pitch deck"
-                                                >
-                                                    <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <PitchDeckAssetPreview
-                                            src={pitchDeckPreviewUrl}
-                                            openUrl={uploadedPitchDeckUrl || pitchDeckUrl || pitchDeckPreviewUrl}
-                                            contentType={pitchDeckContentType}
-                                            fileName={pitchDeckOriginalFilename}
-                                            fileSizeBytes={pitchDeckFileSizeBytes}
-                                        />
-                                    </div>
-                                ) : null}
-                                {videoPreviewUrl && previewMediaKind ? (
-                                    <div
-                                        className="mt-6 overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4 text-left"
-                                        onClick={(event) => event.stopPropagation()}
-                                    >
-                                        <div className="mb-3 flex items-center justify-between gap-3">
-                                            <div>
-                                                <p className="text-sm font-black text-gray-950">
-                                                    {previewMediaKind === "audio" ? "Recorded audio preview" : "Recorded video preview"}
-                                                </p>
-                                                <p className="mt-1 text-xs font-semibold text-slate-500">
-                                                    Review it here before you continue.
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-shrink-0 items-center gap-2">
-                                                {videoUploadStatusLabel ? (
-                                                    <span className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)]">
-                                                        {videoUploadStatusLabel}
-                                                    </span>
-                                                ) : null}
-                                                <button
-                                                    type="button"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        removeWalkthroughMedia();
-                                                    }}
-                                                    className="flex h-6 w-6 items-center justify-center rounded-full border border-red-100 bg-red-50/60 text-red-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 hover:shadow-[0_0_10px_rgba(239,68,68,0.32)] [&:hover_svg]:drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]"
-                                                    aria-label="Remove walkthrough media"
-                                                >
-                                                    <XMarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        {previewMediaKind === "audio" ? (
-                                            <audio
-                                                src={videoPreviewUrl}
-                                                controls
-                                                className="w-full"
-                                            />
-                                        ) : (
-                                            <VideoAssetPreview
-                                                src={videoPreviewUrl}
-                                                contentType={videoContentType || "video/webm"}
-                                                fileName={videoOriginalFilename || "Recorded walkthrough"}
-                                                fileSizeBytes={videoFileSizeBytes}
-                                                className="aspect-video w-full rounded-xl"
-                                            />
-                                        )}
-                                    </div>
-                                ) : null}
-                                {recordingError ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{recordingError}</p>
-                                ) : null}
-                                {videoUploadStatusLabel && !videoPreviewUrl ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">{videoUploadStatusLabel}</p>
-                                ) : null}
-                                {videoUploadError ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{videoUploadError}</p>
-                                ) : null}
-                                {pitchDeckUploadStatusLabel && !pitchDeckPreviewUrl ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">{pitchDeckUploadStatusLabel}</p>
-                                ) : null}
-                                {pitchDeckUploadError ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{pitchDeckUploadError}</p>
-                                ) : null}
-                                {materialsUploadError ? (
-                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{materialsUploadError}</p>
-                                ) : null}
-                            </div>
-                        </div>
-                    </div>
-                </fieldset>
-                {isEmailDraftBusy && (
-                    <div className="absolute inset-0 z-10 cursor-wait rounded-[2rem] bg-white/30" aria-hidden />
-                )}
-            </div>
-        </section>
-    );
-
     const optionalDataSourcesSection = (
         <section className="flex min-h-[5.25rem] w-full flex-col rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:min-h-0 sm:rounded-[2rem] sm:p-6">
-            <div className="flex w-full min-w-0 items-center justify-between gap-3 sm:gap-6">
+            <div className="flex w-full min-w-0 flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <div className="min-w-0">
                     <h2 className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-xl sm:normal-case sm:tracking-normal sm:text-gray-950">
                         <span className="sm:hidden">Connect data</span>
@@ -5390,7 +4938,7 @@ export default function CreateUpdate() {
                     </p>
                 </div>
 
-                <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
+                <div className="flex w-full flex-wrap items-center justify-end gap-3 sm:ml-auto sm:w-auto sm:max-w-[50%] sm:shrink-0">
                     {compactSourcesLoading ? (
                         <ArrowPathIcon className="h-5 w-5 animate-spin text-slate-400" aria-label="Checking connections" />
                     ) : (
@@ -5416,18 +4964,12 @@ export default function CreateUpdate() {
                             );
                         })
                     )}
-                    <div className="flex flex-col items-stretch gap-2 text-center">
-                        <Link
-                            to={manageConnectionsHref}
-                            className="inline-flex min-h-11 cursor-pointer items-center justify-center whitespace-nowrap rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-extrabold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]"
-                        >
-                            <span className="sm:hidden">Manage</span>
-                            <span className="hidden sm:inline">Manage connections</span>
-                        </Link>
-                        <span className="hidden min-h-11 w-full items-center justify-center rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-sm font-extrabold text-slate-500 sm:inline-flex">
-                            Manual draft only
-                        </span>
-                    </div>
+                    <Link
+                        to={manageConnectionsHref}
+                        className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-6 py-3 text-center text-sm font-extrabold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:-translate-y-0.5 hover:bg-[var(--vr-palette-black)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(0,255,215,0.18)] sm:w-auto sm:min-w-48"
+                    >
+                        Manage connections
+                    </Link>
                 </div>
             </div>
 
@@ -5444,198 +4986,23 @@ export default function CreateUpdate() {
         if (!(draftForm instanceof HTMLFormElement)) return;
         const nextFormData = new FormData(draftForm);
         nextFormData.set("intent", "save-draft");
+        setSaveAttemptContent(workingContent);
         saveDraftFetcher.submit(nextFormData, { method: "post" });
-    }, [saveDraftFetcher]);
+    }, [saveDraftFetcher, workingContent]);
 
-    const mlaiGenerateUpdateBrand = (
-        <>
-            <style>{`
-                body:has(.mlai-vibe-update) {
-                    --vr-color-app-bg: #f5f0e6;
-                    background: #f5f0e6;
-                }
-                .mlai-vibe-update {
-                    --vr-font-title: 'Oswald', 'Arial Narrow', sans-serif;
-                    --vr-font-body: 'Roboto', system-ui, sans-serif;
-                    --vr-color-primary: #1a1a1a;
-                    --vr-color-primary-contrast: #f5f0e6;
-                    --vr-color-text: #1a1a1a;
-                    --vr-color-border: #d7cfbf;
-                    --vr-palette-paper: #f5f0e6;
-                    --vr-palette-black: #1a1a1a;
-                    --vr-palette-orange: #ff3c00;
-                    --vr-palette-coral: #ff3c00;
-                    background: #f5f0e6;
-                    color: #1a1a1a;
-                    font-family: 'Roboto', system-ui, sans-serif;
-                }
-                .mlai-vibe-update :is(h1, h2, h3, h4) {
-                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
-                    font-weight: 700;
-                    letter-spacing: -0.01em;
-                    line-height: 0.96;
-                    text-transform: uppercase;
-                }
-                .mlai-vibe-update h2 { font-size: clamp(1.5rem, 2.4vw, 2rem); }
-                .mlai-vibe-update h3 { font-size: clamp(1.2rem, 1.7vw, 1.5rem); }
-                .mlai-vibe-update :is(button, [role="button"]) {
-                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
-                    font-weight: 700;
-                    letter-spacing: 0.025em;
-                    text-transform: uppercase;
-                }
-                .mlai-vibe-update :is(input, textarea, select) {
-                    font-family: 'Roboto', system-ui, sans-serif;
-                    font-size: 0.9375rem;
-                    line-height: 1.5;
-                }
-                .mlai-vibe-update [class*="shadow"] { box-shadow: none !important; }
-                @media (min-width: 640px) {
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button > div + p + p {
-                        display: none;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button > div + p {
-                        margin-top: 0.9rem;
-                        color: #1a1a1a;
-                        font-size: clamp(1rem, 1.8vw, 1.35rem);
-                        line-height: 1;
-                        white-space: normal;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p) {
-                        min-height: 8.5rem;
-                        padding-bottom: 1rem;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover {
-                        background: transparent !important;
-                        box-shadow: none !important;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover > div {
-                        border-color: #00ffd7 !important;
-                    }
-                    .mlai-vibe-update nav[aria-label="Monthly update progress"] button:has(> div + p + p):hover > div + p {
-                        color: #00a98f !important;
-                    }
-                }
-                .mlai-vibe-update__identity {
-                    position: relative;
-                    overflow: hidden;
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: space-between;
-                    gap: 1.5rem;
-                    border-radius: 28px;
-                    background: #1a1a1a;
-                    color: #f5f0e6;
-                    padding: clamp(1.5rem, 3vw, 2.5rem);
-                }
-                .mlai-vibe-update__kicker {
-                    position: relative;
-                    z-index: 1;
-                    margin: 0;
-                    font-family: 'Roboto', system-ui, sans-serif;
-                    font-size: 0.7rem;
-                    font-weight: 800;
-                    letter-spacing: 0.18em;
-                    text-transform: uppercase;
-                }
-                .mlai-vibe-update__kicker { color: #00ffd7; }
-                .mlai-vibe-update__graphic {
-                    position: relative;
-                    z-index: 1;
-                    flex: 0 0 auto;
-                    width: clamp(9rem, 17vw, 13rem);
-                    height: clamp(7rem, 13vw, 9.5rem);
-                }
-                .mlai-vibe-update__graphic-block,
-                .mlai-vibe-update__graphic-dot {
-                    position: absolute;
-                    display: block;
-                }
-                .mlai-vibe-update__graphic-block {
-                    bottom: 0;
-                    border-radius: 1.15rem 1.15rem 0.25rem 0.25rem;
-                }
-                .mlai-vibe-update__graphic-block--one {
-                    left: 0;
-                    width: 28%;
-                    height: 39%;
-                    background: #00ffd7;
-                }
-                .mlai-vibe-update__graphic-block--two {
-                    left: 34%;
-                    width: 28%;
-                    height: 64%;
-                    background: #f5f0e6;
-                }
-                .mlai-vibe-update__graphic-block--three {
-                    right: 0;
-                    width: 31%;
-                    height: 91%;
-                    background: #ff3c00;
-                }
-                .mlai-vibe-update__graphic-dot {
-                    top: 0;
-                    left: 42%;
-                    width: 1.25rem;
-                    height: 1.25rem;
-                    border-radius: 999px;
-                    background: #00ffd7;
-                }
-                .mlai-vibe-update__title {
-                    position: relative;
-                    z-index: 1;
-                    margin: 0.5rem 0 0;
-                    color: #f5f0e6;
-                    font-family: 'Oswald', 'Arial Narrow', sans-serif;
-                    font-size: clamp(2.5rem, 7vw, 4.5rem);
-                    font-weight: 700;
-                    letter-spacing: -0.025em;
-                    line-height: 0.86;
-                    text-transform: uppercase;
-                }
-                .mlai-vibe-update__subtitle {
-                    position: relative;
-                    z-index: 1;
-                    max-width: 38rem;
-                    margin: 0.85rem 0 0;
-                    color: #ebe4d4;
-                    font-size: 0.95rem;
-                    font-weight: 500;
-                    line-height: 1.5;
-                }
-                @media (max-width: 640px) {
-                    .mlai-vibe-update__identity { align-items: flex-start; flex-direction: column; gap: 1rem; }
-                    .mlai-vibe-update__graphic { width: 8rem; height: 6rem; }
-                }
-            `}</style>
-            <header className="mlai-vibe-update__identity">
-                <div>
-                    <p className="mlai-vibe-update__kicker">MLAI / Founder Tools</p>
-                    <h1 className="mlai-vibe-update__title">Vibe Raising</h1>
-                    <p className="mlai-vibe-update__subtitle">Founder update studio for sharing progress with MLAI.</p>
-                </div>
-                <div className="mlai-vibe-update__graphic" aria-hidden="true">
-                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--one" />
-                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--two" />
-                    <span className="mlai-vibe-update__graphic-block mlai-vibe-update__graphic-block--three" />
-                    <span className="mlai-vibe-update__graphic-dot" />
-                </div>
-            </header>
-        </>
-    );
     // 1. Feedback View — preview-dominant with rating sidebar
     const reviewActionData = activeReviewActionData?.step === "feedback" || activeReviewActionData?.step === "publish-error"
         ? activeReviewActionData
         : actionData;
 
     if ((reviewActionData?.step === "feedback" || reviewActionData?.step === "publish-error") && !dismissedFeedback) {
-        const { feedback, data } = reviewActionData;
+        const { data } = reviewActionData;
         const sendError = reviewActionData.step === "publish-error" ? String((reviewActionData as any).error || "") : "";
         const reviewData = data as any;
         const reviewAnsweredFounderQuestionCount = FOUNDER_QUESTION_FIELDS
             .filter((field) => hasMeaningfulFounderAnswer(reviewData?.[field]))
             .length;
-        const canSubmitReviewToMlai = reviewAnsweredFounderQuestionCount >= REQUIRED_FOUNDER_QUESTION_COUNT;
+        const canSubmitReviewToMlai = reviewAnsweredFounderQuestionCount >= REQUIRED_FOUNDER_QUESTION_COUNT && Boolean(reviewData?.revisionId && reviewData?.revisionHash);
         const rawReviewDraftId = String(reviewData?.draftId || reviewActionData?.update?.id || "").trim();
         const reviewDraftId = BACKEND_DRAFT_ID_PATTERN.test(rawReviewDraftId) ? rawReviewDraftId : "";
         const reviewMonth = String(reviewData?.month || selectedMonth);
@@ -5651,9 +5018,9 @@ export default function CreateUpdate() {
         const reviewPitchDeckOpenUrl = reviewPitchDeckUrl || uploadedPitchDeckUrl || pitchDeckPreviewUrl;
         const hasReviewPitchDeck = Boolean(reviewPitchDeckPreviewUrl);
         const reviewFinancialSnapshot = normalizeFinancialSnapshot(
-            reviewData?.financialSnapshot ||
-            reviewData?.financial_snapshot ||
-            reviewActionData?.update?.financialSnapshot ||
+            reviewData && Object.hasOwn(reviewData, "financialSnapshot") ? reviewData.financialSnapshot :
+            reviewData && Object.hasOwn(reviewData, "financial_snapshot") ? reviewData.financial_snapshot :
+            reviewActionData?.update && Object.hasOwn(reviewActionData.update, "financialSnapshot") ? reviewActionData.update.financialSnapshot :
             financialSnapshot,
         );
         const reviewConciseAnalysis = normalizeConciseAnalysis(
@@ -5691,6 +5058,7 @@ export default function CreateUpdate() {
                         name: user.fullName || "Founder",
                         linkedinUrl: "",
                     }];
+        const reviewCover = normalizeUpdateCover(reviewActionData?.update?.coverImage ?? reviewData?.coverImage);
         const reviewVideoUrl = String(reviewData?.videoUrl || videoPreviewUrl || "").trim();
         const reviewVideoContentType = String(reviewData?.videoContentType || videoContentType || "").trim();
         const reviewVideoOriginalFilename = String(reviewData?.videoOriginalFilename || videoOriginalFilename || "").trim();
@@ -5717,6 +5085,9 @@ export default function CreateUpdate() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
             }
+            if (step === "publish" && canSubmitReviewToMlai && !isSubmitting) {
+                handleSendToMlai();
+            }
         };
 
         const handleSendToMlai = () => {
@@ -5724,19 +5095,12 @@ export default function CreateUpdate() {
             setShowSendToMlaiConfirmation(true);
         };
 
+        const reviewAudienceVisibility = normalizeAudienceVisibilityValue(reviewData?.audienceVisibility);
         const handleConfirmSendToMlai = () => {
             const sendForm = document.getElementById(SEND_TO_MLAI_FORM_ID);
             if (!(sendForm instanceof HTMLFormElement)) return;
 
             const formData = new FormData(sendForm);
-            formData.set("mlaiFeedbackOptIn", mlaiFeedbackPreference);
-            formData.set("submissionDestination", "mlai");
-            formData.set("surveyFinancialQuestionContext", financialSurveyQuestion.context);
-            formData.set("surveyImportedMetricsUseful", endOfFlowSurvey.importedMetricsUseful || "");
-            formData.set("surveyConnectorValueClear", endOfFlowSurvey.connectorValueClear || "");
-            formData.set("surveyGuidedQuestionsUseful", endOfFlowSurvey.guidedQuestionsUseful || "");
-            formData.set("surveyPreviewAccurate", endOfFlowSurvey.previewAccurate || "");
-            formData.set("surveyComments", endOfFlowSurveyComments.trim());
             submit(formData, {
                 method: "post",
                 action: `${location.pathname}${location.search || ""}`,
@@ -5746,24 +5110,18 @@ export default function CreateUpdate() {
         const isSurveyCommentsStep = endOfFlowSurveyStep === END_OF_FLOW_SURVEY_STEP_COUNT - 1;
 
         return (
-            <div className="mlai-vibe-update mx-auto max-w-6xl space-y-10 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:px-6">
-                {mlaiGenerateUpdateBrand}
+            <VibeRaisingWorkflowLayout activeStep={showSendToMlaiConfirmation ? "publish" : "review"} completedSteps={["draft"]} enabledSteps={canSubmitReviewToMlai ? ["draft", "review", "publish"] : ["draft", "review"]} onStepClick={handleReviewStepperClick}>
+                <div className="update-editor update-reader">
+                    <header className="update-editor-header"><div><button type="button" className="update-back" onClick={() => setDismissedFeedback(true)}><ArrowLeftIcon className="h-3.5 w-3.5" />Back to draft</button><h1>Review your update</h1></div><span className="update-editor-status">Saved draft</span></header>
+                    <div className="update-review-note"><span>This is how your update will appear.</span><span>Audience: {reviewAudienceVisibility.includes("community") ? "Community" : "Just for me"}</span></div>
                 <Form id={SEND_TO_MLAI_FORM_ID} method="POST" className="hidden">
-                    <input type="hidden" name="intent" value="send-to-mlai" />
+                    <input type="hidden" name="intent" value="publish" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
-                    {privateAudienceVisibility.map((audience) => (
+                    {reviewAudienceVisibility.map((audience) => (
                         <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
                     ))}
                     <input type="hidden" name="month" value={reviewMonth} />
                     <input type="hidden" name="year" value={reviewYear} />
-                    <input type="hidden" name="mlaiFeedbackOptIn" value={mlaiFeedbackPreference} />
-                    <input type="hidden" name="submissionDestination" value="mlai" />
-                    <input type="hidden" name="surveyFinancialQuestionContext" value={financialSurveyQuestion.context} />
-                    <input type="hidden" name="surveyImportedMetricsUseful" value={endOfFlowSurvey.importedMetricsUseful || ""} />
-                    <input type="hidden" name="surveyConnectorValueClear" value={endOfFlowSurvey.connectorValueClear || ""} />
-                    <input type="hidden" name="surveyGuidedQuestionsUseful" value={endOfFlowSurvey.guidedQuestionsUseful || ""} />
-                    <input type="hidden" name="surveyPreviewAccurate" value={endOfFlowSurvey.previewAccurate || ""} />
-                    <input type="hidden" name="surveyComments" value={endOfFlowSurveyComments} />
                     {Object.entries(reviewData || {})
                         .filter(([key, value]) => (
                             ![
@@ -5787,2062 +5145,459 @@ export default function CreateUpdate() {
                             <input key={key} type="hidden" name={key} value={String(value)} />
                         ))}
                 </Form>
-
-                <MonthlyUpdateStepper
-                    activeStep="review"
-                    disableMotion
-                    enabledSteps={["connect", "draft", "review"]}
-                    onStepClick={handleReviewStepperClick}
-                    expandOnHover
-                    frameless
-                    className="mt-8"
-                />
-
-                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
-                    <div className="min-w-0">
-                        <h2 className="text-lg font-black text-gray-950">Send this update to MLAI</h2>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">
-                            This submission stays private and goes only to the MLAI team.
-                        </p>
-                        {!canSubmitReviewToMlai ? (
-                            <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
-                                Answer at least {REQUIRED_FOUNDER_QUESTION_COUNT} founder questions before sending this update. You currently have {reviewAnsweredFounderQuestionCount}.
-                            </p>
-                        ) : null}
-                    </div>
-
-                    <fieldset className="mt-4 border-t border-[var(--vr-color-border)] pt-4 sm:mt-6 sm:pt-6">
-                        <legend className="text-base font-black text-gray-950">Would you like feedback from MLAI?</legend>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">
-                            Choose whether the MLAI team may contact you with practical feedback on this update.
-                        </p>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                            {([
-                                { value: "yes", title: "Yes, send me feedback", description: "MLAI may follow up with suggestions and useful next steps." },
-                                { value: "no", title: "No feedback needed", description: "Submit the update without a follow-up from MLAI." },
-                            ] as const).map((option) => {
-                                const checked = mlaiFeedbackPreference === option.value;
-                                return (
-                                    <label
-                                        key={option.value}
-                                        className={clsx(
-                                            "cursor-pointer rounded-2xl border p-4 transition",
-                                            checked
-                                                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.10)] ring-2 ring-[rgba(0,128,128,0.10)]"
-                                                : "border-[var(--vr-color-border)] bg-white hover:border-[rgba(0,128,128,0.28)]",
-                                        )}
-                                    >
-                                        <span className="flex items-start gap-3">
-                                            <input
-                                                type="radio"
-                                                name="mlaiFeedbackPreference"
-                                                value={option.value}
-                                                checked={checked}
-                                                onChange={() => setMlaiFeedbackPreference(option.value)}
-                                                className="mt-1 h-4 w-4 accent-[var(--vr-color-primary)]"
-                                            />
-                                            <span>
-                                                <span className="block text-sm font-black text-gray-950">{option.title}</span>
-                                                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{option.description}</span>
-                                            </span>
-                                        </span>
-                                    </label>
-                                );
-                            })}
-                        </div>
-                    </fieldset>
+                    <UpdateArticle title={getUpdateTitles([...existingMonthlyUpdates.filter(item => item.id !== String(reviewActionData?.update?.id || reviewData.id)), { ...reviewData, ...reviewActionData?.update } as VibeRaisingMonthlyUpdate]).get(String(reviewActionData?.update?.id || reviewData.id))} update={{ ...reviewData, ...reviewActionData?.update, monthName: reviewMonth, year: reviewYear, coverImage: reviewCover, financialSnapshot: reviewFinancialSnapshot } as VibeRaisingMonthlyUpdate} companyName={user.companyName} />
+                    {sendError && <p className="update-notice" role="alert">{sendError}</p>}
+                    <div className="update-actions"><span className="update-action-status">Saved privately until you approve.</span><button type="button" className="update-button secondary" onClick={() => setDismissedFeedback(true)}>Keep editing</button><button type="button" className="update-button" disabled={isSubmitting || !canSubmitReviewToMlai} onClick={handleSendToMlai}>Approve update <ArrowRightIcon className="h-4 w-4" /></button></div>
+                    {showSendToMlaiConfirmation && <UpdateDialog title="Approve this update?" onClose={() => setShowSendToMlaiConfirmation(false)}><p>Approve the saved revision you just reviewed for {reviewAudienceVisibility.includes("community") ? "the community" : "your private archive"}.</p><div className="flex flex-wrap justify-end gap-2"><button type="button" className="update-button secondary" onClick={() => setShowSendToMlaiConfirmation(false)}>Back to review</button><button type="button" className="update-button" onClick={handleConfirmSendToMlai} disabled={isSubmitting || !reviewData?.revisionId}>{isSubmitting ? "Approving…" : "Approve this revision"}</button></div></UpdateDialog>}
                 </div>
+            </VibeRaisingWorkflowLayout>
+        );
+    }
 
-                {/* Main layout: founder preview. AI grading/feedback is hidden for now. */}
-                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
-
-                    {/* PREVIEW — dominant, takes most of the width */}
-                    <div className="flex-1 min-w-0">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            {/* Hero banner */}
-                            <div className="relative w-full h-24 overflow-hidden sm:h-32">
-                                <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
-                                <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
-                                    <circle cx="120" cy="80" r="100" fill="white" />
-                                    <circle cx="650" cy="140" r="70" fill="white" />
-                                    <circle cx="400" cy="30" r="50" fill="white" />
-                                    <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center px-4 sm:px-6">
-                                    <div className="flex min-w-0 items-center gap-3.5">
-                                        {user.domain ? (
-                                            <img
-                                                src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
-                                                alt=""
-                                                className="h-12 w-12 rounded-xl border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
-                                            />
-                                        ) : (
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/30 bg-white/20 backdrop-blur-sm">
-                                                <span className="text-base font-bold text-white">{user.companyName.charAt(0)}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex min-w-0 flex-col justify-center">
-                                            <p className="truncate [font-family:var(--vr-font-title)] text-3xl font-black uppercase leading-none tracking-normal text-white drop-shadow-sm sm:text-4xl">
-                                                {user.companyName}
-                                            </p>
-                                            <p className="mt-1 truncate [font-family:var(--vr-font-title)] text-sm font-black uppercase leading-none tracking-normal text-white/85 drop-shadow-sm sm:text-lg">
-                                                {reviewMonth} {reviewYear} Update
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+    return (
+        <VibeRaisingWorkflowLayout
+            activeStep="draft"
+            panelRef={draftStepperRef}
+            enabledSteps={["draft"]}
+            progress={{ draft: answeredFounderQuestionCount / 5 }}
+        >
+            <div className="update-editor">
+                <header className="update-editor-header">
+                    <div>
+                        <Link to="/founder-tools/updates" className="update-back">
+                            <ArrowLeftIcon className="h-3.5 w-3.5" />
+                            All updates
+                        </Link>
+                        <h1>{isEdit ? "Edit your update" : "A little progress, shared."}</h1>
+                    </div>
+                    <span className="update-editor-status" aria-live="polite">
+                        {draftSaved && !hasUnsavedChanges
+                            ? "Draft saved"
+                            : hasUnsavedChanges
+                              ? "Unsaved changes"
+                              : "Your draft"}
+                    </span>
+                </header>
+                <Form
+                    id={DRAFT_REVIEW_FORM_ID}
+                    method="POST"
+                    className="update-form"
+                    onSubmit={() => setSaveAttemptContent(workingContent)}
+                >
+                    <input type="hidden" name="companyId" value={resolveActiveCompanyId(user) || ""} />
+                    <input type="hidden" name="expectedRevision" value={expectedRevision ?? ""} />
+                    <input type="hidden" name="updateId" value={activeUpdateId || ""} />
+                    <input type="hidden" name="creationKey" value={creationKey || ""} />
+                    <input type="hidden" name="updateDate" value={updateDate || ""} />
+                    <input type="hidden" name="intent" value="review" />
+                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
+                    {formMetricKeys.map((metricKey) => (
+                        <input key={metricKey} type="hidden" name={metricKey} value={metricValues[metricKey] || ""} />
+                    ))}
+                    <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
+                    <input
+                        type="hidden"
+                        name="financialSnapshot"
+                        value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""}
+                    />
+                    <input
+                        type="hidden"
+                        name="conciseAnalysis"
+                        value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""}
+                    />
+                    <input type="hidden" name="presentationMode" value={presentationMode} />
+                    {privateAudienceVisibility.map((audience) => (
+                        <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
+                    ))}
+                    <input type="hidden" name="coverImage" value={JSON.stringify(coverImage)} />
+                    <input type="hidden" name="sourceUrl" value={sourceUrl} />
+                    <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
+                    <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
+                    <input type="hidden" name="pitchDeckContentType" value={pitchDeckContentType} />
+                    <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
+                    <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
+                    <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
+                    <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
+                    <input type="hidden" name="manualSummary" value={manualSummary} />
+                    <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
+                    <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
+                    <input type="hidden" name="videoContentType" value={videoContentType} />
+                    <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
+                    <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
+                    <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
+                    <input type="hidden" name="month" value={selectedMonth} />
+                    <input type="hidden" name="year" value={selectedYear} />
+                    <div className="update-form-top">
+                        <label htmlFor="update-date"><CalendarDaysIcon className="h-4 w-4" />Update date
+                            <input id="update-date" type="date" value={updateDate || ""} max={today} min="2025-01-01"
+                                disabled={isSubmitting || saveDraftFetcher.state !== "idle" || isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)}
+                                required={!existingData}
+                                onChange={event => setUpdateDate(event.target.value)} />
+                        </label>
+                        <span className="update-period-note">{!updateDate && existingData ? `${selectedMonthLabel} · exact date not recorded` : "Share progress whenever it happens"}</span>
+                    </div>
+                    <section className="update-ai" aria-labelledby="update-ai-heading">
+                        <div className="update-ai-heading">
+                            <SparklesIcon className="update-ai-icon" />
+                            <div className="update-ai-title">
+                                <h2 id="update-ai-heading">A head start with AI</h2>
+                                <p>Your connected tools, brought into a draft you can make your own.</p>
                             </div>
-
-                            {/* Preview header */}
-                            <div className="border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <StartupRegionBadge location={user.location} />
+                            <button
+                                type="button"
+                                className="update-button"
+                                disabled={
+                                    emailDraftActionBusy ||
+                                    isEmailDraftBusy ||
+                                    Boolean(draftCandidate) ||
+                                    !selectedInputSources.length ||
+                                    isSelectedMonthUnavailable
+                                }
+                                onClick={handleGenerateDraftFromEmailClick}
+                            >
+                                <SparklesIcon className="h-4 w-4" />
+                                {emailDraftActionBusy || isEmailDraftBusy ? "Drafting…" : "Draft with AI"}
+                            </button>
+                        </div>
+                        <div className="update-connections" aria-label="Connected sources">
+                            {compactSourcesLoading && (
+                                <span className="text-xs text-slate-500">Checking connections…</span>
+                            )}
+                            {compactOptionalSources
+                                .filter(isConnectedInputSource)
+                                .sort(
+                                    (a, b) =>
+                                        Number(["xero", "stripe"].includes(b.key)) -
+                                        Number(["xero", "stripe"].includes(a.key)),
+                                )
+                                .map((source) => (
                                     <button
                                         type="button"
-                                        onClick={() => setShowReviewLinkedInPopup(true)}
-                                        className={clsx(
-                                            "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black shadow-sm ring-1 transition",
-                                            hasReviewLinkedIn
-                                                ? "bg-[#0A66C2] text-white ring-[#0A66C2]/20 hover:bg-[#084f96]"
-                                                : "bg-gray-100 text-gray-400 ring-gray-200 hover:bg-gray-200 hover:text-gray-600",
-                                        )}
-                                        aria-label={hasReviewLinkedIn ? "Edit founder LinkedIn" : "Add founder LinkedIn"}
+                                        key={source.key}
+                                        className="update-source"
+                                        data-financial={source.key === "xero" || source.key === "stripe"}
+                                        data-selected={selectedDraftInputSources.has(source.key)}
+                                        aria-pressed={selectedDraftInputSources.has(source.key)}
+                                        aria-label={`${selectedDraftInputSources.has(source.key) ? "Exclude" : "Include"} ${source.label} in AI draft`}
+                                        disabled={isEmailDraftBusy || emailDraftActionBusy}
+                                        onClick={() => toggleDraftInputSource(source)}
                                     >
-                                        LinkedIn
-                                        {hasReviewLinkedIn ? (
-                                            <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
-                                        ) : null}
+                                        <CheckCircleIcon />
+                                        {source.label}
                                     </button>
-                                </div>
-                            </div>
-
-                            {reviewFinancialSnapshot ? (
-                                <FinancialChartsSection snapshot={reviewFinancialSnapshot} analysis={reviewConciseAnalysis} />
-                            ) : null}
-
-                            {!reviewFinancialSnapshot && hasReviewPitchDeck ? (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <div className="mb-3">
-                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
-                                                    Pitch deck
-                                                </p>
-                                            </div>
-                                            <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)]">
-                                                        <CloudArrowUpIcon className="h-5 w-5" />
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="text-sm font-black text-gray-950">Pitch deck attached</p>
-                                                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                            {reviewPitchDeckLabel}{formatFileSize(reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes) ? ` · ${formatFileSize(reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes)}` : ""}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="hidden sm:block">
-                                                <PitchDeckAssetPreview
-                                                    src={reviewPitchDeckPreviewUrl}
-                                                    openUrl={reviewPitchDeckOpenUrl}
-                                                    contentType={reviewPitchDeckContentType || pitchDeckContentType}
-                                                    fileName={reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename}
-                                                    fileSizeBytes={reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes}
-                                                />
-                                            </div>
-                                        </div>
-                                        {reviewVideoUrl ? (
-                                            <div>
-                                                <div className="mb-3">
-                                                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                                        {reviewMediaIsAudio ? "Voice note" : "Walkthrough video"}
-                                                    </p>
-                                                    <h4 className="mt-1 text-base font-black text-gray-950">
-                                                        Founder {reviewMediaIsAudio ? "audio" : "video"} preview
-                                                    </h4>
-                                                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                                                        This {reviewMediaIsAudio ? "voice note" : "video"} will appear with the deck so MLAI can understand the story directly.
-                                                    </p>
-                                                </div>
-                                                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)]">
-                                                            <CloudArrowUpIcon className="h-5 w-5" />
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-sm font-black text-gray-950">{reviewMediaIsAudio ? "Voice note attached" : "Walkthrough video attached"}</p>
-                                                            <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                                {reviewVideoLabel}{formatFileSize(reviewVideoFileSizeBytes) ? ` · ${formatFileSize(reviewVideoFileSizeBytes)}` : ""}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
-                                                    <VideoAssetPreview
-                                                        src={reviewVideoUrl}
-                                                        contentType={reviewVideoContentType}
-                                                        fileName={reviewVideoOriginalFilename || reviewVideoUrl}
-                                                        fileSizeBytes={reviewVideoFileSizeBytes}
-                                                        className="aspect-video w-full rounded-none"
-                                                    />
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            ) : !reviewFinancialSnapshot ? (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6">
-                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-                                        {(() => {
-                                            const metricRecord = (((data as any)?.metrics || data) as Record<string, string>) || {};
-                                            const selectedReviewKeys = String((data as any)?.metricKeys || "")
-                                                .split(",")
-                                                .map((key) => key.trim())
-                                                .filter((key) => hasDisplayableMetricValue(metricRecord[key] ?? (data as any)?.[key]));
-                                            const options = selectedReviewKeys.length > 0
-                                                ? metricOptionsFromKeys(selectedReviewKeys)
-                                                : getMetricOptionsForDisplay(metricRecord);
-                                            return options.map(m => {
-                                            const val = (data as any)?.[m.key] || (data as any)?.metrics?.[m.key];
-                                            if (!hasDisplayableMetricValue(val)) return null;
+                                ))}
+                            <Link to={manageConnectionsHref}>Manage connections ↗</Link>
+                        </div>
+                        <p className="update-ai-note">
+                            {connectedDraftInputSources.includes("xero") ||
+                            connectedDraftInputSources.includes("stripe")
+                                ? "Financial figures are imported from your connected sources and can’t be edited here."
+                                : "Earning revenue? Connect Xero or Stripe to include reliable financial figures."}{" "}
+                            {!compactSourcesLoading && !connectedDraftInputSources.length
+                                ? "You can start writing below."
+                                : ""}
+                        </p>
+                        {Object.keys(metricValues).length > 0 && (
+                            <details>
+                                <summary>View figures for {selectedMonth}</summary>
+                                <div className="update-metrics">
+                                    {metricOptionsForValues(metricValues)
+                                        .filter((metric) => String(metricValues[metric.key] ?? "").trim())
+                                        .map((metric) => {
+                                            const evidence = metricEvidence?.[metric.key];
+                                            const locked = isFinancialMetric(metric.key, evidence);
                                             return (
-                                                <div
-                                                    key={m.key}
-                                                    className={clsx(
-                                                        "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
-                                                        val
-                                                            ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                            : "border-gray-200 bg-gray-50 opacity-40"
+                                                <div className="update-metric" key={metric.key}>
+                                                    <label htmlFor={`draft-figure-${metric.key}`}>
+                                                        {locked && <LockClosedIcon className="h-3 w-3" />}
+                                                        {metric.label}
+                                                    </label>
+                                                    {locked ? (
+                                                        <output id={`draft-figure-${metric.key}`}>
+                                                            {metricValues[metric.key]}
+                                                        </output>
+                                                    ) : (
+                                                        <input
+                                                            id={`draft-figure-${metric.key}`}
+                                                            value={metricValues[metric.key] ?? ""}
+                                                            onChange={(event) =>
+                                                                setMetricValues((previous) => ({
+                                                                    ...previous,
+                                                                    [metric.key]: event.target.value,
+                                                                }))
+                                                            }
+                                                            className="mt-2 w-full rounded border border-slate-200 bg-white p-2 text-sm"
+                                                        />
                                                     )}
-	                                                >
-                                                    <MetricInfoBadge info={m.info} />
-	                                                    <div className={clsx(
-                                                        "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                        val ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                                    )}>
-                                                        {m.icon}
-                                                    </div>
-                                                    <p className={clsx(
-                                                        "text-base font-extrabold leading-tight",
-                                                        val ? "text-gray-900" : "text-gray-300"
-                                                    )}>
-                                                        {val ? `${m.prefix || ""}${val}` : "—"}
-                                                    </p>
-                                                    <p className={clsx(
-                                                        "text-[10px] font-semibold uppercase tracking-wide mt-1",
-                                                        val ? "text-gray-600" : "text-gray-400"
-                                                    )}>{m.label}</p>
+                                                    <small>
+                                                        {evidence?.quality === "founder_asserted"
+                                                            ? "Founder reported · historical value"
+                                                            : evidence?.source_provider
+                                                              ? `${INPUT_SOURCE_LABELS[evidence.source_provider as VibeRaisingInputSourceKey] || evidence.source_provider} · ${evidence.quality === "partial" ? "partial coverage" : "imported"}`
+                                                              : "Source unverified"}
+                                                    </small>
                                                 </div>
                                             );
-                                        });
-                                        })()}
-                                    </div>
+                                        })}
                                 </div>
-                            ) : null}
-
-                            {!reviewFinancialSnapshot && !hasReviewPitchDeck && reviewVideoUrl ? (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
-                                    <div className="mb-3">
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                            {reviewMediaIsAudio ? "Voice note" : "Walkthrough video"}
-                                        </p>
-                                        <h4 className="mt-1 text-base font-black text-gray-950">
-                                            Founder {reviewMediaIsAudio ? "audio" : "video"} preview
-                                        </h4>
-                                    </div>
-                                    <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
-                                        <div className="flex items-start gap-3">
-                                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)]">
-                                                <CloudArrowUpIcon className="h-5 w-5" />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-black text-gray-950">{reviewMediaIsAudio ? "Voice note attached" : "Walkthrough video attached"}</p>
-                                                <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                    {reviewVideoLabel}{formatFileSize(reviewVideoFileSizeBytes) ? ` · ${formatFileSize(reviewVideoFileSizeBytes)}` : ""}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
-                                        <VideoAssetPreview
-                                            src={reviewVideoUrl}
-                                            contentType={reviewVideoContentType}
-                                            fileName={reviewVideoOriginalFilename || reviewVideoUrl}
-                                            fileSizeBytes={reviewVideoFileSizeBytes}
-                                            className="aspect-video w-full rounded-none"
-                                        />
-                                    </div>
-                                </div>
-                            ) : null}
-
-                            {/* Content sections */}
-                            {!reviewFinancialSnapshot ? <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
-                                <ReviewSummaryBlock summary={reviewSummary} sourceUrl={reviewSourceUrl} />
-                                <ReviewPreviewSection
-                                    label="Key Highlights"
-                                    text={(data as any)?.highlights}
+                                <p className="update-ai-note">
+                                    {reportingPeriod?.is_partial ? "This month is incomplete. " : ""}Correct imported
+                                    figures at the source, then draft again to refresh them.
+                                </p>
+                            </details>
+                        )}
+                        {(emailDraftActionBusy || emailDraftCardVisible) && (
+                            <div className="update-ai-run" role="status">
+                                <ArrowPathIcon
+                                    className={`h-4 w-4 ${isEmailDraftBusy ? "motion-safe:animate-spin" : ""}`}
                                 />
-                                <ReviewPreviewSection
-                                    label="Challenges"
-                                    text={(data as any)?.challenges}
-                                />
-                                <ReviewPreviewSection
-                                    label="Learnings"
-                                    text={(data as any)?.learnings}
-                                />
-                                <ReviewPreviewSection
-                                    label="Next 30 Days"
-                                    text={(data as any)?.next30Days}
-                                />
-                                <ReviewPreviewSection
-                                    label="Support request"
-                                    text={(data as any)?.asks}
-                                />
-                            </div> : null}
-                        </div>
-
-                        {/* Revenue chart + Past month previews */}
-                        {!reviewFinancialSnapshot && !hasReviewPitchDeck && (() => {
-                            const d = data as any;
-                            const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> }> = [];
-                            for (let i = 0; d?.[`pastMonth_${i}_month`]; i++) {
-                                const pm: any = {
-                                    month: d[`pastMonth_${i}_month`],
-                                    highlights: d[`pastMonth_${i}_highlights`] || "",
-                                    challenges: d[`pastMonth_${i}_challenges`] || "",
-                                    asks: d[`pastMonth_${i}_asks`] || "",
-                                    learnings: d[`pastMonth_${i}_learnings`] || "",
-                                    next30Days: d[`pastMonth_${i}_next30Days`] || "",
-                                    metrics: {},
-                                };
-                                for (const m of METRIC_OPTIONS) {
-                                    if (d[`pastMonth_${i}_${m.key}`]) pm.metrics[m.key] = d[`pastMonth_${i}_${m.key}`];
-                                }
-                                pastMonths.push(pm);
-                            }
-
-                            // Build revenue chart data
-                            const reviewChartData: ChartData[] = [
-                                ...pastMonths.map(pm => ({
-                                    month: pm.month,
-                                    value: parseRevenue(pm.metrics.revenue || "0"),
-                                })),
-                                {
-                                    month: d?.month || selectedMonth,
-                                    value: parseRevenue(d?.revenue || "0"),
-                                    isCurrent: true,
-                                }
-                            ];
-
-                            const hasRevenue = reviewChartData.some(r => r.value > 0);
-
-                            return (
-                                <>
-                                    {hasRevenue && (
-                                        <div className="mt-4 hidden grid-cols-1 gap-4 sm:grid">
-                                            <GrowthChart
-                                                data={reviewChartData}
-                                                onSelect={() => {}}
-                                                title="Revenue"
-                                                subtitle="Monthly revenue with MoM growth"
-                                                formatter={formatCompact}
-                                            />
-                                        </div>
-                                    )}
-                                    {pastMonths.length > 0 && (
-                                        <div className="mt-4 hidden space-y-2 sm:block">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Previous Updates</p>
-                                            {pastMonths.map((pm, i) => (
-                                                <PastMonthPreviewCard key={i} pm={pm} />
-                                            ))}
-                                        </div>
-                                    )}
-                                </>
-                            );
-                        })()}
-
-                        <div className="mt-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] p-4">
-                            <p className="text-sm font-semibold text-[var(--vr-color-text)]">
-                                This update is saved privately in <Link to="/founder-tools/drafts" className="font-black text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]">My Drafts</Link> until you send it to MLAI.
-                            </p>
-                        </div>
-
-                    </div>
-
-                    {showReviewLinkedInPopup ? (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                            <div
-                                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                                onClick={() => setShowReviewLinkedInPopup(false)}
-                                aria-hidden
-                            />
-                            <section
-                                role="dialog"
-                                aria-modal="true"
-                                aria-labelledby="review-linkedin-popup-title"
-                                className="relative z-[110] w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl"
-                            >
-                                <div className="flex items-start justify-between gap-4 border-b border-[var(--vr-color-border)] px-6 pb-4 pt-6">
-                                    <div>
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#0A66C2]">
-                                            Founder LinkedIn
-                                        </p>
-                                        <h2 id="review-linkedin-popup-title" className="mt-2 text-xl font-black leading-tight text-[var(--vr-color-text)]">
-                                            Add a founder LinkedIn link
-                                        </h2>
-                                    </div>
+                                <span>
+                                    {emailDraftCardStatus === "failed"
+                                        ? emailDraftCardError
+                                        : emailDraftCardDisplayStage}{" "}
+                                    {isEmailDraftBusy ? "Keep writing while we work." : ""}
+                                </span>
+                                {isEmailDraftBusy && (
                                     <button
                                         type="button"
-                                        onClick={() => setShowReviewLinkedInPopup(false)}
-                                        className="flex-shrink-0 rounded-full p-2 text-[var(--vr-color-text-sub)] transition hover:bg-[var(--vr-color-neutral-100)] hover:text-[var(--vr-color-text)]"
-                                        aria-label="Close founder LinkedIn popup"
-                                    >
-                                        <XMarkIcon className="h-5 w-5" />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-4 px-6 py-6">
-                                    <p className="text-sm leading-6 text-[var(--vr-color-text-mid)]">
-                                        A founder LinkedIn link gives MLAI useful company context. Add or update it here and it will be saved with this update.
-                                    </p>
-                                    {reviewLinkedInDrafts.map((draft) => (
-                                        <label key={draft.id} className="block">
-                                            <span className="mb-2 block text-sm font-black text-gray-950">{draft.name || "Founder"}</span>
-                                            <input
-                                                type="url"
-                                                inputMode="url"
-                                                value={draft.linkedinUrl}
-                                                onChange={(event) => {
-                                                    const nextValue = event.target.value;
-                                                    setMissingFounderLinkedInDrafts((current) => {
-                                                        if (current.some((item) => item.id === draft.id)) {
-                                                            return current.map((item) =>
-                                                                item.id === draft.id ? { ...item, linkedinUrl: nextValue } : item,
-                                                            );
-                                                        }
-                                                        return [
-                                                            ...current,
-                                                            {
-                                                                id: draft.id,
-                                                                sourceIndex: draft.sourceIndex,
-                                                                name: draft.name || "Founder",
-                                                                linkedinUrl: nextValue,
-                                                            },
-                                                        ];
-                                                    });
-                                                }}
-                                                placeholder="https://www.linkedin.com/in/founder"
-                                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-300 focus:border-[#0A66C2] focus:ring-4 focus:ring-[#0A66C2]/10"
-                                            />
-                                        </label>
-                                    ))}
-                                </div>
-
-                                <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowReviewLinkedInPopup(false)}
-                                        className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#0A66C2] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#0A66C2]/10 transition hover:bg-[#084f96] active:scale-[0.98]"
-                                    >
-                                        Save LinkedIn
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowReviewLinkedInPopup(false)}
-                                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3.5 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)] active:scale-[0.98]"
+                                        className="underline"
+                                        disabled={emailDraftCancelBusy}
+                                        onClick={() => void handleCancelEmailDraft()}
                                     >
                                         Cancel
                                     </button>
-                                </div>
-                            </section>
-                        </div>
-                    ) : null}
-
-                    {SHOW_AI_REVIEW_FEEDBACK && (
-                        <div className="w-full space-y-3 lg:sticky lg:top-6 lg:w-56 lg:flex-shrink-0">
-                            <div className="flex flex-col items-center rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
-                                {user.domain ? (
-                                    <img
-                                        src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
-                                        alt={user.companyName}
-                                        className="mb-2 h-12 w-12 rounded-xl bg-gray-50"
-                                    />
-                                ) : (
-                                    <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--vr-palette-teal-soft),var(--vr-palette-mint))]">
-                                        <span className="text-lg font-bold text-[var(--vr-palette-black)]">{user.companyName.charAt(0)}</span>
-                                    </div>
                                 )}
-                                <p className="text-sm font-bold text-gray-900">{user.companyName}</p>
-                                {user.domain && (
-                                    <p className="mt-0.5 text-[11px] text-gray-400">{user.domain}</p>
-                                )}
-                                <StartupRegionBadge location={user.location} className="mt-3" />
-                                {feedback?.grade && (
-                                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(0,255,215,0.28)] bg-[rgba(0,255,215,0.12)] px-2.5 py-1">
-                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--vr-color-primary)]">AI Grade</span>
-                                        <span className="text-sm font-bold leading-none text-[var(--vr-color-primary)]">{feedback.grade}</span>
-                                    </div>
+                                {emailDraftCardStatus === "failed" && (
+                                    <button type="button" className="underline" onClick={handleRetryEmailDraft}>
+                                        Retry
+                                    </button>
                                 )}
                             </div>
-
-                            <CollapsibleFeedback
-                                icon={<CheckCircleIcon className="w-3.5 h-3.5" />}
-                                headline={`${feedback?.strengths.length} strengths found`}
-                                color="green"
-                            >
-                                <ul className="space-y-1.5">
-                                    {feedback?.strengths.map((str: string, i: number) => (
-                                        <li key={i} className="flex items-start gap-1.5 text-xs leading-relaxed text-[var(--vr-color-text)]">
-                                            <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--vr-color-primary)]" />
-                                            {str}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CollapsibleFeedback>
-
-                            <CollapsibleFeedback
-                                icon={<ExclamationTriangleIcon className="w-3.5 h-3.5" />}
-                                headline={`${feedback?.improvements.length} areas to improve`}
-                                color="orange"
-                            >
-                                <ul className="space-y-1.5">
-                                    {feedback?.improvements.map((imp: string, i: number) => (
-                                        <li key={i} className="flex items-start gap-1.5 text-xs leading-relaxed text-[var(--vr-color-text)]">
-                                            <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--vr-palette-orange)]" />
-                                            {imp}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CollapsibleFeedback>
-
-                            <CollapsibleFeedback
-                                icon={<LightBulbIcon className="w-3.5 h-3.5" />}
-                                headline="Pro tip from AI"
-                                color="blue"
-                            >
-                                <p className="text-xs leading-relaxed text-[var(--vr-color-text)]">{feedback?.proTip}</p>
-                            </CollapsibleFeedback>
-                        </div>
-                    )}
-                </div>
-
-                <div className="sticky top-[4.5rem] z-30 mb-4 flex min-h-14 items-center sm:hidden" aria-label="Review progress">
-                    <div className="min-w-0 flex-1 rounded-xl border border-[var(--vr-color-border)] bg-white px-3 py-2 shadow-lg shadow-black/10">
-                        <div className="flex items-center justify-between gap-3">
-                            <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[var(--vr-color-primary)]">Draft progress</p>
-                            <p className="shrink-0 text-sm font-black text-gray-950">75%</p>
-                        </div>
-                        <div className="mt-1 flex items-center gap-2">
-                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200/80">
-                                <div className="h-full w-3/4 rounded-full bg-[var(--vr-color-primary)]" />
-                            </div>
-                            <p className="shrink-0 text-[10px] font-bold text-slate-500">Review</p>
-                        </div>
-                    </div>
-                </div>
-
-                <VibeRaisingStickyStepBar
-                    hideStatus
-                    compactOnMobile
-                    statusTitle={`Review ${reviewMonth} ${reviewYear} update`}
-                    onBack={() => setDismissedFeedback(true)}
-                    primaryLabel={isSubmitting ? "Sending..." : "Send to MLAI"}
-                    mobilePrimaryLabel={isSubmitting ? "Sending..." : "Send to MLAI"}
-                    primaryDisabled={isSubmitting || !canSubmitReviewToMlai}
-                    onPrimary={handleSendToMlai}
-                />
-
-                {sendError ? (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-800 shadow-sm">
-                        {sendError}
-                    </div>
-                ) : null}
-
-                {showSendToMlaiConfirmation ? (
-                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-                        <button
-                            type="button"
-                            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
-                            onClick={() => {
-                                if (!isSubmitting) setShowSendToMlaiConfirmation(false);
-                            }}
-                            aria-label="Return to update review"
-                        />
-                        <section
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="send-to-mlai-confirmation-title"
-                            aria-describedby="send-to-mlai-confirmation-description"
-                            className="relative z-[160] max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-[var(--vr-color-border)] bg-white shadow-2xl"
-                        >
-                            <div className="flex items-start justify-between gap-5 border-b border-[var(--vr-color-border)] px-5 py-5 sm:px-7 sm:py-6">
-                                <div>
-                                    <h2 id="send-to-mlai-confirmation-title" className="text-2xl font-black text-gray-950 sm:text-3xl">
-                                        Send this update to MLAI?
-                                    </h2>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowSendToMlaiConfirmation(false)}
-                                    disabled={isSubmitting}
-                                    className="rounded-full border border-[var(--vr-color-border)] p-2 text-slate-500 transition hover:border-slate-400 hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
-                                    aria-label="Close confirmation"
-                                >
-                                    <XMarkIcon className="h-5 w-5" />
-                                </button>
-                            </div>
-
-                            <div className="space-y-6 px-5 py-5 sm:px-7 sm:py-6">
-                                <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,128,128,0.24)] bg-[rgba(0,255,215,0.08)] p-4">
-                                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--vr-color-primary)] text-white">
-                                        <LockClosedIcon className="h-5 w-5" />
-                                    </span>
-                                    <div>
-                                        <p id="send-to-mlai-confirmation-description" className="text-sm leading-6 text-slate-600">
-                                            Only members of the Vibe Raising development team can access this submission. It will not be visible to investors or other founders.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div aria-labelledby="end-of-flow-survey-title">
-                                    <h3 id="end-of-flow-survey-title" className="text-xl font-black text-gray-950">Help us improve this flow</h3>
-
-                                    <div className="mt-5 flex items-center justify-between gap-4">
-                                        <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
-                                            Step {endOfFlowSurveyStep + 1} of {END_OF_FLOW_SURVEY_STEP_COUNT}
-                                        </p>
-                                        <div className="flex flex-1 justify-end gap-1.5" aria-hidden="true">
-                                            {Array.from({ length: END_OF_FLOW_SURVEY_STEP_COUNT }, (_, index) => (
-                                                <span
-                                                    key={index}
-                                                    className={clsx(
-                                                        "h-1.5 w-8 rounded-full transition-colors",
-                                                        index <= endOfFlowSurveyStep ? "bg-[var(--vr-color-primary)]" : "bg-slate-200",
-                                                    )}
-                                                />
-                                            ))}
+                        )}
+                        {compactSourcesError && (
+                            <p className="update-ai-note" role="alert">
+                                {compactSourcesError}
+                            </p>
+                        )}
+                        <details className="update-source-range">
+                            <summary>Source dates{visibleSourceWindow ? ` · ${new Date(narrativeStart || visibleSourceWindow.start).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: reportingTimezone || "UTC" })}–${new Date(narrativeEnd || visibleSourceWindow.end).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: reportingTimezone || "UTC" })}` : ""}</summary>
+                            <p className="update-section-help">{proposedSourceWindow?.previous ? "Progress since your previous update." : "Progress from the start of this month."} Financial figures keep their own reporting period.</p>
+                            <label>From <input type="datetime-local" aria-label="Source range start" value={toLocalDateTime(narrativeStart || visibleSourceWindow?.start || "")} disabled={isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)} onChange={event => setNarrativeStart(fromLocalDateTime(event.target.value))} /></label>
+                            <label>To <input type="datetime-local" aria-label="Source range end" value={toLocalDateTime(narrativeEnd || visibleSourceWindow?.end || "")} disabled={isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)} onChange={event => setNarrativeEnd(fromLocalDateTime(event.target.value))} /></label>
+                            <small>Times use your device timezone. The end time is exclusive.</small>
+                            {(narrativeStart || narrativeEnd) && <button type="button" disabled={isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)} onClick={() => { setNarrativeStart(""); setNarrativeEnd(""); }}>Reset dates</button>}
+                        </details>
+                    </section>
+                    {draftCandidate && (
+                        <section className="update-candidate" aria-live="polite">
+                            <h2>Your AI draft is ready</h2>
+                            <p>
+                                Your writing is unchanged. Compare the draft below, then choose which writing to keep.
+                                Both choices use the newly imported figures.
+                            </p>
+                            <details>
+                                <summary>Compare AI draft</summary>
+                                <pre>
+                                    {[
+                                        draftCandidate.summary,
+                                        ...[
+                                            ["Highlights", draftCandidate.highlights],
+                                            ["Challenges", draftCandidate.challenges],
+                                            ["Learnings", draftCandidate.learnings],
+                                            ["Next steps", draftCandidate.next30Days],
+                                            ["How you can help", draftCandidate.asks],
+                                        ].map(([label, text]) => (text ? `${label}\n${text}` : "")),
+                                    ]
+                                        .filter(Boolean)
+                                        .join("\n\n")}
+                                </pre>
+                                <dl className="update-metrics">
+                                    {Object.entries(draftCandidate.metrics || {}).map(([key, value]) => (
+                                        <div className="update-metric" key={key}>
+                                            <dt>{METRIC_OPTION_MAP.get(key)?.label || key}</dt>
+                                            <dd>{String(value)}</dd>
                                         </div>
-                                    </div>
-
-                                    <div className="mt-4 min-h-52 rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-5 sm:p-6">
-                                        {activeSurveyQuestion ? (
-                                            <fieldset>
-                                                <legend className="text-xl font-black leading-7 text-gray-950 sm:text-2xl">
-                                                    {activeSurveyQuestion.label}
-                                                </legend>
-                                                <div className="mt-6 grid grid-cols-2 gap-3 sm:max-w-md">
-                                                    {([
-                                                        { value: "yes", label: "Thumbs up", Icon: HandThumbUpSolidIcon },
-                                                        { value: "no", label: "Thumbs down", Icon: HandThumbDownSolidIcon },
-                                                    ] as const).map(({ value, label, Icon }) => {
-                                                        const checked = endOfFlowSurvey[activeSurveyQuestion.key] === value;
-                                                        const isPositive = value === "yes";
-                                                        return (
-                                                            <label
-                                                                key={value}
-                                                                title={label}
-                                                                className={clsx(
-                                                                    "group relative flex min-h-24 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:scale-[0.98] focus-within:ring-4 focus-within:ring-offset-2",
-                                                                    checked
-                                                                        ? isPositive
-                                                                            ? "border-[#00a98f] bg-[#00bfa5] text-white shadow-teal-900/20 focus-within:ring-[rgba(0,191,165,0.24)]"
-                                                                            : "border-[#f04a23] bg-[#ff5c35] text-white shadow-orange-900/20 focus-within:ring-[rgba(255,92,53,0.22)]"
-                                                                        : isPositive
-                                                                            ? "border-[var(--vr-color-border)] bg-white text-[#008b78] hover:border-[#00bfa5] hover:bg-[rgba(0,255,215,0.12)] hover:shadow-teal-900/15 focus-within:ring-[rgba(0,191,165,0.20)]"
-                                                                            : "border-[var(--vr-color-border)] bg-white text-[#d94928] hover:border-[#ff5c35] hover:bg-[rgba(255,92,53,0.10)] hover:shadow-orange-900/15 focus-within:ring-[rgba(255,92,53,0.18)]",
-                                                                )}
-                                                            >
-                                                                <span
-                                                                    className={clsx(
-                                                                        "pointer-events-none absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-70",
-                                                                        isPositive ? "bg-[#00ffd7]" : "bg-[#ff8a66]",
-                                                                    )}
-                                                                    aria-hidden="true"
-                                                                />
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`survey-${activeSurveyQuestion.key}`}
-                                                                    value={value}
-                                                                    checked={checked}
-                                                                    onChange={() => {
-                                                                        setEndOfFlowSurvey((current) => ({
-                                                                            ...current,
-                                                                            [activeSurveyQuestion.key]: value,
-                                                                        }));
-                                                                        setEndOfFlowSurveyStep((current) => Math.min(
-                                                                            END_OF_FLOW_SURVEY_STEP_COUNT - 1,
-                                                                            current + 1,
-                                                                        ));
-                                                                    }}
-                                                                    className="sr-only"
-                                                                    aria-label={label}
-                                                                />
-                                                                <span
-                                                                    className={clsx(
-                                                                        "relative z-10 flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:bg-white group-hover:shadow-md",
-                                                                        checked
-                                                                            ? "bg-white/20 text-white"
-                                                                            : isPositive
-                                                                                ? "bg-[rgba(0,255,215,0.13)] text-[#008b78]"
-                                                                                : "bg-[rgba(255,92,53,0.11)] text-[#d94928]",
-                                                                    )}
-                                                                    aria-hidden="true"
-                                                                >
-                                                                    <Icon
-                                                                        className={clsx(
-                                                                            "h-8 w-8 transition-transform duration-300",
-                                                                            isPositive ? "group-hover:-rotate-6" : "group-hover:rotate-6",
-                                                                        )}
-                                                                    />
-                                                                </span>
-                                                            </label>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </fieldset>
-                                        ) : isSurveyCommentsStep ? (
-                                            <label className="block">
-                                                <span className="text-xl font-black leading-7 text-gray-950 sm:text-2xl">What would make your next update faster or more useful?</span>
-                                                <span className="ml-2 text-sm font-semibold text-slate-400">Optional</span>
-                                                <textarea
-                                                    value={endOfFlowSurveyComments}
-                                                    onChange={(event) => setEndOfFlowSurveyComments(event.target.value)}
-                                                    maxLength={1000}
-                                                    rows={4}
-                                                    placeholder="Tell us what worked, what felt unclear, or what would make the next update easier."
-                                                    className="mt-5 w-full resize-y rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-3 text-sm font-medium leading-6 text-gray-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,255,215,0.14)]"
-                                                />
-                                            </label>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col-reverse gap-3 border-t border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-5 py-4 sm:flex-row sm:justify-end sm:px-7">
+                                    ))}
+                                </dl>
+                            </details>
+                            <div className="flex flex-wrap gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        if (endOfFlowSurveyStep === 0) {
-                                            setShowSendToMlaiConfirmation(false);
-                                            return;
-                                        }
-                                        setEndOfFlowSurveyStep((current) => Math.max(0, current - 1));
-                                    }}
-                                    disabled={isSubmitting}
-                                    className="rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-sm font-black text-gray-950 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="update-button"
+                                    onClick={() => applyDraftCandidate(draftCandidate)}
                                 >
-                                    {endOfFlowSurveyStep === 0 ? "Go back" : "Previous"}
+                                    Use AI draft
                                 </button>
-                                {isSurveyCommentsStep ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleConfirmSendToMlai}
-                                        disabled={isSubmitting}
-                                        className="rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-lg shadow-teal-900/10 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        {isSubmitting ? "Sending..." : "Confirm and send to MLAI"}
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => setEndOfFlowSurveyStep((current) => Math.min(END_OF_FLOW_SURVEY_STEP_COUNT - 1, current + 1))}
-                                        className="rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-lg shadow-teal-900/10 transition hover:brightness-95"
-                                    >
-                                        Skip
-                                    </button>
-                                )}
+                                <button
+                                    type="button"
+                                    className="update-button secondary"
+                                    onClick={() => applyDraftCandidate(draftCandidate, true)}
+                                >
+                                    Keep my writing
+                                </button>
                             </div>
                         </section>
+                    )}
+                    {founderQuestionGateError && (
+                        <p className="update-notice" role="alert">
+                            {founderQuestionGateError}
+                        </p>
+                    )}
+                    {!localRecoveryAvailable && (
+                        <p className="update-notice" role="alert">
+                            Local recovery is unavailable in this browser. Save your draft before leaving this page.
+                        </p>
+                    )}
+                    <div className="update-writing">
+                        <section className="update-section">
+                            <label htmlFor="update-summary" className="update-summary-label">
+                                The short version
+                            </label>
+                            <p className="update-section-help">
+                                A few lines that capture this period. What should someone remember?
+                            </p>
+                            <BulletTextarea
+                                id="update-summary"
+                                name="summary"
+                                className="update-summary-input"
+                                value={summary}
+                                onChange={setSummary}
+                                placeholder="Recently, we…"
+                            />
+                        </section>
+                        <SectionWithExample
+                            label="Highlights"
+                            name="highlights"
+                            value={highlights}
+                            onChange={setHighlights}
+                            placeholder="A win, something shipped, or a moment worth sharing…"
+                        />
+                        <SectionWithExample
+                            label="Challenges"
+                            name="challenges"
+                            value={challenges}
+                            onChange={setChallenges}
+                            placeholder="What’s been difficult, or hasn’t gone to plan?"
+                        />
+                        <SectionWithExample
+                            label="Learnings"
+                            name="learnings"
+                            value={learnings}
+                            onChange={setLearnings}
+                            placeholder="An insight from a customer, an experiment, or the work itself…"
+                        />
+                        <SectionWithExample
+                            label="Next steps"
+                            name="next30Days"
+                            value={next30Days}
+                            onChange={setNext30Days}
+                            placeholder="What are you focusing on next?"
+                        />
+                        <SectionWithExample
+                            label="How you can help"
+                            name="asks"
+                            value={asks}
+                            onChange={setAsks}
+                            placeholder="An introduction, feedback, or a specific skill you’re looking for…"
+                        />
                     </div>
-                ) : null}
-            </div>
-        );
-    }
-
-    if (!isEdit && updateCadence === null) {
-        const cadenceOptions: Array<{
-            value: UpdateCadence;
-            title: string;
-            description: string;
-            badge?: string;
-            accentClassName: string;
-        }> = [
-            {
-                value: "monthly",
-                title: "Monthly",
-                description: "Share a fuller progress update once each month.",
-                accentClassName: "bg-[var(--vr-palette-black)] text-[var(--vr-palette-paper)]",
-            },
-            {
-                value: "weekly",
-                title: "Weekly",
-                description: "Create a shorter update every week through the Victor AI experience.",
-                badge: "Victor AI-only",
-                accentClassName: "bg-[var(--vr-palette-orange)] text-white",
-            },
-        ];
-
-        return (
-            <div className="mlai-vibe-update mx-auto w-full max-w-6xl space-y-8 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-24 sm:px-6 sm:py-8">
-                {mlaiGenerateUpdateBrand}
-                <section className="w-full rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 sm:p-8 lg:p-10">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-orange)]">
-                        Before you start
-                    </p>
-                    <h1 className="mt-4 text-4xl font-black tracking-tight text-gray-950 sm:text-5xl">
-                        How often do you want to update?
-                    </h1>
-                    <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base sm:leading-7">
-                        Choose the cadence that matches how often you want to share progress with MLAI.
-                    </p>
-
-                    <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                        {cadenceOptions.map((option) => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => {
-                                    setUpdateCadence(option.value);
-                                    if (option.value === "weekly" && selectedWeekOption) {
-                                        handleWeekChange(selectedWeekOption);
+                    <div className="update-form-end">
+                        {coverEditor}
+                        <div className="update-audience">
+                            <div>
+                                <strong>Who should see this?</strong>
+                                <p>Your draft stays private until you approve it.</p>
+                            </div>
+                            <label>
+                                <span className="sr-only">Update audience</span>
+                                <select
+                                    aria-label="Update audience"
+                                    value={privateAudienceVisibility.includes("community") ? "community" : "private"}
+                                    onChange={(event) =>
+                                        setAudienceVisibility(normalizeAudienceVisibilityValue(event.target.value))
                                     }
-                                }}
-                                className="group flex min-h-48 w-full flex-col items-start justify-between rounded-[1.75rem] border-2 border-[var(--vr-palette-black)] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#1a1a1a] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(255,60,0,0.24)]"
-                                aria-label={`Choose ${option.title.toLowerCase()} updates`}
-                            >
-                                <span className={clsx(
-                                    "inline-flex h-12 min-w-12 items-center justify-center rounded-full px-4 text-sm font-black uppercase tracking-[0.12em]",
-                                    option.accentClassName,
-                                )}>
-                                    {option.value === "monthly" ? "M" : "W"}
-                                </span>
-                                <span className="mt-8 block">
-                                    <span className="flex flex-wrap items-center gap-3">
-                                        <span className="block text-3xl font-black text-gray-950">{option.title}</span>
-                                        {option.badge ? (
-                                            <span className="rounded-full border border-[var(--vr-palette-orange)] bg-[rgba(255,60,0,0.10)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--vr-palette-orange)]">
-                                                {option.badge}
-                                            </span>
-                                        ) : null}
-                                    </span>
-                                    <span className="mt-3 block text-sm font-semibold leading-6 text-slate-600">
-                                        {option.description}
-                                    </span>
-                                </span>
-                                <span className="mt-6 inline-flex items-center gap-2 text-sm font-black text-[var(--vr-palette-orange)]">
-                                    Continue
-                                    <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                                </span>
-                            </button>
-                        ))}
+                                >
+                                    <option value="private">Just for me</option>
+                                    <option value="community">Community</option>
+                                </select>
+                            </label>
+                        </div>
                     </div>
-                </section>
-            </div>
-        );
-    }
-
-    // 3. Create/Edit Form View
-    return (
-        <div
-            className={clsx(
-                "mlai-vibe-update mx-auto w-full max-w-6xl space-y-4 rounded-[32px] bg-[#f5f0e6] px-4 py-5 pb-32 sm:space-y-10 sm:px-6",
-                isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate && "pt-16 sm:pt-0",
-            )}
-        >
-            {mlaiGenerateUpdateBrand}
-            {!isEdit && updateCadence ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-3 sm:px-5">
-                    <p className="text-sm font-semibold text-slate-600">
-                        Update cadence:{" "}
-                        <strong className="font-black text-gray-950">
-                            {updateCadence === "monthly" ? "Monthly" : "Weekly - Victor AI-only"}
-                        </strong>
-                    </p>
+                </Form>
+                <div className="update-actions">
+                    <span className="update-action-status" aria-live="polite">
+                        {draftCandidate
+                            ? "Choose a draft above before saving."
+                            : !hasMinimumFounderAnswers
+                              ? "Answer any 3 sections to review."
+                              : "Ready when you are."}
+                    </span>
                     <button
                         type="button"
-                        onClick={() => setUpdateCadence(null)}
-                        className="text-sm font-black text-[var(--vr-palette-orange)] underline decoration-2 underline-offset-4 transition hover:text-[var(--vr-palette-black)]"
+                        className="update-button secondary"
+                        disabled={
+                            isSubmitting ||
+                            saveDraftFetcher.state !== "idle" ||
+                            isEmailDraftBusy ||
+                            emailDraftActionBusy ||
+                            Boolean(draftCandidate)
+                        }
+                        onClick={handlePersistDraft}
                     >
-                        Change
+                        {saveDraftFetcher.state !== "idle" ? "Saving…" : "Save draft"}
+                    </button>
+                    <button
+                        type="submit"
+                        form={DRAFT_REVIEW_FORM_ID}
+                        className="update-button"
+                        disabled={
+                            isSubmitting ||
+                            saveDraftFetcher.state !== "idle" ||
+                            !hasMinimumFounderAnswers ||
+                            isEmailDraftBusy ||
+                            emailDraftActionBusy ||
+                            Boolean(draftCandidate)
+                        }
+                    >
+                        {isSubmitting ? "Saving…" : "Save & review"}
+                        <ArrowRightIcon className="h-4 w-4" />
                     </button>
                 </div>
-            ) : null}
-            <div className="space-y-4">
-                <div ref={draftStepperRef} className="hidden sm:block">
-                    <MonthlyUpdateStepper
-                        activeStep={monthConfirmed ? "connect" : "draft"}
-                        disableMotion
-                        enabledSteps={isEdit ? ["draft"] : ["draft", "connect"]}
-                        onStepClick={handleDraftStepperClick}
-                        expandOnHover
-                        frameless
-                        className="mt-8"
-                    />
-                </div>
-            </div>
-
-            {!monthConfirmed ? (
-            <section>
-                <div className="space-y-4">
-                        <div ref={monthSelectorRef} className="space-y-3">
-                            <div className="hidden sm:block">
-                                <h2 className="text-3xl font-black tracking-tight text-gray-950">
-                                    {isWeeklyUpdate ? "Select week" : "Select month"}
-                                </h2>
-                            </div>
-                            <div className="overflow-visible rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm transition-all sm:p-8 lg:p-10">
-                                <div className="grid gap-4">
-                                    <div>
-                                        <div className="rounded-3xl bg-white p-4 shadow-sm sm:p-5">
-                                            <p className="mb-5 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base sm:leading-7">
-                                                {isWeeklyUpdate
-                                                    ? "Select the Monday–Sunday period this Victor AI update covers. Choose the current week or catch up on one of the three previous weeks."
-                                                    : monthSelectionCaption}
-                                            </p>
-                                            {isWeeklyUpdate ? (
-                                                <WeeklyUpdateTabs
-                                                    options={createStepWeekOptions}
-                                                    selectedKey={selectedWeekKey}
-                                                    onSelect={handleWeekChange}
-                                                    isDateEditable={!isEmailDraftBusy}
-                                                />
-                                            ) : (
-                                                <MonthYearTabs
-                                                    month={selectedMonth}
-                                                    year={selectedYear}
-                                                    onMonthChange={setSelectedMonth}
-                                                    onYearChange={setSelectedYear}
-                                                    onPeriodChange={setActivePeriodKey}
-                                                    monthChoices={createStepVisibleMonthOptions}
-                                                    isDateEditable={!isEmailDraftBusy}
-                                                />
-                                            )}
-                                            <p className="mt-4 text-xs font-semibold leading-5 text-slate-500">
-                                                {isWeeklyUpdate
-                                                    ? "Weekly updates are created through Victor AI only."
-                                                    : "20 Roo Points are awarded only for updates from the last 3 months."}
-                                            </p>
-                                            {!isWeeklyUpdate && !isEdit && !showAllCreateStepMonths ? (
-                                                <div className="mt-5 hidden items-center gap-3 text-sm font-semibold text-[var(--vr-color-primary)] sm:flex">
-                                                    <span className="text-[var(--vr-color-primary)]">Need an older month?</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowAllCreateStepMonths(true)}
-                                                        className="font-black underline underline-offset-4 transition hover:text-[var(--vr-palette-black)]"
-                                                    >
-                                                        View all months
-                                                    </button>
-                                                </div>
-                                            ) : null}
-                                            {!isWeeklyUpdate && isSelectedMonthBeforeMinimum ? (
-                                                <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
-                                                    Updates before June 2025 are not eligible for scoring or draft rewards.
-                                                </p>
-                                            ) : null}
-                                            {!isWeeklyUpdate && isSelectedMonthInFuture && (
-                                                <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
-                                                    Future monthly updates can be generated once that month starts.
-                                                </p>
-                                            )}
-                                            {!isWeeklyUpdate && existingUpdateForSelectedMonth && !isSelectedMonthUnavailable && (
-                                                <p className="mt-3 rounded-xl border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.12)] px-4 py-3 text-sm font-medium text-[var(--vr-color-primary)]">
-                                                    An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        disabled={!hasSelectedPeriod || isSelectedMonthUnavailable || emailDraftActionBusy}
-                                        onClick={() => {
-                                            handleGenerateSelectedMonthUpdate();
-                                        }}
-                                        onTouchStart={handleGenerateDraftCardTouchStart}
-                                        onTouchEnd={handleGenerateDraftCardTouchEnd}
-                                        className={clsx(
-                                            "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 sm:hidden",
-                                            !hasSelectedPeriod || isSelectedMonthUnavailable || emailDraftActionBusy
-                                                ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
-                                                : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
-                                        )}
-                                        aria-label={hasSelectedPeriod ? `Start ${selectedPeriodLabel} draft` : `Select a ${selectedPeriodName} before starting a draft`}
-                                    >
-                                        <div>
-                                            <p className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
-                                                Step 1
-                                            </p>
-                                            <p className="mt-3 text-lg font-black">
-                                                {hasSelectedPeriod ? "Start draft" : `Select ${selectedPeriodName} first`}
-                                            </p>
-                                        </div>
-                                        <span className="mt-5 flex items-center justify-between text-sm font-black">
-                                            <span>{hasSelectedPeriod ? selectedPeriodLabel : `Choose a ${selectedPeriodName}`}</span>
-                                            {emailDraftActionBusy ? (
-                                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                            ) : (
-                                                <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                                            )}
-                                        </span>
-                                    </button>
-                                </div>
-                            </div>
-                    </div>
-                </div>
-            </section>
-            ) : (
-                <section id="mobile-selected-month-summary" className="scroll-mt-36 sm:hidden">
-                    <div className="space-y-4">
-                        {renderSelectedMonthSummaryCard()}
-                    </div>
-                </section>
-            )}
-
-            <section
-                className={clsx(
-                    "transition-opacity",
-                    !monthConfirmed && "hidden sm:block",
-                )}
-            >
-                {selectedDraftStage === "reporting" ? (
-                        <>
-                            {shouldShowEmailDraftProgress ? (
-                                <EmailDraftInProgressCard
-                                    status={emailDraftCardStatus}
-                                    displayStage={emailDraftCardDisplayStage}
-                                    completedSteps={emailDraftCardCompletedSteps}
-                                    totalSteps={emailDraftCardTotalSteps}
-                                    sourceLabel={`${selectedInputSourceDescription} for ${selectedPeriodLabel}`}
-                                    error={emailDraftCardError}
-                                    notice={emailDraftCardNotice}
-                                    pollingDegraded={emailDraftPollingDegraded}
-                                    onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
-                                    retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
-                                    onCancel={isEmailDraftBusy ? () => {
-                                        void handleCancelEmailDraft();
-                                    } : undefined}
-                                    cancelDisabled={emailDraftCancelBusy}
-                                    isCancelling={emailDraftCancelBusy}
-                                    manualFallbackMessage={canContinueDraftManually ? "You can keep editing the update below while the backend draft connection is unavailable." : null}
-                                />
-                            ) : null}
-                            {hasDraftTemplate ? (
-                                <>
-                                    <div ref={draftTemplateSectionRef} className="scroll-mt-28 space-y-4 sm:mt-8 sm:space-y-6 lg:mt-10">
-                                    {optionalDataSourcesSection}
-                                    {!shouldShowEmailDraftProgress ? (
-                                        <div className="relative">
-                                        <button
-                                            type="button"
-                                            disabled={emailDraftActionBusy || isSelectedMonthInFuture || selectedInputSources.length === 0}
-                                            onClick={() => {
-                                                void handleGenerateDraftFromEmailClick();
-                                            }}
-                                            className={clsx(
-                                                "group flex min-h-[5.25rem] w-full items-center justify-between gap-3 rounded-2xl border px-5 py-3 text-left shadow-sm transition disabled:cursor-not-allowed sm:min-h-0 sm:gap-4 sm:p-5",
-                                                canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
-                                                    ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
-                                                    : "cursor-not-allowed border-[var(--vr-color-border)] bg-white sm:border-[rgba(0,128,128,0.32)] sm:bg-[rgba(0,255,215,0.08)]",
-                                            )}
-                                        >
-                                            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                                                <div className={clsx(
-                                                    "hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1 sm:flex",
-                                                    hasNoSourceForAssistedDraft
-                                                        ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
-                                                        : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
-                                                )}>
-                                                    {emailDraftActionBusy ? (
-                                                        <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                                    ) : (
-                                                        <SparklesIcon className="h-5 w-5" />
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-base sm:font-bold sm:normal-case sm:tracking-normal sm:text-gray-950">
-                                                        <span className="sm:hidden">AI drafting</span>
-                                                        <span className="hidden sm:inline">{emailDraftButtonTitle}</span>
-                                                        <span className="relative ml-2 hidden align-middle text-[var(--vr-color-primary)] transition group-hover:text-black sm:inline-flex" aria-hidden="true">
-                                                            <InformationCircleIcon className="h-3.5 w-3.5" />
-                                                            <span className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-2rem)] translate-y-1 rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-left text-xs font-medium normal-case leading-5 tracking-normal text-white opacity-0 shadow-[0_14px_30px_-10px_rgba(15,23,42,0.65)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus:translate-y-0 group-focus:opacity-100">
-                                                                {emailDraftButtonDescription}
-                                                                <span className="absolute left-2 top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-slate-950" />
-                                                            </span>
-                                                        </span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <span className={clsx(
-                                                "flex flex-shrink-0 items-center justify-center rounded-full border px-3 py-1 text-xs font-black transition sm:h-10 sm:w-10 sm:rounded-xl sm:px-0 sm:py-0 sm:group-hover:translate-x-1",
-                                                "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:border-[var(--vr-palette-black)] group-hover:bg-[var(--vr-palette-black)]",
-                                            )}>
-                                                <span className="sm:hidden">Draft</span>
-                                                <ArrowRightIcon className={clsx(
-                                                    "hidden h-5 w-5 sm:block",
-                                                    "text-current",
-                                                )} />
-                                            </span>
-                                        </button>
-                                        <div className="absolute left-[6.75rem] top-1/2 z-10 -translate-y-1/2 sm:hidden">
-                                            <CardInfoTooltip info={emailDraftButtonDescription} />
-                                        </div>
-                                        </div>
-                                    ) : null}
-                                <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
-                                    <input type="hidden" name="intent" value="review" />
-                                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
-                                    {formMetricKeys.map((metricKey) => (
-                                        <input key={metricKey} type="hidden" name={metricKey} value={metricValues[metricKey] || ""} />
-                                    ))}
-                                    <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
-                                    <input type="hidden" name="financialSnapshot" value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""} />
-                                    <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
-                                    <input type="hidden" name="presentationMode" value={presentationMode} />
-                                    {privateAudienceVisibility.map((audience) => (
-                                        <input key={audience} type="hidden" name="audienceVisibility" value={audience} />
-                                    ))}
-                                    <input type="hidden" name="summary" value={summary} />
-                                    <input type="hidden" name="sourceUrl" value={sourceUrl} />
-                                    <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
-                                    <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
-                                    <input type="hidden" name="pitchDeckContentType" value={pitchDeckContentType} />
-                                    <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
-                                    <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
-                                    <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
-                                    <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
-                                    <input type="hidden" name="manualSummary" value={manualSummary} />
-                                    <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
-                                    <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
-                                    <input type="hidden" name="videoContentType" value={videoContentType} />
-                                    <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
-                                    <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
-                                    <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
-                                    <input type="hidden" name="month" value={selectedMonth} />
-                                    <input type="hidden" name="year" value={selectedYear} />
-                                    <input type="hidden" name="updateCadence" value={updateCadence || "monthly"} />
-                                    {isWeeklyUpdate && selectedWeekOption ? (
-                                        <>
-                                            <input type="hidden" name="weekStart" value={selectedWeekOption.startIso} />
-                                            <input type="hidden" name="weekEnd" value={selectedWeekOption.endIso} />
-                                        </>
-                                    ) : null}
-
-                                    {renderSelectedMonthSummaryCard("hidden sm:block")}
-
-                                    <section className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5" aria-labelledby="financial-metrics-source-title">
-                                        <div>
-                                            <h2 id="financial-metrics-source-title" className="text-base font-black text-gray-950 sm:text-lg">Financial metrics</h2>
-                                            <p className="mt-1 text-sm leading-6 text-slate-600">
-                                                Metrics come from a verified financial connection. Manual metric entry is not available.
-                                            </p>
-                                        </div>
-
-                                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                                            {financialMetricSources.map((source) => {
-                                                const connected = isConnectedInputSource(source);
-                                                const selected = selectedDraftInputSources.has(source.key);
-                                                const isStripe = source.key === "stripe";
-                                                return (
-                                                    <article key={source.key} className="flex min-h-32 flex-col justify-between rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4">
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div className="flex min-w-0 items-center gap-3">
-                                                                <DraftSourceLogo sourceKey={source.key} />
-                                                                <div className="min-w-0">
-                                                                    <h3 className="text-base font-black text-gray-950">{source.label}</h3>
-                                                                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                                                                        {isStripe ? "Revenue and subscription metrics" : "Invoices and accounting metrics"}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            <span className={clsx(
-                                                                "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em]",
-                                                                connected
-                                                                    ? "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)]"
-                                                                    : "bg-white text-slate-500 ring-1 ring-[var(--vr-color-border)]",
-                                                            )}>
-                                                                {compactSourceStatusLabel(source)}
-                                                            </span>
-                                                        </div>
-
-                                                        {connected ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => toggleDraftInputSource(source)}
-                                                                aria-pressed={selected}
-                                                                className={clsx(
-                                                                    "mt-4 inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-black transition",
-                                                                    selected
-                                                                        ? "bg-[var(--vr-color-primary)] text-white"
-                                                                        : "border border-[var(--vr-color-primary)] bg-white text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.10)]",
-                                                                )}
-                                                            >
-                                                                {selected ? `Using ${source.label}` : `Use ${source.label}`}
-                                                            </button>
-                                                        ) : (
-                                                            <Link
-                                                                to={manageConnectionsHref}
-                                                                className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-black text-white transition hover:bg-[var(--vr-palette-black)]"
-                                                            >
-                                                                Connect {source.label}
-                                                            </Link>
-                                                        )}
-                                                    </article>
-                                                );
-                                            })}
-                                        </div>
-                                        {compactSourcesLoading ? (
-                                            <p className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
-                                                <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                                                Checking connector status...
-                                            </p>
-                                        ) : null}
-                                    </section>
-
-                                    <div
-                                        role="status"
-                                        className={clsx(
-                                            "flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold",
-                                            hasMinimumFounderAnswers
-                                                ? "border-[rgba(0,128,128,0.22)] bg-[rgba(0,255,215,0.10)] text-[var(--vr-color-primary)]"
-                                                : "border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] text-[var(--vr-color-text)]",
-                                        )}
-                                    >
-                                        <span>{founderQuestionRequirementText}</span>
-                                        <span className="rounded-full bg-white px-3 py-1 text-xs font-black">
-                                            {answeredFounderQuestionCount}/5 answered
-                                        </span>
-                                    </div>
-                                    {founderQuestionGateError ? (
-                                        <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
-                                            {founderQuestionGateError}
-                                        </p>
-                                    ) : null}
-
-                                    <div className="space-y-5">
-                                        <SectionWithExample
-                                            label="Key Highlights"
-                                            name="highlights"
-                                            value={highlights}
-                                            onChange={setHighlights}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            mobileAdvanceTo="challenges"
-                                            placeholder="What went well this month? Major wins, product launches, partnerships..."
-                                        />
-                                        <SectionWithExample
-                                            label="Challenges"
-                                            name="challenges"
-                                            value={challenges}
-                                            onChange={setChallenges}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            mobileAdvanceTo="learnings"
-                                            placeholder="What obstacles are you facing? Where do you need help?"
-                                        />
-                                        <SectionWithExample
-                                            label="Learnings"
-                                            name="learnings"
-                                            value={learnings}
-                                            onChange={setLearnings}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            mobileAdvanceTo="next30Days"
-                                            placeholder="What did you learn from customers, experiments, or execution this month?"
-                                        />
-                                        <SectionWithExample
-                                            label="Next 30 Days"
-                                            name="next30Days"
-                                            value={next30Days}
-                                            onChange={setNext30Days}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            mobileAdvanceTo="asks"
-                                            placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                                        />
-                                        <SectionWithExample
-                                            label="Support request"
-                                            name="asks"
-                                            value={asks}
-                                            onChange={setAsks}
-                                            enableMobileAdvance={isMobileTourViewport}
-                                            placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
-                                        />
-                                    </div>
-
-                                </Form>
-                                    {materialsSection}
-                                    </div>
-                                </>
-                            ) : null}
-                        </>
-                    ) : null}
-
-            </section>
-
-            {isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate ? (
-                <div className="pointer-events-none fixed inset-x-4 top-[4.5rem] z-30 flex min-h-14 items-center sm:hidden" aria-label="Draft progress">
-                    <div className="min-w-0 flex-1 rounded-xl border border-[var(--vr-color-border)] bg-white px-3 py-2 shadow-lg shadow-black/10">
-                        <div className="flex items-center justify-between gap-3">
-                            <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[var(--vr-color-primary)]">Draft progress</p>
-                            <p className="shrink-0 text-sm font-black text-gray-950">25%</p>
-                        </div>
-                        <div className="mt-1 flex items-center gap-2">
-                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200/80">
-                                <div className="h-full w-1/4 rounded-full bg-[var(--vr-color-primary)]" />
-                            </div>
-                            <p className="shrink-0 text-[10px] font-bold text-slate-500">Draft</p>
-                        </div>
-                    </div>
-                </div>
-            ) : null}
-
-            <VibeRaisingStickyStepBar
-                key={monthConfirmed ? "draft-template-actions" : "select-month-actions"}
-                className={clsx(
-                    !monthConfirmed && "hidden sm:block",
-                )}
-                hideStatusOnMobile={isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate}
-                hideBackOnMobile
-                statusIcon={draftStickyStatusIcon}
-                statusTitle={draftStickyBar.statusTitle}
-                statusDetail={draftStickyBar.statusDetail}
-                onBack={draftStickyBar.onBack}
-                tertiaryLabel={isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling..." : "Cancel draft") : undefined}
-                mobileTertiaryLabel={isEmailDraftBusy ? (emailDraftCancelBusy ? "Cancelling" : "Cancel") : undefined}
-                onTertiary={isEmailDraftBusy ? () => { void handleCancelEmailDraft(); } : undefined}
-                tertiaryDisabled={emailDraftCancelBusy}
-                primaryLabel={draftStickyBar.primaryLabel}
-                onPrimary={draftStickyBar.onPrimary}
-                primaryDisabled={draftStickyBar.primaryDisabled}
-                primaryType={draftStickyBar.primaryType}
-                primaryForm={draftStickyBar.primaryForm}
-            />
-
-            {showStoryMaterialsSuggestion ? (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div
-                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                        onClick={dismissStoryMaterialsSuggestion}
-                        aria-hidden
-                    />
-
-                    <section
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="story-materials-suggestion-title"
-                        className="relative z-[110] w-full max-w-2xl overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl"
-                    >
-                        <div className="flex items-start justify-between gap-4 border-b border-[var(--vr-color-border)] px-6 pb-4 pt-6">
-                            <div>
-                                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                    Founder-first update
-                                </p>
-                                <h2 id="story-materials-suggestion-title" className="mt-2 text-xl font-black leading-tight text-[var(--vr-color-text)]">
-                                    No metrics? Add deck/video.
-                                </h2>
-                            </div>
+                {showRegenerateConfirm && (
+                    <UpdateDialog title="Create a fresh AI draft?" onClose={handleCancelRegenerateDraft}>
+                        <p>
+                            Use the latest data for {selectedPeriodLabel}. You can keep writing while it runs, and
+                            compare the result before choosing your draft.
+                        </p>
+                        <div className="flex flex-wrap justify-end gap-2">
                             <button
                                 type="button"
-                                onClick={dismissStoryMaterialsSuggestion}
-                                className="flex-shrink-0 rounded-full p-2 text-[var(--vr-color-text-sub)] transition hover:bg-[var(--vr-color-neutral-100)] hover:text-[var(--vr-color-text)]"
-                                aria-label="Dismiss pitch deck and video suggestion"
-                            >
-                                <XMarkIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <div className="px-6 py-6">
-                            <p className="text-sm leading-7 text-[var(--vr-color-text-mid)]">
-                                Add a short deck or walkthrough so MLAI can understand the story behind the numbers.
-                            </p>
-
-                            {missingFounderLinkedInDrafts.length > 0 ? (
-                                <div className="mt-5 space-y-3 rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4">
-                                    <p className="text-sm font-black text-[var(--vr-color-text)]">Strongly recommended: founder LinkedIn</p>
-                                    {missingFounderLinkedInDrafts.map((draft) => (
-                                        <label key={draft.id} className="block">
-                                            <span className="mb-1 block text-xs font-bold text-[var(--vr-color-text-sub)]">{draft.name}</span>
-                                            <input
-                                                type="url"
-                                                inputMode="url"
-                                                value={draft.linkedinUrl}
-                                                onChange={(event) => {
-                                                    const nextValue = event.target.value;
-                                                    setMissingFounderLinkedInDrafts((current) =>
-                                                        current.map((item) =>
-                                                            item.id === draft.id ? { ...item, linkedinUrl: nextValue } : item,
-                                                        ),
-                                                    );
-                                                }}
-                                                placeholder="https://www.linkedin.com/in/..."
-                                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-300 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
-                                            />
-                                        </label>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="mt-5 rounded-2xl border border-[rgba(0,128,128,0.14)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-primary)]">
-                                    Founder LinkedIn links are already attached, giving MLAI useful company context.
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row">
-                            <button
-                                type="button"
-                                onClick={handleAddStoryMaterials}
-                                className="inline-flex flex-1 items-center justify-center rounded-xl bg-[var(--vr-palette-black)] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-black/10 transition hover:bg-[var(--vr-palette-coral)] active:scale-[0.98]"
-                            >
-                                Add pitch deck or video
-                            </button>
-                            <button
-                                type="button"
-                                onClick={dismissStoryMaterialsSuggestion}
-                                className="inline-flex flex-1 items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3.5 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)] active:scale-[0.98]"
-                            >
-                                Keep writing
-                            </button>
-                        </div>
-                    </section>
-                </div>
-            ) : null}
-
-            {showRegenerateConfirm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl ring-1 ring-black/5">
-                        <div className="border-b border-[var(--vr-color-border)] px-6 py-5">
-                            <div className="flex items-start gap-4">
-                                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(255,200,1,0.16)] text-[var(--vr-palette-orange)] ring-1 ring-[rgba(255,200,1,0.30)]">
-                                    <ExclamationTriangleIcon className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-black text-[var(--vr-color-text)]">Replace this draft?</h2>
-                                    <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        Running again rebuilds the <strong className="font-bold text-gray-900">{selectedPeriodLabel}</strong> draft from scratch using your latest data{regenerateDialogSourceLabels.length > 0 ? <> from <strong className="font-bold text-gray-900">{regenerateDialogSourceLabels.join(", ")}</strong></> : null}, and can take up to 20 minutes. The current draft — including any manual edits — will be replaced. We keep a backup of the previous version.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col-reverse gap-3 px-6 py-4 sm:flex-row sm:justify-end">
-                            <button
-                                type="button"
+                                className="update-button secondary"
                                 onClick={handleCancelRegenerateDraft}
-                                disabled={emailDraftActionBusy}
-                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
+                                className="update-button"
                                 onClick={handleConfirmRegenerateDraft}
                                 disabled={emailDraftActionBusy}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {emailDraftActionBusy ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
-                                Regenerate {selectedPeriodLabel}
+                                Create draft
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {showLegacyDraftFlow ? (
-            <>
-            <Form method="POST" className="space-y-6">
-                <input type="hidden" name="intent" value="review" />
-                <input
-                    type="hidden"
-                    name="metricKeys"
-                    value={formMetricKeys.join(",")}
-                />
-                <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
-                <input type="hidden" name="financialSnapshot" value={financialSnapshot ? JSON.stringify(financialSnapshot) : ""} />
-                <input type="hidden" name="conciseAnalysis" value={conciseAnalysis ? JSON.stringify(conciseAnalysis) : ""} />
-                <input type="hidden" name="presentationMode" value={presentationMode} />
-                <input type="hidden" name="summary" value={summary} />
-                <input type="hidden" name="sourceUrl" value={sourceUrl} />
-                <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
-                <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
-                <input type="hidden" name="pitchDeckContentType" value={pitchDeckContentType} />
-                <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
-                <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
-                <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
-                <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
-                <input type="hidden" name="manualSummary" value={manualSummary} />
-                <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
-                <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
-                <input type="hidden" name="videoContentType" value={videoContentType} />
-                <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
-                <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
-                <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
-
-                <section>
-                    <div className="flex items-end justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-black text-gray-950">Selected inputs</h2>
-                            <p className="mt-3 text-sm text-slate-500">
-                                Sources and materials included in this draft.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="mt-6 rounded-2xl border border-[var(--vr-color-border)] bg-white p-5 shadow-sm">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex flex-wrap gap-2">
-                                {selectedInputSourceLabels.length > 0 ? (
-                                    selectedInputSourceLabels.map((label) => (
-                                        <span key={label} className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
-                                            {label}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-gray-500 ring-1 ring-gray-100">
-                                        Manual materials only
-                                    </span>
-                                )}
-                            </div>
-                            {manualDocuments.length > 0 ? (
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {manualDocuments.map((document) => (
-                                        <span key={document.id} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
-                                            {document.originalFilename}
-                                        </span>
-                                    ))}
-                                </div>
-                            ) : null}
-                        </div>
-                        <div className="flex shrink-0 justify-end">
-                            {!isEdit && (
-                                <Link
-                                    to={manageConnectionsHref}
-                                    className="inline-flex items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
-                                >
-                                    Manage connections
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                </section>
-
-                <section>
-                    <div className="flex items-end justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-black text-gray-950">AI drafting</h2>
-                            <p className="mt-3 text-sm text-slate-500">
-                                Use selected sources to generate a first draft.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="mt-6">
-                        {emailDraftCardVisible ? (
-                            <EmailDraftInProgressCard
-                                status={emailDraftCardStatus}
-                                displayStage={emailDraftCardDisplayStage}
-                                completedSteps={emailDraftCardCompletedSteps}
-                                totalSteps={emailDraftCardTotalSteps}
-                                sourceLabel={`${selectedInputSourceDescription} for ${selectedPeriodLabel}`}
-                                error={emailDraftCardError}
-                                notice={emailDraftCardNotice}
-                                pollingDegraded={emailDraftPollingDegraded}
-                                onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
-                                retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
-                                onCancel={isEmailDraftBusy ? () => {
-                                    void handleCancelEmailDraft();
-                                } : undefined}
-                                cancelDisabled={emailDraftCancelBusy}
-                                isCancelling={emailDraftCancelBusy}
-                            />
-                        ) : (
-                            <button
-                                type="button"
-                                disabled={emailDraftActionBusy || isSelectedMonthUnavailable || selectedInputSources.length === 0}
-                                onClick={() => {
-                                    void handleGenerateDraftFromEmailClick();
-                                }}
-                                className={clsx(
-                                    "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
-                                    canGenerateDraftFromEmail && !isSelectedMonthUnavailable && selectedInputSources.length > 0
-                                        ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
-                                        : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
-                                )}
-                            >
-                                <div className="flex min-w-0 items-center gap-4">
-                                    <div className={clsx(
-                                        "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1",
-                                        hasNoSourceForAssistedDraft
-                                            ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
-                                            : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
-                                    )}>
-                                        {emailDraftActionBusy ? (
-                                            <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                        ) : (
-                                            <SparklesIcon className="h-5 w-5" />
-                                        )}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-base font-bold text-gray-950">
-                                            {emailDraftButtonTitle}
-                                        </p>
-                                        <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                                            {emailDraftButtonDescription}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className={clsx(
-                                    "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition group-hover:translate-x-1",
-                                    hasNoSourceForAssistedDraft
-                                        ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
-                                        : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
-                                )}>
-                                    <ArrowRightIcon className={clsx(
-                                        "h-5 w-5",
-                                        hasNoSourceForAssistedDraft ? "text-gray-300" : "text-current",
-                                    )} />
-                                </span>
-                            </button>
-                        )}
-                    </div>
-                </section>
-
-                <section>
-                    <div className="flex items-end justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-black text-gray-950">Update draft</h2>
-                            <p className="mt-3 text-sm text-slate-500">
-                                Edit metrics and submission-ready dot points for {activeDisplayMonth} {activeDisplayYear}.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="relative mt-6">
-                    <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
-	                    {financialSnapshot ? (
-	                        <FinancialChartsSection snapshot={financialSnapshot} analysis={conciseAnalysis} />
-	                    ) : null}
-	                        {/* ─── Growth Charts ─── */}
-                        {!financialSnapshot && pastMonthCards.length > 0 && (hasRevenueChart || hasActiveUsersChart) && (
-                            <div className={clsx("grid gap-4", hasRevenueChart && hasActiveUsersChart ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
-                                {hasRevenueChart && (
-                                    <GrowthChart
-                                        data={chartData}
-                                        onSelect={expandCardFromChart}
-                                        title="Revenue"
-                                        subtitle="Monthly revenue with MoM growth"
-                                        formatter={formatCompact}
-                                    />
-                                )}
-                                {hasActiveUsersChart && (
-                                    <GrowthChart
-                                        data={activeUsersChartData}
-                                        onSelect={expandCardFromChart}
-                                        title="Active Users"
-                                        subtitle="Monthly active users with MoM growth"
-                                        formatter={formatUsers}
-                                    />
-                                )}
-                            </div>
-                        )}
-
-                {/* ─── Stacked Card Layout ─── */}
-                {pastMonthCards.length > 0 && (
-                    <div className="relative">
-                        {/* Past month cards — grayed-out, peeking behind current */}
-	                        {pastMonthCards.map((card, index) => (
-	                            <div key={index} id={`past-month-${index}`} className="hidden">
-                                {/* Collapsed: gray card strip peeking behind */}
-                                <button
-                                    type="button"
-                                    onClick={() => toggleCardExpand(index)}
-                                    className={clsx(
-                                        "w-full text-left rounded-xl border transition-all",
-                                        expandedCards.has(index)
-                                            ? "border-gray-300 bg-white shadow-sm"
-                                            : "border-gray-200 bg-gray-100/80 hover:bg-gray-100"
-                                    )}
-                                >
-                                    <div className="flex items-center justify-between px-5 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <h4 className="text-sm font-bold text-gray-600">{card.month}</h4>
-                                            {!expandedCards.has(index) && (
-                                                <>
-                                                    {getMetricOptionsForMetrics(card.metrics).length > 0 && (
-                                                        <span className="flex items-center gap-2 text-xs text-gray-400">
-                                                            {getMetricOptionsForMetrics(card.metrics).map(m => (
-                                                                <span key={m.key} className="whitespace-nowrap">{m.label}: {m.prefix || ""}{card.metrics[m.key]}</span>
-                                                            ))}
-                                                        </span>
-                                                    )}
-                                                    {getMetricOptionsForMetrics(card.metrics).length === 0 && (
-                                                        <span className="text-xs text-gray-400 truncate max-w-[300px]">{(card.highlights || "").slice(0, 80)}...</span>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-gray-400 font-medium bg-gray-200/60 px-2 py-0.5 rounded-full">Past</span>
-                                            <ChevronDownIcon className={clsx("w-4 h-4 text-gray-400 transition-transform", expandedCards.has(index) && "rotate-180")} />
-                                        </div>
-                                    </div>
-                                </button>
-
-                                {/* Expanded: full editable content */}
-                                {expandedCards.has(index) && (
-                                    <div className="border border-t-0 border-gray-300 rounded-b-xl bg-white px-5 py-4 space-y-3 -mt-1">
-                                        {/* Metrics — square boxes */}
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Metrics</label>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                                                {getEditableMetricOptions(card.metrics, new Set(Object.keys(card.metrics))).map(m => {
-                                                    const active = m.key in card.metrics;
-                                                    return (
-                                                        <div
-                                                            key={m.key}
-                                                            onClick={() => {
-                                                                if (active) {
-                                                                    const updated = { ...card.metrics };
-                                                                    delete updated[m.key];
-                                                                    setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: updated } : c));
-                                                                } else {
-                                                                    updatePastMonthMetric(index, m.key, "");
-                                                                }
-                                                            }}
-                                                            className={clsx(
-                                                                "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
-                                                                active
-                                                                    ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                                    : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
-                                                            )}
-	                                                        >
-                                                            <MetricInfoBadge info={m.info} />
-	                                                            <div className={clsx(
-                                                                "w-5 h-5 rounded-full flex items-center justify-center mb-1",
-                                                                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                                            )}>
-                                                                {m.icon}
-                                                            </div>
-                                                            {active ? (
-                                                                <input
-                                                                    type="text"
-                                                                    value={card.metrics[m.key] || ""}
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                    onChange={(e) => updatePastMonthMetric(index, m.key, e.target.value)}
-                                                                    placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-xs font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
-                                                                />
-                                                            ) : (
-                                                                <p className="text-xs font-extrabold text-gray-300">—</p>
-                                                            )}
-                                                            <p className={clsx(
-                                                                "text-[8px] font-semibold uppercase tracking-wide mt-0.5",
-                                                                active ? "text-gray-600" : "text-gray-400"
-                                                            )}>{m.label}</p>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Highlights</label>
-                                            <BulletInput value={card.highlights} onChange={(v) => updatePastMonthField(index, "highlights", v)} placeholder="Key highlight..." section="highlights" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Challenges</label>
-                                            <BulletInput value={card.challenges} onChange={(v) => updatePastMonthField(index, "challenges", v)} placeholder="Challenge faced..." section="challenges" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Learnings</label>
-                                            <BulletInput value={card.learnings} onChange={(v) => updatePastMonthField(index, "learnings", v)} placeholder="Learning from this month..." section="learnings" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Next 30 Days</label>
-                                            <BulletInput value={card.next30Days} onChange={(v) => updatePastMonthField(index, "next30Days", v)} placeholder="Priority for the next month..." section="next30Days" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Asks</label>
-                                            <BulletInput value={card.asks} onChange={(v) => updatePastMonthField(index, "asks", v)} placeholder="Where could MLAI help?" section="asks" />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Hidden inputs for included past months */}
-                                <input type="hidden" name={`pastMonth_${index}_month`} value={card.month} />
-                                <input type="hidden" name={`pastMonth_${index}_highlights`} value={card.highlights} />
-                                <input type="hidden" name={`pastMonth_${index}_challenges`} value={card.challenges} />
-                                <input type="hidden" name={`pastMonth_${index}_asks`} value={card.asks} />
-                                <input type="hidden" name={`pastMonth_${index}_learnings`} value={card.learnings} />
-                                <input type="hidden" name={`pastMonth_${index}_next30Days`} value={card.next30Days} />
-                                {Object.entries(card.metrics).map(([key, value]) => (
-                                    <input key={key} type="hidden" name={`pastMonth_${index}_${key}`} value={value} />
-                                ))}
-                            </div>
-                        ))}
-
-                        {/* Current month card — prominent, always visible */}
-                        <div
-                            id="current-month-card"
-                            className={clsx(
-	                                "rounded-xl border-2 bg-white p-6 space-y-5 shadow-md ring-1 scroll-mt-24",
-	                                activeMonthTheme.borderClass,
-	                                activeMonthTheme.ringClass,
-	                            )}
-	                        >
-	                            {!isViewingCurrentUpdate && (
-	                                <>
-	                                    <input type="hidden" name="month" value={selectedMonth} />
-	                                    <input type="hidden" name="year" value={selectedYear} />
-	                                    <input type="hidden" name="highlights" value={highlights} />
-	                                    <input type="hidden" name="challenges" value={challenges} />
-	                                    <input type="hidden" name="asks" value={asks} />
-	                                    <input type="hidden" name="learnings" value={learnings} />
-	                                    <input type="hidden" name="next30Days" value={next30Days} />
-	                                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
-	                                    {getMetricOptionsForMetrics(metricValues).map((metric) => (
-	                                        <input key={metric.key} type="hidden" name={metric.key} value={metricValues[metric.key] || ""} />
-	                                    ))}
-	                                </>
-	                            )}
-
-                            {/* Metrics — square boxes, click to activate */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
-                                </label>
-	                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-	                                    {getEditableMetricOptions(activeMetricValues, activeSelectedMetrics).map((m) => {
-	                                        const active = activeSelectedMetrics.has(m.key);
-	                                        return (
-	                                            <div
-	                                                key={m.key}
-	                                                onClick={(event) => {
-	                                                    if ((event.target as HTMLElement).closest("input,button,a,textarea,select")) return;
-	                                                    activateActiveMetric(m.key);
-	                                                }}
-                                                className={clsx(
-                                                    "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
-                                                    active
-                                                        ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                        : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
-                                                )}
-	                                            >
-                                                <MetricInfoBadge info={m.info} />
-	                                                <div className={clsx(
-                                                    "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                                )}>
-                                                    {m.icon}
-                                                </div>
-                                                {active ? (
-                                                    <input
-	                                                        id={`active-metric-${m.key}`}
-	                                                        type="text"
-	                                                        name={isViewingCurrentUpdate ? m.key : undefined}
-	                                                        value={activeMetricValues[m.key] || ""}
-	                                                        onClick={(e) => e.stopPropagation()}
-	                                                        onChange={(e) => updateActiveMetric(m.key, e.target.value)}
-                                                        placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                        className="w-full min-w-0 border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-sm font-extrabold text-gray-900 placeholder:text-xs focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-base"
-                                                    />
-                                                ) : (
-                                                    <p className="text-base font-extrabold text-gray-300">—</p>
-                                                )}
-                                                <p className={clsx(
-                                                    "mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-tight tracking-wide",
-                                                    active ? "text-gray-600" : "text-gray-400"
-                                                )}>{m.label}</p>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Qualitative fields — auto-expanding, no scroll */}
-                            <div className="space-y-4">
-	                                <SectionWithExample
-	                                    label="Key Highlights"
-	                                    name={isViewingCurrentUpdate ? "highlights" : `pastMonth_${activePastIndex}_highlights`}
-	                                    value={activeHighlights}
-	                                    onChange={updateActiveHighlights}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    mobileAdvanceTo={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
-                                    rows={3}
-                                    placeholder="What went well this month? Major wins, product launches, partnerships..."
-                                />
-	                                <SectionWithExample
-	                                    label="Challenges"
-	                                    name={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
-	                                    value={activeChallenges}
-	                                    onChange={updateActiveChallenges}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    mobileAdvanceTo={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
-                                    rows={3}
-                                    placeholder="What obstacles are you facing? Where do you need help?"
-                                />
-	                                <SectionWithExample
-	                                    label="Learnings"
-	                                    name={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
-	                                    value={activeLearnings}
-	                                    onChange={updateActiveLearnings}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    mobileAdvanceTo={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
-                                    rows={3}
-                                    placeholder="What did you learn from customers, experiments, or execution this month?"
-                                />
-	                                <SectionWithExample
-	                                    label="Next 30 Days"
-	                                    name={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
-	                                    value={activeNext30Days}
-	                                    onChange={updateActiveNext30Days}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    mobileAdvanceTo={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
-                                    rows={3}
-                                    placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                                />
-	                                <SectionWithExample
-	                                    label="Support request"
-	                                    name={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
-	                                    value={activeAsks}
-	                                    onChange={updateActiveAsks}
-                                    enableMobileAdvance={isMobileTourViewport}
-                                    rows={3}
-                                    placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    </UpdateDialog>
                 )}
-
-                {/* ─── Default Form (when no email draft) ─── */}
-                {pastMonthCards.length === 0 && (
-                    <div
-                        className={clsx(
-                            "rounded-xl border bg-white p-6 space-y-5 ring-1",
-                            selectedMonthTheme.borderClass,
-                            selectedMonthTheme.ringClass,
-                        )}
-                    >
-                        {/* Metrics — square boxes, click to activate */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
-                            </label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                {getEditableMetricOptions(metricValues, selectedMetrics).map((m) => {
-                                    const active = selectedMetrics.has(m.key);
-                                    return (
-                                        <div
-                                            key={m.key}
-                                            onClick={(event) => {
-                                                if ((event.target as HTMLElement).closest("input,button,a,textarea,select")) return;
-                                                setSelectedMetrics((previous) => {
-                                                    if (previous.has(m.key)) return previous;
-                                                    const next = new Set(previous);
-                                                    next.add(m.key);
-                                                    return next;
-                                                });
-                                                focusMetricInput(`default-metric-${m.key}`);
-                                            }}
-                                            className={clsx(
-                                                "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
-                                                active
-                                                    ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                    : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
-                                            )}
-	                                        >
-                                            <MetricInfoBadge info={m.info} />
-	                                            <div className={clsx(
-                                                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                            )}>
-                                                {m.icon}
-                                            </div>
-                                            {active ? (
-                                                <input
-                                                    id={`default-metric-${m.key}`}
-                                                    type="text"
-                                                    name={m.key}
-                                                    value={metricValues[m.key] || ""}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
-                                                    placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                    className="w-full min-w-0 border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-sm font-extrabold text-gray-900 placeholder:text-xs focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-base"
-                                                />
-                                            ) : (
-                                                <p className="text-base font-extrabold text-gray-300">—</p>
-                                            )}
-                                            <p className={clsx(
-                                                "mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-tight tracking-wide",
-                                                active ? "text-gray-600" : "text-gray-400"
-                                            )}>{m.label}</p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Qualitative Sections */}
-                        <div className="space-y-5">
-                            <SectionWithExample
-                                label="Key Highlights"
-                                name="highlights"
-                                value={highlights}
-                                onChange={setHighlights}
-                                placeholder="What went well this month? Major wins, product launches, partnerships..."
-                            />
-                            <SectionWithExample
-                                label="Challenges"
-                                name="challenges"
-                                value={challenges}
-                                onChange={setChallenges}
-                                placeholder="What obstacles are you facing? Where do you need help?"
-                            />
-                            <SectionWithExample
-                                label="Learnings"
-                                name="learnings"
-                                value={learnings}
-                                onChange={setLearnings}
-                                placeholder="What did you learn from customers, experiments, or execution this month?"
-                            />
-                            <SectionWithExample
-                                label="Next 30 Days"
-                                name="next30Days"
-                                value={next30Days}
-                                onChange={setNext30Days}
-                                placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
-                            />
-                            <SectionWithExample
-                                label="Support request"
-                                name="asks"
-                                value={asks}
-                                onChange={setAsks}
-                                placeholder="How can MLAI help? Feedback, introductions, advice, or specific expertise..."
-                            />
-                        </div>
-                    </div>
+                {showEmailWizard && isClientMounted && (
+                    <DraftFromEmailWizard
+                        isOpen={showEmailWizard}
+                        onClose={handleEmailWizardClose}
+                        onGoogleConnected={handleEmailWizardConnected}
+                        backendBaseUrl={backendBaseUrl}
+                        companyDomain={user.domain}
+                    />
                 )}
-
-                    </fieldset>
-                    {isEmailDraftBusy && (
-                        <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/25" aria-hidden />
-                    )}
-                    </div>
-                </section>
-
-                {materialsSection}
-            </Form>
-
-            {isClientMounted ? (
-                <DraftFromEmailWizard
-                    isOpen={showEmailWizard}
-                    onClose={handleEmailWizardClose}
-                    onGoogleConnected={handleEmailWizardConnected}
-                    backendBaseUrl={backendBaseUrl}
-                    companyDomain={user.domain}
-                />
-            ) : null}
-            <CreateUpdateMobileTour
-                open={mobileTourOpen}
-                stepIndex={mobileTourStepIndex}
-                steps={mobileTourSteps}
-                onBack={goToPreviousMobileTourStep}
-                onClose={closeMobileTour}
-                onNext={goToNextMobileTourStep}
-            />
-            </>
-            ) : null}
-        </div>
+            </div>
+        </VibeRaisingWorkflowLayout>
     );
 }

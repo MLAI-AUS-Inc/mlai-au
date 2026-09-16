@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -111,9 +110,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -134,7 +131,7 @@ export default function ArticleContent() {
         <p><strong>{TOPIC}</strong> — {"Founders clubs are not just another networking event. In the sources, they are described as recurring communities where founders meet, share what is working, talk through what is not, and help each other move faster. That practical difference matters. A one-off event might give you a few new contacts, but a club is designed for repeated connection, trust, and honest conversations between people who are building companies and dealing with similar pressure."}</p>
         <p>{"Founders often carry decisions, risk, and uncertainty in ways that other people around them do not fully understand. The examples here position founders clubs as spaces for support, collaboration, and growth, whether that happens through peer sharing programs, city-based meetups, or broader startup communities across Australia. Some clubs organise regular in-person connection, and others frame their value around community and collaboration at a national level."}</p>
         <p>{"For founders clubs are built to solve the isolation problem, focus on Helps reduce isolation while increasing support and momentum."}</p>
-        <p>{"In practice, founders clubs are built to solve the isolation problem works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+        <p>{"A useful first conversation starts with a specific question you can share safely. Ask for a perspective or introduction, then decide what evidence you need from customers or your own work."}</p>
         <ArticleImageBlock
           src={HERO_IMAGE}
           alt={HERO_IMAGE_ALT}
@@ -197,14 +194,7 @@ export default function ArticleContent() {
           <h3>{"Commitment reduces randomness"}</h3>
           <p>{"When members expect to return, they are more likely to share real problems, give honest feedback, and help each other over time."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the founders clubs checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -237,7 +227,7 @@ export default function ArticleContent() {
           <h2>{"Choose a founders club that matches the way you actually build"}</h2>
           <p>{"The best founders club is not always the biggest or the loudest. It is the one that fits the kind of support you need right now. If you want local connection, a city-based community can make it easier to meet people regularly and build real trust over time. Sources in this section show both models: founder programs built around peer learning and support, and recurring local communities that bring founders together in person."}</p>
           <p>{"A practical next step is to test a club by the quality of participation, not the brand around it. Look at whether members actually show up, whether the group has a clear format, and whether conversations help you move on a real problem. Founder Sports Club, for example, centres on small monthly local meetups with a few founders, while Aussie Founders Club presents itself as a wider Australian startup community. Neither format is automatically better."}</p>
-          <p>{"In practice, choose a founders club that matches the way you actually build works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+          <p>{"Before committing, inspect a current session’s topic, format and expectations. Choose a group where you can contribute and learn; membership alone does not establish customer demand or business progress."}</p>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-7e9cdbce-f430-4e65-8051-2b4e7b3d639e.jpg?alt=media&token=77817074-ab4b-403d-88d4-166db7fa890a"
             alt="Choose a founders club that matches the way you actually build"
@@ -254,17 +244,17 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://fizzymag.com/articles/scale-up-founders-club-resource-for-entrepreneurs", title: "The Role of Founders' Clubs in Scaling Businesses Discover How Scale-Up Founders' Clubs Propel Entrepreneurial Success", publisher: "fizzymag.com", description: "Authoritative reference supporting The Role of Founders' Clubs in Scaling Businesses Discover How Scale-Up Founders' Clubs Propel Entrepreneurial Success.", category: "guide"},
-          {id: 2, href: "https://www.artofmondays.com/founder-sports-club", title: "Founder Sports Club | by Art of Mondays", publisher: "artofmondays.com", description: "Authoritative reference supporting Founder Sports Club | by Art of Mondays.", category: "guide"},
-          {id: 3, href: "https://tidyhq.com/blog/starting-a-new-club-what-you-need", title: "Starting a New Club: Essential Setup Checklist | TidyHQ", publisher: "tidyhq.com", description: "Authoritative reference supporting Starting a New Club: Essential Setup Checklist | TidyHQ.", category: "guide"},
-          {id: 4, href: "https://stripe.com/resources/more/checklist-for-business-startups-what-founding-teams-need-to-do-first", title: "Start-up business checklist for founding teams | Stripe", publisher: "stripe.com", description: "Authoritative reference supporting Start-up business checklist for founding teams | Stripe.", category: "guide"},
-          {id: 5, href: "https://cohortspace.com.au/gold-coast-startup-programs/", title: "programs -", publisher: "cohortspace.com.au", description: "Authoritative reference supporting programs -.", category: "guide"},
-          {id: 6, href: "https://www.swisspreneur.org/blog/startup-club", title: "Startup Club Guide: How to Launch and Grow in 2025 - Swisspreneur", publisher: "swisspreneur.org", description: "Authoritative reference supporting Startup Club Guide: How to Launch and Grow in 2025 - Swisspreneur.", category: "guide"},
-          {id: 7, href: "https://au.linkedin.com/company/aussiefoundersclub", title: "Aussie Founders Club | LinkedIn", publisher: "au.linkedin.com", description: "Authoritative reference supporting Aussie Founders Club | LinkedIn.", category: "guide"},
-          {id: 8, href: "https://www.inspiredfounders.com.au/theinspiredclub", title: "The Inspired Club \u2014 Inspired Founders", publisher: "inspiredfounders.com.au", description: "Authoritative reference supporting The Inspired Club \u2014 Inspired Founders.", category: "guide"},
-          {id: 9, href: "https://fundersclub.com/blog/2016/06/07/founders-guide-one-on-ones-at-startups/", title: "Founders' Guide: One-on-ones | FundersClub", publisher: "fundersclub.com", description: "Authoritative reference supporting Founders' Guide: One-on-ones | FundersClub.", category: "guide"},
-          {id: 10, href: "https://startupwiseguys.com/all-programs/the-founders-club/", title: "The Founders Club - Startup Wise Guys", publisher: "startupwiseguys.com", description: "Authoritative reference supporting The Founders Club - Startup Wise Guys.", category: "guide"},
-          {id: 11, href: "https://www.swisspreneur.org/blog/entrepreneur-club", title: "Entrepreneur Club Guide: Your Pathway to Success in 2025 - Swisspreneur", publisher: "swisspreneur.org", description: "Authoritative reference supporting Entrepreneur Club Guide: Your Pathway to Success in 2025 - Swisspreneur.", category: "guide"},
+          {id: 1, href: "https://fizzymag.com/articles/scale-up-founders-club-resource-for-entrepreneurs", title: "The Role of Founders' Clubs in Scaling Businesses Discover How Scale-Up Founders' Clubs Propel Entrepreneurial Success", publisher: "fizzymag.com", description: "", category: "guide"},
+          {id: 2, href: "https://www.artofmondays.com/founder-sports-club", title: "Founder Sports Club | by Art of Mondays", publisher: "artofmondays.com", description: "", category: "guide"},
+          {id: 3, href: "https://tidyhq.com/blog/starting-a-new-club-what-you-need", title: "Starting a New Club: Essential Setup Checklist | TidyHQ", publisher: "tidyhq.com", description: "", category: "guide"},
+          {id: 4, href: "https://stripe.com/resources/more/checklist-for-business-startups-what-founding-teams-need-to-do-first", title: "Start-up business checklist for founding teams | Stripe", publisher: "stripe.com", description: "", category: "guide"},
+          {id: 5, href: "https://cohortspace.com.au/gold-coast-startup-programs/", title: "programs -", publisher: "cohortspace.com.au", description: "", category: "guide"},
+          {id: 6, href: "https://www.swisspreneur.org/blog/startup-club", title: "Startup Club Guide: How to Launch and Grow in 2025 - Swisspreneur", publisher: "swisspreneur.org", description: "", category: "guide"},
+          {id: 7, href: "https://au.linkedin.com/company/aussiefoundersclub", title: "Aussie Founders Club | LinkedIn", publisher: "au.linkedin.com", description: "", category: "guide"},
+          {id: 8, href: "https://www.inspiredfounders.com.au/theinspiredclub", title: "The Inspired Club \u2014 Inspired Founders", publisher: "inspiredfounders.com.au", description: "", category: "guide"},
+          {id: 9, href: "https://fundersclub.com/blog/2016/06/07/founders-guide-one-on-ones-at-startups/", title: "Founders' Guide: One-on-ones | FundersClub", publisher: "fundersclub.com", description: "", category: "guide"},
+          {id: 10, href: "https://startupwiseguys.com/all-programs/the-founders-club/", title: "The Founders Club - Startup Wise Guys", publisher: "startupwiseguys.com", description: "", category: "guide"},
+          {id: 11, href: "https://www.swisspreneur.org/blog/entrepreneur-club", title: "Entrepreneur Club Guide: Your Pathway to Success in 2025 - Swisspreneur", publisher: "swisspreneur.org", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

@@ -78,8 +78,7 @@ app/components/testimonial-tetris/
 ├── testimonialData.ts           # Testimonial content & auto-sizing config
 ├── types.ts                     # TypeScript interfaces
 ├── utils.ts                     # Helper functions
-├── README.md                    # This file
-└── PR_DESCRIPTION.md            # Pull request documentation
+└── README.md                    # This file
 ```
 
 ---

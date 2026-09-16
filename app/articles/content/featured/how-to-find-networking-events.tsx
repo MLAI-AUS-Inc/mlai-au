@@ -103,7 +103,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Choose an event around the people you hope to meet and the question you want to explore. Verify the organiser, format and current availability before making plans.",
   items: [
     { label: 'Where can I find networking events near me?', description: 'Start with Meetup, Eventbrite, Humanitix and LinkedIn Events; filter by your city and industry.' },
     { label: 'How do I find events relevant to my field?', description: 'Use keywords (e.g., AI, design, product), follow organisers, and check coworking and university calendars.' },

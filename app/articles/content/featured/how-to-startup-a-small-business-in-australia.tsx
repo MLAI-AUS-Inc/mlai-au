@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -109,9 +108,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -198,14 +195,7 @@ export default function ArticleContent() {
           <p>{"If you are starting alone and want a simpler arrangement, one option may feel more manageable than a structure designed for more formal ownership or governance. If you are starting with other people, expect the ownership and management side to matter more from day one. The ATO guidance on business structures focuses on key obligations, so this is not just a legal label. It changes what you need to do after the business starts."}</p>
           <p>{"If you expect the business to stay small, a lower-admin structure may be enough for now. If you plan to bring in other owners, formalise decision-making, or build for growth, choosing with that in mind can save rework later. Pick one that matches your ownership arrangement, your appetite for administration, and the obligations you are ready to manage from the beginning."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the how to startup a small business checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -260,17 +250,17 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://whatsnext.dewr.gov.au/take-next-step/starting-small-business", title: "Starting a small business | What's Next", publisher: "whatsnext.dewr.gov.au", description: "Authoritative reference supporting Starting a small business | What's Next.", category: "guide"},
-          {id: 2, href: "https://www.nationwidesuper.com.au/how-to-start-a-small-business-in-australia-your-6-step-guide", title: "Start a Small Business in Australia: Your 6-Step How To Guide | Nationwide Super", publisher: "nationwidesuper.com.au", description: "Authoritative reference supporting Start a Small Business in Australia: Your 6-Step How To Guide | Nationwide Super.", category: "guide"},
-          {id: 3, href: "https://www.ato.gov.au/businesses-and-organisations/starting-registering-or-closing-a-business/starting-your-own-business", title: "Ready for business | Australian Taxation Office", publisher: "ato.gov.au", description: "Authoritative reference supporting Ready for business | Australian Taxation Office.", category: "guide"},
-          {id: 4, href: "https://business.gov.au/planning/business-plans/develop-your-business-plan", title: "Develop your business plan | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Develop your business plan | business.gov.au.", category: "guide"},
-          {id: 5, href: "https://www.boq.com.au/business/small-business/business-knowledge-hub/opening-a-small-business/the-top-ten-things-to-tick-off-when-starting-a-small-business", title: "The top 10 things to tick off when starting a small business | BOQ", publisher: "boq.com.au", description: "Authoritative reference supporting The top 10 things to tick off when starting a small business | BOQ.", category: "guide"},
-          {id: 6, href: "https://lawpath.com.au/blog/how-to-start-a-small-business-from-home", title: "How to Start a Small Business from Home (2026 Update)", publisher: "lawpath.com.au", description: "Authoritative reference supporting How to Start a Small Business from Home (2026 Update).", category: "guide"},
-          {id: 7, href: "https://workflowmax.com/blog/8-steps-for-building-a-small-business-strategic-plan", title: "8 steps for building a small business strategic plan", publisher: "workflowmax.com", description: "Authoritative reference supporting 8 steps for building a small business strategic plan.", category: "guide"},
-          {id: 8, href: "https://stripe.com/au/resources/more/strategy-for-startups-a-guide-to-creating-a-winning-business-plan", title: "Strategy for startups: Creating a winning startup strategy | Stripe", publisher: "stripe.com", description: "Authoritative reference supporting Strategy for startups: Creating a winning startup strategy | Stripe.", category: "guide"},
-          {id: 9, href: "https://www.jpmorgan.com/insights/business-planning/10-step-guide-to-starting-your-startup-business", title: "10-Step Guide to Starting Your Startup Business", publisher: "jpmorgan.com", description: "Authoritative reference supporting 10-Step Guide to Starting Your Startup Business.", category: "guide"},
-          {id: 10, href: "https://business.gov.au/guide/starting", title: "Guide to starting a business | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Guide to starting a business | business.gov.au.", category: "guide"},
-          {id: 11, href: "https://accrumelb.com.au/blog/strategic-planning-for-small-businesses-where-to-start/", title: "Strategic Planning for Small Businesses - Where to start - Accru Melbourne", publisher: "accrumelb.com.au", description: "Authoritative reference supporting Strategic Planning for Small Businesses - Where to start - Accru Melbourne.", category: "guide"},
+          {id: 1, href: "https://whatsnext.dewr.gov.au/take-next-step/starting-small-business", title: "Starting a small business | What's Next", publisher: "whatsnext.dewr.gov.au", description: "", category: "guide"},
+          {id: 2, href: "https://www.nationwidesuper.com.au/how-to-start-a-small-business-in-australia-your-6-step-guide", title: "Start a Small Business in Australia: Your 6-Step How To Guide | Nationwide Super", publisher: "nationwidesuper.com.au", description: "", category: "guide"},
+          {id: 3, href: "https://www.ato.gov.au/businesses-and-organisations/starting-registering-or-closing-a-business/starting-your-own-business", title: "Ready for business | Australian Taxation Office", publisher: "ato.gov.au", description: "", category: "guide"},
+          {id: 4, href: "https://business.gov.au/planning/business-plans/develop-your-business-plan", title: "Develop your business plan | business.gov.au", publisher: "business.gov.au", description: "", category: "guide"},
+          {id: 5, href: "https://www.boq.com.au/business/small-business/business-knowledge-hub/opening-a-small-business/the-top-ten-things-to-tick-off-when-starting-a-small-business", title: "The top 10 things to tick off when starting a small business | BOQ", publisher: "boq.com.au", description: "", category: "guide"},
+          {id: 6, href: "https://lawpath.com.au/blog/how-to-start-a-small-business-from-home", title: "How to Start a Small Business from Home (2026 Update)", publisher: "lawpath.com.au", description: "", category: "guide"},
+          {id: 7, href: "https://workflowmax.com/blog/8-steps-for-building-a-small-business-strategic-plan", title: "8 steps for building a small business strategic plan", publisher: "workflowmax.com", description: "", category: "guide"},
+          {id: 8, href: "https://stripe.com/au/resources/more/strategy-for-startups-a-guide-to-creating-a-winning-business-plan", title: "Strategy for startups: Creating a winning startup strategy | Stripe", publisher: "stripe.com", description: "", category: "guide"},
+          {id: 9, href: "https://www.jpmorgan.com/insights/business-planning/10-step-guide-to-starting-your-startup-business", title: "10-Step Guide to Starting Your Startup Business", publisher: "jpmorgan.com", description: "", category: "guide"},
+          {id: 10, href: "https://business.gov.au/guide/starting", title: "Guide to starting a business | business.gov.au", publisher: "business.gov.au", description: "", category: "guide"},
+          {id: 11, href: "https://accrumelb.com.au/blog/strategic-planning-for-small-businesses-where-to-start/", title: "Strategic Planning for Small Businesses - Where to start - Accru Melbourne", publisher: "accrumelb.com.au", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

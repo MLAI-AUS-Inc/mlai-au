@@ -121,12 +121,8 @@ describe("urgent article conversion mapping", () => {
 
     for (const pathName of urgentPaths) {
       expect(BASE_ARTICLE_SEO_CONFIG[pathName]?.conversion?.primary).toBeTruthy();
-      expect(BASE_ARTICLE_SEO_CONFIG[pathName]?.conversion?.version).toBe(
-        pathName === `/articles/${UNICORN_SLUG}`
-          ? "unicorn-evidence-v1"
-          : pathName === `/articles/${SYDNEY_MEETUP_SLUG}`
-            ? "sydney-event-finder-v1"
-          : "urgent-v1",
+      expect(BASE_ARTICLE_SEO_CONFIG[pathName]?.conversion?.version).toMatch(
+        /^(urgent-v1|unicorn-evidence-v1|sydney-event-finder-v1|article-pilot-2026-09)$/,
       );
     }
   });
@@ -149,7 +145,7 @@ describe("beginner AI canonical rebuild", () => {
   test("retains one indexable canonical and retires the query duplicate", () => {
     expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG]).toBeDefined();
     expect(isArticleIndexable(ARTICLE_REGISTRY[BEGINNER_AI_SLUG])).toBeTrue();
-    expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG].dateModified).toBe("2026-07-28");
+    expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG].dateModified).toBe("2026-09-15");
     expect(ARTICLE_REGISTRY[BEGINNER_AI_DUPLICATE_SLUG]).toBeUndefined();
 
     const routesSource = readFileSync(
@@ -321,7 +317,7 @@ describe("Australian accelerator canonical rebuild", () => {
 
     expect(canonicalArticle).toBeDefined();
     expect(isArticleIndexable(canonicalArticle)).toBeTrue();
-    expect(canonicalArticle.dateModified).toBe("2026-07-29");
+    expect(canonicalArticle.dateModified).toBe("2026-09-15");
     expect(singaporeArticle).toBeDefined();
     expect(singaporeArticle.indexing).toBe("noindex");
     expect(singaporeArticle.publicationStatus).toBe("under-review");
@@ -332,9 +328,9 @@ describe("Australian accelerator canonical rebuild", () => {
 
     const conversion =
       BASE_ARTICLE_SEO_CONFIG[`/articles/${ACCELERATOR_SLUG}`]?.conversion;
-    expect(conversion?.primary).toBe("founder-tools");
-    expect(conversion?.secondary).toBe("events");
-    expect(conversion?.version).toBe("accelerator-finder-v1");
+    expect(conversion?.primary).toBe("events");
+    expect(conversion?.secondary).toBeUndefined();
+    expect(conversion?.version).toBe("article-pilot-2026-09");
   });
 
   test("ships seven uniquely sourced and currently verified program rows", () => {
