@@ -6,12 +6,14 @@ const answers = { highlights: "Shipped a trial.", challenges: "Need onboarding f
 const percent = (html: string) => Number(html.match(/aria-label="Draft progress"[^>]*aria-valuenow="(\d+)"/)?.[1]);
 
 describe("compact update progress", () => {
-  test("each meaningful section contributes once, including multiple dot points", () => {
-    expect(percent(renderUpdateEditor({}))).toBe(0);
-    expect(percent(renderUpdateEditor({ highlights: "Shipped a trial.\nReceived our first feedback." }))).toBe(20);
-    expect(percent(renderUpdateEditor(answers))).toBe(60);
-    expect(percent(renderUpdateEditor({ ...answers, next30Days: "Ship onboarding.", asks: "Find a designer." }))).toBe(100);
-    expect(percent(renderUpdateEditor({ ...answers, asks: " \n- \n• " }))).toBe(60);
+  test("the gallery moves from Draft to Refine once the founder has writing", () => {
+    expect(renderUpdateEditor({})).toContain('<li aria-current="step">Draft</li>');
+    for (const writing of [{ highlights: "Shipped a trial.\nReceived our first feedback." }, answers, { summary: "Our latest chapter" }]) {
+      const html = renderUpdateEditor(writing);
+      expect(html).toContain('<li aria-current="step">Refine</li>');
+      expect(html.match(/aria-current="step"/g)).toHaveLength(1);
+      expect(html).not.toContain('aria-label="Draft progress"');
+    }
   });
   test("keeps three quiet steps and makes connections part of drafting", () => {
     const html = renderToStaticMarkup(<VibeRaisingProgressPanel activeStep="connect" progress={{draft:.4}} />);
@@ -22,9 +24,9 @@ describe("compact update progress", () => {
   });
   test("review and send stay locked until the saved draft has three answers", () => {
     const locked = renderUpdateEditor({ highlights: answers.highlights }, true);
-    expect(locked).toMatch(/data-stepper-step="publish"[^>]*disabled=""/);
+    expect(locked).toMatch(/<button[^>]*disabled=""[^>]*>Approve update/);
     const ready = renderUpdateEditor(answers, true);
-    expect(ready).not.toMatch(/data-stepper-step="publish"[^>]*disabled=""/);
+    expect(ready).not.toMatch(/<button[^>]*disabled=""[^>]*>Approve update/);
     expect(ready.match(/aria-current="step"/g)).toHaveLength(1);
     expect(ready).toContain("Approve update");
   });

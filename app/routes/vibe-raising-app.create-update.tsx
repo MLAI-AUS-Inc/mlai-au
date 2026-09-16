@@ -4,6 +4,10 @@ import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
 import UpdateDialog from "~/components/vibe-raising/UpdateDialog";
 import { isFinancialMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updateWorkingCopyKey } from "~/lib/update-working-copy";
 import "~/styles/update-editor.css";
+import "~/styles/update-gallery.css";
+import { hasUpdateWriting } from "~/lib/update-draft-writing";
+import ConnectorTile from "~/components/vibe-raising/ConnectorTile";
+import { completeConnectorCatalogue } from "~/lib/update-connectors";
 import UpdateCoverEditor from "~/components/vibe-raising/UpdateCoverEditor";
 import { coverUpdateText, normalizeUpdateCover, parseUpdateCoverForm } from "~/lib/update-cover";
 import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
@@ -148,6 +152,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
 const COMPACT_OPTIONAL_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
     "google_analytics",
     "stripe",
+    "bank_feed",
     "luma",
     "linear",
     "notion",
@@ -2324,7 +2329,7 @@ function SectionWithExample({
                             bulletIndex={i}
                             accessibleLabel={`${label} point ${i + 1}`}
                             enterKeyHint={enableMobileAdvance ? (mobileAdvanceTo ? "next" : "done") : undefined}
-                            placeholder={hints[i % hints.length] || placeholder}
+                            placeholder={placeholder || hints[i % hints.length]}
                             className="update-point-input"
                         />
                         {(items.length > 1 || item.trim().length > 0) && (
@@ -2935,6 +2940,7 @@ function CreateUpdateEditor() {
     const isSubmitting = navigation.state === "submitting";
     const { activeRun: sharedActiveDraftRun, refreshActiveRun } = useActiveDraftRun();
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
+    const hasExplicitSourceSelection = new URLSearchParams(location.search).has("inputs");
     const defaultData = actionData?.step === "feedback" || actionData?.step === "publish-error" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
@@ -3154,7 +3160,7 @@ function CreateUpdateEditor() {
     );
     useEffect(() => {
         setSelectedDraftInputSources(new Set(initialSelectedInputSources));
-    }, [initialSelectedInputSourcesKey]);
+    }, [initialSelectedInputSourcesKey, hasExplicitSourceSelection]);
     const selectedInputSources = useMemo(
         () => Array.from(selectedDraftInputSources).filter((key) => VALID_INPUT_SOURCE_KEYS.has(key)),
         [selectedDraftInputSources],
@@ -3273,6 +3279,7 @@ function CreateUpdateEditor() {
     const generateDraftSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const shouldDimMetricsTemplate = false;
     const [awakeMetricCards, setAwakeMetricCards] = useState<Set<string>>(new Set());
+    const galleryConnectorSources = useMemo(() => completeConnectorCatalogue(compactSources), [compactSources]);
     const compactOptionalSources = useMemo(() => {
         const byKey = new Map(compactSources.map((source) => [source.key, source]));
         return COMPACT_OPTIONAL_SOURCE_KEYS
@@ -3295,7 +3302,7 @@ function CreateUpdateEditor() {
         const params = new URLSearchParams(location.search);
         for (const key of ["cadence", "month", "year", "weekStart", "step"]) params.delete(key);
         if (updateDate) params.set("date", updateDate); else params.delete("date");
-        if (selectedInputSources.length) params.set("inputs", selectedInputSources.join(",")); else params.delete("inputs");
+        params.set("inputs", selectedInputSources.join(","));
         return `${location.pathname}?${params}`;
     }, [location.pathname, location.search, updateDate, selectedInputSources]);
     const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
@@ -3340,13 +3347,12 @@ function CreateUpdateEditor() {
         };
     }, [backendBaseUrl]);
 
-    // On the edit/regenerate path (no ?inputs= deep link), pre-select the founder's
-    // connected sources once so the picker isn't empty and the generate button is enabled.
-    // Bails for create-new, for ?inputs= deep links, and once a selection already exists.
+    // Select connected sources once on first arrival. Explicit deep links and
+    // recovered choices, including an empty selection, take precedence.
     const didSeedEditSourcesRef = useRef(false);
     useEffect(() => {
         if (didSeedEditSourcesRef.current) return;
-        if (initialSelectedInputSources.length > 0) {
+        if (hasExplicitSourceSelection || initialSelectedInputSources.length > 0) {
             didSeedEditSourcesRef.current = true;
             return;
         }
@@ -3355,7 +3361,7 @@ function CreateUpdateEditor() {
             setSelectedDraftInputSources(new Set(connectedDraftInputSources));
         }
         didSeedEditSourcesRef.current = true;
-    }, [isEdit, initialSelectedInputSources, connectedDraftInputSources, selectedDraftInputSources]);
+    }, [hasExplicitSourceSelection, initialSelectedInputSources, connectedDraftInputSources, selectedDraftInputSources]);
 
     const toggleDraftInputSource = useCallback((source: VibeRaisingInputSourceSummary) => {
         if (!isConnectedInputSource(source)) return;
@@ -3516,8 +3522,13 @@ function CreateUpdateEditor() {
     };
     const handleDraftComplete = (data: any) => {
         if (!editorMountedRef.current) return;
-        // The worker has saved a candidate revision. Keep the working text untouched until the founder chooses.
-        setDraftCandidate(data);
+        // Populate an empty first draft immediately. Never replace writing, including
+        // text added while the request was running, without the founder choosing it.
+        if (hasUpdateWriting({ summary, highlights, challenges, learnings, next30Days, asks })) {
+            setDraftCandidate(data);
+        } else {
+            applyDraftCandidate(data);
+        }
     };
 
     useEffect(() => {
@@ -4016,9 +4027,10 @@ function CreateUpdateEditor() {
     }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso, activeUpdateId, creationKey, updateDate, expectedRevision, narrativeStart, narrativeEnd, user.activeCompanyId]);
 
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
-        const effectiveInputSources = options?.inputSources?.length ? options.inputSources : selectedInputSources;
+        const effectiveInputSources = (options?.inputSources ?? selectedInputSources)
+            .filter((key) => connectedDraftInputSources.includes(key));
         if (effectiveInputSources.length === 0) {
-            setEmailDraftUiError("Choose an optional connected source before generating a source-assisted draft.");
+            setEmailDraftUiError("Select at least one connected source to create your draft.");
             return;
         }
         if (!canGenerateDraftFromEmail) {
@@ -4054,11 +4066,13 @@ function CreateUpdateEditor() {
     }, [
         backendBaseUrl,
         canGenerateDraftFromEmail,
+        connectedDraftInputSources,
         isSelectedMonthUnavailable,
         navigate,
         selectedInputSources,
         startOrResumeEmailDraft,
         targetMonthIso,
+        updateDate,
     ]);
 
     const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
@@ -4069,19 +4083,16 @@ function CreateUpdateEditor() {
     }, [clearPersistedEmailDraftRun, startDraftFromSelectedInputs]);
 
     const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
-        // Entry paths like "Edit" never pass ?inputs= and hide the source cards,
-        // so fall back to every connected source rather than refusing to run.
-        const fallbackInputSources =
-            !request?.inputSources?.length && selectedInputSources.length === 0 && connectedDraftInputSources.length > 0
-                ? connectedDraftInputSources
-                : undefined;
-        if (fallbackInputSources) {
-            setSelectedDraftInputSources(new Set(fallbackInputSources));
-        }
+        // Only use the sources checked in the editor, including on retry.
         const enrichedRequest = {
             ...request,
-            inputSources: request?.inputSources ?? fallbackInputSources,
+            inputSources: (request?.inputSources ?? selectedInputSources)
+                .filter((key) => connectedDraftInputSources.includes(key)),
         };
+        if (!enrichedRequest.inputSources.length) {
+            setEmailDraftUiError("Select at least one connected source to create your draft.");
+            return;
+        }
         if (existingUpdateForSelectedMonth) {
             setPendingDraftRequest({
                 ...enrichedRequest,
@@ -4287,7 +4298,7 @@ function CreateUpdateEditor() {
         setUploadedVideoUrl(restored.videoUrl || ""); setVideoStoragePath(restored.videoStoragePath || "");
         setVideoContentType(restored.videoContentType || ""); setVideoFileSizeBytes(restored.videoFileSizeBytes || null);
         setVideoOriginalFilename(restored.videoOriginalFilename || "");
-        if (saved?.selectedSources && initialSelectedInputSources.length === 0) { setSelectedDraftInputSources(new Set(saved.selectedSources)); didSeedEditSourcesRef.current = true; }
+        if (saved?.selectedSources && !hasExplicitSourceSelection) { setSelectedDraftInputSources(new Set(saved.selectedSources)); didSeedEditSourcesRef.current = true; }
         setLoadedWorkingScope(workingScope);
         // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -4823,7 +4834,7 @@ function CreateUpdateEditor() {
         focusMetricInput(`active-metric-${key}`);
     };
 
-    const coverScopeKey = `${user.authUser.id}:${resolveActiveCompanyId(user)}:${selectedYear}:${selectedMonth}`;
+    const coverScopeKey = workingScope;
     const coverEditor = (
         <UpdateCoverEditor
             key={coverScopeKey}
@@ -5110,9 +5121,9 @@ function CreateUpdateEditor() {
         const isSurveyCommentsStep = endOfFlowSurveyStep === END_OF_FLOW_SURVEY_STEP_COUNT - 1;
 
         return (
-            <VibeRaisingWorkflowLayout activeStep={showSendToMlaiConfirmation ? "publish" : "review"} completedSteps={["draft"]} enabledSteps={canSubmitReviewToMlai ? ["draft", "review", "publish"] : ["draft", "review"]} onStepClick={handleReviewStepperClick}>
-                <div className="update-editor update-reader">
-                    <header className="update-editor-header"><div><button type="button" className="update-back" onClick={() => setDismissedFeedback(true)}><ArrowLeftIcon className="h-3.5 w-3.5" />Back to draft</button><h1>Review your update</h1></div><span className="update-editor-status">Saved draft</span></header>
+            <VibeRaisingWorkflowLayout variant="gallery" activeStep="review">
+                <div className="update-editor update-reader update-gallery">
+                    <header className="update-editor-header"><div><button type="button" className="update-back" onClick={() => setDismissedFeedback(true)}><ArrowLeftIcon className="h-3.5 w-3.5" />Back to draft</button><h1>Review your update</h1></div><nav className="gallery-progress" aria-label="Update progress"><ol><li>Draft</li><li>Refine</li><li aria-current="step">Review</li></ol></nav></header>
                     <div className="update-review-note"><span>This is how your update will appear.</span><span>Audience: {reviewAudienceVisibility.includes("community") ? "Community" : "Just for me"}</span></div>
                 <Form id={SEND_TO_MLAI_FORM_ID} method="POST" className="hidden">
                     <input type="hidden" name="intent" value="publish" />
@@ -5156,27 +5167,37 @@ function CreateUpdateEditor() {
 
     return (
         <VibeRaisingWorkflowLayout
+            variant="gallery"
             activeStep="draft"
             panelRef={draftStepperRef}
             enabledSteps={["draft"]}
             progress={{ draft: answeredFounderQuestionCount / 5 }}
         >
-            <div className="update-editor">
+            <div className="update-editor update-gallery">
                 <header className="update-editor-header">
                     <div>
                         <Link to="/founder-tools/updates" className="update-back">
                             <ArrowLeftIcon className="h-3.5 w-3.5" />
                             All updates
                         </Link>
-                        <h1>{isEdit ? "Edit your update" : "A little progress, shared."}</h1>
+                        <h1>{isEdit ? "Edit update" : "New update"}</h1>
+                        <div className="update-form-top">
+                            <label htmlFor="update-date"><span className="sr-only">Update date</span>
+                                <input id="update-date" type="date" form={DRAFT_REVIEW_FORM_ID} value={updateDate || ""} max={today} min="2025-01-01"
+                                    disabled={isSubmitting || saveDraftFetcher.state !== "idle" || isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)}
+                                    required={!existingData}
+                                    onChange={event => setUpdateDate(event.target.value)} />
+                            </label>
+                            {!updateDate && existingData && <span className="update-period-note">{selectedMonthLabel} · exact date not recorded</span>}
+                        </div>
                     </div>
-                    <span className="update-editor-status" aria-live="polite">
-                        {draftSaved && !hasUnsavedChanges
-                            ? "Draft saved"
-                            : hasUnsavedChanges
-                              ? "Unsaved changes"
-                              : "Your draft"}
-                    </span>
+                    <nav className="gallery-progress" aria-label="Update progress" ref={draftStepperRef}>
+                        <ol>
+                            <li aria-current={!hasUpdateWriting({ summary, highlights, challenges, learnings, next30Days, asks }) ? "step" : undefined}>Draft</li>
+                            <li aria-current={hasUpdateWriting({ summary, highlights, challenges, learnings, next30Days, asks }) ? "step" : undefined}>Refine</li>
+                            <li>Review</li>
+                        </ol>
+                    </nav>
                 </header>
                 <Form
                     id={DRAFT_REVIEW_FORM_ID}
@@ -5227,71 +5248,56 @@ function CreateUpdateEditor() {
                     <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
                     <input type="hidden" name="month" value={selectedMonth} />
                     <input type="hidden" name="year" value={selectedYear} />
-                    <div className="update-form-top">
-                        <label htmlFor="update-date"><CalendarDaysIcon className="h-4 w-4" />Update date
-                            <input id="update-date" type="date" value={updateDate || ""} max={today} min="2025-01-01"
-                                disabled={isSubmitting || saveDraftFetcher.state !== "idle" || isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)}
-                                required={!existingData}
-                                onChange={event => setUpdateDate(event.target.value)} />
-                        </label>
-                        <span className="update-period-note">{!updateDate && existingData ? `${selectedMonthLabel} · exact date not recorded` : "Share progress whenever it happens"}</span>
-                    </div>
+                    <div className="update-gallery-main">
                     <section className="update-ai" aria-labelledby="update-ai-heading">
                         <div className="update-ai-heading">
-                            <SparklesIcon className="update-ai-icon" />
                             <div className="update-ai-title">
-                                <h2 id="update-ai-heading">A head start with AI</h2>
-                                <p>Your connected tools, brought into a draft you can make your own.</p>
+                                <h2 id="update-ai-heading">{hasUpdateWriting({ summary, highlights, challenges, learnings, next30Days, asks }) ? "Your connected sources" : "Create your first draft"}</h2>
+                                <p>AI writes the first draft. You make it yours.</p>
                             </div>
+                            <div className="gallery-source-meta">
+                                {compactOptionalSources.length > 0 && <span className="gallery-source-count">
+                                    {compactOptionalSources.length} connected · {compactOptionalSources.filter(source => selectedDraftInputSources.has(source.key)).length} selected
+                                </span>}
+                                <Link className="gallery-manage" to={manageConnectionsHref}>Manage <span className="sr-only">connections</span><span aria-hidden="true">↗</span></Link>
+                            </div>
+                        </div>
+                        <fieldset className="gallery-source-picker" disabled={compactSourcesLoading || Boolean(compactSourcesError) || isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)}>
+                            <legend className="sr-only">Sources to include in your AI draft</legend>
+                            {compactSourcesLoading && <span className="gallery-source-message" role="status">Checking connections…</span>}
+                            <div className="connector-grid">
+                                {galleryConnectorSources.map(source => <ConnectorTile key={source.key} source={source}
+                                    selected={selectedDraftInputSources.has(source.key)}
+                                    onToggle={toggleDraftInputSource}
+                                    onConnect={() => navigate(`${manageConnectionsHref}#source-${source.key}`)} />)}
+                            </div>
+                        </fieldset>
+                        {!compactSourcesLoading && !compactOptionalSources.length && !compactSourcesError && (
+                            <p className="gallery-source-message">Connect a source to create your first draft, or start writing below.</p>
+                        )}
+                        <div className="gallery-ai-actions">
                             <button
                                 type="button"
-                                className="update-button"
+                                className="update-button gallery-create"
                                 disabled={
+                                    compactSourcesLoading || Boolean(compactSourcesError) ||
                                     emailDraftActionBusy ||
                                     isEmailDraftBusy ||
                                     Boolean(draftCandidate) ||
-                                    !selectedInputSources.length ||
+                                    !compactOptionalSources.some(source => selectedDraftInputSources.has(source.key)) ||
                                     isSelectedMonthUnavailable
                                 }
                                 onClick={handleGenerateDraftFromEmailClick}
                             >
-                                <SparklesIcon className="h-4 w-4" />
-                                {emailDraftActionBusy || isEmailDraftBusy ? "Drafting…" : "Draft with AI"}
+                                {emailDraftActionBusy || isEmailDraftBusy ? "Creating your draft…" : hasUpdateWriting({ summary, highlights, challenges, learnings, next30Days, asks }) ? "Draft again with AI" : "Create my draft"}
+                                <ArrowRightIcon className="h-4 w-4" />
                             </button>
-                        </div>
-                        <div className="update-connections" aria-label="Connected sources">
-                            {compactSourcesLoading && (
-                                <span className="text-xs text-slate-500">Checking connections…</span>
-                            )}
-                            {compactOptionalSources
-                                .filter(isConnectedInputSource)
-                                .sort(
-                                    (a, b) =>
-                                        Number(["xero", "stripe"].includes(b.key)) -
-                                        Number(["xero", "stripe"].includes(a.key)),
-                                )
-                                .map((source) => (
-                                    <button
-                                        type="button"
-                                        key={source.key}
-                                        className="update-source"
-                                        data-financial={source.key === "xero" || source.key === "stripe"}
-                                        data-selected={selectedDraftInputSources.has(source.key)}
-                                        aria-pressed={selectedDraftInputSources.has(source.key)}
-                                        aria-label={`${selectedDraftInputSources.has(source.key) ? "Exclude" : "Include"} ${source.label} in AI draft`}
-                                        disabled={isEmailDraftBusy || emailDraftActionBusy}
-                                        onClick={() => toggleDraftInputSource(source)}
-                                    >
-                                        <CheckCircleIcon />
-                                        {source.label}
-                                    </button>
-                                ))}
-                            <Link to={manageConnectionsHref}>Manage connections ↗</Link>
+                            <button type="button" className="gallery-text-button" onClick={() => document.getElementById("update-summary")?.focus()}>Write it myself</button>
                         </div>
                         <p className="update-ai-note">
                             {connectedDraftInputSources.includes("xero") ||
                             connectedDraftInputSources.includes("stripe")
-                                ? "Financial figures are imported from your connected sources and can’t be edited here."
+                                ? "Financial figures are imported and read-only."
                                 : "Earning revenue? Connect Xero or Stripe to include reliable financial figures."}{" "}
                             {!compactSourcesLoading && !connectedDraftInputSources.length
                                 ? "You can start writing below."
@@ -5448,21 +5454,22 @@ function CreateUpdateEditor() {
                             Local recovery is unavailable in this browser. Save your draft before leaving this page.
                         </p>
                     )}
-                    <div className="update-writing">
+                    <div className="update-writing" ref={draftTemplateSectionRef}>
+                        <div className="gallery-writing-heading">
+                            <h2>Your draft</h2>
+                            <p>{generatedRevisionId ? "Your AI draft is ready. Edit and make it yours." : "AI will fill in the key points from your sources."}</p>
+                        </div>
                         <section className="update-section">
                             <label htmlFor="update-summary" className="update-summary-label">
                                 The short version
                             </label>
-                            <p className="update-section-help">
-                                A few lines that capture this period. What should someone remember?
-                            </p>
                             <BulletTextarea
                                 id="update-summary"
                                 name="summary"
                                 className="update-summary-input"
                                 value={summary}
                                 onChange={setSummary}
-                                placeholder="Recently, we…"
+                                placeholder="Your summary will appear here."
                             />
                         </section>
                         <SectionWithExample
@@ -5501,12 +5508,12 @@ function CreateUpdateEditor() {
                             placeholder="An introduction, feedback, or a specific skill you’re looking for…"
                         />
                     </div>
-                    <div className="update-form-end">
+                    </div>
+                    <aside className="update-form-end update-gallery-aside" aria-label="Cover and visibility">
                         {coverEditor}
                         <div className="update-audience">
                             <div>
-                                <strong>Who should see this?</strong>
-                                <p>Your draft stays private until you approve it.</p>
+                                <strong>Visibility</strong>
                             </div>
                             <label>
                                 <span className="sr-only">Update audience</span>
@@ -5517,18 +5524,18 @@ function CreateUpdateEditor() {
                                         setAudienceVisibility(normalizeAudienceVisibilityValue(event.target.value))
                                     }
                                 >
-                                    <option value="private">Just for me</option>
+                                    <option value="private">Only me</option>
                                     <option value="community">Community</option>
                                 </select>
                             </label>
                         </div>
-                    </div>
+                    </aside>
                 </Form>
                 <div className="update-actions">
                     <span className="update-action-status" aria-live="polite">
                         {draftCandidate
                             ? "Choose a draft above before saving."
-                            : !hasMinimumFounderAnswers
+                            : draftSaved && !hasUnsavedChanges ? "Draft saved" : !hasUpdateWriting({ summary, highlights, challenges, learnings, next30Days, asks }) ? "Ready to draft" : !hasMinimumFounderAnswers
                               ? "Answer any 3 sections to review."
                               : "Ready when you are."}
                     </span>
@@ -5559,7 +5566,7 @@ function CreateUpdateEditor() {
                             Boolean(draftCandidate)
                         }
                     >
-                        {isSubmitting ? "Saving…" : "Save & review"}
+                        {isSubmitting ? "Saving…" : "Review update"}
                         <ArrowRightIcon className="h-4 w-4" />
                     </button>
                 </div>
