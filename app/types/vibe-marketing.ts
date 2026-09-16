@@ -364,6 +364,7 @@ export interface VibeMarketingResearchAutomation {
   frequencyPerDay: number;
   localSendTimes: string[];
   enabled: boolean;
+  pauseReason?: string;
 }
 
 export interface VibeMarketingNotificationChannelsPayload {

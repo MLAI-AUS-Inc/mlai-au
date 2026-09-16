@@ -2281,6 +2281,7 @@ export function normalizeResearchAutomation(payload: unknown): VibeMarketingRese
       ? data.localSendTimes.map((item) => String(item))
       : [],
     enabled: Boolean(data.enabled ?? data.status === "active"),
+    pauseReason: String(data.pauseReason ?? ""),
   };
 }
 
