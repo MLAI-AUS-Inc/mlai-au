@@ -44,6 +44,8 @@ export function researchedIslands(result?: Record<string, unknown>): ResearchedI
     const item = value as ResearchedIsland;
     return Boolean(item && typeof item.id === "string" && typeof item.name === "string" && item.metrics &&
       Number.isFinite(item.metrics.total_volume) && item.metrics.total_volume > 0 &&
-      Number.isFinite(item.metrics.avg_difficulty) && Array.isArray(item.keywords) && item.keywords.length >= 3);
+      Number.isFinite(item.metrics.avg_difficulty) && Array.isArray(item.keywords) && item.keywords.length > 0 &&
+      item.keywords.every(row => row && typeof row.keyword === "string" && row.keyword.trim() &&
+        Number.isFinite(row.volume) && row.volume > 0 && Number.isFinite(row.difficulty) && row.difficulty >= 0 && row.difficulty <= 100));
   });
 }
