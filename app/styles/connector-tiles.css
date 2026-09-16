@@ -1,0 +1,34 @@
+.connector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 9px; }
+.connector-tile {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-rows: auto auto;
+  align-items: center; gap: 9px 8px; width: 100%; min-width: 0; padding: 13px 12px;
+  border: 1px solid #dfe3e1; border-radius: 9px; background: #ffffffb3;
+  color: #303b38; text-align: left; font-family: "Roboto", system-ui, sans-serif;
+  cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.connector-tile:hover { border-color: #93aba2; background: #fff; }
+.connector-tile[data-on="true"] { background: #dff5ec; border-color: #8dbdac; color: #173e32; box-shadow: inset 0 0 0 .5px #8dbdac; }
+.connector-tile[data-on="true"]:hover { background: #d0efe1; border-color: #528f79; }
+.connector-tile:focus-visible { outline: 2px solid #15856e; outline-offset: 3px; }
+.connector-tile:disabled { cursor: not-allowed; opacity: .62; }
+.connector-logo { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; overflow: hidden; }
+.connector-logo img, .connector-logo svg { width: 100%; height: 100%; object-fit: contain; }
+.connector-logo--stripe { background: #635bff; color: white; font-weight: 800; font-size: 23px; }
+.connector-logo--xero { background: #13b5ea; color: white; border-radius: 50%; font-size: 8px; font-weight: 700; }
+.connector-logo--linear { background: #202124; color: white; padding: 2px; }
+.connector-tile-name { font-weight: 500; font-size: 12px; line-height: 1.3; }
+.connector-tile-state { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #6b7771; }
+.connector-tile-state i { width: 5px; height: 5px; border-radius: 50%; background: #a7afa9; }
+.connector-tile[data-on="true"] .connector-tile-state { color: #166547; font-weight: 600; }
+.connector-tile[data-on="true"] .connector-tile-state i { background: #188461; }
+.connector-tile-status { grid-column: 1 / -1; font-size: 10px; line-height: 1.4; color: #6b7771; }
+.connector-tile[data-on="true"] .connector-tile-status { color: #346b56; }
+.connector-tile-description { grid-column: 1 / -1; font-size: 13px; line-height: 1.5; color: #69746f; }
+.connector-tile--detailed { padding: 20px; grid-template-columns: 34px minmax(0,1fr) auto; gap: 12px; min-height: 156px; }
+.connector-tile--detailed .connector-logo { width: 34px; height: 34px; }
+.connector-tile--detailed .connector-logo--stripe { font-size: 29px; }
+.connector-tile--detailed .connector-logo--xero { font-size: 10px; }
+.connector-tile--detailed .connector-tile-name { font-size: 16px; }
+.connector-tile--detailed .connector-tile-state, .connector-tile--detailed .connector-tile-status { font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .connector-tile { transition: none; } }
+@media (max-width: 480px) { .connector-grid { grid-template-columns: 1fr 1fr; } .connector-tile { padding: 12px 10px; } }

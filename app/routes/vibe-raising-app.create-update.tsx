@@ -6,6 +6,8 @@ import { isFinancialMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updat
 import "~/styles/update-editor.css";
 import "~/styles/update-gallery.css";
 import { hasUpdateWriting } from "~/lib/update-draft-writing";
+import ConnectorTile from "~/components/vibe-raising/ConnectorTile";
+import { completeConnectorCatalogue } from "~/lib/update-connectors";
 import UpdateCoverEditor from "~/components/vibe-raising/UpdateCoverEditor";
 import { coverUpdateText, normalizeUpdateCover, parseUpdateCoverForm } from "~/lib/update-cover";
 import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
@@ -150,6 +152,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
 const COMPACT_OPTIONAL_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
     "google_analytics",
     "stripe",
+    "bank_feed",
     "luma",
     "linear",
     "notion",
@@ -2937,6 +2940,7 @@ function CreateUpdateEditor() {
     const isSubmitting = navigation.state === "submitting";
     const { activeRun: sharedActiveDraftRun, refreshActiveRun } = useActiveDraftRun();
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
+    const hasExplicitSourceSelection = new URLSearchParams(location.search).has("inputs");
     const defaultData = actionData?.step === "feedback" || actionData?.step === "publish-error" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
@@ -3156,7 +3160,7 @@ function CreateUpdateEditor() {
     );
     useEffect(() => {
         setSelectedDraftInputSources(new Set(initialSelectedInputSources));
-    }, [initialSelectedInputSourcesKey]);
+    }, [initialSelectedInputSourcesKey, hasExplicitSourceSelection]);
     const selectedInputSources = useMemo(
         () => Array.from(selectedDraftInputSources).filter((key) => VALID_INPUT_SOURCE_KEYS.has(key)),
         [selectedDraftInputSources],
@@ -3275,6 +3279,7 @@ function CreateUpdateEditor() {
     const generateDraftSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const shouldDimMetricsTemplate = false;
     const [awakeMetricCards, setAwakeMetricCards] = useState<Set<string>>(new Set());
+    const galleryConnectorSources = useMemo(() => completeConnectorCatalogue(compactSources), [compactSources]);
     const compactOptionalSources = useMemo(() => {
         const byKey = new Map(compactSources.map((source) => [source.key, source]));
         return COMPACT_OPTIONAL_SOURCE_KEYS
@@ -3297,7 +3302,7 @@ function CreateUpdateEditor() {
         const params = new URLSearchParams(location.search);
         for (const key of ["cadence", "month", "year", "weekStart", "step"]) params.delete(key);
         if (updateDate) params.set("date", updateDate); else params.delete("date");
-        if (selectedInputSources.length) params.set("inputs", selectedInputSources.join(",")); else params.delete("inputs");
+        params.set("inputs", selectedInputSources.join(","));
         return `${location.pathname}?${params}`;
     }, [location.pathname, location.search, updateDate, selectedInputSources]);
     const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
@@ -3347,7 +3352,7 @@ function CreateUpdateEditor() {
     const didSeedEditSourcesRef = useRef(false);
     useEffect(() => {
         if (didSeedEditSourcesRef.current) return;
-        if (initialSelectedInputSources.length > 0) {
+        if (hasExplicitSourceSelection || initialSelectedInputSources.length > 0) {
             didSeedEditSourcesRef.current = true;
             return;
         }
@@ -3356,7 +3361,7 @@ function CreateUpdateEditor() {
             setSelectedDraftInputSources(new Set(connectedDraftInputSources));
         }
         didSeedEditSourcesRef.current = true;
-    }, [isEdit, initialSelectedInputSources, connectedDraftInputSources, selectedDraftInputSources]);
+    }, [hasExplicitSourceSelection, initialSelectedInputSources, connectedDraftInputSources, selectedDraftInputSources]);
 
     const toggleDraftInputSource = useCallback((source: VibeRaisingInputSourceSummary) => {
         if (!isConnectedInputSource(source)) return;
@@ -4293,7 +4298,7 @@ function CreateUpdateEditor() {
         setUploadedVideoUrl(restored.videoUrl || ""); setVideoStoragePath(restored.videoStoragePath || "");
         setVideoContentType(restored.videoContentType || ""); setVideoFileSizeBytes(restored.videoFileSizeBytes || null);
         setVideoOriginalFilename(restored.videoOriginalFilename || "");
-        if (saved?.selectedSources && initialSelectedInputSources.length === 0) { setSelectedDraftInputSources(new Set(saved.selectedSources)); didSeedEditSourcesRef.current = true; }
+        if (saved?.selectedSources && !hasExplicitSourceSelection) { setSelectedDraftInputSources(new Set(saved.selectedSources)); didSeedEditSourcesRef.current = true; }
         setLoadedWorkingScope(workingScope);
         // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -5257,21 +5262,15 @@ function CreateUpdateEditor() {
                                 <Link className="gallery-manage" to={manageConnectionsHref}>Manage <span className="sr-only">connections</span><span aria-hidden="true">↗</span></Link>
                             </div>
                         </div>
-                        <fieldset className="gallery-sources" disabled={isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)}>
-                            <legend className="sr-only">Connected sources to include in your AI draft</legend>
+                        <fieldset className="gallery-source-picker" disabled={compactSourcesLoading || Boolean(compactSourcesError) || isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)}>
+                            <legend className="sr-only">Sources to include in your AI draft</legend>
                             {compactSourcesLoading && <span className="gallery-source-message" role="status">Checking connections…</span>}
-                            {compactOptionalSources
-                                .slice()
-                                .sort((a, b) => Number(["xero", "stripe"].includes(b.key)) - Number(["xero", "stripe"].includes(a.key)))
-                                .map(source => (
-                                    <label key={source.key} className="gallery-source" title={`${source.label} · ${compactSourceStatusLabel(source)}`}>
-                                        <span className="gallery-source-logo" aria-hidden="true"><DraftSourceLogo sourceKey={source.key} /></span>
-                                        <span>{source.label}{source.status === "syncing" && <small>Syncing</small>}</span>
-                                        <input type="checkbox" checked={selectedDraftInputSources.has(source.key)}
-                                            aria-label={`Use ${source.label} in AI draft`}
-                                            onChange={() => toggleDraftInputSource(source)} />
-                                    </label>
-                                ))}
+                            <div className="connector-grid">
+                                {galleryConnectorSources.map(source => <ConnectorTile key={source.key} source={source}
+                                    selected={selectedDraftInputSources.has(source.key)}
+                                    onToggle={toggleDraftInputSource}
+                                    onConnect={() => navigate(`${manageConnectionsHref}#source-${source.key}`)} />)}
+                            </div>
                         </fieldset>
                         {!compactSourcesLoading && !compactOptionalSources.length && !compactSourcesError && (
                             <p className="gallery-source-message">Connect a source to create your first draft, or start writing below.</p>
