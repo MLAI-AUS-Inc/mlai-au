@@ -1,6 +1,9 @@
 import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
 
 export const MAX_COVER_BYTES = 10 * 1024 * 1024;
+// A presentation fallback, not a user upload: no asset token or backend mutation is needed.
+export const DEFAULT_UPDATE_COVER_URL = "/vibe-raising/covers/gallery-default.webp";
+export const DEFAULT_UPDATE_COVER_ALT = "Abstract blue circle and black arch with fine teal lines on cream paper";
 
 export function coverFileError(file: Pick<File, "type" | "size">): string | null {
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return "Choose a PNG, JPEG or WebP image.";
