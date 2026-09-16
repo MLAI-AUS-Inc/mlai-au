@@ -31,15 +31,15 @@ export default function CustomContentIslandBuilder({ open, onClose, companyId, o
   const focusLabel = ISLAND_FOCUSES.find((option) => option.id === brief.searchIntent)?.label || "Explore all opportunities";
   useEffect(() => { if (open) titleRef.current?.focus(); }, [open, view]);
   const title = saved ? "Your island is on the map" : researching ? "Finding your next content island" : finished ?
-    proposals.length ? "Explore your researched islands" : "Let’s try a different angle" :
+    proposals.length ? "Explore your researched islands" : run?.status === "completed" ? "More context could help" : "Research was interrupted" :
     ["What do you want to explore?", "What are your readers looking for?", "Ready to discover your islands?"][step];
   const subtitle = saved ? "Your island has a researched theme and real search data. You’re ready to explore article ideas." : researching ?
-    "We’re finding relevant searches and grouping them into themes with real demand. This can take a few minutes." : finished ?
+    "We’re exploring related terms and following promising searches, then grouping the closest matches into islands. A thorough search can take several minutes." : finished ?
     proposals.length ? "These themes come from relevant search data, ranked by opportunity. Choose one to start building around." :
-    "We only suggest islands when we find enough relevant keywords with measured search data." :
+    "Your brief is saved. You can refine it or try the research again." :
     ["A few words or a description is enough. Start with any topic, audience need, service, product or feature.",
-      "Keep the intent that fits your content, or explore all opportunities and let the research guide you.",
-      "We’ll research related keywords, filter them to your brief, then group and rank the strongest content themes."][step];
+      "We’ll prioritise your chosen intent while exploring closely related searches. You can also explore all opportunities.",
+      "We’ll search broadly across related terms and applications, follow promising leads, and recommend the closest content themes with real demand."][step];
 
   return (
     <Dialog open={open} onClose={() => { if (!busy && !adding) onClose(); }} className="relative z-[70]">
@@ -66,7 +66,7 @@ export default function CustomContentIslandBuilder({ open, onClose, companyId, o
             </div> : researching ? <div className="space-y-6 px-5 py-7 sm:px-8">
               <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5"><p className="break-words text-sm font-bold text-violet-900">{brief.subject}</p><p className="mt-1 text-xs text-violet-700">{focusLabel}</p></div>
               <ol aria-label="Research progress" className="space-y-4">{[
-                ["load_context", "Understand your topic"], ["research_sources", "Find related searches and measure demand"],
+                ["load_context", "Understand your topic"], ["research_sources", "Explore related terms and follow promising searches"],
                 ["synthesize", "Group keywords into relevant islands"], ["finalize", "Rank the strongest opportunities"],
               ].map(([key, label]) => {
                 const complete = run?.steps?.find((item) => item.key === key)?.status === "completed";
@@ -80,8 +80,10 @@ export default function CustomContentIslandBuilder({ open, onClose, companyId, o
                 <p className="text-xs font-semibold leading-5 text-slate-500">Google searches · Australia · English · DataForSEO<br />Monthly searches are estimates summed across related keywords, not unique people.</p>
                 {proposals.map((island, index) => <article key={island.id} className={clsx("rounded-2xl border p-5", index === 0 ? "border-violet-300 bg-violet-50/50" : "border-slate-200")}>
                   {index === 0 && <p className="mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-wide text-violet-700"><Sparkles className="h-3.5 w-3.5" />Recommended opportunity</p>}
+                  {island.keywords.length < 3 && <p className="mb-2 text-xs font-bold text-slate-600">Focused starting point · Limited search data</p>}
                   <h3 className="break-words text-lg font-black text-slate-950">{island.name}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{island.description}</p>
                   <dl className="my-4 grid grid-cols-3 gap-3"><div><dt className="text-xs leading-5 text-slate-500">Monthly searches</dt><dd className="text-lg font-black text-slate-950">{number(island.metrics.total_volume)}</dd></div><div><dt className="text-xs leading-5 text-slate-500">Related keywords</dt><dd className="text-lg font-black text-slate-950">{number(island.metrics.keyword_count)}</dd></div><div><dt className="text-xs leading-5 text-slate-500">Avg. difficulty</dt><dd className="text-lg font-black text-slate-950">{number(island.metrics.avg_difficulty)}<span className="text-xs font-medium text-slate-500"> / 100</span></dd></div></dl>
+                  {island.keywords.length < 3 && <p className="mb-4 text-xs leading-5 text-slate-500">This topic has a small set of measured searches. You can still use it to start exploring article ideas.</p>}
                   <details className="mb-4 text-sm"><summary className="cursor-pointer font-bold text-violet-700">See the searches behind this island</summary><ul className="mt-3 space-y-2">{island.keywords.slice(0, 10).map((keyword) => <li key={keyword.keyword} className="flex items-start justify-between gap-4 text-xs leading-5 text-slate-600"><span>{keyword.keyword}</span><span className="shrink-0 font-semibold">{number(keyword.volume)} / mo</span></li>)}</ul></details>
                   <button type="button" disabled={Boolean(adding)} onClick={() => void state.adopt(island.id)} className={clsx(primaryClass, "w-full")}>{adding === island.id ? <><Loader2 className="h-4 w-4 animate-spin" />Adding island…</> : "Add this island · free"}</button>
                 </article>)}

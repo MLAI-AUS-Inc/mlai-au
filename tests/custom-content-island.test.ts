@@ -13,8 +13,11 @@ describe("custom content island", () => {
     expect(EMPTY_ISLAND_BRIEF).not.toHaveProperty("name");
   });
   test("shows only measured proposals and recognises terminal research states", () => {
-    const island = { id: "one", name: "Gardening", metrics: { total_volume: 600, avg_difficulty: 20 }, keywords: [{}, {}, {}] };
+    const island = { id: "one", name: "Gardening", metrics: { total_volume: 600, avg_difficulty: 20 }, keywords: [{keyword: "balcony herbs", volume: 600, difficulty: 20}] };
     expect(researchedIslands({suggested_islands: [island, {...island, metrics: {total_volume: 0}}, {name: "Made up"}]})).toEqual([island]);
+    expect(researchedIslands({suggested_islands: [{...island, keywords: []}]})).toEqual([]);
+    expect(researchedIslands({suggested_islands: [{...island, keywords: [{keyword: "guess", volume: 600, difficulty: null}]}]})).toEqual([]);
+    expect(researchedIslands({suggested_islands: [{...island, keywords: [{keyword: "guess", volume: 0, difficulty: 20}]}]})).toEqual([]);
     expect(researchIsTerminal("completed")).toBe(true);
     expect(researchIsTerminal("failed")).toBe(true);
     expect(researchIsTerminal("queued")).toBe(false);
