@@ -81,6 +81,12 @@ export function useIslandResearch(companyId: string, onAdded: (island: VibeMarke
     return () => { stopped = true; clearTimeout(timer); controller.abort(); };
   }, [runId, companyId, terminal]);
 
+  useEffect(() => {
+    const adopted = run?.result?.adopted_proposal_ids;
+    if (Array.isArray(adopted)) setSelected(current => current.some(id => adopted.includes(id))
+      ? current.filter(id => !adopted.includes(id)) : current);
+  }, [run?.result?.adopted_proposal_ids]);
+
   async function post(body: Record<string, unknown>) {
     abort.current = new AbortController();
     const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" },
