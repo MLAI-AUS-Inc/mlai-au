@@ -1,3 +1,4 @@
+import { parseArticleEditorialSnapshot } from "~/lib/article-editorial";
 import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { readableBackendErrors } from "~/lib/backend-error";
 import { hasAcceptedAutofillRun } from "~/lib/vibe-marketing-autofill-state";
@@ -383,6 +384,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     return undefined;
   };
   return {
+    editorialSnapshot: parseArticleEditorialSnapshot(payload.editorialSnapshot),
     runId: asNullableString(payload.runId) ?? asNullableString(payload.run_id) ?? "",
     workflow: asNullableString(payload.workflow) ?? "",
     domain: asNullableString(payload.domain) ?? "",
@@ -993,6 +995,11 @@ export function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic |
   const onMain = asBoolean(payload.onMain ?? payload.on_main);
   return {
     id: asNullableString(payload.id) ?? undefined,
+    audienceId: asNullableString(payload.audienceId ?? payload.audience_id),
+    offerId: asNullableString(payload.offerId ?? payload.offer_id),
+    editorialSnapshot: parseArticleEditorialSnapshot(payload.editorialSnapshot ?? payload.editorial_snapshot),
+    originalEditorialSnapshot: parseArticleEditorialSnapshot(payload.originalEditorialSnapshot ?? payload.original_editorial_snapshot),
+    editorialProvenanceStatus: asNullableString(payload.editorialProvenanceStatus ?? payload.editorial_provenance_status) || "unknown",
     title: title ?? keyword ?? "Written article",
     slug: asNullableString(payload.slug),
     keyword: keyword ?? title ?? "",
@@ -2064,8 +2071,15 @@ export async function selectResearchedContentIslands(env: Env, request: Request,
   return { islands };
 }
 
-export function startVibeMarketingArticle(env: Env, request: Request, body: Record<string, unknown>) {
-  return startMarketingRun(env, request, "article", body);
+export async function startVibeMarketingArticle(env: Env, request: Request, body: Record<string, unknown>) {
+  const result = await startMarketingRun(env, request, "article", body);
+  // HTTP success alone does not confirm a queued article. Keep the current
+  // brief visible on every entry screen instead of redirecting to write-check
+  // or back to the discovery run and hiding a rejection/uncertain outcome.
+  if (!result.runId?.trim()) {
+    throw new Error(result.error || "Article generation could not be confirmed because the backend returned no run ID. Check existing article runs before retrying; no automatic retry was made.");
+  }
+  return result;
 }
 
 export async function recordVibeMarketingTopicFeedback(
