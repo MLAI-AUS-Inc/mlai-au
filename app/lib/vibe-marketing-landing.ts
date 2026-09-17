@@ -1,5 +1,16 @@
 import type { VibeMarketingBootstrap } from "~/types/vibe-marketing";
 
+// The dashboard only needs connection status. Fetching the repository picker
+// here makes every visit and background refresh wait for GitHub enumeration.
+export function isDashboardGithubConnected(bootstrap: Pick<VibeMarketingBootstrap, "settings" | "checks">) {
+  const state = String(bootstrap.settings.githubConnectionState ?? "").trim().toLowerCase();
+  return Boolean(
+    (bootstrap.checks.github?.passed && bootstrap.settings.githubRepo) ||
+      state === "connected" ||
+      state === "already_connected",
+  );
+}
+
 type VibeMarketingLandingBootstrap = Pick<
   VibeMarketingBootstrap,
   "articleSetupState" | "checks" | "hasCompletedArticleFlow" | "startPageMode"

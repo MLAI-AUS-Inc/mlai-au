@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { TableOfContents } from './TableOfContents'
+import { useArticleHydrated } from './ArticleHydration'
 
 type TocItem = {
   id: string
@@ -46,12 +47,17 @@ export function ArticleEnhancer({
   enableHowTo = false,
   enableMediaObject = false,
 }: ArticleEnhancerProps) {
+  const articleHydrated = useArticleHydrated()
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [howToJson, setHowToJson] = useState<string | null>(null)
   const [mediaJson, setMediaJson] = useState<string | null>(null)
   const [tocTarget, setTocTarget] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
+    // The layout may commit while its lazy article is still dehydrated. A
+    // portal or heading-ID mutation at that point changes React's hydration
+    // input. Wait for the article boundary's commit, not an arbitrary timeout.
+    if (!articleHydrated) return
     const container = document.querySelector(contentSelector)
     if (!container) {
       return
@@ -175,7 +181,7 @@ export function ArticleEnhancer({
     updateState(items)
 
     return () => observer.disconnect()
-  }, [articleDescription, articleTitle, contentSelector, enableHowTo, enableMediaObject, enableToc])
+  }, [articleHydrated, articleDescription, articleTitle, contentSelector, enableHowTo, enableMediaObject, enableToc])
 
   const hasToc = enableToc && tocItems.length > 1 && tocTarget
 

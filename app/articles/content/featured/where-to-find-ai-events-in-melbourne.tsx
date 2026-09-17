@@ -155,9 +155,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -293,14 +291,14 @@ export default function ArticleContent() {
 
       <ArticleReferences
           references={[
-            {id: 1, href: "https://amirbrooks.com.au/guides/melbourne-tech-ai-events-2026", title: "Melbourne Tech Events & AI Conferences 2026 | Amir Brooks", publisher: "amirbrooks.com.au", description: "Authoritative reference supporting Melbourne Tech Events & AI Conferences 2026 | Amir Brooks.", category: "guide"},
-            {id: 2, href: "https://www.inspire9.com/events-melbourne", title: "Business Events in Melbourne \u00b7 Coworking Richmond - Inspire9", publisher: "inspire9.com", description: "Authoritative reference supporting Business Events in Melbourne \u00b7 Coworking Richmond - Inspire9.", category: "guide"},
-            {id: 3, href: "https://australia.theaisummit.com/", title: "Home", publisher: "australia.theaisummit.com", description: "Authoritative reference supporting Home.", category: "guide"},
-            {id: 4, href: "https://enterpriseai-mel.coriniumintelligence.com/", title: "Enterprise AI Melbourne - Home", publisher: "enterpriseai-mel.coriniumintelligence.com", description: "Authoritative reference supporting Enterprise AI Melbourne - Home.", category: "guide"},
-            {id: 5, href: "https://www.melbconnect.com.au/ai-melbourne", title: "Melbourne Connect | Melbourne Connect | Melbourne AI Innovations &\u2026", publisher: "melbconnect.com.au", description: "Authoritative reference supporting Melbourne Connect | Melbourne Connect | Melbourne AI Innovations &\u2026.", category: "guide"},
-            {id: 6, href: "https://campus.buildclub.ai/events", title: "Build Club", publisher: "campus.buildclub.ai", description: "Authoritative reference supporting Build Club.", category: "guide"},
-            {id: 7, href: "https://nationaleducationsummit.com.au/melbourne/ai-in-the-classroom/", title: "AI in the Classroom Conference Melbourne", publisher: "nationaleducationsummit.com.au", description: "Authoritative reference supporting AI in the Classroom Conference Melbourne.", category: "guide"},
-            {id: 8, href: "https://globalai.community/chapters/melbourne/", title: "Global AI Melbourne - Global AI Community", publisher: "globalai.community", description: "Authoritative reference supporting Global AI Melbourne - Global AI Community.", category: "guide"},
+            {id: 1, href: "https://amirbrooks.com.au/guides/melbourne-tech-ai-events-2026", title: "Melbourne Tech Events & AI Conferences 2026 | Amir Brooks", publisher: "amirbrooks.com.au", description: "", category: "guide"},
+            {id: 2, href: "https://www.inspire9.com/events-melbourne", title: "Business Events in Melbourne \u00b7 Coworking Richmond - Inspire9", publisher: "inspire9.com", description: "", category: "guide"},
+            {id: 3, href: "https://australia.theaisummit.com/", title: "Home", publisher: "australia.theaisummit.com", description: "", category: "guide"},
+            {id: 4, href: "https://enterpriseai-mel.coriniumintelligence.com/", title: "Enterprise AI Melbourne - Home", publisher: "enterpriseai-mel.coriniumintelligence.com", description: "", category: "guide"},
+            {id: 5, href: "https://www.melbconnect.com.au/ai-melbourne", title: "Melbourne Connect | Melbourne Connect | Melbourne AI Innovations &\u2026", publisher: "melbconnect.com.au", description: "", category: "guide"},
+            {id: 6, href: "https://campus.buildclub.ai/events", title: "Build Club", publisher: "campus.buildclub.ai", description: "", category: "guide"},
+            {id: 7, href: "https://nationaleducationsummit.com.au/melbourne/ai-in-the-classroom/", title: "AI in the Classroom Conference Melbourne", publisher: "nationaleducationsummit.com.au", description: "", category: "guide"},
+            {id: 8, href: "https://globalai.community/chapters/melbourne/", title: "Global AI Melbourne - Global AI Community", publisher: "globalai.community", description: "", category: "guide"},
           ]}
           heading="Sources & further reading"
         />

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { MetaFunction } from "react-router";
 import SectionDivider from "~/components/SectionDivider";
 
-const LAST_UPDATED = "20 May 2026";
+const LAST_UPDATED = "8 September 2026";
 
 type LegalBlock =
   | { type: "p"; text: string }
@@ -141,6 +141,35 @@ const sections: LegalSection[] = [
       {
         type: "p",
         text: "Where a program involves children or students, MLAI aims to collect only what is reasonably needed for the educational purpose, use simulated or de-identified data where appropriate, and follow applicable school, partner, consent and legal requirements.",
+      },
+      { type: "h3", text: "Carbon, Cost & Convenience" },
+      {
+        type: "p",
+        text: "Carbon, Cost & Convenience is a free iPad educational game for individual learners and supervised classrooms. Continue Solo Offline stores game progress only on the device. Online Classroom lets a teacher create a time-limited classroom and students join using a teacher-provided class and table code.",
+      },
+      {
+        type: "p",
+        text: "Online Classroom processes a teacher- or student-chosen display name, a technical Firebase user identifier, classroom and table membership, gameplay choices, household state, scores and daily trends. It also processes limited authentication diagnostics and device-integrity information through Firebase Authentication, Firebase App Check and Apple App Attest to operate and protect the service.",
+      },
+      {
+        type: "p",
+        text: "Teachers use Sign in with Apple when creating or resuming an online classroom. The app does not request the teacher's Apple email address or full name. Students receive an automatically generated anonymous Firebase account and do not provide an email address or password to the app. Players may use a fictional or classroom-safe display name.",
+      },
+      {
+        type: "p",
+        text: "Online information is used for app functionality: authenticating the current device, placing a player at the correct table, synchronising teacher-controlled classroom state, preserving the player's household state, calculating outcomes and displaying shared results. The app has no advertising, in-app purchases, subscriptions or cross-app tracking, and does not include Firebase Analytics or Google AppMeasurement. App Privacy separately declares unlinked Other Diagnostic Data for SDK diagnostics under the Analytics purpose.",
+      },
+      {
+        type: "p",
+        text: "Students may choose Scan QR code to read a teacher's table code. Camera access is requested only after choosing Scan. Images are processed in memory on the device, are not saved or uploaded, and are discarded when scanning stops. Only the decoded classroom/table code enters the classroom join flow. Enter code manually works without camera access. The camera stops when scanning closes or the app moves to the background.",
+      },
+      {
+        type: "p",
+        text: "Online Classroom uses Google Firebase and Apple's Sign in with Apple and App Attest services. Firebase Realtime Database and callable functions are hosted in the asia-southeast1 region, so information may be processed outside the user's state or country. Students can read shared classroom state and their assigned table, and can read or change only their own household record. The authenticated teacher can view and control the classroom information needed to run the session. The app does not send classroom information to the AI or marketing services described elsewhere in this general MLAI policy.",
+      },
+      {
+        type: "p",
+        text: "New online classrooms are scheduled to expire 90 days after creation. Delete Account is available in the opening menu and teacher dashboard. Student deletion removes that student's online account, permitted gameplay data and memberships. Teacher deletion requires Apple reauthentication and removes the teacher account and all owned classrooms and their gameplay data. Offline solo progress remains on the device until the user resets it, deletes the app or clears local storage. For app support or a privacy request, email hi@mlai.au.",
       },
     ],
   },
@@ -545,7 +574,7 @@ function ContactCard() {
         <strong>MLAI Aus Inc</strong>
       </p>
       <p className="mb-2 text-base leading-7 text-white/80">ABN 94 807 394 137</p>
-      <p className="mb-2 text-base leading-7 text-white/80">585 Little Collins Street, Melbourne VIC 3000</p>
+      <p className="mb-2 text-base leading-7 text-white/80">Suite 350, 585 Little Collins Street, Melbourne VIC 3000</p>
       <p className="mb-2 text-base leading-7 text-white/80">Email: hi@mlai.au</p>
       <p className="text-base leading-7 text-white/80">Website: mlai.au</p>
     </div>

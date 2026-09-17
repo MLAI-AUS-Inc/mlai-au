@@ -171,6 +171,17 @@ export function createApiClient(env: any, request?: Request) {
         if (cookieHeader) {
             headers["Cookie"] = cookieHeader;
         }
+
+        // SSR actions authenticate to the backend with the browser's cookie, so
+        // preserve the browser-controlled Origin as well. The backend validates
+        // this exact value against CSRF_TRUSTED_ORIGINS before allowing unsafe
+        // cookie-authenticated requests. Do not synthesize an Origin when the
+        // incoming request omitted one; missing/untrusted origins must still be
+        // rejected by the backend.
+        const originHeader = request.headers.get("Origin");
+        if (originHeader) {
+            headers["Origin"] = originHeader;
+        }
     }
 
     const client = axios.create({

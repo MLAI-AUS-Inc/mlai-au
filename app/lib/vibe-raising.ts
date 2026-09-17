@@ -1,9 +1,12 @@
+import { normalizeUpdateCover } from "~/lib/update-cover";
+import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
 import { redirect } from "react-router";
 import { normalizeAuthNextForApp } from "~/lib/auth-return";
 import type { User } from "~/types/user";
 import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 import { parseVibeRaisingAudienceVisibility } from "~/lib/vibe-raising-audience-visibility";
+import type { VibeRaisingFinancialSurveyContext } from "~/lib/vibe-raising-survey";
 import type {
   VibeRaisingAudienceVisibilitySelection,
   VibeRaisingDraftResultsResponse,
@@ -16,6 +19,8 @@ import type {
   VibeRaisingEmailDraftMonth,
   VibeRaisingFinancialSyncResponse,
   VibeRaisingFinancialSyncRun,
+  VibeRaisingFinancialSnapshot,
+  VibeRaisingConciseAnalysis,
   VibeRaisingFounderProfile,
   VibeRaisingGmailDisconnectResponse,
   VibeRaisingGmailMessagePreview,
@@ -605,6 +610,136 @@ function normalizePastMonthSummary(raw: unknown) {
   };
 }
 
+export function normalizeFinancialSnapshot(raw: unknown): VibeRaisingFinancialSnapshot | null {
+  let candidate = raw;
+  if (typeof candidate === "string") {
+    try {
+      candidate = JSON.parse(candidate);
+    } catch {
+      return null;
+    }
+  }
+  const payload = asRecord(candidate);
+  if (!payload) return null;
+  const toNumber = (value: unknown): number | null => {
+    if (value == null || (typeof value === "string" && !value.trim()) || typeof value === "boolean") return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  };
+  const performance = (Array.isArray(payload.performance) ? payload.performance : [])
+    .map((item) => {
+      const point = asRecord(item);
+      const month = asNullableString(point?.month);
+      if (!point || !month) return null;
+      return {
+        month,
+        income: toNumber(point.income),
+        expenses: toNumber(point.expenses),
+        net: toNumber(point.net),
+        isPartial: Boolean(point.isPartial ?? point.is_partial),
+        basis: asNullableString(point.basis),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+  if (!performance.length) return null;
+
+  const revenueMix = (Array.isArray(payload.revenueMix ?? payload.revenue_mix)
+    ? (payload.revenueMix ?? payload.revenue_mix) as unknown[]
+    : [])
+    .map((item) => {
+      const point = asRecord(item);
+      const month = asNullableString(point?.month);
+      if (!point || !month) return null;
+      const segments = (Array.isArray(point.segments) ? point.segments : [])
+        .map((segment) => {
+          const segmentPayload = asRecord(segment);
+          const key = asNullableString(segmentPayload?.key);
+          const label = asNullableString(segmentPayload?.label);
+          if (!segmentPayload || !key || !label) return null;
+          return { key, label, amount: toNumber(segmentPayload.amount) };
+        })
+        .filter((segment): segment is NonNullable<typeof segment> => segment !== null);
+      return { month, total: toNumber(point.total), segments };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  const eventContribution = (Array.isArray(payload.eventContribution ?? payload.event_contribution)
+    ? (payload.eventContribution ?? payload.event_contribution) as unknown[]
+    : [])
+    .map((item) => {
+      const event = asRecord(item);
+      const label = asNullableString(event?.label);
+      if (!event || !label) return null;
+      return {
+        label,
+        income: toNumber(event.income),
+        expenses: toNumber(event.expenses),
+        net: toNumber(event.net),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  const overhead = (Array.isArray(payload.overhead) ? payload.overhead : [])
+    .map((item) => {
+      const overheadItem = asRecord(item);
+      const label = asNullableString(overheadItem?.label);
+      if (!overheadItem || !label) return null;
+      return { label, amount: toNumber(overheadItem.amount) };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+  const quality = asRecord(payload.dataQuality ?? payload.data_quality);
+
+  return {
+    schemaVersion:
+      asNullableString(payload.schemaVersion) ??
+      asNullableString(payload.schema_version) ??
+      "1",
+    targetMonth:
+      asNullableString(payload.targetMonth) ??
+      asNullableString(payload.target_month) ??
+      performance[performance.length - 1].month,
+    asOfDate:
+      asNullableString(payload.asOfDate) ??
+      asNullableString(payload.as_of_date),
+    currency: asNullableString(payload.currency) ?? "AUD",
+    generatedAt:
+      asNullableString(payload.generatedAt) ??
+      asNullableString(payload.generated_at),
+    performance,
+    revenueMix,
+    eventContribution,
+    overhead,
+    dataQuality: quality
+      ? {
+          warnings: Array.isArray(quality.warnings)
+            ? quality.warnings.map(String).filter(Boolean)
+            : [],
+          calculationBasis:
+            asNullableString(quality.calculationBasis) ??
+            asNullableString(quality.calculation_basis),
+        }
+      : null,
+  };
+}
+
+export function normalizeConciseAnalysis(raw: unknown): VibeRaisingConciseAnalysis | null {
+  let candidate = raw;
+  if (typeof candidate === "string") {
+    try {
+      candidate = JSON.parse(candidate);
+    } catch {
+      return null;
+    }
+  }
+  const payload = asRecord(candidate);
+  if (!payload) return null;
+  const headline = asNullableString(payload.headline) ?? "";
+  const bullets = Array.isArray(payload.bullets)
+    ? payload.bullets.map(String).map((item) => item.trim()).filter(Boolean).slice(0, 3)
+    : [];
+  return headline || bullets.length ? { headline, bullets } : null;
+}
+
 function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null {
   if (!raw || typeof raw !== "object") return null;
 
@@ -627,8 +762,19 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   }
 
   return {
+    updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
+    creationKey: asNullableString(payload.creationKey),
+    updateDate: asNullableString(payload.updateDate),
+    datePrecision: payload.datePrecision === "month" ? "month" as const : payload.datePrecision === "day" ? "day" as const : undefined,
+    firstPublishedAt: asNullableString(payload.firstPublishedAt),
+    narrativePeriod: (payload.narrativePeriod || null) as VibeRaisingMonthlyUpdate["narrativePeriod"],
+
+    revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
+    revisionHash: asNullableString(payload.revisionHash),
+    metricEvidence: asRecord(payload.metricEvidence) as VibeRaisingMonthlyUpdate["metricEvidence"],
     month: asNullableString(payload.month) ?? undefined,
     year: yearValue,
+    coverImage: normalizeUpdateCover(payload.coverImage ?? structuredMemo.cover_image),
     summary: normalizeDraftSummary(payload.summary) ??
       normalizeDraftSummary(payload.topline) ??
       normalizeDraftSummary(structuredMemo.topline) ??
@@ -692,6 +838,21 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
     metricSuggestions: normalizeMetricSuggestions(
       payload.metricSuggestions ?? payload.metric_suggestions,
     ),
+    reportingPeriod: asRecord(payload.reportingPeriod ?? payload.reporting_period),
+    evidenceWarnings: Array.isArray(payload.evidenceWarnings) ? payload.evidenceWarnings.map(String) : [],
+    metricHistory: normalizeMetricHistory(payload.metricHistory ?? payload.metric_history),
+    financialSnapshot: normalizeFinancialSnapshot(
+      Object.hasOwn(payload, "financialSnapshot") ? payload.financialSnapshot
+        : Object.hasOwn(payload, "financial_snapshot") ? payload.financial_snapshot
+          : structuredMemo.financial_snapshot,
+    ),
+    conciseAnalysis: normalizeConciseAnalysis(
+      payload.conciseAnalysis ?? payload.concise_analysis ?? structuredMemo.concise_analysis,
+    ),
+    presentationMode:
+      asNullableString(payload.presentationMode) ??
+      asNullableString(payload.presentation_mode) ??
+      asNullableString(structuredMemo.presentation_mode),
     pastMonths: Array.isArray(payload.pastMonths)
       ? payload.pastMonths.map(normalizePastMonthSummary)
       : [],
@@ -751,6 +912,14 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
         : undefined;
 
   return {
+    updateId: asNullableIdentifier(payload.updateId ?? payload.draftId ?? payload.draft_id),
+    creationKey: asNullableString(payload.creationKey),
+    updateDate: asNullableString(payload.updateDate),
+    datePrecision: payload.datePrecision === "month" ? "month" : payload.datePrecision === "day" ? "day" : undefined,
+    firstPublishedAt: asNullableString(payload.firstPublishedAt),
+    narrativePeriod: (payload.narrativePeriod || null) as VibeRaisingMonthlyUpdate["narrativePeriod"],
+    revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
+    revisionHash: asNullableString(payload.revisionHash),
     draftId: typeof draftId === "number" && Number.isFinite(draftId) ? draftId : undefined,
     isoMonth:
       asNullableString(payload.isoMonth) ??
@@ -758,6 +927,7 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
       undefined,
     month,
     year: typeof year === "number" && Number.isFinite(year) ? year : undefined,
+    coverImage: normalizeUpdateCover(payload.coverImage ?? payload.cover_image),
     summary:
       asNullableString(payload.summary) ??
       asNullableString(payload.topline) ??
@@ -873,6 +1043,7 @@ export function normalizeMetricHistory(raw: unknown): VibeRaisingMetricHistory {
       if (!rawPoint || typeof rawPoint !== "object") continue;
       const pointPayload = rawPoint as Record<string, unknown>;
       const month = asNullableString(pointPayload.month);
+      if (pointPayload.value === null || pointPayload.value === undefined || pointPayload.value === "") continue;
       const value = Number(pointPayload.value);
       if (!month || !Number.isFinite(value)) continue;
       points.push({
@@ -929,7 +1100,23 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
     monthLabel;
 
   return {
+    updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
+    creationKey: asNullableString(payload.creationKey),
+    updateDate: asNullableString(payload.updateDate),
+    datePrecision: payload.datePrecision === "month" ? "month" as const : payload.datePrecision === "day" ? "day" as const : undefined,
+    firstPublishedAt: asNullableString(payload.firstPublishedAt),
+    narrativePeriod: (payload.narrativePeriod || null) as VibeRaisingMonthlyUpdate["narrativePeriod"],
+
     id,
+    weekStart: asNullableString(payload.weekStart ?? payload.week_start),
+    weekEnd: asNullableString(payload.weekEnd ?? payload.week_end),
+    coverImage: normalizeUpdateCover(payload.coverImage ?? payload.cover_image),
+    coverImageUrl: normalizeUpdateCover(payload.coverImage ?? payload.cover_image)?.url ?? asNullableString(payload.coverImageUrl ?? payload.cover_image_url),
+    revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
+    revisionHash: asNullableString(payload.revisionHash),
+    snapshotId: payload.snapshotId == null ? null : Number(payload.snapshotId),
+    evidenceStatus: asNullableString(payload.evidenceStatus),
+    metricEvidence: (payload.metricEvidence || {}) as VibeRaisingMonthlyUpdate["metricEvidence"],
     isoMonth:
       asNullableString(payload.isoMonth) ??
       asNullableString(payload.iso_month),
@@ -940,7 +1127,7 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
       asNullableString(payload.date) ??
       asNullableString(payload.updatedAt) ??
       asNullableString(payload.updated_at) ??
-      new Date().toISOString(),
+      "",
     status: asNullableString(payload.status),
     visibility:
       asNullableString(payload.visibility) ??
@@ -999,6 +1186,14 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
       payload.metricSuggestions ?? payload.metric_suggestions,
     ),
     displayConfig: normalizeDisplayConfig(payload.displayConfig ?? payload.display_config),
+    reportingPeriod: asRecord(payload.reportingPeriod ?? payload.reporting_period),
+    evidenceWarnings: Array.isArray(payload.evidenceWarnings) ? payload.evidenceWarnings.map(String) : [],
+    metricHistory: normalizeMetricHistory(payload.metricHistory ?? payload.metric_history),
+    financialSnapshot: normalizeFinancialSnapshot(payload.financialSnapshot ?? payload.financial_snapshot),
+    conciseAnalysis: normalizeConciseAnalysis(payload.conciseAnalysis ?? payload.concise_analysis),
+    presentationMode:
+      asNullableString(payload.presentationMode) ??
+      asNullableString(payload.presentation_mode),
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
@@ -1319,7 +1514,7 @@ function withBrowserCompanyScope(path: string): string {
   return `${path}${path.includes("?") ? "&" : "?"}company_id=${encodeURIComponent(browserCompanyScopeId)}`;
 }
 
-async function requestBrowserJson<T>(
+export async function requestBrowserJson<T>(
   backendBaseUrl: string,
   path: string,
   init?: RequestInit,
@@ -1641,6 +1836,13 @@ function normalizeStartupUpdateStatus(
       payload.step_states,
   );
   return {
+    updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
+    creationKey: asNullableString(payload.creationKey),
+    updateDate: asNullableString(payload.updateDate),
+    datePrecision: payload.datePrecision === "month" ? "month" as const : payload.datePrecision === "day" ? "day" as const : undefined,
+    firstPublishedAt: asNullableString(payload.firstPublishedAt),
+    narrativePeriod: (payload.narrativePeriod || null) as VibeRaisingMonthlyUpdate["narrativePeriod"],
+
     state: normalizeStartupUpdateState(payload.state),
     gmailConnected: Boolean(
       payload.gmailConnected ??
@@ -2389,46 +2591,11 @@ export async function getVibeRaisingMonthlyUpdatesBundle(
   request: Request,
   companyId?: string | null,
 ): Promise<VibeRaisingMonthlyUpdatesBundle> {
-  if (shouldUseDevBackendStub()) {
-    return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
-  }
-  const client = createApiClient(env, request);
-
-  try {
-    const response = await client.get(
-      companyId ? `${UPDATES_PATH}?company_id=${encodeURIComponent(companyId)}` : UPDATES_PATH,
-    );
-    const updates: unknown[] = Array.isArray(response.data?.updates) ? response.data.updates : [];
-    return mergeLocalPublishedUpdate({
-      updates: updates
-        .map(normalizeMonthlyUpdate)
-        .filter((value): value is VibeRaisingMonthlyUpdate => value !== null),
-      metricHistory: normalizeMetricHistory(
-        response.data?.metricHistory ?? response.data?.metric_history,
-      ),
-    }, request);
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return mergeLocalPublishedUpdate({ updates: [], metricHistory: {} }, request);
-    }
-
-    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
-      console.warn("No backend monthly update session in local dev; using update stubs.");
-      return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
-    }
-
-    if (shouldUseDevAuthBypass() && !error.response) {
-      console.warn("Backend monthly update lookup failed before returning a response in local dev; using update stubs.");
-      return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
-    }
-
-    if (shouldUseDevBackendFallback(error)) {
-      console.warn("Backend unavailable in local dev; using Vibe Raising monthly update stubs for preview.");
-      return mergeLocalPublishedUpdate(DEV_MONTHLY_UPDATES_BUNDLE_STUB, request);
-    }
-
-    throw error;
-  }
+  const response = await createApiClient(env, request).get(
+    companyId ? `${UPDATES_PATH}?company_id=${encodeURIComponent(companyId)}` : UPDATES_PATH);
+  const raw: unknown[] = Array.isArray(response.data?.updates) ? response.data.updates : [];
+  return { updates: raw.map(normalizeMonthlyUpdate).filter((item): item is VibeRaisingMonthlyUpdate => item !== null),
+    metricHistory: normalizeMetricHistory(response.data?.metricHistory ?? response.data?.metric_history) };
 }
 
 export async function getVibeRaisingMonthlyUpdates(
@@ -2444,44 +2611,10 @@ export async function getVibeRaisingDrafts(
   request: Request,
   companyId?: string | null,
 ): Promise<VibeRaisingMonthlyUpdate[]> {
-  if (shouldUseDevBackendStub()) {
-    return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
-  }
-
-  const client = createApiClient(env, request);
-  try {
-    const response = await client.get(
-      companyId ? `${DRAFTS_PATH}?company_id=${encodeURIComponent(companyId)}` : DRAFTS_PATH,
-    );
-    const drafts: unknown[] = Array.isArray(response.data?.drafts) ? response.data.drafts : [];
-    return mergeLocalDraftUpdate(
-      drafts
-        .map(normalizeMonthlyUpdate)
-        .filter((value): value is VibeRaisingMonthlyUpdate => value !== null),
-      request,
-    );
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return mergeLocalDraftUpdate([], request);
-    }
-
-    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
-      console.warn("No backend drafts session in local dev; using draft stubs.");
-      return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
-    }
-
-    if (shouldUseDevAuthBypass() && !error.response) {
-      console.warn("Backend draft lookup failed before returning a response in local dev; using draft stubs.");
-      return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
-    }
-
-    if (shouldUseDevBackendFallback(error)) {
-      console.warn("Backend unavailable in local dev; using Vibe Raising draft stubs for preview.");
-      return mergeLocalDraftUpdate(DEV_MONTHLY_DRAFTS_STUB, request);
-    }
-
-    throw error;
-  }
+  const response = await createApiClient(env, request).get(
+    companyId ? `${DRAFTS_PATH}?company_id=${encodeURIComponent(companyId)}` : DRAFTS_PATH);
+  const raw: unknown[] = Array.isArray(response.data?.drafts) ? response.data.drafts : [];
+  return raw.map(normalizeMonthlyUpdate).filter((item): item is VibeRaisingMonthlyUpdate => item !== null);
 }
 
 export async function getVibeRaisingMonthlyUpdateById(
@@ -2513,7 +2646,11 @@ export async function saveVibeRaisingMonthlyUpdate(
   env: Env,
   request: Request,
   body: {
+    updateId?: string | null;
+    creationKey?: string | null;
+    updateDate?: string | null;
     companyId?: string | null;
+    expectedRevision?: number | null;
     month: string;
     year: number;
     highlights: string;
@@ -2524,7 +2661,11 @@ export async function saveVibeRaisingMonthlyUpdate(
     metrics: Record<string, string>;
     metricSuggestions?: VibeRaisingMetricSuggestion[];
     displayConfig?: VibeRaisingMetricDisplayConfig | null;
+    financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+    conciseAnalysis?: VibeRaisingConciseAnalysis | null;
+    presentationMode?: string | null;
     audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
+    coverImage?: VibeRaisingUpdateCover | null;
     summary?: string | null;
     sourceUrl?: string | null;
     pitchDeckUrl?: string | null;
@@ -2541,144 +2682,44 @@ export async function saveVibeRaisingMonthlyUpdate(
     saveMode?: VibeRaisingSaveMode;
     manualDocumentIds?: string[];
     manualSummary?: string | null;
+    mlaiFeedbackOptIn?: boolean | null;
+    submissionDestination?: string | null;
+    surveyFinancialQuestionContext?: VibeRaisingFinancialSurveyContext | null;
+    surveyImportedMetricsUseful?: boolean | null;
+    surveyConnectorValueClear?: boolean | null;
+    surveyGuidedQuestionsUseful?: boolean | null;
+    surveyPreviewAccurate?: boolean | null;
+    surveyComments?: string | null;
   },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
-  const buildDevSavedUpdate = () => {
-    const month = body.month || "Update";
-    const year = body.year || new Date().getFullYear();
-    const parsedMonth = Date.parse(`${month} 1, ${year}`);
-    const date = Number.isNaN(parsedMonth)
-      ? new Date(year, 0, 1)
-      : new Date(parsedMonth);
-    return normalizeMonthlyUpdate({
-      ...body,
-      id: `dev-update-${year}-${month.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-      month,
-      monthName: month,
-      year,
-      date: date.toISOString(),
-      status: body.saveMode === "draft" ? "draft" : "ready",
-      visibility: "private",
-      publishedAt: null,
-    });
-  };
-
-  if (shouldUseDevBackendStub()) {
-    return buildDevSavedUpdate();
-  }
-
-  const client = createApiClient(env, request);
-  try {
-    const response = await client.post(UPDATES_PATH, body);
-    return normalizeMonthlyUpdate(response.data?.update ?? response.data);
-  } catch (error: any) {
-    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
-      console.warn("No backend save session in local dev; returning a saved update stub.");
-      return buildDevSavedUpdate();
-    }
-
-    if (shouldUseDevAuthBypass() && !error.response) {
-      console.warn("Backend save failed before returning a response in local dev; returning a saved update stub.");
-      return buildDevSavedUpdate();
-    }
-
-    const status = error.response?.status;
-    const hasOptionalFields = Boolean(
-        body.summary ||
-        body.sourceUrl ||
-        body.pitchDeckUrl ||
-        body.pitchDeckSummary ||
-        (body.manualDocumentIds || []).length > 0 ||
-        body.manualSummary ||
-        body.videoUrl ||
-        body.learnings ||
-        body.next30Days ||
-        (body.metricSuggestions || []).length > 0,
-    );
-    if (!hasOptionalFields || (status !== 400 && status !== 422)) {
-      if (shouldUseDevBackendFallback(error)) {
-        console.warn("Backend unavailable in local dev; returning a saved update stub.");
-        return buildDevSavedUpdate();
-      }
-      throw error;
-    }
-
-    try {
-      const response = await client.post(UPDATES_PATH, {
-        month: body.month,
-        year: body.year,
-        audienceVisibility: body.audienceVisibility,
-        highlights: body.highlights,
-        challenges: body.challenges,
-        asks: body.asks,
-        learnings: body.learnings,
-        next30Days: body.next30Days,
-        metrics: body.metrics,
-        saveMode: body.saveMode,
-      });
-      return normalizeMonthlyUpdate(response.data?.update ?? response.data);
-    } catch (fallbackError: any) {
-      if (fallbackError.response?.status === 401 && shouldUseDevAuthBypass()) {
-        console.warn("No backend save session in local dev; returning a saved update stub.");
-        return buildDevSavedUpdate();
-      }
-      if (shouldUseDevAuthBypass() && !fallbackError.response) {
-        console.warn("Backend save failed before returning a response in local dev; returning a saved update stub.");
-        return buildDevSavedUpdate();
-      }
-      if (shouldUseDevBackendFallback(fallbackError)) {
-        console.warn("Backend unavailable in local dev; returning a saved update stub.");
-        return buildDevSavedUpdate();
-      }
-      throw fallbackError;
-    }
-  }
+  const response = await createApiClient(env, request).post(UPDATES_PATH, body);
+  return normalizeMonthlyUpdate(response.data?.update ?? response.data);
 }
 
 export async function publishVibeRaisingMonthlyUpdate(
   env: Env,
   request: Request,
   updateId: string,
+  approval: { companyId: string; revisionId: number; revisionHash: string; audienceVisibility: VibeRaisingAudienceVisibilitySelection },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
-  const buildDevPublishedUpdate = () => normalizeMonthlyUpdate({
-    ...(DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId) || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
-    id: updateId,
-    status: "ready",
-    visibility: "published",
-    publishedAt: new Date().toISOString(),
-  });
-
-  if (shouldUseDevBackendStub()) {
-    return buildDevPublishedUpdate();
-  }
-
-  if (import.meta.env.DEV && !/^\d+$/.test(updateId)) {
-    console.warn("Skipping backend publish for local dev update stub.");
-    return buildDevPublishedUpdate();
-  }
-
   const client = createApiClient(env, request);
-  try {
-    const response = await client.post(`${UPDATES_PATH}${encodeURIComponent(updateId)}/publish/`);
-    return normalizeMonthlyUpdate(response.data?.update ?? response.data);
-  } catch (error: any) {
-    if (import.meta.env.DEV && error.response?.status === 404) {
-      console.warn("Backend publish endpoint could not find this local update; returning a published update stub.");
-      return buildDevPublishedUpdate();
-    }
+  const response = await client.post(`${UPDATES_PATH}${encodeURIComponent(updateId)}/publish/`, approval);
+  return normalizeMonthlyUpdate(response.data?.update ?? response.data);
+}
 
-    if (shouldUseDevAuthBypass() && (error.response?.status === 401 || !error.response)) {
-      console.warn("No backend publish session in local dev; returning a published update stub.");
-      return buildDevPublishedUpdate();
-    }
-
-    if (shouldUseDevBackendFallback(error)) {
-      console.warn("Backend unavailable in local dev; returning a published update stub.");
-      return buildDevPublishedUpdate();
-    }
-
-    throw error;
-  }
+export interface StartupHealth {
+  summary: string;
+  period: { as_of: string; is_partial: boolean; timezone: string } | null;
+  metrics: Array<{ key: string; label: string; display_value: string | null; quality: string; source_provider?: string; observed_at?: string; metadata?: { basis?: string; calculation_basis?: string; limitations?: string[] } }>;
+  attention: Array<{ metric_key: string; reason: string }>;
+  configuration: { timezone: string; currency: string; version: number; metricDefinitions?: Array<{ key: string; label: string; definition: string }> };
+}
+export async function getStartupHealth(env: Env, request: Request, companyId?: string | null): Promise<StartupHealth> {
+  const response = await createApiClient(env, request).get(`/api/v1/vibe-raising/business-health/?company_id=${encodeURIComponent(companyId || "")}`);
+  return response.data;
+}
+export async function saveStartupReportingConfig(env: Env, request: Request, body: { companyId: string; timezone: string; currency: string; metricLabel?: string; metricDefinition?: string }) {
+  return createApiClient(env, request).post("/api/v1/vibe-raising/business-health/", body);
 }
 
 export async function uploadVibeRaisingUpdateVideo(
@@ -3047,6 +3088,21 @@ export async function getVibeRaisingInputSourcesStatus(
   }
 
   return { sources, financeUnavailable };
+}
+
+/** Read connector status for the company rendered by this server request. */
+export async function getVibeRaisingInputSourcesForRequest(
+  env: Env,
+  request: Request,
+  companyId?: string | null,
+): Promise<VibeRaisingInputSourceSummary[]> {
+  const path = companyId
+    ? `${INPUT_SOURCES_STATUS_PATH}?company_id=${encodeURIComponent(companyId)}`
+    : INPUT_SOURCES_STATUS_PATH;
+  const response = await createApiClient(env, request).get(path, { timeout: 5000 });
+  return Object.values(normalizeInputSourceSummaries(response.data)).filter(
+    (source): source is VibeRaisingInputSourceSummary => Boolean(source),
+  );
 }
 
 // Luma is connected by pasting an API key (see connectVibeRaisingLuma), not via OAuth redirect.
@@ -4103,6 +4159,13 @@ export async function getVibeRaisingXeroPreview(
 export async function runVibeRaisingStartupUpdate(
   backendBaseUrl: string,
   options?: {
+    companyId?: string;
+    updateId?: string | null;
+    creationKey?: string | null;
+    updateDate?: string | null;
+    expectedRevision?: number | null;
+    narrativeStart?: string | null;
+    narrativeEnd?: string | null;
     forceRegenerate?: boolean;
     inputSources?: VibeRaisingInputSourceKey[];
     targetMonth?: string | null;
@@ -4111,6 +4174,9 @@ export async function runVibeRaisingStartupUpdate(
   },
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const body: Record<string, unknown> = {};
+  for (const key of ["companyId", "updateId", "creationKey", "updateDate", "expectedRevision", "narrativeStart", "narrativeEnd"] as const) {
+    if (options?.[key] != null) body[key] = options[key];
+  }
   if (options?.forceRegenerate) {
     body.forceRegenerate = true;
   }

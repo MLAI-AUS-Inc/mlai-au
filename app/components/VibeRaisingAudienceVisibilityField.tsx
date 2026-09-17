@@ -22,10 +22,6 @@ export const VIBE_RAISING_AUDIENCE_VISIBILITY_OPTIONS: Array<{
     value: "community",
     label: "Show community",
   },
-  {
-    value: "investors",
-    label: "Show it to investors",
-  },
 ];
 
 const optionIconMap = {
@@ -50,7 +46,7 @@ export default function VibeRaisingAudienceVisibilityField({
   defaultValue = ["just_me"],
   onChange,
   title = "Who should see this?",
-  description = "Keep this private, or select one or both public audiences.",
+  description = "Choose whether this stays private or is shared with the community.",
   className,
 }: Props) {
   const [localValue, setLocalValue] = useState<VibeRaisingAudienceVisibilitySelection>(() =>
@@ -64,7 +60,7 @@ export default function VibeRaisingAudienceVisibilityField({
         <p className="text-base font-black text-gray-950">{title}</p>
         {description ? <p className="text-sm font-semibold text-slate-500">{description}</p> : null}
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-2" role="group" aria-label={typeof title === "string" ? title : "Update visibility"}>
+      <div className="mt-3 grid grid-cols-2 gap-2" role="group" aria-label={typeof title === "string" ? title : "Update visibility"}>
         {VIBE_RAISING_AUDIENCE_VISIBILITY_OPTIONS.map((option) => {
           const Icon = optionIconMap[option.value];
           const checked = selectedValue.includes(option.value);

@@ -98,7 +98,82 @@ export interface VibeRaisingMetricHistorySeries {
 
 export type VibeRaisingMetricHistory = Record<string, VibeRaisingMetricHistorySeries>;
 
+export interface VibeRaisingFinancialPerformancePoint {
+  month: string;
+  income: number | null;
+  expenses: number | null;
+  net: number | null;
+  isPartial?: boolean;
+  basis?: string | null;
+}
+
+export interface VibeRaisingRevenueMixSegment {
+  key: string;
+  label: string;
+  amount: number | null;
+}
+
+export interface VibeRaisingRevenueMixPoint {
+  month: string;
+  total: number | null;
+  segments: VibeRaisingRevenueMixSegment[];
+}
+
+export interface VibeRaisingEventContribution {
+  label: string;
+  income: number | null;
+  expenses: number | null;
+  net: number | null;
+}
+
+export interface VibeRaisingOverheadItem {
+  label: string;
+  amount: number | null;
+}
+
+export interface VibeRaisingFinancialSnapshot {
+  schemaVersion: string;
+  targetMonth: string;
+  asOfDate?: string | null;
+  currency: string;
+  generatedAt?: string | null;
+  performance: VibeRaisingFinancialPerformancePoint[];
+  revenueMix: VibeRaisingRevenueMixPoint[];
+  eventContribution: VibeRaisingEventContribution[];
+  overhead: VibeRaisingOverheadItem[];
+  dataQuality?: {
+    warnings: string[];
+    calculationBasis?: string | null;
+  } | null;
+}
+
+export interface VibeRaisingConciseAnalysis {
+  headline: string;
+  bullets: string[];
+}
+
+export interface VibeRaisingUpdateCover {
+  url: string;
+  assetToken?: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  source: "upload" | "generated";
+  model?: string | null;
+}
+
 export interface VibeRaisingDraftedContent {
+  updateId?: string | number | null;
+  creationKey?: string | null;
+  updateDate?: string | null;
+  datePrecision?: "day" | "month";
+  firstPublishedAt?: string | null;
+  narrativePeriod?: { start: string; end: string; timezone: string; end_exclusive?: boolean } | null;
+
+  metricEvidence?: VibeRaisingMonthlyUpdate["metricEvidence"];
+  coverImage?: VibeRaisingUpdateCover | null;
+  revisionId?: number | null;
+  revisionHash?: string | null;
   month?: string;
   year?: number;
   summary?: string;
@@ -123,10 +198,32 @@ export interface VibeRaisingDraftedContent {
   pastMonths: VibeRaisingPastMonthSummary[];
   metrics?: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
+  financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+  metricHistory?: VibeRaisingMetricHistory;
+  reportingPeriod?: { start?: string; cutoff?: string; timezone?: string; is_partial?: boolean } | null;
+  evidenceWarnings?: string[];
+  conciseAnalysis?: VibeRaisingConciseAnalysis | null;
+  presentationMode?: string | null;
 }
 
 export interface VibeRaisingMonthlyUpdate {
+  updateId?: string | number | null;
+  creationKey?: string | null;
+  updateDate?: string | null;
+  datePrecision?: "day" | "month";
+  firstPublishedAt?: string | null;
+  narrativePeriod?: { start: string; end: string; timezone: string; end_exclusive?: boolean } | null;
+
   id: string;
+  weekStart?: string | null;
+  weekEnd?: string | null;
+  coverImageUrl?: string | null;
+  coverImage?: VibeRaisingUpdateCover | null;
+  revisionId?: number | null;
+  revisionHash?: string | null;
+  snapshotId?: number | null;
+  evidenceStatus?: string | null;
+  metricEvidence?: Record<string, { quality?: string; source_provider?: string; basis?: string; limitations?: string[] }>;
   isoMonth?: string | null;
   month: string;
   monthName?: string | null;
@@ -158,6 +255,12 @@ export interface VibeRaisingMonthlyUpdate {
   asks: string;
   learnings: string;
   next30Days: string;
+  financialSnapshot?: VibeRaisingFinancialSnapshot | null;
+  metricHistory?: VibeRaisingMetricHistory;
+  reportingPeriod?: { start?: string; cutoff?: string; timezone?: string; is_partial?: boolean } | null;
+  evidenceWarnings?: string[];
+  conciseAnalysis?: VibeRaisingConciseAnalysis | null;
+  presentationMode?: string | null;
 }
 
 export interface VibeRaisingVideoUploadResponse {
@@ -651,7 +754,10 @@ export interface VibeRaisingStartupUpdateRunProgress {
   generatedDraftMonths: string[];
   targetMonth?: string | null;
 }
-export interface VibeRaisingEmailDraftMonth {
+export interface VibeRaisingEmailDraftMonth extends Pick<VibeRaisingMonthlyUpdate, "updateId" | "creationKey" | "updateDate" | "datePrecision" | "firstPublishedAt" | "narrativePeriod"> {
+  coverImage?: VibeRaisingUpdateCover | null;
+  revisionId?: number | null;
+  revisionHash?: string | null;
   draftId?: number;
   isoMonth?: string;
   month: string;
@@ -687,6 +793,13 @@ export interface VibeRaisingStartupUpdateBootstrapResponse {
 }
 
 export interface VibeRaisingStartupUpdateStatusResponse {
+  updateId?: string | number | null;
+  creationKey?: string | null;
+  updateDate?: string | null;
+  datePrecision?: "day" | "month";
+  firstPublishedAt?: string | null;
+  narrativePeriod?: { start: string; end: string; timezone: string; end_exclusive?: boolean } | null;
+
   state: VibeRaisingStartupUpdateState;
   gmailConnected: boolean;
   authUrl?: string | null;

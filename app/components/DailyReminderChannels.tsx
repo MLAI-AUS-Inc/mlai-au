@@ -140,7 +140,7 @@ function PublishChannelStatusBadge({ tone }: { tone: PublishChannelTone }) {
   );
 }
 
-// Checkbox that toggles whether a connected channel receives the daily reminder.
+// Checkbox that toggles the supported notifications for a connected channel.
 // Submits inline via a fetcher (no page nav), reflects the sent value optimistically,
 // and reverts + shows the reason if the server rejects (e.g. the last channel).
 function DeliveryToggle({
@@ -168,7 +168,7 @@ function DeliveryToggle({
           type="submit"
           role="switch"
           aria-checked={checked}
-          aria-label={`Send the daily research reminder via ${CHANNEL_LABELS[type]}`}
+          aria-label={type === "email" ? "Email me when an article draft is ready to review" : `Send research topics and draft notifications via ${CHANNEL_LABELS[type]}`}
           title={
             checked
               ? `Sending via ${CHANNEL_LABELS[type]} — click to stop`
@@ -224,7 +224,7 @@ function ChannelTypeToggle({
           type="submit"
           role="switch"
           aria-checked={checked}
-          aria-label={`Send the daily research reminder via ${CHANNEL_LABELS[type]}`}
+          aria-label={type === "email" ? "Email me when an article draft is ready to review" : `Send research topics and draft notifications via ${CHANNEL_LABELS[type]}`}
           title={
             checked
               ? `Sending via ${CHANNEL_LABELS[type]} — click to stop`
@@ -467,7 +467,7 @@ function ChannelRow({
             Use account email
           </button>
           <p className="text-[11px] font-medium text-gray-500">
-            Daily reminders will go to {accountEmail || "your signed-in email"}. No extra confirmation is required.
+            Completed draft notifications will go to {accountEmail || "your signed-in email"}. No extra confirmation is required.
           </p>
         </Form>
       ) : type === "whatsapp" && isPending && channel?.pendingVerification ? (
@@ -559,6 +559,7 @@ export default function DailyReminderChannels({
   return (
     <div className={clsx("min-w-0 space-y-2", variant === "publish" && "space-y-2.5")}>
       <p className="text-xs font-black uppercase tracking-wide text-gray-500">Notification channels</p>
+      <p className="text-xs leading-5 text-gray-600">Daily suggestions rotate through fresh topics. A newly added island or custom topic gets one place in your next shortlist when relevant research is available, then normal opportunity ranking resumes. Research and reminders pause after three unanswered days.</p>
       {channelError && variant !== "publish" ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700">
           {channelError}

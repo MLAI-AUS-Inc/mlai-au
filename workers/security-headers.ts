@@ -13,39 +13,28 @@
  */
 
 /** Statuses that must not carry a response body (per the fetch spec). */
-const NULL_BODY_STATUSES = new Set([101, 103, 204, 205, 304]);
+const NULL_BODY_STATUSES = new Set([204, 205, 304]);
 
 /**
- * Always-safe headers. None of these change what the site is allowed to load,
- * so they carry no breakage risk for the existing page set.
+ * Defaults for responses that do not already set a route-specific policy.
  */
 const BASE_SECURITY_HEADERS: Record<string, string> = {
   // Stop MIME sniffing (e.g. a user-supplied file being reinterpreted as script).
   "X-Content-Type-Options": "nosniff",
-  // Clickjacking protection for legacy browsers. SAMEORIGIN rather than DENY so
-  // any first-party embed keeps working; CSP frame-ancestors below is the modern
-  // equivalent and supersedes this where supported.
-  "X-Frame-Options": "SAMEORIGIN",
   // Send the full URL same-origin, origin-only cross-origin, nothing on downgrade.
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  // Drop ambient access to powerful APIs the site does not use. `payment=()` is
-  // safe here: the site links to stripe.com but never loads Stripe.js.
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  // Founder updates use getUserMedia. Keep first-party recording available,
+  // subject to the browser's normal user permission, without granting embeds it.
+  "Permissions-Policy": "camera=(self), microphone=(self), geolocation=(), payment=()",
 };
 
 /**
  * HSTS.
  *
- * NOTE (read before merging): `includeSubDomains` applies to EVERY *.mlai.au
- * subdomain — api, chat, roo, and anything internal. Confirm they are all
- * HTTPS-only first. If any subdomain still needs plain HTTP, drop the
- * `; includeSubDomains` portion below.
- *
- * `preload` is intentionally omitted. Submitting to the browser preload list is
- * slow and painful to reverse, so it should be a separate, deliberate decision
- * once this has been running cleanly.
+ * Scope the new policy to this host. Subdomain-wide enforcement and preload
+ * require a separate inventory of every service under mlai.au.
  */
-const HSTS_VALUE = "max-age=31536000; includeSubDomains";
+const HSTS_VALUE = "max-age=31536000";
 
 /**
  * Content-Security-Policy — REPORT-ONLY for now.
@@ -76,7 +65,6 @@ const CSP_REPORT_ONLY = [
   "img-src 'self' data: blob: https:",
   "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.loom.com https://docs.google.com",
   "connect-src 'self' https://api.mlai.au https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://www.clarity.ms https://connect.facebook.net",
-  "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
@@ -96,21 +84,37 @@ function isHtmlResponse(response: Response): boolean {
  * Streaming bodies are passed straight through, so this does not buffer.
  */
 export function applySecurityHeaders(response: Response, url: URL): Response {
+  // A Cloudflare WebSocket upgrade carries state that a normal Response loses.
+  if (response.status === 101) return response;
   const headers = new Headers(response.headers);
 
   for (const [name, value] of Object.entries(BASE_SECURITY_HEADERS)) {
-    headers.set(name, value);
+    // In particular, Roo capability responses must retain no-referrer.
+    if (!headers.has(name)) headers.set(name, value);
+  }
+
+  const productionHost = url.hostname === "mlai.au" || url.hostname === "www.mlai.au";
+  if (productionHost && !headers.has("X-Frame-Options")) {
+    headers.set("X-Frame-Options", "SAMEORIGIN");
   }
 
   // HSTS is only meaningful over TLS; browsers ignore it on plain HTTP.
-  if (url.protocol === "https:") {
+  if (url.protocol === "https:" && !headers.has("Strict-Transport-Security")) {
     headers.set("Strict-Transport-Security", HSTS_VALUE);
   }
 
   // Only send CSP on actual documents. Attaching it to JSON/asset responses adds
   // bytes and report noise without protecting anything.
   if (isHtmlResponse(response)) {
-    headers.set("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY);
+    // Preview deployments are embedded by Founder Tools on mlai.au. Enforce
+    // an explicit parent allowlist instead of adding SAMEORIGIN on previews.
+    // Appending a policy preserves any stricter policy supplied by a route.
+    headers.append("Content-Security-Policy", productionHost
+      ? "frame-ancestors 'self'"
+      : "frame-ancestors 'self' https://mlai.au");
+    if (!headers.has("Content-Security-Policy-Report-Only")) {
+      headers.set("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY);
+    }
   }
 
   const body = NULL_BODY_STATUSES.has(response.status) ? null : response.body;

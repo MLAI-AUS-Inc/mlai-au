@@ -350,7 +350,7 @@ export interface VibeMarketingNotificationChannel {
   routeId: string;
   displayName: string;
   consentState: VibeMarketingNotificationConsentState;
-  /** Whether this channel receives the daily research reminder + topics. */
+  /** Whether this channel receives its supported Content Factory notifications. */
   deliveryEnabled: boolean;
   verifiedAt: string | null;
   isPrimary: boolean;
@@ -364,6 +364,7 @@ export interface VibeMarketingResearchAutomation {
   frequencyPerDay: number;
   localSendTimes: string[];
   enabled: boolean;
+  pauseReason?: string;
 }
 
 export interface VibeMarketingNotificationChannelsPayload {
@@ -433,8 +434,48 @@ export interface VibeMarketingTopicPillar {
   ideaCount: number;
   iconKey: "brain" | "community" | "rocket" | "tools" | "default" | string;
   colorKey: "green" | "purple" | "blue" | "orange" | string;
-  source: "semantic_cluster" | "pillar_strategy" | string;
+  source: "semantic_cluster" | "pillar_strategy" | "content_island" | string;
+  pillarKeyword?: string | null;
   topicCandidates: VibeMarketingTopicCandidate[];
+}
+
+/**
+ * One content island on the force-directed map. `slug` is the stable per-org island
+ * key the discovery dispatch resolves against `topicPillars` — `id` is the display id
+ * (`island:<slug>`) and must never be used to join edges.
+ */
+export interface IslandGraphNode {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  pillarKeyword: string | null;
+  iconKey: string;
+  colorKey: string;
+  status: string;
+  isNew: boolean;
+  researchPending?: boolean;
+  keywordCount: number;
+  totalVolume: number;
+  avgDifficulty: number;
+  opportunityScore: number;
+  aiSearchVolume: number;
+  ideaCount: number;
+  articlesWritten: number;
+}
+
+/** A similarity link between two islands. `source`/`target` are bare island slugs. */
+export interface IslandGraphEdge {
+  source: string;
+  target: string;
+  similarity: number;
+}
+
+export interface VibeMarketingIslandGraph {
+  updatedAt: string | null;
+  emergingCount: number;
+  nodes: IslandGraphNode[];
+  edges: IslandGraphEdge[];
 }
 
 export interface VibeMarketingTopicFeedback {
@@ -844,6 +885,7 @@ export interface VibeMarketingBootstrap {
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];
   topicPillars: VibeMarketingTopicPillar[];
+  islandGraph?: VibeMarketingIslandGraph | null;
   hiddenTopicCandidates: VibeMarketingTopicCandidate[];
   declinedTopicFeedback: VibeMarketingTopicFeedback[];
   draftArticles: VibeMarketingDraftArticle[];

@@ -84,6 +84,15 @@ function nextStepForFailure(code: string, reason: string, run: VibeMarketingRunS
     return "Retry the scan, or cancel it and start again.";
   }
   if (
+    normalizedCode.includes("CONFIG_SERVICE_UNAVAILABLE") ||
+    normalizedCode.includes("UPSTREAM_PROTOCOL_ERROR")
+  ) {
+    return "Retry or resume this run shortly. Your saved competitors and seed keywords have not changed.";
+  }
+  if (normalizedCode.includes("MISSING_CONFIG")) {
+    return "Open company setup and add at least one competitor or seed keyword, then retry topic research.";
+  }
+  if (
     normalizedCode.includes("UNSUPPORTED_RUNTIME") ||
     reasonText.includes("build script") ||
     reasonText.includes("build or preview command")
@@ -92,6 +101,9 @@ function nextStepForFailure(code: string, reason: string, run: VibeMarketingRunS
   }
   if (normalizedCode.includes("ROUTE") || normalizedCode.includes("SURFACE") || normalizedCode.includes("HINT")) {
     return "Paste the public articles/blogs route manually in the setup flow, or add a conventional route and re-scan.";
+  }
+  if (!["repo_scan", "content_factory_scan"].includes(run.workflow)) {
+    return "Review the failed step, then retry or resume this run when ready.";
   }
   return "Review the failed step, then re-scan. If you already know the public articles/blogs route, paste it manually in the setup flow.";
 }

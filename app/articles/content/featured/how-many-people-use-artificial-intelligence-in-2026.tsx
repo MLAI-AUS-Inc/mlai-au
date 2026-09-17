@@ -122,9 +122,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -280,18 +278,18 @@ export default function ArticleContent() {
       <div className="not-prose my-10 rounded-3xl border border-purple-100 bg-purple-50/70 p-6 shadow-sm" data-cf-component-id={"references"} data-cf-component-type={"references"} data-cf-component-label={"Authoritative References"}>
         <ArticleReferences
           references={[
-            {id: 1, href: "https://datareportal.com/reports/digital-2026-one-billion-people-using-ai", title: "More than 1 billion people use AI — DataReportal – Global Digital Insights", publisher: "datareportal.com", description: "Authoritative reference supporting More than 1 billion people use AI — DataReportal – Global Digital Insights.", category: "guide"},
-            {id: 2, href: "https://www.hostinger.com/au/tutorials/how-many-companies-use-ai", title: "How many companies use AI in 2026? Stats & trends revealed", publisher: "hostinger.com", description: "Authoritative reference supporting How many companies use AI in 2026? Stats & trends revealed.", category: "guide"},
-            {id: 3, href: "https://ai.uq.edu.au/project/trust-artificial-intelligence-global-study", title: "Trust in Artificial Intelligence: A global study - Artificial Intelligence at UQ - University of Queensland", publisher: "ai.uq.edu.au", description: "Authoritative reference supporting Trust in Artificial Intelligence: A global study - Artificial Intelligence at UQ - University of Queensland.", category: "guide"},
-            {id: 4, href: "https://medium.com/data-ai-and-beyond/84-of-humans-have-never-used-ai-thats-either-a-crisis-or-an-opportunity-8d7c79f5f658", title: "84% of Humans Have Never Used AI. That’s Either a Crisis or an Opportunity. | by Julius Nyerere Nyambok | Data, AI and Beyond | Medium", publisher: "medium.com", description: "Authoritative reference supporting 84% of Humans Have Never Used AI. That’s Either a Crisis or an Opportunity. | by Julius Nyerere Nyambok | Data, AI and Beyond | Medium.", category: "guide"},
-            {id: 5, href: "https://itbrief.com.au/story/nab-says-42-of-aussie-smes-use-ai-to-boost-productivity", title: "NAB says 42% of Aussie SMEs use AI to boost productivity", publisher: "itbrief.com.au", description: "Authoritative reference supporting NAB says 42% of Aussie SMEs use AI to boost productivity.", category: "guide"},
-            {id: 6, href: "https://elementor.com/blog/ai-how-many-companies-are-really-using-it/", title: "AI in 2026: How Many Companies Are Really Using It? (Stats & Trends Revealed)", publisher: "elementor.com", description: "Authoritative reference supporting AI in 2026: How Many Companies Are Really Using It? (Stats & Trends Revealed).", category: "guide"},
-            {id: 7, href: "https://digitalinclusionindex.org.au/australia-is-facing-an-ai-divide-new-national-survey-shows/", title: "Australia is facing an ‘AI divide’, new national survey shows - Australian Digital Inclusion Index", publisher: "digitalinclusionindex.org.au", description: "Authoritative reference supporting Australia is facing an ‘AI divide’, new national survey shows - Australian Digital Inclusion Index.", category: "guide"},
-            {id: 8, href: "https://www.nu.edu/blog/ai-statistics-trends/", title: "131 AI Statistics and Trends for 2026 | National University", publisher: "nu.edu", description: "Authoritative reference supporting 131 AI Statistics and Trends for 2026 | National University.", category: "guide"},
-            {id: 9, href: "https://www.aiprm.com/en-au/ai-statistics/", title: "AI Statistics 2024 · AIPRM", publisher: "aiprm.com", description: "Authoritative reference supporting AI Statistics 2024 · AIPRM.", category: "guide"},
-            {id: 10, href: "https://www.quetext.com/blog/ai-usage-statistics-2026-how-many-people-use-ai", title: "AI Usage Statistics in 2026: How Many People Use AI Today?", publisher: "quetext.com", description: "Authoritative reference supporting AI Usage Statistics in 2026: How Many People Use AI Today?.", category: "guide"},
-            {id: 11, href: "https://www.comparethemarket.com.au/news/how-many-australians-use-ai-2026/", title: "Australia’s AI boom: 57% of nation to embrace artificial intelligence in 2026 | Compare the Market", publisher: "comparethemarket.com.au", description: "Authoritative reference supporting Australia’s AI boom: 57% of nation to embrace artificial intelligence in 2026 | Compare the Market.", category: "guide"},
-            {id: 12, href: "https://www.iabuk.com/standard-content/ai-usage-statistics", title: "AI Usage Statistics | IAB UK", publisher: "iabuk.com", description: "Authoritative reference supporting AI Usage Statistics | IAB UK.", category: "guide"},
+            {id: 1, href: "https://datareportal.com/reports/digital-2026-one-billion-people-using-ai", title: "More than 1 billion people use AI — DataReportal – Global Digital Insights", publisher: "datareportal.com", description: "", category: "guide"},
+            {id: 2, href: "https://www.hostinger.com/au/tutorials/how-many-companies-use-ai", title: "How many companies use AI in 2026? Stats & trends revealed", publisher: "hostinger.com", description: "", category: "guide"},
+            {id: 3, href: "https://ai.uq.edu.au/project/trust-artificial-intelligence-global-study", title: "Trust in Artificial Intelligence: A global study - Artificial Intelligence at UQ - University of Queensland", publisher: "ai.uq.edu.au", description: "", category: "guide"},
+            {id: 4, href: "https://medium.com/data-ai-and-beyond/84-of-humans-have-never-used-ai-thats-either-a-crisis-or-an-opportunity-8d7c79f5f658", title: "84% of Humans Have Never Used AI. That’s Either a Crisis or an Opportunity. | by Julius Nyerere Nyambok | Data, AI and Beyond | Medium", publisher: "medium.com", description: "", category: "guide"},
+            {id: 5, href: "https://itbrief.com.au/story/nab-says-42-of-aussie-smes-use-ai-to-boost-productivity", title: "NAB says 42% of Aussie SMEs use AI to boost productivity", publisher: "itbrief.com.au", description: "", category: "guide"},
+            {id: 6, href: "https://elementor.com/blog/ai-how-many-companies-are-really-using-it/", title: "AI in 2026: How Many Companies Are Really Using It? (Stats & Trends Revealed)", publisher: "elementor.com", description: "", category: "guide"},
+            {id: 7, href: "https://digitalinclusionindex.org.au/australia-is-facing-an-ai-divide-new-national-survey-shows/", title: "Australia is facing an ‘AI divide’, new national survey shows - Australian Digital Inclusion Index", publisher: "digitalinclusionindex.org.au", description: "", category: "guide"},
+            {id: 8, href: "https://www.nu.edu/blog/ai-statistics-trends/", title: "131 AI Statistics and Trends for 2026 | National University", publisher: "nu.edu", description: "", category: "guide"},
+            {id: 9, href: "https://www.aiprm.com/en-au/ai-statistics/", title: "AI Statistics 2024 · AIPRM", publisher: "aiprm.com", description: "", category: "guide"},
+            {id: 10, href: "https://www.quetext.com/blog/ai-usage-statistics-2026-how-many-people-use-ai", title: "AI Usage Statistics in 2026: How Many People Use AI Today?", publisher: "quetext.com", description: "", category: "guide"},
+            {id: 11, href: "https://www.comparethemarket.com.au/news/how-many-australians-use-ai-2026/", title: "Australia’s AI boom: 57% of nation to embrace artificial intelligence in 2026 | Compare the Market", publisher: "comparethemarket.com.au", description: "", category: "guide"},
+            {id: 12, href: "https://www.iabuk.com/standard-content/ai-usage-statistics", title: "AI Usage Statistics | IAB UK", publisher: "iabuk.com", description: "", category: "guide"},
           ]}
           heading="Sources & further reading"
         />

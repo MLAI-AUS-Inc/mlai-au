@@ -1,11 +1,20 @@
 # New Developer Setup
 
-This is the short path for someone who needs to develop, test, and push work on the main MLAI repos.
+This is the legacy short path for someone working on the original website,
+backend, and Roo repository group. For the complete platform map—including
+inactive experiments—start with the
+[`mlai-engineering`](https://github.com/MLAI-AUS-Inc/mlai-engineering)
+repository.
 
 Main repos:
 - `mlai-au` - public website and React Router app
 - `mlai-backend` - Django API and backend jobs
 - `roo` - Roo Slack/agent service
+
+`mlai-chat`, `mlai-plane`, and `mlai-plane-edge` are inactive experiments in
+deploying the open-source Buzz and Plane products. They are not part of the
+standard onboarding or supported MLAI architecture. Do not clone or run them
+unless a task explicitly investigates or reactivates an experiment.
 
 Clone `content-factory` too only when working on article/content generation flows. The backend full local stack expects it as a sibling repo.
 
@@ -183,6 +192,11 @@ uvicorn roo.main:app --reload
 ## 6. Backend Full Local Stack
 
 Only use this when backend integration work needs Docker services and the sibling `content-factory` repo.
+
+> **Migration approval required:** the backend web container is configured to
+> apply pending database migrations when it starts. Do not run the Compose
+> startup command below unless you have explicit approval for every migration
+> it would apply. Inspect the migration state first with a non-applying check.
 
 Expected layout:
 

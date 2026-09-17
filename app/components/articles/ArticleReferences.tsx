@@ -144,7 +144,7 @@ export function ArticleReferences({
       aria-labelledby={headingId}
       data-cf-component-id="references"
       data-cf-component-type="references"
-      data-cf-component-label="Authoritative References"
+      data-cf-component-label="References"
       className="mt-2"
     >
       <div className="flex items-center justify-between gap-3 px-1 pb-0.5">

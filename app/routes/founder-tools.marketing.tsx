@@ -7,18 +7,14 @@ import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
-  BookOpen,
-  Brain,
   Camera,
   CheckCircle2,
   ChevronDown,
-  CircleHelp,
   ExternalLink,
   FileText,
   Flame,
   Globe2,
   Loader2,
-  MoreHorizontal,
   PenLine,
   Plus,
   Rocket,
@@ -32,17 +28,19 @@ import {
   Trash2,
   Undo2,
   UserRound,
-  UsersRound,
-  Wrench,
 } from "lucide-react";
 import { clsx } from "clsx";
 
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
+import CustomContentIslandBuilder from "~/components/CustomContentIslandBuilder";
 import AvatarModal from "~/components/AvatarModal";
+import GitHubConnectForm from "~/components/GitHubConnectForm";
 import { RooPointCost } from "~/components/RooPointCost";
 import VibeMarketingAnalyticsSection from "~/components/VibeMarketingAnalyticsSection";
 import VibeMarketingDailyBriefSection from "~/components/VibeMarketingDailyBriefSection";
+import VibeMarketingIslandGraphSection from "~/components/VibeMarketingIslandGraphSection";
+import { PillarIcon } from "~/components/VibeMarketingPillarIcon";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
@@ -52,7 +50,7 @@ import {
   autofillStartErrorsForDisplay,
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
-import { shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
+import { isDashboardGithubConnected, shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
 import { findRecoverableDiscoveryRun } from "~/lib/vibe-marketing-discovery-recovery";
 import {
   VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
@@ -77,7 +75,6 @@ import {
   controlVibeMarketingRun,
   discardVibeMarketingWrittenArticle,
   getVibeMarketingBootstrap,
-  getVibeMarketingGithubRepos,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
   recordVibeMarketingTopicFeedback,
@@ -107,7 +104,6 @@ import type {
   VibeMarketingAutofillResult,
   VibeMarketingBootstrap,
   VibeMarketingDraftArticle,
-  VibeMarketingGithubReposResponse,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
@@ -173,30 +169,6 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
 }
 
-function unavailableGithubRepos(): VibeMarketingGithubReposResponse {
-  return { status: "unavailable", repos: [], repositories: [] };
-}
-
-function dashboardGithubConnectionState(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
-  return String(
-    githubRepos.connectionState ??
-      githubRepos.connection_state ??
-      bootstrap.settings.githubConnectionState ??
-      githubRepos.status ??
-      "",
-  ).trim().toLowerCase();
-}
-
-function isDashboardGithubConnected(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
-  const state = dashboardGithubConnectionState(githubRepos, bootstrap);
-  return (
-    isGithubPublishingReady(bootstrap) ||
-    state === "connected" ||
-    state === "already_connected" ||
-    Boolean(githubRepos.repos?.length || githubRepos.repositories?.length)
-  );
-}
-
 function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
   return Boolean(
     bootstrap.checks.scaffold?.setupBlocked &&
@@ -211,6 +183,7 @@ function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  if (isArticleSystemSetupBlocked(bootstrap)) return "content_only";
   const effective = bootstrap.settings.articleDeliveryModeEffective;
   if (effective === "review_draft" || effective === "publish_code" || effective === "content_only") {
     return effective;
@@ -335,7 +308,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (!vibeContext.appUser) {
     return {
       bootstrap: emptyBootstrapFromProfile(vibeContext.profile),
-      githubRepos: unavailableGithubRepos(),
       hasFounderCompany: false,
       billingRequestIds: {
         articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
@@ -345,13 +317,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 
   const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
-  const [bootstrap, githubRepos] = await Promise.all([
-    getVibeMarketingBootstrap(env, request, activeCompanyId, "summary"),
-    getVibeMarketingGithubRepos(env, request, activeCompanyId).catch(() => unavailableGithubRepos()),
-  ]);
+  const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
   return {
     bootstrap,
-    githubRepos,
     hasFounderCompany: true,
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
@@ -557,16 +525,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-content-island-discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
-      if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
-      }
       const contentIslandSlug = stringFromForm(formData, "contentIslandSlug");
       const pillar = bootstrap.topicPillars.find((item) => item.slug === contentIslandSlug);
       if (!pillar) {
         return { intent, error: "Choose a content island before generating article ideas." };
       }
       const contentIslandKeyword =
-        stringFromForm(formData, "contentIslandKeyword") ||
+        pillar.pillarKeyword ||
         pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ||
         pillar.name;
       const run = await startVibeMarketingDiscovery(env, request, {
@@ -603,9 +568,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "research-custom-topic") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
-      if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
-      }
       const customTitle = stringFromForm(formData, "customTitle");
       const targetKeyword = stringFromForm(formData, "targetKeyword");
       const articleContext = stringFromForm(formData, "articleContext");
@@ -642,9 +604,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-discovery" || intent === "discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
-      if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
-      }
       const run = await startVibeMarketingDiscovery(env, request, { companyId: activeCompanyId });
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
@@ -702,9 +661,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId);
-      if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
-      }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
       const candidatePool = [
@@ -973,12 +929,6 @@ function normalizeDashboardDomain(value: string | null | undefined) {
   } catch {
     return raw.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").split(/[/?#]/, 1)[0].replace(/\/+$/, "");
   }
-}
-
-function githubConnectHrefForDashboard(connected: boolean) {
-  const params = new URLSearchParams({ returnTo: "/founder-tools/marketing" });
-  if (connected) params.set("forceReconnect", "true");
-  return `/founder-tools/marketing/github-connect?${params.toString()}`;
 }
 
 function topicChips(bootstrap: VibeMarketingBootstrap) {
@@ -3247,20 +3197,6 @@ function pillarProgressTheme(colorKey: string | null | undefined): MarketingRunP
   return pillarTheme(colorKey).progress;
 }
 
-function PillarIcon({ iconKey, className }: { iconKey: string | null | undefined; className?: string }) {
-  const Icon =
-    iconKey === "brain"
-      ? Brain
-      : iconKey === "community"
-        ? UsersRound
-        : iconKey === "rocket"
-          ? Rocket
-          : iconKey === "tools"
-            ? Wrench
-            : Sparkles;
-  return <Icon className={className} />;
-}
-
 const CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS = [
   { key: "queue_research", name: "Queue research run" },
   { key: "load_context", name: "Load startup context" },
@@ -3382,78 +3318,52 @@ function contentIslandDiscoveryStepLabel(run: VibeMarketingRunSummary | null, ac
   return `Researching article ideas for ${islandName}.`;
 }
 
+// Both the map and fallback cards use the same heading and action toolbar.
+function ContentIslandsSectionHeader() {
+  return <div className="max-w-xl">
+    <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">Content strategy</p>
+    <h2 className="mt-1 text-xl font-black tracking-normal text-slate-950">Find your next content opportunity</h2>
+    <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">Explore the themes your audience searches for, compare demand, and generate article ideas when you are ready.</p>
+  </div>;
+}
+
+function ContentIslandActions({ submitting, discoverySubmitting, onCreateIsland }: {
+  submitting: boolean; discoverySubmitting: boolean; onCreateIsland: () => void;
+}) {
+  return <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+    <button type="button" onClick={onCreateIsland} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-black text-white hover:bg-violet-800 focus-visible:ring-4 focus-visible:ring-violet-200"><Plus className="h-4 w-4" />Create an island</button>
+    <Form method="POST"><button type="submit" name="intent" value="start-discovery" disabled={submitting} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 hover:bg-violet-50 focus-visible:ring-4 focus-visible:ring-violet-100 disabled:opacity-50">{discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}Find more islands</button></Form>
+  </div>;
+}
+
 function TopicPillarsSection({
   pillars,
   submitting,
-  discoverySubmitting,
   generatingPillarSlug,
   confirmingPillarSlug,
   activePillarSlug,
-  customNotice,
-  helpOpen,
-  helpRef,
   onGenerate,
-  onAddCustomPillar,
-  onLearnMore,
+  header,
+  actions,
 }: {
   pillars: VibeMarketingTopicPillar[];
   submitting: boolean;
-  discoverySubmitting: boolean;
   generatingPillarSlug?: string | null;
   confirmingPillarSlug?: string | null;
   activePillarSlug: string | null;
-  customNotice: boolean;
-  helpOpen: boolean;
-  helpRef: RefObject<HTMLDivElement | null>;
   onGenerate: (pillar: VibeMarketingTopicPillar) => void;
-  onAddCustomPillar: () => void;
-  onLearnMore: () => void;
+  header: ReactNode;
+  actions: ReactNode;
 }) {
-  const visiblePillars = pillars.slice(0, 4);
+  const visiblePillars = pillars;
   const generating = Boolean(generatingPillarSlug);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black tracking-normal text-slate-950">
-              Your content islands
-            </h2>
-            <CircleHelp className="h-5 w-5 text-slate-400" />
-          </div>
-          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-            These are broad content themes based on your business and seed keywords.
-            <br />
-            Click a content island to see topic ideas that live under it.
-          </p>
-        </div>
-        <div className="flex flex-wrap justify-start gap-3 lg:ml-auto lg:justify-end lg:self-start">
-          <Form method="POST">
-            <button
-              type="submit"
-              name="intent"
-              value="start-discovery"
-              disabled={submitting}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Suggest more content islands
-            </button>
-          </Form>
-          <button
-            type="button"
-            onClick={onLearnMore}
-            aria-expanded={helpOpen}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
-          >
-            <BookOpen className="h-4 w-4" />
-            Learn more
-          </button>
-        </div>
-      </div>
+      {header}
+      <div className="mt-5">{actions}</div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {visiblePillars.map((pillar) => {
           const theme = pillarTheme(pillar.colorKey);
           const active = pillar.slug === activePillarSlug;
@@ -3463,43 +3373,50 @@ function TopicPillarsSection({
             <article
               key={pillar.id || pillar.slug}
               className={clsx(
-                "relative flex min-h-[220px] flex-col items-center rounded-xl border bg-white px-3 py-5 text-center shadow-sm transition",
+                "flex min-h-[170px] flex-col rounded-xl border bg-white p-4 text-left shadow-sm transition",
                 active ? "border-violet-300 ring-4 ring-violet-50" : "border-slate-200 hover:border-violet-200",
               )}
             >
-              <MoreHorizontal className="absolute right-4 top-4 h-4 w-4 text-slate-400" />
-              <div className={clsx("flex h-12 w-12 items-center justify-center rounded-full shadow-lg", theme.iconWrap)}>
-                <PillarIcon iconKey={pillar.iconKey} className="h-6 w-6" />
+              <div className="flex items-start gap-3">
+                <div className={clsx("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-sm", theme.iconWrap)}>
+                  <PillarIcon iconKey={pillar.iconKey} className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black leading-5 text-slate-950">{pillar.name}</h3>
+                  {pillar.description ? (
+                    <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">{pillar.description}</p>
+                  ) : null}
+                </div>
               </div>
-              <h3 className="mt-6 min-h-[42px] text-balance text-sm font-black leading-5 text-slate-950">
-                {pillar.name}
-              </h3>
-              <div className="mt-2 h-4" aria-hidden="true" />
               <button
                 type="button"
                 onClick={() => onGenerate(pillar)}
                 disabled={submitting || generating}
-                aria-label={confirming ? `Generate topic ideas for ${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point` : undefined}
+                aria-label={
+                  confirming
+                    ? `Confirm topic idea generation for ${pillar.name} for ${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point`
+                    : `Generate topic ideas for ${pillar.name}`
+                }
                 className={clsx(
-                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
+                  "mt-auto inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border text-sm font-black transition focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-60",
                   theme.solidButton,
                 )}
               >
                 {generatingThisPillar ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin text-white" />
-                    loading
+                    Researching ideas…
                   </>
                 ) : (
                   <>
                     {confirming ? (
                       <>
+                        Confirm
                         <RooPointCost points={-VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} />
-                        <span aria-hidden="true">?</span>
                       </>
                     ) : (
                       <>
-                        Generate
+                        Generate topic ideas
                         <ArrowRight className="h-4 w-4 text-white" />
                       </>
                     )}
@@ -3510,36 +3427,8 @@ function TopicPillarsSection({
           );
         })}
 
-        <button
-          type="button"
-          onClick={onAddCustomPillar}
-          className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-violet-300 hover:bg-violet-50/30"
-        >
-          <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-violet-300 text-violet-600">
-            <Plus className="h-6 w-6" />
-          </span>
-          <span className="mt-5 text-sm font-black text-slate-700">Add custom content island</span>
-        </button>
       </div>
 
-      <div
-        ref={helpRef}
-        tabIndex={-1}
-        className={clsx(
-          "mt-5 rounded-lg bg-violet-50 px-4 py-3 text-sm font-black text-violet-700 outline-none transition focus:ring-4 focus:ring-violet-100",
-          helpOpen ? "ring-1 ring-violet-100" : "",
-        )}
-      >
-        <div className="flex items-center gap-3">
-          <Sparkles className="h-5 w-5 shrink-0 text-violet-500" />
-          <p>Content islands organize broad themes. Each content island contains many specific article ideas.</p>
-        </div>
-        {customNotice ? (
-          <p className="mt-3 pl-8 text-sm font-bold text-violet-600">
-            Custom content island creation is not available yet. Use the Custom topic tab above for one-off article ideas.
-          </p>
-        ) : null}
-      </div>
     </section>
   );
 }
@@ -3547,14 +3436,12 @@ function TopicPillarsSection({
 function ReturningTopicPickerPage({
   bootstrap,
   billingRequestIds,
-  githubRepos,
   error,
   errorIntent,
   setupMergedNotice = false,
 }: {
   bootstrap: VibeMarketingBootstrap;
   billingRequestIds: { articleJob: string; contentIslandTopics: string };
-  githubRepos: VibeMarketingGithubReposResponse;
   error: string | null;
   errorIntent?: string | null;
   setupMergedNotice?: boolean;
@@ -3569,7 +3456,6 @@ function ReturningTopicPickerPage({
   const customResearchFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "custom-research" });
   const companyAvatarFetcher = useFetcher<CompanyAvatarActionData>({ key: "company-avatar" });
   const topicListRef = useRef<HTMLDivElement | null>(null);
-  const pillarHelpRef = useRef<HTMLDivElement | null>(null);
   const baseTopics = useMemo(
     () => bootstrap.topicCandidates.filter((topic) => !topic.alreadyWritten).slice(0, 8),
     [bootstrap.topicCandidates],
@@ -3580,8 +3466,8 @@ function ReturningTopicPickerPage({
   const [toast, setToast] = useState<TopicToast | null>(null);
   const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
   const [confirmingContentIslandSlug, setConfirmingContentIslandSlug] = useState<string | null>(null);
-  const [customPillarNotice, setCustomPillarNotice] = useState(false);
-  const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
+  const [customIslandOpen, setCustomIslandOpen] = useState(false);
+  useEffect(() => { setCustomIslandOpen(false); }, [bootstrap.company.id]);
   const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<ContentIslandDiscoveryRunState | null>(null);
   const [contentIslandRefreshRunId, setContentIslandRefreshRunId] = useState<string | null>(null);
   const [companyAvatarModalOpen, setCompanyAvatarModalOpen] = useState(false);
@@ -3644,12 +3530,13 @@ function ReturningTopicPickerPage({
     ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
     : effectiveDeliveryMode === "review_draft"
       ? "This will generate an article preview for comments before publishing."
-      : "This will generate article copy and images for manual publishing.";
+      : isArticleSystemSetupBlocked(bootstrap)
+        ? "Your draft can be written while website setup finishes. Once setup is ready, review it on your site before publishing."
+        : "This will generate article copy and images for manual publishing.";
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
-  const githubConnected = isDashboardGithubConnected(githubRepos, bootstrap);
-  const githubConnectionHref = githubConnectHrefForDashboard(githubConnected);
+  const githubConnected = isDashboardGithubConnected(bootstrap);
   const websiteDomainDisplay = normalizeDashboardDomain(domain) || "Add your domain";
   const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
   const companyAvatarUrl = companyAvatarPreviewUrl || savedCompanyAvatarUrl;
@@ -3779,14 +3666,15 @@ function ReturningTopicPickerPage({
   const revalidatorRef = useRef(revalidator);
   revalidatorRef.current = revalidator;
   useEffect(() => {
-    if (!hasInFlightWork) return;
+    // A poll must not restart a route loader while the user is leaving it.
+    if (!hasInFlightWork || navigation.state !== "idle") return;
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       const current = revalidatorRef.current;
       if (current.state === "idle") current.revalidate();
     }, 15000);
     return () => clearInterval(interval);
-  }, [hasInFlightWork]);
+  }, [hasInFlightWork, navigation.state]);
 
   const submitSelectedTopic = useCallback(() => {
     if (articleSubmitting || !selectedTopic) return;
@@ -3861,7 +3749,12 @@ function ReturningTopicPickerPage({
     formData.set("clientRequestId", `${billingRequestIds.contentIslandTopics}:${pillar.slug}`);
     formData.set("contentIslandSlug", pillar.slug);
     formData.set("contentIslandName", pillar.name);
-    formData.set("contentIslandKeyword", pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ?? pillar.name);
+    formData.set(
+      "contentIslandKeyword",
+      pillar.pillarKeyword ??
+        pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ??
+        pillar.name,
+    );
     formData.set("contentIslandIconKey", pillar.iconKey);
     formData.set("contentIslandColorKey", pillar.colorKey);
     contentIslandDiscoveryFetcher.submit(formData, { method: "POST" });
@@ -3895,20 +3788,7 @@ function ReturningTopicPickerPage({
     customResearchFetcher.submit(formData, { method: "POST" });
   }
 
-  function handleAddCustomPillar() {
-    setCustomPillarNotice(true);
-    window.setTimeout(() => {
-      pillarHelpRef.current?.focus({ preventScroll: false });
-    }, 0);
-  }
-
-  function handleLearnMorePillars() {
-    setPillarHelpOpen((open) => !open);
-    window.setTimeout(() => {
-      pillarHelpRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      pillarHelpRef.current?.focus({ preventScroll: true });
-    }, 0);
-  }
+  function handleAddCustomPillar() { setCustomIslandOpen(true); }
 
   const handleCompanyAvatarSave = useCallback(
     (file: File) => {
@@ -4292,8 +4172,34 @@ function ReturningTopicPickerPage({
     setDeclinedFeedback((current) => current.filter((item) => item.id !== data.topicFeedback?.id));
   }, [restoreFetcher.data]);
 
+  const contentIslandsHeader = <ContentIslandsSectionHeader />;
+  const contentIslandActions = <ContentIslandActions
+    submitting={isSubmitting || contentIslandDiscoveryBusy}
+    discoverySubmitting={discoverySubmitting}
+    onCreateIsland={handleAddCustomPillar}
+  />;
+  const topicPillarsCards = (
+    <TopicPillarsSection
+      pillars={bootstrap.topicPillars}
+      submitting={isSubmitting || contentIslandDiscoveryBusy}
+      generatingPillarSlug={generatingPillarSlug}
+      confirmingPillarSlug={confirmingContentIslandSlug}
+      activePillarSlug={activePillarSlug}
+      onGenerate={handleContentIslandGenerateClick}
+      header={contentIslandsHeader}
+      actions={contentIslandActions}
+    />
+  );
+
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
+      <CustomContentIslandBuilder
+        key={bootstrap.company.id}
+        companyId={bootstrap.company.id}
+        open={customIslandOpen}
+        onClose={() => setCustomIslandOpen(false)}
+        onAdded={(island) => { setActivePillarSlug(island.slug); revalidator.revalidate(); }}
+      />
       {setupMergedNotice ? (
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
@@ -4336,9 +4242,7 @@ function ReturningTopicPickerPage({
               What should we write about next?
             </h1>
             <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
-              {directPublishMode
-                ? "Choose a topic and we'll research, write, and prepare a high-performing SEO article for your site."
-                : "Choose a topic and we'll research, write, and package a high-performing SEO article for manual publishing."}
+              Choose a topic and we'll research, write, and check an article that helps your readers complete a useful task.
             </p>
             <p className="mt-3 max-w-2xl text-sm font-bold text-slate-500">{deliveryModeNote}</p>
           </div>
@@ -4562,20 +4466,25 @@ function ReturningTopicPickerPage({
 
           </Form>
 
-          <TopicPillarsSection
-            pillars={bootstrap.topicPillars}
-            submitting={isSubmitting || contentIslandDiscoveryBusy}
-            discoverySubmitting={discoverySubmitting}
-            generatingPillarSlug={generatingPillarSlug}
-            confirmingPillarSlug={confirmingContentIslandSlug}
-            activePillarSlug={activePillarSlug}
-            customNotice={customPillarNotice}
-            helpOpen={pillarHelpOpen}
-            helpRef={pillarHelpRef}
-            onGenerate={handleContentIslandGenerateClick}
-            onAddCustomPillar={handleAddCustomPillar}
-            onLearnMore={handleLearnMorePillars}
-          />
+          {bootstrap.islandGraph?.nodes?.length ? (
+            <VibeMarketingIslandGraphSection
+              graph={bootstrap.islandGraph}
+              pillars={bootstrap.topicPillars}
+              submitting={isSubmitting || contentIslandDiscoveryBusy}
+              generatingPillarSlug={generatingPillarSlug}
+              confirmingPillarSlug={confirmingContentIslandSlug}
+              activePillarSlug={activePillarSlug}
+                                      onGenerate={handleContentIslandGenerateClick}
+              onSelectIsland={(slug) => {
+                setActivePillarSlug(slug);
+                setConfirmingContentIslandSlug(null);
+              }}
+                      header={contentIslandsHeader}
+              actions={contentIslandActions}
+            />
+          ) : (
+            topicPillarsCards
+          )}
         </div>
 
         <aside className="space-y-5">
@@ -4644,12 +4553,17 @@ function ReturningTopicPickerPage({
                     GitHub connected
                   </span>
                 ) : (
-                  <a
-                    href={githubConnectionHref}
-                    className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                  <GitHubConnectForm
+                    returnTo="/founder-tools/marketing"
+                    className="shrink-0"
                   >
-                    Manage GitHub
-                  </a>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      Manage GitHub
+                    </button>
+                  </GitHubConnectForm>
                 )}
               </div>
             </div>
@@ -4785,7 +4699,7 @@ function ReturningTopicPickerPage({
 }
 
 export default function FounderToolsMarketing() {
-  const { bootstrap, billingRequestIds, githubRepos } = useLoaderData<typeof loader>();
+  const { bootstrap, billingRequestIds } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const location = useLocation();
   const error = actionError(actionData);
@@ -4800,7 +4714,6 @@ export default function FounderToolsMarketing() {
         <ReturningTopicPickerPage
           bootstrap={bootstrap}
           billingRequestIds={billingRequestIds}
-          githubRepos={githubRepos}
           error={error}
           errorIntent={errorIntent}
           setupMergedNotice={setupMergedNotice}

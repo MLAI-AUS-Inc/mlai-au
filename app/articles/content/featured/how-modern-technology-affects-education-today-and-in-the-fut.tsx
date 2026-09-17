@@ -1,398 +1,123 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router'
 import { Home } from 'lucide-react'
-import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { Link } from 'react-router'
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import { DEFAULT_AUTHOR_KEY, getAuthorProfile } from '~/articles/authors'
+import AuthorBio from '~/components/AuthorBio'
 
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import { QuoteBlock } from '../../../components/articles/QuoteBlock'
-import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
-import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
-import { ArticleStepList } from '../../../components/articles/ArticleStepList'
-import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
-import { ArticleReferences } from '../../../components/articles/ArticleReferences'
-import { ArticleDisclaimer } from '../../../components/articles/ArticleDisclaimer'
-import { getDefaultArticleAuthorDetails } from '../../authors'
-
-/** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
-
-const TOPIC = 'How modern technology affects education today and in the future'
 export const CATEGORY = 'featured'
 export const SLUG = 'how-modern-technology-affects-education-today-and-in-the-fut'
-const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
-const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
-const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? AUTHOR_PROFILE.credentials ?? 'Founder'
-const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
-const AUTHOR_AVATAR =
-  AUTHOR_PROFILE.avatarUrl ??
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
-export const DATE_PUBLISHED = '2026-01-27'
-export const DATE_MODIFIED = '2026-01-27'
-export const DESCRIPTION = 'How technology is changing Australian education today—and what’s next with AI, privacy, inclusion, and practical steps to adopt it responsibly.'
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c64e3c6c-e429-49ad-acb9-ed1a06156751.jpg?alt=media&token=d82a401d-a58e-47e5-ba8d-76025cf5b37b"
-const HERO_IMAGE_ALT = 'Students using laptops in a classroom'
-export const FEATURED_FOCUS = 'ai' // 'startups' | 'ai' | 'product' | 'funding'
+export const DATE_PUBLISHED = '2025-12-26'
+export const DATE_MODIFIED = '2026-09-15'
+export const DESCRIPTION = 'Evaluate education technology claims using a dated planning-time trial, Australian sector guidance and a worked caption-review example. Turn future possibilities into questions you can test.'
+export const FEATURED_FOCUS = 'ai'
+const TITLE = 'Modern technology in education: evidence today and questions for the future'
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c64e3c6c-e429-49ad-acb9-ed1a06156751.jpg?alt=media&token=d82a401d-a58e-47e5-ba8d-76025cf5b37b'
 
-/** ===== FAQ ===== */
-interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
-}
-
-export const faqItems: FAQ[] = [
-  {
-    id: 1,
-    question: 'What are the biggest benefits of using technology in learning today?',
-    answer:
-      'Personalised support (including AI assistance), faster feedback via learning platforms, improved access and inclusion (captions, screen readers, translation), and richer collaboration through shared docs and classroom tools.'
-  },
-  {
-    id: 2,
-    question: 'Will AI replace teachers?',
-    answer:
-      'No. Evidence and practice point to AI augmenting teachers, not replacing them. The teacher’s role shifts toward facilitation, feedback, and wellbeing, while AI handles drafting, practice, and administrative tasks.'
-  },
-  {
-    id: 3,
-    question: 'How should schools handle academic integrity with AI tools?',
-    answer:
-      <>Design assessments that emphasise process, oral/observed explanations, and original artefacts. Teach citation and disclosure of AI assistance. Avoid relying on “AI detectors” alone—these tools are unreliable and can create false positives.</>
-  },
-  {
-    id: 4,
-    question: 'What minimum setup is needed to get value from edtech?',
-    answer:
-      'A stable internet connection, fit-for-purpose devices, a central learning platform (e.g., LMS), accessibility defaults (captions, alt text, readable formats), and clear classroom routines for when tech is used—and when it is put away.'
-  },
-  {
-    id: 5,
-    question: 'How do we protect student data when using new tools?',
-    answer:
-      'Align to the Australian Privacy Principles (APPs): minimise data collected, prefer onshore data storage, restrict retention, verify vendor security, and provide clear consent and opt-out pathways.'
-  },
-  {
-    id: 6,
-    question: 'What metrics should we track in a pilot?',
-    answer:
-      'Define a small set: engagement (attendance, on-task time), learning outcomes (rubrics, mastery checks), workload/time saved, and inclusion signals (participation across diverse learners). Compare before/after on a short 4–6 week pilot.'
-  }
-]
-
-/** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
-  heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
-  items: [
-    { label: 'What are the biggest benefits of technology in education today?', description: 'Personalised learning, better access/inclusion, faster feedback and richer collaboration.' },
-    { label: 'What risks should schools manage with edtech?', description: 'Digital divide, distraction/wellbeing, privacy/data handling, academic integrity, vendor lock‑in.' },
-    { label: 'How will technology shape the future of learning?', description: 'AI‑assisted personalisation, more authentic assessment, and immersive simulations—teachers stay central.' }
-  ]
+ heading: 'Separate a useful feature from a demonstrated educational benefit',
+ intro: 'For Australian educators considering a technology proposal: identify the task, the relevant evidence and the decision your institution must make.',
+ items: [
+  { label: 'Ask what was measured', description: 'A reduction in preparation time does not establish better student learning or savings across a whole school.' },
+  { label: 'Keep sectors separate', description: 'Schools guidance, VET assessment responsibilities and a university’s rules are not interchangeable.' },
+  { label: 'Treat the future as conditional', description: 'State the benefit you want, the evidence that would support it and what would make you stop.' },
+ ],
 }
 
-/** ===== Article Metadata (route handler uses for registry/SEO) ===== */
-export const articleMeta = {
-  title: `${TOPIC} (2026)`,
-  topic: TOPIC,
-  category: CATEGORY,
-  slug: SLUG,
-  description: DESCRIPTION,
-  datePublished: DATE_PUBLISHED,
-  dateModified: DATE_MODIFIED,
-  author: AUTHOR,
-  image: HERO_IMAGE,
-  imageAlt: HERO_IMAGE_ALT
-}
-
-/** ===== References (optional) ===== */
-const references = [
-  {
-    id: 1,
-    href: 'https://www.australiancurriculum.edu.au/curriculum-information/understand-this-learning-area/technologies',
-    title: 'Australian Curriculum: Technologies',
-    publisher: 'ACARA',
-    description: 'Curriculum expectations for digital technologies and computational thinking across F–10.',
-    category: 'government'
-  },
-  {
-    id: 2,
-    href: 'https://www.esafety.gov.au/educators',
-    title: 'eSafety guidance for schools and educators',
-    publisher: 'eSafety Commissioner (Australia)',
-    description: 'Practical guidance on online safety, privacy, and wellbeing in education settings.',
-    category: 'guide'
-  },
-  {
-    id: 3,
-    href: 'https://www.oaic.gov.au/privacy/australian-privacy-principles',
-    title: 'Australian Privacy Principles (APPs)',
-    publisher: 'Office of the Australian Information Commissioner',
-    description: 'Legal principles governing personal information handling in Australia.',
-    category: 'government'
-  },
-  {
-    id: 4,
-    href: 'https://unesdoc.unesco.org/ark:/48223/pf0000386591',
-    title: 'Guidance for generative AI in education and research',
-    publisher: 'UNESCO',
-    description: 'International guidance on the safe, effective use of generative AI in education.',
-    category: 'analysis'
-  }
+export const faqItems = [
+ { id: 1, question: 'Does technology automatically improve learning?', answer: 'No. A feature, policy or successful demonstration is not an outcome study. Specify what learners should be able to do and look for evidence from a comparable task and setting.' },
+ { id: 2, question: 'What does the lesson-planning trial show?', answer: 'The cited English trial concerns preparation time for Year 7 and 8 science using ChatGPT plus a guide. It does not supply an Australian student-attainment estimate or a guaranteed saving for your institution.' },
+ { id: 3, question: 'Will AI replace teachers in the next few years?', answer: 'This guide does not make a staffing forecast. A tool’s ability to draft text does not establish that it can take responsibility for teaching, assessment or student support.' },
+ { id: 4, question: 'Is a four-to-six-week pilot always enough?', answer: 'No. Duration should follow the question, required approvals, learning cycle and evaluation design. A short demonstration cannot establish long-term learning, safety or equitable access.' },
+ { id: 5, question: 'Can we upload student work if a tool stores data in Australia?', answer: 'Not on that fact alone. Obtain the institution’s decision about the particular tool, information, purpose and applicable obligations before uploading. Storage location is only one consideration.' },
 ]
 
-/**
- * ARTICLE CONTENT COMPONENT
- *
- * This component is dynamically imported by the route handler and rendered
- * INSIDE ArticleLayout. Do NOT wrap in ArticleLayout here.
- */
+export const articleMeta = {
+ title: TITLE, topic: TITLE, category: CATEGORY, slug: SLUG, description: DESCRIPTION,
+ datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED,
+ author: getAuthorProfile(DEFAULT_AUTHOR_KEY).name, image: HERO_IMAGE,
+ imageAlt: 'Illustration of a small robot on a desk with books, headphones and digital devices',
+}
+
 export default function ArticleContent() {
-  const authorDetails = {
-    name: AUTHOR,
-    role: AUTHOR_ROLE,
-    bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR
-  }
+ return <div className="bg-transparent">
+  <ArticleHeroHeader
+   breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: 'Education technology evidence', current: true }]}
+   title={TITLE} titleHighlight="education" headerBgColor="cyan"
+   summary={summaryHighlights} heroImage={HERO_IMAGE} heroImageAlt={articleMeta.imageAlt}
+  />
+  <div className="prose prose-lg prose-headings:scroll-mt-24 max-w-3xl mx-auto px-4 py-10">
+   <p>Modern technology can change how an educational activity is prepared, accessed, completed or assessed. Those are different changes: a caption helps present spoken information in text; a drafting assistant produces material to review; a learning platform distributes work. Whether a particular use improves access, workload or understanding needs its own evidence.</p>
+   <p>This guide helps an Australian educator turn a broad proposal into a specific question. It is not a census of technology use, a recommended-products list or a forecast that every classroom will become AI-led. For earlier changes, see the <Link to="/articles/featured/how-technology-has-changed-education">Australian education technology timeline</Link>; for classroom harms and privacy questions, see the <Link to="/articles/featured/how-technology-affects-education-negatively">education technology risk guide</Link>.</p>
 
-  return (
-    <>
-      {/* Hero header (custom) */}
-      <ArticleHeroHeader
-        breadcrumbs={[
-          { label: 'Home', href: '/', icon: Home },
-          { label: 'Articles', href: '/articles' },
-          { label: TOPIC, current: true }
-        ]}
-        title={TOPIC}
-        titleHighlight={TOPIC}
-        headerBgColor="cyan"
-        summary={summaryHighlights}
-        heroImage={HERO_IMAGE}
-        heroImageAlt={HERO_IMAGE_ALT}
-      />
+   <h2 id="current-evidence">What current guidance and a measured trial actually establish</h2>
+   <p>Sources checked 15 September 2026. This is a deliberately small, mixed evidence set, not a systematic review. The three Australian rows describe responsibilities or policy; the English trial measures a particular workload outcome. They cannot be averaged into a score for “technology in education”.</p>
+   <p className="text-sm">The source table scrolls horizontally on small screens. Focus it to use the arrow keys.</p>
+   <div id="education-evidence-table" role="region" aria-label="Education technology evidence and scope" tabIndex={0} className="overflow-x-auto scroll-mt-24">
+    <table className="min-w-[40rem]"><caption>Source, setting, finding and limit</caption><thead><tr><th>Source and period</th><th>Type and setting</th><th>Supported point</th><th>Limit</th></tr></thead><tbody>
+     <tr><td><a href="https://www.education.gov.au/schooling/resources/australian-framework-generative-artificial-intelligence-ai-schools">Australian AI-in-schools framework resource</a>; review endorsed June 2025</td><td>National schools guidance; the landing page describes its purpose and review.</td><td>There is a responsible-use framework for people connected with school education.</td><td>Its existence does not approve a product or measure a learning effect.</td></tr>
+     <tr><td><a href="https://www.asqa.gov.au/for-providers/guidance-and-resources-providers/artificial-intelligence-ai-use-in-vocational-education-training-vet/responsible-use">ASQA responsible AI-use guidance</a>; checked September 2026</td><td>VET provider guidance, including oversight and training-product requirements.</td><td>Qualified people retain responsibility for student-affecting decisions; AI use cannot displace required competency evidence.</td><td>This is not permission to replace practical assessment with a generated answer, or guidance for every school.</td></tr>
+     <tr><td><a href="https://www.sydney.edu.au/students/assessments.html">University of Sydney assessment guidance</a>; updated 2 June 2026</td><td>One university’s description of secure and open assessments.</td><td>Assessment conditions matter separately from whether course materials are online.</td><td>It is not a survey showing that Australian universities are uniformly hybrid-first.</td></tr>
+     <tr><td><a href="https://educationendowmentfoundation.org.uk/projects-and-evaluation/projects/choices-in-edtech-using-generative-ai-chatgpt-for-ks3-science-lesson-preparation-2024-teacher-choices-trial">EEF/NFER Teacher Choices trial</a>; 2024</td><td>School-randomised comparison in England; Year 7 and 8 science preparation.</td><td>ChatGPT plus a guide reduced reported preparation time relative to the non-GenAI comparison.</td><td>A workload result is not a student-attainment result or a local Australian saving.</td></tr>
+    </tbody></table>
+   </div>
 
-      {/* Table of contents placeholder */}
-      <ArticleTocPlaceholder className="bg-transparent" />
+   <h2 id="planning-trial">A promising result, with the denominator left attached</h2>
+   <p>The EEF project summary reports 259 teachers in 68 English secondary schools. Preparation time averaged 56.2 minutes per week in the ChatGPT group versus 81.5 in the comparison: 25.3 minutes less, approximately 31%. That concerns the selected science preparation, not the entire working week.</p>
+   <p>The linked <a href="https://d2tic4wvo1iusb.cloudfront.net/production/documents/projects/chatgpt_in_lesson_planning_-_evaluation_report.pdf">December 2024 evaluation report</a>, executive summary, PDF file pages 5–6, describes weekly diaries and an outcome window in weeks 6–10 after five initial weeks. It reports incomplete diary data excluded 18.5% of enrolled teachers from the primary analysis. A blinded resource review found no evidence of a quality difference; that is not proof of identical quality or improved student attainment.</p>
+   <p>Before transferring a result, compare subject, staff experience, approved tools, preparation task and support. A faster first draft can still require substantial checking. Keep setup, verification and correction in a workload estimate rather than reporting generation time alone.</p>
 
-      <div className="prose prose-lg prose-slate max-w-none">
-        {/* Opening paragraph */}
-        <p>
-          <strong>{TOPIC}</strong> in Australia is less about shiny gadgets and more about
-          how tools change pedagogy, access, and assessment. Since the rapid rise of
-          generative AI in 2023, classrooms, workplaces, and VET/uni settings have been
-          adapting quickly. This guide summarises the practical benefits, risks, and
-          what’s next—so you can plan responsible, evidence‑based steps.
-        </p>
+   <h2 id="caption-example">Worked example: a caption exists, but does it preserve the explanation?</h2>
+   <p><strong>Invented editorial fixture—not a recording, product test or learner study:</strong> a teacher wants text access to a short explanation. The original script below is written for this example. The two faulty captions are deliberately constructed to show what a review must catch.</p>
+   <p><strong>Original script:</strong> “This activity is optional. Do not submit it for a grade. The water sample starts at twenty degrees Celsius.”</p>
+   <ol>
+    <li><strong>Faulty caption A:</strong> “This activity is optional. Submit it for a grade. The water sample starts at twenty degrees Celsius.” Removing the negation reverses the instruction. The caption fails even though the surrounding words are correct.</li>
+    <li><strong>Faulty caption B:</strong> “This activity is optional. Do not submit it for a grade. The water sample starts at twenty degrees Fahrenheit.” The unit is wrong. A spelling check would not establish that the scientific meaning was preserved.</li>
+    <li><strong>Reviewed text:</strong> the original script above is the reference for these fixtures. Restoring its words resolves these two errors; it does not test timing, speaker identification, player controls or whether learners can use the eventual resource.</li>
+   </ol>
+   <p>A useful proposal is therefore “provide accurate, usable text for this explanation”, not “enable AI captions and claim inclusion”. In a real recording, compare with the actual speech; a script alone may differ from what was said. Do not use student recordings or identifiable material for a tool demonstration without the required institutional approval.</p>
 
-        {/* Hero Image - Use ArticleImageBlock, not raw img */}
-        <ArticleImageBlock
-          src={HERO_IMAGE}
-          alt={HERO_IMAGE_ALT}
-          caption="Technology supports teaching; it doesn’t replace it."
-        />
+   <h2 id="proposal-record">A completed proposal—and a record you can reuse</h2>
+   <dl>
+    <dt>Task and audience</dt><dd>Fictional staff-only review of one teacher-authored explanation. No learner account, voice recording or student work is used.</dd>
+    <dt>Current alternative</dt><dd>Publish the teacher’s reviewed text alongside the explanation using an existing approved system.</dd>
+    <dt>Proposed change</dt><dd>Investigate whether assisted caption preparation would improve that process. The invented fixtures above are only a first content check.</dd>
+    <dt>Evidence still missing</dt><dd>Actual audio alignment, keyboard and assistive-technology usability, learner needs, total preparation effort and the institution’s tool decision.</dd>
+    <dt>Decision now</dt><dd>Keep the approved text route. Do not begin a student pilot or claim improved access from these fixtures. Take the unanswered questions to the institution’s teaching, accessibility and privacy teams.</dd>
+   </dl>
+   <p>Copy the following into your planning notes. It is a proposal worksheet, not an approved research protocol or a promise of a downloadable classroom kit.</p>
+   <pre className="whitespace-pre-wrap break-words" aria-label="Education technology proposal worksheet">{[
+    'Specific reader / learner group and educational task:',
+    'Problem with the current approach, with existing evidence:',
+    'Current non-AI or already-approved alternative:',
+    'Proposed change and why it might help:',
+    'Supporting source / setting / date / measured outcome:',
+    'Important differences between that evidence and this setting:',
+    'Tool, account, input material, rights and data destination:',
+    'Required institutional decisions and responsible people:',
+    'Quality and accessibility checks / serious-error stop condition:',
+    'Comparison, outcome definition and missing-data handling:',
+    'Setup, review, correction and ongoing workload to count:',
+    'Proposed duration and reason / permissions still required:',
+    'Decision: keep current approach, investigate, pause or seek approval:',
+    'Next evidence, owner and review date:',
+   ].join('\n')}</pre>
 
-        {/* WHO IS THIS FOR - Use AudienceGrid, not raw HTML divs */}
-        <AudienceGrid
-          heading="Who is this guide for?"
-          cards={[
-            {
-              title: 'Teachers & trainers',
-              description: 'Practical ways to blend AI and edtech with strong pedagogy.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />,
-              variant: 'orange'
-            },
-            {
-              title: 'Students & career changers',
-              description: 'Study strategies and tools that support inclusion and mastery.',
-              icon: <AcademicCapIcon className="h-6 w-6" />,
-              variant: 'purple'
-            },
-            {
-              title: 'Leaders & community builders',
-              description: 'Policy, privacy, and change management for safe pilots.',
-              icon: <UsersIcon className="h-6 w-6" />,
-              variant: 'yellow'
-            }
-          ]}
-        />
+   <h2 id="future">Future possibilities: replace a prediction with a testable question</h2>
+   <ul>
+    <li><strong>More tailored feedback:</strong> can learners explain the next problem without the assistant, and what happens when its advice is wrong? A polished answer is not evidence of retained understanding.</li>
+    <li><strong>More simulation:</strong> which parts of a task can be rehearsed, and which still require physical performance, supervision or accredited assessment? A simulation should not be assumed to replace a placement.</li>
+    <li><strong>More connected learning records:</strong> who accepts the record, under which rules, and can the learner retrieve it in a usable format? Technical portability is different from credit recognition.</li>
+   </ul>
+   <p>These are possible directions, not a prediction that they will arrive in three to five years. A future claim becomes useful when it names a decision, a constraint and an observation that could disprove it. The <Link to="/articles/featured/how-technology-is-shaping-learning-in-higher-education">higher-education assessment and credit guide</Link> works through two of those decisions for students.</p>
 
-        {/* Research-derived sections */}
-        <h2>How technology is reshaping learning today</h2>
-        <p>
-          Most Australian classrooms now blend in‑person teaching with digital platforms:
-          learning management systems for content and feedback, collaboration tools for
-          group work, and accessibility features (captions, alt text, transcripts) baked
-          into mainstream apps. AI adds drafting and practice support—helpful for idea
-          generation, differentiation, and quick formative checks—when guided by clear
-          expectations and teacher oversight.
-        </p>
-        <p>
-          The core shift is from content delivery to coached practice. Teachers remain the
-          anchor for context, motivation, and judgement; technology shortens feedback
-          loops and widens access when used intentionally.
-        </p>
-
-        <QuoteBlock title="Key insight" variant="purple">
-          Technology amplifies good teaching—it rarely fixes weak pedagogy. Start with
-          learning outcomes, then choose the smallest toolset that helps you reach them.
-        </QuoteBlock>
-
-        <h2>Benefits you can bank on—when implemented well</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-d79dc5fc-6199-4f0a-a050-032b2667ba16.jpg?alt=media&token=5fa6f4ac-6865-4b07-947d-9b497f0dad81" alt="People collaborating in a vibrant tech startup office with a nostalgic 90s film aesthetic, showcasing innovation and teamwork." className="w-full rounded-lg my-8" />
-
-        <p>
-          Personalisation: adaptive practice, scaffolded prompts, and AI‑assisted
-          explanations can meet learners where they are. Access and inclusion: built‑in
-          captions, transcripts, screen readers, and translation lower barriers for
-          multilingual and neurodivergent learners. Feedback at pace: shared docs and LMS
-          tooling enable timely, targeted feedback and peer review.
-        </p>
-        <p>
-          Efficiency for educators: lesson planning, rubric drafting, and administrative
-          tasks can be partially automated, giving more time for facilitation and
-          wellbeing. Community: technology makes learning visible, connecting students,
-          families, and support staff with clearer progress signals.
-        </p>
-
-        <h2>Risks and trade‑offs to manage upfront</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-499d3010-19c1-4376-ad24-58c2df09fcad.jpg?alt=media&token=936da780-4a3a-4ff5-ab51-48c8601331a6" alt="Illustration for Risks and trade‑offs to manage upfront" className="w-full rounded-lg my-8" />
-
-        <p>
-          Digital divide: connectivity, device quality, and quiet study spaces are not
-          equal—plan offline options and equitable access. Attention and wellbeing:
-          distraction is real; build clear routines for when devices are open and when
-          they’re closed. Privacy and security: apply Australian Privacy Principles
-          (APPs)—minimise data, prefer onshore storage, set strict retention, and vet
-          vendors carefully.
-        </p>
-        <p>
-          Academic integrity: design for thinking, process, and oral/observed work; avoid
-          over‑reliance on AI “detectors”. Cost and lock‑in: prefer standards‑based tools
-          and exportable formats; pilot first, scale second.
-        </p>
-
-        <QuoteBlock title="Practical guardrails" variant="orange">
-          Default to data minimisation, opt‑in pilots, transparent AI use, and regular
-          reviews with students and staff. Document what data leaves your systems—and why.
-        </QuoteBlock>
-
-        <h2>AI in Australian classrooms, VET and workplace learning</h2>
-        <h3>What’s working now</h3>
-        <p>
-          Teachers and trainers use AI to draft exemplars and rubrics, create differentiated
-          practice, generate formative questions, and summarise student reflections. Students
-          use AI for brainstorming, revision plans, and practice explanations—when guided to
-          cite and disclose assistance. Accessibility features (captions, transcripts,
-          text‑to‑speech) lift participation.
-        </p>
-        <h3>What to avoid</h3>
-        <p>
-          “Ban or nothing” approaches tend to drive unsupervised use rather than safer
-          habits. Over‑automating feedback can reduce teacher judgement; keep human review
-          in the loop, particularly for at‑risk learners. Be cautious of uploading personal
-          or sensitive data to third‑party tools.
-        </p>
-        <p>
-          For a broader context, see our overview of the Australian AI ecosystem in
-          <Link to="/articles" className="underline underline-offset-4">
-            the Australian AI Landscape
-          </Link>
-          .
-        </p>
-
-        <h2>What the next 3–5 years likely bring</h2>
-        <h3>AI‑assisted personalisation, with teacher oversight</h3>
-        <p>
-          Expect tighter learning loops: diagnose → practice → feedback in minutes, not weeks,
-          with teachers orchestrating tasks and safeguarding equity.
-        </p>
-        <h3>Assessment that values process and explanation</h3>
-        <p>
-          More oral, observed, and project‑based demonstrations of competence; explicit rules
-          for disclosing AI assistance.
-        </p>
-        <h3>Immersive simulations (AR/VR) for applied practice</h3>
-        <p>
-          Safer, repeatable practice for practical skills (labs, trades, health) that once
-          required scarce equipment or placements.
-        </p>
-        <h3>Data standards and portability</h3>
-        <p>
-          Interoperable records follow learners across schools, VET, uni, and work—supporting
-          lifelong learning without locking into a single vendor.
-        </p>
-        <h3>Lifelong learning and micro‑credentials</h3>
-        <p>
-          Short, stackable credentials aligned to real tasks, with evidence captured across
-          platforms.
-        </p>
-
-        <ArticleStepList
-          title="Start small: a safe pilot that builds evidence"
-          steps={[
-            'Define learning outcomes and constraints (privacy, budget, devices).',
-            'Select a low‑risk use case and a small cohort for 4–6 weeks.',
-            'Capture baselines (engagement, rubrics) before the pilot starts.',
-            'Complete a privacy impact check; get consent where needed.',
-            'Co‑design routines with teachers and students; adjust weekly.',
-            'Review results; decide to scale, pause, or retire.'
-          ]}
-          accent="teal"
-        />
-
-        <ArticleResourceCTA
-          eyebrow="Resources"
-          title={`Get templates for ${TOPIC}`}
-          description="Download checklists, worksheets, and example documents tailored to this guide."
-          buttonLabel="Download now"
-          buttonHref="#"
-          accent="purple"
-        />
-
-        <QuoteBlock title="Pro tip" variant="purple">
-          Pilot one workflow at a time. Evidence from a small, well‑run pilot beats a
-          platform‑wide rollout with unclear outcomes.
-        </QuoteBlock>
-
-        <MLAITemplateResourceCTA />
-
-        <h2>Closing: keep people at the centre</h2>
-        <p>
-          Technology can widen access, speed feedback, and personalise practice—but the
-          heart of learning is still human. Start with outcomes, protect privacy, measure
-          what matters, and scale only when the evidence is there.
-        </p>
-      </div>
-
-      {/* References */}
-      <ArticleReferences references={references} heading="Sources & further reading" />
-
-      {/* Disclaimer */}
-      <ArticleDisclaimer />
-
-      {/* Company CTA */}
-      <ArticleCompanyCTA
-        title={`Need help with ${TOPIC}?`}
-        body="Join the MLAI community to collaborate with fellow AI practitioners in Australia."
-        buttonText="Get recommendations"
-        buttonHref="/contact"
-        note="We’re a not‑for‑profit community—friendly, practical, and local."
-      />
-
-      {/* Author Bio */}
-      <AuthorBio author={authorDetails} />
-
-      {/* FAQ */}
-      <ArticleFAQ items={faqItems} />
-
-      {/* Navigation */}
-      <ArticleFooterNav />
-    </>
-  )
+   <h2 id="approval">Resolve approval before collecting information</h2>
+   <p><a href="https://www.oaic.gov.au/privacy/your-privacy-rights/more-privacy-rights/children-and-young-people">OAIC’s education guidance</a> distinguishes institutions: private education is usually covered by the federal Privacy Act; public schools, TAFEs and most universities instead may fall under state or territory privacy laws. ANU and private universities are federal Act exceptions to that general tertiary distinction. Ask the responsible institutional team which obligations apply.</p>
+   <p>An Australian storage location, a consent box or a staff-only demonstration is not a complete approval process. Establish what material may be used, who decides, and what safeguards and alternatives are required. This article does not authorise data collection, assessment changes or procurement.</p>
+   <p>The source comparison, caption fixtures and worksheet are MLAI editorial work, not new research or independent specialist approval. There is no school-consulting or contractor offer attached to this education resource.</p>
+   <ArticleFAQ items={faqItems} />
+   <AuthorBio author={getAuthorProfile(DEFAULT_AUTHOR_KEY)} />
+  </div>
+ </div>
 }

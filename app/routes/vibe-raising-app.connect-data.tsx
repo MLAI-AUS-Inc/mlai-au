@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Route } from "./+types/vibe-raising-app.connect-data";
 import { Link, redirect, useLoaderData, useLocation, useNavigate } from "react-router";
 import { clsx } from "clsx";
@@ -12,12 +12,10 @@ import {
   ChevronDownIcon,
   CloudArrowUpIcon,
   DocumentTextIcon,
-  FolderIcon,
   LinkIcon,
   LockClosedIcon,
   MagnifyingGlassIcon,
   ShieldCheckIcon,
-  SparklesIcon,
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -32,7 +30,6 @@ import {
   getVibeRaisingGoogleAnalyticsProperties,
   getVibeRaisingInputSourcesStatus,
   getVibeRaisingLinearPreview,
-  getVibeRaisingLinearProjects,
   getVibeRaisingLumaEvents,
   listVibeRaisingManualDocuments,
   uploadVibeRaisingManualDocument,
@@ -42,8 +39,8 @@ import {
   getVibeRaisingSlackPreview,
   getVibeRaisingXeroPreview,
   requireVibeRaisingFounder,
+  resolveActiveCompanyId,
   saveVibeRaisingGoogleAnalyticsPropertySelections,
-  saveVibeRaisingLinearProjectSelections,
   saveVibeRaisingLumaSelections,
   saveVibeRaisingSlackChannelSelections,
   syncVibeRaisingFinancialSources,
@@ -54,112 +51,32 @@ import type {
   VibeRaisingGmailPreview,
   VibeRaisingGoogleAnalyticsProperty,
   VibeRaisingGoogleAnalyticsPropertiesResponse,
-  VibeRaisingLumaEvent,
   VibeRaisingLumaEventsResponse,
   VibeRaisingLumaMetricOption,
   VibeRaisingInputSourceKey,
-  VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
   VibeRaisingLinearPreview,
-  VibeRaisingLinearProject,
-  VibeRaisingLinearProjectsResponse,
   VibeRaisingManualDocument,
   VibeRaisingSlackChannel,
   VibeRaisingSlackChannelsResponse,
   VibeRaisingSlackPreview,
   VibeRaisingXeroPreview,
 } from "~/types/vibe-raising";
-import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
-import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
+import VibeRaisingWorkflowLayout from "~/components/VibeRaisingWorkflowLayout";
+import ConnectorTile from "~/components/vibe-raising/ConnectorTile";
+import { completeConnectorCatalogue, isConnectedConnector, readConnectorSelection, resolveConnectorSelection } from "~/lib/update-connectors";
+import "~/styles/update-editor.css";
+import "~/styles/update-gallery.css";
+import "~/styles/update-connections.css";
 
 const DEFAULT_NEXT = "/founder-tools/updates/create";
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "google_analytics", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear", "luma"]);
 const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSourceKey>(["stripe"]);
-const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_analytics", "stripe", "linear", "notion"];
-const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", "slack", "bank_feed", "xero", "luma"];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
-const LINEAR_PROJECT_PAGE_LIMIT = 100;
 const GOOGLE_ANALYTICS_PROPERTY_PAGE_LIMIT = 200;
-const LUMA_EVENT_PAGE_LIMIT = 50;
-const DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_data_sources_mobile_tour_seen_v1";
-const DATA_PRIVACY_POINTS = [
-  "Only you can see connected source data in your workspace",
-  "Private drafts stay hidden until you publish",
-  "You can disconnect sources and remove cached data anytime",
-] as const;
-const MOBILE_DATA_PRIVACY_POINTS = [
-  "Only you can see connected data here",
-  "Drafts stay private until you publish",
-  "Disconnect or remove data anytime",
-] as const;
-
-const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
-  {
-    key: "gmail",
-    label: "Gmail",
-    capabilities: ["context"],
-    selected: false,
-    status: "not_connected",
-  },
-  {
-    key: "google_analytics",
-    label: "Google Analytics",
-    capabilities: ["metrics"],
-    selected: false,
-    status: "not_connected",
-  },
-  {
-    key: "stripe",
-    label: "Stripe",
-    capabilities: ["metrics"],
-    selected: false,
-    status: "not_connected",
-  },
-  {
-    key: "xero",
-    label: "Xero",
-    capabilities: ["metrics"],
-    selected: false,
-    status: "not_connected",
-  },
-  {
-    key: "bank_feed",
-    label: "Bank Feed",
-    capabilities: ["cash_validation"],
-    selected: false,
-    status: "not_connected",
-  },
-  {
-    key: "notion",
-    label: "Notion",
-    capabilities: ["docs", "context"],
-    selected: false,
-    status: "not_connected",
-  },
-  {
-    key: "google_drive",
-    label: "Google Drive",
-    capabilities: ["docs", "context"],
-    selected: false,
-    status: "not_connected",
-  },
-  {
-    key: "slack",
-    label: "Slack",
-    capabilities: ["context"],
-    selected: false,
-    status: "not_connected",
-  },
-  {
-    key: "linear",
-    label: "Linear",
-    capabilities: ["context"],
-    selected: false,
-    status: "not_connected",
-  },
-];
+const EMPTY_SOURCES = completeConnectorCatalogue([]);
 
 type ManualMaterialsState = {
   summary: string;
@@ -167,133 +84,16 @@ type ManualMaterialsState = {
   documents: VibeRaisingManualDocument[];
 };
 
-type MobileTourStep = {
-  key: string;
-  title: string;
-  body: string;
-  targetRef: RefObject<Element | null>;
-};
-
-function MobileDataSourcesTour({
-  open,
-  stepIndex,
-  steps,
-  onBack,
-  onClose,
-  onNext,
-}: {
-  open: boolean;
-  stepIndex: number;
-  steps: MobileTourStep[];
-  onBack: () => void;
-  onClose: () => void;
-  onNext: () => void;
-}) {
-  const titleId = useId();
-  const step = steps[stepIndex];
-  const [targetRect, setTargetRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
-
-  useEffect(() => {
-    if (!open || !step) {
-      setTargetRect(null);
-      return;
-    }
-
-    const updateTargetRect = () => {
-      const node = step.targetRef.current;
-      if (!node) {
-        setTargetRect(null);
-        return;
-      }
-
-      const rect = node.getBoundingClientRect();
-      setTargetRect({
-        top: Math.max(rect.top - 8, 12),
-        left: Math.max(rect.left - 8, 12),
-        width: Math.min(rect.width + 16, window.innerWidth - 24),
-        height: rect.height + 16,
-      });
-    };
-
-    const handleViewportChange = () => window.requestAnimationFrame(updateTargetRect);
-
-    handleViewportChange();
-    window.addEventListener("resize", handleViewportChange);
-    window.addEventListener("scroll", handleViewportChange, true);
-    return () => {
-      window.removeEventListener("resize", handleViewportChange);
-      window.removeEventListener("scroll", handleViewportChange, true);
-    };
-  }, [open, step]);
-
-  if (!open || !step) return null;
-
-  return (
-    <div className="fixed inset-0 z-[140] sm:hidden" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-      <button
-        type="button"
-        className="absolute inset-0 bg-slate-950/55"
-        onClick={onClose}
-        aria-label="Close data sources tour"
-      />
-
-      {targetRect ? (
-        <>
-          <div
-            className="pointer-events-none absolute rounded-[28px] border-2 border-[var(--vr-color-primary)] bg-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.58)] transition-all duration-200"
-            style={targetRect}
-          />
-        </>
-      ) : null}
-
-      <section className="absolute inset-x-4 bottom-4 rounded-[28px] bg-white p-5 shadow-2xl shadow-black/20">
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--vr-color-primary)]">Quick mobile tour</p>
-        <h2 id={titleId} className="mt-2 text-xl font-black text-gray-950">{step.title}</h2>
-        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{step.body}</p>
-
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-black text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            Skip
-          </button>
-
-          <div className="flex items-center gap-2">
-            {stepIndex > 0 ? (
-              <button
-                type="button"
-                onClick={onBack}
-                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
-              >
-                Back
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={onNext}
-              className="inline-flex items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
-            >
-              {stepIndex === steps.length - 1 ? "Got it" : "Next"}
-            </button>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents" | "luma">;
 
 function isOAuthSourceKey(key: VibeRaisingInputSourceKey): key is OAuthSourceKey {
   return key !== "gmail" && key !== "manual_documents" && key !== "luma";
 }
 
-function readStoredManualMaterials(): ManualMaterialsState {
+function readStoredManualMaterials(scope: string): ManualMaterialsState {
   if (typeof window === "undefined") return { summary: "", manualDocumentIds: [], documents: [] };
   try {
-    const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
+    const raw = window.sessionStorage.getItem(`${MANUAL_MATERIALS_STORAGE_KEY}:${scope}`);
     if (!raw) return { summary: "", manualDocumentIds: [], documents: [] };
     const parsed = JSON.parse(raw) as {
       sourceUrl?: unknown;
@@ -318,23 +118,23 @@ function readStoredManualMaterials(): ManualMaterialsState {
   }
 }
 
-function writeStoredManualMaterials(materials: ManualMaterialsState) {
+function writeStoredManualMaterials(materials: ManualMaterialsState, scope: string) {
   if (typeof window === "undefined") return;
   const summary = materials.summary.trim();
   const manualDocumentIds = Array.from(new Set(materials.manualDocumentIds.map((item) => item.trim()).filter(Boolean)));
   const documents = materials.documents.filter((document) => manualDocumentIds.includes(document.id));
   if (manualDocumentIds.length === 0 && !summary) {
-    window.localStorage.removeItem(MANUAL_MATERIALS_STORAGE_KEY);
+    window.sessionStorage.removeItem(`${MANUAL_MATERIALS_STORAGE_KEY}:${scope}`);
     return;
   }
-  window.localStorage.setItem(MANUAL_MATERIALS_STORAGE_KEY, JSON.stringify({ summary, manualDocumentIds, documents }));
+  window.sessionStorage.setItem(`${MANUAL_MATERIALS_STORAGE_KEY}:${scope}`, JSON.stringify({ summary, manualDocumentIds, documents }));
 }
 
 const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; mobileDescription: string; connectedUse: string }> = {
   gmail: {
-    description: "Scan emails for key updates, investor feedback, and important threads.",
-    mobileDescription: "Scan key emails and investor threads.",
-    connectedUse: "Emails, investor threads",
+    description: "Scan emails for key updates, customer feedback, and important threads.",
+    mobileDescription: "Scan key emails and customer threads.",
+    connectedUse: "Emails, customer threads",
   },
   google_analytics: {
     description: "Bring product traffic, acquisition, and engagement metrics into updates.",
@@ -412,9 +212,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const { appUser: user } = await requireVibeRaisingFounder(env, request);
 
-  if (!user.companyRegistered) {
-    throw redirect("/founder-tools/company-setup");
-  }
 
   const url = new URL(request.url);
   return {
@@ -422,53 +219,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     next: sanitizeNext(url.searchParams.get("next")),
     backendBaseUrl: String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL),
   };
-}
-
-function statusLabel(status: VibeRaisingInputSourceStatus) {
-  switch (status) {
-    case "connected":
-      return "Connected";
-    case "syncing":
-      return "Syncing";
-    case "error":
-      return "Needs attention";
-    case "coming_soon":
-      return "Coming soon";
-    case "unavailable":
-      return "Coming soon";
-    default:
-      return "Not connected";
-  }
-}
-
-function statusClassName(status: VibeRaisingInputSourceStatus) {
-  switch (status) {
-    case "connected":
-      return "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]";
-    case "syncing":
-      return "bg-[rgba(76,110,245,0.10)] text-[var(--vr-palette-blue)] ring-[rgba(76,110,245,0.22)]";
-    case "error":
-      return "bg-[rgba(255,200,1,0.16)] text-[var(--vr-color-text)] ring-[rgba(255,200,1,0.32)]";
-    case "coming_soon":
-      return "bg-gray-100 text-gray-500 ring-gray-200";
-    case "unavailable":
-      return "bg-gray-100 text-gray-500 ring-gray-200";
-    default:
-      return "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]";
-  }
-}
-
-function capabilityLabel(capability: VibeRaisingInputSourceSummary["capabilities"][number]) {
-  switch (capability) {
-    case "metrics":
-      return "Metrics";
-    case "cash_validation":
-      return "Cash validation";
-    case "docs":
-      return "Docs";
-    default:
-      return "Context";
-  }
 }
 
 function formatMoney(value?: string | null, currency?: string | null) {
@@ -1237,66 +987,33 @@ function GoogleAnalyticsPreview({
   );
 }
 
-function mergeLumaEventsById(
-  previous: Record<string, VibeRaisingLumaEvent>,
-  events: VibeRaisingLumaEvent[],
-) {
-  if (events.length === 0) return previous;
-  const next = { ...previous };
-  events.forEach((event) => {
-    next[event.eventId] = { ...next[event.eventId], ...event };
-  });
-  return next;
-}
-
-function getSelectedLumaEventIds(events: VibeRaisingLumaEvent[]) {
-  return events.filter((event) => event.selected).map((event) => event.eventId);
-}
-
-function formatLumaEventDate(startAt: string | null | undefined): string {
-  if (!startAt) return "";
-  const parsed = new Date(startAt);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return parsed.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
-
 function LumaPreview({
-  events,
   accountLabel,
   loading,
   error,
   saving,
-  selectedEventIds,
   selectedMetricKeys,
   availableMetrics,
-  nextCursor,
-  loadingMore,
-  onToggleEvent,
   onToggleMetric,
-  onLoadMore,
   onSave,
 }: {
-  events: VibeRaisingLumaEvent[];
   accountLabel: string | null;
   loading: boolean;
   error: string | null;
   saving: boolean;
-  selectedEventIds: Set<string>;
   selectedMetricKeys: Set<string>;
   availableMetrics: VibeRaisingLumaMetricOption[];
-  nextCursor: string | null;
-  loadingMore: boolean;
-  onToggleEvent: (eventId: string) => void;
   onToggleMetric: (metricKey: string) => void;
-  onLoadMore: () => void;
   onSave: () => void;
 }) {
   return (
     <section className="rounded-xl border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-gray-950">Luma events &amp; metrics</h2>
-          <p className="mt-2 text-sm text-slate-500">Choose which events to track and which metrics to pull from your Luma calendar.</p>
+          <h2 className="text-lg font-black text-gray-950">Luma metrics</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Events are matched automatically to the month you select when creating an update. Choose which metrics to track.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {loading ? (
@@ -1311,7 +1028,7 @@ function LumaPreview({
             disabled={saving}
             className="inline-flex items-center gap-2 rounded-lg bg-[var(--vr-color-primary)] px-3 py-2 text-xs font-extrabold text-white transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving ? "Saving" : "Save selection"}
+            {saving ? "Saving" : "Save metrics"}
           </button>
         </div>
       </div>
@@ -1326,13 +1043,17 @@ function LumaPreview({
           <p className="mt-2 truncate text-sm font-black text-gray-950">{accountLabel || "Connected Luma"}</p>
         </div>
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected events</p>
-          <p className="mt-2 text-sm font-black text-gray-950">{selectedEventIds.size === 0 ? "All" : selectedEventIds.size}</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Event window</p>
+          <p className="mt-2 text-sm font-black text-gray-950">Selected update month</p>
         </div>
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected metrics</p>
           <p className="mt-2 text-sm font-black text-gray-950">{selectedMetricKeys.size}</p>
         </div>
+      </div>
+
+      <div className="mt-5 rounded-lg bg-[rgba(0,255,215,0.08)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+        Only events in the selected calendar month contribute to that update&apos;s event totals. Nearby event history remains available as drafting context.
       </div>
 
       {availableMetrics.length > 0 ? (
@@ -1367,155 +1088,36 @@ function LumaPreview({
           </ul>
         </div>
       ) : null}
-
-      {events.length > 0 ? (
-        <div className="mt-5 rounded-lg border border-gray-100">
-          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
-            <p className="text-sm font-black text-gray-950">Events</p>
-            <p className="mt-1 text-xs font-bold text-slate-500">
-              {selectedEventIds.size === 0 ? "All events are counted until you pick specific ones." : `${selectedEventIds.size} selected`}
-            </p>
-          </div>
-          <ul className="divide-y divide-gray-100 px-2 py-2">
-            {events.map((event) => {
-              const selected = selectedEventIds.has(event.eventId);
-              const dateLabel = formatLumaEventDate(event.startAt);
-              return (
-                <li key={event.eventId}>
-                  <button
-                    type="button"
-                    onClick={() => onToggleEvent(event.eventId)}
-                    className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-3 text-left font-semibold text-gray-800 transition hover:bg-[rgba(0,255,215,0.08)]"
-                  >
-                    <span
-                      className={clsx(
-                        "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
-                        selected ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white" : "border-gray-300 bg-white text-transparent",
-                      )}
-                    >
-                      <CheckIcon className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-black text-gray-950">{event.name}</span>
-                      {dateLabel ? <span className="mt-0.5 block truncate text-xs font-bold text-slate-500">{dateLabel}</span> : null}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          {nextCursor ? (
-            <div className="border-t border-gray-100 p-2">
-              <button
-                type="button"
-                onClick={onLoadMore}
-                disabled={loadingMore}
-                className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <ArrowPathIcon className={clsx("h-4 w-4", loadingMore && "animate-spin")} />
-                {loadingMore ? "Loading events" : "Load more events"}
-              </button>
-            </div>
-          ) : null}
-        </div>
-      ) : !loading ? (
-        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
-          No past Luma events found yet. Once you've run an event, it'll show up here.
-        </div>
-      ) : null}
     </section>
   );
 }
 
-function mergeLinearProjectsById(
-  previous: Record<string, VibeRaisingLinearProject>,
-  projects: VibeRaisingLinearProject[],
-) {
-  if (projects.length === 0) return previous;
-  const next = { ...previous };
-  projects.forEach((project) => {
-    next[project.projectId] = { ...next[project.projectId], ...project };
-  });
-  return next;
-}
-
-function getSelectedLinearProjectIds(projects: VibeRaisingLinearProject[]) {
-  return projects.filter((project) => project.selected).map((project) => project.projectId);
-}
-
 function LinearPreview({
-  projects,
   preview,
-  loadingProjects,
-  loadingPreview,
+  loading,
   error,
-  saving,
   syncing,
-  selectedProjectIds,
-  nextCursor,
-  loadingMoreProjects,
-  onToggleProject,
-  onLoadMoreProjects,
-  onSaveProjects,
   onSync,
 }: {
-  projects: VibeRaisingLinearProject[];
   preview: VibeRaisingLinearPreview | null;
-  loadingProjects: boolean;
-  loadingPreview: boolean;
+  loading: boolean;
   error: string | null;
-  saving: boolean;
   syncing: boolean;
-  selectedProjectIds: Set<string>;
-  nextCursor: string | null;
-  loadingMoreProjects: boolean;
-  onToggleProject: (projectId: string) => void;
-  onLoadMoreProjects: () => void;
-  onSaveProjects: () => void;
   onSync: () => void;
 }) {
-  const [projectQuery, setProjectQuery] = useState("");
-  const projectsById = useMemo(() => new Map(projects.map((project) => [project.projectId, project])), [projects]);
-  const selectedProjects = useMemo(
-    () =>
-      Array.from(selectedProjectIds).map((projectId) => {
-        const project = projectsById.get(projectId);
-        if (project) return project;
-        return {
-          projectId,
-          linearProjectId: projectId,
-          projectName: projectId,
-          name: projectId,
-          selected: true,
-        } satisfies VibeRaisingLinearProject;
-      }),
-    [projectsById, selectedProjectIds],
-  );
-  const filteredProjects = useMemo(() => {
-    const normalizedQuery = projectQuery.trim().toLowerCase();
-    if (!normalizedQuery) return projects;
-    return projects.filter((project) =>
-      [project.projectName, project.name, project.projectId, project.status, project.health]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(normalizedQuery)),
-    );
-  }, [projectQuery, projects]);
-
-  const handleComboboxChange = (project: VibeRaisingLinearProject | null) => {
-    if (!project) return;
-    onToggleProject(project.projectId);
-    setProjectQuery("");
-  };
+  const recentProjects = preview?.selectedProjects ?? [];
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-gray-950">Linear preview</h2>
-          <p className="mt-2 text-sm text-slate-500">Selected project context available for this update.</p>
+          <h2 className="text-lg font-black text-gray-950">Linear activity</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Projects with project, update, or issue activity in the last 30 days are included automatically.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {loadingProjects || loadingPreview ? (
+          {loading ? (
             <span className="inline-flex items-center gap-2 text-sm font-bold text-gray-700">
               <ArrowPathIcon className="h-4 w-4 animate-spin" />
               Loading
@@ -1524,7 +1126,7 @@ function LinearPreview({
           <button
             type="button"
             onClick={onSync}
-            disabled={syncing || selectedProjectIds.size === 0}
+            disabled={syncing}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-extrabold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <ArrowPathIcon className={clsx("h-4 w-4", syncing && "animate-spin")} />
@@ -1543,8 +1145,8 @@ function LinearPreview({
           <p className="mt-2 truncate text-sm font-black text-gray-950">{preview?.accountLabel || "Connected Linear"}</p>
         </div>
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected projects</p>
-          <p className="mt-2 text-sm font-black text-gray-950">{selectedProjectIds.size}</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Active projects (30 days)</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{recentProjects.length}</p>
         </div>
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Cached issues</p>
@@ -1552,111 +1154,30 @@ function LinearPreview({
         </div>
       </div>
 
-      {projects.length > 0 ? (
-        <div className="mt-5 rounded-lg border border-gray-100">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
-            <div>
-              <p className="text-sm font-black text-gray-950">Projects</p>
-              <p className="mt-1 text-xs font-bold text-slate-500">{selectedProjectIds.size} selected</p>
-            </div>
-            <button
-              type="button"
-              onClick={onSaveProjects}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-gray-950 px-3 py-2 text-xs font-extrabold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? "Saving" : "Save selection"}
-            </button>
-          </div>
-          <div className="px-4 py-4">
-            {selectedProjects.length > 0 ? (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {selectedProjects.map((project) => (
-                  <span
-                    key={project.projectId}
-                    className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-extrabold text-gray-800 ring-1 ring-gray-200"
-                  >
-                    <span className="truncate">{project.projectName}</span>
-                    <button
-                      type="button"
-                      onClick={() => onToggleProject(project.projectId)}
-                      className="rounded-full p-0.5 text-gray-600 transition hover:bg-gray-200 hover:text-gray-950"
-                      aria-label={`Remove ${project.projectName}`}
-                    >
-                      <XMarkIcon className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            ) : null}
+      <div className="mt-5 rounded-lg bg-[rgba(0,255,215,0.08)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+        You do not need to choose projects. The 30-day activity window is refreshed before a monthly update is created.
+      </div>
 
-            <Combobox value={null} onChange={handleComboboxChange}>
-              <div className="relative">
-                <div className="relative">
-                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Combobox.Input
-                    className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-9 pr-10 text-sm font-semibold text-gray-950 placeholder:text-slate-400 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-100"
-                    displayValue={() => projectQuery}
-                    onChange={(event) => setProjectQuery(event.target.value)}
-                    placeholder="Search and select Linear projects"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600">
-                    <ChevronDownIcon className="h-4 w-4" />
-                  </Combobox.Button>
-                </div>
-                <Combobox.Options className="absolute z-20 mt-2 max-h-80 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg focus:outline-none">
-                  {filteredProjects.length > 0 ? (
-                    filteredProjects.map((project) => {
-                      const selected = selectedProjectIds.has(project.projectId);
-                      return (
-                        <Combobox.Option
-                          key={project.projectId}
-                          value={project}
-                          className={({ active }) =>
-                            clsx(
-                              "relative flex cursor-pointer select-none items-center gap-3 px-4 py-3 font-semibold",
-                              active ? "bg-gray-50 text-gray-950" : "text-gray-800",
-                            )
-                          }
-                        >
-                          <span
-                            className={clsx(
-                              "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
-                              selected ? "border-gray-950 bg-gray-950 text-white" : "border-gray-300 bg-white text-transparent",
-                            )}
-                          >
-                            <CheckIcon className="h-3.5 w-3.5" />
-                          </span>
-                          <span className="min-w-0 flex-1 truncate">{project.projectName}</span>
-                          {project.health ? <span className="shrink-0 text-xs font-bold text-slate-400">{project.health}</span> : null}
-                        </Combobox.Option>
-                      );
-                    })
-                  ) : (
-                    <div className="px-4 py-4 text-sm font-semibold text-slate-500">No loaded projects match this search.</div>
-                  )}
-                  {nextCursor ? (
-                    <div className="border-t border-gray-100 p-2">
-                      <button
-                        type="button"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={onLoadMoreProjects}
-                        disabled={loadingMoreProjects}
-                        className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <ArrowPathIcon className={clsx("h-4 w-4", loadingMoreProjects && "animate-spin")} />
-                        {loadingMoreProjects ? "Loading projects" : "Load more projects"}
-                      </button>
-                    </div>
-                  ) : null}
-                </Combobox.Options>
-              </div>
-            </Combobox>
+      {recentProjects.length > 0 ? (
+        <div className="mt-5 rounded-lg border border-gray-100">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Projects included automatically</p>
+            <p className="mt-1 text-xs font-bold text-slate-500">{recentProjects.length} with recent activity</p>
+          </div>
+          <div className="flex flex-wrap gap-2 px-4 py-4">
+            {recentProjects.map((project) => (
+              <span
+                key={project.projectId}
+                className="inline-flex max-w-full rounded-full bg-gray-100 px-3 py-1.5 text-xs font-extrabold text-gray-800 ring-1 ring-gray-200"
+              >
+                <span className="truncate">{project.projectName}</span>
+              </span>
+            ))}
           </div>
         </div>
-      ) : !loadingProjects ? (
+      ) : !loading ? (
         <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
-          Linear is connected. Open the project picker again after the workspace project list is available.
+          No Linear projects have activity in the last 30 days, so none will be included right now.
         </div>
       ) : null}
 
@@ -1822,213 +1343,15 @@ function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputS
   );
 }
 
-function ConnectorCard({
-  source,
-  selected,
-  busy,
-  isMobileView = false,
-  onConnect,
-  onToggle,
-}: {
-  source: VibeRaisingInputSourceSummary;
-  selected: boolean;
-  busy: boolean;
-  isMobileView?: boolean;
-  onConnect: (source: VibeRaisingInputSourceSummary) => void;
-  onToggle: (source: VibeRaisingInputSourceSummary) => void;
+function ManualMaterialsCard({ expanded, hasManualMaterials, summary, onToggle }: {
+  expanded: boolean; hasManualMaterials: boolean; summary: string; onToggle: () => void;
 }) {
-  const selectable = FUNCTIONAL_SOURCES.has(source.key) && (source.status === "connected" || source.status === "syncing");
-  const canConnectWhenUnavailable =
-    source.status === "unavailable" && OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE.has(source.key);
-  const canConnect =
-    FUNCTIONAL_SOURCES.has(source.key) &&
-    source.status !== "connected" &&
-    source.status !== "syncing" &&
-    (source.status !== "unavailable" || canConnectWhenUnavailable);
-  const disabled = source.status === "coming_soon" || (source.status === "unavailable" && !canConnectWhenUnavailable);
-  const isConnected = source.status === "connected" || source.status === "syncing";
-  const displayedStatus = canConnectWhenUnavailable ? "not_connected" : source.status;
-  const displayedStatusLabel = canConnectWhenUnavailable ? "Ready to connect" : statusLabel(source.status);
-  const shouldShowHeaderStatus = !isMobileView && displayedStatus !== "coming_soon" && displayedStatus !== "unavailable";
-  const description = isMobileView ? "" : SOURCE_COPY[source.key].description;
-  const shouldShowCapabilities = !isMobileView;
-  const connectClassName = clsx(
-    "block w-full rounded-xl px-3 py-2.5 text-center text-sm font-extrabold transition",
-    disabled || !canConnect
-      ? "cursor-not-allowed bg-gray-100 text-gray-400"
-      : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)] hover:ring-1 hover:ring-[rgba(0,128,128,0.18)]",
-  );
-
-  return (
-    <div className={clsx(
-      "relative flex min-h-[112px] flex-col overflow-hidden rounded-xl border p-3 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
-      isConnected
-        ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white ring-1 ring-[rgba(0,128,128,0.24)]"
-        : selected
-          ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
-          : "border-gray-200 bg-white",
-    )} tabIndex={0}>
-      <div className="pointer-events-none flex flex-col gap-3">
-        <div
-          className={clsx(
-            "flex gap-3",
-            isMobileView ? "items-center justify-center" : "items-start",
-            shouldShowHeaderStatus && "justify-between",
-          )}
-        >
-          <SourceLogo sourceKey={source.key} large={!isMobileView} />
-          {shouldShowHeaderStatus ? (
-            <span className={clsx(
-              "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
-              isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
-            )}>
-              {displayedStatusLabel}
-            </span>
-          ) : null}
-        </div>
-        <h3 className={clsx(
-          "break-words text-base font-black leading-tight sm:text-left sm:text-lg",
-          isMobileView && "text-center",
-          isConnected ? "text-white" : "text-gray-950",
-        )}>
-          {source.label}
-        </h3>
-      </div>
-
-      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-2" : "pt-4 sm:pt-5")}>
-        {description ? (
-          <p className={clsx("mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4", isConnected ? "text-white/80" : "text-slate-500")}>
-            {description}
-          </p>
-        ) : null}
-        {shouldShowCapabilities ? (
-          <div className="mt-2 flex flex-wrap gap-1.5 sm:mt-3">
-            {source.capabilities.map((capability) => (
-              <span
-                key={capability}
-                className={clsx(
-                  "rounded-full px-2 py-1 text-[11px] font-extrabold",
-                  isConnected ? "bg-white/[0.14] text-white ring-1 ring-white/20" : "bg-gray-50 text-slate-500",
-                )}
-              >
-                {capabilityLabel(capability)}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <div className="mt-auto pt-4">
-          {selectable ? (
-            <button
-              type="button"
-              onClick={() => onToggle(source)}
-              className={clsx(
-                "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-extrabold transition",
-                isConnected && selected
-                  ? "bg-white text-[var(--vr-color-primary)] hover:bg-white/90"
-                : isConnected
-                    ? "bg-white/[0.14] text-white ring-1 ring-white/[0.24] hover:bg-white/[0.20]"
-                    : selected
-                      ? "bg-[var(--vr-color-primary)] text-white"
-                      : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)]",
-              )}
-            >
-              <span>{selected ? "Using in this update" : "Use in this update"}</span>
-              <CheckCircleIcon className={clsx("h-5 w-5", isConnected && selected ? "text-[var(--vr-color-primary)]" : selected || isConnected ? "text-white" : "text-[var(--vr-palette-teal-soft)]")} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={disabled || busy || !canConnect}
-              onClick={() => onConnect(source)}
-              className={connectClassName}
-            >
-              {busy ? "Connecting..." : canConnect ? "Connect" : statusLabel(source.status)}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ManualMaterialsCard({
-  expanded,
-  hasManualMaterials,
-  summary,
-  onToggle,
-}: {
-  expanded: boolean;
-  hasManualMaterials: boolean;
-  summary: string;
-  onToggle: () => void;
-}) {
-  const cardCaption = "Upload document or add a short written summary for context outside your connected tools.";
-
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={expanded}
-      aria-controls="manual-materials-panel"
-      className={clsx(
-        "group relative flex min-h-[152px] w-full flex-col overflow-hidden rounded-xl border p-3 text-left shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
-        expanded || hasManualMaterials
-          ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
-          : "border-gray-200 bg-white hover:border-[rgba(0,128,128,0.28)] hover:shadow-md",
-      )}
-    >
-      <div className="pointer-events-none flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
-            <DocumentTextIcon className="h-6 w-6 sm:h-8 sm:w-8" />
-          </div>
-          <span
-            className={clsx(
-              "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
-              hasManualMaterials
-                ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]"
-                : "bg-gray-100 text-slate-500 ring-gray-200",
-            )}
-          >
-            {hasManualMaterials ? "Added" : "Optional"}
-          </span>
-        </div>
-        <h3 className="break-words text-left text-base font-black leading-tight text-gray-950 sm:text-lg">
-          Manual input
-        </h3>
-      </div>
-
-      <div className="flex flex-1 flex-col pt-4 sm:pt-5">
-        <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:text-xs sm:leading-5">
-          {cardCaption}
-        </p>
-
-        <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
-          {["Documents", "Summary"].map((item) => (
-            <span
-              key={item}
-              className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 sm:text-[10px]"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-auto pt-3 sm:pt-4">
-          <div className="flex w-full items-center justify-center rounded-lg bg-[rgba(0,255,215,0.12)] px-2.5 py-2 text-[11px] font-extrabold text-[var(--vr-color-primary)] transition group-hover:bg-[rgba(0,255,215,0.18)] group-hover:ring-1 group-hover:ring-[rgba(0,128,128,0.18)] sm:px-3 sm:text-xs">
-            <span>{expanded ? "Hide form" : "Open form"}</span>
-          </div>
-
-          {hasManualMaterials ? (
-            <p className="mt-2 text-[10px] font-medium leading-4 text-[var(--vr-color-text)] sm:text-[11px]">
-              {summary}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </button>
-  );
+  return <button type="button" className="connections-materials-toggle" onClick={onToggle}
+    aria-expanded={expanded} aria-controls="manual-materials-panel">
+    <DocumentTextIcon className="h-5 w-5" />
+    <span><strong>Documents & extra context</strong><small>{hasManualMaterials ? summary : "Add a document or a few notes to help your draft."}</small></span>
+    <span>{expanded ? "Close" : "Add context"}</span>
+  </button>;
 }
 
 function deletionSummaryText(deleted: {
@@ -2067,7 +1390,7 @@ function sourceScanSummary(source: VibeRaisingInputSourceSummary) {
     case "notion":
       return "the pages and notes you choose to use as drafting context";
     case "google_drive":
-      return "the files you choose to use as investor-update context";
+      return "the files you choose to use as monthly-update context";
     default:
       return "the selected source data needed for this update";
   }
@@ -2179,12 +1502,12 @@ function GmailManagementModal({
 }
 
 export default function ConnectData() {
-  const { backendBaseUrl, next } = useLoaderData<typeof loader>();
+  const { backendBaseUrl, next, user } = useLoaderData<typeof loader>();
+  const materialsScope = `${user.authUser.id}:${resolveActiveCompanyId(user)}`;
   const navigate = useNavigate();
   const location = useLocation();
   const [sources, setSources] = useState<VibeRaisingInputSourceSummary[]>(EMPTY_SOURCES);
   const [selectedSources, setSelectedSources] = useState<Set<VibeRaisingInputSourceKey>>(new Set());
-  const [showAllSources, setShowAllSources] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [syncingFinance, setSyncingFinance] = useState(false);
   const [syncingSlack, setSyncingSlack] = useState(false);
@@ -2194,7 +1517,6 @@ export default function ConnectData() {
   const [lumaApiKeyValue, setLumaApiKeyValue] = useState("");
   const [lumaConnecting, setLumaConnecting] = useState(false);
   const [lumaError, setLumaError] = useState<string | null>(null);
-  const [showNoSourcesModal, setShowNoSourcesModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [gmailManagementSource, setGmailManagementSource] = useState<VibeRaisingInputSourceSummary | null>(null);
   const [gmailDisconnectAction, setGmailDisconnectAction] = useState<"disconnect" | "delete" | null>(null);
@@ -2224,83 +1546,34 @@ export default function ConnectData() {
   const [googleAnalyticsError, setGoogleAnalyticsError] = useState<string | null>(null);
   const [savingGoogleAnalyticsProperties, setSavingGoogleAnalyticsProperties] = useState(false);
   const [selectedGoogleAnalyticsPropertyIds, setSelectedGoogleAnalyticsPropertyIds] = useState<Set<string>>(new Set());
-  const [lumaEventsById, setLumaEventsById] = useState<Record<string, VibeRaisingLumaEvent>>({});
-  const [lumaEventsNextCursor, setLumaEventsNextCursor] = useState<string | null>(null);
   const [loadingLumaEvents, setLoadingLumaEvents] = useState(false);
-  const [loadingMoreLumaEvents, setLoadingMoreLumaEvents] = useState(false);
   const [lumaAccountLabel, setLumaAccountLabel] = useState<string | null>(null);
   const [lumaEventsError, setLumaEventsError] = useState<string | null>(null);
   const [savingLumaSelections, setSavingLumaSelections] = useState(false);
-  const [selectedLumaEventIds, setSelectedLumaEventIds] = useState<Set<string>>(new Set());
   const [selectedLumaMetricKeys, setSelectedLumaMetricKeys] = useState<Set<string>>(new Set());
   const [lumaAvailableMetrics, setLumaAvailableMetrics] = useState<VibeRaisingLumaMetricOption[]>([]);
   const [syncingLinear, setSyncingLinear] = useState(false);
-  const [linearProjectsById, setLinearProjectsById] = useState<Record<string, VibeRaisingLinearProject>>({});
-  const [linearProjectsNextCursor, setLinearProjectsNextCursor] = useState<string | null>(null);
-  const [loadingLinearProjects, setLoadingLinearProjects] = useState(false);
-  const [loadingMoreLinearProjects, setLoadingMoreLinearProjects] = useState(false);
   const [linearPreview, setLinearPreview] = useState<VibeRaisingLinearPreview | null>(null);
   const [loadingLinearPreview, setLoadingLinearPreview] = useState(false);
   const [linearError, setLinearError] = useState<string | null>(null);
-  const [savingLinearProjects, setSavingLinearProjects] = useState(false);
-  const [selectedLinearProjectIds, setSelectedLinearProjectIds] = useState<Set<string>>(new Set());
-  const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials());
-  const [manualDocuments, setManualDocuments] = useState<VibeRaisingManualDocument[]>(() => readStoredManualMaterials().documents);
+  const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials(materialsScope));
+  const [manualDocuments, setManualDocuments] = useState<VibeRaisingManualDocument[]>(() => readStoredManualMaterials(materialsScope).documents);
   const [loadingManualDocuments, setLoadingManualDocuments] = useState(false);
   const [manualDocumentUploadStatus, setManualDocumentUploadStatus] = useState<"idle" | "creating_session" | "uploading" | "finalizing">("idle");
   const [manualDocumentError, setManualDocumentError] = useState<string | null>(null);
   const [manualMaterialsExpanded, setManualMaterialsExpanded] = useState(false);
   const manualDocumentInputRef = useRef<HTMLInputElement | null>(null);
-  const privacyCardRef = useRef<HTMLDivElement | null>(null);
-  const sourcesSectionRef = useRef<HTMLElement | null>(null);
-  const manualMaterialsRef = useRef<HTMLDivElement | null>(null);
   const defaultSelectionAppliedRef = useRef(false);
   const slackSelectionTouchedRef = useRef(false);
-  const linearSelectionTouchedRef = useRef(false);
   const googleAnalyticsSelectionTouchedRef = useRef(false);
-  const lumaSelectionTouchedRef = useRef(false);
-  const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
-  const [showStickyBarOnMobile, setShowStickyBarOnMobile] = useState(false);
-  const [mobileTourOpen, setMobileTourOpen] = useState(false);
-  const [mobileTourStepIndex, setMobileTourStepIndex] = useState(0);
-  const [mobileTourChecked, setMobileTourChecked] = useState(false);
-  const [mobilePrivacyNoteSeen, setMobilePrivacyNoteSeen] = useState(false);
-
+  const lumaMetricSelectionTouchedRef = useRef(false);
   const sourceByKey = useMemo(() => new Map(sources.map((source) => [source.key, source])), [sources]);
-  const prioritySources = useMemo(() => {
-    return PRIORITY_SOURCE_KEYS
-      .map((key) => sourceByKey.get(key))
-      .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
-  }, [sourceByKey]);
-  const moreOptionSources = useMemo(() => {
-    return MORE_SOURCE_KEYS
-      .map((key) => sourceByKey.get(key))
-      .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
-  }, [sourceByKey]);
+  const allConnectors = useMemo(() => completeConnectorCatalogue(sources), [sources]);
   const selectedSourceList = useMemo(
-    () => sources.filter((source) => selectedSources.has(source.key)),
-    [selectedSources, sources],
-  );
-  const privacyPoints = isMobileTourViewport ? MOBILE_DATA_PRIVACY_POINTS : DATA_PRIVACY_POINTS;
-  const mobileTourSteps = useMemo<MobileTourStep[]>(
-    () => [
-      {
-        key: "privacy",
-        title: "Start with privacy",
-        body: "This card explains what stays private and links to the policy before you connect anything.",
-        targetRef: privacyCardRef,
-      },
-      {
-        key: "sources",
-        title: "Pick the best sources first",
-        body: "Start with the tools you already use. One connector is enough to begin, and you can add more later.",
-        targetRef: sourcesSectionRef,
-      },
-    ],
-    [],
+    () => allConnectors.filter((source) => isConnectedConnector(source) && selectedSources.has(source.key)),
+    [selectedSources, allConnectors],
   );
   const slackChannels = useMemo(() => Object.values(slackChannelsById), [slackChannelsById]);
-  const linearProjects = useMemo(() => Object.values(linearProjectsById), [linearProjectsById]);
   const googleAnalyticsProperties = useMemo(() => Object.values(googleAnalyticsPropertiesById), [googleAnalyticsPropertiesById]);
   const selectedManualDocumentIds = useMemo(() => new Set(manualMaterials.manualDocumentIds), [manualMaterials.manualDocumentIds]);
   const hasManualMaterials = Boolean(manualMaterials.manualDocumentIds.length > 0 || manualMaterials.summary.trim());
@@ -2326,21 +1599,17 @@ export default function ConnectData() {
   const lumaSource = sourceByKey.get("luma");
   const shouldShowLumaPreview =
     lumaSource?.status === "connected" || lumaSource?.status === "syncing" || lumaSource?.status === "error";
-  const lumaEvents = useMemo(() => Object.values(lumaEventsById), [lumaEventsById]);
 
   const refreshStatuses = async () => {
     setLoadingStatus(true);
     setStatusMessage(null);
     try {
       const response = await getVibeRaisingInputSourcesStatus(backendBaseUrl);
-      setSources(response.sources);
+      setSources(completeConnectorCatalogue(response.sources));
       if (!defaultSelectionAppliedRef.current) {
         defaultSelectionAppliedRef.current = true;
-        setSelectedSources(new Set(
-          response.sources
-            .filter((source) => FUNCTIONAL_SOURCES.has(source.key) && source.selected && (source.status === "connected" || source.status === "syncing"))
-            .map((source) => source.key),
-        ));
+        setSelectedSources(new Set(resolveConnectorSelection(response.sources,
+          readConnectorSelection(new URL(next, "http://mlai.local").search))));
       }
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "We couldn't load connector status.");
@@ -2352,89 +1621,6 @@ export default function ConnectData() {
   useEffect(() => {
     void refreshStatuses();
   }, [backendBaseUrl]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 639px)");
-    const syncViewport = () => setIsMobileTourViewport(mediaQuery.matches);
-    syncViewport();
-    mediaQuery.addEventListener("change", syncViewport);
-    return () => mediaQuery.removeEventListener("change", syncViewport);
-  }, []);
-
-  useEffect(() => {
-    if (mobileTourChecked || !isMobileTourViewport) return;
-    setMobileTourChecked(true);
-
-    try {
-      if (window.localStorage.getItem(DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY) === "1") {
-        setMobilePrivacyNoteSeen(true);
-        return;
-      }
-    } catch {
-      // Ignore storage failures and still show the tour for this session.
-    }
-
-    const timer = window.setTimeout(() => {
-      setMobileTourStepIndex(0);
-      setMobileTourOpen(true);
-    }, 450);
-
-    return () => window.clearTimeout(timer);
-  }, [isMobileTourViewport, mobileTourChecked]);
-
-  useEffect(() => {
-    if (!isMobileTourViewport) return;
-
-    const syncMobileTourState = () => {
-      let hasSeenTour = false;
-
-      try {
-        hasSeenTour = window.localStorage.getItem(DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY) === "1";
-      } catch {
-        hasSeenTour = false;
-      }
-
-      setMobilePrivacyNoteSeen(hasSeenTour);
-
-      if (!hasSeenTour) {
-        setMobileTourChecked(false);
-        setMobileTourStepIndex(0);
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        syncMobileTourState();
-      }
-    };
-
-    window.addEventListener("focus", syncMobileTourState);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("focus", syncMobileTourState);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [isMobileTourViewport]);
-
-  useEffect(() => {
-    if (!isMobileTourViewport) {
-      setShowStickyBarOnMobile(false);
-      return;
-    }
-
-    const updateStickyVisibility = () => {
-      setShowStickyBarOnMobile(window.scrollY > 120);
-    };
-
-    updateStickyVisibility();
-    window.addEventListener("scroll", updateStickyVisibility, true);
-    window.addEventListener("resize", updateStickyVisibility);
-    return () => {
-      window.removeEventListener("scroll", updateStickyVisibility, true);
-      window.removeEventListener("resize", updateStickyVisibility);
-    };
-  }, [isMobileTourViewport]);
 
   useEffect(() => {
     if (hasManualMaterials) {
@@ -2458,7 +1644,7 @@ export default function ConnectData() {
             manualDocumentIds: selectedDocuments.map((document) => document.id),
             documents: selectedDocuments,
           };
-          writeStoredManualMaterials(nextMaterials);
+          writeStoredManualMaterials(nextMaterials, materialsScope);
           return nextMaterials;
         });
       })
@@ -2649,56 +1835,8 @@ export default function ConnectData() {
 
   useEffect(() => {
     if (!shouldShowLinearPreview) {
-      setLinearProjectsById({});
-      setLinearProjectsNextCursor(null);
       setLinearPreview(null);
       setLinearError(null);
-      setLoadingLinearProjects(false);
-      setLoadingMoreLinearProjects(false);
-      setLoadingLinearPreview(false);
-      setSelectedLinearProjectIds(new Set());
-      linearSelectionTouchedRef.current = false;
-      return;
-    }
-
-    let cancelled = false;
-    linearSelectionTouchedRef.current = false;
-    setLinearProjectsById({});
-    setLinearProjectsNextCursor(null);
-    setSelectedLinearProjectIds(new Set());
-    setLoadingLinearProjects(true);
-    setLinearError(null);
-    getVibeRaisingLinearProjects(backendBaseUrl, { limit: LINEAR_PROJECT_PAGE_LIMIT })
-      .then((payload: VibeRaisingLinearProjectsResponse) => {
-        if (cancelled) return;
-        setLinearProjectsById((previous) => mergeLinearProjectsById(previous, payload.projects));
-        setLinearProjectsNextCursor(payload.nextCursor ?? null);
-        const selectedProjectIds = getSelectedLinearProjectIds(payload.projects);
-        if (!linearSelectionTouchedRef.current && selectedProjectIds.length > 0) {
-          setSelectedLinearProjectIds((previous) => {
-            const nextSelected = new Set(previous);
-            selectedProjectIds.forEach((projectId) => nextSelected.add(projectId));
-            return nextSelected;
-          });
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setLinearError(error instanceof Error ? error.message : "We couldn't load Linear projects.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingLinearProjects(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [backendBaseUrl, shouldShowLinearPreview, linearSource?.status]);
-
-  useEffect(() => {
-    if (!shouldShowLinearPreview) {
-      setLinearPreview(null);
       setLoadingLinearPreview(false);
       return;
     }
@@ -2709,14 +1847,6 @@ export default function ConnectData() {
       .then((preview) => {
         if (cancelled) return;
         setLinearPreview(preview);
-        setLinearProjectsById((previous) => mergeLinearProjectsById(previous, preview.selectedProjects));
-        if (!linearSelectionTouchedRef.current && preview.selectedProjects.length > 0) {
-          setSelectedLinearProjectIds((previous) => {
-            const nextSelected = new Set(previous);
-            preview.selectedProjects.forEach((project) => nextSelected.add(project.projectId));
-            return nextSelected;
-          });
-        }
       })
       .catch((error) => {
         if (!cancelled) {
@@ -2783,49 +1913,32 @@ export default function ConnectData() {
 
   useEffect(() => {
     if (!shouldShowLumaPreview) {
-      setLumaEventsById({});
-      setLumaEventsNextCursor(null);
       setLumaAccountLabel(null);
       setLumaEventsError(null);
       setLoadingLumaEvents(false);
-      setLoadingMoreLumaEvents(false);
-      setSelectedLumaEventIds(new Set());
       setSelectedLumaMetricKeys(new Set());
       setLumaAvailableMetrics([]);
-      lumaSelectionTouchedRef.current = false;
+      lumaMetricSelectionTouchedRef.current = false;
       return;
     }
 
     let cancelled = false;
-    lumaSelectionTouchedRef.current = false;
-    setLumaEventsById({});
-    setLumaEventsNextCursor(null);
-    setSelectedLumaEventIds(new Set());
+    lumaMetricSelectionTouchedRef.current = false;
     setSelectedLumaMetricKeys(new Set());
     setLoadingLumaEvents(true);
     setLumaEventsError(null);
-    getVibeRaisingLumaEvents(backendBaseUrl, { limit: LUMA_EVENT_PAGE_LIMIT })
+    getVibeRaisingLumaEvents(backendBaseUrl, { limit: 1 })
       .then((payload: VibeRaisingLumaEventsResponse) => {
         if (cancelled) return;
-        setLumaEventsById((previous) => mergeLumaEventsById(previous, payload.events));
-        setLumaEventsNextCursor(payload.nextCursor ?? null);
         setLumaAccountLabel(payload.accountLabel ?? null);
         setLumaAvailableMetrics(payload.availableMetrics);
-        if (!lumaSelectionTouchedRef.current) {
-          const selectedEventIds = getSelectedLumaEventIds(payload.events);
-          if (selectedEventIds.length > 0) {
-            setSelectedLumaEventIds((previous) => {
-              const nextSelected = new Set(previous);
-              selectedEventIds.forEach((eventId) => nextSelected.add(eventId));
-              return nextSelected;
-            });
-          }
+        if (!lumaMetricSelectionTouchedRef.current) {
           setSelectedLumaMetricKeys(new Set(payload.selectedMetrics));
         }
       })
       .catch((error) => {
         if (!cancelled) {
-          setLumaEventsError(error instanceof Error ? error.message : "We couldn't load your Luma events.");
+          setLumaEventsError(error instanceof Error ? error.message : "We couldn't load your Luma settings.");
         }
       })
       .finally(() => {
@@ -2837,7 +1950,16 @@ export default function ConnectData() {
     };
   }, [backendBaseUrl, shouldShowLumaPreview, lumaSource?.status, lumaSource?.lastSyncedAt]);
 
-  const currentReturnPath = `${location.pathname}${location.search || ""}`;
+  const connectionReturnPath = (connectingKey?: VibeRaisingInputSourceKey) => {
+    const target = new URL(next, "http://mlai.local");
+    const keys = new Set(selectedSources);
+    if (connectingKey) keys.add(connectingKey);
+    target.searchParams.set("inputs", Array.from(keys).join(","));
+    const params = new URLSearchParams(location.search);
+    params.set("next", `${target.pathname}${target.search}`);
+    return `${location.pathname}?${params}`;
+  };
+  const currentReturnPath = connectionReturnPath();
 
   const requestConnectSource = (source: VibeRaisingInputSourceSummary) => {
     if (!FUNCTIONAL_SOURCES.has(source.key)) return;
@@ -2870,6 +1992,7 @@ export default function ConnectData() {
       return;
     }
     setShowLumaModal(false);
+    setSelectedSources(previous => new Set([...previous, "luma"]));
     setLumaApiKeyValue("");
     setLumaConnecting(false);
     await refreshStatuses();
@@ -2897,9 +2020,11 @@ export default function ConnectData() {
 
     try {
       if (source.key === "gmail") {
-        const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl, { next: currentReturnPath });
+        const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl, { next: connectionReturnPath(source.key) });
         if (bootstrap.googleConnected) {
           await refreshStatuses();
+          setSelectedSources(previous => new Set([...previous, source.key]));
+          setBusyProvider(null);
           return;
         }
         if (!bootstrap.oauthUrl) {
@@ -2910,10 +2035,18 @@ export default function ConnectData() {
       }
 
       if (!isOAuthSourceKey(source.key)) return;
-      window.location.assign(connectVibeRaisingInputSource(backendBaseUrl, source.key, currentReturnPath));
+      window.location.assign(connectVibeRaisingInputSource(backendBaseUrl, source.key, connectionReturnPath(source.key)));
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : `We couldn't connect ${source.label}.`);
       setBusyProvider(null);
+    }
+  };
+
+  const showConfiguration = (key: string) => {
+    const section = document.getElementById(`configuration-${key}`);
+    if (section instanceof HTMLDetailsElement) {
+      section.open = true;
+      section.scrollIntoView({ block: "start", behavior: "smooth" });
     }
   };
 
@@ -2922,14 +2055,12 @@ export default function ConnectData() {
     if (source.status !== "connected" && source.status !== "syncing") return;
     if (source.key === "slack" && selectedSlackChannelIds.size === 0 && !selectedSources.has("slack")) {
       setStatusMessage("Select at least one Slack channel before using Slack in this update.");
-      return;
-    }
-    if (source.key === "linear" && selectedLinearProjectIds.size === 0 && !selectedSources.has("linear")) {
-      setStatusMessage("Select at least one Linear project before using Linear in this update.");
+      showConfiguration("slack");
       return;
     }
     if (source.key === "google_analytics" && selectedGoogleAnalyticsPropertyIds.size === 0 && !selectedSources.has("google_analytics")) {
       setStatusMessage("Select at least one Google Analytics property before using Google Analytics in this update.");
+      showConfiguration("google_analytics");
       return;
     }
 
@@ -3173,21 +2304,8 @@ export default function ConnectData() {
     }
   };
 
-  const handleToggleLumaEvent = (eventId: string) => {
-    lumaSelectionTouchedRef.current = true;
-    setSelectedLumaEventIds((previous) => {
-      const nextSelected = new Set(previous);
-      if (nextSelected.has(eventId)) {
-        nextSelected.delete(eventId);
-      } else {
-        nextSelected.add(eventId);
-      }
-      return nextSelected;
-    });
-  };
-
   const handleToggleLumaMetric = (metricKey: string) => {
-    lumaSelectionTouchedRef.current = true;
+    lumaMetricSelectionTouchedRef.current = true;
     setSelectedLumaMetricKeys((previous) => {
       const nextSelected = new Set(previous);
       if (nextSelected.has(metricKey)) {
@@ -3199,120 +2317,27 @@ export default function ConnectData() {
     });
   };
 
-  const handleLoadMoreLumaEvents = async () => {
-    if (!lumaEventsNextCursor || loadingMoreLumaEvents) return;
-    setLoadingMoreLumaEvents(true);
-    setLumaEventsError(null);
-    try {
-      const payload = await getVibeRaisingLumaEvents(backendBaseUrl, {
-        cursor: lumaEventsNextCursor,
-        limit: LUMA_EVENT_PAGE_LIMIT,
-      });
-      setLumaEventsById((previous) => mergeLumaEventsById(previous, payload.events));
-      setLumaEventsNextCursor(payload.nextCursor ?? null);
-      if (!lumaSelectionTouchedRef.current) {
-        const selectedEventIds = getSelectedLumaEventIds(payload.events);
-        if (selectedEventIds.length > 0) {
-          setSelectedLumaEventIds((previous) => {
-            const nextSelected = new Set(previous);
-            selectedEventIds.forEach((eventId) => nextSelected.add(eventId));
-            return nextSelected;
-          });
-        }
-      }
-    } catch (error) {
-      setLumaEventsError(error instanceof Error ? error.message : "We couldn't load more Luma events.");
-    } finally {
-      setLoadingMoreLumaEvents(false);
-    }
-  };
-
   const handleSaveLumaSelections = async () => {
     setSavingLumaSelections(true);
     setStatusMessage(null);
     try {
       await saveVibeRaisingLumaSelections(
         backendBaseUrl,
-        Array.from(selectedLumaEventIds),
+        [],
         Array.from(selectedLumaMetricKeys),
       );
       setStatusMessage("Saved. Updating your Luma metrics…");
       try {
         await syncVibeRaisingInputSources(backendBaseUrl, ["luma"]);
       } catch {
-        // Sync is best-effort; the selection is already saved.
+        // Sync is best-effort; the metric preferences are already saved.
       }
       await refreshStatuses();
       setStatusMessage("Luma metrics updated.");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "We couldn't save your Luma selection.");
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't save your Luma metrics.");
     } finally {
       setSavingLumaSelections(false);
-    }
-  };
-
-  const handleToggleLinearProject = (projectId: string) => {
-    linearSelectionTouchedRef.current = true;
-    setSelectedLinearProjectIds((previous) => {
-      const nextSelected = new Set(previous);
-      if (nextSelected.has(projectId)) {
-        nextSelected.delete(projectId);
-      } else {
-        nextSelected.add(projectId);
-      }
-      return nextSelected;
-    });
-  };
-
-  const handleLoadMoreLinearProjects = async () => {
-    if (!linearProjectsNextCursor || loadingMoreLinearProjects) return;
-    setLoadingMoreLinearProjects(true);
-    setLinearError(null);
-    try {
-      const payload = await getVibeRaisingLinearProjects(backendBaseUrl, {
-        cursor: linearProjectsNextCursor,
-        limit: LINEAR_PROJECT_PAGE_LIMIT,
-      });
-      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, payload.projects));
-      setLinearProjectsNextCursor(payload.nextCursor ?? null);
-      const selectedProjectIds = getSelectedLinearProjectIds(payload.projects);
-      if (!linearSelectionTouchedRef.current && selectedProjectIds.length > 0) {
-        setSelectedLinearProjectIds((previous) => {
-          const nextSelected = new Set(previous);
-          selectedProjectIds.forEach((projectId) => nextSelected.add(projectId));
-          return nextSelected;
-        });
-      }
-    } catch (error) {
-      setLinearError(error instanceof Error ? error.message : "We couldn't load more Linear projects.");
-    } finally {
-      setLoadingMoreLinearProjects(false);
-    }
-  };
-
-  const handleSaveLinearProjects = async () => {
-    setSavingLinearProjects(true);
-    setStatusMessage(null);
-    try {
-      const selectionResponse = await saveVibeRaisingLinearProjectSelections(backendBaseUrl, Array.from(selectedLinearProjectIds));
-      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, selectionResponse.projects));
-      setSelectedSources((previous) => {
-        const nextSelected = new Set(previous);
-        if (selectedLinearProjectIds.size > 0) {
-          nextSelected.add("linear");
-        } else {
-          nextSelected.delete("linear");
-        }
-        return nextSelected;
-      });
-      await Promise.all([
-        refreshStatuses(),
-        getVibeRaisingLinearPreview(backendBaseUrl).then(setLinearPreview),
-      ]);
-    } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "We couldn't save Linear project selection.");
-    } finally {
-      setSavingLinearProjects(false);
     }
   };
 
@@ -3320,11 +2345,9 @@ export default function ConnectData() {
     setSyncingLinear(true);
     setStatusMessage(null);
     try {
-      const selectionResponse = await saveVibeRaisingLinearProjectSelections(backendBaseUrl, Array.from(selectedLinearProjectIds));
-      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, selectionResponse.projects));
       setSelectedSources((previous) => {
         const nextSelected = new Set(previous);
-        if (selectedLinearProjectIds.size > 0) nextSelected.add("linear");
+        nextSelected.add("linear");
         return nextSelected;
       });
       await syncVibeRaisingInputSources(backendBaseUrl, ["linear"]);
@@ -3339,47 +2362,25 @@ export default function ConnectData() {
     }
   };
 
-  const navigateToDraft = (includeInputs: boolean) => {
-    if (
-      includeInputs &&
-      selectedSources.has("linear") &&
-      selectedLinearProjectIds.size === 0 &&
-      !(sourceByKey.get("linear")?.selectedProjectCount ?? 0)
-    ) {
-      setStatusMessage("Select at least one Linear project before using Linear in this update.");
-      return;
-    }
-    writeStoredManualMaterials(manualMaterials);
+  const navigateToDraft = () => {
+    writeStoredManualMaterials(manualMaterials, materialsScope);
     const target = new URL(next, "http://mlai.local");
-    const draftSources = new Set(selectedSources);
-    if (includeInputs && hasManualMaterials) {
+    const draftSources = new Set(selectedSourceList.map(source => source.key));
+    if (hasManualMaterials) {
       draftSources.add("manual_documents");
     }
-    if (includeInputs && draftSources.size > 0) {
+    if (draftSources.size > 0) {
       target.searchParams.set("inputs", Array.from(draftSources).join(","));
     } else {
-      target.searchParams.delete("inputs");
+      target.searchParams.set("inputs", "");
     }
     navigate(`${target.pathname}${target.search}`);
-  };
-
-  const handleManualMaterialsContinue = () => {
-    if (selectedSourceList.length === 0 && !hasManualMaterials) {
-      setShowNoSourcesModal(true);
-      return;
-    }
-    navigateToDraft(true);
-  };
-
-  const continueWithoutSources = () => {
-    setShowNoSourcesModal(false);
-    navigateToDraft(true);
   };
 
   const updateManualMaterials = (patch: Partial<ManualMaterialsState>) => {
     setManualMaterials((previous) => {
       const nextMaterials = { ...previous, ...patch };
-      writeStoredManualMaterials(nextMaterials);
+      writeStoredManualMaterials(nextMaterials, materialsScope);
       return nextMaterials;
     });
   };
@@ -3400,7 +2401,7 @@ export default function ConnectData() {
           .map((documentId) => documentsById.get(documentId))
           .filter((item): item is VibeRaisingManualDocument => Boolean(item)),
       };
-      writeStoredManualMaterials(nextMaterials);
+      writeStoredManualMaterials(nextMaterials, materialsScope);
       return nextMaterials;
     });
   };
@@ -3452,203 +2453,36 @@ export default function ConnectData() {
     }
   };
 
-  const handleStepperClick = (step: MonthlyUpdateStepKey) => {
-    if (step === "connect") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-
-    if (step === "draft") {
-      navigateToDraft(true);
-    }
-  };
-
-  const stickyStatusTitle = selectedSourceList.length > 0
-    ? `${selectedSourceList.length} external source${selectedSourceList.length === 1 ? "" : "s"} selected`
-    : hasManualMaterials
-      ? "Manual materials added"
-      : "No external sources selected";
-  const stickyStatusDetail = selectedSourceList.length > 0
-    ? selectedSourceList.map((source) => source.label).join(", ")
-    : hasManualMaterials
-      ? "Your uploaded documents or summary will be included in the draft."
-      : "Continue with manual input only, or connect a source first.";
-  const stickyStatusIcon = selectedSourceList.length > 0 ? (
-    <div className="flex -space-x-2">
-      {selectedSourceList.slice(0, 3).map((source) => (
-        <div key={source.key} className="rounded-xl ring-2 ring-white">
-          <SourceLogo sourceKey={source.key} />
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
-      <FolderIcon className="h-5 w-5" />
-    </div>
-  );
-
-  const closeMobileTour = () => {
-    setMobileTourOpen(false);
-    setMobilePrivacyNoteSeen(true);
-    try {
-      window.localStorage.setItem(DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY, "1");
-    } catch {
-      // Ignore storage failures.
-    }
-  };
-
-  const goToPreviousMobileTourStep = () => {
-    setMobileTourStepIndex((current) => Math.max(0, current - 1));
-  };
-
-  const goToNextMobileTourStep = () => {
-    if (mobileTourStepIndex >= mobileTourSteps.length - 1) {
-      closeMobileTour();
-      return;
-    }
-    setMobileTourStepIndex((current) => current + 1);
-  };
-
   return (
-    <div className="mx-auto max-w-6xl space-y-10 pb-32">
-      <div className="space-y-4">
-        <MonthlyUpdateStepper
-          activeStep="connect"
-          disableMotion
-          enabledSteps={["draft", "connect"]}
-          onStepClick={handleStepperClick}
-          expandOnHover
-          frameless
-          className="mt-8"
-        />
-
-        {!(isMobileTourViewport && mobilePrivacyNoteSeen) ? (
-          <div ref={privacyCardRef} className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex min-w-0 items-center gap-4">
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
-                    <ShieldCheckIcon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-lg font-black text-gray-950">Your data stays private</h2>
-                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 sm:hidden">
-                      Only you can see connected data and private drafts until you publish.{" "}
-                      <Link
-                        to="/privacy"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-black text-[var(--vr-color-primary)] underline underline-offset-2"
-                      >
-                        Privacy Policy
-                      </Link>
-                    </p>
-                  </div>
-                </div>
-                <div className="hidden lg:flex lg:justify-end">
-                  <Link
-                    to="/privacy"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-4 py-2 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)]"
-                  >
-                    Privacy Policy
-                  </Link>
-                </div>
-              </div>
-
-              <ul className="mt-5 hidden space-y-3 sm:block">
-                {privacyPoints.map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <CheckCircleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
-                    <p className="text-[11px] font-semibold leading-4 text-slate-600 sm:text-sm sm:leading-6">{item}</p>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-6 hidden border-t border-[var(--vr-color-border)] pt-6 sm:block">
-                <div className="flex min-w-0 items-start gap-4">
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
-                    <SparklesIcon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-black text-gray-950">How it works</h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {isMobileTourViewport
-                        ? "Connect a tool or continue with manual input."
-                        : "Connect your tools below. We only use the authorized data needed to help draft your monthly update."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-          </div>
-        ) : null}
-      </div>
-
-      {statusMessage ? (
-        <div className="rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-5 py-4 text-sm font-semibold text-[var(--vr-color-text)]">
-          {statusMessage}
+    <VibeRaisingWorkflowLayout variant="gallery" activeStep="connect">
+    <div className="update-editor update-gallery connections-page">
+      <header className="update-editor-header">
+        <div>
+          <button type="button" className="update-back" onClick={() => navigateToDraft()}>← Back to update</button>
+          <h1>Connections</h1>
+          <p className="connections-intro">Your tools. Your story. Choose what goes into your update.</p>
         </div>
-      ) : null}
-
-      <section ref={sourcesSectionRef}>
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-black text-gray-950">Popular sources</h2>
-            <p className="mt-3 text-sm text-slate-500">Quickly connect the most common tools startups use.</p>
-          </div>
-          {loadingStatus ? (
-            <span className="inline-flex items-center gap-2 text-sm font-bold text-[var(--vr-color-primary)]">
-              <ArrowPathIcon className="h-4 w-4 animate-spin" />
-              Checking status
-            </span>
-          ) : null}
+        <button type="button" className="connections-refresh" disabled={loadingStatus} onClick={() => void refreshStatuses()}>
+          <ArrowPathIcon className={`h-4 w-4 ${loadingStatus ? "motion-safe:animate-spin" : ""}`} />
+          {loadingStatus ? "Checking…" : "Refresh"}
+        </button>
+      </header>
+      {statusMessage && <p className="update-notice" role="status">{statusMessage}</p>}
+      <section aria-labelledby="connections-heading">
+        <div className="connections-section-heading">
+          <h2 id="connections-heading">Your sources</h2>
+          <span>{allConnectors.filter(isConnectedConnector).length} connected · {selectedSourceList.length} on</span>
         </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-          {prioritySources.map((source) => (
-            <ConnectorCard
-              key={source.key}
-              source={source}
-              selected={selectedSources.has(source.key)}
-              busy={busyProvider === source.key}
-              isMobileView={isMobileTourViewport}
-              onConnect={requestConnectSource}
-              onToggle={handleToggle}
-            />
-          ))}
+        <p className="connections-help">Turn a connected source on to include it. Turning it off keeps your account connected.</p>
+        <div className="connections-grid">
+          {allConnectors.map(source => <div key={source.key} id={`source-${source.key}`}>
+            <ConnectorTile source={source} selected={selectedSources.has(source.key)} detailed
+              disabled={loadingStatus} busy={busyProvider === source.key || (source.key === "luma" && lumaConnecting)}
+              onToggle={handleToggle} onConnect={requestConnectSource} />
+          </div>)}
         </div>
-
-        {moreOptionSources.length > 0 ? (
-          <div className="mt-8 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowAllSources((value) => !value)}
-              aria-expanded={showAllSources}
-              aria-controls="more-source-options-panel"
-              className="inline-flex min-w-56 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-900 shadow-sm transition hover:bg-gray-50"
-            >
-              {showAllSources ? "Hide more options" : "More options"}
-              <ChevronDownIcon className={clsx("h-4 w-4 text-slate-400 transition", showAllSources && "rotate-180")} />
-            </button>
-          </div>
-        ) : null}
-
-        {showAllSources && moreOptionSources.length > 0 ? (
-          <div id="more-source-options-panel" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-            {moreOptionSources.map((source) => (
-              <ConnectorCard
-                key={source.key}
-                source={source}
-                selected={selectedSources.has(source.key)}
-                busy={busyProvider === source.key}
-                isMobileView={isMobileTourViewport}
-                onConnect={requestConnectSource}
-                onToggle={handleToggle}
-              />
-            ))}
-          </div>
-        ) : null}
-          <div ref={manualMaterialsRef} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+        <p className="connections-finance-note">Earning revenue? Stripe and Xero bring in financial figures that stay linked to their source and read-only.</p>
+          <div className="connections-materials">
             <ManualMaterialsCard
               expanded={manualMaterialsExpanded}
               hasManualMaterials={hasManualMaterials}
@@ -3769,7 +2603,7 @@ export default function ConnectData() {
                     value={manualMaterials.summary}
                     onChange={(event) => updateManualMaterials({ summary: event.target.value })}
                     rows={4}
-                    placeholder="Topline context investors should read before the detailed sections..."
+                    placeholder="Topline context the community should read before the detailed sections..."
                     className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
                   />
                 </label>
@@ -3780,6 +2614,7 @@ export default function ConnectData() {
       </section>
 
       {shouldShowGoogleAnalyticsPreview ? (
+        <details className="connections-detail" id="configuration-google_analytics"><summary>Google Analytics · Properties</summary><div className="connections-detail-body">
         <GoogleAnalyticsPreview
           properties={googleAnalyticsProperties}
           accountLabel={googleAnalyticsAccountLabel ?? googleAnalyticsSource?.accountLabel ?? null}
@@ -3793,28 +2628,26 @@ export default function ConnectData() {
           onLoadMore={() => void handleLoadMoreGoogleAnalyticsProperties()}
           onSave={() => void handleSaveGoogleAnalyticsProperties()}
         />
+        </div></details>
       ) : null}
 
       {shouldShowLumaPreview ? (
+        <details className="connections-detail" id="configuration-luma"><summary>Luma · Event metrics</summary><div className="connections-detail-body">
         <LumaPreview
-          events={lumaEvents}
           accountLabel={lumaAccountLabel ?? lumaSource?.accountLabel ?? null}
           loading={loadingLumaEvents}
           error={lumaEventsError}
           saving={savingLumaSelections}
-          selectedEventIds={selectedLumaEventIds}
           selectedMetricKeys={selectedLumaMetricKeys}
           availableMetrics={lumaAvailableMetrics}
-          nextCursor={lumaEventsNextCursor}
-          loadingMore={loadingMoreLumaEvents}
-          onToggleEvent={handleToggleLumaEvent}
           onToggleMetric={handleToggleLumaMetric}
-          onLoadMore={() => void handleLoadMoreLumaEvents()}
           onSave={() => void handleSaveLumaSelections()}
         />
+        </div></details>
       ) : null}
 
       {shouldShowSlackPreview ? (
+        <details className="connections-detail" id="configuration-slack"><summary>Slack · Channels & sync</summary><div className="connections-detail-body">
         <SlackPreview
           channels={slackChannels}
           preview={slackPreview}
@@ -3831,28 +2664,23 @@ export default function ConnectData() {
           onSaveChannels={() => void handleSaveSlackChannels()}
           onSync={() => void handleSyncSlack()}
         />
+        </div></details>
       ) : null}
 
       {shouldShowLinearPreview ? (
+        <details className="connections-detail" id="configuration-linear"><summary>Linear · Projects & sync</summary><div className="connections-detail-body">
         <LinearPreview
-          projects={linearProjects}
           preview={linearPreview}
-          loadingProjects={loadingLinearProjects}
-          loadingPreview={loadingLinearPreview}
+          loading={loadingLinearPreview}
           error={linearError}
-          saving={savingLinearProjects}
           syncing={syncingLinear}
-          selectedProjectIds={selectedLinearProjectIds}
-          nextCursor={linearProjectsNextCursor}
-          loadingMoreProjects={loadingMoreLinearProjects}
-          onToggleProject={handleToggleLinearProject}
-          onLoadMoreProjects={() => void handleLoadMoreLinearProjects()}
-          onSaveProjects={() => void handleSaveLinearProjects()}
           onSync={() => void handleSyncLinear()}
         />
+        </div></details>
       ) : null}
 
       {shouldShowXeroPreview ? (
+        <details className="connections-detail" id="configuration-xero"><summary>Xero · Financial data</summary><div className="connections-detail-body">
         <XeroPreview
           preview={xeroPreview}
           loading={loadingXeroPreview}
@@ -3861,96 +2689,30 @@ export default function ConnectData() {
           onSync={() => void handleSyncFinance(["xero"])}
           reconnectHref={connectVibeRaisingInputSource(backendBaseUrl, "xero", currentReturnPath)}
         />
+        </div></details>
       ) : null}
 
       {shouldShowBankFeedPreview ? (
+        <details className="connections-detail" id="configuration-bank_feed"><summary>Bank Feed · Transactions</summary><div className="connections-detail-body">
         <BankFeedPreview
           preview={bankFeedPreview}
           loading={loadingBankFeedPreview}
           error={bankFeedPreviewError}
         />
+        </div></details>
       ) : null}
 
-      <div className="rounded-2xl border border-[rgba(0,255,215,0.20)] bg-[rgba(0,255,215,0.08)] px-5 py-4 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
-            <LockClosedIcon className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-black text-gray-950">Your connected data stays private while you draft.</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Your connected data and private drafts are visible only to you until you publish.
-            </p>
-          </div>
+      {shouldShowGmailPreview && <details className="connections-detail" id="configuration-gmail">
+        <summary>Gmail · Account & data</summary><div className="connections-detail-body">
+          <GmailPreview preview={gmailPreview} loading={loadingGmailPreview} error={gmailPreviewError} />
+          {gmailSource && <button type="button" className="update-button secondary" onClick={() => handleOpenGmailManagement(gmailSource)}>Manage Gmail connection</button>}
         </div>
+      </details>}
+      <p className="connections-privacy"><LockClosedIcon className="h-4 w-4" /> Connected data stays private while you draft. <Link to="/privacy" target="_blank" rel="noreferrer">Privacy policy ↗</Link></p>
+      <div className="update-actions">
+        <span className="update-action-status">{selectedSourceList.length} source{selectedSourceList.length === 1 ? "" : "s"} on{hasManualMaterials ? " · Extra context added" : ""}</span>
+        <button type="button" className="update-button" onClick={() => navigateToDraft()}>Return to update <ArrowRightIcon className="h-4 w-4" /></button>
       </div>
-
-      <VibeRaisingStickyStepBar
-        className={clsx(isMobileTourViewport && !showStickyBarOnMobile && "hidden sm:block")}
-        hideStatusOnMobile
-        hideBackOnMobile
-        statusIcon={stickyStatusIcon}
-        statusTitle={stickyStatusTitle}
-        statusDetail={stickyStatusDetail}
-        onBack={() => navigate("/founder-tools/companies")}
-        primaryLabel="Continue to draft"
-        onPrimary={handleManualMaterialsContinue}
-      />
-
-      <MobileDataSourcesTour
-        open={mobileTourOpen}
-        stepIndex={mobileTourStepIndex}
-        steps={mobileTourSteps}
-        onBack={goToPreviousMobileTourStep}
-        onClose={closeMobileTour}
-        onNext={goToNextMobileTourStep}
-      />
-
-      {showNoSourcesModal ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
-            <div className="px-6 pb-5 pt-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--vr-palette-mint)] text-[var(--vr-palette-black)]">
-                  <FolderIcon className="h-6 w-6" />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowNoSourcesModal(false)}
-                  className="rounded-full p-2 text-slate-400 transition hover:bg-gray-50 hover:text-gray-700"
-                  aria-label="Close manual-only notice"
-                >
-                  <XMarkIcon className="h-5 w-5" />
-                </button>
-              </div>
-              <h2 className="mt-5 text-2xl font-black text-gray-950">No source connected</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                You have not connected an external source yet. If you continue, you will draft this update from manual input only.
-              </p>
-              <p className="mt-3 text-sm font-semibold leading-6 text-[var(--vr-color-primary)]">
-                Only you can see your connected data and private drafts in this workspace until you publish.
-              </p>
-            </div>
-            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={() => setShowNoSourcesModal(false)}
-                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-700 transition hover:bg-gray-50"
-              >
-                Go back
-              </button>
-              <button
-                type="button"
-                onClick={continueWithoutSources}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-palette-mint)] px-5 py-3 text-sm font-extrabold text-[var(--vr-palette-black)] shadow-sm transition hover:bg-[var(--vr-color-primary)] hover:text-white"
-              >
-                Continue
-                <ArrowRightIcon className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {gmailManagementSource ? (
         <GmailManagementModal
@@ -3964,7 +2726,7 @@ export default function ConnectData() {
       ) : null}
 
       {pendingConnectSource ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
+        <div className="connections-modal fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
             <div className="border-b border-gray-100 px-6 py-5">
               <div className="flex items-start gap-4">
@@ -3977,7 +2739,7 @@ export default function ConnectData() {
                     Connect {pendingConnectSource.label}?
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    We only use the authorized data needed for your investor update workflow. Only you can see this connected data in your workspace until you publish an update.
+                    We only use the authorized data needed for your monthly update workflow. Only you can see this connected data in your workspace until you publish an update.
                   </p>
                 </div>
                 <button
@@ -4056,7 +2818,7 @@ export default function ConnectData() {
       ) : null}
 
       {showLumaModal ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
+        <div className="connections-modal fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
             <div className="border-b border-gray-100 px-6 py-5">
               <div className="flex items-start gap-4">
@@ -4133,5 +2895,6 @@ export default function ConnectData() {
       ) : null}
 
     </div>
+    </VibeRaisingWorkflowLayout>
   );
 }

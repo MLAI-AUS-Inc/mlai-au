@@ -38,7 +38,6 @@ import { ArticleFooterNav } from '~/components/articles/ArticleFooterNav'
 import { QuoteBlock } from '~/components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '~/components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '~/components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '~/components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '~/components/articles/ArticleStepList'
 import { MLAITemplateResourceCTA } from '~/components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '~/components/articles/ArticleReferences'
@@ -114,7 +113,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Assess a classroom technology against the learning task, the students using it and the risks that need attention. Separate measured effects from concerns that still need evidence.",
   items: [
     { label: 'What are the main negative effects of classroom technology?', description: 'Distraction, shallow learning from multitasking, equity gaps, privacy/security risks, and extra teacher workload.' },
     { label: 'Does screen time harm learning outcomes?', description: 'Excessive or unfocused use links to lower recall and sleep issues; structured, time‑bound tasks mitigate risk.' },
@@ -350,14 +349,7 @@ export default function ArticleContent() {
           accent='teal'
         />
 
-        <ArticleResourceCTA
-          eyebrow='Resources'
-          title={`Get templates for ${TOPIC}`}
-          description='Download checklists, lesson planning prompts, and privacy review guides.'
-          buttonLabel='Download now'
-          buttonHref='/articles'
-          accent='purple'
-        />
+
 
         <QuoteBlock title='Pro tip' variant='purple'>
           If you can’t describe how the tool improves learning — and how you’ll know — it probably

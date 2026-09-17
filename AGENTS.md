@@ -8,7 +8,7 @@ Use `bun` instead of `npm` -- `bun run typecheck`, `bun run typegen`
 
 Add new routes to the `routes.ts` file
 
-Read and use [@TODO.md](@file:mlai-au/TODO.md) as your scratchpad to keep track.
+Use a local `TODO.md` scratchpad to keep track; create it if needed. It is gitignored and must not be committed. Keep task plans, handoff notes, PR drafts, generated reports, and browser captures local too (use `.local/` for working files without a dedicated ignore rule). Maintained documentation, source code, and shared configuration belong in version control. Never force-add local artefacts to a PR.
 
 You may use commands like `tree -I 'node_modules|public'` to get an overview of the project structure.
 

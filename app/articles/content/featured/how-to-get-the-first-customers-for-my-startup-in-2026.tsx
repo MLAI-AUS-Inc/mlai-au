@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -104,9 +103,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -126,7 +123,7 @@ export default function ArticleContent() {
       <div className="prose prose-lg prose-slate max-w-none bg-transparent">
         <p><strong>{TOPIC}</strong> — {"Getting the first customers still feels hard because launching a product does not create demand on its own. Early founders often hit a frustrating loop: you need customers to prove the product works, but many buyers want proof before they commit. That makes the first sales more than a revenue problem. They are a trust problem. In 2026, that pressure is even more obvious because founders have many channels available, but not much room for vague outreach or broad messaging."}</p>
         <p>{"Those first customers matter because they help shape what the startup actually becomes. They give direct feedback, show whether your positioning makes sense, and create the first layer of social proof that later customers look for. A better path is to choose a clear target segment, explain a specific problem you solve, and actively reach out instead of waiting for inbound interest."}</p>
-        <p>{"In practice, why first customers are hard to win in 2026 works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+        <p>{"Start by naming the customer, the problem and the existing alternative. Use conversations to test those assumptions before treating a channel or message as proven."}</p>
         <ArticleImageBlock
           src={HERO_IMAGE}
           alt={HERO_IMAGE_ALT}
@@ -187,14 +184,7 @@ export default function ArticleContent() {
             height={800}
           />
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the how to get the first customers for my startup 2026 checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -230,7 +220,7 @@ export default function ArticleContent() {
           <h2>{"Your next 30 days to get the first customers"}</h2>
           <p>{"Pick one beachhead segment, describe the problem that group urgently wants solved, and turn that into one clear offer. Do not try to appeal to everyone at once. Early traction usually comes from a small group of people who strongly need the solution, not from a broad market that only finds it mildly useful. That focus makes your message easier to test and helps you learn faster from each conversation."}</p>
           <p>{"Then spend your time on direct outreach and real customer conversations before you spread effort across bigger acquisition channels. The goal is not polished scale yet. The goal is to recruit a few early customers who can show you what is working, where your pitch is weak, and what proof future prospects need to see. If you do that well, you finish the month with more than a few customers."}</p>
-          <p>{"In practice, your next 30 days to get the first customers works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+          <p>{"For your next test, write down whom you will approach, the question you want answered and the evidence that would make you continue, change direction or stop. Record non-responses and refusals alongside positive replies."}</p>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Finline-72fcc631-5883-4b4a-b94c-1b56800267b7.jpg?alt=media&token=7308b531-24be-4b37-9f16-a4342a3bae74"
             alt="Startup"
@@ -247,17 +237,17 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://stripe.com/guides/atlas/starting-sales", title: "Your first 10 customers", publisher: "stripe.com", description: "Authoritative reference supporting Your first 10 customers.", category: "guide"},
-          {id: 2, href: "https://www.stoneandchalk.com.au/articles/how-to-get-your-first-startup-customers", title: "How to get your first startup customers | Stone & Chalk", publisher: "stoneandchalk.com.au", description: "Authoritative reference supporting How to get your first startup customers | Stone & Chalk.", category: "guide"},
-          {id: 3, href: "https://www.creworklabs.com/blog/how-to-get-your-first-users-in-2025", title: "How to Get Your First Users in 2026 A Practical Guide for Early Stage Founders", publisher: "creworklabs.com", description: "Authoritative reference supporting How to Get Your First Users in 2026 A Practical Guide for Early Stage Founders.", category: "guide"},
-          {id: 4, href: "https://www.linkedin.com/posts/jasoncalacanis_startups-founders-gotomarket-activity-7316618962618781696-rdQu", title: "How to land your first customer as a startup founder | Jason Calacanis posted on the topic | LinkedIn", publisher: "linkedin.com", description: "Authoritative reference supporting How to land your first customer as a startup founder | Jason Calacanis posted on the topic | LinkedIn.", category: "guide"},
-          {id: 5, href: "https://entrepreneur.nyu.edu/blog/2025/01/13/choosing-your-initial-target-customer/", title: "The Secret to Startup Success: How to Select the Right First Customers - NYU Entrepreneurship Choosing Your Initial Target Customer: A Beachhead Strategy", publisher: "entrepreneur.nyu.edu", description: "Authoritative reference supporting The Secret to Startup Success: How to Select the Right First Customers - NYU Entrepreneurship Choosing Your Initial Target Customer: A Beachhead Strategy.", category: "guide"},
-          {id: 6, href: "https://www.hubspot.com/startups/sales-and-marketing/customer-acquisition-for-startups/", title: "Customer Acquisition for Startups: Growth Tactics for the First 1000 Customers", publisher: "hubspot.com", description: "Authoritative reference supporting Customer Acquisition for Startups: Growth Tactics for the First 1000 Customers.", category: "guide"},
-          {id: 7, href: "https://thedelta.io/blog/early-go-to-market-for-startups-how-to-get-your-first-2050-customers-without-wasting-time", title: "About The Delta \u00e2\u0080\u0094 Berlin's Startup Campus & Founder Launchpad", publisher: "thedelta.io", description: "Authoritative reference supporting About The Delta \u00e2\u0080\u0094 Berlin's Startup Campus & Founder Launchpad.", category: "guide"},
-          {id: 8, href: "https://www.cleanlist.ai/blog/2026-03-23-how-to-get-your-first-100-customers", title: "Get Your First 100 Customers (2026) | Cleanlist", publisher: "cleanlist.ai", description: "Authoritative reference supporting Get Your First 100 Customers (2026) | Cleanlist.", category: "guide"},
-          {id: 9, href: "https://hivemediagroup.com.au/your-2026-marketing-kickstart-a-no-fluff-checklist-for-small-business-owners/", title: "Your 2026 Marketing Kickstart: A Practical Checklist for Small Business Owners", publisher: "hivemediagroup.com.au", description: "Authoritative reference supporting Your 2026 Marketing Kickstart: A Practical Checklist for Small Business Owners.", category: "guide"},
-          {id: 10, href: "https://entrepreneurloop.com/how-to-get-first-100-customers-new-startup/", title: "How to Get First 100 Customers for Your New Startup", publisher: "entrepreneurloop.com", description: "Authoritative reference supporting How to Get First 100 Customers for Your New Startup.", category: "guide"},
-          {id: 11, href: "https://whitekeymarketing.com.au/marketing-strategies-for-startups/", title: "Marketing Strategies For Growing Australian Startups", publisher: "whitekeymarketing.com.au", description: "Authoritative reference supporting Marketing Strategies For Growing Australian Startups.", category: "guide"},
+          {id: 1, href: "https://stripe.com/guides/atlas/starting-sales", title: "Your first 10 customers", publisher: "stripe.com", description: "", category: "guide"},
+          {id: 2, href: "https://www.stoneandchalk.com.au/articles/how-to-get-your-first-startup-customers", title: "How to get your first startup customers | Stone & Chalk", publisher: "stoneandchalk.com.au", description: "", category: "guide"},
+          {id: 3, href: "https://www.creworklabs.com/blog/how-to-get-your-first-users-in-2025", title: "How to Get Your First Users in 2026 A Practical Guide for Early Stage Founders", publisher: "creworklabs.com", description: "", category: "guide"},
+          {id: 4, href: "https://www.linkedin.com/posts/jasoncalacanis_startups-founders-gotomarket-activity-7316618962618781696-rdQu", title: "How to land your first customer as a startup founder | Jason Calacanis posted on the topic | LinkedIn", publisher: "linkedin.com", description: "", category: "guide"},
+          {id: 5, href: "https://entrepreneur.nyu.edu/blog/2025/01/13/choosing-your-initial-target-customer/", title: "The Secret to Startup Success: How to Select the Right First Customers - NYU Entrepreneurship Choosing Your Initial Target Customer: A Beachhead Strategy", publisher: "entrepreneur.nyu.edu", description: "", category: "guide"},
+          {id: 6, href: "https://www.hubspot.com/startups/sales-and-marketing/customer-acquisition-for-startups/", title: "Customer Acquisition for Startups: Growth Tactics for the First 1000 Customers", publisher: "hubspot.com", description: "", category: "guide"},
+          {id: 7, href: "https://thedelta.io/blog/early-go-to-market-for-startups-how-to-get-your-first-2050-customers-without-wasting-time", title: "About The Delta \u00e2\u0080\u0094 Berlin's Startup Campus & Founder Launchpad", publisher: "thedelta.io", description: "", category: "guide"},
+          {id: 8, href: "https://www.cleanlist.ai/blog/2026-03-23-how-to-get-your-first-100-customers", title: "Get Your First 100 Customers (2026) | Cleanlist", publisher: "cleanlist.ai", description: "", category: "guide"},
+          {id: 9, href: "https://hivemediagroup.com.au/your-2026-marketing-kickstart-a-no-fluff-checklist-for-small-business-owners/", title: "Your 2026 Marketing Kickstart: A Practical Checklist for Small Business Owners", publisher: "hivemediagroup.com.au", description: "", category: "guide"},
+          {id: 10, href: "https://entrepreneurloop.com/how-to-get-first-100-customers-new-startup/", title: "How to Get First 100 Customers for Your New Startup", publisher: "entrepreneurloop.com", description: "", category: "guide"},
+          {id: 11, href: "https://whitekeymarketing.com.au/marketing-strategies-for-startups/", title: "Marketing Strategies For Growing Australian Startups", publisher: "whitekeymarketing.com.au", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

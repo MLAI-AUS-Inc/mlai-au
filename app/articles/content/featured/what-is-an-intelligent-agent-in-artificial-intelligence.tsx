@@ -12,7 +12,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -127,9 +126,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -226,14 +223,7 @@ export default function ArticleContent() {
         </div>
 
         <div data-cf-component-id={"resource-cta"} data-cf-component-type={"resource-cta"} data-cf-component-label={"Get the checklist"}>
-          <ArticleResourceCTA
-            eyebrow="Free guide"
-            title={"Get the what is intelligent agent in artificial intelligence checklist"}
-            description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-            buttonLabel="Download now"
-            buttonHref="/articles"
-            accent="purple"
-          />
+
         </div>
 
         <div data-cf-component-id={"step-list:practical-next-steps"} data-cf-component-type={"step-list"} data-cf-component-label={"Practical next steps"}>
@@ -301,16 +291,16 @@ export default function ArticleContent() {
       <div data-cf-component-id={"references"} data-cf-component-type={"references"} data-cf-component-label={"Authoritative References"}>
         <ArticleReferences
           references={[
-            {id: 1, href: "https://en.wikipedia.org/wiki/Intelligent_agent", title: "Intelligent agent - Wikipedia", publisher: "en.wikipedia.org", description: "Authoritative reference supporting Intelligent agent - Wikipedia.", category: "guide"},
-            {id: 2, href: "https://aws.amazon.com/what-is/ai-agents/", title: "What are AI Agents?- Agents in Artificial Intelligence Explained - AWS", publisher: "aws.amazon.com", description: "Authoritative reference supporting What are AI Agents?- Agents in Artificial Intelligence Explained - AWS.", category: "guide"},
-            {id: 3, href: "https://mitsloan.mit.edu/ideas-made-to-matter/agentic-ai-explained", title: "Agentic AI, explained | MIT Sloan", publisher: "mitsloan.mit.edu", description: "Authoritative reference supporting Agentic AI, explained | MIT Sloan.", category: "guide"},
-            {id: 4, href: "https://www.ibm.com/think/topics/ai-agents", title: "What Are AI Agents? | IBM", publisher: "ibm.com", description: "Authoritative reference supporting What Are AI Agents? | IBM.", category: "guide"},
-            {id: 5, href: "https://www.blueprism.com/guides/ai/intelligent-agents/", title: "What Are Intelligent Agents? | SS&C Blue Prism", publisher: "blueprism.com", description: "Authoritative reference supporting What Are Intelligent Agents? | SS&C Blue Prism.", category: "guide"},
-            {id: 6, href: "https://www.habitat3.com.au/single-post/ai-agents-what-are-they-how-do-they-help-small-business", title: "AI Agents: What are they and why should small businesses care? How can AI agents help small business?", publisher: "habitat3.com.au", description: "Authoritative reference supporting AI Agents: What are they and why should small businesses care? How can AI agents help small business?.", category: "guide"},
-            {id: 7, href: "https://www.ebsco.com/research-starters/applied-sciences/intelligent-agent", title: "Intelligent agent | Applied Sciences | Research Starters | EBSCO Research", publisher: "ebsco.com", description: "Authoritative reference supporting Intelligent agent | Applied Sciences | Research Starters | EBSCO Research.", category: "guide"},
-            {id: 8, href: "https://cloud.google.com/discover/what-are-ai-agents", title: "What are AI agents? Definition, examples, and types | Google Cloud", publisher: "cloud.google.com", description: "Authoritative reference supporting What are AI agents? Definition, examples, and types | Google Cloud.", category: "guide"},
-            {id: 9, href: "https://www.geeksforgeeks.org/artificial-intelligence/intelligent-agent-in-ai/", title: "Intelligent Agent in AI - GeeksforGeeks", publisher: "geeksforgeeks.org", description: "Authoritative reference supporting Intelligent Agent in AI - GeeksforGeeks.", category: "guide"},
-            {id: 10, href: "https://genezio.com/blog/common-ai-agent-mistakes-how-intelligent-agents-fail-and-what-you-can-do/", title: "AI Agent Mistakes: How Intelligent Agents Fail and What To Do", publisher: "genezio.com", description: "Authoritative reference supporting AI Agent Mistakes: How Intelligent Agents Fail and What To Do.", category: "guide"},
+            {id: 1, href: "https://en.wikipedia.org/wiki/Intelligent_agent", title: "Intelligent agent - Wikipedia", publisher: "en.wikipedia.org", description: "", category: "guide"},
+            {id: 2, href: "https://aws.amazon.com/what-is/ai-agents/", title: "What are AI Agents?- Agents in Artificial Intelligence Explained - AWS", publisher: "aws.amazon.com", description: "", category: "guide"},
+            {id: 3, href: "https://mitsloan.mit.edu/ideas-made-to-matter/agentic-ai-explained", title: "Agentic AI, explained | MIT Sloan", publisher: "mitsloan.mit.edu", description: "", category: "guide"},
+            {id: 4, href: "https://www.ibm.com/think/topics/ai-agents", title: "What Are AI Agents? | IBM", publisher: "ibm.com", description: "", category: "guide"},
+            {id: 5, href: "https://www.blueprism.com/guides/ai/intelligent-agents/", title: "What Are Intelligent Agents? | SS&C Blue Prism", publisher: "blueprism.com", description: "", category: "guide"},
+            {id: 6, href: "https://www.habitat3.com.au/single-post/ai-agents-what-are-they-how-do-they-help-small-business", title: "AI Agents: What are they and why should small businesses care? How can AI agents help small business?", publisher: "habitat3.com.au", description: "", category: "guide"},
+            {id: 7, href: "https://www.ebsco.com/research-starters/applied-sciences/intelligent-agent", title: "Intelligent agent | Applied Sciences | Research Starters | EBSCO Research", publisher: "ebsco.com", description: "", category: "guide"},
+            {id: 8, href: "https://cloud.google.com/discover/what-are-ai-agents", title: "What are AI agents? Definition, examples, and types | Google Cloud", publisher: "cloud.google.com", description: "", category: "guide"},
+            {id: 9, href: "https://www.geeksforgeeks.org/artificial-intelligence/intelligent-agent-in-ai/", title: "Intelligent Agent in AI - GeeksforGeeks", publisher: "geeksforgeeks.org", description: "", category: "guide"},
+            {id: 10, href: "https://genezio.com/blog/common-ai-agent-mistakes-how-intelligent-agents-fail-and-what-you-can-do/", title: "AI Agent Mistakes: How Intelligent Agents Fail and What To Do", publisher: "genezio.com", description: "", category: "guide"},
           ]}
           heading="Sources & further reading"
         />

@@ -1,10 +1,11 @@
+import { getUpdateTitles, sortStartupUpdates } from "~/lib/startup-updates-presentation";
+import UpdateEvidenceText from "~/components/vibe-raising/UpdateEvidenceText";
 import { Link, redirect, useLoaderData } from "react-router";
 import { formatDistanceToNow } from "date-fns";
 import type { Route } from "./+types/vibe-raising-app.drafts";
 import { ActiveDraftRunChip } from "~/components/ActiveDraftRunStatus";
 import {
-    VIBE_METRIC_OPTIONS,
-    VIBE_METRIC_OPTION_MAP,
+    metricOptionsForValues,
     formatMetricDisplayValue,
     hasDisplayableMetricValue,
     metricCardLabel,
@@ -61,11 +62,11 @@ function getDraftMetricOptions(metrics?: Record<string, string>, fullMetricKeys?
     const values = metrics || {};
     const configured = fullMetricKeys
         ? fullMetricKeys
-            .map((key) => VIBE_METRIC_OPTION_MAP.get(key))
+            .map((key) => metricOptionsForValues(values).find(option => option.key === key))
             .filter((option): option is MetricOption => Boolean(option))
         : [];
     const seen = new Set(configured.map((option) => option.key));
-    const remaining = VIBE_METRIC_OPTIONS.filter((option) => !seen.has(option.key));
+    const remaining = metricOptionsForValues(values).filter((option) => !seen.has(option.key));
 
     return [...configured, ...remaining].filter((option) => hasDisplayableMetricValue(values[option.key]));
 }
@@ -79,7 +80,7 @@ function DraftSection({ label, text }: { label: string; text?: string | null }) 
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
             <ul className="mt-2 list-outside list-disc space-y-1.5 pl-5 text-sm font-medium leading-6 text-slate-700 marker:text-[var(--vr-color-primary)]">
                 {items.map((item, index) => (
-                    <li key={`${label}-${index}`}>{item}</li>
+                    <li key={`${label}-${index}`}><UpdateEvidenceText text={item} /></li>
                 ))}
             </ul>
         </div>
@@ -90,10 +91,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const { appUser } = await requireVibeRaisingFounder(env, request);
 
-    if (!appUser.companyRegistered) {
-        throw redirect("/founder-tools/company-setup");
-    }
-
     const drafts = await getVibeRaisingDrafts(env, request, resolveActiveCompanyId(appUser));
 
     return {
@@ -102,7 +99,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function VibeRaisingDraftsPage() {
-    const { drafts } = useLoaderData<typeof loader>();
+    const { drafts: rawDrafts } = useLoaderData<typeof loader>();
+    const drafts = sortStartupUpdates(rawDrafts);
+    const titles = getUpdateTitles(drafts);
     const readyDrafts = drafts.filter((draft) => draft.status === "ready").length;
     const inProgressDrafts = drafts.filter((draft) => draft.status !== "ready").length;
 
@@ -198,7 +197,7 @@ export default function VibeRaisingDraftsPage() {
                                                     {isReady ? "Ready" : "In progress"}
                                                 </span>
                                             </div>
-                                            <h3 className="mt-3 text-2xl font-black text-gray-950">{draft.month}</h3>
+                                            <h3 className="mt-3 text-2xl font-black text-gray-950">{titles.get(draft.id)}</h3>
                                         </div>
                                         <div className="inline-flex items-center gap-2 rounded-full bg-[var(--vr-palette-paper)] px-3 py-2 text-xs font-bold text-slate-500">
                                             <ClockIcon className="h-4 w-4" />
@@ -233,7 +232,7 @@ export default function VibeRaisingDraftsPage() {
                                         <DraftSection label="Challenges" text={draft.challenges} />
                                         <DraftSection label="Learnings" text={draft.learnings} />
                                         <DraftSection label="Next 30 Days" text={draft.next30Days} />
-                                        <DraftSection label="Ask from Investors" text={draft.asks} />
+                                        <DraftSection label="Ways to help" text={draft.asks} />
                                     </div>
 
                                     <div className="mt-5 flex flex-wrap gap-3">

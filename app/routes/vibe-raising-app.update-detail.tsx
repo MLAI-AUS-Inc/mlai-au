@@ -8,8 +8,8 @@ import {
     getVibeRaisingMonthlyUpdatesBundle,
     resolveActiveCompanyId,
 } from "~/lib/vibe-raising";
-import VRPreviewUpdateCard from "~/components/vibe-raising/VRPreviewUpdateCard";
-import TrendsSection from "~/components/vibe-raising/TrendsSection";
+import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
+import { getUpdateTitles, getUpdateTimeLabels } from "~/lib/startup-updates-presentation";
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -23,30 +23,20 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
         throw redirect("/founder-tools/updates");
     }
 
-    const { updates, metricHistory } = await getVibeRaisingMonthlyUpdatesBundle(env, request, resolveActiveCompanyId(vibeContext.appUser));
+    const { updates } = await getVibeRaisingMonthlyUpdatesBundle(env, request, resolveActiveCompanyId(vibeContext.appUser));
     const update = updates.find((item) => String(item.id) === String(params.id));
     if (!update) {
         throw new Response("Update not found", { status: 404 });
     }
 
-    return { user: vibeContext.appUser, update, metricHistory };
-}
-
-function isCurrentMonthUpdate(update: { date?: string | null }): boolean {
-    const updateDate = new Date(update.date || "");
-    if (Number.isNaN(updateDate.getTime())) return false;
-    const now = new Date();
-    return (
-        updateDate.getMonth() === now.getMonth() &&
-        updateDate.getFullYear() === now.getFullYear()
-    );
+    return { user: vibeContext.appUser, update, updateTitle: getUpdateTitles(updates).get(update.id), timeLabel: getUpdateTimeLabels(updates).get(update.id) };
 }
 
 export default function UpdateDetailPage() {
-    const { user, update, metricHistory } = useLoaderData<typeof loader>();
+    const { user, update, updateTitle, timeLabel } = useLoaderData<typeof loader>();
 
     return (
-        <div className="vr-scope mx-auto max-w-4xl space-y-4 pb-12">
+        <div className="vr-scope update-reader">
             <Link
                 to="/founder-tools/updates"
                 className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-gray-500 transition hover:text-[var(--vr-color-primary)]"
@@ -54,18 +44,7 @@ export default function UpdateDetailPage() {
                 <ArrowLeftIcon className="h-3.5 w-3.5" />
                 All updates
             </Link>
-            <VRPreviewUpdateCard
-                update={update}
-                user={user}
-                statusLabel={isCurrentMonthUpdate(update) ? "Current" : "Sent"}
-                trendsSlot={
-                    <TrendsSection
-                        metricHistory={metricHistory}
-                        displayConfig={update.displayConfig}
-                        currentIsoMonth={update.isoMonth}
-                    />
-                }
-            />
+            <UpdateArticle update={update} companyName={user.companyName} title={updateTitle} timeLabel={timeLabel} editable />
         </div>
     );
 }

@@ -84,8 +84,18 @@ function lineNumberForIndex(source: string, index: number) {
 }
 
 function isValidInternalRoute(route: string) {
-  return VALID_STATIC_ROUTES.has(route) || VALID_ARTICLE_ROUTES.has(route);
+  return VALID_STATIC_ROUTES.has(route) || VALID_ARTICLE_ROUTES.has(route) || VALID_PUBLIC_FILES.has(route);
 }
+
+// A static destination must exist; a /downloads prefix alone proves nothing.
+function collectPublicFiles(directory: string, prefix = ""): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    const url = prefix + "/" + encodeURIComponent(entry.name);
+    if (entry.isDirectory()) return collectPublicFiles(path.join(directory, entry.name), url);
+    return entry.isFile() ? [url] : [];
+  });
+}
+const VALID_PUBLIC_FILES = new Set(collectPublicFiles(path.join(process.cwd(), "public")));
 
 const invalidMatches: InvalidMatch[] = [];
 const articleContentFiles = collectArticleContentFiles(ARTICLE_CONTENT_ROOT);

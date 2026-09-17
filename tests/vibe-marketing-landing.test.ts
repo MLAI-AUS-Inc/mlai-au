@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { shouldShowVibeMarketingTopicPicker } from "../app/lib/vibe-marketing-landing";
+import { isDashboardGithubConnected, shouldShowVibeMarketingTopicPicker } from "../app/lib/vibe-marketing-landing";
 import type { VibeMarketingBootstrap } from "../app/types/vibe-marketing";
 
 function bootstrapFixture(
@@ -16,6 +16,16 @@ function bootstrapFixture(
 }
 
 describe("vibe marketing landing", () => {
+  test("reads the GitHub badge from bootstrap without requiring a repository list", () => {
+    for (const state of ["connected", "already_connected", " Connected "]) {
+      expect(isDashboardGithubConnected({ settings: { githubConnectionState: state, dailyDiscoveryEnabled: false }, checks: {} })).toBe(true);
+    }
+    expect(isDashboardGithubConnected({ settings: { githubRepo: "org/site", dailyDiscoveryEnabled: false }, checks: { github: { passed: true } } })).toBe(true);
+    for (const state of [undefined, "auth_required", "disconnected"]) {
+      expect(isDashboardGithubConnected({ settings: { githubConnectionState: state, githubRepo: "org/site", dailyDiscoveryEnabled: false }, checks: {} })).toBe(false);
+    }
+  });
+
   test("keeps first-time users on setup", () => {
     expect(shouldShowVibeMarketingTopicPicker(bootstrapFixture())).toBe(false);
   });

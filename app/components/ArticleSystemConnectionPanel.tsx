@@ -29,6 +29,7 @@ import {
   type SurfaceCandidate,
 } from "~/components/ArticleSystemSurfaceSummary";
 import GitHubMark from "~/components/GitHubMark";
+import GitHubConnectForm from "~/components/GitHubConnectForm";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import {
   articleSystemScaffoldActionLabel,
@@ -653,15 +654,6 @@ function articleSetupHintValue(articleSetupState: VibeMarketingArticleSetupState
   return "";
 }
 
-function githubConnectHref({ forceReconnect = false, githubRepo = "" }: { forceReconnect?: boolean; githubRepo?: string } = {}) {
-  const params = new URLSearchParams({
-    returnTo: "/founder-tools/marketing/create?step=articleSystem",
-  });
-  if (forceReconnect) params.set("forceReconnect", "true");
-  if (githubRepo && !forceReconnect) params.set("githubRepo", githubRepo);
-  return `/founder-tools/marketing/github-connect?${params.toString()}`;
-}
-
 export default function ArticleSystemConnectionPanel({
   bootstrap,
   githubRepos,
@@ -681,6 +673,12 @@ export default function ArticleSystemConnectionPanel({
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const location = useLocation();
   const revalidator = useRevalidator();
+  const githubReturnTo = useMemo(() => {
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.delete("githubAuthError");
+    const search = searchParams.toString();
+    return `${location.pathname}${search ? `?${search}` : ""}${location.hash}`;
+  }, [location.hash, location.pathname, location.search]);
   const actionPending = isActionPending ?? (() => isSubmitting);
   const connected = isGithubConnected(githubRepos, bootstrap);
   void showDenySetupAction;
@@ -1264,14 +1262,19 @@ export default function ArticleSystemConnectionPanel({
               <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
                 GitHub will open securely, then return you here when the connection is ready.
               </p>
-              <a
-                href={githubConnectHref()}
-                onClick={markGithubAuthOpen}
-                className="mt-5 inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
+              <GitHubConnectForm
+                returnTo={githubReturnTo}
+                onSubmit={markGithubAuthOpen}
+                className="mt-5"
               >
-                <GitHubMark className="h-5 w-5" />
-                {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
-              </a>
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
+                >
+                  <GitHubMark className="h-5 w-5" />
+                  {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
+                </button>
+              </GitHubConnectForm>
               <div className="mt-5 flex flex-wrap justify-center gap-4">
                 <SmallProof icon={<LockKeyhole className="h-4 w-4" />} label="Secure OAuth" />
                 <SmallProof icon={<ShieldCheck className="h-4 w-4" />} label="Granular permissions" />
@@ -1355,15 +1358,20 @@ export default function ArticleSystemConnectionPanel({
                       </a>
                     ) : null}
                   </p>
-                  <a
-                    href={githubConnectHref({ forceReconnect: true })}
+                  <GitHubConnectForm
+                    returnTo={githubReturnTo}
+                    forceReconnect
                     target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={markGithubAuthOpen}
-                    className="text-sm font-black text-violet-700 transition hover:text-violet-900"
+                    onSubmit={markGithubAuthOpen}
+                    className="inline"
                   >
-                    Add or manage GitHub accounts
-                  </a>
+                    <button
+                      type="submit"
+                      className="text-sm font-black text-violet-700 transition hover:text-violet-900"
+                    >
+                      Add or manage GitHub accounts
+                    </button>
+                  </GitHubConnectForm>
                 </div>
               </div>
               <div className="flex gap-4 rounded-2xl bg-slate-50 p-4">

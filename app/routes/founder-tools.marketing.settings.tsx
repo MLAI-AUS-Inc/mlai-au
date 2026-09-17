@@ -185,7 +185,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 const EMAIL_CHANNEL_BANNERS: Record<string, { tone: "success" | "error"; message: string }> = {
-  verified: { tone: "success", message: "Email channel verified. Daily research topics will be sent there." },
+  verified: { tone: "success", message: "Email channel verified. We’ll email you when a completed article draft is ready to review." },
   expired: { tone: "error", message: "That verification link has expired. Send a new one below." },
   invalid: { tone: "error", message: "That verification link is no longer valid. Send a new one below." },
 };
@@ -295,8 +295,8 @@ export default function FounderToolsMarketingSettings() {
           <label className="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
             <input name="dailyDiscoveryEnabled" type="checkbox" defaultChecked={bootstrap.settings.dailyDiscoveryEnabled} className="mt-1 h-4 w-4 rounded border-gray-300 text-violet-600" />
             <span>
-              <span className="block text-sm font-black text-gray-950">Enable daily generation</span>
-              <span className="mt-1 block text-sm text-gray-600">Candidates are generated daily and still require approval before publish.</span>
+              <span className="block text-sm font-black text-gray-950">Enable daily research and reminders</span>
+              <span className="mt-1 block text-sm text-gray-600">Get fresh article options each day. Research and reminders pause after three unanswered days. Turn this on and save to resume.</span>
             </span>
           </label>
           <label className="block">
@@ -312,9 +312,14 @@ export default function FounderToolsMarketingSettings() {
       </Form>
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-black text-gray-950">Daily reminder notifications</h2>
+        <h2 className="text-lg font-black text-gray-950">Content notifications</h2>
+        {dailyCheck?.automation?.pauseReason === "three_unanswered_days" ? (
+          <p role="status" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+            Daily research is paused because three daily shortlists went unanswered. Your islands and articles are saved. Enable daily research above and save settings when you’re ready to resume.
+          </p>
+        ) : null}
         <p className="mt-1 text-sm text-gray-600">
-          Choose where the daily research topics are sent. Verified channels all receive the same message each morning.
+          Choose WhatsApp or Slack for daily research topics, and email for completed article drafts.
         </p>
         <div className="mt-4 max-w-xl">
           <DailyReminderChannels

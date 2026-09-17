@@ -1,6 +1,10 @@
 import { createRequestHandler } from "react-router";
-import { isWattTheHackEndpointPath } from "~/lib/watt-the-hack-access";
 import { applySecurityHeaders } from "./security-headers";
+import { isWattTheHackEndpointPath } from "~/lib/watt-the-hack-access";
+import {
+  rejectedRooAccountLinkCapabilityResponse,
+  rooAccountLinkCapabilityDisposition,
+} from "~/lib/roo-account-link-url";
 import { withSessionRefresh } from "./session-refresh";
 
 declare module "react-router" {
@@ -26,6 +30,8 @@ const LEGACY_REDIRECTS: Record<string, string> = {
   "/codeofconduct": "/terms",
   "/support": "/contact",
   "/Support": "/contact",
+  // Search Console reports this URL with punctuation copied from an old link.
+  "/hackathons):": "/hackathons",
   // Consolidate duplicate Vibe Raising landing URLs onto the canonical /vibe-raising.
   // Handled at the worker (before React Router) to avoid the trailing-slash route
   // colliding with — and shadowing — the real /vibe-raising landing route.
@@ -61,18 +67,19 @@ async function renderWithReactRouter(request: Request, env: Env, ctx: ExecutionC
   );
 }
 
-/**
- * Core routing/render logic. Split out from `fetch` so that security headers can
- * be applied once, at the outermost layer, across every return path below
- * (redirects, the 404, the cached homepage, and normal SSR renders) rather than
- * being repeated — and inevitably missed — at each individual `return`.
- */
-async function handleRequest(
-  request: Request,
-  env: Env,
-  ctx: ExecutionContext,
-  url: URL
-): Promise<Response> {
+async function handleRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  const url = new URL(request.url);
+
+  // Capability URLs must reach the route that immediately scrubs the token.
+  // Never let them pass through generic permanent redirects.
+  const rooLinkDisposition = rooAccountLinkCapabilityDisposition(url);
+  if (rooLinkDisposition === "reject") {
+    return rejectedRooAccountLinkCapabilityResponse();
+  }
+  if (rooLinkDisposition === "route") {
+    return renderWithReactRouter(request, env, ctx);
+  }
+
   // 1. Redirect www → non-www (301)
   if (url.hostname === "www.mlai.au") {
     url.hostname = "mlai.au";
@@ -154,8 +161,7 @@ async function handleRequest(
 
 export default {
   async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const response = await handleRequest(request, env, ctx, url);
-    return applySecurityHeaders(response, url);
+    const response = await handleRequest(request, env, ctx);
+    return applySecurityHeaders(response, new URL(request.url));
   },
 } satisfies ExportedHandler<Env>;

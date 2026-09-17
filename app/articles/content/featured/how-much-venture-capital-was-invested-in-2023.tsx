@@ -85,7 +85,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Compare funding figures only after checking their geography, reporting period and definition of venture investment. A global total and an Australian total answer different questions.",
   items: [
     { label: 'How much VC was invested globally in 2023?', description: 'Around US$248B–US$285B depending on the tracker (scope and methodology differ).' },
     { label: 'Why do estimates for 2023 differ by source?', description: 'Datasets vary on equity vs. debt, CVC, secondaries, stage definitions, and backfilled disclosures.' },

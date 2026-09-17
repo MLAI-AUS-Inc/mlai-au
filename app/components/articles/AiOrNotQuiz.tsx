@@ -95,7 +95,7 @@ export default function AiOrNotQuiz() {
             AI or ordinary software?
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-700">
-            Choose an answer, then read why. These examples use the OECD’s
+            Choose an answer, or open the answer guide below. These examples use the OECD’s
             “infers from input” test; real products can combine AI, fixed rules
             and human decisions.
           </p>
@@ -183,6 +183,15 @@ export default function AiOrNotQuiz() {
         </div>
       ) : null}
 
+      <details className="mt-6 rounded-2xl border border-gray-300 p-4">
+        <summary className="cursor-pointer font-bold text-gray-950">Read all answers and explanations</summary>
+        <ol className="mt-4 space-y-4 text-sm leading-6 text-gray-800">
+          {SCENARIOS.map((scenario, index) => <li key={scenario.id}>
+            <strong>{index + 1}. {scenario.scenario} {scenario.answer === "ai" ? "AI." : "Not AI."}</strong>{" "}
+            {scenario.explanation}
+          </li>)}
+        </ol>
+      </details>
       <p className="mt-5 text-xs leading-5 text-gray-600">
         Method note: MLAI constructed these scenarios for explanation. This is
         not a validated assessment and it does not inspect the implementation of
