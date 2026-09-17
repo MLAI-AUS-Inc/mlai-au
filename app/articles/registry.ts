@@ -5,6 +5,7 @@ export const ARTICLE_FALLBACK_IMAGE =
   "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
 
 export type ArticleWithSlug = {
+  editorial?: { schemaVersion: number; audienceId: string; audienceVersion: number; actionId: string | null; actionVersion: number | null; conversionIntent: "offer" | "none" } | null;
   title: string;
   date: string; // YYYY-MM-DD
   description: string;

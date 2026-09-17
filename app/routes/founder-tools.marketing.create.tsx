@@ -1,4 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
+import EditorialBriefFields from "~/components/EditorialBriefFields";
+import { articleBriefFromRequest, loadEditorialCatalog } from "~/lib/editorial-catalog.server";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator, useSearchParams } from "react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -154,8 +156,8 @@ const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
     next: "Choose a pending topic or run new research if the current candidates have already been used.",
   },
   chooseArticle: {
-    why: "The selected topic becomes the article brief, including the title angle and target keyword.",
-    next: "Content Factory generates the article, images, and content package for review.",
+    why: "A topic needs one approved audience, a specific reader task, a useful contribution and an appropriate next step.",
+    next: "Complete the editorial brief before Content Factory generates an article for review.",
   },
   writeCheck: {
     why: "Generation creates the article and validates the files before you review the result.",
@@ -494,9 +496,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   const vibeContext = await getOptionalVibeRaisingContext(env, request);
   const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
-  const [bootstrap, baselineHistory] = await Promise.all([
+  const [bootstrap, baselineHistory, editorialState] = await Promise.all([
     getVibeMarketingBootstrap(env, request, activeCompanyId, "summary"),
     getVibeMarketingBaselineHistory(env, request, activeCompanyId),
+    loadEditorialCatalog(env, request, activeCompanyId),
   ]);
   const requestedStep = normalizeStep(url.searchParams.get("step"), "startupDetails");
   if (isArticleSystemSetupBlocked(bootstrap) && ["research", "chooseArticle"].includes(requestedStep)) {
@@ -527,6 +530,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     bootstrap,
     baselineHistory,
     githubRepos,
+    editorialState,
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
     },
@@ -914,7 +918,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         };
       }
       const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
+      const editorialBrief = await articleBriefFromRequest(env, request, formData, activeCompanyId);
       const result = await startVibeMarketingArticle(env, request, {
+        editorialBrief,
         companyId: activeCompanyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
@@ -1065,7 +1071,8 @@ function PanelHeader({
 }
 
 export default function FounderToolsMarketingCreate() {
-  const { bootstrap, baselineHistory, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
+  const { bootstrap, baselineHistory, githubRepos, billingRequestIds, editorialState } = useLoaderData<typeof loader>();
+  const [editorialAvailable, setEditorialAvailable] = useState(false);
   const [searchParams] = useSearchParams();
   const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap, {
     hasResearchRun: Boolean(searchParams.get("researchRunId")?.trim()),
@@ -1690,6 +1697,7 @@ export default function FounderToolsMarketingCreate() {
                   ) : null}
               <Form method="POST" className="space-y-5">
                 <input type="hidden" name="intent" value="start-article" />
+                <EditorialBriefFields topic={selectedTopicCandidate?.title} state={editorialState} companyId={bootstrap.company.id} onRefresh={() => researchRevalidator.revalidate()} refreshing={researchRevalidator.state !== "idle"} onAvailabilityChange={setEditorialAvailable} />
                 <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
                 <input type="hidden" name="sourceDiscoveryRunId" value={latestDiscovery?.runId ?? ""} />
                 {!isCustomArticleSelected ? <input type="hidden" name="deliveryModeExplicit" value="false" /> : null}
@@ -1791,7 +1799,7 @@ export default function FounderToolsMarketingCreate() {
                       </div>
                       <p className="mt-1 max-w-2xl text-xs font-semibold leading-5 text-gray-500">{deliveryModeNote}</p>
                     </div>
-                    <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
+                    <button type="submit" disabled={isSubmitting || !editorialAvailable} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
                       {articleStartPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
                       {articleStartPending ? (
                         "Starting article..."
