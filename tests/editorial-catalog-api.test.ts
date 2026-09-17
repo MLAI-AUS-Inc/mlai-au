@@ -1,7 +1,19 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { action, loader } from "../app/routes/founder-tools.marketing.editorial";
-import { articleBriefFromRequest, loadEditorialCatalog, saveEditorialCatalog } from "../app/lib/editorial-catalog.server";
 import type { EditorialCatalog } from "../app/lib/editorial-catalog";
+
+// Global Bun module mocks in other route suites must not replace these real HTTP clients.
+if (process.env.EDITORIAL_CATALOG_CHILD !== "1") {
+  test("editorial-catalog-api.test.ts passes its isolated HTTP cases", () => {
+    const result = Bun.spawnSync([process.execPath, "test", import.meta.path], {
+      cwd: process.cwd(),
+      env: { ...process.env, EDITORIAL_CATALOG_CHILD: "1", VITE_STUB_BACKEND: "false", VITE_DEV_AUTH_BYPASS: "false" },
+      stdout: "pipe", stderr: "pipe",
+    });
+    expect(result.exitCode, result.stdout.toString() + result.stderr.toString()).toBe(0);
+  });
+} else {
+const { action, loader } = await import("../app/routes/founder-tools.marketing.editorial");
+const { articleBriefFromRequest, loadEditorialCatalog, saveEditorialCatalog } = await import("../app/lib/editorial-catalog.server");
 
 let server: ReturnType<typeof Bun.serve>;
 let calls: { path: string; method: string; cookie: string | null; origin: string | null; body: any }[];
@@ -119,3 +131,4 @@ test("API does not invent an Origin or fall back to an empty catalogue for artic
   catalogStatus = 503; await expect(articleBriefFromRequest(env(), request(), form, "owned")).rejects.toThrow();
   expect(calls.some(c => c.path.includes("/article"))).toBe(false);
 });
+}

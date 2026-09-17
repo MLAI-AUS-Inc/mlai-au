@@ -1,8 +1,20 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { action as dashboardAction } from "../app/routes/founder-tools.marketing";
-import { action as createAction } from "../app/routes/founder-tools.marketing.create";
-import { action as researchAction } from "../app/routes/founder-tools.marketing.run";
 import type { EditorialCatalog } from "../app/lib/editorial-catalog";
+
+// Global Bun module mocks in other route suites must not replace these real HTTP clients.
+if (process.env.EDITORIAL_DISPATCH_CHILD !== "1") {
+  test("editorial-article-dispatch.test.ts passes its isolated HTTP cases", () => {
+    const result = Bun.spawnSync([process.execPath, "test", import.meta.path], {
+      cwd: process.cwd(),
+      env: { ...process.env, EDITORIAL_DISPATCH_CHILD: "1", VITE_STUB_BACKEND: "false", VITE_DEV_AUTH_BYPASS: "false" },
+      stdout: "pipe", stderr: "pipe",
+    });
+    expect(result.exitCode, result.stdout.toString() + result.stderr.toString()).toBe(0);
+  });
+} else {
+const { action: dashboardAction } = await import("../app/routes/founder-tools.marketing");
+const { action: createAction } = await import("../app/routes/founder-tools.marketing.create");
+const { action: researchAction } = await import("../app/routes/founder-tools.marketing.run");
 
 // Real route actions, auth/profile adapters, bootstrap normalizer, catalogue
 // validation and article API client. Only the HTTP backend is a fixture: no SQL,
@@ -232,3 +244,4 @@ test("research-run topic absent from the dashboard list still requires and carri
   expect(generations()[0].body).toMatchObject({ topic: "Run-local delivery task", sourceRunId: "discovery-fixture", editorialBrief: { audience_id: "BUILDER", offer_id: "build" } });
   form.set("editorialOfferId", "pilot"); errorResult(await submit(routes[2], form)); expect(generations()).toHaveLength(1);
 });
+}
