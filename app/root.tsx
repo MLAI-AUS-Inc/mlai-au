@@ -76,6 +76,10 @@ export default function Layout() {
     Boolean(routeArticle) ||
     location.pathname === "/mlai-studio/start-project" ||
     location.pathname === "/founder-tools/start";
+  const canonicalPath = location.pathname.replace(/\/$/, "") || "/";
+  const routeOwnsCanonical =
+    routeOwnsFullMetadata ||
+    ["/articles", "/roo", "/vibe-raising"].includes(canonicalPath);
 
   useEffect(() => {
     if (!shouldLoadThirdPartyAnalytics) return;
@@ -150,9 +154,12 @@ export default function Layout() {
               property="og:image:alt"
               content="MLAI Logo, a Kangaroo wearing sunglasses"
             />
-            <meta name="robots" content="index, follow" />
-            <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
           </>
+        ) : null}
+
+        {/* Routes with their own canonical must be the sole source, including pagination. */}
+        {!routeOwnsCanonical ? (
+          <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
         ) : null}
 
         <Meta />
