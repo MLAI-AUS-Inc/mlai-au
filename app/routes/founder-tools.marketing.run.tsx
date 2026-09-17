@@ -1,4 +1,8 @@
+import ArticleAudienceDetails from "~/components/ArticleAudienceDetails";
 import type { Route } from "./+types/founder-tools.marketing.run";
+import EditorialBriefFields from "~/components/EditorialBriefFields";
+import ArticleAdmissionNotice from "~/components/ArticleAdmissionNotice";
+import { articleBriefFromRequest, loadEditorialCatalog } from "~/lib/editorial-catalog.server";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator, type ShouldRevalidateFunctionArgs } from "react-router";
@@ -418,6 +422,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   return {
     run,
     bootstrap,
+    editorialState: await loadEditorialCatalog(env, request, companyId),
     setupRun,
     githubRepos,
     accountEmail: appUser.email || authUser.email || null,
@@ -700,7 +705,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         return { intent, error: "Choose a discovered topic or enter a custom title or keyword before generating an article." };
       }
       const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
+      const editorialBrief = await articleBriefFromRequest(env, request, formData, companyId);
       const result = await startVibeMarketingArticle(env, request, {
+        editorialBrief,
         companyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
@@ -4850,11 +4857,13 @@ export default function FounderToolsMarketingRun() {
     accountEmail,
     accountEmailVerified,
     billingRequestIds,
+    editorialState,
   } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const location = useLocation();
   const revalidator = useRevalidator();
+  const [editorialAvailable, setEditorialAvailable] = useState(false);
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const previewStartFetcher = useFetcher<typeof action>();
   const previewStartRunRef = useRef("");
@@ -5069,6 +5078,10 @@ export default function FounderToolsMarketingRun() {
         </div>
       ) : null}
 
+      <ArticleAudienceDetails snapshot={run.editorialSnapshot} />
+      <ArticleAdmissionNotice value={run.result?.article_admission_notice} companyId={bootstrap.company.id}
+        onRefresh={() => { setPolledRun(null); revalidator.revalidate(); }} refreshing={revalidator.state !== "idle"} />
+
       <MarketingWorkflowShell
         progress={workflowProgress}
         viewedStepId={viewedWorkflowStepId}
@@ -5146,6 +5159,7 @@ export default function FounderToolsMarketingRun() {
               {discoveryCandidates.length > 0 && selectedDiscoveryCandidate ? (
                 <Form method="POST" className="mt-4 space-y-4">
                   <input type="hidden" name="intent" value="start-article" />
+                  <EditorialBriefFields topic={selectedDiscoveryCandidate?.title} state={editorialState} companyId={bootstrap.company.id} onRefresh={() => revalidator.revalidate()} refreshing={revalidator.state !== "idle"} onAvailabilityChange={setEditorialAvailable} />
                   <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
                   <input type="hidden" name="candidateTitle" value={selectedDiscoveryCandidate.title} />
                   <input type="hidden" name="candidateKeyword" value={selectedDiscoveryCandidate.keyword} />
@@ -5168,7 +5182,7 @@ export default function FounderToolsMarketingRun() {
                         <p className="text-[11px] font-black uppercase tracking-wide text-gray-400">Selected topic</p>
                         <p className="mt-1 max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedDiscoveryCandidate.title}</p>
                       </div>
-                      <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
+                      <button type="submit" disabled={isSubmitting || !editorialAvailable} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
                         {pendingActions.isPending("start-article") ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
                         {pendingActions.isPending("start-article") ? (
                           "Starting article..."

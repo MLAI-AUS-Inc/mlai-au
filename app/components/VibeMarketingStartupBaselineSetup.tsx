@@ -1,3 +1,5 @@
+import CustomerProfilesSetup from "./CustomerProfilesSetup";
+import { parseCustomerSuggestions } from "~/lib/customer-profile-suggestions";
 import { Form, Link, useFetcher, useLocation, useNavigation } from "react-router";
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
 import {
@@ -468,6 +470,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
           ? payload.company_context
           : profileFields?.companyContext ?? null,
     profileFields,
+    editorialSuggestions: parseCustomerSuggestions(payload.editorialSuggestions),
     offeringProfile: plainObject(payload.offeringProfile ?? payload.offering_profile),
     competitors: Array.from(new Set(competitorStrings.map((competitor) => competitor.trim()).filter(Boolean))),
     competitorSuggestions,
@@ -3060,6 +3063,7 @@ export default function VibeMarketingStartupBaselineSetup({
                   </div>
                 )}
 
+                <CustomerProfilesSetup companyId={bootstrap.company.id || ""} companyName={startupValues.companyName || bootstrap.company.name} domain={startupValues.domain} suggestions={extractAutofill(autofillRun)?.editorialSuggestions} onSuggest={() => startAutofill()} researching={researchLocked} />
                 {companySetupWorkflow ? (
                   <div className="mt-7 space-y-6">
                     <FormField label="Target audience">

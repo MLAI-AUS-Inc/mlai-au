@@ -117,7 +117,11 @@ if (process.env.MARKETING_LOADER_REGRESSION_CHILD !== "1") {
       expect(data.run.runId).toBe(runId);
       expect(data.setupRun).toBeNull();
       const marketingRequests = fixture.requests.filter((request) => request.path.includes("vibe-marketing"));
-      expect(marketingRequests).toHaveLength(2);
+      expect(marketingRequests.map((request) => request.path).sort()).toEqual([
+        "/api/v1/vibe-marketing/bootstrap/",
+        "/api/v1/vibe-marketing/editorial-catalog/",
+        `/api/v1/vibe-marketing/runs/${runId}`,
+      ].sort());
       expect(marketingRequests.every((request) => request.company === companyId && request.cookie === "access_token=fixture")).toBe(true);
     });
 
