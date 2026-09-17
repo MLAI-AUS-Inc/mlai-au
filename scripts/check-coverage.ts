@@ -7,8 +7,17 @@ const COVERAGE_DIR = path.join(ROOT, "coverage");
 const LCOV_PATH = path.join(COVERAGE_DIR, "lcov.info");
 const SUMMARY_PATH = path.join(COVERAGE_DIR, "coverage-summary.txt");
 const SOURCE_ROOTS = [path.join(ROOT, "app"), path.join(ROOT, "workers")];
-const MIN_LINES = Number(process.env.COVERAGE_MIN_LINES ?? "6.5");
-const MIN_FUNCTIONS = Number(process.env.COVERAGE_MIN_FUNCTIONS ?? "9.25");
+function threshold(name: string, fallback: string): number {
+  const raw = process.env[name] ?? fallback;
+  const value = Number(raw);
+  if (!raw.trim() || !Number.isFinite(value) || value < 0 || value > 100) {
+    throw new Error(`${name} must be a finite percentage between 0 and 100; received ${JSON.stringify(raw)}.`);
+  }
+  return value;
+}
+
+const MIN_LINES = threshold("COVERAGE_MIN_LINES", "6.5");
+const MIN_FUNCTIONS = threshold("COVERAGE_MIN_FUNCTIONS", "9.25");
 
 type CoverageCounts = {
   linesFound: number;
@@ -34,10 +43,6 @@ function collectSourceFiles(directory: string): string[] {
     }
   }
   return files.sort();
-}
-
-function relativeSourcePath(filePath: string): string {
-  return path.relative(ROOT, filePath).split(path.sep).join("/");
 }
 
 function resolveLcovPath(value: string): string {

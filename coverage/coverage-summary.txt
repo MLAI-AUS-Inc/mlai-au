@@ -1,5 +1,0 @@
-Eligible files: 581
-Excluded: declaration files (*.d.ts)
-Lines: 9862/147776 (6.67%)
-Functions: 558/5918 (9.43%)
-Thresholds: lines 6.50%, functions 9.25%
