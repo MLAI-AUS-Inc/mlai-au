@@ -6,6 +6,7 @@ import { isFinancialMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updat
 import "~/styles/update-editor.css";
 import "~/styles/update-gallery.css";
 import { hasUpdateWriting } from "~/lib/update-draft-writing";
+import { getUpdateDraftDateError, MIN_UPDATE_DATE } from "~/lib/update-draft-date";
 import ConnectorTile from "~/components/vibe-raising/ConnectorTile";
 import { completeConnectorCatalogue } from "~/lib/update-connectors";
 import UpdateCoverEditor from "~/components/vibe-raising/UpdateCoverEditor";
@@ -3069,6 +3070,9 @@ function CreateUpdateEditor() {
     const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
     const [updateDate, setUpdateDate] = useState<string>(defaultData?.updateDate ?? (existingData ? "" : today));
+    const updateDateInputRef = useRef<HTMLInputElement>(null);
+    const [showUpdateDateError, setShowUpdateDateError] = useState(false);
+    const updateDateError = showUpdateDateError ? getUpdateDraftDateError(updateDate, today) : null;
     const [activeUpdateId, setActiveUpdateId] = useState<string | null>(defaultData?.id ? String(defaultData.id) : null);
     const [narrativeStart, setNarrativeStart] = useState("");
     const [narrativeEnd, setNarrativeEnd] = useState("");
@@ -4026,7 +4030,16 @@ function CreateUpdateEditor() {
         }
     }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso, activeUpdateId, creationKey, updateDate, expectedRevision, narrativeStart, narrativeEnd, user.activeCompanyId]);
 
+    const validateDraftDate = useCallback(() => {
+        if (!getUpdateDraftDateError(updateDate, today)) return true;
+        setShowUpdateDateError(true);
+        setEmailDraftUiError(null);
+        updateDateInputRef.current?.focus();
+        return false;
+    }, [updateDate, today]);
+
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
+        if (!validateDraftDate()) return;
         const effectiveInputSources = (options?.inputSources ?? selectedInputSources)
             .filter((key) => connectedDraftInputSources.includes(key));
         if (effectiveInputSources.length === 0) {
@@ -4037,7 +4050,7 @@ function CreateUpdateEditor() {
             navigate("/founder-tools/companies");
             return;
         }
-        if (isSelectedMonthUnavailable || !targetMonthIso || !updateDate) {
+        if (isSelectedMonthUnavailable || !targetMonthIso) {
             setEmailDraftUiError("Choose the current month or a previous month before generating an update.");
             return;
         }
@@ -4072,7 +4085,7 @@ function CreateUpdateEditor() {
         selectedInputSources,
         startOrResumeEmailDraft,
         targetMonthIso,
-        updateDate,
+        validateDraftDate,
     ]);
 
     const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
@@ -4083,6 +4096,9 @@ function CreateUpdateEditor() {
     }, [clearPersistedEmailDraftRun, startDraftFromSelectedInputs]);
 
     const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean; inputSources?: VibeRaisingInputSourceKey[] }) => {
+        // Legacy updates intentionally have no exact date. Ask for it before
+        // confirming a new run, and never invent a day from their month/import date.
+        if (!validateDraftDate()) return;
         // Only use the sources checked in the editor, including on retry.
         const enrichedRequest = {
             ...request,
@@ -4102,7 +4118,7 @@ function CreateUpdateEditor() {
             return;
         }
         executeDraftRequest(enrichedRequest);
-    }, [connectedDraftInputSources, executeDraftRequest, existingUpdateForSelectedMonth, selectedInputSources]);
+    }, [connectedDraftInputSources, executeDraftRequest, existingUpdateForSelectedMonth, selectedInputSources, validateDraftDate]);
 
     const handleGenerateSelectedMonthUpdate = useCallback(() => {
         if (!hasSelectedMonth || isSelectedMonthUnavailable) return;
@@ -5183,13 +5199,16 @@ function CreateUpdateEditor() {
                         <h1>{isEdit ? "Edit update" : "New update"}</h1>
                         <div className="update-form-top">
                             <label htmlFor="update-date"><span className="sr-only">Update date</span>
-                                <input id="update-date" type="date" form={DRAFT_REVIEW_FORM_ID} value={updateDate || ""} max={today} min="2025-01-01"
+                                <input ref={updateDateInputRef} id="update-date" type="date" form={DRAFT_REVIEW_FORM_ID} value={updateDate || ""} max={today} min={MIN_UPDATE_DATE}
                                     disabled={isSubmitting || saveDraftFetcher.state !== "idle" || isEmailDraftBusy || emailDraftActionBusy || Boolean(draftCandidate)}
                                     required={!existingData}
+                                    aria-invalid={Boolean(updateDateError)}
+                                    aria-describedby={updateDateError ? "update-date-error" : !updateDate && existingData ? "update-date-hint" : undefined}
                                     onChange={event => setUpdateDate(event.target.value)} />
                             </label>
-                            {!updateDate && existingData && <span className="update-period-note">{selectedMonthLabel} · exact date not recorded</span>}
+                            {!updateDate && existingData && <span id="update-date-hint" className="update-period-note">{selectedMonthLabel} · exact date not recorded. Choose an update date to create a fresh AI draft.</span>}
                         </div>
+                        {updateDateError && <p id="update-date-error" className="update-notice" role="alert">{updateDateError}</p>}
                     </div>
                     <nav className="gallery-progress" aria-label="Update progress" ref={draftStepperRef}>
                         <ol>
