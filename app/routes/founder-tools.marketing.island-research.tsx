@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.island-research";
 import { apiErrorDetail } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
-import { adoptResearchedContentIsland, getVibeMarketingRun, startContentIslandResearch } from "~/lib/vibe-marketing";
+import { adoptResearchedContentIsland, selectResearchedContentIslands, getVibeMarketingRun, startContentIslandResearch } from "~/lib/vibe-marketing";
 import { requireVibeRaisingFounder, resolveActiveCompanyId } from "~/lib/vibe-raising";
 
 function failure(error: unknown) {
@@ -23,6 +23,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (body.action === "research") {
       const run = await startContentIslandResearch(env, request, { ...body, companyId });
       return Response.json(run);
+    }
+    if ((body.action === "preview" || body.action === "adopt") && typeof body.runId === "string" && Array.isArray(body.proposalIds)) {
+      return Response.json(await selectResearchedContentIslands(env, request, body.runId, {
+        companyId, proposalIds: body.proposalIds, preview: body.action === "preview",
+      }));
     }
     if (body.action === "adopt" && typeof body.runId === "string") {
       const island = await adoptResearchedContentIsland(env, request, body.runId, { companyId, proposalId: body.proposalId });

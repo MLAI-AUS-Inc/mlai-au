@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { DEFAULT_UPDATE_COVER_URL } from "~/lib/update-cover";
 import { PencilSquareIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import UpdateEvidenceText from "./UpdateEvidenceText";
 import UpdatesIncomeChart from "./UpdatesIncomeChart";
@@ -70,7 +71,7 @@ export default function UpdateArticle({
       : null;
   const month =
     getUpdatePeriod(update).monthName || update.monthName || String(update.month || "").replace(/\s+\d{4}$/, "");
-  const cover = update.coverImage?.url || update.coverImageUrl;
+  const cover = update.coverImage?.url || update.coverImageUrl || DEFAULT_UPDATE_COVER_URL;
   // Historical articles use their frozen evidence even if a connector is later disconnected.
   const providers = Object.values(update.metricEvidence || {}).map((item) => ({
     key: item.source_provider,

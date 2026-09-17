@@ -1,0 +1,48 @@
+.connections-page { --vr-font-title: "Roboto", system-ui, sans-serif; }
+.connections-page .update-editor-header { margin-bottom: 35px; }
+.connections-intro { margin: 12px 0 0; color: #6b7670; font-size: 15px; line-height: 1.6; }
+.connections-refresh { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 12px; margin-top: 27px; font-size: 13px; color: #5d6e65; }
+.connections-refresh:disabled { opacity: .6; }
+.connections-section-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.connections-page h2 { font-size: 21px; font-weight: 500; letter-spacing: -.025em; }
+.connections-page h3 { font-weight: 500; font-family: inherit; text-transform: none; }
+.connections-section-heading > span { font-size: 12px; color: #6b7771; }
+.connections-help { color: #747e79; font-size: 13px; line-height: 1.6; margin: 9px 0 22px; }
+.connections-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.connections-grid > div { min-width: 0; scroll-margin-top: 90px; }
+.connections-grid > div:target { outline: 2px solid #15856e; outline-offset: 4px; border-radius: 9px; }
+.connections-grid .connector-tile { height: 100%; }
+.connections-finance-note { font-size: 12px; line-height: 1.7; color: #6b7771; margin: 17px 0 32px; }
+.connections-materials { border-top: 1px solid #e0e5e1; margin: 0 0 24px; }
+.connections-materials-toggle { display: flex; width: 100%; align-items: center; gap: 15px; padding: 22px 0; text-align: left; }
+.connections-materials-toggle > span:nth-child(2) { flex: 1; }
+.connections-materials-toggle strong { display: block; font-size: 14px; font-weight: 500; }
+.connections-materials-toggle small { display: block; font-size: 12px; color: #78827c; margin-top: 5px; }
+.connections-materials-toggle > span:last-child { color: #17795f; font-size: 12px; white-space: nowrap; }
+.connections-page #manual-materials-panel { border: 1px solid #e0e5e1; border-radius: 9px; box-shadow: none; margin-bottom: 20px; }
+.connections-detail { border-top: 1px solid #e0e5e1; scroll-margin-top: 85px; }
+.connections-detail > summary { padding: 18px 0; cursor: pointer; font-size: 13px; color: #52645b; }
+.connections-detail-body { padding-bottom: 24px; }
+.connections-detail-body > div { border-radius: 9px; box-shadow: none; }
+.connections-detail-body .font-black, .connections-detail-body .font-extrabold { font-weight: 500; }
+.connections-detail-body :is(button, input, select, textarea) { border-radius: 6px; }
+.connections-privacy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #7b857e; font-size: 12px; line-height: 1.6; margin: 27px 0 0; }
+.connections-privacy a { margin-left: auto; text-underline-offset: 3px; text-decoration: underline; }
+.connections-page .update-actions { margin-top: 26px; }
+.connections-modal > div { border-radius: 12px; max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; }
+.connections-modal :is(h2,h3) { font-family: inherit; text-transform: none; font-weight: 500; }
+.connections-modal .font-black, .connections-modal .font-extrabold { font-weight: 500; }
+.connections-modal :is(button, input, section) { border-radius: 7px; }
+@media (max-width: 800px) {
+  .connections-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+  .connections-grid .connector-tile--detailed { padding: 15px; grid-template-columns: 28px minmax(0,1fr) auto; gap: 10px 7px; }
+  .connections-grid .connector-tile-name { font-size: 13px; }
+  .connections-grid .connector-logo { width: 28px; height: 28px; }
+  .connections-grid .connector-tile-state { font-size: 10px; }
+  .connections-page .update-editor-header { gap: 12px; }
+  .connections-refresh { margin-top: 0; padding-left: 0; }
+  .connections-privacy a { margin-left: 24px; }
+}
+@media (max-width: 380px) {
+  .connections-grid { grid-template-columns: 1fr; }
+}

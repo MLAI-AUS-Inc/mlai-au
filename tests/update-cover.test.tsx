@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { coverFileError, coverUpdateText, normalizeUpdateCover, parseUpdateCoverForm } from "../app/lib/update-cover";
+import { coverFileError, coverUpdateText, DEFAULT_UPDATE_COVER_URL, normalizeUpdateCover, parseUpdateCoverForm } from "../app/lib/update-cover";
 import { startUpdateCover, uploadUpdateCover, waitForUpdateCover } from "../app/lib/update-cover-client";
 import { normalizeMonthlyUpdate } from "../app/lib/vibe-raising";
 import UpdateCoverEditor from "../app/components/vibe-raising/UpdateCoverEditor";
@@ -64,18 +64,18 @@ describe("update cover contract", () => {
     globalThis.fetch = (async () => respond({ status: "failed", detail: "Try another idea, or upload a cover." })) as typeof fetch;
     await expect(waitForUpdateCover("https://backend.example", "company-a", "job", new AbortController().signal)).rejects.toThrow("Try another idea");
   });
-  it("renders an optional cover prompt and disables generation for an empty draft", () => {
+  it("shows the default artwork and disables generation for an empty draft", () => {
     const html = renderToStaticMarkup(<UpdateCoverEditor backendBaseUrl="https://backend.example" companyId="1" scopeKey="1:2026-06" updateText="" value={null} onChange={() => {}} />);
-    expect(html).toContain("Cover image");
-    expect(html).toContain("Optional");
-    expect(html).toContain("Create me an image");
+    expect(html).toContain("Default cover");
+    expect(html).toContain(DEFAULT_UPDATE_COVER_URL);
+    expect(html).toContain("Generate image");
+    expect(html).toContain("Upload image");
     expect(html).toContain("disabled=");
-    expect(html).toContain("simple date cover");
   });
   it("shows the selected cover with replacement and removal controls", () => {
     const html = renderToStaticMarkup(<UpdateCoverEditor backendBaseUrl="https://backend.example" companyId="1" scopeKey="1:2026-06" updateText="New education programme delivered this month." value={cover} onChange={() => {}} />);
     expect(html).toContain(cover.url);
     expect(html).toContain("Replace image");
-    expect(html).toContain("Remove cover");
+    expect(html).toContain("Use default cover");
   });
 });

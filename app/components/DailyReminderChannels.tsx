@@ -559,6 +559,7 @@ export default function DailyReminderChannels({
   return (
     <div className={clsx("min-w-0 space-y-2", variant === "publish" && "space-y-2.5")}>
       <p className="text-xs font-black uppercase tracking-wide text-gray-500">Notification channels</p>
+      <p className="text-xs leading-5 text-gray-600">Daily suggestions rotate through fresh topics. A newly added island or custom topic gets one place in your next shortlist when relevant research is available, then normal opportunity ranking resumes. Research and reminders pause after three unanswered days.</p>
       {channelError && variant !== "publish" ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700">
           {channelError}
