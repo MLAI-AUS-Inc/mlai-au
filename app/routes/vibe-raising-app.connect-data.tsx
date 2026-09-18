@@ -63,8 +63,8 @@ import type {
   VibeRaisingXeroPreview,
 } from "~/types/vibe-raising";
 import VibeRaisingWorkflowLayout from "~/components/VibeRaisingWorkflowLayout";
-import ConnectorTile from "~/components/vibe-raising/ConnectorTile";
-import { completeConnectorCatalogue, isConnectedConnector, readConnectorSelection, resolveConnectorSelection } from "~/lib/update-connectors";
+import ConnectorTile, { ConnectorLogo } from "~/components/vibe-raising/ConnectorTile";
+import { completeConnectorCatalogue, isConnectedConnector, readConnectorSelection, resolveConnectorSelection, UPDATE_CONNECTORS } from "~/lib/update-connectors";
 import "~/styles/update-editor.css";
 import "~/styles/update-gallery.css";
 import "~/styles/update-connections.css";
@@ -753,6 +753,7 @@ function SlackPreview({
                     className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-9 pr-10 text-sm font-semibold text-gray-950 placeholder:text-slate-400 focus:border-[var(--vr-color-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(0,128,128,0.10)]"
                     displayValue={() => channelQuery}
                     onChange={(event) => setChannelQuery(event.target.value)}
+                    aria-label="Search and select Slack channels"
                     placeholder="Search and select Slack channels"
                   />
                   <Combobox.Button className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600">
@@ -1509,6 +1510,27 @@ export default function ConnectData() {
   const [sources, setSources] = useState<VibeRaisingInputSourceSummary[]>(EMPTY_SOURCES);
   const [selectedSources, setSelectedSources] = useState<Set<VibeRaisingInputSourceKey>>(new Set());
   const [loadingStatus, setLoadingStatus] = useState(true);
+  const [inspectedKey, setInspectedKey] = useState<VibeRaisingInputSourceKey | null>(null);
+  const inspectorHeadingRef = useRef<HTMLHeadingElement>(null);
+  const focusInspectorRef = useRef(false);
+  const inspectedSource = sources.find(source => source.key === inspectedKey);
+
+  useEffect(() => {
+    const key = location.hash.replace(/^#(?:source-|configuration-)/, "");
+    if (UPDATE_CONNECTORS.some(source => source.key === key)) {
+      setInspectedKey(key as VibeRaisingInputSourceKey);
+      focusInspectorRef.current = true;
+    }
+  }, [location.hash]);
+
+  useEffect(() => {
+    if (!focusInspectorRef.current || !inspectedSource) return;
+    focusInspectorRef.current = false;
+    inspectorHeadingRef.current?.focus({ preventScroll: true });
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      document.getElementById("connection-inspector")?.scrollIntoView({ block: "start", behavior: "auto" });
+    }
+  }, [inspectedSource]);
   const [syncingFinance, setSyncingFinance] = useState(false);
   const [syncingSlack, setSyncingSlack] = useState(false);
   const [busyProvider, setBusyProvider] = useState<VibeRaisingInputSourceKey | null>(null);
@@ -2042,12 +2064,23 @@ export default function ConnectData() {
     }
   };
 
-  const showConfiguration = (key: string) => {
-    const section = document.getElementById(`configuration-${key}`);
-    if (section instanceof HTMLDetailsElement) {
-      section.open = true;
-      section.scrollIntoView({ block: "start", behavior: "smooth" });
+  const showConfiguration = (key: VibeRaisingInputSourceKey) => {
+    focusInspectorRef.current = true;
+    setInspectedKey(key);
+    if (key === inspectedKey) {
+      inspectorHeadingRef.current?.focus({ preventScroll: true });
+      if (window.matchMedia("(max-width: 760px)").matches) document.getElementById("connection-inspector")?.scrollIntoView({ block: "start" });
     }
+  };
+
+  const closeConfiguration = () => {
+    const previousKey = inspectedKey;
+    setInspectedKey(null);
+    requestAnimationFrame(() => {
+      const trigger = document.getElementById(`manage-${previousKey}`);
+      trigger?.focus({ preventScroll: true });
+      if (window.matchMedia("(max-width: 760px)").matches) trigger?.scrollIntoView({ block: "center" });
+    });
   };
 
   const handleToggle = (source: VibeRaisingInputSourceSummary) => {
@@ -2456,40 +2489,192 @@ export default function ConnectData() {
   return (
     <VibeRaisingWorkflowLayout variant="gallery" activeStep="connect">
     <div className="update-editor update-gallery connections-page">
-      <header className="update-editor-header">
+      <header className="connections-header">
         <div>
           <button type="button" className="update-back" onClick={() => navigateToDraft()}>← Back to update</button>
-          <h1>Connections</h1>
-          <p className="connections-intro">Your tools. Your story. Choose what goes into your update.</p>
+          <h1>Connections<span aria-hidden="true">.</span></h1>
+          <p className="connections-intro">The tools you use. The story you’re building.</p>
         </div>
         <button type="button" className="connections-refresh" disabled={loadingStatus} onClick={() => void refreshStatuses()}>
           <ArrowPathIcon className={`h-4 w-4 ${loadingStatus ? "motion-safe:animate-spin" : ""}`} />
-          {loadingStatus ? "Checking…" : "Refresh"}
+          {loadingStatus ? "Checking…" : "Refresh connections"}
         </button>
       </header>
-      {statusMessage && <p className="update-notice" role="status">{statusMessage}</p>}
-      <section aria-labelledby="connections-heading">
-        <div className="connections-section-heading">
-          <h2 id="connections-heading">Your sources</h2>
-          <span>{allConnectors.filter(isConnectedConnector).length} connected · {selectedSourceList.length} on</span>
-        </div>
-        <p className="connections-help">Turn a connected source on to include it. Turning it off keeps your account connected.</p>
-        <div className="connections-grid">
-          {allConnectors.map(source => <div key={source.key} id={`source-${source.key}`}>
-            <ConnectorTile source={source} selected={selectedSources.has(source.key)} detailed
-              disabled={loadingStatus} busy={busyProvider === source.key || (source.key === "luma" && lumaConnecting)}
-              onToggle={handleToggle} onConnect={requestConnectSource} />
-          </div>)}
-        </div>
-        <p className="connections-finance-note">Earning revenue? Stripe and Xero bring in financial figures that stay linked to their source and read-only.</p>
-          <div className="connections-materials">
+      {statusMessage && !inspectedSource && <p className="update-notice" role="status">{statusMessage}</p>}
+      <div className="connections-workspace">
+        <section className="connections-library" aria-labelledby="connections-heading" aria-busy={loadingStatus}>
+          <div className="connections-section-heading">
+            <h2 id="connections-heading">Choose your sources</h2>
+            <span>{loadingStatus ? "Checking connections…" : `${allConnectors.filter(isConnectedConnector).length} connected`}</span>
+          </div>
+          <p className="connections-help">Turn sources on for your AI draft. Off keeps the account connected.</p>
+          <div className="connections-grid">
+            {allConnectors.map(source => <div key={source.key} id={`source-${source.key}`}
+              className="connection-source" data-inspected={inspectedKey === source.key} data-on={isConnectedConnector(source) && selectedSources.has(source.key)}>
+              <ConnectorTile source={source} selected={selectedSources.has(source.key)} detailed
+                disabled={loadingStatus} busy={busyProvider === source.key || (source.key === "luma" && lumaConnecting)}
+                onToggle={handleToggle} onConnect={requestConnectSource} />
+              <button id={`manage-${source.key}`} type="button" className="connection-manage"
+                aria-label={`${source.label} connection details`} aria-controls="connection-inspector" aria-expanded={inspectedKey === source.key}
+                onClick={() => inspectedKey === source.key ? closeConfiguration() : showConfiguration(source.key)}>
+                <span>{source.accountLabel || (source.key === "stripe" || source.key === "xero" ? "Financial source" : "Connection details")}</span>
+                <ArrowRightIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>)}
+          </div>
+        </section>
+        <aside className="connections-inspector" id="connection-inspector" aria-labelledby="connection-inspector-heading">
+          {inspectedSource ? <>
+            <button type="button" className="connection-overview-link" onClick={closeConfiguration}>← Your draft sources</button>
+            <div className="connection-inspector-heading">
+              <ConnectorLogo sourceKey={inspectedSource.key} />
+              <div>
+                <h2 id="connection-inspector-heading" tabIndex={-1} ref={inspectorHeadingRef}>{inspectedSource.label}</h2>
+                <p>{UPDATE_CONNECTORS.find(source => source.key === inspectedKey)?.description}</p>
+              </div>
+            </div>
+            <div className="connection-account-status">
+              <span data-connected={isConnectedConnector(inspectedSource)}><i />{loadingStatus ? "Checking…" : isConnectedConnector(inspectedSource) ? (inspectedSource.status === "syncing" ? "Syncing" : "Connected") : inspectedSource.status === "error" ? "Needs reconnection" : inspectedSource.status === "coming_soon" ? "Coming soon" : inspectedSource.status === "unavailable" && inspectedKey !== "stripe" ? "Unavailable" : "Not connected"}</span>
+              {isConnectedConnector(inspectedSource) && <span>{selectedSources.has(inspectedSource.key) ? "On for this update" : "Off for this update"}</span>}
+            </div>
+            {inspectedSource.accountLabel && <p className="connection-account-label">{inspectedSource.accountLabel}</p>}
+            {statusMessage && <p className="update-notice" role="status">{statusMessage}</p>}
+            {inspectedSource.warning && <p className="update-notice" role="status">{inspectedSource.warning}</p>}
+            {isConnectedConnector(inspectedSource) ? <>
+              <p className="connection-detail-intro">{selectedSources.has(inspectedSource.key) ? "This source is included in your next AI draft." : "Your account is connected. Turn its tile on to include it in your draft."}</p>
+              {inspectedSource.lastSyncedAt && <p className="connection-sync-time">Last synced {formatShortDate(inspectedSource.lastSyncedAt)}</p>}
+              {(inspectedKey === "stripe" || inspectedKey === "xero" || inspectedKey === "bank_feed") && <p className="connection-readonly"><LockClosedIcon className="h-4 w-4" />Imported financial figures stay linked to their source and read-only.</p>}
+              {inspectedKey === "stripe" && <button type="button" className="update-button secondary" disabled={syncingFinance} onClick={() => void handleSyncFinance(["stripe"])}><ArrowPathIcon className="h-4 w-4" />{syncingFinance ? "Syncing…" : "Sync Stripe"}</button>}
+              {(inspectedKey === "google_drive" || inspectedKey === "notion") && <p className="connection-detail-intro">Available documents and context from this connection can help shape your update. Review the generated draft before sharing.</p>}
+            </> : <div className="connection-connect-prompt">
+              <p>{inspectedSource.status === "coming_soon" || (inspectedSource.status === "unavailable" && inspectedKey !== "stripe") ? "This source isn’t available to connect right now. You can still add documents or notes as context." : `Connect ${inspectedSource.label} to bring ${UPDATE_CONNECTORS.find(source => source.key === inspectedKey)?.description.toLowerCase()} into your update.`}</p>
+              <button type="button" className="update-button" disabled={loadingStatus || busyProvider !== null || lumaConnecting || inspectedSource.status === "coming_soon" || (inspectedSource.status === "unavailable" && inspectedKey !== "stripe")}
+                onClick={() => requestConnectSource(inspectedSource)}>{busyProvider === inspectedKey || (inspectedKey === "luma" && lumaConnecting) ? "Connecting…" : `${inspectedSource.status === "error" ? "Reconnect" : "Connect"} ${inspectedSource.label}`}<ArrowRightIcon className="h-4 w-4" /></button>
+            </div>}
+            {inspectedKey === "google_analytics" && shouldShowGoogleAnalyticsPreview ? (
+              <div className="connections-detail-body">
+                <GoogleAnalyticsPreview
+                  properties={googleAnalyticsProperties}
+                  accountLabel={googleAnalyticsAccountLabel ?? googleAnalyticsSource?.accountLabel ?? null}
+                  loading={loadingGoogleAnalyticsProperties}
+                  error={googleAnalyticsError}
+                  saving={savingGoogleAnalyticsProperties}
+                  selectedPropertyIds={selectedGoogleAnalyticsPropertyIds}
+                  nextCursor={googleAnalyticsNextCursor}
+                  loadingMore={loadingMoreGoogleAnalyticsProperties}
+                  onToggleProperty={handleToggleGoogleAnalyticsProperty}
+                  onLoadMore={() => void handleLoadMoreGoogleAnalyticsProperties()}
+                  onSave={() => void handleSaveGoogleAnalyticsProperties()}
+                />
+              </div>
+            ) : null}
+
+            {inspectedKey === "luma" && shouldShowLumaPreview ? (
+              <div className="connections-detail-body">
+                <LumaPreview
+                  accountLabel={lumaAccountLabel ?? lumaSource?.accountLabel ?? null}
+                  loading={loadingLumaEvents}
+                  error={lumaEventsError}
+                  saving={savingLumaSelections}
+                  selectedMetricKeys={selectedLumaMetricKeys}
+                  availableMetrics={lumaAvailableMetrics}
+                  onToggleMetric={handleToggleLumaMetric}
+                  onSave={() => void handleSaveLumaSelections()}
+                />
+              </div>
+            ) : null}
+
+            {inspectedKey === "slack" && shouldShowSlackPreview ? (
+              <div className="connections-detail-body">
+                <SlackPreview
+                  channels={slackChannels}
+                  preview={slackPreview}
+                  loadingChannels={loadingSlackChannels}
+                  loadingPreview={loadingSlackPreview}
+                  error={slackError}
+                  saving={savingSlackChannels}
+                  syncing={syncingSlack}
+                  selectedChannelIds={selectedSlackChannelIds}
+                  nextCursor={slackChannelsNextCursor}
+                  loadingMoreChannels={loadingMoreSlackChannels}
+                  onToggleChannel={handleToggleSlackChannel}
+                  onLoadMoreChannels={() => void handleLoadMoreSlackChannels()}
+                  onSaveChannels={() => void handleSaveSlackChannels()}
+                  onSync={() => void handleSyncSlack()}
+                />
+              </div>
+            ) : null}
+
+            {inspectedKey === "linear" && shouldShowLinearPreview ? (
+              <div className="connections-detail-body">
+                <LinearPreview
+                  preview={linearPreview}
+                  loading={loadingLinearPreview}
+                  error={linearError}
+                  syncing={syncingLinear}
+                  onSync={() => void handleSyncLinear()}
+                />
+              </div>
+            ) : null}
+
+            {inspectedKey === "xero" && shouldShowXeroPreview ? (
+              <div className="connections-detail-body">
+                <XeroPreview
+                  preview={xeroPreview}
+                  loading={loadingXeroPreview}
+                  error={xeroPreviewError}
+                  syncing={syncingFinance}
+                  onSync={() => void handleSyncFinance(["xero"])}
+                  reconnectHref={connectVibeRaisingInputSource(backendBaseUrl, "xero", currentReturnPath)}
+                />
+              </div>
+            ) : null}
+
+            {inspectedKey === "bank_feed" && shouldShowBankFeedPreview ? (
+              <div className="connections-detail-body">
+                <BankFeedPreview
+                  preview={bankFeedPreview}
+                  loading={loadingBankFeedPreview}
+                  error={bankFeedPreviewError}
+                />
+              </div>
+            ) : null}
+
+            {inspectedKey === "gmail" && shouldShowGmailPreview && <div className="connections-detail-body">
+                <GmailPreview preview={gmailPreview} loading={loadingGmailPreview} error={gmailPreviewError} />
+                {gmailSource && <button type="button" className="update-button secondary" onClick={() => handleOpenGmailManagement(gmailSource)}>Manage Gmail connection</button>}
+            </div>}
+
+          </> : <>
+            <div className="connections-draft-art" aria-hidden="true">
+              <span className="connections-art-node connections-art-node--one"><ConnectorLogo sourceKey="slack" /></span>
+              <span className="connections-art-node connections-art-node--two"><ConnectorLogo sourceKey="xero" /></span>
+              <span className="connections-art-node connections-art-node--three"><ConnectorLogo sourceKey="google_drive" /></span>
+              <svg viewBox="0 0 300 130" fill="none"><path d="M50 22C128 22 90 66 164 66M42 104C122 104 102 66 164 66M90 66H164" stroke="currentColor" strokeWidth="1" /><circle cx="162" cy="66" r="4" fill="currentColor" /></svg>
+              <div className="connections-art-page"><span /> <i /><i /><i /><b>THE UPDATE</b></div>
+            </div>
+            <p className="connections-eyebrow">A LITTLE CONTEXT GOES A LONG WAY</p>
+            <h2 id="connection-inspector-heading">Your next update,<br /> already taking shape.</h2>
+            <p className="connections-overview-copy">AI brings your activity together into a first draft. You make it yours.</p>
+            <div className="connections-included">
+              <div><strong>{loadingStatus ? "—" : selectedSourceList.length}</strong><span>source{selectedSourceList.length === 1 ? "" : "s"} on for this update</span></div>
+              {selectedSourceList.length ? <ul aria-label="Sources included in your draft">{selectedSourceList.map(source => <li key={source.key}><ConnectorLogo sourceKey={source.key} />{source.label}</li>)}</ul> : <p>Choose a source to get started, or add your own notes below.</p>}
+            </div>
+            <p className="connections-finance-note"><LockClosedIcon className="h-4 w-4" /><span>Earning revenue? <strong>Stripe and Xero</strong> add financial figures that stay linked to their source and read-only.</span></p>
             <ManualMaterialsCard
               expanded={manualMaterialsExpanded}
               hasManualMaterials={hasManualMaterials}
-            summary={manualMaterialsSummary}
-            onToggle={() => setManualMaterialsExpanded((value) => !value)}
-          />
-
+              summary={manualMaterialsSummary}
+              onToggle={() => {
+                setManualMaterialsExpanded(value => !value);
+                if (!manualMaterialsExpanded) requestAnimationFrame(() => document.getElementById("manual-materials-panel")?.scrollIntoView({ block: "start", behavior: "auto" }));
+              }}
+            />
+          </>}
+          <p className="connections-privacy"><LockClosedIcon className="h-3.5 w-3.5" /><span>Your data stays private while you draft.<br /><Link to="/privacy" target="_blank" rel="noreferrer">Privacy policy ↗</Link></span></p>
+        </aside>
+      </div>
+      <div className="connections-materials">
           {manualMaterialsExpanded ? (
             <div
               id="manual-materials-panel"
@@ -2611,104 +2796,6 @@ export default function ConnectData() {
             </div>
           ) : null}
         </div>
-      </section>
-
-      {shouldShowGoogleAnalyticsPreview ? (
-        <details className="connections-detail" id="configuration-google_analytics"><summary>Google Analytics · Properties</summary><div className="connections-detail-body">
-        <GoogleAnalyticsPreview
-          properties={googleAnalyticsProperties}
-          accountLabel={googleAnalyticsAccountLabel ?? googleAnalyticsSource?.accountLabel ?? null}
-          loading={loadingGoogleAnalyticsProperties}
-          error={googleAnalyticsError}
-          saving={savingGoogleAnalyticsProperties}
-          selectedPropertyIds={selectedGoogleAnalyticsPropertyIds}
-          nextCursor={googleAnalyticsNextCursor}
-          loadingMore={loadingMoreGoogleAnalyticsProperties}
-          onToggleProperty={handleToggleGoogleAnalyticsProperty}
-          onLoadMore={() => void handleLoadMoreGoogleAnalyticsProperties()}
-          onSave={() => void handleSaveGoogleAnalyticsProperties()}
-        />
-        </div></details>
-      ) : null}
-
-      {shouldShowLumaPreview ? (
-        <details className="connections-detail" id="configuration-luma"><summary>Luma · Event metrics</summary><div className="connections-detail-body">
-        <LumaPreview
-          accountLabel={lumaAccountLabel ?? lumaSource?.accountLabel ?? null}
-          loading={loadingLumaEvents}
-          error={lumaEventsError}
-          saving={savingLumaSelections}
-          selectedMetricKeys={selectedLumaMetricKeys}
-          availableMetrics={lumaAvailableMetrics}
-          onToggleMetric={handleToggleLumaMetric}
-          onSave={() => void handleSaveLumaSelections()}
-        />
-        </div></details>
-      ) : null}
-
-      {shouldShowSlackPreview ? (
-        <details className="connections-detail" id="configuration-slack"><summary>Slack · Channels & sync</summary><div className="connections-detail-body">
-        <SlackPreview
-          channels={slackChannels}
-          preview={slackPreview}
-          loadingChannels={loadingSlackChannels}
-          loadingPreview={loadingSlackPreview}
-          error={slackError}
-          saving={savingSlackChannels}
-          syncing={syncingSlack}
-          selectedChannelIds={selectedSlackChannelIds}
-          nextCursor={slackChannelsNextCursor}
-          loadingMoreChannels={loadingMoreSlackChannels}
-          onToggleChannel={handleToggleSlackChannel}
-          onLoadMoreChannels={() => void handleLoadMoreSlackChannels()}
-          onSaveChannels={() => void handleSaveSlackChannels()}
-          onSync={() => void handleSyncSlack()}
-        />
-        </div></details>
-      ) : null}
-
-      {shouldShowLinearPreview ? (
-        <details className="connections-detail" id="configuration-linear"><summary>Linear · Projects & sync</summary><div className="connections-detail-body">
-        <LinearPreview
-          preview={linearPreview}
-          loading={loadingLinearPreview}
-          error={linearError}
-          syncing={syncingLinear}
-          onSync={() => void handleSyncLinear()}
-        />
-        </div></details>
-      ) : null}
-
-      {shouldShowXeroPreview ? (
-        <details className="connections-detail" id="configuration-xero"><summary>Xero · Financial data</summary><div className="connections-detail-body">
-        <XeroPreview
-          preview={xeroPreview}
-          loading={loadingXeroPreview}
-          error={xeroPreviewError}
-          syncing={syncingFinance}
-          onSync={() => void handleSyncFinance(["xero"])}
-          reconnectHref={connectVibeRaisingInputSource(backendBaseUrl, "xero", currentReturnPath)}
-        />
-        </div></details>
-      ) : null}
-
-      {shouldShowBankFeedPreview ? (
-        <details className="connections-detail" id="configuration-bank_feed"><summary>Bank Feed · Transactions</summary><div className="connections-detail-body">
-        <BankFeedPreview
-          preview={bankFeedPreview}
-          loading={loadingBankFeedPreview}
-          error={bankFeedPreviewError}
-        />
-        </div></details>
-      ) : null}
-
-      {shouldShowGmailPreview && <details className="connections-detail" id="configuration-gmail">
-        <summary>Gmail · Account & data</summary><div className="connections-detail-body">
-          <GmailPreview preview={gmailPreview} loading={loadingGmailPreview} error={gmailPreviewError} />
-          {gmailSource && <button type="button" className="update-button secondary" onClick={() => handleOpenGmailManagement(gmailSource)}>Manage Gmail connection</button>}
-        </div>
-      </details>}
-      <p className="connections-privacy"><LockClosedIcon className="h-4 w-4" /> Connected data stays private while you draft. <Link to="/privacy" target="_blank" rel="noreferrer">Privacy policy ↗</Link></p>
       <div className="update-actions">
         <span className="update-action-status">{selectedSourceList.length} source{selectedSourceList.length === 1 ? "" : "s"} on{hasManualMaterials ? " · Extra context added" : ""}</span>
         <button type="button" className="update-button" onClick={() => navigateToDraft()}>Return to update <ArrowRightIcon className="h-4 w-4" /></button>
