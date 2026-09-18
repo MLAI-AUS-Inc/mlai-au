@@ -25,6 +25,8 @@
     "test:articles:browser": "playwright test",
     "postbuild": "bun scripts/check-article-downloads.tsx --built",
     "test": "bun test ./tests",
+    "test:coverage": "bun scripts/run-coverage.ts",
+    "test:coverage:check": "bun run test:coverage",
     "check:editorial": "bun test tests/customer-profile-flow.test.tsx tests/editorial-catalog.test.tsx tests/editorial-catalog-api.test.ts tests/editorial-article-dispatch.test.ts tests/article-admission-notice.test.tsx"
   },
   "dependencies": {

@@ -22,8 +22,30 @@ jobs:
       - name: Run type check
         run: bun run typecheck
 
-      - name: Run tests
-        run: bun run test
+      - name: Run full test suite with coverage
+        run: bun run test:coverage:check
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: warn
+
+      - name: Add coverage summary
+        if: always()
+        run: |
+          {
+            echo "## Test coverage"
+            echo '```'
+            if [ -f coverage/coverage-summary.txt ]; then
+              cat coverage/coverage-summary.txt
+            else
+              echo "No coverage summary was produced by this run. See the test output."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Test monthly-update reminder links
         run: bun test tests/monthly-update-reminder-link.test.ts
