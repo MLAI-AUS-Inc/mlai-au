@@ -1,3 +1,4 @@
+import { MyStartupMigrationLink } from "~/components/MyStartupMigrationLink";
 import type { Route } from "./+types/vibe-raising-app";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { useEffect, useState } from "react";
@@ -164,6 +165,7 @@ export default function VibeRaisingApp() {
         />
       ) : null}
 
+      <MyStartupMigrationLink companyId={scopedCompanyId} />
       <div className="vr-scope">
         {loadingMarketingPage ? (
           <div role="status" className="fixed right-4 top-20 z-50 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
