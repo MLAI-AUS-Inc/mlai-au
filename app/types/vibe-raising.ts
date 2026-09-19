@@ -207,6 +207,7 @@ export interface VibeRaisingDraftedContent {
 }
 
 export interface VibeRaisingMonthlyUpdate {
+  progressCharts?: import("~/lib/startup-progress").ProgressChartSnapshot[] | null;
   updateId?: string | number | null;
   creationKey?: string | null;
   updateDate?: string | null;

@@ -1,8 +1,11 @@
 import { getUpdatePeriod, updateCalendarDate, getUpdateTitles } from "~/lib/startup-updates-presentation";
 import { defaultUpdateSourceWindow, toLocalDateTime, fromLocalDateTime } from "~/lib/update-source-window";
+import ProgressChartPicker from "~/components/vibe-raising/ProgressChartPicker";
+import { parseChartSelections, type ProgressChartSpec, type ProgressChartSnapshot } from "~/lib/startup-progress";
+import { getStartupProgress } from "~/lib/startup-progress.server";
 import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
 import UpdateDialog from "~/components/vibe-raising/UpdateDialog";
-import { isFinancialMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updateWorkingCopyKey } from "~/lib/update-working-copy";
+import { isImportedMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updateWorkingCopyKey } from "~/lib/update-working-copy";
 import "~/styles/update-editor.css";
 import "~/styles/update-gallery.css";
 import { hasUpdateWriting } from "~/lib/update-draft-writing";
@@ -553,6 +556,8 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         month: update.monthName || parsedPeriod.month,
         year: update.year || parsedPeriod.year,
         coverImage: update.coverImage || null,
+        progressCharts: update.progressCharts,
+        chartSelections: update.progressCharts?.map(chart => chart.spec),
         summary: update.summary || "",
         sourceUrl: update.sourceUrl || "",
         pitchDeckUrl: update.pitchDeckUrl || "",
@@ -651,7 +656,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
     if (editId && !existingData) throw new Response("Update not found", { status: 404 });
     const health = await getStartupHealth(env, request, resolveActiveCompanyId(user));
+    const progress = await getStartupProgress(env, request, resolveActiveCompanyId(user)).catch(() => null);
+    let incomingChart: ProgressChartSpec | null = null;
+    if (progress && url.searchParams.get("chartCompany") === resolveActiveCompanyId(user) && url.searchParams.has("chart")) {
+        try {
+            const parsed = parseChartSelections([JSON.parse(url.searchParams.get("chart")!)]);
+            if (parsed?.[0].seriesIds.every(id => progress.series.some(series => series.id === id))) incomingChart = parsed[0];
+        } catch { /* Ignore invalid or out-of-scope chart links. */ }
+    }
     return {
+        progress, incomingChart,
         user,
         metricDefinitions: health.configuration.metricDefinitions || [],
         creationKey: creationKey || existingData?.creationKey || null,
@@ -708,6 +722,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     };
 
     return {
+        ...(formData.has("chartSelections") ? { chartSelections: parseChartSelections(formData.get("chartSelections")) } : {}),
         updateId: String(formData.get("updateId") || "") || null,
         creationKey: String(formData.get("creationKey") || "") || null,
         updateDate: String(formData.get("updateDate") || "") || null,
@@ -804,7 +819,9 @@ export async function action({ request, context }: Route.ActionArgs) {
             answeredQuestionCount: answeredFounderQuestionCount,
         };
     }
-    const savePayload = buildMonthlyUpdateSavePayload(formData);
+    let savePayload: ReturnType<typeof buildMonthlyUpdateSavePayload>;
+    try { savePayload = buildMonthlyUpdateSavePayload(formData); }
+    catch (error) { return { step: "validation-error", error: error instanceof Error ? error.message : "Check your chart selection." }; }
     const updates: Record<string, unknown> = {
         ...Object.fromEntries(formData),
         audienceVisibility: savePayload.audienceVisibility,
@@ -2929,7 +2946,7 @@ function CreateUpdateEditor() {
         selectedInputSources: initialSelectedInputSources,
         draftReturnState,
         existingMonthlyUpdates,
-        metricDefinitions, creationKey, reportingTimezone, today,
+        metricDefinitions, creationKey, reportingTimezone, today, progress, incomingChart,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const [activeReviewActionData, setActiveReviewActionData] = useState<any>(null);
@@ -2943,6 +2960,10 @@ function CreateUpdateEditor() {
     const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
     const hasExplicitSourceSelection = new URLSearchParams(location.search).has("inputs");
     const defaultData = actionData?.step === "feedback" || actionData?.step === "publish-error" ? (actionData.data as any) : (existingData || {});
+    // Undefined preserves legacy charts; [] is an explicit choice to share none.
+    const [chartSelections, setChartSelections] = useState<ProgressChartSpec[] | undefined>(() =>
+        defaultData.chartSelections ?? (existingData ? undefined : progress ? [] : undefined));
+    const [frozenProgressCharts, setFrozenProgressCharts] = useState<ProgressChartSnapshot[]>(defaultData.progressCharts || []);
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [pitchDeckPreviewUrl, setPitchDeckPreviewUrl] = useState<string | null>(defaultData?.pitchDeckUrl || null);
@@ -4299,6 +4320,9 @@ function CreateUpdateEditor() {
         setChallenges(restored.challenges || ""); setLearnings(restored.learnings || "");
         setNext30Days(restored.next30Days || ""); setAsks(restored.asks || "");
         setCoverImage(normalizeUpdateCover(restored.coverImage));
+        const restoredCharts: ProgressChartSpec[] | undefined = Array.isArray(restored.chartSelections) ? restored.chartSelections as ProgressChartSpec[] : base.chartSelections ?? (existingData ? undefined : progress ? [] : undefined);
+        setChartSelections(incomingChart ? [...(restoredCharts || []).filter(chart => chart.id !== incomingChart.id), incomingChart].slice(0, 12) : restoredCharts);
+        setFrozenProgressCharts(restored.frozenProgressCharts || base.progressCharts || []);
         setSourceUrl(restored.sourceUrl || "");
         setAudienceVisibility(normalizeAudienceVisibilityValue(restored.audienceVisibility));
         setFinancialSnapshot(restored.financialSnapshot || null);
@@ -4306,7 +4330,7 @@ function CreateUpdateEditor() {
         setMetricValues(restored.metrics || {}); setSelectedMetrics(new Set(Object.keys(restored.metrics || {})));
         setExpectedRevision(saved ? saved.expectedRevision ?? null : base.revisionId || null);
         setDraftCandidate(saved?.candidate || null);
-        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ updateDate: base.updateDate ?? (existingData ? "" : today), narrativeStart: "", narrativeEnd: "", summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {} }));
+        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ updateDate: base.updateDate ?? (existingData ? "" : today), narrativeStart: "", narrativeEnd: "", summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {}, chartSelections: base.chartSelections ?? (existingData ? undefined : progress ? [] : undefined) }));
         // Legacy attachments are retained, even though the new form no longer asks for them.
         setPitchDeckUrl(restored.pitchDeckUrl || ""); setPitchDeckStoragePath(restored.pitchDeckStoragePath || "");
         setPitchDeckContentType(restored.pitchDeckContentType || ""); setPitchDeckFileSizeBytes(restored.pitchDeckFileSizeBytes || null);
@@ -4316,15 +4340,20 @@ function CreateUpdateEditor() {
         setVideoOriginalFilename(restored.videoOriginalFilename || "");
         if (saved?.selectedSources && !hasExplicitSourceSelection) { setSelectedDraftInputSources(new Set(saved.selectedSources)); didSeedEditSourcesRef.current = true; }
         setLoadedWorkingScope(workingScope);
+        if (incomingChart) {
+            const params = new URLSearchParams(location.search);
+            params.delete("chart"); params.delete("chartCompany");
+            navigate(`${location.pathname}?${params}`, { replace: true, preventScrollReset: true });
+        }
         // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [workingScope]);
-    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues });
+    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues, chartSelections });
     const hasUnsavedChanges = workingContent !== lastSavedContent;
     useEffect(() => {
         if (loadedWorkingScope !== workingScope) return;
         const available = writeUpdateWorkingCopy(workingScope, {
-            ...JSON.parse(workingContent), activeUpdateId, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot,
+            ...JSON.parse(workingContent), activeUpdateId, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, frozenProgressCharts,
             candidate: draftCandidate, selectedSources: selectedInputSources, lastSavedContent, sourceUrl,
             pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary,
             videoUrl: uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename,
@@ -4334,13 +4363,14 @@ function CreateUpdateEditor() {
             if (copy) writeUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `id:${activeUpdateId}`), copy);
         }
         setLocalRecoveryAvailable(available);
-    }, [activeUpdateId, workingScope, loadedWorkingScope, workingContent, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
+    }, [activeUpdateId, workingScope, loadedWorkingScope, workingContent, frozenProgressCharts, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
     useEffect(() => {
         const saved = saveDraftFetcher.data?.step === "draft-saved" ? saveDraftFetcher.data.update : actionData?.step === "feedback" ? actionData.update : null;
         if (!saved) return;
         setActiveUpdateId(String(saved.id));
         setExpectedRevision(saved.revisionId || null);
         setMetricEvidence(saved.metricEvidence || {}); setReportingPeriod(saved.reportingPeriod || null);
+        setFrozenProgressCharts(saved.progressCharts || []);
         setLastSavedContent(saveAttemptContent);
     }, [saveDraftFetcher.data, actionData]);
     useEffect(() => {
@@ -5234,6 +5264,7 @@ function CreateUpdateEditor() {
                     {formMetricKeys.map((metricKey) => (
                         <input key={metricKey} type="hidden" name={metricKey} value={metricValues[metricKey] || ""} />
                     ))}
+                    {progress && chartSelections !== undefined && <input type="hidden" name="chartSelections" value={JSON.stringify(chartSelections)} />}
                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
                     <input
                         type="hidden"
@@ -5285,7 +5316,7 @@ function CreateUpdateEditor() {
                             <legend className="sr-only">Sources to include in your AI draft</legend>
                             {compactSourcesLoading && <span className="gallery-source-message" role="status">Checking connections…</span>}
                             <div className="connector-grid">
-                                {galleryConnectorSources.map(source => <ConnectorTile key={source.key} source={source}
+                                {galleryConnectorSources.map(source => <ConnectorTile key={source.key} source={source} selectionPurpose="draft"
                                     selected={selectedDraftInputSources.has(source.key)}
                                     onToggle={toggleDraftInputSource}
                                     onConnect={() => navigate(`${manageConnectionsHref}#source-${source.key}`)} />)}
@@ -5330,7 +5361,7 @@ function CreateUpdateEditor() {
                                         .filter((metric) => String(metricValues[metric.key] ?? "").trim())
                                         .map((metric) => {
                                             const evidence = metricEvidence?.[metric.key];
-                                            const locked = isFinancialMetric(metric.key, evidence);
+                                            const locked = isImportedMetric(metric.key, evidence);
                                             return (
                                                 <div className="update-metric" key={metric.key}>
                                                     <label htmlFor={`draft-figure-${metric.key}`}>
@@ -5473,6 +5504,12 @@ function CreateUpdateEditor() {
                             Local recovery is unavailable in this browser. Save your draft before leaving this page.
                         </p>
                     )}
+                    {progress && <>
+                        <ProgressChartPicker series={progress?.series || []} selected={chartSelections || []}
+                            onChange={setChartSelections} cutoff={updateDate && updateDate < today ? updateDate : today} frozen={frozenProgressCharts} />
+                        <Link className="progress-text-button" to="/founder-tools/progress">Manage your progress metrics ↗</Link>
+                        {chartSelections === undefined && <p className="update-section-help">This update still uses its original figures. <button type="button" className="progress-text-button" onClick={() => setChartSelections([])}>Choose no charts instead</button></p>}
+                    </>}
                     <div className="update-writing" ref={draftTemplateSectionRef}>
                         <div className="gallery-writing-heading">
                             <h2>Your draft</h2>

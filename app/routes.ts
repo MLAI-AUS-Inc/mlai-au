@@ -125,6 +125,7 @@ export default [
     index("routes/founder-tools.index.tsx"),
     route("upgrade", "routes/founder-tools.upgrade.tsx"),
     route("updates", "routes/vibe-raising-app._index.tsx"),
+    route("progress", "routes/founder-tools.progress.tsx"),
     route("drafts", "routes/vibe-raising-app.drafts.tsx"),
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
     route("data-sources", "routes/vibe-raising-app.connect-data.tsx"),

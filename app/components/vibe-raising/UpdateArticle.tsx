@@ -2,6 +2,8 @@ import { Link } from "react-router";
 import { DEFAULT_UPDATE_COVER_URL } from "~/lib/update-cover";
 import { PencilSquareIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import UpdateEvidenceText from "./UpdateEvidenceText";
+import ProgressChart from "./ProgressChart";
+import "~/styles/startup-progress.css";
 import UpdatesIncomeChart from "./UpdatesIncomeChart";
 import { getUpdatesFinancialSeries, getUpdatePeriod } from "~/lib/startup-updates-presentation";
 import {
@@ -160,7 +162,12 @@ export default function UpdateArticle({
             </section>
           ) : null;
         })}
-        {(metrics.length > 0 || series) && (
+        {Array.isArray(update.progressCharts) && update.progressCharts.length > 0 && (
+          <section className="update-article-section"><h2>This period in numbers</h2>
+            <div className="progress-article-charts">{update.progressCharts.map(chart => <ProgressChart key={chart.spec.id} spec={chart.spec} series={chart.series} cutoff={chart.cutoff} />)}</div>
+          </section>
+        )}
+        {!Array.isArray(update.progressCharts) && (metrics.length > 0 || series) && (
           <section className="update-article-section">
             <h2>This period in numbers</h2>
             {period?.is_partial && (

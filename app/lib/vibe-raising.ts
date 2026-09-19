@@ -1100,6 +1100,7 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
     monthLabel;
 
   return {
+    progressCharts: Array.isArray(payload.progressCharts) ? payload.progressCharts as VibeRaisingMonthlyUpdate["progressCharts"] : null,
     updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
     creationKey: asNullableString(payload.creationKey),
     updateDate: asNullableString(payload.updateDate),
@@ -2646,6 +2647,7 @@ export async function saveVibeRaisingMonthlyUpdate(
   env: Env,
   request: Request,
   body: {
+    chartSelections?: import("~/lib/startup-progress").ProgressChartSpec[];
     updateId?: string | null;
     creationKey?: string | null;
     updateDate?: string | null;

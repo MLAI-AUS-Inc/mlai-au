@@ -6,7 +6,6 @@ import { getUpdateExcerpt, getUpdatePeriod, getUpdateTitles, sortStartupUpdates,
 import type { UpdatesFinancialSeries } from "~/lib/startup-updates-presentation";
 import UpdatesIncomeChart from "./UpdatesIncomeChart";
 import "~/styles/startup-updates.css";
-import { DEFAULT_UPDATE_COVER_URL } from "~/lib/update-cover";
 
 const LINK_FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700";
 const COVER_PALETTES = ["paper", "sage", "clay", "ink"];
@@ -15,7 +14,7 @@ function UpdateCover({ update, companyName, featured }: { update: VibeRaisingMon
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const period = getUpdatePeriod(update);
   const number = period.month?.slice(5, 7) || "—";
-  const imageUrl = update.coverImage?.url || update.coverImageUrl?.trim() || DEFAULT_UPDATE_COVER_URL;
+  const imageUrl = update.coverImage?.url || update.coverImageUrl?.trim();
   const safeImage = imageUrl && (/^https?:\/\//.test(imageUrl) || /^\/(?!\/)/.test(imageUrl));
   if (safeImage && failedImage !== imageUrl) {
     return <img src={imageUrl} alt="" width={800} height={440}

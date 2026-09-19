@@ -15,6 +15,7 @@ import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import CompanySwitcher from "~/components/CompanySwitcher";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
+import { progressEnabled } from "~/lib/startup-progress";
 import { getCurrentRooPointsBalance } from "~/lib/roo-points";
 import {
   getOptionalVibeRaisingContext,
@@ -115,11 +116,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     appUser: vibeContext.appUser,
     rooPointsBalance,
     backendBaseUrl: String(env.BACKEND_BASE_URL || "https://api.mlai.au"),
+    progressAvailable: progressEnabled(env),
   };
 }
 
 export default function VibeRaisingApp() {
-  const { user, appUser, backendBaseUrl, rooPointsBalance } = useLoaderData<typeof loader>();
+  const { user, appUser, backendBaseUrl, rooPointsBalance, progressAvailable } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const loadingMarketingPage = navigation.state === "loading" &&
     (navigation.location?.pathname === "/founder-tools/marketing" ||
@@ -149,7 +151,7 @@ export default function VibeRaisingApp() {
   return (
     <AuthenticatedLayout
       user={user}
-      navigation={BASE_FOUNDER_NAVIGATION}
+      navigation={progressAvailable ? [BASE_FOUNDER_NAVIGATION[0], { name: "Progress", href: "/founder-tools/progress", icon: ChartBarIcon, exact: true }, ...BASE_FOUNDER_NAVIGATION.slice(1)] : BASE_FOUNDER_NAVIGATION}
       userNavigation={FOUNDER_USER_NAVIGATION}
       rooPointsBalance={rooPointsBalance}
       logoutAction="/founder-tools/logout"

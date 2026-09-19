@@ -18,12 +18,13 @@ export function ConnectorLogo({ sourceKey }: { sourceKey: VibeRaisingInputSource
   </span>;
 }
 
-export default function ConnectorTile({ source, selected, disabled = false, busy = false, detailed = false, onToggle, onConnect }: {
+export default function ConnectorTile({ source, selected, disabled = false, busy = false, detailed = false, selectionPurpose = "update", onToggle, onConnect }: {
   source: VibeRaisingInputSourceSummary;
   selected: boolean;
   disabled?: boolean;
   busy?: boolean;
   detailed?: boolean;
+  selectionPurpose?: "update" | "draft";
   onToggle: (source: VibeRaisingInputSourceSummary) => void;
   onConnect: (source: VibeRaisingInputSourceSummary) => void;
 }) {
@@ -33,7 +34,7 @@ export default function ConnectorTile({ source, selected, disabled = false, busy
   // Stripe's OAuth remains available when its status service is unavailable.
   const unavailable = source.status === "coming_soon" || (source.status === "unavailable" && source.key !== "stripe");
   const status = busy ? "Connecting…" : source.status === "syncing" ? "Syncing"
-    : connected ? (on ? "Included in update" : "Connected · not used")
+    : connected ? (on ? (selectionPurpose === "draft" ? "Used for AI draft" : "Included in update") : "Connected · not used")
     : source.status === "coming_soon" ? "Coming soon"
     : unavailable ? "Unavailable"
     : source.status === "error" ? "Reconnect to use ↗" : "Connect to use ↗";

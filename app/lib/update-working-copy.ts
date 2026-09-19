@@ -56,3 +56,7 @@ export function isFinancialMetric(
     )
   );
 }
+
+export function isImportedMetric(key: string, evidence?: { source_provider?: string }) {
+  return isFinancialMetric(key, evidence) || ["google_analytics", "luma"].includes(evidence?.source_provider || "");
+}
