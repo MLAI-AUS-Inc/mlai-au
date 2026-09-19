@@ -97,3 +97,14 @@ describe("editor save and review action", () => {
     });
   });
 });
+
+test("save forwards explicit chart removal without accepting browser chart values", async () => {
+  const result = await submit("save-draft", { chartSelections: "[]", progressCharts: '[{"value":999}]' });
+  expect(result?.step).toBe("draft-saved");
+  expect(save.mock.calls[0][2].chartSelections).toEqual([]);
+  expect(save.mock.calls[0][2].progressCharts).toBeUndefined();
+});
+test("invalid chart choices preserve the draft with a validation error", async () => {
+  expect((await submit("save-draft", { chartSelections: "not-json" }))?.step).toBe("validation-error");
+  expect(save).not.toHaveBeenCalled();
+});
