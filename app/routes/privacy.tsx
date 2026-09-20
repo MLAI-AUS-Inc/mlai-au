@@ -220,7 +220,7 @@ const sections: LegalSection[] = [
       },
       {
         "type": "p",
-        "text": "The app requests device permissions when you use features that need them, such as selecting or capturing media, microphone access for enabled audio features, or device authentication. You can change permissions in iOS Settings. Selected media is uploaded when you choose to share it; granting a permission is not permission to publish your entire library."
+        "text": "The app requests device permissions when you use features that need them, such as selecting or capturing media, microphone access for enabled audio features, or device authentication. You can change permissions in iOS Settings. When you choose an attachment, it may be uploaded while you compose your message, before you press Send. Granting a permission does not publish your entire library."
       },
       {
         "type": "p",
