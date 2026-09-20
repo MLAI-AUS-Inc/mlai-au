@@ -38,6 +38,10 @@ export interface VibeMarketingScanProgress {
 }
 
 export interface VibeMarketingRunSummary {
+  generation?: number | null;
+  stateVersion?: number | null;
+  failure?: { code?: string; message?: string; dependency?: string; next_action?: string; requires_user_action?: boolean };
+  recovery?: { state?: string; due_at?: string; step?: string; reason?: string };
   runId: string;
   workflow: string;
   domain: string;
@@ -543,6 +547,7 @@ export interface VibeMarketingPublishAttempt {
 }
 
 export interface VibeMarketingWrittenTopic {
+  liveVerification?: { state?: string | null; checkedAt?: string | null; method?: string | null };
   id?: string;
   title: string;
   slug?: string | null;

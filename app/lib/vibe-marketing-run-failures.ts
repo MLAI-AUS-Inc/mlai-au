@@ -78,6 +78,22 @@ function firstRunError(run: VibeMarketingRunSummary): string {
 }
 
 function nextStepForFailure(code: string, reason: string, run: VibeMarketingRunSummary): string {
+  const actions: Record<string, string> = {
+    automatic_retry: "Recovery is scheduled. Completed work is saved; no manual retry is needed.",
+    restore_revision_dependencies: "Restore the revision's source research and article plan, then resume.",
+    restore_complete_production_corpus: "Restore complete published article coverage, then resume the saved draft.",
+    repair_corpus_adapter: "Configure a supported article directory and readable article bodies for this website.",
+    correct_cta_destination_or_target: "Correct the call-to-action destination or its missing section target, then resume.",
+    recapture_source: "Refresh the damaged source capture, then recheck the saved article.",
+    inspect_usage_and_explicitly_raise_limit: "Review this run's model usage and budget before authorizing more work.",
+    restore_verified_artifact: "Restore a verified artifact or regenerate the affected step.",
+    retry_review_with_unchanged_article: "Correct the review response and recheck the saved article.",
+    revise_prose_or_evidence: "Review the unsupported claims and revise the prose or provide supporting evidence.",
+    revise_reader_task_or_contribution: "Revise the article's contribution using the recorded comparison findings.",
+  };
+  const action = run.nextAction || run.failure?.next_action || "";
+  if (actions[action]) return actions[action];
+  if (run.failure?.requires_user_action) return "Review the recorded failure and resolve its dependency before resuming.";
   const normalizedCode = code.toUpperCase();
   const reasonText = reason.toLowerCase();
   if (run.stale || run.staleReason === "scan_queue_not_started") {
@@ -109,8 +125,8 @@ function nextStepForFailure(code: string, reason: string, run: VibeMarketingRunS
 }
 
 export function runFailureGuidance(run: VibeMarketingRunSummary) {
-  const code = cleanString(run.blockingCode) || blockingCodeFromPayload(run) || cleanString(run.errorCode);
-  const reason = cleanString(run.blockingReason) || blockingReasonFromPayload(run) || firstRunError(run);
+  const code = cleanString(run.failure?.code) || cleanString(run.blockingCode) || blockingCodeFromPayload(run) || cleanString(run.errorCode);
+  const reason = cleanString(run.failure?.message) || cleanString(run.blockingReason) || blockingReasonFromPayload(run) || firstRunError(run);
   const isScanRun = ["repo_scan", "content_factory_scan"].includes(run.workflow);
   const title = isScanRun ? "Repository scan needs attention" : "Run needs attention";
   const fallbackReason = isScanRun

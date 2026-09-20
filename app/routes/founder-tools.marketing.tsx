@@ -1,3 +1,4 @@
+import { isLiveBodyVerified } from "~/lib/article-live-state";
 import type { Route } from "./+types/founder-tools.marketing";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator } from "react-router";
@@ -2587,30 +2588,28 @@ function publishAttemptTone(attempt: NonNullable<VibeMarketingWrittenTopic["publ
 }
 
 function articlePublishStatusTone(article: VibeMarketingWrittenTopic) {
-  // On origin/main is the authoritative "published" fact — surface it as Live
-  // even when the sitemap signal (publishStatus "live") hasn't caught up.
-  if (article.onMain) {
+  if (isLiveBodyVerified(article)) {
     return {
       label: "Live",
       pill: "bg-emerald-50 text-emerald-600",
       dot: "bg-emerald-500",
-      hint: "Verified on origin/main.",
+      hint: `Served article content matched the saved version at ${article.liveVerification?.checkedAt}.`,
     };
   }
-  switch (article.publishStatus) {
+  switch (article.onMain ? "merged" : article.publishStatus) {
     case "live":
       return {
-        label: "Live",
-        pill: "bg-emerald-50 text-emerald-600",
-        dot: "bg-emerald-500",
-        hint: "Verified on your website.",
+        label: "Live unverified",
+        pill: "bg-amber-50 text-amber-700",
+        dot: "bg-amber-500",
+        hint: "Historical publication recorded. Current served content has not been verified.",
       };
     case "merged":
       return {
         label: "Merged",
         pill: "bg-sky-50 text-sky-700",
         dot: "bg-sky-500",
-        hint: "The PR merged — waiting for the next site deploy.",
+        hint: "The PR merged. Current served article content has not been verified.",
       };
     case "pr_open":
       return {
