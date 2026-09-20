@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { MetaFunction } from "react-router";
 import SectionDivider from "~/components/SectionDivider";
 
-const LAST_UPDATED = "8 September 2026";
+const LAST_UPDATED = "20 September 2026";
 
 type LegalBlock =
   | { type: "p"; text: string }
@@ -172,6 +172,77 @@ const sections: LegalSection[] = [
         text: "New online classrooms are scheduled to expire 90 days after creation. Delete Account is available in the opening menu and teacher dashboard. Student deletion removes that student's online account, permitted gameplay data and memberships. Teacher deletion requires Apple reauthentication and removes the teacher account and all owned classrooms and their gameplay data. Offline solo progress remains on the device until the user resets it, deletes the app or clears local storage. For app support or a privacy request, email hi@mlai.au.",
       },
     ],
+  },
+  {
+    "id": "mlai-chat",
+    "title": "4A. MLAI Chat",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "MLAI Chat is MLAI’s member messaging app. It uses your existing MLAI account and community access. This section explains Chat-specific handling; using Chat does not by itself connect the Google, marketing or founder tools described elsewhere in this policy."
+      },
+      {
+        "type": "h3",
+        "text": "Account, conversations and community activity"
+      },
+      {
+        "type": "list",
+        "items": [
+          "We process your account email, name, avatar, community profile identifier, membership and permissions to sign you in and show your community profile.",
+          "We process messages, replies, reactions, channel memberships, direct-message participants, timestamps, read state, and the photos, videos, files or links you choose to share to deliver and synchronise conversations.",
+          "Community features may show event information, volunteer activity and requests, contribution history, Roo Points balances, rewards and redemption requests associated with your account.",
+          "For sign-in and security we process installation identifiers, device public keys, session tokens, device/platform information, IP addresses and service logs. The app keeps sign-in secrets in protected device storage and may cache conversations and preferences locally."
+        ]
+      },
+      {
+        "type": "h3",
+        "text": "Who can see content and connected Slack conversations"
+      },
+      {
+        "type": "p",
+        "text": "People with access to the relevant community channel or conversation can see the content you share there. Authorised MLAI operators and service providers may access service data for delivery, support, security, moderation and legal obligations. MLAI Chat is not a promise of end-to-end confidentiality against the service operator. Recipients may copy or retain content outside MLAI’s control."
+      },
+      {
+        "type": "p",
+        "text": "Where a channel is linked to Slack, messages and attachments may be mirrored between MLAI Chat and the corresponding Slack conversation, and are visible to its authorised participants. If you connect your own Slack account for private conversation features, we process the connection credentials, workspace and Slack user identifiers, conversation identifiers and the messages needed for that feature. Disconnecting Slack stops future access through that connection; it does not erase copies already delivered to Slack or other participants."
+      },
+      {
+        "type": "h3",
+        "text": "Roo and AI processing"
+      },
+      {
+        "type": "p",
+        "text": "Roo is an AI assistant. Messages directed to Roo, relevant conversation context, attachments you share with it, and account or community information needed to fulfil your request may be processed by MLAI’s assistant service and its configured AI providers. The Roo service supports Google (Gemini), OpenAI and Anthropic; the providers used depend on the enabled feature and service configuration. Slack is also involved when you use the Slack conversation with Roo. AI responses can be inaccurate. Do not send passwords, payment credentials, sensitive personal information or confidential information you are not authorised to share."
+      },
+      {
+        "type": "h3",
+        "text": "Permissions, reporting and security"
+      },
+      {
+        "type": "p",
+        "text": "The app requests device permissions when you use features that need them, such as selecting or capturing media, microphone access for enabled audio features, or device authentication. You can change permissions in iOS Settings. When you choose an attachment, it may be uploaded while you compose your message, before you press Send. Granting a permission does not publish your entire library."
+      },
+      {
+        "type": "p",
+        "text": "When you report content or a member, we process the report reason, relevant content and identifiers, and moderation actions so authorised moderators can investigate. Blocking a member and reporting them are separate controls. For safety concerns or appeals, contact hi@mlai.au. Service logs and abuse records may be retained where needed for security, investigations or legal obligations."
+      },
+      {
+        "type": "h3",
+        "text": "Account deletion and retention"
+      },
+      {
+        "type": "p",
+        "text": "You can find Account and data deletion under Settings → Help and legal, or contact hi@mlai.au for an account or data-deletion request. Specify whether your request covers your shared MLAI account or particular Chat data. Signing out, removing a device, disconnecting Slack or uninstalling the app does not by itself delete your MLAI account or server-side content."
+      },
+      {
+        "type": "p",
+        "text": "We verify requests to protect your account, explain their scope and any information we must retain, and confirm when processing is complete. Requests may cover your account profile, Chat messages and attachments, device bindings and connected-service credentials. We retain only information still needed for legal obligations, security, dispute resolution or records such as completed transactions, and explain applicable exceptions. Copies held independently by other participants or external platforms may remain under their control. Backups are removed through their retention cycle rather than immediately rewritten."
+      },
+      {
+        "type": "p",
+        "text": "Hosting, media storage, email delivery, Slack and AI service providers may process Chat information outside Australia. The security, overseas processing, rights and contact sections below also apply. Contact hi@mlai.au to ask about a particular data flow, retention period, export or deletion request."
+      }
+    ]
   },
   {
     id: "google-user-data",
@@ -493,6 +564,7 @@ const sections: LegalSection[] = [
 ];
 
 const navLinks = [
+  { href: "#mlai-chat", label: "MLAI Chat" },
   { href: "#information-we-collect", label: "Information we collect" },
   { href: "#product-specific-data", label: "Product-specific data" },
   { href: "#google-user-data", label: "Google user data" },
