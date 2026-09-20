@@ -1,3 +1,4 @@
+import ArticleRecoveryNotice from "./ArticleRecoveryNotice";
 import { ArrowPathIcon, ExclamationTriangleIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 import type { ReactNode } from "react";
@@ -147,6 +148,7 @@ export default function MarketingRunProgressCard({
         containerClassName,
       )}
     >
+      <ArticleRecoveryNotice run={run} />
       <div className="flex items-start gap-4">
         <div className={clsx("flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl", iconClassName)}>
           {attentionState ? <ExclamationTriangleIcon className="h-6 w-6" /> : icon ?? (isRunning ? <ArrowPathIcon className="h-6 w-6 animate-spin" /> : <SparklesIcon className="h-6 w-6" />)}

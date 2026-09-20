@@ -383,7 +383,14 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     }
     return undefined;
   };
+  const failure = asObjectRecord(payload.failure ?? result.failure);
+  const recovery = asObjectRecord(payload.recovery ?? result.recovery);
+  const recovering = recovery.state === "pending" && ["running", "queued"].includes(String(payload.status));
   return {
+    generation: asNumber(payload.generation ?? result.generation),
+    stateVersion: asNumber(payload.stateVersion ?? payload.state_version ?? result.state_version),
+    failure: { code: asNullableString(failure.code) ?? undefined, message: asNullableString(failure.message) ?? undefined, dependency: asNullableString(failure.dependency) ?? undefined, next_action: asNullableString(failure.next_action) ?? undefined, requires_user_action: asOptionalBoolean(failure.requires_user_action) ?? undefined },
+    recovery: { state: asNullableString(recovery.state) ?? undefined, due_at: asNullableString(recovery.due_at) ?? undefined, step: asNullableString(recovery.step) ?? undefined, reason: asNullableString(recovery.reason) ?? undefined },
     editorialSnapshot: parseArticleEditorialSnapshot(payload.editorialSnapshot),
     runId: asNullableString(payload.runId) ?? asNullableString(payload.run_id) ?? "",
     workflow: asNullableString(payload.workflow) ?? "",
@@ -392,14 +399,14 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     status: asNullableString(payload.status) ?? "queued",
     currentStep: asNullableString(payload.currentStep) ?? asNullableString(payload.current_step),
     approvalState: asNullableString(payload.approvalState) ?? asNullableString(payload.approval_state),
-    resumeAvailable: Boolean(payload.resumeAvailable ?? payload.resume_available),
+    resumeAvailable: !recovering && Boolean(payload.resumeAvailable ?? payload.resume_available),
     createdAt: asNullableString(payload.createdAt) ?? asNullableString(payload.created_at) ?? undefined,
     updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at) ?? undefined,
     stepOrder: Array.isArray(payload.stepOrder) ? payload.stepOrder.map(String) : [],
     steps: Array.isArray(payload.steps) ? payload.steps.map(normalizeStep) : [],
     warnings: asStringList(payload.warnings),
     errors: asStringList(payload.errors),
-    errorCode: asNullableString(payload.errorCode) ?? asNullableString(payload.error_code) ?? asNullableString(result.errorCode) ?? asNullableString(result.error_code),
+    errorCode: asNullableString(failure.code) ?? asNullableString(payload.errorCode) ?? asNullableString(payload.error_code) ?? asNullableString(result.errorCode) ?? asNullableString(result.error_code),
     blockingReason:
       asNullableString(payload.blockingReason) ??
       asNullableString(payload.blocking_reason) ??
@@ -424,11 +431,11 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
       asNullableString(payload.setupRunId) ??
       asNullableString(payload.setup_run_id) ??
       asNullableString(resultValue("setupRunId", "setup_run_id", "scaffoldJobId", "scaffold_job_id")),
-    nextAction:
+    nextAction: recovering ? "automatic_retry" : asNullableString(failure.next_action) ??
       asNullableString(payload.nextAction) ??
       asNullableString(payload.next_action) ??
       asNullableString(resultValue("nextAction", "next_action")),
-    requiresUserAction:
+    requiresUserAction: recovering ? false : asOptionalBoolean(failure.requires_user_action) ??
       asOptionalBoolean(payload.requiresUserAction ?? payload.requires_user_action) ??
       asOptionalBoolean(resultValue("requiresUserAction", "requires_user_action")),
     cancelledRunIds: asStringList(payload.cancelledRunIds ?? payload.cancelled_run_ids),
@@ -452,7 +459,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     publishChildWaitReason: asNullableString(payload.publishChildWaitReason) ?? asNullableString(payload.publish_child_wait_reason),
     stale: Boolean(payload.stale),
     staleReason: asNullableString(payload.staleReason) ?? asNullableString(payload.stale_reason),
-    retryAvailable: Boolean(payload.retryAvailable ?? payload.retry_available),
+    retryAvailable: !recovering && Boolean(payload.retryAvailable ?? payload.retry_available),
     queueName: asNullableString(payload.queueName) ?? asNullableString(payload.queue_name),
     queuedAt: asNullableString(payload.queuedAt) ?? asNullableString(payload.queued_at),
     result,
@@ -993,7 +1000,9 @@ export function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic |
   if (!title && !keyword) return null;
   const publishStatus = asArticlePublishStatus(payload.publishStatus ?? payload.publish_status);
   const onMain = asBoolean(payload.onMain ?? payload.on_main);
+  const liveVerification = asObjectRecord(payload.liveVerification ?? payload.live_verification);
   return {
+    liveVerification: { state: asNullableString(liveVerification.state), checkedAt: asNullableString(liveVerification.checked_at ?? liveVerification.checkedAt), method: asNullableString(liveVerification.method) },
     id: asNullableString(payload.id) ?? undefined,
     audienceId: asNullableString(payload.audienceId ?? payload.audience_id),
     offerId: asNullableString(payload.offerId ?? payload.offer_id),

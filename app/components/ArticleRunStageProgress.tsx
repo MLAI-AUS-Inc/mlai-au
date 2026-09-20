@@ -6,6 +6,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 import { Link } from "react-router";
+import ArticleRecoveryNotice, { isRunRecovering } from "./ArticleRecoveryNotice";
 
 import {
   articlePreconditionRepairStateForRun,
@@ -344,7 +345,7 @@ export function articleRunTechnicalProgressLabel(run: VibeMarketingRunSummary) {
 
 export function articleRunVisibleError(run: VibeMarketingRunSummary) {
   const repair = articlePreconditionRepairStateForRun(run);
-  if (repair.autoRecovering) return "";
+  if (repair.autoRecovering || isRunRecovering(run)) return "";
   return run.errors[0] ?? "";
 }
 
@@ -373,6 +374,7 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
 
   return (
     <section className={clsx(embedded ? "space-y-4" : "rounded-xl border border-violet-100 bg-violet-50/70 p-5 shadow-sm")}>
+      <ArticleRecoveryNotice run={run} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-wide text-violet-600">Generating article</p>
