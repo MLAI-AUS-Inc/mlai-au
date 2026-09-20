@@ -17,7 +17,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { ArticleCallout } from '../../../components/articles/ArticleCallout'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
@@ -110,7 +109,7 @@ export const faqItems: FAQ[] = [
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
   intro:
-    'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
+    "Follow how a venture fund raises, invests and returns capital, and distinguish the fund’s economics from the finances of an individual startup.",
   items: [
     {
       label: 'How do VC firms make money?',
@@ -242,14 +241,7 @@ export default function ArticlePage() {
           Most firms run a pipeline: (1) <strong>Sourcing</strong> via networks, inbound, and theses; (2) <strong>Screening</strong> for fit (stage, sector, cheque size); (3) <strong>Diligence</strong> on team, product, market, traction, references, legal; (4) <strong>Investment Committee</strong> (IC) to approve terms; and (5) <strong>Closing</strong> and wiring funds. For AI startups, diligence often includes model provenance, data rights, eval quality, governance, and customer validation.
         </p>
 
-        <ArticleResourceCTA
-          eyebrow='Download'
-          title={`Get the checklist for ${TOPIC}`}
-          description='A founder-side due‑diligence list to prep your deck, metrics, and data room.'
-          buttonLabel='Download now'
-          buttonHref='#'
-          accent='purple'
-        />
+
 
         <QuoteBlock title='Evidence or expert insight' variant='purple'>
           “VC is a power‑law business: one or two companies can return an entire fund. Show how you might be that outlier—credibly.”
@@ -348,7 +340,7 @@ export default function ArticlePage() {
           <ul className='space-y-3'>
             <li className='flex gap-3 text-gray-700'>
               <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600'>1</span>
-              <span>Download the checklist mentioned above.</span>
+              <span>Map who supplies capital, who makes investment decisions and how returns reach investors.</span>
             </li>
             <li className='flex gap-3 text-gray-700'>
               <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600'>2</span>

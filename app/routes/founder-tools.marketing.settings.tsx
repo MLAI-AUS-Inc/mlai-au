@@ -295,8 +295,8 @@ export default function FounderToolsMarketingSettings() {
           <label className="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
             <input name="dailyDiscoveryEnabled" type="checkbox" defaultChecked={bootstrap.settings.dailyDiscoveryEnabled} className="mt-1 h-4 w-4 rounded border-gray-300 text-violet-600" />
             <span>
-              <span className="block text-sm font-black text-gray-950">Enable daily generation</span>
-              <span className="mt-1 block text-sm text-gray-600">Candidates are generated daily and still require approval before publish.</span>
+              <span className="block text-sm font-black text-gray-950">Enable daily research and reminders</span>
+              <span className="mt-1 block text-sm text-gray-600">Get fresh article options each day. Research and reminders pause after three unanswered days. Turn this on and save to resume.</span>
             </span>
           </label>
           <label className="block">
@@ -313,6 +313,11 @@ export default function FounderToolsMarketingSettings() {
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-black text-gray-950">Content notifications</h2>
+        {dailyCheck?.automation?.pauseReason === "three_unanswered_days" ? (
+          <p role="status" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+            Daily research is paused because three daily shortlists went unanswered. Your islands and articles are saved. Enable daily research above and save settings when you’re ready to resume.
+          </p>
+        ) : null}
         <p className="mt-1 text-sm text-gray-600">
           Choose WhatsApp or Slack for daily research topics, and email for completed article drafts.
         </p>

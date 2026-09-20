@@ -1,0 +1,220 @@
+{
+  "version": "agent-observation-run-v1",
+  "recordedAt": "2026-09-10T01:35:55.844Z",
+  "operator": "Local process; no independent reviewer identity asserted",
+  "environment": {
+    "node": "v25.2.1",
+    "v8": "14.1.146.11-node.14",
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "sourceSha256": {
+    "trace.mjs": "0ad2dcb300d3e27d4e33d58bce6ca31aac7fcd1bbe6209924ff1d83460fba544",
+    "trace.test.mjs": "6158ef7e508f4f3c903e0e8538b678bded0523c5fe3a21f5e3f9a622b1d6c2d6",
+    "observe.mjs": "9b1231290366a4014738fe2d2c4fba79a92d0acf6c7a4a980eda58815c00381f",
+    "observe.test.mjs": "6a423ec161b5a0b00c00c63c08ee473ca3f830376c850b482f8431dafdb001e0",
+    "fixture.json": "3bb0bae2a5ee0f40ade10e87425ff840ceef050e3b05b8e46088e08a42058538",
+    "run.mjs": "72f333494b4413153da8c8ae74e0845c973d0bdc598461d910c23961b6c61d31"
+  },
+  "tests": {
+    "command": "node --test --test-reporter=tap trace.test.mjs observe.test.mjs",
+    "exitStatus": 0,
+    "counts": {
+      "tests": 23,
+      "pass": 23,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "tapOutput": "TAP version 13\n# Subtest: all attempts stay in the denominator, including two limits and one error\nok 1 - all attempts stay in the denominator, including two limits and one error\n  ---\n  duration_ms: 2.735125\n  type: 'test'\n  ...\n# Subtest: histogram preserves empty buckets and exact minute boundaries\nok 2 - histogram preserves empty buckets and exact minute boundaries\n  ---\n  duration_ms: 0.291584\n  type: 'test'\n  ...\n# Subtest: retry review retains the early retry and accepts exact delay equality\nok 3 - retry review retains the early retry and accepts exact delay equality\n  ---\n  duration_ms: 0.534458\n  type: 'test'\n  ...\n# Subtest: missing retry delay stays unknown rather than becoming zero\nok 4 - missing retry delay stays unknown rather than becoming zero\n  ---\n  duration_ms: 0.151458\n  type: 'test'\n  ...\n# Subtest: zero delay is an explicit value, not missing\nok 5 - zero delay is an explicit value, not missing\n  ---\n  duration_ms: 0.12775\n  type: 'test'\n  ...\n# Subtest: end-of-window without a next record cannot prove the client stopped\nok 6 - end-of-window without a next record cannot prove the client stopped\n  ---\n  duration_ms: 0.11075\n  type: 'test'\n  ...\n# Subtest: exact duplicate publications exclude denied attempts and report a denominator\nok 7 - exact duplicate publications exclude denied attempts and report a denominator\n  ---\n  duration_ms: 0.188583\n  type: 'test'\n  ...\n# Subtest: case and whitespace variants are distinct: no semantic spam detector\nok 8 - case and whitespace variants are distinct: no semantic spam detector\n  ---\n  duration_ms: 0.114125\n  type: 'test'\n  ...\n# Subtest: moderation queues recorded flags and missing review, not invented human judgments\nok 9 - moderation queues recorded flags and missing review, not invented human judgments\n  ---\n  duration_ms: 0.125542\n  type: 'test'\n  ...\n# Subtest: threshold sensitivity uses adjacent same-account attempts, including failed ones\nok 10 - threshold sensitivity uses adjacent same-account attempts, including failed ones\n  ---\n  duration_ms: 0.163334\n  type: 'test'\n  ...\n# Subtest: an empty window is zero observed attempts, not a zero measured duplicate rate\nok 11 - an empty window is zero observed attempts, not a zero measured duplicate rate\n  ---\n  duration_ms: 0.094083\n  type: 'test'\n  ...\n# Subtest: equal timestamps and a clipped final bucket are represented explicitly\nok 12 - equal timestamps and a clipped final bucket are represented explicitly\n  ---\n  duration_ms: 0.116167\n  type: 'test'\n  ...\n# Subtest: observation neither mutates input nor shares mutable output arrays with it\nok 13 - observation neither mutates input nor shares mutable output arrays with it\n  ---\n  duration_ms: 0.114458\n  type: 'test'\n  ...\n# Subtest: strict schema rejects missing fields, extra fields, real provenance and invalid payload types\nok 14 - strict schema rejects missing fields, extra fields, real provenance and invalid payload types\n  ---\n  duration_ms: 0.641209\n  type: 'test'\n  ...\n# Subtest: malformed, out-of-order, outside-window and duplicate-ID attempts are rejected\nok 15 - malformed, out-of-order, outside-window and duplicate-ID attempts are rejected\n  ---\n  duration_ms: 0.381708\n  type: 'test'\n  ...\n# Subtest: invalid ranges and unbounded allocations fail before building a histogram\nok 16 - invalid ranges and unbounded allocations fail before building a histogram\n  ---\n  duration_ms: 0.417167\n  type: 'test'\n  ...\n# Subtest: retry values must be explicit null or a bounded whole duration on a limit record\nok 17 - retry values must be explicit null or a bounded whole duration on a limit record\n  ---\n  duration_ms: 0.395083\n  type: 'test'\n  ...\n# Subtest: scheduled start does not erase a later recorded human edit\nok 18 - scheduled start does not erase a later recorded human edit\n  ---\n  duration_ms: 2.190708\n  type: 'test'\n  ...\n# Subtest: regular timestamps do not prove autonomy or safety\nok 19 - regular timestamps do not prove autonomy or safety\n  ---\n  duration_ms: 0.08\n  type: 'test'\n  ...\n# Subtest: unknown provenance stays visible and input is not mutated\nok 20 - unknown provenance stays visible and input is not mutated\n  ---\n  duration_ms: 0.0755\n  type: 'test'\n  ...\n# Subtest: approval is only a recorded assertion, not authorisation performed by this lab\nok 21 - approval is only a recorded assertion, not authorisation performed by this lab\n  ---\n  duration_ms: 0.085709\n  type: 'test'\n  ...\n# Subtest: broken trace linkage and unapproved actions are listed\nok 22 - broken trace linkage and unapproved actions are listed\n  ---\n  duration_ms: 0.069292\n  type: 'test'\n  ...\n# Subtest: malformed, duplicate, impossible, reversed and secret-bearing records are rejected\nok 23 - malformed, duplicate, impossible, reversed and secret-bearing records are rejected\n  ---\n  duration_ms: 0.204875\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 82.665833\n"
+  },
+  "trace": {
+    "eventsInspected": 4,
+    "humanInputRecorded": true,
+    "unknownInputRecorded": false,
+    "autonomy": "not-established",
+    "status": "needs-review",
+    "flags": [
+      {
+        "id": "send",
+        "reason": "approval-not-recorded"
+      }
+    ]
+  },
+  "observation": {
+    "version": "agent-observation-v1",
+    "provenance": "synthetic",
+    "window": {
+      "start": "2026-09-10T00:00:00.000Z",
+      "end": "2026-09-10T00:05:00.000Z",
+      "bucketSeconds": 60
+    },
+    "counts": {
+      "attempts": 9,
+      "published": 6,
+      "rateLimited": 2,
+      "errors": 1
+    },
+    "histogram": [
+      {
+        "start": "2026-09-10T00:00:00.000Z",
+        "end": "2026-09-10T00:01:00.000Z",
+        "attempts": 5,
+        "published": 3,
+        "rateLimited": 2,
+        "errors": 0
+      },
+      {
+        "start": "2026-09-10T00:01:00.000Z",
+        "end": "2026-09-10T00:02:00.000Z",
+        "attempts": 1,
+        "published": 0,
+        "rateLimited": 0,
+        "errors": 1
+      },
+      {
+        "start": "2026-09-10T00:02:00.000Z",
+        "end": "2026-09-10T00:03:00.000Z",
+        "attempts": 2,
+        "published": 2,
+        "rateLimited": 0,
+        "errors": 0
+      },
+      {
+        "start": "2026-09-10T00:03:00.000Z",
+        "end": "2026-09-10T00:04:00.000Z",
+        "attempts": 1,
+        "published": 1,
+        "rateLimited": 0,
+        "errors": 0
+      },
+      {
+        "start": "2026-09-10T00:04:00.000Z",
+        "end": "2026-09-10T00:05:00.000Z",
+        "attempts": 0,
+        "published": 0,
+        "rateLimited": 0,
+        "errors": 0
+      }
+    ],
+    "retryChecks": [
+      {
+        "from": "p3",
+        "to": "p4",
+        "waitSeconds": 1,
+        "requiredSeconds": 5,
+        "status": "early"
+      },
+      {
+        "from": "p4",
+        "to": "p5",
+        "waitSeconds": 10,
+        "requiredSeconds": 10,
+        "status": "met-recorded-delay"
+      }
+    ],
+    "duplicateGroups": [
+      {
+        "contentSha256": "6540ea5335cb790fbd8f7b915b889d51448c68016ac6ec6e7892a3574d2acf0b",
+        "publishedIds": [
+          "p1",
+          "p2",
+          "p7",
+          "p9"
+        ]
+      }
+    ],
+    "duplicatePublicationsAfterFirst": 3,
+    "duplicateDenominator": 6,
+    "duplicateFraction": 0.5,
+    "moderation": {
+      "publishedDenominator": 6,
+      "recordedCleared": 2,
+      "reviewQueue": [
+        {
+          "id": "p2",
+          "recordedState": "flagged"
+        },
+        {
+          "id": "p5",
+          "recordedState": "not-reviewed"
+        },
+        {
+          "id": "p7",
+          "recordedState": "not-reviewed"
+        },
+        {
+          "id": "p9",
+          "recordedState": "not-reviewed"
+        }
+      ]
+    },
+    "intervals": [
+      {
+        "account": "alpha",
+        "from": "p1",
+        "to": "p2",
+        "seconds": 0.5
+      },
+      {
+        "account": "alpha",
+        "from": "p2",
+        "to": "p3",
+        "seconds": 0.5
+      },
+      {
+        "account": "alpha",
+        "from": "p3",
+        "to": "p4",
+        "seconds": 1
+      },
+      {
+        "account": "alpha",
+        "from": "p4",
+        "to": "p5",
+        "seconds": 10
+      },
+      {
+        "account": "alpha",
+        "from": "p5",
+        "to": "p9",
+        "seconds": 168
+      },
+      {
+        "account": "beta",
+        "from": "p6",
+        "to": "p7",
+        "seconds": 60
+      },
+      {
+        "account": "beta",
+        "from": "p7",
+        "to": "p8",
+        "seconds": 10
+      }
+    ],
+    "sensitivity": [
+      {
+        "thresholdSeconds": 1,
+        "matchingIntervals": 3,
+        "denominator": 7
+      },
+      {
+        "thresholdSeconds": 10,
+        "matchingIntervals": 5,
+        "denominator": 7
+      },
+      {
+        "thresholdSeconds": 60,
+        "matchingIntervals": 6,
+        "denominator": 7
+      }
+    ],
+    "actorGroundTruth": "not-collected",
+    "autonomy": "not-established",
+    "status": "needs-review",
+    "productionApproval": false
+  },
+  "independentReview": false,
+  "productionApproval": false
+}

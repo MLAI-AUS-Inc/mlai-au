@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '~/components/articles/ArticleFooterNav'
 import { QuoteBlock } from '~/components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '~/components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '~/components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '~/components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '~/components/articles/ArticleStepList'
 import { MLAITemplateResourceCTA } from '~/components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '~/components/articles/ArticleReferences'
@@ -87,7 +86,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Explore changes in access, teaching and assessment, while asking which learners and settings the evidence actually describes.",
   items: [
     { label: 'Does technology improve student outcomes?', description: 'When paired with good pedagogy, tech can speed feedback and boost engagement; impact varies by context.' },
     { label: 'How has technology changed assessment?', description: 'More formative quizzes, faster feedback and analytics; authentic, real‑world tasks still matter most.' },
@@ -299,14 +298,7 @@ export default function ArticleContent() {
           accent="teal"
         />
 
-        <ArticleResourceCTA
-          eyebrow="Resources"
-          title={`Get templates for ${TOPIC}`}
-          description="Download checklists, pilot plans, and example class norms tailored to this guide."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <QuoteBlock title="Pro tip" variant="orange">
           Start small. One outcome, one class, one tool. Measure, then scale what works.

@@ -45,7 +45,7 @@ export const faqItems: FAQ[] = [
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
   intro:
-    'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
+    "Pick a learning goal, establish the prerequisites and use a small project to check what you can explain and do independently.",
   items: [
     {
       label: 'What is the fastest way to start learning AI in 2026?',

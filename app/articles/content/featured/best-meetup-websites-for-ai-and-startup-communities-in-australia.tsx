@@ -155,9 +155,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -297,14 +295,14 @@ export default function ArticleContent() {
 
       <ArticleReferences
           references={[
-            {id: 1, href: "https://geoguy.org/best-meetup-websites/", title: "Best meetup websites - Find solace in the company of like-minded singles - Geoguys", publisher: "geoguy.org", description: "Authoritative reference supporting Best meetup websites - Find solace in the company of like-minded singles - Geoguys.", category: "guide"},
-            {id: 2, href: "https://www.firstclassaccounts.com/blog/6-really-simple-tips-for-using-meetup-as-part-of-your-business-strategy/", title: "6 simple ways to use Meetup to grow your business network - First Class Accounts", publisher: "firstclassaccounts.com", description: "Authoritative reference supporting 6 simple ways to use Meetup to grow your business network - First Class Accounts.", category: "guide"},
-            {id: 3, href: "https://maxmyprofit.com.au/sydney-business-meetup-groups/", title: "6 Sydney Business Meetup Groups you Should be a Part Of - MaxMyProfit", publisher: "maxmyprofit.com.au", description: "Authoritative reference supporting 6 Sydney Business Meetup Groups you Should be a Part Of - MaxMyProfit.", category: "guide"},
-            {id: 4, href: "https://www.atrium.me/community", title: "Australian Tech Communities | Atrium", publisher: "atrium.me", description: "Authoritative reference supporting Australian Tech Communities | Atrium.", category: "guide"},
-            {id: 5, href: "https://www.localguidesconnect.com/t/how-to-organize-a-successful-meet-up/463414", title: "How to organize a successful meet-up - Get started on Connect - Local Guides Connect", publisher: "localguidesconnect.com", description: "Authoritative reference supporting How to organize a successful meet-up - Get started on Connect - Local Guides Connect.", category: "guide"},
-            {id: 6, href: "https://addicted2success.com/success-advice/14-ways-to-build-the-1-meetup-in-your-city/", title: "14 Ways To Build The #1 Meetup In Your City - Addicted 2 Success", publisher: "addicted2success.com", description: "Authoritative reference supporting 14 Ways To Build The #1 Meetup In Your City - Addicted 2 Success.", category: "guide"},
-            {id: 7, href: "https://mikeschinkel.com/2010/25-best-practices-for-meetup-organizers/", title: "25 Best Practices for Meetup Organizers \u2013 MikeSchinkel.com", publisher: "mikeschinkel.com", description: "Authoritative reference supporting 25 Best Practices for Meetup Organizers \u2013 MikeSchinkel.com.", category: "guide"},
-            {id: 8, href: "https://jakeworth.com/posts/how-i-organize-a-meetup/", title: "How to Start a Meetup Group (Lessons from Running One for 10 Years) | Jake Worth", publisher: "jakeworth.com", description: "Authoritative reference supporting How to Start a Meetup Group (Lessons from Running One for 10 Years) | Jake Worth.", category: "guide"},
+            {id: 1, href: "https://geoguy.org/best-meetup-websites/", title: "Best meetup websites - Find solace in the company of like-minded singles - Geoguys", publisher: "geoguy.org", description: "", category: "guide"},
+            {id: 2, href: "https://www.firstclassaccounts.com/blog/6-really-simple-tips-for-using-meetup-as-part-of-your-business-strategy/", title: "6 simple ways to use Meetup to grow your business network - First Class Accounts", publisher: "firstclassaccounts.com", description: "", category: "guide"},
+            {id: 3, href: "https://maxmyprofit.com.au/sydney-business-meetup-groups/", title: "6 Sydney Business Meetup Groups you Should be a Part Of - MaxMyProfit", publisher: "maxmyprofit.com.au", description: "", category: "guide"},
+            {id: 4, href: "https://www.atrium.me/community", title: "Australian Tech Communities | Atrium", publisher: "atrium.me", description: "", category: "guide"},
+            {id: 5, href: "https://www.localguidesconnect.com/t/how-to-organize-a-successful-meet-up/463414", title: "How to organize a successful meet-up - Get started on Connect - Local Guides Connect", publisher: "localguidesconnect.com", description: "", category: "guide"},
+            {id: 6, href: "https://addicted2success.com/success-advice/14-ways-to-build-the-1-meetup-in-your-city/", title: "14 Ways To Build The #1 Meetup In Your City - Addicted 2 Success", publisher: "addicted2success.com", description: "", category: "guide"},
+            {id: 7, href: "https://mikeschinkel.com/2010/25-best-practices-for-meetup-organizers/", title: "25 Best Practices for Meetup Organizers \u2013 MikeSchinkel.com", publisher: "mikeschinkel.com", description: "", category: "guide"},
+            {id: 8, href: "https://jakeworth.com/posts/how-i-organize-a-meetup/", title: "How to Start a Meetup Group (Lessons from Running One for 10 Years) | Jake Worth", publisher: "jakeworth.com", description: "", category: "guide"},
           ]}
           heading="Sources & further reading"
         />

@@ -5,6 +5,7 @@ export const ARTICLE_FALLBACK_IMAGE =
   "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
 
 export type ArticleWithSlug = {
+  editorial?: { schemaVersion: number; audienceId: string; audienceVersion: number; actionId: string | null; actionVersion: number | null; conversionIntent: "offer" | "none" } | null;
   title: string;
   date: string; // YYYY-MM-DD
   description: string;
@@ -82,6 +83,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/startups-in-melbourne-for-ai-builders-and-new-founders': {
         title: "Startups in Melbourne for AI Builders and New Founders",
         date: "2026-09-13",
+        dateModified: "2026-09-15",
         description: "Start with LaunchVic\u2019s event listings, find AI peers, test a customer problem and use official business setup guidance to begin building in Melbourne.",
         author: "Dr Sam Donegan",
         slug: "featured/startups-in-melbourne-for-ai-builders-and-new-founders",
@@ -102,6 +104,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/startup-company-investment-for-ai-founders': {
         title: "Startup Company Investment for AI Founders",
         date: "2026-07-27",
+        dateModified: "2026-09-15",
         description: "Startup company investment essentials for AI founders: set a clear milestone, plan runway and build an evidence-based funding case.",
         author: "Dr Sam Donegan",
         slug: "featured/startup-company-investment-for-ai-founders",
@@ -122,6 +125,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup': {
         title: "What Is an Accelerator and Is It Right for Your AI Startup?",
         date: "2026-07-26",
+        dateModified: "2026-09-15",
         description: "What is an accelerator for AI startups? Assess program fit.",
         author: "Dr Sam Donegan",
         slug: "featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup",
@@ -239,28 +243,29 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         hasContent: true,
     },
     'featured/what-is-artificial-intelligence-in-simple-words': {
-        title: "What Is Artificial Intelligence in Simple Words?",
-        date: "2026-04-18",
-        dateModified: "2026-07-28",
-        description: "A plain-English guide to AI, machine learning and generative AI, with an interactive AI-or-not exercise and a practical human-check workflow.",
-        author: "Dr Sam Donegan",
-        slug: "featured/what-is-artificial-intelligence-in-simple-words",
-        analyticsArticleId: "81b3ca24-a36d-40c4-b2f0-e998f1fa5a36",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aabcc5ca-e159-4024-b1c7-baf0b68dc947.jpg?alt=media&token=a5c618e2-f10a-4f7a-8bc3-5a0702cf9959",
-        imageAlt: "Person using a voice assistant on a smartphone, an everyday example of an AI-enabled interface",
-        hasContent: true,
-    },
+    "title": "What Is Artificial Intelligence in Simple Words?",
+    "date": "2026-04-18",
+    "dateModified": "2026-09-15",
+    "description": "A plain-English guide to AI, machine learning and generative AI, with an interactive AI-or-not exercise and a practical human-check workflow.",
+    "author": "Dr Sam Donegan",
+    "slug": "featured/what-is-artificial-intelligence-in-simple-words",
+    "analyticsArticleId": "81b3ca24-a36d-40c4-b2f0-e998f1fa5a36",
+    "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aabcc5ca-e159-4024-b1c7-baf0b68dc947.jpg?alt=media&token=a5c618e2-f10a-4f7a-8bc3-5a0702cf9959",
+    "imageAlt": "Illustrative image of two people",
+    "hasContent": true
+},
     'featured/what-is-an-agent-in-artificial-intelligence': {
-        title: "What Is an Agent in Artificial Intelligence?",
-        date: "2026-04-17",
-        description: "What is agent in artificial intelligence? Learn the core definition, how AI agents work, the main agent types, and how agents differ from assistants, bots, and fixed automation.",
-        author: "Dr Sam Donegan",
-        slug: "featured/what-is-an-agent-in-artificial-intelligence",
-        analyticsArticleId: "b5f3f893-bdb5-4499-bfd9-e8c6325ae4ff",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a2025658-d5c3-44fe-a5c4-f9599005a6a0.jpg?alt=media&token=98790d72-c277-47c3-a63f-6b565ac852e2",
-        imageAlt: "Close-up of coworkers reviewing an AI agent workflow on a laptop during a",
-        hasContent: true,
-    },
+    "title": "What is an AI agent—and does your business need one?",
+    "date": "2026-04-17",
+    "description": "Compare fixed automation, AI-assisted workflows and agents on one business task. Define approvals, failure tests and costs before commissioning a build.",
+    "author": "Dr Sam Donegan",
+    "slug": "featured/what-is-an-agent-in-artificial-intelligence",
+    "analyticsArticleId": "b5f3f893-bdb5-4499-bfd9-e8c6325ae4ff",
+    "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a2025658-d5c3-44fe-a5c4-f9599005a6a0.jpg?alt=media&token=98790d72-c277-47c3-a63f-6b565ac852e2",
+    "imageAlt": "Illustration of colleagues reviewing a workflow on a laptop",
+    "hasContent": true,
+    "dateModified": "2026-09-15"
+},
     'featured/how-to-startup-a-small-business-in-australia': {
         title: "How to Startup a Small Business in Australia",
         date: "2026-04-14",
@@ -361,16 +366,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         imageAlt: "Startup founder pitching first customers in 2026 during a close-up candid chat with an early user",
       },
     'featured/go-to-market-for-startups': {
-        title: "Go to Market for Startups",
-        date: "2026-04-04",
-        description: "Go to market for startups with a practical guide to customer focus, pricing, channels, and early traction tests.",
-        author: "Dr Sam Donegan",
-        slug: "featured/go-to-market-for-startups",
-        analyticsArticleId: "00f44c34-b1fb-431e-800d-b1d73e8f1622",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8dae336-fe4f-4a44-bff3-316597ffe118.jpg?alt=media&token=0ef63680-c513-4f09-9e25-21b2d81228e9",
-        imageAlt: "Go to Market for Startups",
-        hasContent: true,
-    },
+    "title": "Go to market for startups: design a channel test you can learn from",
+    "date": "2026-04-04",
+    "description": "A worked channel-test plan for Australian early-stage founders: define the buyer, offer, cost limits and evidence before deciding what to repeat.",
+    "author": "Dr Sam Donegan",
+    "slug": "featured/go-to-market-for-startups",
+    "analyticsArticleId": "00f44c34-b1fb-431e-800d-b1d73e8f1622",
+    "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8dae336-fe4f-4a44-bff3-316597ffe118.jpg?alt=media&token=0ef63680-c513-4f09-9e25-21b2d81228e9",
+    "imageAlt": "Two people examining a printed profile and coloured notes, one pointing with a pen",
+    "hasContent": true,
+    "dateModified": "2026-09-15"
+},
     'featured/how-to-assess-cofounder-values-match-before-you-commit': {
         title: "How to Assess Cofounder Values Match Before You Commit",
         date: "2026-03-30",
@@ -507,20 +513,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     imageAlt: "People collaborating in a tech startup environment with a nostalgic 90s film aesthetic.",
   },
   "featured/startup-accelerator-australia": {
-    title: "Australian Startup Accelerators: A Verified 2026 Program Finder",
-    date: "2026-01-10",
-    dateModified: "2026-07-29",
-    description:
-      "Compare verified Australian startup accelerators by stage, format, duration, published terms and intake status, then use MLAI’s interactive fit scorecard.",
-    author: "Dr Sam Donegan",
-    slug: "featured/startup-accelerator-australia",
-    analyticsArticleId: "1cf96443-6ccb-4a80-998f-fb777e21d542",
-    image:
-      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b4a9a55e-4254-4bb3-9eed-5b80dfbc4432.jpg?alt=media&token=54ee6558-bb42-4528-812c-7377691e9f9f",
-    imageAlt:
-      "Australian founders comparing accelerator eligibility, terms and program commitments",
-    hasContent: true,
-  },
+    "title": "Australian startup accelerators: eligibility, intakes and terms",
+    "date": "2026-01-10",
+    "dateModified": "2026-09-15",
+    "description": "Compare seven Australian accelerator source records, distinguish applications from expressions of interest, and record eligibility, terms and founder-time trade-offs before deciding.",
+    "author": "Dr Sam Donegan",
+    "slug": "featured/startup-accelerator-australia",
+    "analyticsArticleId": "1cf96443-6ccb-4a80-998f-fb777e21d542",
+    "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b4a9a55e-4254-4bb3-9eed-5b80dfbc4432.jpg?alt=media&token=54ee6558-bb42-4528-812c-7377691e9f9f",
+    "imageAlt": "Hands using a laptop at a shared table (illustrative image)",
+    "hasContent": true
+},
   "featured/how-to-find-networking-events": {
     title: "How to find networking events in Australia (2026)",
     date: "2026-01-03",
@@ -534,18 +537,16 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
       "Group of diverse professionals networking in a vibrant tech startup setting, evoking a nostalgic 90s film aesthetic.",
   },
   "featured/how-modern-technology-affects-education-today-and-in-the-fut": {
-    title: "How modern technology affects education today and in the future (2026)",
-    date: "2025-12-26",
-    description:
-      "A practical Australian view: benefits, risks and what’s next for AI, privacy and inclusion—plus steps to pilot edtech responsibly.",
-    author: "Dr Sam Donegan",
-    slug: "featured/how-modern-technology-affects-education-today-and-in-the-fut",
-    image:
-      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c64e3c6c-e429-49ad-acb9-ed1a06156751.jpg?alt=media&token=d82a401d-a58e-47e5-ba8d-76025cf5b37b",
-    imageAlt:
-      "People collaborating in a retro tech startup setting, reflecting modern education's evolution and future impact.",
-    hasContent: true,
-  },
+    "title": "Modern technology in education: evidence today and questions for the future",
+    "date": "2025-12-26",
+    "description": "Evaluate education technology claims using a dated planning-time trial, Australian sector guidance and a worked caption-review example. Turn future possibilities into questions you can test.",
+    "author": "Dr Sam Donegan",
+    "slug": "featured/how-modern-technology-affects-education-today-and-in-the-fut",
+    "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c64e3c6c-e429-49ad-acb9-ed1a06156751.jpg?alt=media&token=d82a401d-a58e-47e5-ba8d-76025cf5b37b",
+    "imageAlt": "Illustration of a small robot on a desk with books, headphones and digital devices",
+    "hasContent": true,
+    "dateModified": "2026-09-15"
+},
   "featured/how-technology-has-changed-education": {
     title: "How technology has changed education (2026)",
     date: "2025-12-21",
@@ -636,29 +637,28 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     hasContent: true,
   },
   "featured/the-best-startup-pitch-deck-ever": {
-    title: "The Best Startup Pitch Deck Ever (2026): An Australian Founder's Guide",
-    date: "2025-11-23",
-    description:
-      "Investors’ 2026 expectations, the 12-slide structure, AU-specific tips, timing, examples, and the most common mistakes—plus a downloadable checklist.",
-    author: "Dr Sam Donegan",
-    slug: "featured/the-best-startup-pitch-deck-ever",
-    image:
-      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e50e5db0-d45f-42af-bbe1-fa732bdd1ffb.jpg?alt=media&token=cee71a66-a4bf-48d9-81b0-a662965f714a",
-    imageAlt: "The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide",
-    hasContent: true,
-  },
+    "title": "A startup pitch deck you can defend: an evidence-first review",
+    "date": "2025-11-23",
+    "description": "Review startup deck claims using founder-published examples, twenty synthetic timing records, scripted corrections and a completed downloadable evidence worksheet.",
+    "author": "Dr Sam Donegan",
+    "slug": "featured/the-best-startup-pitch-deck-ever",
+    "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e50e5db0-d45f-42af-bbe1-fa732bdd1ffb.jpg?alt=media&token=cee71a66-a4bf-48d9-81b0-a662965f714a",
+    "imageAlt": "The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide",
+    "hasContent": true,
+    "dateModified": "2026-09-15"
+},
   "featured/how-to-get-data-science-job": {
-    title: "How to get a data science job in Australia (2026)",
-    date: "2025-11-19",
-    description:
-      "AU-focused guide to landing a data science role: skills, portfolio, interviews, where to find jobs, and practical steps for grads, switchers and engineers.",
-    author: "Dr Sam Donegan",
-    slug: "featured/how-to-get-data-science-job",
-    analyticsArticleId: "04d9b070-8338-47bf-ac29-12bf350a3807",
-    image: ARTICLE_FALLBACK_IMAGE,
-    imageAlt: "How to get a data science job in Australia (2026)",
-    hasContent: true,
-  },
+    "title": "How to get a data science job in Australia: build evidence of delivery",
+    "date": "2025-11-19",
+    "description": "Choose a target data role, build a reproducible portfolio with leakage and failure checks, and turn real evidence into applications or a scoped builder brief.",
+    "author": "Dr Sam Donegan",
+    "slug": "featured/how-to-get-data-science-job",
+    "analyticsArticleId": "04d9b070-8338-47bf-ac29-12bf350a3807",
+    "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-8cebc51f-5bc8-46f4-8676-bd361214e6b3.jpg?alt=media&token=273d8b6c-afd5-411f-89e9-fa04b4413f6d",
+    "imageAlt": "Laptop displaying charts on a desk beside an Australian flag",
+    "hasContent": true,
+    "dateModified": "2026-09-15"
+},
   "featured/how-to-pitch-your-idea": {
     title: "How to Pitch Your Big Idea",
     date: "2025-06-01",
@@ -736,16 +736,22 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     hasContent: true,
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5": {
-    title: "AI Bits for Techies | Issue #5 | 16 Feb 2026",
-    date: "2026-02-16",
-    description: "AI Bits Issue #5: Three papers on Moltbook—whether agent 'emergent behavior' is real or human-influenced—plus Dr. CaBot, Seedance 2.0, WorldVQA, and a book on alignment vs. governance.",
-    author: "MLAI Editorial Team",
-    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
-    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5",
-    image: ARTICLE_FALLBACK_IMAGE,
-    imageAlt: "AI Bits for Techies newsletter banner",
-    hasContent: true,
-  },
+    "title": "AI Bits #5: What agent activity logs can—and cannot—prove",
+    "date": "2026-02-16",
+    "description": "Read Moltbook research with its limits, then run a synthetic agent-observability kit: activity, retries, duplicate posts, moderation and a builder handover.",
+    "author": "MLAI Editorial Team",
+    "authors": [
+        "samDonegan",
+        "junKaiChang",
+        "juliaPonder",
+        "shivangShekhar"
+    ],
+    "slug": "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5",
+    "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504",
+    "imageAlt": "AI Bits for Techies newsletter banner",
+    "hasContent": true,
+    "dateModified": "2026-09-15"
+},
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6": {
     title: "AI Bits for Techies | Issue #6 | 25 Feb 2026",
     date: "2026-02-25",

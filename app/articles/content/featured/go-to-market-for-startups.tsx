@@ -1,296 +1,114 @@
-import type { ReactNode } from 'react'
-import { Home } from 'lucide-react'
-import { AcademicCapIcon, RocketLaunchIcon, UsersIcon } from '@heroicons/react/24/outline'
-import { DEFAULT_AUTHOR_KEY, getAuthorProfile, DEFAULT_AUTHOR_AVATAR_FALLBACK_URL } from '~/articles/authors'
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import QuoteBlock from '../../../components/articles/QuoteBlock'
-import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
-import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
-import { ArticleStepList } from '../../../components/articles/ArticleStepList'
-import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
-import { ArticleReferences } from '../../../components/articles/ArticleReferences'
-import ArticleDisclaimer from '../../../components/articles/ArticleDisclaimer'
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import { ArticleTocPlaceholder } from "~/components/articles/ArticleTocPlaceholder";
+import { GTM_BLANK_FIELDS, GTM_COMPLETED_FIELDS, GTM_STAGE_ROWS, GTM_RECORDS, GTM_LOG_HEADERS, gtmRecordCells, GTM_PROVENANCE, GTM_OBJECTIONS, GTM_DECISION, GTM_UNKNOWN, GTM_REVIEW_STATUS } from "~/lib/gtm-channel-test";
 
-export const useCustomHeader = true
-
-const TOPIC = "Go to Market for Startups"
-export const CATEGORY = "featured"
-export const SLUG = "go-to-market-for-startups"
-export const DATE_PUBLISHED = "2026-04-04"
-export const DATE_MODIFIED = "2026-04-04"
-export const DESCRIPTION = "Go to market for startups with a practical guide to customer focus, pricing, channels, and early traction tests."
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8dae336-fe4f-4a44-bff3-316597ffe118.jpg?alt=media&token=0ef63680-c513-4f09-9e25-21b2d81228e9"
-const HERO_IMAGE_ALT = "Go to Market for Startups"
-export const FEATURED_FOCUS = "product"
-
-const AUTHOR_PROFILE = getAuthorProfile(DEFAULT_AUTHOR_KEY)
-const AUTHOR = AUTHOR_PROFILE?.name ?? 'Dr Sam Donegan'
-const AUTHOR_ROLE = AUTHOR_PROFILE?.role ?? AUTHOR_PROFILE?.credentials ?? 'Founder'
-const AUTHOR_BIO = AUTHOR_PROFILE?.bio ?? ''
-const AUTHOR_AVATAR = AUTHOR_PROFILE?.avatarUrl ?? DEFAULT_AUTHOR_AVATAR_FALLBACK_URL
-
-interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
-}
-
-export const faqItems: FAQ[] = [
-  { id: 1, question: "What should be included in a startup go-to-market plan?", answer: "A startup GTM plan usually includes target customer definition, customer problem, messaging, pricing, sales activity, and distribution channels. It should also define a small set of tests and the signals used to judge early traction." },
-  { id: 2, question: "How is go-to-market different from marketing for a startup?", answer: "Marketing is one part of go-to-market, but GTM is broader. It connects audience choice, positioning, pricing, sales motion, and channels so the startup has a practical path from discovery to revenue." },
-  { id: 3, question: "When should founders handle GTM themselves?", answer: "In the earliest stage, founder-led GTM is often the best fit because it keeps feedback loops short. Founders can stay close to sales calls, onboarding, and customer research before building a more structured motion." },
-  { id: 4, question: "How many channels should an early-stage startup test first?", answer: "Early-stage startups usually benefit from testing only a small number of channels at first. A short test plan makes it easier to learn which message, audience, and sales approach produce useful conversations and next-step actions." },
-  { id: 5, question: "What metrics matter most in early go-to-market work?", answer: "Early GTM work should track signals closer to traction than raw reach alone. Useful indicators include response quality, next-step conversion, activation, and early retention clues that show real customer intent." },
-  { id: 6, question: "How does a GTM strategy change after early traction appears?", answer: "Once early proof points appear, the GTM motion can become more repeatable. What worked gets turned into clearer targeting, sharper messaging, better-defined sales and marketing plans, and more deliberate channel choices." },
-]
-
+export const useCustomHeader = true;
+export const CATEGORY = "featured";
+export const SLUG = "go-to-market-for-startups";
+export const DATE_PUBLISHED = "2026-04-04";
+export const DATE_MODIFIED = "2026-09-15";
+const TITLE = "Go to market for startups: design a channel test you can learn from";
+export const DESCRIPTION = "A worked channel-test plan for Australian early-stage founders: define the buyer, offer, cost limits and evidence before deciding what to repeat.";
+const PATH = "/articles/" + CATEGORY + "/" + SLUG;
+const HERO = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8dae336-fe4f-4a44-bff3-316597ffe118.jpg?alt=media&token=0ef63680-c513-4f09-9e25-21b2d81228e9";
+export const articleMeta = { title: TITLE, topic: TITLE, category: CATEGORY, slug: SLUG, description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, author: "Dr Sam Donegan", image: HERO, imageAlt: "Two people examining a printed profile and coloured notes, one pointing with a pen" };
 export const summaryHighlights = {
-  heading: "Key facts: Go to Market for Startups",
-  intro: "Go to market for startups with a practical guide to customer focus, pricing, channels, and early traction tests.",
+  heading: "A decision, not a launch checklist",
+  intro: "A go-to-market plan connects a particular buyer, a credible offer and a way to reach them. Test that connection before increasing spend.",
   items: [
-    { label: "go to market for startups?", description: "Go to market for startups is the practical plan for reaching a defined customer and turning interest into early revenue. It links customer choice, messaging, pricing, sales activity, and channels." },
-    { label: "go to market strategy for startups?", description: "A startup GTM strategy starts by narrowing to a specific customer and urgent problem it can win first. It then aligns positioning, pricing, and distribution with how that buyer discovers and buys." },
-    { label: "go to market strategies for startups?", description: "Early startup GTM strategies are usually founder-led, focused, and test-based rather than broad and automated. The aim is to learn which segment, message, and motion create repeatable customer response." },
+    { label: "Reader", description: "Australian early-stage founders who have a problem hypothesis and need to choose their next acquisition experiment." },
+    { label: "Output", description: "A completed fictional channel test, its 28-record log, clear denominators and a matching editable worksheet for your own evidence." },
+    { label: "Limit", description: "Small, non-random tests suggest a next step; they do not prove product-market fit or forecast acquisition cost." },
   ],
-}
+};
+export const faqItems = [
+  { id: 1, question: "How is go-to-market different from marketing?", answer: "Marketing helps a buyer discover and understand an offer. A go-to-market decision also includes who buys, what is sold, price conditions, buying approvals, delivery and the evidence needed to repeat that route." },
+  { id: 2, question: "How many channels should I test?", answer: "Start with what you can track and fulfil within your time and spending limits. This worksheet compares two routes for illustration, not because two is a universal optimum. One well-recorded route may be enough to find the next uncertainty." },
+  { id: 3, question: "Does a paid pilot prove product-market fit?", answer: "No. A paid pilot shows that a particular buyer accepted particular terms. Delivery cost, continued use, repeat purchasing and demand beyond personal contacts remain separate questions." },
+  { id: 4, question: "Should I automate outreach with AI?", answer: "Not just to increase volume. First establish an appropriate audience, permitted contact route, accurate claims and a useful offer. Review every customer-facing statement and keep sensitive prospect information out of unapproved tools. This guide does not establish legal permission to contact anyone." },
+];
 
-export const articleMeta = {
-  title: "Go to Market for Startups",
-  topic: TOPIC,
-  category: CATEGORY,
-  slug: SLUG,
-  description: DESCRIPTION,
-  datePublished: DATE_PUBLISHED,
-  dateModified: DATE_MODIFIED,
-  author: AUTHOR,
-  image: HERO_IMAGE,
-  imageAlt: HERO_IMAGE_ALT,
-  featuredFocus: FEATURED_FOCUS,
-}
-
-const faqSchemaItems = [
-  { question: "go to market for startups?", answer: "Go to market for startups is the practical plan for reaching a defined customer and turning interest into early revenue. It links customer choice, messaging, pricing, sales activity, and channels." },
-  { question: "go to market strategy for startups?", answer: "A startup GTM strategy starts by narrowing to a specific customer and urgent problem it can win first. It then aligns positioning, pricing, and distribution with how that buyer discovers and buys." },
-  { question: "go to market strategies for startups?", answer: "Early startup GTM strategies are usually founder-led, focused, and test-based rather than broad and automated. The aim is to learn which segment, message, and motion create repeatable customer response." },
-  { question: "What should be included in a startup go-to-market plan?", answer: "A startup GTM plan usually includes target customer definition, customer problem, messaging, pricing, sales activity, and distribution channels. It should also define a small set of tests and the signals used to judge early traction." },
-  { question: "How is go-to-market different from marketing for a startup?", answer: "Marketing is one part of go-to-market, but GTM is broader. It connects audience choice, positioning, pricing, sales motion, and channels so the startup has a practical path from discovery to revenue." },
-  { question: "When should founders handle GTM themselves?", answer: "In the earliest stage, founder-led GTM is often the best fit because it keeps feedback loops short. Founders can stay close to sales calls, onboarding, and customer research before building a more structured motion." },
-  { question: "How many channels should an early-stage startup test first?", answer: "Early-stage startups usually benefit from testing only a small number of channels at first. A short test plan makes it easier to learn which message, audience, and sales approach produce useful conversations and next-step actions." },
-  { question: "What metrics matter most in early go-to-market work?", answer: "Early GTM work should track signals closer to traction than raw reach alone. Useful indicators include response quality, next-step conversion, activation, and early retention clues that show real customer intent." },
-  { question: "How does a GTM strategy change after early traction appears?", answer: "Once early proof points appear, the GTM motion can become more repeatable. What worked gets turned into clearer targeting, sharper messaging, better-defined sales and marketing plans, and more deliberate channel choices." },
-]
-
-const faqStructuredData = faqSchemaItems.length
-  ? JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqSchemaItems.map((item) => ({
-        '@type': 'Question',
-        name: item.question,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: item.answer,
-        },
-      })),
-    })
-  : null
+export const channelTestWorksheet = GTM_BLANK_FIELDS;
 
 export default function ArticleContent() {
-  const authorDetails = {
-    name: AUTHOR,
-    role: AUTHOR_ROLE,
-    bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR,
-  }
+  return <div data-cf-article-body>
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: TITLE, current: true }]} title={TITLE} titleHighlight="channel test" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
+    <div className="prose prose-lg prose-slate max-w-none">
+      <p>This guide is for a founder choosing how to reach an initial Australian customer segment—not an established business buying an AI transformation or a developer seeking contract work. You will leave with a test record and a decision rule, rather than a list of every marketing channel.</p>
+      <p>If you cannot yet describe a problem someone has experienced, start with the <Link to="/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026">first-customer conversation guide</Link>. That page helps you prepare and record individual conversations; this one helps you design and interpret a channel test. If you already have a buyer and need to scope delivery, use the <Link to="/articles/featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers">prototype-to-paid-pilot guide</Link>.</p>
+      <ArticleTocPlaceholder />
 
-  return (
-    <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
-      <ArticleHeroHeader
-        breadcrumbs={[
-          { label: 'Home', href: '/', icon: Home },
-          { label: 'Articles', href: "/articles" },
-          { label: TOPIC, current: true },
-        ]}
-        title={TOPIC}
-        titleHighlight={TOPIC}
-        headerBgColor="cyan"
-        summary={summaryHighlights}
-        heroImage={HERO_IMAGE}
-        heroImageAlt={HERO_IMAGE_ALT}
-      />
+      <h2 id="buyer-offer" className="scroll-mt-28">1. Specify a buyer and an offer before a channel</h2>
+      <p><a href="https://startups.aws.com/learn/prove-whats-possible-make-your-idea-success-solid-go-to-market-strategy">AWS’s go-to-market guide</a> links market research, competing alternatives, audience access and messaging. Those are planning considerations, not proof that your particular offer has demand.</p>
+      <p><strong>Fictional worked example:</strong> a Melbourne founder is considering a tool that drafts quote-follow-up messages for small commercial maintenance businesses. The assumed buyer is the owner who approves follow-ups; the current alternative is a spreadsheet and manually written emails. These are hypotheses to check, not research findings about that sector.</p>
+      <p>The proposed test offer is a review-only demonstration using synthetic quote records, followed by an optional, separately scoped paid pilot. It does not send customer emails or promise more sales. Record the pilot’s actual price and conditions consistently across routes; “interested” is not acceptance of a price never shown.</p>
+      <p>For the fictional calculation, assume a fixed AUD 600 total pilot price for one review-only workflow and ten synthetic records, with one review session and no live integration. This is an invented test price, not an MLAI quote, market benchmark or claim that the work is profitable. A real proposal needs its own delivery estimate and explicit commercial terms.</p>
+      <p>Write your message around the task: “See how a draft follow-up is checked against the quote before anyone sends it.” Avoid “autonomous revenue engine” or a savings percentage you have not measured. Make clear what exists today, what is a prototype and what still requires development.</p>
 
-      <ArticleTocPlaceholder className="bg-transparent" />
+      <h2 id="channel-choice" className="scroll-mt-28">2. Choose a route you can access appropriately</h2>
+      <p><a href="https://business.gov.au/planning/business-plans/develop-your-marketing-plan">business.gov.au’s marketing-plan guidance</a> connects a target market, goals, activities and a budget, then calls for analysing results and refining the plan. It does not establish a universally best channel.</p>
+      <div role="region" aria-label="GTM channel selection" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4"><table className="min-w-[38rem]">
+        <thead><tr><th>Route in this example</th><th>What it might reveal</th><th>What can distort the result</th></tr></thead>
+        <tbody>
+          <tr><td>Introductions requested through existing contacts, with the recipient’s agreement</td><td>Whether a relevant owner accepts a demonstration and discusses the workflow</td><td>Personal trust can outperform what strangers would do; the pool is limited</td></tr>
+          <tr><td>An organiser-approved session for people who choose to attend</td><td>Whether the explanation attracts task-relevant follow-up</td><td>Attendance and enthusiasm are not buying authority; event preparation costs time</td></tr>
+        </tbody>
+      </table></div>
+      <p>These are candidate routes, not access MLAI guarantees. Follow organiser rules and obtain appropriate permission before following up. Do not scrape attendee lists or treat membership as consent. Check requirements for your actual communication channel and jurisdiction before outreach; this is not legal advice.</p>
+      <p>Keep the offer and qualification rule consistent. If the audience, message and price all differ, document that you compared two bundles of choices—not the isolated effect of the channel.</p>
 
-      <div className="prose prose-lg prose-slate max-w-none bg-transparent">
-        <p><strong>{TOPIC}</strong> — {"A go-to-market plan is the practical plan a startup uses to bring a product or service to market and reach the right customers. It is not just a launch announcement or a list of marketing tasks. The plan usually connects customer research, target audience choices, messaging, pricing, sales activity, and distribution channels so the business knows how it will win attention and convert that attention into early revenue."}</p>
-        <p>{"For an early startup, this matters because time, budget, and team capacity are limited. A weak go-to-market approach can push a founder toward the wrong audience, the wrong channel, or a sales process that does not fit the product. In simple terms, go to market for startups is about making a few clear decisions early so growth efforts are tied to real customers, not guesswork."}</p>
-        <p>{"In practice, what a go-to-market plan does for an early startup works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
-        <ArticleImageBlock
-          src={HERO_IMAGE}
-          alt={HERO_IMAGE_ALT}
-          caption="Go to market for startups with a practical guide to customer focus, pricing, channels, and early traction tests."
-          width={1600}
-          height={1067}
-        />
+      <h2 id="worksheet" className="scroll-mt-28">3. Complete the same twelve fields before starting</h2>
+      <p>Copy these fields into your own document or <a href="/downloads/gtm-channel-test.txt" download="gtm-channel-test.txt">save the editable text worksheet and completed example</a>. The file includes the same completed fields, stage definitions, record log and decision shown here, plus space for actual follow-up evidence. It is an editorial planning aid, not a validated scoring system.</p>
+      <pre className="whitespace-pre-wrap" aria-label="Channel test worksheet">{channelTestWorksheet.join("\n")}</pre>
+      <h3 id="completed-record" className="scroll-mt-28">Completed fictional channel-test record</h3>
+      <p>{GTM_PROVENANCE} The schedule deliberately describes a future fictional decision, not a forecast. This expanded log assigns statuses to illustrate the earlier aggregate counts; it is not newly discovered customer evidence.</p>
+      <dl className="space-y-5">{GTM_COMPLETED_FIELDS.map((field, index) => <div key={field.label} data-gtm-record-field={index + 1}><dt className="font-bold">{field.label}</dt><dd className="ml-0 mt-1">{field.value}</dd></div>)}</dl>
 
-        <AudienceGrid
-          heading="Who is this guide for?"
-          cards={[
-            {
-              title: 'Founders & Builders',
-              description: 'For operators validating demand, pitching a vision, and moving before momentum stalls.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />,
-              variant: 'orange',
-            },
-            {
-              title: 'Students & Switchers',
-              description: 'For readers learning how strong technical partners evaluate traction, skills, and fit.',
-              icon: <AcademicCapIcon className="h-6 w-6" />,
-              variant: 'purple',
-            },
-            {
-              title: 'Community Builders',
-              description: 'For connectors, mentors, and organisers helping founders meet collaborators in the right rooms.',
-              icon: <UsersIcon className="h-6 w-6" />,
-              variant: 'yellow',
-            },
-          ]}
-        />
+      <h2 id="worked-results" className="scroll-mt-28">4. Interpret counts without inventing a winner</h2>
+      <p>A reply, an attended demonstration, acceptance of terms, payment and actual use answer different questions. In this example, “activation” means completing the agreed ten-record pilot review. No fictional buyer has done that. The session has no paid buyer yet, so its activation proportion is not calculable—not an observed 0% success rate.</p>
+      <p>Wide tables scroll sideways. You can focus a table region and use the arrow keys, or read the same rows in the text download.</p>
+      <div role="region" aria-label="GTM stage denominators" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4"><table className="min-w-[44rem]">
+        <caption>Synthetic stage counts at the fictional 5 October decision</caption>
+        <thead><tr><th scope="col">Stage and denominator</th><th scope="col">Agreed introductions</th><th scope="col">Opt-in session</th></tr></thead>
+        <tbody>{GTM_STAGE_ROWS.map(row => <tr key={row.label}><th scope="row" className="font-normal"><strong>{row.label}</strong><br />{row.rule}</th>{row.cells.map((cell, index) => <td key={index}>{cell}</td>)}</tr>)}</tbody>
+      </table></div>
+      <p>Five of eight introduced people and four of twenty attendees met the fit rule. Those denominators describe different selection processes, so their percentages are not a fair experiment proving introductions are better. One payment is too little evidence for a stable acquisition forecast. Zero payments so far does not make acquisition cost zero.</p>
+      <details className="my-6 rounded-xl border border-gray-300 p-4">
+        <summary className="cursor-pointer font-semibold">Inspect all 28 synthetic status records</summary>
+        <p>I01–I08 are introduced recipients; S01–S20 are session attendees. Every status is invented. “Not-invited” is separate from a pending response; “not-shown” means no pilot offer was made under this demo-first protocol. “Not-due” means no terms were accepted, not a missing or refused payment. No row represents a real person.</p>
+        <div role="region" aria-label="GTM synthetic record log" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4"><table className="min-w-[56rem]">
+          <caption>Author-created records, not a CRM export</caption>
+          <thead><tr>{GTM_LOG_HEADERS.map(label => <th scope="col" key={label}>{label}</th>)}</tr></thead>
+          <tbody>{GTM_RECORDS.map(row => <tr key={row.id} data-gtm-record-id={row.id}>{gtmRecordCells(row).map((cell, index) => index === 0 ? <th scope="row" key={index}>{cell}</th> : <td key={index}>{cell}</td>)}</tr>)}</tbody>
+        </table></div>
+        <p>{GTM_OBJECTIONS}</p>
+      </details>
+      <h3 id="cost-check" className="scroll-mt-28">Cash, founder time and delivery promises are separate limits</h3>
+      <p><strong>Cost arithmetic:</strong> if the founder uses an illustrative AUD 60/hour value for planning, introductions consumed AUD 40 + (4 × AUD 60) = AUD 280 in cash plus valued time. The session consumed AUD 180 + (8 × AUD 60) = AUD 660. Only AUD 40 and AUD 180 are cash spending in this example; valued founder time is an opportunity-cost assumption, not a salary payment.</p>
+      <p>Combined acquisition uses AUD 220 cash and 12 hours, valued here at AUD 720: AUD 940 cash plus valued time. There is AUD 30 cash headroom but <strong>0 hours remaining</strong>. Two accepted pilots use the two-commitment ceiling, even though only one buyer has paid. That ceiling does not establish delivery feasibility: delivery and support effort still need estimating.</p>
+      <p>These totals exclude product development, pilot delivery, ongoing support, refunds, taxes and other overhead. Do not present them as fully loaded customer acquisition cost or compare them with the fictional AUD 600 payment as though the difference were profit. Record delivery and continued use separately before judging the business model.</p>
 
-        <QuoteBlock title="Key insight" variant="purple">
-          {"Go to market for startups is the practical plan for reaching a defined customer and turning interest into early revenue. It links customer choice, messaging, pricing, sales activity, and channels."}
-        </QuoteBlock>
-          <h2>{"Start with the customer and the problem you can win"}</h2>
-          <p>{"A strong go-to-market plan starts with a clear target customer, not a vague market. Early-stage startups usually do better when they define a specific group they can understand, reach, and serve well first. That means getting practical about who the customer is, what context they work or live in, and where your product has the best chance of fitting into real behaviour. Broad categories like \"small businesses\" or \"healthcare\" are usually too wide to guide good decisions on messaging, channels, and sales."}</p>
-          <p>{"The next step is to focus on the problem, not just the product. Sources on GTM planning consistently point to target customer definition, market research, and competitive advantage as core parts of the strategy."}</p>
-          <p>{"Instead of trying to launch to everyone, pick an initial segment you can reach with the resources you actually have. A startup's first market does not need to be the biggest market. It needs to be a market where your message is easy to explain, the customer problem is clear, and your team can learn quickly from real conversations and early adoption. That narrower starting point makes it easier to test positioning and improve the offer before expanding."}</p>
-          <p>{"Asana's Oatly example shows the logic: the company did not try to win every buyer at once. It went to coffee shops where the product made sense in the moment and where likely adopters were already looking for dairy alternatives. For startups, the lesson is not to copy that channel, but to copy that focus. Start with the customer and buying context where your product is most likely to solve a real problem first."}</p>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-55366fe5-ff9c-43de-ba5d-d6dac84fbdc9.jpg?alt=media&token=19ac8e9c-23ac-4d1d-98a7-9c3074700d36"
-            alt="Hand marking a niche customer segment on a whiteboard beside notes, coffee cup, and startup desk clutter"
-            caption="Start with the customer and the problem you can win"
-            width={1200}
-            height={800}
-          />
-          <h2>{"Match your GTM motion to your stage"}</h2>
-          <p>{"A startup\u2019s go-to-market motion should change as the company learns. In the earliest stage, the work is usually very hands-on. Stone & Chalk frames this as the period where founders do much of the work themselves, while they try to get the product into users\u2019 hands, prove it works, and learn how to sell it. That usually means the founder is close to sales conversations, onboarding, and customer feedback instead of trying to build a large marketing engine too early."}</p>
-          <p>{"At that point, the main goal is not broad channel volume. It is evidence that the product solves a real and repeatable customer need. Stripe\u2019s GTM guide supports this view by describing GTM as a plan that connects the business to customers through research, target customer definition, sales and marketing plans, pricing, and channels. Early on, that plan can stay simple. What matters most is learning which customer has the problem, how they describe it, and whether they will adopt the product with enough consistency to justify a more structured motion."}</p>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-b482c17f-f609-4a32-aff6-0048a0e8202a.jpg?alt=media&token=2c08a481-202e-40a4-95fa-39e67f851b83"
-            alt="Startup coworking space"
-            caption="Match your GTM motion to your stage"
-            width={1200}
-            height={800}
-          />
-          <h3>{"Early stage: founder-led and learning-heavy"}</h3>
-          <p>{"Before there is strong proof of product-market fit, founder-led selling is often the right fit. It keeps the feedback loop short. Stone & Chalk explicitly separates the early days from the later go-to-market phase, which suggests that early GTM should stay focused on direct customer contact and fast learning rather than layered teams or complex campaigns."}</p>
-          <h3>{"After early proof: make the motion more repeatable"}</h3>
-          <p>{"Once early customer proof points start to appear, GTM can become more structured. It means turning what worked into a repeatable process: a clearer target customer, sharper messaging, better-defined sales and marketing plans, and more deliberate channel choices. That progression fits both Stone & Chalk\u2019s move from product-market fit into the go-to-market phase and Stripe\u2019s view of GTM as a practical plan for how a business reaches customers."}</p>
+      <h2 id="decision" className="scroll-mt-28">5. Make a bounded next decision</h2>
+      <ul>
+        <li><strong>Repeat narrowly:</strong> relevant buyers completed the next step and the test stayed within limits. Repeat with a new, clearly described group; check whether personal connections were doing the work.</li>
+        <li><strong>Change one assumption:</strong> people fit the segment but misunderstand the offer, cannot obtain approval or reject the terms. Record the objection and change the relevant assumption, not every variable at once.</li>
+        <li><strong>Stop or pause:</strong> access is inappropriate, the promised result cannot be delivered, capacity is exhausted or the agreed spending limit is reached. More outreach does not repair these problems.</li>
+      </ul>
+      <p><strong>Decision for this example:</strong> {GTM_DECISION}</p>
+      <p>{GTM_UNKNOWN} The pending payment is still pending at the fictional decision date; an expired follow-up window does not convert it into a sale or a loss. Do not infer price objections from a bare “declined” status.</p>
+      <p>Keep unsuccessful tests. A useful record explains the exact offer, who saw it, what happened and what remains unknown. Do not let an AI summary turn tentative interest into a customer win.</p>
+      <h3 id="actual-follow-up" className="scroll-mt-28">Record a new decision before extending a real test</h3>
+      <p>The download includes blank follow-up slots. Record internal ID, route, appropriate contact basis and expiry, stage, date, actual outcome, supporting source and next allowed action in an approved private system. Separately record any new acquisition hours/cash, delivery capacity, approval owner and date. Leave unknowns explicit; no slot is a requirement to collect unnecessary personal data.</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the go to market for startups checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
-
-        <ArticleStepList
-          title="Practical next steps"
-          steps={[
-            "Look at response quality, next-step conversion, activation, and early retention clues.",
-            "Use each test cycle to refine customer focus, messaging, and channel choice.",
-          ]}
-          accent="indigo"
-        />
-          <h2>{"Choose channels, pricing, and positioning as one system"}</h2>
-          <p>{"A startup should choose channels based on how its target customer already discovers and evaluates solutions, not on what feels exciting to the founding team. A go-to-market strategy usually covers the target customer, sales and marketing plans, pricing, and distribution channels because these decisions affect each other. Asana\u2019s Oatly example shows this logic clearly: the company went to coffee shops because that was where likely customers were already making choices about dairy alternatives."}</p>
-          <p>{"Positioning needs to match that same buying context. The message should explain the product in terms the buyer already understands, with clear value instead of internal product language. If the route to market asks for a quick, low-friction decision, pricing should feel easy to try and easy to justify. If the product needs more buyer confidence, education, or stakeholder approval, the pricing and distribution model should support a longer sales motion rather than fight it."}</p>
-          <p>{"In practice, choose channels, pricing, and positioning as one system works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
-          <p>{"The goal is to keep choose channels, pricing, and positioning as one system concrete enough to guide action, while still tying each detail back to the main point of the section."}</p>
-          <h2>{"Build a short test plan for first customer traction"}</h2>
-          <p>{"A strong early test plan is short on purpose. Instead of trying many channels, messages, and offers at once, pick a small number of experiments that match your target customer and your current stage. That fits the basic GTM guidance from Asana and the startup-focused advice from Stone & Chalk: start with clear audience, messaging, channels, and goals, then execute in a way that is manageable with limited time and money. For a startup, the goal is not a perfect launch."}</p>
-          <p>{"You might be testing whether a specific customer segment responds to your message, whether a direct outreach approach gets more useful conversations than a broader awareness push, or whether your first sales motion can move someone to a next step. Startmate and Stone & Chalk both point to the need for founders to focus on essentials in the early stage. That means choosing a few tests you can actually run well, not building a long checklist of activity that spreads your attention too thin."}</p>
-          <p>{"As you run those tests, track signals that are closer to traction than raw reach alone. In an early go-to-market for startups, stronger signals include the quality of replies, how many prospects take the next step, whether new users activate in the product, and whether there are early signs they want to come back. Asana's GTM framework includes goals and execution, which supports this more practical view: measure the points where customer interest turns into action, not just impressions or clicks."}</p>
-          <p>{"If one path creates better conversations or faster movement, make that the centre of the next GTM iteration. A useful early plan is a loop: choose a few focused experiments, measure the steps that show intent, and use what you learn to sharpen the next version of your go-to-market strategy."}</p>
-          <ul>
-            <li>{"Look at response quality, next-step conversion, activation, and early retention clues."}</li>
-            <li>{"Use each test cycle to refine customer focus, messaging, and channel choice."}</li>
-          </ul>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e16d7d01-f0b0-4012-beeb-d15bf5970e61.jpg?alt=media&token=fc74da09-a857-435e-8111-ff9f563b9b6e"
-            alt="Build a short test plan for first customer traction"
-            caption="Build a short test plan for first customer traction"
-            width={1200}
-            height={800}
-          />
-          <h2>{"Turn your GTM strategy into a repeatable next step"}</h2>
-          <p>{"The most useful next step is usually the simplest one: narrow your focus. Stripe describes a go-to-market strategy as a plan that connects target customers, pricing, sales, and distribution channels. That only works well when the target customer is clear. For an early-stage startup, the goal is not to cover the whole market. It is to choose the segment and problem where you can earn traction fastest, then build a consistent motion around that choice."}</p>
-          <p>{"Once that segment is clear, make the rest of the GTM choices match how that buyer actually buys. Asana frames GTM as a practical execution plan that covers audience, messaging, channels, sales planning, and goals. A GTM strategy becomes more useful when these parts support each other instead of pulling in different directions."}</p>
-          <p>{"Stone & Chalk emphasises focusing on the essentials in the early stage, especially when time and resources are limited. So rather than scaling too early, test a small number of outreach, messaging, or channel ideas, review the evidence, and refine the motion. Strong go to market for startups work is usually less about a perfect launch and more about building a repeatable path to first customers."}</p>
-          <ul>
-            <li>{"Choose one customer segment and one urgent problem."}</li>
-            <li>{"Align positioning, pricing, and channels to that buyer."}</li>
-          </ul>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f5ac82c5-466e-4ba0-b2ae-2cd8128aa7ee.jpg?alt=media&token=c2078f34-d665-438e-bb2a-f20bb0f148a1"
-            alt="Team gathered around a whiteboard narrowing go-to-market priorities, pricing, and customer focus in"
-            caption="Turn your GTM strategy into a repeatable next step"
-            width={1200}
-            height={800}
-          />
-
-        <QuoteBlock title="Keep moving forward" variant="orange">
-          {"Early startup GTM strategies are usually founder-led, focused, and test-based rather than broad and automated. The aim is to learn which segment, message, and motion create repeatable customer response."}
-        </QuoteBlock>
-
-        <MLAITemplateResourceCTA />
-
-      <ArticleReferences
-        references={[
-          {id: 1, href: "https://xgrowth.com.au/blogs/go-to-market-strategy-examples/", title: "Go-to-Market Strategy Examples - xGrowth", publisher: "xgrowth.com.au", description: "Authoritative reference supporting Go-to-Market Strategy Examples - xGrowth.", category: "guide"},
-          {id: 2, href: "https://stripe.com/resources/more/what-is-a-go-to-market-strategy-a-quick-gtm-guide-for-startups", title: "What is a go-to-market strategy? A quick GTM guide | Stripe", publisher: "stripe.com", description: "Authoritative reference supporting What is a go-to-market strategy? A quick GTM guide | Stripe.", category: "guide"},
-          {id: 3, href: "https://www.stoneandchalk.com.au/articles/go-to-market-strategy-guide-for-saas-startups", title: "Go-to-market strategy guide for SaaS startups | Stone & Chalk", publisher: "stoneandchalk.com.au", description: "Authoritative reference supporting Go-to-market strategy guide for SaaS startups | Stone & Chalk.", category: "guide"},
-          {id: 4, href: "https://xgrowth.com.au/blogs/go-to-market-checklist/", title: "Go-to-Market Checklist - xGrowth", publisher: "xgrowth.com.au", description: "Authoritative reference supporting Go-to-Market Checklist - xGrowth.", category: "guide"},
-          {id: 5, href: "https://aws.amazon.com/startups/learn/prove-whats-possible-make-your-idea-success-solid-go-to-market-strategy", title: "Make your idea a success with a solid go-to-market strategy | AWS Startups", publisher: "aws.amazon.com", description: "Authoritative reference supporting Make your idea a success with a solid go-to-market strategy | AWS Startups.", category: "guide"},
-          {id: 6, href: "https://arisegtm.com/blog/go-to-market-strategy-for-startups", title: "Go-To-Market Strategy for Startups", publisher: "arisegtm.com", description: "Authoritative reference supporting Go-To-Market Strategy for Startups.", category: "guide"},
-          {id: 7, href: "https://www.upliftgtm.com/blog/gtm-checklist", title: "GTM Checklist: 50-Point Go-to-Market Launch Checklist", publisher: "upliftgtm.com", description: "Authoritative reference supporting GTM Checklist: 50-Point Go-to-Market Launch Checklist.", category: "guide"},
-          {id: 8, href: "https://asana.com/resources/go-to-market-gtm-strategy", title: "Go to market GTM strategy: definition & 9-step guide [2026] \u2022 Asana", publisher: "asana.com", description: "Authoritative reference supporting Go to market GTM strategy: definition & 9-step guide [2026] \u2022 Asana.", category: "guide"},
-          {id: 9, href: "https://www.wrike.com/go-to-market-guide/", title: "Beginner's Guide to Go-To-Market Strategy | Wrike", publisher: "wrike.com", description: "Authoritative reference supporting Beginner's Guide to Go-To-Market Strategy | Wrike.", category: "guide"},
-          {id: 10, href: "https://workdash.com.au/go-to-market-strategies/", title: "Go to Market Strategy: What Startups Need to Know", publisher: "workdash.com.au", description: "Authoritative reference supporting Go to Market Strategy: What Startups Need to Know.", category: "guide"},
-        ]}
-        heading="Sources & further reading"
-      />
-
-        <ArticleDisclaimer />
-
-        <div className="my-12 not-prose">
-          <ArticleCompanyCTA
-            title="Need a clearer startup GTM plan?"
-            body="Use the guide to narrow your first customer, choose a small set of channels, and build a short test loop around real customer behaviour."
-            buttonText="Browse startup articles"
-            buttonHref="/articles"
-          />
-        </div>
-      </div>
-
-        <AuthorBio author={authorDetails} />
-
-        <div className="mt-12">
-          <ArticleFAQ items={faqItems} />
-        </div>
-
-        <ArticleFooterNav backHref="/articles" topHref="#" />
-    </>
-  )
+      <h2 id="peer-review" className="scroll-mt-28">Take one unresolved decision to peers</h2>
+      <p>Bring an anonymised version of your worksheet and one question—such as whether your fit rule distinguishes a user from a buyer—to a relevant founder or AI discussion. Give useful context without sharing prospect identities, confidential quotes or contact lists. MLAI events are for participation and learning, not guaranteed customer introductions.</p>
+    <p><Link to="/events">Explore upcoming MLAI events</Link> and check the listing for its topic, format and participation requirements.</p>
+      <p>If your next task is organising company evidence for an update or content plan, explore <Link to="/founder-tools/start">Founder Tools</Link>; opening a workspace requires an account. Keep pending experiments distinct from confirmed results. No worksheet is automatically imported, and a polished update is not customer evidence.</p>
+      <p><small>Sources checked 15 September 2026. The worksheet, synthetic dataset and decision framework are editorial aids; neither linked organisation has endorsed or validated them. {GTM_REVIEW_STATUS} This page does not claim original customer research or a completed pilot.</small></p>
+      <ArticleFAQ items={faqItems} />
+    </div>
+  </div>;
 }

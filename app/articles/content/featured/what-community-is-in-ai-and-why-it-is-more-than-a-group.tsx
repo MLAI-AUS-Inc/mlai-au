@@ -158,9 +158,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -293,12 +291,12 @@ export default function ArticleContent() {
 
       <ArticleReferences
           references={[
-            {id: 1, href: "https://en.wikipedia.org/wiki/Community", title: "Community - Wikipedia", publisher: "en.wikipedia.org", description: "Authoritative reference supporting Community - Wikipedia.", category: "guide"},
-            {id: 2, href: "https://bevy.com/b/blog/why-community-events-matter-more-in-the-ai-era-not-less", title: "Why Community Events Matter More in the AI Era, Not Less - Bevy", publisher: "bevy.com", description: "Authoritative reference supporting Why Community Events Matter More in the AI Era, Not Less - Bevy.", category: "guide"},
-            {id: 3, href: "https://www.carriemelissajones.com/blog/what-is-community-strategy", title: "What is Community Strategy? \u2014 The CMJ Group by Carrie Melissa Jones", publisher: "carriemelissajones.com", description: "Authoritative reference supporting What is Community Strategy? \u2014 The CMJ Group by Carrie Melissa Jones.", category: "guide"},
-            {id: 4, href: "https://stackoverflow.co/internal/resources/why-your-ai-project-needs-a-community-of-practice-and-how-to-build-one/", title: "Why your AI project needs a community of practice and how to build one - Stack Overflow", publisher: "stackoverflow.co", description: "Authoritative reference supporting Why your AI project needs a community of practice and how to build one - Stack Overflow.", category: "guide"},
-            {id: 5, href: "https://deb-schell.medium.com/ai-isnt-replacing-community-it-s-redefining-how-we-build-it-77062c67a796", title: "Medium", publisher: "deb-schell.medium.com", description: "Authoritative reference supporting Medium.", category: "guide"},
-            {id: 6, href: "https://www.activenetwork.com/blog/the-importance-of-small-business-in-your-community", title: "The Importance Of Small Business In Your Community | ACTIVE Network Blog", publisher: "activenetwork.com", description: "Authoritative reference supporting The Importance Of Small Business In Your Community | ACTIVE Network Blog.", category: "guide"},
+            {id: 1, href: "https://en.wikipedia.org/wiki/Community", title: "Community - Wikipedia", publisher: "en.wikipedia.org", description: "", category: "guide"},
+            {id: 2, href: "https://bevy.com/b/blog/why-community-events-matter-more-in-the-ai-era-not-less", title: "Why Community Events Matter More in the AI Era, Not Less - Bevy", publisher: "bevy.com", description: "", category: "guide"},
+            {id: 3, href: "https://www.carriemelissajones.com/blog/what-is-community-strategy", title: "What is Community Strategy? \u2014 The CMJ Group by Carrie Melissa Jones", publisher: "carriemelissajones.com", description: "", category: "guide"},
+            {id: 4, href: "https://stackoverflow.co/internal/resources/why-your-ai-project-needs-a-community-of-practice-and-how-to-build-one/", title: "Why your AI project needs a community of practice and how to build one - Stack Overflow", publisher: "stackoverflow.co", description: "", category: "guide"},
+            {id: 5, href: "https://deb-schell.medium.com/ai-isnt-replacing-community-it-s-redefining-how-we-build-it-77062c67a796", title: "Medium", publisher: "deb-schell.medium.com", description: "", category: "guide"},
+            {id: 6, href: "https://www.activenetwork.com/blog/the-importance-of-small-business-in-your-community", title: "The Importance Of Small Business In Your Community | ACTIVE Network Blog", publisher: "activenetwork.com", description: "", category: "guide"},
           ]}
           heading="Sources & further reading"
         />

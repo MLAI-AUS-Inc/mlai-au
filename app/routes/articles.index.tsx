@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { redirect } from "react-router";
 import {
     getArticlesSortedNewestFirst,
     resolveArticleRouteSlug,
@@ -47,9 +48,28 @@ export function meta({ data }: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
     const url = new URL(request.url);
-    const pageParam = url.searchParams.get("page");
-    const parsed = parseInt(pageParam ?? '1', 10);
-    const pageNumber = Number.isNaN(parsed) ? 1 : Math.max(1, parsed);
+    const pageParams = url.searchParams.getAll("page");
+    const pageParam = pageParams[0];
+    const pageNumber = pageParam === undefined ? 1 : Number(pageParam);
+    const totalPages = Math.max(1, Math.ceil(getArticlesSortedNewestFirst().length / PAGE_SIZE));
+
+    // Invalid pages must not return a copy of the last page with a new canonical URL.
+    if (
+        pageParams.length > 1 ||
+        (pageParam !== undefined && !/^\d+$/.test(pageParam)) ||
+        !Number.isSafeInteger(pageNumber) ||
+        pageNumber < 1 ||
+        pageNumber > totalPages
+    ) {
+        throw new Response("Article page not found", { status: 404 });
+    }
+
+    if (url.pathname !== "/articles" || (pageParam !== undefined && (pageNumber === 1 || pageParam !== String(pageNumber)))) {
+        url.pathname = "/articles";
+        if (pageNumber === 1) url.searchParams.delete("page");
+        else url.searchParams.set("page", String(pageNumber));
+        return redirect(`${url.pathname}${url.search}`, 301);
+    }
 
     return { page: pageNumber };
 }

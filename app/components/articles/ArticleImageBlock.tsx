@@ -20,6 +20,7 @@ export function ArticleImageBlock({
     imageClassName = '',
     caption,
 }: ArticleImageBlockProps) {
+    if (!src.trim()) return null;
     return (
         <figure className={`my-12 max-w-3xl mx-auto ${containerClassName}`}>
             <ImageWithFallback

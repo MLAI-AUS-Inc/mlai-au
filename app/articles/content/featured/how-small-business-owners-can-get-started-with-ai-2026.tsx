@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -105,7 +104,7 @@ export const faqItems: FAQ[] = [
 /** ===== Summary Highlights (used by ArticleHeroHeader) ===== */
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
-  intro: 'Brief, factual overview referencing current Australian context.',
+  intro: "Start with one bounded task, compare the result with your current process and include the time spent checking and correcting the output.",
   items: [
     { label: 'What’s a good first AI project for a small business?', description: 'Pick one repeatable task (e.g., customer reply drafts or FAQs) and run a 2–4 week pilot.' },
     { label: 'How much does it cost to start using AI in 2026?', description: '$0–$50 per user/month for mainstream tools; keep pilots under $500 total.' },
@@ -274,14 +273,7 @@ export default function ArticleContent() {
           accent="teal"
         />
 
-        <ArticleResourceCTA
-          eyebrow="Resources"
-          title={`Get templates for ${TOPIC}`}
-          description="Download a pilot plan, risk checklist, and prompt examples to get moving faster."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <h2>Choosing tools that fit how you already work</h2>
 <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-457d6857-02d1-4d48-b737-7db763113054.jpg?alt=media&token=7261b560-3a15-4cbe-a28f-62b1ce79ba7a" alt="A vibrant 90s film-inspired scene showcasing a diverse team collaborating in a tech startup environment." className="w-full rounded-lg my-8" />

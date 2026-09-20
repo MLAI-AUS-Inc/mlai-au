@@ -762,8 +762,16 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   }
 
   return {
+    updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
+    creationKey: asNullableString(payload.creationKey),
+    updateDate: asNullableString(payload.updateDate),
+    datePrecision: payload.datePrecision === "month" ? "month" as const : payload.datePrecision === "day" ? "day" as const : undefined,
+    firstPublishedAt: asNullableString(payload.firstPublishedAt),
+    narrativePeriod: (payload.narrativePeriod || null) as VibeRaisingMonthlyUpdate["narrativePeriod"],
+
     revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
     revisionHash: asNullableString(payload.revisionHash),
+    metricEvidence: asRecord(payload.metricEvidence) as VibeRaisingMonthlyUpdate["metricEvidence"],
     month: asNullableString(payload.month) ?? undefined,
     year: yearValue,
     coverImage: normalizeUpdateCover(payload.coverImage ?? structuredMemo.cover_image),
@@ -904,6 +912,12 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
         : undefined;
 
   return {
+    updateId: asNullableIdentifier(payload.updateId ?? payload.draftId ?? payload.draft_id),
+    creationKey: asNullableString(payload.creationKey),
+    updateDate: asNullableString(payload.updateDate),
+    datePrecision: payload.datePrecision === "month" ? "month" : payload.datePrecision === "day" ? "day" : undefined,
+    firstPublishedAt: asNullableString(payload.firstPublishedAt),
+    narrativePeriod: (payload.narrativePeriod || null) as VibeRaisingMonthlyUpdate["narrativePeriod"],
     revisionId: payload.revisionId == null ? null : Number(payload.revisionId),
     revisionHash: asNullableString(payload.revisionHash),
     draftId: typeof draftId === "number" && Number.isFinite(draftId) ? draftId : undefined,
@@ -1086,6 +1100,14 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
     monthLabel;
 
   return {
+    progressCharts: Array.isArray(payload.progressCharts) ? payload.progressCharts as VibeRaisingMonthlyUpdate["progressCharts"] : null,
+    updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
+    creationKey: asNullableString(payload.creationKey),
+    updateDate: asNullableString(payload.updateDate),
+    datePrecision: payload.datePrecision === "month" ? "month" as const : payload.datePrecision === "day" ? "day" as const : undefined,
+    firstPublishedAt: asNullableString(payload.firstPublishedAt),
+    narrativePeriod: (payload.narrativePeriod || null) as VibeRaisingMonthlyUpdate["narrativePeriod"],
+
     id,
     weekStart: asNullableString(payload.weekStart ?? payload.week_start),
     weekEnd: asNullableString(payload.weekEnd ?? payload.week_end),
@@ -1815,6 +1837,13 @@ function normalizeStartupUpdateStatus(
       payload.step_states,
   );
   return {
+    updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
+    creationKey: asNullableString(payload.creationKey),
+    updateDate: asNullableString(payload.updateDate),
+    datePrecision: payload.datePrecision === "month" ? "month" as const : payload.datePrecision === "day" ? "day" as const : undefined,
+    firstPublishedAt: asNullableString(payload.firstPublishedAt),
+    narrativePeriod: (payload.narrativePeriod || null) as VibeRaisingMonthlyUpdate["narrativePeriod"],
+
     state: normalizeStartupUpdateState(payload.state),
     gmailConnected: Boolean(
       payload.gmailConnected ??
@@ -2618,6 +2647,10 @@ export async function saveVibeRaisingMonthlyUpdate(
   env: Env,
   request: Request,
   body: {
+    chartSelections?: import("~/lib/startup-progress").ProgressChartSpec[];
+    updateId?: string | null;
+    creationKey?: string | null;
+    updateDate?: string | null;
     companyId?: string | null;
     expectedRevision?: number | null;
     month: string;
@@ -4128,6 +4161,13 @@ export async function getVibeRaisingXeroPreview(
 export async function runVibeRaisingStartupUpdate(
   backendBaseUrl: string,
   options?: {
+    companyId?: string;
+    updateId?: string | null;
+    creationKey?: string | null;
+    updateDate?: string | null;
+    expectedRevision?: number | null;
+    narrativeStart?: string | null;
+    narrativeEnd?: string | null;
     forceRegenerate?: boolean;
     inputSources?: VibeRaisingInputSourceKey[];
     targetMonth?: string | null;
@@ -4136,6 +4176,9 @@ export async function runVibeRaisingStartupUpdate(
   },
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const body: Record<string, unknown> = {};
+  for (const key of ["companyId", "updateId", "creationKey", "updateDate", "expectedRevision", "narrativeStart", "narrativeEnd"] as const) {
+    if (options?.[key] != null) body[key] = options[key];
+  }
   if (options?.forceRegenerate) {
     body.forceRegenerate = true;
   }

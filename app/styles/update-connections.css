@@ -1,0 +1,154 @@
+/* A source library and an in-context inspector, inside the Gallery app shell. */
+.connections-page { --vr-font-title: "Roboto", system-ui, sans-serif; --connection-line: #dedfd8; --connection-muted: #72786f; }
+.connections-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 8px 0 32px; border-bottom: 1px solid var(--connection-line); }
+.connections-header h1 { font-family: inherit; font-size: clamp(34px, 4vw, 48px); font-weight: 500; letter-spacing: -.055em; line-height: 1.1; margin-top: 18px; }
+.connections-header h1 > span { color: #009780; }
+.connections-intro { margin: 13px 0 0; color: var(--connection-muted); font-size: 14px; line-height: 1.6; }
+.connections-refresh { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 12px; font-size: 12px; color: #596358; border: 1px solid var(--connection-line); border-radius: 6px; }
+.connections-refresh:hover { background: white; }
+.connections-refresh:disabled { opacity: .6; }
+.connections-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 44px; align-items: start; padding-top: 32px; }
+.connections-library { min-width: 0; }
+.connections-section-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.connections-page h2 { font-family: inherit; font-size: 20px; font-weight: 500; letter-spacing: -.025em; }
+.connections-page h3 { font-weight: 500; font-family: inherit; text-transform: none; }
+.connections-section-heading > span { font-size: 11px; color: var(--connection-muted); }
+.connections-help { color: var(--connection-muted); font-size: 12px; line-height: 1.6; margin: 8px 0 22px; }
+.connections-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.connection-source { min-width: 0; background: #ffffff80; border: 1px solid var(--connection-line); border-radius: 9px; overflow: hidden; scroll-margin-top: 100px; transition: border-color .15s, background .15s; }
+.connection-source[data-on="true"] { background: #edf3e9; border-color: #bccdb5; }
+.connection-source[data-inspected="true"] { outline: 2px solid #47725b; outline-offset: 2px; }
+.connections-grid .connector-tile { height: auto; min-height: 109px; padding: 16px 15px 10px; border: 0; border-radius: 0; box-shadow: none; background: transparent; grid-template-columns: 29px minmax(0,1fr) auto; gap: 8px; }
+.connections-grid .connector-tile:hover { background: #ffffff60; }
+.connections-grid .connector-tile:focus-visible { outline-offset: -3px; }
+.connections-grid .connector-logo { height: 29px; width: 29px; }
+.connections-grid .connector-logo--stripe { font-size: 24px; }
+.connections-grid .connector-logo--xero { font-size: 9px; }
+.connections-grid .connector-tile-name { font-size: 14px; font-weight: 500; color: #252c28; }
+.connections-grid .connector-tile-state { gap: 5px; font-size: 10px; padding: 4px 7px; border: 1px solid #d9dcd5; border-radius: 20px; background: #ffffff70; }
+.connections-grid .connector-tile[data-on="true"] .connector-tile-state { background: #244e3c; color: #fff; border-color: #244e3c; }
+.connections-grid .connector-tile[data-on="true"] .connector-tile-state i { background: #a6e0b6; }
+.connections-grid .connector-tile-description { font-size: 11px; color: #667163; }
+.connections-grid .connector-tile-status { font-size: 10px; color: #5b695a; }
+.connection-manage { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; min-height: 34px; padding: 8px 15px; text-align: left; border-top: 1px solid #d1d8cb80; font-size: 10px; color: #667163; }
+.connection-manage span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.connection-manage svg { flex-shrink: 0; }
+.connection-manage:hover { background: #ffffff90; color: #174c3a; }
+.connection-manage:focus-visible { outline-offset: -3px; }
+.connections-inspector { min-width: 0; border: 1px solid var(--connection-line); background: #ffffff85; border-radius: 11px; padding: 25px; position: sticky; top: 92px; }
+.connections-inspector:has(.connection-inspector-heading) { max-height: calc(100dvh - 120px); overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; }
+.connections-draft-art { position: relative; height: 150px; margin: -2px 0 25px; border-radius: 7px; background: #e9ede2; overflow: hidden; }
+.connections-draft-art > svg { position: absolute; width: 100%; height: 100%; color: #839778; }
+.connections-art-node { position: absolute; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid #d2dbcb; border-radius: 9px; background: #fafbf7; z-index: 1; }
+.connections-art-node .connector-logo { width: 21px; height: 21px; }
+.connections-art-node .connector-logo--xero { font-size: 7px; }
+.connections-art-node--one { left: 10%; top: 13px; transform: rotate(-9deg); }
+.connections-art-node--two { left: 23%; top: 57px; }
+.connections-art-node--three { left: 8%; bottom: 13px; transform: rotate(8deg); }
+.connections-art-page { position: absolute; right: 11%; top: 21px; width: 81px; height: 107px; transform: rotate(7deg); background: #fffef9; border: 1px solid #cdd5c5; border-radius: 3px; padding: 12px; box-shadow: 0 5px 10px #3346220a; }
+.connections-art-page span { display: block; height: 29px; margin-bottom: 11px; background: #aabf9b; border-radius: 1px 12px 1px 1px; }
+.connections-art-page i { display: block; background: #d5dace; height: 2px; margin: 5px 0; }
+.connections-art-page i:nth-of-type(3) { width: 60%; }
+.connections-art-page b { font-size: 5px; letter-spacing: 1.1px; font-weight: 500; color: #456046; }
+.connections-eyebrow { font-size: 9px; letter-spacing: .11em; font-weight: 500; color: #718169; margin-bottom: 12px; }
+.connections-inspector > h2 { font-size: 26px; line-height: 1.2; letter-spacing: -.04em; font-weight: 400; }
+.connections-overview-copy { font-size: 13px; color: #6d7569; line-height: 1.75; margin: 13px 0 25px; }
+.connections-included { padding: 21px 0; border-top: 1px solid var(--connection-line); border-bottom: 1px solid var(--connection-line); }
+.connections-included > div { display: flex; align-items: baseline; gap: 10px; }
+.connections-included strong { font-size: 28px; font-weight: 400; line-height: 1; letter-spacing: -.05em; }
+.connections-included span { font-size: 12px; color: #52614d; }
+.connections-included ul { display: flex; flex-wrap: wrap; gap: 9px 12px; padding: 0; list-style: none; margin-top: 17px; }
+.connections-included li { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #5f6b58; }
+.connections-included .connector-logo { height: 14px; width: 14px; border-radius: 3px; font-size: 12px; }
+.connections-included .connector-logo--xero { border-radius: 50%; font-size: 4px; }
+.connections-included p { font-size: 12px; line-height: 1.6; color: #737a6c; margin-top: 12px; }
+.connections-finance-note { display: flex; align-items: flex-start; gap: 9px; font-size: 11px; line-height: 1.7; color: #737a6c; margin: 21px 0; }
+.connections-finance-note svg { flex-shrink: 0; margin-top: 2px; }
+.connections-finance-note strong { font-weight: 500; color: #424e3d; }
+.connections-materials-toggle { display: flex; width: 100%; align-items: center; gap: 10px; padding: 15px 0; text-align: left; border-top: 1px solid var(--connection-line); }
+.connections-materials-toggle > svg { flex-shrink: 0; color: #5c6b53; }
+.connections-materials-toggle > span:nth-child(2) { flex: 1; }
+.connections-materials-toggle strong { display: block; font-size: 12px; font-weight: 500; }
+.connections-materials-toggle small { display: block; font-size: 10px; line-height: 1.6; color: #78816f; margin-top: 4px; }
+.connections-materials-toggle > span:last-child { color: #17795f; font-size: 10px; white-space: nowrap; }
+.connections-materials:empty { display: none; }
+.connections-page #manual-materials-panel { border: 1px solid var(--connection-line); border-radius: 9px; box-shadow: none; margin: 24px 0 0; scroll-margin-top: 95px; }
+.connection-overview-link { font-size: 11px; color: #62705c; min-height: 30px; margin: -5px 0 15px; }
+.connection-inspector-heading { display: flex; align-items: center; gap: 13px; }
+.connection-inspector-heading > .connector-logo { width: 36px; height: 36px; }
+.connection-inspector-heading h2 { font-size: 24px; line-height: 1.2; }
+.connection-inspector-heading p { font-size: 11px; line-height: 1.5; color: var(--connection-muted); margin-top: 5px; }
+.connection-account-status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; border-block: 1px solid var(--connection-line); padding: 14px 0; margin: 22px 0 12px; font-size: 10px; color: #70796a; }
+.connection-account-status span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.connection-account-status i { width: 5px; height: 5px; background: #989c93; border-radius: 50%; }
+.connection-account-status [data-connected="true"] { color: #2f7152; }
+.connection-account-status [data-connected="true"] i { background: #2f7152; }
+.connection-account-label { font-size: 12px; overflow-wrap: anywhere; }
+.connection-detail-intro, .connection-connect-prompt p { font-size: 12px; line-height: 1.75; color: #727a6b; margin: 13px 0; }
+.connection-connect-prompt .update-button { margin-top: 5px; }
+.connection-sync-time { font-size: 10px; color: #77816f; margin: 10px 0; }
+.connection-readonly { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; line-height: 1.65; color: #556c4b; background: #edf3e8; padding: 12px; border-radius: 6px; margin: 18px 0; }
+.connection-readonly svg { flex-shrink: 0; }
+.connections-detail-body { margin-top: 23px; padding-top: 20px; border-top: 1px solid var(--connection-line); }
+.connections-detail-body > :is(div, section) { padding: 0; border: 0; background: transparent; box-shadow: none; border-radius: 0; }
+.connections-detail-body .font-black, .connections-detail-body .font-extrabold { font-weight: 500; }
+.connections-detail-body h2 { font-size: 16px; }
+.connections-detail-body :is(button, input, select, textarea) { border-radius: 6px; }
+.connections-detail-body .grid { grid-template-columns: minmax(0,1fr); }
+.connections-detail-body .text-sm { font-size: 12px; }
+.connections-detail-body .text-xs { font-size: 11px; }
+.connections-detail-body .bg-gray-50 { background: #f3f4ee; }
+.connections-detail-body .shadow-sm { box-shadow: none; }
+.connections-detail-body .text-slate-500 { color: #737c6e; }
+.connections-detail-body :is(td, th) { overflow-wrap: anywhere; }
+.connections-privacy { display: flex; align-items: flex-start; gap: 8px; color: #858c7d; font-size: 10px; line-height: 1.8; margin: 22px 0 0; }
+.connections-privacy svg { flex-shrink: 0; margin-top: 3px; }
+.connections-privacy a { text-underline-offset: 3px; text-decoration: underline; }
+.connections-page .update-actions { margin-top: 28px; }
+.connections-modal > div { border-radius: 12px; max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; }
+.connections-modal :is(h2,h3) { font-family: inherit; text-transform: none; font-weight: 500; }
+.connections-modal .font-black, .connections-modal .font-extrabold { font-weight: 500; }
+.connections-modal :is(button, input, section) { border-radius: 7px; }
+@media (max-width: 1100px) {
+  .connections-workspace { grid-template-columns: minmax(0,1fr) 280px; gap: 24px; }
+  .connections-inspector { padding: 20px; }
+  .connections-grid .connector-tile { grid-template-columns: 25px minmax(0,1fr) auto; gap: 7px; padding: 13px 11px 10px; }
+  .connections-grid .connector-tile-name { font-size: 12px; }
+  .connections-grid .connector-logo { width: 25px; height: 25px; }
+  .connection-manage { padding-inline: 11px; }
+}
+@media (max-width: 760px) {
+  .connections-workspace { grid-template-columns: minmax(0,1fr); gap: 25px; }
+  .connections-inspector { position: static; }
+  .connections-inspector:has(.connection-inspector-heading) { order: -1; max-height: none; overflow: visible; }
+  .connections-draft-art { display: none; }
+  .connections-included { padding: 17px 0; }
+  .connections-overview-copy { margin-bottom: 18px; }
+  .connections-inspector > h2 br { display: none; }
+  .connections-header { padding-top: 0; }
+  .connections-refresh { align-self: flex-start; margin-top: 45px; }
+  .connection-inspector-heading h2 { scroll-margin-top: 130px; }
+}
+@media (max-width: 480px) {
+  .connections-header { flex-wrap: wrap; gap: 17px; padding-bottom: 23px; }
+  .connections-refresh { margin: 0; min-height: 36px; }
+  .connections-workspace { padding-top: 23px; }
+  .connections-grid { gap: 10px; }
+  .connections-grid .connector-tile { min-height: 140px; grid-template-columns: 24px minmax(0,1fr); padding: 12px 10px; }
+  .connections-grid .connector-tile-state { grid-row: 2; grid-column: 1 / -1; justify-self: start; }
+  .connections-grid .connector-tile-description { min-height: 32px; }
+  .connections-help { margin-bottom: 18px; }
+  .connection-manage { min-height: 38px; }
+  .connections-inspector { padding: 20px; }
+  .connections-inspector > h2 { font-size: 23px; }
+}
+@media (prefers-reduced-motion: reduce) { .connection-source { transition: none; } }
+.connections-inspector { scroll-margin-top: 90px; }
+.connections-detail-body > section > .grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.connections-detail-body > section > .grid > div { padding: 12px; min-width: 0; overflow-wrap: anywhere; }
+.connections-detail-body > section > .grid > div:first-child:nth-last-child(3) { grid-column: 1 / -1; }
+@media (min-width: 1280px) {
+  .connections-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .connections-grid .connector-tile { min-height: 117px; }
+  .connections-grid .connector-tile-description { min-height: 17px; }
+}

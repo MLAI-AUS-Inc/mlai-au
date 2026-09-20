@@ -1,147 +1,123 @@
 .vr-workflow-layout {
-  --vr-workflow-sticky-top: 88px;
-  --vr-workflow-bottom-gap: 24px;
-  /* One caption row (18px) plus the shared 12px grid gap. */
-  --vr-workflow-caption-space: 30px;
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 12px;
-  max-width: 1400px;
-  margin-inline: auto;
-  align-items: stretch;
+  grid-template-columns: 150px minmax(0, 940px);
+  align-items: start;
+  gap: 40px;
+  max-width: 1130px;
+  margin: 20px auto 0;
 }
-.vr-workflow-sidebar, .vr-workflow-content { min-width: 0; }
-.vr-workflow-sticky { position: sticky; top: var(--vr-workflow-sticky-top); }
+.vr-workflow-content {
+  min-width: 0;
+}
+.vr-workflow-sidebar {
+  align-self: stretch;
+}
+.vr-workflow-sticky {
+  position: sticky;
+  top: 115px;
+  padding-top: 102px;
+}
 .vr-workflow-panel {
-  --workflow-mint: var(--vr-palette-mint, #00ffd7);
-  padding: 20px 4px;
-  border: 1px solid #323b38;
-  border-radius: 24px;
-  background: #191d1c;
-  color: #fff;
-  font-family: Roboto, sans-serif;
+  color: #789083;
+  font-family: "Roboto", system-ui, sans-serif;
 }
-.vr-workflow-eyebrow, .vr-workflow-footnote, .vr-workflow-step-copy { display: none; }
-.vr-workflow-steps { margin: 0; padding: 0; list-style: none; }
-.vr-workflow-step { position: relative; min-height: 100px; }
-.vr-workflow-step:last-child { min-height: 44px; }
-.vr-workflow-step-button {
-  position: relative;
+.vr-workflow-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  padding-left: 10px;
+  margin-bottom: 18px;
+  color: #849487;
+}
+.vr-workflow-steps {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  width: 100%;
-  min-height: 44px;
-  padding: 4px 2px;
-  text-align: left;
-  border-radius: 12px;
-  color: #a6b2ad;
-  cursor: pointer;
-  transition: background-color 180ms ease;
+  flex-direction: column;
+  gap: 9px;
+  list-style: none;
+  padding: 0;
 }
-.vr-workflow-step-button:disabled { cursor: default; }
-.vr-workflow-step-button:not(:disabled):hover { background: #00ffd714; }
-.vr-workflow-step-button:focus-visible { outline: 2px solid var(--workflow-mint); outline-offset: 4px; }
+.vr-workflow-step-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+}
+.vr-workflow-step-button:not(:disabled):hover {
+  background: #eaf0e9;
+}
+.vr-workflow-step-button:focus-visible {
+  outline: 2px solid #087f75;
+  outline-offset: 3px;
+}
 .vr-workflow-node {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  border: 1px solid #64736d;
+  width: 23px;
+  height: 23px;
+  border: 1px solid #d1ddd2;
   border-radius: 50%;
-  background: #252d29;
-  font-size: 13px;
-  font-weight: 800;
-  transition: background-color 400ms ease, box-shadow 400ms ease;
+  color: #8c9d90;
+  font-size: 10px;
 }
-.vr-workflow-step[data-complete="true"] .vr-workflow-node { background: var(--workflow-mint); color: #112e27; border-color: var(--workflow-mint); }
+.vr-workflow-step[data-active="true"] .vr-workflow-step-button {
+  background: #e7f0e7;
+  color: #28644c;
+  font-weight: 500;
+}
 .vr-workflow-step[data-active="true"] .vr-workflow-node {
-  background: var(--workflow-mint);
-  color: #112e27;
-  border-color: var(--workflow-mint);
-  box-shadow: 0 0 0 5px #00ffd719, 0 0 20px #00ffd724;
+  background: #28866a;
+  border-color: #28866a;
+  color: white;
 }
-.vr-workflow-track {
-  position: absolute;
-  top: 22px;
-  bottom: -22px;
-  left: 19px;
-  width: 3px;
-  background: #00ffd72e;
-  border-radius: 4px;
+.vr-workflow-step[data-complete="true"] .vr-workflow-node {
+  border-color: #b4d3c0;
+  color: #28866a;
 }
-.vr-workflow-fill {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--workflow-mint);
-  box-shadow: 0 0 10px #00ffd756;
-  transform-origin: top;
-  transition: transform 650ms cubic-bezier(.22, 1, .36, 1);
+.vr-workflow-small-progress {
+  height: 3px;
+  border-radius: 3px;
+  background: #e7ece5;
+  margin: 23px 10px;
+  overflow: hidden;
 }
-.vr-workflow-spark {
-  position: absolute;
-  left: -2px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #d8fff7;
-  box-shadow: 0 0 12px var(--workflow-mint);
-  transform: translateY(-50%);
-  transition: top 650ms cubic-bezier(.22, 1, .36, 1);
+.vr-workflow-small-progress span {
+  display: block;
+  background: #79aa8e;
+  height: 100%;
+  transition: width 0.2s;
 }
-.vr-workflow-node-ring { position: absolute; inset: -4px; width: 42px; height: 42px; transform: rotate(-90deg); }
-.vr-workflow-node-ring circle { fill: none; stroke: #fff; stroke-width: 2; transition: stroke-dashoffset 650ms ease; }
-.vr-workflow-mobile-heading { grid-column: 1 / -1; margin: 0; font: 700 12px/1.5 Roboto, sans-serif; color: #285447; }
-.vr-workflow-mobile-heading span { padding-inline: 4px; color: #74827d; }
-@media (min-width: 640px) {
+@media (max-width: 1023px) {
+  .vr-workflow-layout {
+    display: block;
+    margin-top: 8px;
+  }
+  .vr-workflow-sticky {
+    position: static;
+    padding: 0;
+  }
   .vr-workflow-panel {
-    display: flex;
-    flex-direction: column;
-    height: calc(100dvh - var(--vr-workflow-sticky-top) - var(--vr-workflow-bottom-gap) - var(--vr-workflow-caption-space));
-    overflow-y: auto;
+    margin-bottom: 24px;
   }
-  .vr-workflow-steps { display: flex; flex: 1; flex-direction: column; }
-  .vr-workflow-step { flex: 1; }
-  .vr-workflow-step:last-child { flex: 0 0 auto; }
-  .vr-workflow-eyebrow, .vr-workflow-footnote { flex-shrink: 0; }
-  .vr-workflow-layout .vr-stepbar-content-aligned {
-    left: var(--vr-stepbar-left);
-    right: auto;
-    width: var(--vr-stepbar-width);
-    margin-top: 0;
+  .vr-workflow-eyebrow,
+  .vr-workflow-small-progress {
+    display: none;
   }
-  .vr-workflow-layout .vr-stepbar-content-aligned[data-positioned="false"] {
-    position: relative;
-    inset: auto;
-    width: 100%;
+  .vr-workflow-steps {
+    flex-direction: row;
+    gap: 8px;
   }
-}
-@media (min-width: 1280px) {
-  .vr-workflow-layout { --vr-workflow-caption-space: 0px; grid-template-columns: 216px minmax(0, 1fr); gap: 24px; }
-  .vr-workflow-panel { padding: 24px 16px; }
-  .vr-workflow-eyebrow { display: block; margin: 0 0 28px 2px; color: var(--workflow-mint); font-size: 10px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
-  .vr-workflow-step { min-height: 128px; }
-  .vr-workflow-step:last-child { min-height: 88px; }
-  .vr-workflow-step-copy { display: block; min-width: 0; padding-top: 3px; }
-  .vr-workflow-step-title { display: block; color: #c5cfc9; font: 600 18px/1.3 Oswald, sans-serif; }
-  .vr-workflow-step[data-active="true"] .vr-workflow-step-title { color: #fff; }
-  .vr-workflow-step-detail { display: block; margin-top: 6px; font-size: 11px; line-height: 1.5; color: #a6b2ad; }
-  .vr-workflow-current { display: block; margin-top: 8px; font-size: 10px; font-weight: 700; color: var(--workflow-mint); }
-  .vr-workflow-footnote { display: block; margin: 18px 0 0; padding-top: 16px; border-top: 1px solid #ffffff14; color: #a6b2ad; font-size: 11px; line-height: 1.6; }
-  .vr-workflow-mobile-heading { display: none; }
-}
-@media (max-width: 639px) {
-  .vr-workflow-content > .mlai-vibe-update { padding-inline: 0; }
-}
-@media (max-height: 700px) {
-  .vr-workflow-step { min-height: 88px; }
-  .vr-workflow-eyebrow { margin-bottom: 16px; }
-  .vr-workflow-footnote { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .vr-workflow-panel *, .vr-workflow-panel *::before, .vr-workflow-panel *::after { transition: none !important; animation: none !important; }
+  .vr-workflow-step {
+    flex: 1;
+  }
+  .vr-workflow-step-button {
+    justify-content: center;
+    font-size: 12px;
+    gap: 8px;
+  }
 }

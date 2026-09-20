@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from "@heroicons/react/24/outline";
 import type { VibeRaisingAppUser, VibeRaisingMonthlyUpdate } from "~/types/vibe-raising";
-import { getUpdateExcerpt, getUpdatePeriod, getUpdateTitles, sortStartupUpdates } from "~/lib/startup-updates-presentation";
+import { getUpdateExcerpt, getUpdatePeriod, getUpdateTitles, sortStartupUpdates, groupStartupUpdatesByMonth, getUpdateTimeLabels, updateCalendarDate } from "~/lib/startup-updates-presentation";
 import type { UpdatesFinancialSeries } from "~/lib/startup-updates-presentation";
 import UpdatesIncomeChart from "./UpdatesIncomeChart";
 import "~/styles/startup-updates.css";
@@ -14,27 +14,29 @@ function UpdateCover({ update, companyName, featured }: { update: VibeRaisingMon
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const period = getUpdatePeriod(update);
   const number = period.month?.slice(5, 7) || "—";
-  const imageUrl = update.coverImageUrl?.trim();
+  const imageUrl = update.coverImage?.url || update.coverImageUrl?.trim();
   const safeImage = imageUrl && (/^https?:\/\//.test(imageUrl) || /^\/(?!\/)/.test(imageUrl));
   if (safeImage && failedImage !== imageUrl) {
     return <img src={imageUrl} alt="" width={800} height={440}
       loading={featured ? "eager" : "lazy"} onError={() => setFailedImage(imageUrl)}
       className="h-full w-full object-cover transition-transform duration-500 motion-reduce:transition-none group-hover:scale-[1.025]" />;
   }
-  return <div className={`update-cover update-cover--${COVER_PALETTES[(Number(number) || 0) % COVER_PALETTES.length]}`} aria-hidden="true">
+  return <div className={`update-cover update-cover--${COVER_PALETTES[Array.from(update.id).reduce((sum, char) => sum + char.charCodeAt(0), 0) % COVER_PALETTES.length]}`} aria-hidden="true">
     <span className="update-cover-orbit" /><span className="update-cover-rule" />
     <span className="update-cover-brand">{companyName}</span><span className="update-cover-number">{number}</span>
-    <span className="update-cover-caption">THE UPDATE</span><span className="update-cover-year">{period.year}</span>
+    <span className="update-cover-caption">{period.date ? `${Number(period.date.slice(8))} ${period.monthName?.toUpperCase()}` : "THE UPDATE"}</span><span className="update-cover-year">{period.year}</span>
   </div>;
 }
 
-export function UpdateStoryCard({ update, title, companyName, variant = "compact" }: {
-  update: VibeRaisingMonthlyUpdate; title: string; companyName: string; variant?: "featured" | "compact" | "archive";
+export function UpdateStoryCard({ update, title, companyName, variant = "compact", timeLabel }: {
+  update: VibeRaisingMonthlyUpdate; title: string; companyName: string; variant?: "featured" | "compact" | "archive"; timeLabel?: string;
 }) {
   const featured = variant === "featured";
   const compact = variant === "compact";
   const period = getUpdatePeriod(update);
   const excerpt = getUpdateExcerpt(update);
+  const financialCutoff = updateCalendarDate(update.reportingPeriod?.cutoff, update.reportingPeriod?.timezone || "UTC");
+  const cutoffLabel = financialCutoff ? new Date(`${financialCutoff}T12:00:00Z`).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "UTC" }) : null;
   const href = `/founder-tools/updates/${encodeURIComponent(update.id)}`;
   return <article className={`min-w-0 ${compact ? "border-b border-[#dfe6e2] py-5 first:pt-0 last:border-0" : ""}`}>
     <Link to={href} className={`group block rounded-xl ${LINK_FOCUS} ${compact ? "grid grid-cols-[minmax(0,1fr)_112px] items-start gap-5 sm:grid-cols-[minmax(0,1fr)_144px] lg:grid-cols-[minmax(0,1fr)_120px] xl:grid-cols-[minmax(0,1fr)_150px]" : ""}`}
@@ -46,7 +48,8 @@ export function UpdateStoryCard({ update, title, companyName, variant = "compact
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-500">
           {featured && <span className="font-semibold tracking-[0.12em] text-teal-800">LATEST UPDATE</span>}
           {period.year && <span>{period.year}</span>}
-          {update.reportingPeriod?.is_partial && <span>· Month to date{period.date ? ` · through ${Number(period.date.slice(8))} ${period.monthName}` : ""}</span>}
+          {timeLabel && <span>{timeLabel}</span>}
+          {update.reportingPeriod?.is_partial && <span>· {cutoffLabel ? `Figures through ${cutoffLabel}` : "Partial financial period"}</span>}
           {update.evidenceStatus === "legacy_unverified" && <span>· Unverified archive</span>}
         </div>
         <h3 className={`mt-2 font-semibold tracking-tight text-[#152c34] transition-colors group-hover:text-teal-800 ${featured ? "text-3xl leading-tight sm:text-[2.5rem]" : compact ? "text-xl leading-snug" : "text-2xl"}`}>{title}</h3>
@@ -68,10 +71,12 @@ export default function StartupUpdatesPage({ user, updates, financialSeries, run
 }) {
   const [params] = useSearchParams();
   const all = params.get("view") === "all";
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [visibleMonths, setVisibleMonths] = useState(6);
   const ordered = sortStartupUpdates(updates);
   // Count the whole collection before taking the featured/side/archive slices.
   const titles = getUpdateTitles(ordered);
+  const timeLabels = getUpdateTimeLabels(ordered);
+  const months = groupStartupUpdatesByMonth(ordered);
   const companyName = user.companyName.trim() || "Your Startup";
   const owner = user.role === "founder";
   const latestParams = new URLSearchParams(params);
@@ -105,17 +110,27 @@ export default function StartupUpdatesPage({ user, updates, financialSeries, run
         <h2 id="all-updates-heading" className="text-2xl font-semibold tracking-tight text-[#152c34]">All updates <span className="ml-2 text-base font-normal text-slate-500">{ordered.length}</span></h2>
         <Link to={latestHref} className={`inline-flex min-h-11 items-center gap-2 rounded text-sm font-medium text-teal-800 ${LINK_FOCUS}`}><ArrowLeftIcon className="h-4 w-4" /> Latest updates</Link>
       </div>
-      <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 xl:grid-cols-3">
-        {ordered.slice(0, visibleCount).map(update => <UpdateStoryCard key={update.id} update={update} title={titles.get(update.id)!} companyName={companyName} variant="archive" />)}
+      <div className="space-y-14 sm:space-y-20">
+        {months.slice(0, visibleMonths).map(group => (
+          <section key={group.key} aria-labelledby={`updates-month-${group.key}`}>
+            <header className="mb-6 flex items-baseline gap-3 border-b border-[#dfe6e2] pb-4">
+              <h3 id={`updates-month-${group.key}`} className="text-xl font-semibold tracking-tight text-[#152c34]">{group.label}</h3>
+              <span className="text-sm text-slate-500">{group.updates.length} {group.updates.length === 1 ? "update" : "updates"}</span>
+            </header>
+            <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 xl:grid-cols-3">
+              {group.updates.map(update => <UpdateStoryCard key={update.id} update={update} title={titles.get(update.id)!} timeLabel={timeLabels.get(update.id)} companyName={companyName} variant="archive" />)}
+            </div>
+          </section>
+        ))}
       </div>
-      {visibleCount < ordered.length && <button type="button" onClick={() => setVisibleCount(count => count + 12)}
-        className={`mx-auto mt-10 block min-h-11 rounded-xl border border-teal-800 px-6 py-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 ${LINK_FOCUS}`}>Show more updates</button>}
+      {visibleMonths < months.length && <button type="button" onClick={() => setVisibleMonths(count => count + 6)}
+        className={`mx-auto mt-10 block min-h-11 rounded-xl border border-teal-800 px-6 py-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 ${LINK_FOCUS}`}>Show earlier months</button>}
     </section> : <section aria-labelledby="latest-updates-heading">
       <h2 id="latest-updates-heading" className="mb-6 text-2xl font-semibold tracking-tight text-[#152c34]">Latest updates</h2>
       <div className="grid items-start gap-9 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] xl:gap-12">
-        <UpdateStoryCard update={ordered[0]} title={titles.get(ordered[0].id)!} companyName={companyName} variant="featured" />
+        <UpdateStoryCard update={ordered[0]} title={titles.get(ordered[0].id)!} timeLabel={timeLabels.get(ordered[0].id)} companyName={companyName} variant="featured" />
         <div className="min-w-0">
-          {ordered.slice(1, 4).map(update => <UpdateStoryCard key={update.id} update={update} title={titles.get(update.id)!} companyName={companyName} />)}
+          {ordered.slice(1, 4).map(update => <UpdateStoryCard key={update.id} update={update} title={titles.get(update.id)!} timeLabel={timeLabels.get(update.id)} companyName={companyName} />)}
           <Link to={archiveHref} className={`mt-5 flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#bfd2ca] bg-white px-5 py-3 text-sm font-semibold text-teal-800 transition hover:border-teal-700 hover:bg-[#f0f6f3] ${LINK_FOCUS}`}>
             See all updates <ArrowRightIcon className="h-4 w-4" />
           </Link>

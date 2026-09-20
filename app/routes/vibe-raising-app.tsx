@@ -1,3 +1,4 @@
+import { MyStartupMigrationLink } from "~/components/MyStartupMigrationLink";
 import type { Route } from "./+types/vibe-raising-app";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { useEffect, useState } from "react";
@@ -15,6 +16,7 @@ import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import CompanySwitcher from "~/components/CompanySwitcher";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
+import { progressEnabled } from "~/lib/startup-progress";
 import { getCurrentRooPointsBalance } from "~/lib/roo-points";
 import {
   getOptionalVibeRaisingContext,
@@ -115,11 +117,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     appUser: vibeContext.appUser,
     rooPointsBalance,
     backendBaseUrl: String(env.BACKEND_BASE_URL || "https://api.mlai.au"),
+    progressAvailable: progressEnabled(env),
   };
 }
 
 export default function VibeRaisingApp() {
-  const { user, appUser, backendBaseUrl, rooPointsBalance } = useLoaderData<typeof loader>();
+  const { user, appUser, backendBaseUrl, rooPointsBalance, progressAvailable } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const loadingMarketingPage = navigation.state === "loading" &&
     (navigation.location?.pathname === "/founder-tools/marketing" ||
@@ -149,7 +152,7 @@ export default function VibeRaisingApp() {
   return (
     <AuthenticatedLayout
       user={user}
-      navigation={BASE_FOUNDER_NAVIGATION}
+      navigation={progressAvailable ? [BASE_FOUNDER_NAVIGATION[0], { name: "Progress", href: "/founder-tools/progress", icon: ChartBarIcon, exact: true }, ...BASE_FOUNDER_NAVIGATION.slice(1)] : BASE_FOUNDER_NAVIGATION}
       userNavigation={FOUNDER_USER_NAVIGATION}
       rooPointsBalance={rooPointsBalance}
       logoutAction="/founder-tools/logout"
@@ -162,6 +165,7 @@ export default function VibeRaisingApp() {
         />
       ) : null}
 
+      <MyStartupMigrationLink companyId={scopedCompanyId} />
       <div className="vr-scope">
         {loadingMarketingPage ? (
           <div role="status" className="fixed right-4 top-20 z-50 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">

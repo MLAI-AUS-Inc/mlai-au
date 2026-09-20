@@ -155,9 +155,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -283,17 +281,17 @@ export default function ArticleContent() {
 
       <ArticleReferences
           references={[
-            {id: 1, href: "https://www.e-resident.gov.ee/blog/posts/how-to-start-a-startup-a-practical-guide/", title: "How to start a startup: a practical guide", publisher: "e-resident.gov.ee", description: "Authoritative reference supporting How to start a startup: a practical guide.", category: "guide"},
-            {id: 2, href: "https://business.gov.au/guide/starting", title: "Guide to starting a business | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Guide to starting a business | business.gov.au.", category: "guide"},
-            {id: 3, href: "https://stripe.com/resources/more/how-to-start-a-startup-a-guide-for-entrepreneurs", title: "How to start a start-up | Stripe", publisher: "stripe.com", description: "Authoritative reference supporting How to start a start-up | Stripe.", category: "guide"},
-            {id: 4, href: "https://learn.microsoft.com/en-us/ai-builder/overview", title: "Overview of AI Builder | Microsoft Learn", publisher: "learn.microsoft.com", description: "Authoritative reference supporting Overview of AI Builder | Microsoft Learn.", category: "guide"},
-            {id: 5, href: "https://stripe.com/resources/more/strategy-for-startups-a-guide-to-creating-a-winning-business-plan", title: "Strategy for startups: Creating a winning startup strategy | Stripe", publisher: "stripe.com", description: "Authoritative reference supporting Strategy for startups: Creating a winning startup strategy | Stripe.", category: "guide"},
-            {id: 6, href: "https://www.fundable.com/learn/resources/guides/startup", title: "Startup Guide - Everything you need to know to start and grow", publisher: "fundable.com", description: "Authoritative reference supporting Startup Guide - Everything you need to know to start and grow.", category: "guide"},
-            {id: 7, href: "https://www.australianinvestmentnetwork.com/start-your-own-business", title: "How to Launch a Start-up Business in Australia - Australian Angel Investment Network", publisher: "australianinvestmentnetwork.com", description: "Authoritative reference supporting How to Launch a Start-up Business in Australia - Australian Angel Investment Network.", category: "guide"},
-            {id: 8, href: "https://www.smallbusiness.nsw.gov.au/help/common-questions/the-basics-of-starting-a-business", title: "The basics of starting a business | NSW Small Business Commissioner", publisher: "smallbusiness.nsw.gov.au", description: "Authoritative reference supporting The basics of starting a business | NSW Small Business Commissioner.", category: "guide"},
-            {id: 9, href: "https://fundingguru.com/blog/what-is-the-difference-between-a-startup-and-a-small-business", title: "Startup vs Small Business: Key Differences Explained", publisher: "fundingguru.com", description: "Authoritative reference supporting Startup vs Small Business: Key Differences Explained.", category: "guide"},
-            {id: 10, href: "https://www.jpmorgan.com/insights/business-planning/10-step-guide-to-starting-your-startup-business", title: "10-Step Guide to Starting Your Startup Business", publisher: "jpmorgan.com", description: "Authoritative reference supporting 10-Step Guide to Starting Your Startup Business.", category: "guide"},
-            {id: 11, href: "https://podcasts.apple.com/au/podcast/the-how-of-business-how-to-start-run-grow-and/id1105145426", title: "The How of Business - How to start, run, grow and exit a small business. - Podcast - Apple\u00c2 Podcasts", publisher: "podcasts.apple.com", description: "Authoritative reference supporting The How of Business - How to start, run, grow and exit a small business. - Podcast - Apple\u00c2 Podcasts.", category: "guide"},
+            {id: 1, href: "https://www.e-resident.gov.ee/blog/posts/how-to-start-a-startup-a-practical-guide/", title: "How to start a startup: a practical guide", publisher: "e-resident.gov.ee", description: "", category: "guide"},
+            {id: 2, href: "https://business.gov.au/guide/starting", title: "Guide to starting a business | business.gov.au", publisher: "business.gov.au", description: "", category: "guide"},
+            {id: 3, href: "https://stripe.com/resources/more/how-to-start-a-startup-a-guide-for-entrepreneurs", title: "How to start a start-up | Stripe", publisher: "stripe.com", description: "", category: "guide"},
+            {id: 4, href: "https://learn.microsoft.com/en-us/ai-builder/overview", title: "Overview of AI Builder | Microsoft Learn", publisher: "learn.microsoft.com", description: "", category: "guide"},
+            {id: 5, href: "https://stripe.com/resources/more/strategy-for-startups-a-guide-to-creating-a-winning-business-plan", title: "Strategy for startups: Creating a winning startup strategy | Stripe", publisher: "stripe.com", description: "", category: "guide"},
+            {id: 6, href: "https://www.fundable.com/learn/resources/guides/startup", title: "Startup Guide - Everything you need to know to start and grow", publisher: "fundable.com", description: "", category: "guide"},
+            {id: 7, href: "https://www.australianinvestmentnetwork.com/start-your-own-business", title: "How to Launch a Start-up Business in Australia - Australian Angel Investment Network", publisher: "australianinvestmentnetwork.com", description: "", category: "guide"},
+            {id: 8, href: "https://www.smallbusiness.nsw.gov.au/help/common-questions/the-basics-of-starting-a-business", title: "The basics of starting a business | NSW Small Business Commissioner", publisher: "smallbusiness.nsw.gov.au", description: "", category: "guide"},
+            {id: 9, href: "https://fundingguru.com/blog/what-is-the-difference-between-a-startup-and-a-small-business", title: "Startup vs Small Business: Key Differences Explained", publisher: "fundingguru.com", description: "", category: "guide"},
+            {id: 10, href: "https://www.jpmorgan.com/insights/business-planning/10-step-guide-to-starting-your-startup-business", title: "10-Step Guide to Starting Your Startup Business", publisher: "jpmorgan.com", description: "", category: "guide"},
+            {id: 11, href: "https://podcasts.apple.com/au/podcast/the-how-of-business-how-to-start-run-grow-and/id1105145426", title: "The How of Business - How to start, run, grow and exit a small business. - Podcast - Apple\u00c2 Podcasts", publisher: "podcasts.apple.com", description: "", category: "guide"},
           ]}
           heading="Sources & further reading"
         />

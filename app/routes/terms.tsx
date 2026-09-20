@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { MetaFunction } from "react-router";
 import SectionDivider from "~/components/SectionDivider";
 
-const LAST_UPDATED = "20 May 2026";
+const LAST_UPDATED = "20 September 2026";
 
 type LegalBlock =
   | { type: "p"; text: string }
@@ -61,6 +61,50 @@ const sections: LegalSection[] = [
         text: "Some services may also be governed by a proposal, quote, invoice, event page, grant agreement, purchase order, statement of work, signed agreement, checkout page, product plan or written project terms.",
       },
     ],
+  },
+  {
+    "id": "mlai-chat",
+    "title": "1A. MLAI Chat community rules",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "MLAI Chat is a member community service. Use your own eligible MLAI account, protect your sign-in details and respect other members. You must have the permissions and meet the age and other eligibility requirements applicable to the service. Do not misrepresent your identity or use someone else’s account."
+      },
+      {
+        "type": "p",
+        "text": "We do not tolerate objectionable content or abusive behaviour. You must not post, upload, link to, solicit or promote:"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Child sexual abuse or exploitation, sexual exploitation, pornography or sexually explicit material;",
+          "Threats, encouragement of violence, graphic abuse, self-harm encouragement, harassment, bullying or hate directed at people or protected groups;",
+          "Doxxing, non-consensual intimate imagery, other people’s private information, or content you lack permission to share;",
+          "Scams, impersonation, spam, malware, unlawful activity or content that infringes another person’s rights;",
+          "Attempts to evade blocks, bans, moderation or account security controls."
+        ]
+      },
+      {
+        "type": "p",
+        "text": "You remain responsible for your messages and uploaded content. You give MLAI the permission needed to store, deliver, display and moderate that content for the service, including delivery to a connected Slack channel where applicable. This does not transfer ownership of your content to MLAI."
+      },
+      {
+        "type": "p",
+        "text": "Report objectionable messages or abusive members using the in-app reporting controls. You can also block members using the member controls. For urgent safety concerns, content complaints or moderation appeals, contact hi@mlai.au. MLAI may remove content, restrict features, suspend access or ban accounts that breach these rules, and may preserve relevant evidence or respond to lawful requests."
+      },
+      {
+        "type": "p",
+        "text": "Roo is an optional AI assistant. Review its suggestions before relying on them or confirming an action. Do not use it for emergencies or as a substitute for professional medical, legal or financial advice. Share only information you have authority to provide. Our Privacy Policy explains the service’s AI and Slack data processing."
+      },
+      {
+        "type": "p",
+        "text": "Roo Points are community contribution credits with no cash value, not currency or an investment. Availability of rewards depends on the programme and the relevant reward’s conditions. Points do not guarantee paid work, membership status or a particular opportunity."
+      },
+      {
+        "type": "p",
+        "text": "For an iOS copy obtained through the App Store, Apple’s standard Licensed Application End User License Agreement applies to the app licence unless a separate licence is expressly supplied. These community rules govern use of MLAI’s service and do not replace non-excludable consumer rights."
+      }
+    ]
   },
   {
     id: "accepting-terms",
@@ -731,6 +775,7 @@ const sections: LegalSection[] = [
 ];
 
 const navLinks = [
+  { href: "#mlai-chat", label: "MLAI Chat" },
   { href: "#services-covered", label: "Services covered" },
   { href: "#connected-accounts-oauth", label: "Connected accounts" },
   { href: "#google-api-data", label: "Google API data" },

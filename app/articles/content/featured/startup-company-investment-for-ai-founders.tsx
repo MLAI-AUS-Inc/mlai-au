@@ -19,7 +19,7 @@ const TOPIC = "Startup Company Investment for AI Founders"
 export const CATEGORY = "featured"
 export const SLUG = "startup-company-investment-for-ai-founders"
 export const DATE_PUBLISHED = "2026-07-18"
-export const DATE_MODIFIED = "2026-07-18"
+export const DATE_MODIFIED = '2026-09-15'
 export const DESCRIPTION = "Startup company investment essentials for AI founders: set a clear milestone, plan runway and build an evidence-based funding case."
 const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-09abd229-0994-46d7-b58b-0902fa9b4ef6.jpg?alt=media&token=9252f992-53cf-46c0-bf32-bb025bb61176"
 const HERO_IMAGE_ALT = "AI founders reviewing runway plans and funding milestones with an investor at a shared table"
@@ -75,7 +75,7 @@ function AuthorBio({ author }: { author: AuthorDetails }) {
 export const faqItems: FAQ[] = [
   { id: 1, question: "Is early user interest enough for an AI founder to raise capital?", answer: "No. A working product and early user interest can make fundraising timely, but founders still need to explain why capital is needed now and what specific milestone it will achieve." },
   { id: 2, question: "When should an AI startup bootstrap rather than fundraise?", answer: "Bootstrapping may be the better move when external capital would not clearly shorten the path to the next milestone beyond what current revenue, savings, grants, or a leaner plan can achieve." },
-  { id: 3, question: "How much runway should an early AI startup plan for?", answer: "A practical planning range is about 12 to 18 months of runway, with core team, product-building, go-to-market costs, and a measured buffer included in the budget." },
+  { id: 3, question: "How much runway should an early AI startup plan for?", answer: "There is no universal runway target. Model the dated costs and receipts needed for a specific milestone, including delays and obligations. Separate confirmed cash from uncertain future funding, and obtain qualified advice for consequential financing decisions." },
   { id: 4, question: "What evidence do investors need beyond an AI claim?", answer: "Investors need evidence of a defined customer problem, real-world application, differentiated business value, and existing progress such as a working product, early user interest, or user feedback." },
 ]
 
@@ -109,7 +109,7 @@ const faqSchemaItems = [
   { question: "What is a good startup company to invest in?", answer: "A credible AI startup connects its funding request to a specific proof point and explains how its product can scale, sustain its position, and remain distinct in a crowded market." },
   { question: "Is early user interest enough for an AI founder to raise capital?", answer: "No. A working product and early user interest can make fundraising timely, but founders still need to explain why capital is needed now and what specific milestone it will achieve." },
   { question: "When should an AI startup bootstrap rather than fundraise?", answer: "Bootstrapping may be the better move when external capital would not clearly shorten the path to the next milestone beyond what current revenue, savings, grants, or a leaner plan can achieve." },
-  { question: "How much runway should an early AI startup plan for?", answer: "A practical planning range is about 12 to 18 months of runway, with core team, product-building, go-to-market costs, and a measured buffer included in the budget." },
+  { question: "How much runway should an early AI startup plan for?", answer: "There is no universal runway target. Model the dated costs and receipts needed for a specific milestone, including delays and obligations. Separate confirmed cash from uncertain future funding, and obtain qualified advice for consequential financing decisions." },
   { question: "What evidence do investors need beyond an AI claim?", answer: "Investors need evidence of a defined customer problem, real-world application, differentiated business value, and existing progress such as a working product, early user interest, or user feedback." },
 ]
 
@@ -155,9 +155,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -200,7 +198,7 @@ export default function ArticleContent() {
         <div id="set-the-round-milestone-and-budget" data-cf-component-id={"section:set-the-round-milestone-and-budget"} data-cf-component-type={"section"} data-cf-component-label={"Define the Milestone Your Round Must Buy"} data-cf-source-section-id={"set-the-round-milestone-and-budget"}>
           <h2>{"Define the Milestone Your Round Must Buy"}</h2>
           <p>{"For an early AI company, that proof point might be moving from early validation to a product that can reach more users or showing clearer market demand."}</p>
-          <p>{"Include core team salaries, product-building costs, and go-to-market activity, then add a measured buffer for mistakes or delays. A practical planning range is about 12 to 18 months of runway. Too little capital can keep founders distracted by immediate finances; too much capital at an early valuation can mean giving up more equity and control than necessary."}</p>
+          <p>{"Build a dated cash plan from the work needed to reach a defined milestone. Include applicable team, product, customer research, tax and financing costs, payment dates and a delayed scenario. Keep uncertain receipts separate from available cash. A gap in that plan does not, by itself, establish how much to raise or whether the milestone is worth pursuing."}</p>
           <div data-cf-component-id={"image:set-the-round-milestone-and-budget"} data-cf-component-type={"image"} data-cf-component-label={"Image: Define the Milestone Your Round Must Buy"} data-cf-source-section-id={"set-the-round-milestone-and-budget"}>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-3df2d06f-a75f-4673-a8af-3c3a37310e9f.jpg?alt=media&token=7fd591e8-3b0c-4c6d-839f-d5d990f24dcd"
@@ -259,25 +257,26 @@ export default function ArticleContent() {
           />
           </div>
         </div>
+        <p className="text-sm text-slate-600">Correction, 15 September 2026: the earlier version and PDF presented 12–18 months as a general runway target. That range appears in <a href="https://www.ycombinator.com/blog/how-to-raise-a-seed-round">YC’s 2016 seed-fundraising guide</a> in a particular funding context. It is not a rule for every Australian startup. The replacement worksheet uses explicit cash and timing assumptions.</p>
         <div data-cf-component-id={"resource-cta"} data-cf-component-type={"resource-cta"} data-cf-component-label={"Get the resource"}>
           <ArticleResourceCTA
             eyebrow="Free checklist"
-            title={"AI Startup Fundraising Readiness Checklist"}
-            description="Use this checklist to decide whether fundraising is timely and prepare a clear, milestone-led case for investor conversations."
-            buttonLabel="Download the PDF"
-            buttonHref="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fresources%2Fstartup-company-investment-for-ai-founders-checklist-701741c5.pdf?alt=media&token=e5f370b2-8a89-4259-b55e-e4d0b9e804f1"
+            title={"Founder Funding Preparation Worksheet"}
+            description="Save and edit a Markdown worksheet to record milestone evidence, dated cash assumptions and delay scenarios. It prepares questions for discussion; it does not assess whether you should raise capital."
+            buttonLabel="Download editable worksheet (Markdown)"
+            buttonHref="/downloads/founder-funding-preparation.md"
             accent="purple"
             previewCards={[
               {
-                title: "Raise-readiness test",
-                subtitle: 'PDF',
+                title: "Milestone evidence",
+                subtitle: "Markdown",
                 color: "bg-[#ff3d00]",
                 textColor: "text-white",
                 rotationClass: "rotate-[-6deg]",
               },
               {
                 title: "Investor case checklist",
-                subtitle: 'PDF',
+                subtitle: "Markdown",
                 color: "bg-[#00ffd7]",
                 textColor: "text-black",
                 rotationClass: "rotate-[7deg]",
@@ -286,19 +285,10 @@ export default function ArticleContent() {
           />
         </div>
 
-      <ArticleReferences
-          references={[
-            {id: 1, href: "https://www.bentleys.com.au/resources/startup-funding-strategy-advising-australian-entrepreneurs-on-how-to-get-capital-growth/", title: "Startup Funding Australia: Get Capital & Grow Your Business", publisher: "bentleys.com.au", description: "Authoritative reference supporting Startup Funding Australia: Get Capital & Grow Your Business.", category: "guide"},
-            {id: 2, href: "https://www.pedalstart.com/blog/how-to-raise-seed-funding-for-an-ai-startup", title: "How to Raise Seed Funding for an AI Startup - PedalStart", publisher: "pedalstart.com", description: "Authoritative reference supporting How to Raise Seed Funding for an AI Startup - PedalStart.", category: "guide"},
-            {id: 3, href: "https://www.linkedin.com/posts/siveshkumar_seedfunding-startupfunding-raisefunds-activity-7363472830119788544-mfA2", title: "How to raise seed funding for your AI startup | Sivesh Kumar posted on the topic | LinkedIn", publisher: "linkedin.com", description: "Authoritative reference supporting How to raise seed funding for your AI startup | Sivesh Kumar posted on the topic | LinkedIn.", category: "guide"},
-            {id: 4, href: "https://www.forumvc.com/thought-pieces/ai-startup-investment-how-to-stand-out", title: "AI Startup Investment: How to Stand Out to Investors", publisher: "forumvc.com", description: "Authoritative reference supporting AI Startup Investment: How to Stand Out to Investors.", category: "guide"},
-            {id: 5, href: "https://business.gov.au/finance/funding/pitch-for-venture-capital", title: "Pitch for venture capital | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Pitch for venture capital | business.gov.au.", category: "guide"},
-            {id: 6, href: "https://angelinvestorsnetwork.com/startups/startup-funding-complete-guide", title: "Startup Funding 2026: Stages, Valuations & What Works", publisher: "angelinvestorsnetwork.com", description: "Authoritative reference supporting Startup Funding 2026: Stages, Valuations & What Works.", category: "guide"},
-            {id: 7, href: "https://business.gov.au/guide/starting", title: "Guide to starting a business | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Guide to starting a business | business.gov.au.", category: "guide"},
-            {id: 8, href: "https://sprintlaw.com.au/articles/startup-investment-in-australia-essential-legal-and-business-guide/", title: "Startup Investment in Australia | Sprintlaw Australia", publisher: "sprintlaw.com.au", description: "Authoritative reference supporting Startup Investment in Australia | Sprintlaw Australia.", category: "guide"},
-          ]}
-          heading="Sources & further reading"
-        />
+      <ArticleReferences references={[
+        { id: 1, href: "https://business.gov.au/finance/funding/pitch-for-venture-capital", title: "Pitch for venture capital", publisher: "Australian Government", description: "Preparation questions and information to assemble before approaching investors.", category: "government" },
+        { id: 2, href: "https://www.ycombinator.com/blog/how-to-raise-a-seed-round", title: "A Guide to Seed Fundraising (2016)", publisher: "Y Combinator", description: "Historical US seed-funding context, not a universal Australian runway target.", category: "guide" },
+      ]} />
 
         <ArticleDisclaimer />
 

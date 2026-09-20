@@ -114,6 +114,15 @@ const sharedOptimizeDepsInclude = [
 ];
 
 export default defineConfig({
+  // Workers Builds supplies the actual source commit. Local builds deliberately
+  // say local: their uncommitted contents must not masquerade as a Git revision.
+  define: {
+    __MLAI_BUILD_REVISION__: JSON.stringify(
+      /^[a-f0-9]{40}$/.test(process.env.WORKERS_CI_COMMIT_SHA ?? '')
+        ? process.env.WORKERS_CI_COMMIT_SHA
+        : 'local',
+    ),
+  },
   plugins: [
     cloudflare({ viteEnvironment: { name: "ssr" }, inspectorPort }),
     suppressCloudflareHotChannelRace(),

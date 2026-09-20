@@ -120,11 +120,13 @@ export default [
 
   // Founder Tools App routes
   route("/founder-tools/start", "routes/founder-tools-start.tsx"),
+  route("/founder-tools/migrate-to-chat", "routes/founder-tools.migrate-to-chat.tsx"),
   route("/founder-tools/link-roo", "routes/founder-tools.link-roo.tsx"),
   route("/founder-tools", "routes/vibe-raising-app.tsx", { id: "founder-tools-root" }, [
     index("routes/founder-tools.index.tsx"),
     route("upgrade", "routes/founder-tools.upgrade.tsx"),
     route("updates", "routes/vibe-raising-app._index.tsx"),
+    route("progress", "routes/founder-tools.progress.tsx"),
     route("drafts", "routes/vibe-raising-app.drafts.tsx"),
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
     route("data-sources", "routes/vibe-raising-app.connect-data.tsx"),
@@ -134,6 +136,9 @@ export default [
     route("companies", "routes/vibe-raising-app.companies.tsx"),
     route("switch-company", "routes/founder-tools.switch-company.tsx"),
     route("marketing", "routes/founder-tools.marketing.tsx"),
+    route("marketing/editorial", "routes/founder-tools.marketing.editorial.tsx"),
+    route("marketing/articles", "routes/founder-tools.marketing.articles.tsx"),
+    route("marketing/island-research", "routes/founder-tools.marketing.island-research.tsx"),
     route("marketing/create", "routes/founder-tools.marketing.create.tsx"),
     route("marketing/github-connect", "routes/founder-tools.marketing.github-connect.tsx"),
     route("marketing/autofill-runs/:runId", "routes/founder-tools.marketing.autofill-run.tsx"),

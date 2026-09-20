@@ -364,24 +364,6 @@ function buildRelatedArticleSlugs(
   return results
 }
 
-const DEFAULT_CITATIONS = [
-  {
-    title: "Australia's AI Ethics Principles",
-    href: 'https://www.industry.gov.au/publications/australias-ai-ethics-principles',
-    description: 'Eight voluntary principles designed to ensure AI is safe, secure and reliable.',
-  },
-  {
-    title: 'Policy for the Responsible Use of AI in Government',
-    href: 'https://www.digital.gov.au/policy/policy-responsible-use-ai-government',
-    description: 'Framework for accelerated and sustainable AI adoption by government agencies.',
-  },
-  {
-    title: 'National AI Centre (DISR)',
-    href: 'https://www.ai.gov.au/',
-    description: 'Coordinating Australia’s AI expertise and capabilities to build a responsible AI ecosystem.',
-  },
-]
-
 function buildArticlePath(slug?: string): string {
   if (!slug) return '/articles'
   if (slug.startsWith('/')) return slug
@@ -514,7 +496,6 @@ export function ArticleLayout({
     ? createBreadcrumbJson(resolvedBreadcrumbItems, articlePath)
     : null
   const isUnderEditorialReview = article.publicationStatus === 'under-review'
-  const showCitations = !isUnderEditorialReview && Boolean(seoConfig.citations)
   const routeSlug = resolvedRouteSlug.replace(/^\/+/, "")
 
   const resolvedPersona = featuredProfessionalsPersona ?? article.professionalsPersona
@@ -645,7 +626,7 @@ export function ArticleLayout({
                   /> */}
                 </div>
               ) : null}
-              <div data-article-content>{children}</div>
+              <div data-article-content className="[overflow-wrap:anywhere] [&_table]:[overflow-wrap:normal]">{children}</div>
               {showDisclaimer && !isUnderEditorialReview ? <ArticleDisclaimer /> : null}
               <div className="not-prose my-12">
                 {/* <FindProfessionalsCTA
@@ -684,31 +665,6 @@ export function ArticleLayout({
                     variant="compact"
                   />
                 </div>
-              ) : null}
-              {showCitations ? (
-                <section
-                  data-cf-component-id="authoritative-references"
-                  data-cf-component-type="references"
-                  data-cf-component-label="Authoritative References"
-                  className="not-prose mt-10 rounded-[24px] border border-gray-400 bg-transparent p-6 sm:p-8"
-                >
-                  <h2 className="text-base font-bold uppercase tracking-wide text-gray-700">Authoritative references</h2>
-                  <ul className="mt-4 space-y-4 text-sm text-gray-800">
-                    {DEFAULT_CITATIONS.map((citation) => (
-                      <li key={citation.href}>
-                        <a
-                          href={citation.href}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="font-semibold text-[#4b1bd1] underline underline-offset-4 hover:text-[#3a0fa8]"
-                        >
-                          {citation.title}
-                        </a>
-                        <p className="mt-1 text-gray-800">{citation.description}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
               ) : null}
             </Prose>
 

@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -109,9 +108,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -193,14 +190,7 @@ export default function ArticleContent() {
             height={800}
           />
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the How to Start a Company Around an AI Idea: From Prototype to First Customers checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -238,7 +228,7 @@ export default function ArticleContent() {
           <h2>{"How to win your first customers and learn from each sale"}</h2>
           <p>{"Your first customers usually come from a narrow use case, not a broad AI story. Start with a segment where the pain is clear, frequent, and expensive enough to justify change. In outreach and early calls, talk about the workflow problem, the time or cost being lost, and the measurable result your product can improve. That keeps the conversation grounded in business value instead of model features. A small pilot with simple success metrics is often the easiest way to get a first yes, because it lowers risk for the buyer and gives you a clear feedback loop."}</p>
           <p>{"That gives you material for case examples, testimonials, sharper messaging, and product decisions. That repeatable first use case is a better foundation for growth than an ambitious product vision with no clear buying path."}</p>
-          <p>{"In practice, how to win your first customers and learn from each sale works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+          <p>{"Record what each customer agreed to try, what they actually used and what happened next. Keep a demonstration, an unpaid trial and a paid commitment distinct when deciding your next step."}</p>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ff1ff176-b089-4236-ae39-96758d8dfbc3.jpg?alt=media&token=890bcfb6-5a98-4381-9870-b76d0184141a"
             alt="Startup founder discussing a workflow pain point with first customers during"
@@ -255,16 +245,16 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://www.businessthink.unsw.edu.au/articles/business-ai-efficiency-innovation-automation", title: "A practical guide to getting started with Business AI - UNSW BusinessThink", publisher: "businessthink.unsw.edu.au", description: "Authoritative reference supporting A practical guide to getting started with Business AI - UNSW BusinessThink.", category: "guide"},
-          {id: 2, href: "https://blog.tobiaszwingmann.com/p/ai-prototype-to-production-checklist", title: "The AI Prototype-to-Production Checklist", publisher: "blog.tobiaszwingmann.com", description: "Authoritative reference supporting The AI Prototype-to-Production Checklist.", category: "guide"},
-          {id: 3, href: "https://www.mymobilelyfe.com/artificial-intelligence/from-idea-to-impact-how-to-launch-your-first-ai-project/", title: "From Idea to Impact: How to Launch Your First AI Project | Artificial Intelligence | MyMobileLyfe | AI Consulting and Digital Marketing", publisher: "mymobilelyfe.com", description: "Authoritative reference supporting From Idea to Impact: How to Launch Your First AI Project | Artificial Intelligence | MyMobileLyfe | AI Consulting and Digital Marketing.", category: "guide"},
-          {id: 4, href: "https://business.gov.au/planning/new-businesses/develop-a-new-product", title: "Develop a new product | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Develop a new product | business.gov.au.", category: "guide"},
-          {id: 5, href: "https://www.hubspot.com/startups/scaling-smarter/how-to-validate-startup-idea", title: "Startup Idea Validation: A Step-by-Step Guide Before Launch", publisher: "hubspot.com", description: "Authoritative reference supporting Startup Idea Validation: A Step-by-Step Guide Before Launch.", category: "guide"},
-          {id: 6, href: "https://www.ai-scaleup.com/ai-entrepreneur/how-to-build-startup/", title: "How to Build an AI Startup: An Easy 7-Step Essential Guide", publisher: "ai-scaleup.com", description: "Authoritative reference supporting How to Build an AI Startup: An Easy 7-Step Essential Guide.", category: "guide"},
-          {id: 7, href: "https://ebpearls.com.au/blog/investor-ready-prototypes", title: "Building Investor-Ready Prototypes Without Technical Skills or Funding", publisher: "ebpearls.com.au", description: "Authoritative reference supporting Building Investor-Ready Prototypes Without Technical Skills or Funding.", category: "guide"},
-          {id: 8, href: "https://sprintlaw.com.au/articles/ai-business-ideas-in-australia-how-to-launch-legally-and-safely/", title: "AI Business Ideas in Australia: How to Launch Legally and Safely | Sprintlaw Australia", publisher: "sprintlaw.com.au", description: "Authoritative reference supporting AI Business Ideas in Australia: How to Launch Legally and Safely | Sprintlaw Australia.", category: "guide"},
-          {id: 9, href: "https://www.linkedin.com/posts/tdoucet_here-is-my-roadmap-to-building-a-successful-activity-7265199473234952192-aa1W", title: "Here is my roadmap to building a successful AI company: 1. Focus on the Output First focus on figuring out what quality, best-in-class OUTPUT you can provide to your customers. Your success lies in\u2026 | Troy Doucet", publisher: "linkedin.com", description: "Authoritative reference supporting Here is my roadmap to building a successful AI company: 1. Focus on the Output First focus on figuring out what quality, best-in-class OUTPUT you can provide to your customers. Your success lies in\u2026 | Troy Doucet.", category: "guide"},
-          {id: 10, href: "https://www.cloudflight.io/en/blog/how-to-start-with-ai-in-your-company-a-checklist/", title: "How to start with AI in your company: a checklist | Cloudflight", publisher: "cloudflight.io", description: "Authoritative reference supporting How to start with AI in your company: a checklist | Cloudflight.", category: "guide"},
+          {id: 1, href: "https://www.businessthink.unsw.edu.au/articles/business-ai-efficiency-innovation-automation", title: "A practical guide to getting started with Business AI - UNSW BusinessThink", publisher: "businessthink.unsw.edu.au", description: "", category: "guide"},
+          {id: 2, href: "https://blog.tobiaszwingmann.com/p/ai-prototype-to-production-checklist", title: "The AI Prototype-to-Production Checklist", publisher: "blog.tobiaszwingmann.com", description: "", category: "guide"},
+          {id: 3, href: "https://www.mymobilelyfe.com/artificial-intelligence/from-idea-to-impact-how-to-launch-your-first-ai-project/", title: "From Idea to Impact: How to Launch Your First AI Project | Artificial Intelligence | MyMobileLyfe | AI Consulting and Digital Marketing", publisher: "mymobilelyfe.com", description: "", category: "guide"},
+          {id: 4, href: "https://business.gov.au/planning/new-businesses/develop-a-new-product", title: "Develop a new product | business.gov.au", publisher: "business.gov.au", description: "", category: "guide"},
+          {id: 5, href: "https://www.hubspot.com/startups/scaling-smarter/how-to-validate-startup-idea", title: "Startup Idea Validation: A Step-by-Step Guide Before Launch", publisher: "hubspot.com", description: "", category: "guide"},
+          {id: 6, href: "https://www.ai-scaleup.com/ai-entrepreneur/how-to-build-startup/", title: "How to Build an AI Startup: An Easy 7-Step Essential Guide", publisher: "ai-scaleup.com", description: "", category: "guide"},
+          {id: 7, href: "https://ebpearls.com.au/blog/investor-ready-prototypes", title: "Building Investor-Ready Prototypes Without Technical Skills or Funding", publisher: "ebpearls.com.au", description: "", category: "guide"},
+          {id: 8, href: "https://sprintlaw.com.au/articles/ai-business-ideas-in-australia-how-to-launch-legally-and-safely/", title: "AI Business Ideas in Australia: How to Launch Legally and Safely | Sprintlaw Australia", publisher: "sprintlaw.com.au", description: "", category: "guide"},
+          {id: 9, href: "https://www.linkedin.com/posts/tdoucet_here-is-my-roadmap-to-building-a-successful-activity-7265199473234952192-aa1W", title: "Here is my roadmap to building a successful AI company: 1. Focus on the Output First focus on figuring out what quality, best-in-class OUTPUT you can provide to your customers. Your success lies in\u2026 | Troy Doucet", publisher: "linkedin.com", description: "", category: "guide"},
+          {id: 10, href: "https://www.cloudflight.io/en/blog/how-to-start-with-ai-in-your-company-a-checklist/", title: "How to start with AI in your company: a checklist | Cloudflight", publisher: "cloudflight.io", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

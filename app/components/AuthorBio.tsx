@@ -59,9 +59,6 @@ export default function AuthorBio({ author, authors, className = '' }: AuthorBio
                 })}
             </div>
 
-            <p className="mt-6 text-xs text-gray-600 text-center">
-                AI-assisted drafting, human-edited and reviewed.
-            </p>
         </div>
     )
 }

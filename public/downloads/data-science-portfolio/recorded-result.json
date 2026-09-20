@@ -1,0 +1,156 @@
+{
+  "version": "workload-forecast-v1",
+  "provenance": "Entirely synthetic teaching data; not customer outcomes or a benchmark of general forecasting ability",
+  "training": {
+    "from": "2026-01-05",
+    "through": "2026-02-01",
+    "days": 28
+  },
+  "evaluation": {
+    "from": "2026-02-02",
+    "through": "2026-02-15",
+    "days": 14,
+    "origin": "2026-02-01",
+    "fixedOrigin": true
+  },
+  "fitted": {
+    "intercept": 18.142857,
+    "slopePerWeek": 3,
+    "weekdayOffsets": [
+      2.357143,
+      4.857143,
+      3.607143,
+      2.857143,
+      0.857143,
+      -5.892857,
+      -8.642857
+    ]
+  },
+  "metric": "mean absolute error",
+  "units": "requests per day",
+  "cases": [
+    {
+      "date": "2026-02-02",
+      "actual": 28,
+      "baseline": 30,
+      "candidate": 32.5,
+      "baselineAbsoluteError": 2,
+      "candidateAbsoluteError": 4.5
+    },
+    {
+      "date": "2026-02-03",
+      "actual": 32,
+      "baseline": 32,
+      "candidate": 35,
+      "baselineAbsoluteError": 0,
+      "candidateAbsoluteError": 3
+    },
+    {
+      "date": "2026-02-04",
+      "actual": 30,
+      "baseline": 30,
+      "candidate": 33.75,
+      "baselineAbsoluteError": 0,
+      "candidateAbsoluteError": 3.75
+    },
+    {
+      "date": "2026-02-05",
+      "actual": 28,
+      "baseline": 31,
+      "candidate": 33,
+      "baselineAbsoluteError": 3,
+      "candidateAbsoluteError": 5
+    },
+    {
+      "date": "2026-02-06",
+      "actual": 28,
+      "baseline": 28,
+      "candidate": 31,
+      "baselineAbsoluteError": 0,
+      "candidateAbsoluteError": 3
+    },
+    {
+      "date": "2026-02-07",
+      "actual": 20,
+      "baseline": 20,
+      "candidate": 24.25,
+      "baselineAbsoluteError": 0,
+      "candidateAbsoluteError": 4.25
+    },
+    {
+      "date": "2026-02-08",
+      "actual": 17,
+      "baseline": 19,
+      "candidate": 21.5,
+      "baselineAbsoluteError": 2,
+      "candidateAbsoluteError": 4.5
+    },
+    {
+      "date": "2026-02-09",
+      "actual": 26,
+      "baseline": 30,
+      "candidate": 35.5,
+      "baselineAbsoluteError": 4,
+      "candidateAbsoluteError": 9.5
+    },
+    {
+      "date": "2026-02-10",
+      "actual": 30,
+      "baseline": 32,
+      "candidate": 38,
+      "baselineAbsoluteError": 2,
+      "candidateAbsoluteError": 8
+    },
+    {
+      "date": "2026-02-11",
+      "actual": 30,
+      "baseline": 30,
+      "candidate": 36.75,
+      "baselineAbsoluteError": 0,
+      "candidateAbsoluteError": 6.75
+    },
+    {
+      "date": "2026-02-12",
+      "actual": 28,
+      "baseline": 31,
+      "candidate": 36,
+      "baselineAbsoluteError": 3,
+      "candidateAbsoluteError": 8
+    },
+    {
+      "date": "2026-02-13",
+      "actual": 26,
+      "baseline": 28,
+      "candidate": 34,
+      "baselineAbsoluteError": 2,
+      "candidateAbsoluteError": 8
+    },
+    {
+      "date": "2026-02-14",
+      "actual": 20,
+      "baseline": 20,
+      "candidate": 27.25,
+      "baselineAbsoluteError": 0,
+      "candidateAbsoluteError": 7.25
+    },
+    {
+      "date": "2026-02-15",
+      "actual": 16,
+      "baseline": 19,
+      "candidate": 24.5,
+      "baselineAbsoluteError": 3,
+      "candidateAbsoluteError": 8.5
+    }
+  ],
+  "totalAbsoluteErrors": {
+    "baseline": 21,
+    "candidate": 84
+  },
+  "mae": {
+    "baseline": 1.5,
+    "candidate": 6
+  },
+  "lowerMaeOnFixture": "baseline",
+  "clippedPredictions": 0,
+  "releaseDecision": "NOT APPROVED — no real-world validation, uncertainty model or operational acceptance"
+}

@@ -11,7 +11,6 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
 import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceholder'
 import AudienceGrid from '../../../components/articles/AudienceGrid'
-import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import MLAITemplateResourceCTA from '../../../components/articles/MLAITemplateResourceCTA'
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
@@ -111,9 +110,7 @@ export default function ArticleContent() {
 
   return (
     <>
-      {faqStructuredData ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
-      ) : null}
+
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -172,7 +169,7 @@ export default function ArticleContent() {
           <p>{"Before you build anything, decide exactly what your artificial intelligence should help with. A strong AI project starts with a clear use case, not with a model or tool choice. Sources on AI implementation and strategy consistently point to clear vision, prioritised use cases, and measurable outcomes as the starting point for success."}</p>
           <p>{"State the task, the users, and the result you want to improve. Then add a simple success measure, such as reducing response time, improving document retrieval, or lowering the amount of manual sorting."}</p>
           <p>{"A practical way to think about defining your use case and data strategy is through Set boundaries and prepare the right data."}</p>
-          <p>{"In practice, defining Your Use Case and Data Strategy works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
+          <p>{"Write down the input, expected output, data permissions and a simple baseline before choosing a model. Reserve examples for evaluation and include cases that should be rejected or sent for review."}</p>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-643be2a0-01c8-4839-93d2-c22c54ac57c1.jpg?alt=media&token=d50f3fcd-1ff0-44b8-8140-1cd0740351b8"
             alt="Notebook checklist beside laptop and whiteboard notes outlining AI use case and data plan"
@@ -200,14 +197,7 @@ export default function ArticleContent() {
           <p>{"Training means showing the model examples so it can learn patterns."}</p>
           <p>{"In simple terms, you change settings, retrain, and compare outcomes. That disciplined cycle is what turns a rough AI model into one that is accurate enough to use in practice."}</p>
 
-        <ArticleResourceCTA
-          eyebrow="Free guide"
-          title={"Get the how to create an artificial intelligence checklist"}
-          description="Use this article as a working guide: shortlist candidates, validate traction, and structure your next conversations."
-          buttonLabel="Download now"
-          buttonHref="/articles"
-          accent="purple"
-        />
+
 
         <ArticleStepList
           title="Practical next steps"
@@ -222,8 +212,8 @@ export default function ArticleContent() {
           <h2>{"Secure Deployment and Ethical Considerations"}</h2>
           <p>{"After you train an AI system, deployment should be treated as a security task, not just a launch step. Cyber.gov.au notes that AI adoption brings cyber security risks on top of familiar threats such as phishing, ransomware and insider threats. It also means checking third-party tools carefully before connecting them to business systems, because an AI feature can become another path into sensitive data if it is configured poorly or given broad permissions."}</p>
           <p>{"Ethical deployment also depends on responsible data use and clear governance. Australian small business guidance stresses using AI safely and responsibly, and strategy guidance from Microsoft highlights data governance and responsible AI practices as part of effective adoption. A simple way to apply that is to decide what data the system should never use, review outputs for bias or harmful errors before release, and keep a human in the loop for high-impact decisions. Once the system is live, monitor results over time rather than assuming the first version will stay reliable."}</p>
-          <p>{"In practice, secure Deployment and Ethical Considerations works best when the section stays specific about what changes first, why it matters, and how the reader can apply the idea without filler."}</p>
-          <p>{"The goal is to keep secure Deployment and Ethical Considerations concrete enough to guide action, while still tying each detail back to the main point of the section."}</p>
+          <p>{"Define who can access the system, what actions it may perform and how a person can stop it. Test error handling and escalation using permitted or synthetic data before exposing a real workflow."}</p>
+          <p>{"Keep a record of the version, evaluation cases, observed failures and release decision. A successful demonstration is a starting point for testing, not evidence that the system is ready for every user or setting."}</p>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-c71da946-ac82-4daa-9f92-8dd292c1a714.jpg?alt=media&token=e34a5f8d-6306-4b70-800e-d5887947bf16"
             alt="Secure Deployment and Ethical Considerations"
@@ -250,15 +240,15 @@ export default function ArticleContent() {
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://www.digital.nsw.gov.au/policy/artificial-intelligence/artificial-intelligence-strategy", title: "Artificial Intelligence Strategy | Digital NSW", publisher: "digital.nsw.gov.au", description: "Authoritative reference supporting Artificial Intelligence Strategy | Digital NSW.", category: "guide"},
-          {id: 2, href: "https://www.anz.com.au/business/business-hub/grow-business/grow/small-business-ai/", title: "Getting started with AI for your small business | ANZ", publisher: "anz.com.au", description: "Authoritative reference supporting Getting started with AI for your small business | ANZ.", category: "guide"},
-          {id: 3, href: "https://business.gov.au/online-and-digital/artificial-intelligence", title: "Artificial intelligence (AI) | business.gov.au", publisher: "business.gov.au", description: "Authoritative reference supporting Artificial intelligence (AI) | business.gov.au.", category: "guide"},
-          {id: 4, href: "https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/scenarios/ai/strategy", title: "Create your AI strategy - Cloud Adoption Framework | Microsoft Learn", publisher: "learn.microsoft.com", description: "Authoritative reference supporting Create your AI strategy - Cloud Adoption Framework | Microsoft Learn.", category: "guide"},
-          {id: 5, href: "https://cloud.google.com/transform/how-to-build-an-effective-ai-strategy", title: "An effective AI strategy: How to build one | Google Cloud Blog", publisher: "cloud.google.com", description: "Authoritative reference supporting An effective AI strategy: How to build one | Google Cloud Blog.", category: "guide"},
-          {id: 6, href: "https://www.thestrategygroup.com.au/blog/6-steps-to-a-successful-ai-strategy", title: "How to Build a Winning AI Strategy", publisher: "thestrategygroup.com.au", description: "Authoritative reference supporting How to Build a Winning AI Strategy.", category: "guide"},
-          {id: 7, href: "https://labs.lamatic.ai/p/how-to-build-ai/", title: "By-Step Guide on How to Build AI and AI Systems From Scratch", publisher: "labs.lamatic.ai", description: "Authoritative reference supporting By-Step Guide on How to Build AI and AI Systems From Scratch.", category: "guide"},
-          {id: 8, href: "https://ai.google/build/", title: "Tools for developers to get started \u00e2\u0080\u0094 Google AI", publisher: "ai.google", description: "Authoritative reference supporting Tools for developers to get started \u00e2\u0080\u0094 Google AI.", category: "guide"},
-          {id: 9, href: "https://www.cyber.gov.au/business-government/secure-design/artificial-intelligence/artificial-intelligence-for-small-business", title: "Artificial intelligence for small business | Cyber.gov.au", publisher: "cyber.gov.au", description: "Authoritative reference supporting Artificial intelligence for small business | Cyber.gov.au.", category: "guide"},
+          {id: 1, href: "https://www.digital.nsw.gov.au/policy/artificial-intelligence/artificial-intelligence-strategy", title: "Artificial Intelligence Strategy | Digital NSW", publisher: "digital.nsw.gov.au", description: "", category: "guide"},
+          {id: 2, href: "https://www.anz.com.au/business/business-hub/grow-business/grow/small-business-ai/", title: "Getting started with AI for your small business | ANZ", publisher: "anz.com.au", description: "", category: "guide"},
+          {id: 3, href: "https://business.gov.au/online-and-digital/artificial-intelligence", title: "Artificial intelligence (AI) | business.gov.au", publisher: "business.gov.au", description: "", category: "guide"},
+          {id: 4, href: "https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/scenarios/ai/strategy", title: "Create your AI strategy - Cloud Adoption Framework | Microsoft Learn", publisher: "learn.microsoft.com", description: "", category: "guide"},
+          {id: 5, href: "https://cloud.google.com/transform/how-to-build-an-effective-ai-strategy", title: "An effective AI strategy: How to build one | Google Cloud Blog", publisher: "cloud.google.com", description: "", category: "guide"},
+          {id: 6, href: "https://www.thestrategygroup.com.au/blog/6-steps-to-a-successful-ai-strategy", title: "How to Build a Winning AI Strategy", publisher: "thestrategygroup.com.au", description: "", category: "guide"},
+          {id: 7, href: "https://labs.lamatic.ai/p/how-to-build-ai/", title: "By-Step Guide on How to Build AI and AI Systems From Scratch", publisher: "labs.lamatic.ai", description: "", category: "guide"},
+          {id: 8, href: "https://ai.google/build/", title: "Tools for developers to get started \u00e2\u0080\u0094 Google AI", publisher: "ai.google", description: "", category: "guide"},
+          {id: 9, href: "https://www.cyber.gov.au/business-government/secure-design/artificial-intelligence/artificial-intelligence-for-small-business", title: "Artificial intelligence for small business | Cyber.gov.au", publisher: "cyber.gov.au", description: "", category: "guide"},
         ]}
         heading="Sources & further reading"
       />

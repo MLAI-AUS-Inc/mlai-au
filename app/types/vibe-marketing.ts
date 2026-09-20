@@ -42,6 +42,7 @@ export interface VibeMarketingRunSummary {
   stateVersion?: number | null;
   failure?: { code?: string; message?: string; dependency?: string; next_action?: string; requires_user_action?: boolean };
   recovery?: { state?: string; due_at?: string; step?: string; reason?: string };
+  editorialSnapshot?: import("~/lib/article-editorial").ArticleEditorialSnapshot | null;
   runId: string;
   workflow: string;
   domain: string;
@@ -197,6 +198,7 @@ export interface VibeMarketingAutofillProfileFields {
 }
 
 export interface VibeMarketingAutofillResult {
+  editorialSuggestions?: import("~/lib/customer-profile-suggestions").CustomerSuggestions | null;
   partial?: boolean;
   brandName?: string | null;
   companyLinkedInUrl?: string | null;
@@ -368,6 +370,7 @@ export interface VibeMarketingResearchAutomation {
   frequencyPerDay: number;
   localSendTimes: string[];
   enabled: boolean;
+  pauseReason?: string;
 }
 
 export interface VibeMarketingNotificationChannelsPayload {
@@ -457,6 +460,7 @@ export interface IslandGraphNode {
   colorKey: string;
   status: string;
   isNew: boolean;
+  researchPending?: boolean;
   keywordCount: number;
   totalVolume: number;
   avgDifficulty: number;
@@ -548,6 +552,11 @@ export interface VibeMarketingPublishAttempt {
 
 export interface VibeMarketingWrittenTopic {
   liveVerification?: { state?: string | null; checkedAt?: string | null; method?: string | null };
+  audienceId?: string | null;
+  offerId?: string | null;
+  editorialSnapshot?: import("~/lib/article-editorial").ArticleEditorialSnapshot | null;
+  originalEditorialSnapshot?: import("~/lib/article-editorial").ArticleEditorialSnapshot | null;
+  editorialProvenanceStatus?: string;
   id?: string;
   title: string;
   slug?: string | null;
