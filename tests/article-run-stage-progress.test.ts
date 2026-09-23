@@ -1,9 +1,14 @@
 import { describe, expect, test } from "bun:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
-import {
+import ArticleRunStageProgress, {
+  articleRunFailureSummary,
   articleRunVisibleError,
   deriveArticleProgressStages,
+  stageForStep,
 } from "../app/components/ArticleRunStageProgress";
+import { summarizeRunError } from "../app/lib/vibe-marketing-run-failures";
 import type { VibeMarketingRunSummary } from "../app/types/vibe-marketing";
 
 function repairingArticle(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarketingRunSummary {
@@ -59,5 +64,108 @@ describe("article generation stage progress during setup repair", () => {
       detail: "Approve the generated article setup before continuing.",
     });
     expect(articleRunVisibleError(run)).toBe("Approve the generated article setup before continuing.");
+  });
+});
+
+describe("article generation asset stage", () => {
+  const completedStep = (key: string) => ({
+    key,
+    name: key,
+    required: true,
+    status: "completed",
+    attempts: 1,
+    artifacts: [],
+  });
+
+  test.each(["plan_resource_asset", "generate_resource_pdf"])(
+    "shows %s as preparing images and assets after article assembly",
+    (currentStep) => {
+      // The live run has many section steps, so the old index fallback mapped
+      // these late resource steps to startup context instead of assets.
+      const run = repairingArticle({
+        status: "running",
+        currentStep,
+        errorCode: null,
+        preconditionStatus: null,
+        repairStatus: null,
+        requiresUserAction: false,
+        stepOrder: Array.from({ length: 32 }, (_, index) => `step-${index}`),
+        steps: [
+          ...Array.from({ length: 10 }, (_, index) => completedStep(index === 9 ? "assemble_article" : `completed-${index}`)),
+          { key: currentStep, name: currentStep, required: true, status: "running", attempts: 1, artifacts: [] },
+        ],
+      });
+      const stages = deriveArticleProgressStages(run);
+      const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+
+      expect(stageForStep(currentStep, 10, 32)).toBe("assets");
+      expect(stages.find((stage) => stage.id === "assets")?.status).toBe("running");
+      expect(markup).toContain("Step 8 of 10");
+      expect(markup).toContain("Preparing images and assets");
+      expect(markup).not.toContain("Loading startup context</h2>");
+    },
+  );
+});
+
+describe("article run failure display", () => {
+  const comparisonError = Array.from({ length: 10 }, (_, index) =>
+    `candidate_fit: matched/incomplete: Batch ${index + 1} found a usable task, but the body cites no current primary-source citations.`,
+  ).join(" ");
+
+  function failedComparisonRun(overrides: Partial<VibeMarketingRunSummary> = {}) {
+    return repairingArticle({
+      status: "failed",
+      currentStep: "assemble_article",
+      errorCode: null,
+      preconditionStatus: null,
+      repairStatus: null,
+      requiresUserAction: false,
+      stepOrder: ["load_context", "assemble_article"],
+      steps: [{
+        key: "assemble_article",
+        name: "Assemble article",
+        required: true,
+        status: "failed",
+        attempts: 2,
+        error: comparisonError,
+        artifacts: [],
+      }],
+      errors: [comparisonError],
+      ...overrides,
+    });
+  }
+
+  test("shows a short actionable comparison summary with one expandable copy of the diagnostics", () => {
+    const run = failedComparisonRun();
+    const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+
+    expect(articleRunFailureSummary(run)).toBe(
+      "Draft review could not verify current primary-source citations. Review the source findings before resuming.",
+    );
+    expect(markup).toContain("View full failure details");
+    expect(markup).toContain("<details");
+    expect((markup.match(/candidate_fit: matched\/incomplete:/g) ?? []).length).toBe(10);
+    expect(markup.indexOf("Draft review could not verify")).toBeLessThan(markup.indexOf("<details"));
+  });
+
+  test("keeps step-only failure diagnostics available", () => {
+    const run = failedComparisonRun({ errors: [] });
+    const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run }));
+
+    expect(markup).toContain("Draft review could not verify");
+    expect(markup).toContain("View full failure details");
+    expect((markup.match(/candidate_fit: matched\/incomplete:/g) ?? []).length).toBe(10);
+  });
+
+  test("bounds other long failures and preserves short messages", () => {
+    const longError = `The preview could not be rendered because ${"a technical issue ".repeat(30)}contact support.`;
+    const summary = summarizeRunError(longError);
+
+    expect(summary.length).toBeLessThanOrEqual(210);
+    expect(summary).toEndWith("…");
+    expect(summary).not.toContain("contact support");
+    expect(summarizeRunError("Approve the generated article setup before continuing.")).toBe(
+      "Approve the generated article setup before continuing.",
+    );
   });
 });
