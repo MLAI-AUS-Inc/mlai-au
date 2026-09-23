@@ -374,7 +374,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const runId = params.runId ?? "";
   // These reads share company scope but do not depend on one another. Keep
   // bootstrap out of the critical path to the full run (including 404 recovery).
-  const [bootstrap, run] = await Promise.all([
+  const [bootstrap, run, editorialState] = await Promise.all([
     getVibeMarketingBootstrap(env, request, companyId, "summary"),
     getVibeMarketingRun(env, request, runId, companyId).catch(async (error: unknown) => {
       if (isApiNotFoundError(error)) {
@@ -397,6 +397,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       }
       throw error;
     }),
+    loadEditorialCatalog(env, request, companyId),
   ]);
   let githubRepos: VibeMarketingGithubReposResponse = { status: "unavailable", repos: [], repositories: [] };
   const shouldLoadGithubRepos = ["repo_scan", "content_factory_scan"].includes(run.workflow) && !setupRunIdForRun(run);
@@ -422,7 +423,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   return {
     run,
     bootstrap,
-    editorialState: await loadEditorialCatalog(env, request, companyId),
+    editorialState,
     setupRun,
     githubRepos,
     accountEmail: appUser.email || authUser.email || null,
