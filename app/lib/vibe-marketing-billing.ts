@@ -1,6 +1,21 @@
 export const VIBE_MARKETING_ARTICLE_JOB_COST_POINTS = 6;
 export const VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS = 1;
 
+function isFreeContentFactoryDomain(domain: string | null | undefined) {
+  const value = String(domain || "").trim().toLowerCase();
+  if (!value) return false;
+  const hostname = value.replace(/^https?:\/\//, "").split(/[/?#:]/, 1)[0]?.replace(/\.$/, "").replace(/^www\./, "");
+  return hostname === "mlai.au";
+}
+
+export function vibeMarketingArticleCostPoints(domain: string | null | undefined) {
+  return isFreeContentFactoryDomain(domain) ? 0 : VIBE_MARKETING_ARTICLE_JOB_COST_POINTS;
+}
+
+export function vibeMarketingContentIslandTopicCostPoints(domain: string | null | undefined) {
+  return isFreeContentFactoryDomain(domain) ? 0 : VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS;
+}
+
 function randomIdPart() {
   const runtimeCrypto = globalThis.crypto;
   if (typeof runtimeCrypto?.randomUUID === "function") {

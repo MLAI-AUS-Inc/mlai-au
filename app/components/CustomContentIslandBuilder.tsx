@@ -4,7 +4,6 @@ import { ArrowLeft, ArrowRight, Check, CheckCircle2, Compass, Loader2, Search, S
 import { clsx } from "clsx";
 import { ISLAND_BRIEF_EXAMPLES, ISLAND_FOCUSES, researchedIslands } from "~/lib/custom-content-island";
 import { useIslandResearch } from "~/lib/use-island-research";
-import { VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS } from "~/lib/vibe-marketing-billing";
 import type { VibeMarketingTopicPillar } from "~/types/vibe-marketing";
 
 const inputClass = "mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm font-medium text-slate-950 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100";
@@ -16,10 +15,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
   companyId: string;
+  costPoints: number;
   onAdded: (island: VibeMarketingTopicPillar) => void;
 }
 
-export default function CustomContentIslandBuilder({ open, onClose, companyId, onAdded }: Props) {
+export default function CustomContentIslandBuilder({ open, onClose, companyId, costPoints, onAdded }: Props) {
   const state = useIslandResearch(companyId, onAdded);
   const { brief, setBrief, step, setStep, runId, run, error, paymentRequired, busy, adding, saved, terminal } = state;
   const proposals = researchedIslands(run?.result);
@@ -30,7 +30,7 @@ export default function CustomContentIslandBuilder({ open, onClose, companyId, o
   const finished = Boolean(runId && terminal);
   const view = saved ? "saved" : researching ? "researching" : preview ? "preview" : finished ? "results" : String(step);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const cost = VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS;
+  const costLabel = costPoints === 0 ? "Free" : `${costPoints} Roo ${costPoints === 1 ? "Point" : "Points"}`;
   const focusLabel = ISLAND_FOCUSES.find((option) => option.id === brief.searchIntent)?.label || "Explore all opportunities";
   useEffect(() => { if (open) titleRef.current?.focus(); }, [open, view]);
   const title = saved ? "Your islands are on the map" : preview ? "Here’s how your themes fit together" : researching ? "Finding your next content island" : finished ?
@@ -107,9 +107,9 @@ export default function CustomContentIslandBuilder({ open, onClose, companyId, o
 
                 </article>)}
                 <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white py-4"><p className="text-sm font-semibold text-slate-600">{selected.length} themes selected · Free to add</p><button type="button" disabled={adding || !selected.length} onClick={() => void state.reviewSelection()} className={primaryClass}>{adding ? <><Loader2 className="h-4 w-4 animate-spin" />Reviewing…</> : <>Review selected themes<ArrowRight className="h-4 w-4" /></>}</button></div>
-              </> : <div role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-5"><Search className="mb-3 h-7 w-7 text-amber-700" /><p className="text-sm font-bold text-slate-900">{run?.result?.message ? String(run.result.message) : "We couldn’t finish this research. Try again in a moment."}</p><p className="mt-3 text-sm leading-6 text-slate-600">{run?.result?.island_research_refunded ? "Your research Roo Point has been refunded." : "Any research charge is refunded automatically when research fails or finds no usable islands."}</p></div>}
+              </> : <div role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-5"><Search className="mb-3 h-7 w-7 text-amber-700" /><p className="text-sm font-bold text-slate-900">{run?.result?.message ? String(run.result.message) : "We couldn’t finish this research. Try again in a moment."}</p><p className="mt-3 text-sm leading-6 text-slate-600">{costPoints === 0 ? "Research is free for this domain; you can try again." : run?.result?.island_research_refunded ? "Your research Roo Point has been refunded." : "Any research charge is refunded automatically when research fails or finds no usable islands."}</p></div>}
               <button type="button" disabled={Boolean(adding)} onClick={state.refine} className={secondaryClass}><ArrowLeft className="h-4 w-4" />Refine my topic</button>
-              {proposals.length > 0 && <p className="text-xs text-slate-500">A new research run costs {cost} Roo Point. Adding these results is free.</p>}
+              {proposals.length > 0 && <p className="text-xs text-slate-500">{costPoints === 0 ? "A new research run is free." : `A new research run costs ${costLabel}.`} Adding these results is free.</p>}
             </div> : <form onSubmit={(event) => { event.preventDefault(); if (!busy) { if (step < 2) setStep(step + 1); else void state.research(); } }}>
               <div className="space-y-5 px-5 py-6 sm:px-8">
                 {step === 0 && <>
@@ -124,12 +124,12 @@ export default function CustomContentIslandBuilder({ open, onClose, companyId, o
                 </>}
                 {step === 2 && <>
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5"><p className="text-xs font-black uppercase tracking-wider text-violet-700">Your research brief</p><dl className="mt-4 space-y-4 text-sm"><div><dt className="font-bold text-slate-900">Topic to explore</dt><dd className="mt-1 whitespace-pre-wrap break-words leading-6 text-slate-600">{brief.subject}</dd></div>{brief.description && <div><dt className="font-bold text-slate-900">Context and boundaries</dt><dd className="mt-1 whitespace-pre-wrap break-words leading-6 text-slate-600">{brief.description}</dd></div>}{brief.audience && <div><dt className="font-bold text-slate-900">Audience</dt><dd className="mt-1 break-words leading-6 text-slate-600">{brief.audience}</dd></div>}<div><dt className="font-bold text-slate-900">Search intent</dt><dd className="mt-1 whitespace-pre-wrap break-words leading-6 text-slate-600">{focusLabel}{brief.searchIntent === "custom" && ` — ${brief.focus}`}</dd></div></dl></div>
-                  <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4"><p className="text-sm font-black text-violet-900">Research islands · {cost} Roo Point</p><p className="mt-2 text-sm leading-6 text-violet-800">You’ll get relevant themes, search volumes and difficulty, backed by keyword research. Select all relevant themes and add them to your map at no extra cost.</p><p className="mt-2 text-xs leading-5 text-violet-700">Google · Australia · English. If research fails or finds no usable islands, your point is refunded. Article idea generation is a separate action.</p></div>
+                  <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4"><p className="text-sm font-black text-violet-900">Research islands · {costLabel}</p><p className="mt-2 text-sm leading-6 text-violet-800">You’ll get relevant themes, search volumes and difficulty, backed by keyword research. Select all relevant themes and add them to your map at no extra cost.</p><p className="mt-2 text-xs leading-5 text-violet-700">Google · Australia · English. {costPoints === 0 ? "Research is free for this domain." : "If research fails or finds no usable islands, your point is refunded."} Article idea generation is a separate action.</p></div>
                 </>}
               </div>
               <div className="sticky bottom-0 z-10 flex flex-col-reverse gap-3 rounded-b-3xl border-t border-slate-100 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                 <button type="button" disabled={busy} onClick={() => step ? setStep(step - 1) : onClose()} className={secondaryClass}>{step > 0 && <ArrowLeft className="h-4 w-4" />}{step ? "Back" : "Finish later"}</button>
-                <button type="submit" disabled={busy || !brief.subject.trim()} className={primaryClass}>{busy ? <><Loader2 className="h-4 w-4 animate-spin" />Starting research…</> : step === 2 ? <><Search className="h-4 w-4" />Research islands · {cost} Roo Point</> : <>{step === 0 ? "Choose search intent" : "Review research"}<ArrowRight className="h-4 w-4" /></>}</button>
+                <button type="submit" disabled={busy || !brief.subject.trim()} className={primaryClass}>{busy ? <><Loader2 className="h-4 w-4 animate-spin" />Starting research…</> : step === 2 ? <><Search className="h-4 w-4" />Research islands · {costLabel}</> : <>{step === 0 ? "Choose search intent" : "Review research"}<ArrowRight className="h-4 w-4" /></>}</button>
               </div>
             </form>}
             {error && <div className="px-5 pb-6 sm:px-8"><p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">{error}</p>{paymentRequired && <a href="/founder-tools/upgrades" className="mt-3 inline-flex text-sm font-bold text-violet-700 underline">Get Roo Points</a>}</div>}

@@ -147,7 +147,7 @@ for (const route of routes) describe(`actual ${route.name} article dispatch`, ()
         no_offer_reason: form.get("editorialNoOfferReason"), country: "AU", reader_task: "Compare two candidate workflows",
         distinct_contribution: "A transparent worked comparison with a stop decision",
         acceptance_criteria: ["Include setup and ongoing costs", "Label assumptions and untested outcomes"] });
-      expect(calls.map(c => c.path)).toEqual(["/api/v1/auth/me/", "/api/v1/founder-tools/profile/", "/api/v1/vibe-marketing/bootstrap/?company_id=owned",
+      expect(calls.map(c => c.path)).toEqual(["/api/v1/auth/me/", "/api/v1/founder-tools/profile/", `/api/v1/vibe-marketing/bootstrap/?company_id=owned${route.name === "research confirmation" ? "&view=summary" : ""}`,
         "/api/v1/vibe-marketing/editorial-catalog/?company_id=owned", "/api/v1/vibe-marketing/article"]);
     });
   }
