@@ -31,6 +31,8 @@ export function shouldUseDevBackendFallback(error?: unknown) {
         code === "ECONNRESET" ||
         code === "ENOTFOUND" ||
         code === "ETIMEDOUT" ||
+        code === "ECONNABORTED" ||
+        code === "ERR_NETWORK" ||
         message.includes("network connection lost") ||
         message.includes("network error") ||
         message.includes("failed to fetch") ||
