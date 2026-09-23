@@ -28,18 +28,20 @@ export function contentIslandResearchRequestId(
   storage: RequestIdStorage | null,
   companyId: string,
   islandSlug: string,
-  freshId: string,
 ) {
-  if (!storage || !companyId || !islandSlug) return freshId;
+  const freshId = () => createVibeMarketingClientRequestId("vibe-content-island-topics");
+  if (!storage || !companyId || !islandSlug) return freshId();
   const key = contentIslandRequestKey(companyId, islandSlug);
   try {
     const existing = storage.getItem(key);
     if (existing && existing.length <= 100) return existing;
-    storage.setItem(key, freshId);
+    const created = freshId();
+    storage.setItem(key, created);
+    return created;
   } catch {
     // A disabled storage API does not prevent the request itself.
   }
-  return freshId;
+  return freshId();
 }
 
 export function clearContentIslandResearchRequestId(

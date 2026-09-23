@@ -329,7 +329,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       editorialState: await loadEditorialCatalog(env, request, null),
       billingRequestIds: {
         articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
-        contentIslandTopics: createVibeMarketingClientRequestId("vibe-content-island-topics"),
       },
     };
   }
@@ -345,7 +344,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     editorialState,
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
-      contentIslandTopics: createVibeMarketingClientRequestId("vibe-content-island-topics"),
     },
   };
 }
@@ -3486,7 +3484,7 @@ function ReturningTopicPickerPage({
 }: {
   bootstrap: VibeMarketingBootstrap;
   editorialState: EditorialCatalogState;
-  billingRequestIds: { articleJob: string; contentIslandTopics: string };
+  billingRequestIds: { articleJob: string };
   error: string | null;
   errorIntent?: string | null;
   setupMergedNotice?: boolean;
@@ -3818,7 +3816,7 @@ function ReturningTopicPickerPage({
     formData.set("researchAudienceId", researchAudienceId);
     formData.set("researchCatalogVersion", String(editorialState.catalog?.editorial_catalog_version ?? 0));
     formData.set("clientRequestId", contentIslandResearchRequestId(
-      discoverySessionStorage(), companyId, pillar.slug, billingRequestIds.contentIslandTopics,
+      discoverySessionStorage(), companyId, pillar.slug,
     ));
     formData.set("contentIslandSlug", pillar.slug);
     formData.set("contentIslandName", pillar.name);

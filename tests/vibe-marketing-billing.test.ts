@@ -27,10 +27,15 @@ describe("vibe marketing billing", () => {
       setItem: (key: string, value: string) => { values.set(key, value); },
       removeItem: (key: string) => { values.delete(key); },
     } as Storage;
-    expect(contentIslandResearchRequestId(storage, "company-1", "ai-small-business", "first-id")).toBe("first-id");
-    expect(contentIslandResearchRequestId(storage, "company-1", "ai-small-business", "new-loader-id")).toBe("first-id");
-    expect(contentIslandResearchRequestId(storage, "company-2", "ai-small-business", "other-company-id")).toBe("other-company-id");
+    const first = contentIslandResearchRequestId(storage, "company-1", "ai-small-business");
+    expect(first.startsWith("vibe-content-island-topics:")).toBe(true);
+    expect(first.length).toBeLessThanOrEqual(100);
+    expect(contentIslandResearchRequestId(storage, "company-1", "ai-small-business")).toBe(first);
+    const otherIsland = contentIslandResearchRequestId(storage, "company-1", "funding");
+    expect(otherIsland).not.toBe(first);
+    expect(contentIslandResearchRequestId(storage, "company-1", "funding")).toBe(otherIsland);
+    expect(contentIslandResearchRequestId(storage, "company-2", "ai-small-business")).not.toBe(first);
     clearContentIslandResearchRequestId(storage, "company-1", "ai-small-business");
-    expect(contentIslandResearchRequestId(storage, "company-1", "ai-small-business", "after-acceptance-id")).toBe("after-acceptance-id");
+    expect(contentIslandResearchRequestId(storage, "company-1", "ai-small-business")).not.toBe(first);
   });
 });
