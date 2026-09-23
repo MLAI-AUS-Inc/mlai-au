@@ -32,6 +32,7 @@ import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartup
 import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
 import { readableBackendError } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
+import { getOptionalVibeRaisingContextForLoader } from "~/lib/vibe-raising-loader-context.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
@@ -494,7 +495,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect(`${url.pathname}?${url.searchParams.toString()}`);
   }
 
-  const vibeContext = await getOptionalVibeRaisingContext(env, request);
+  const vibeContext = await getOptionalVibeRaisingContextForLoader(context, request);
   const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
   const [bootstrap, baselineHistory, editorialState] = await Promise.all([
     getVibeMarketingBootstrap(env, request, activeCompanyId, "summary"),

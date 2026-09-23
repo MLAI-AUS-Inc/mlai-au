@@ -40,6 +40,7 @@ import { RooPointCost } from "~/components/RooPointCost";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { apiErrorDetail, isApiNotFoundError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
+import { requireVibeRaisingFounderForLoader } from "~/lib/vibe-raising-loader-context.server";
 import { summarizeRunError } from "~/lib/vibe-marketing-run-failures";
 import {
   createVibeMarketingClientRequestId,
@@ -370,7 +371,7 @@ function accountEmailVerifiedFromAuthUser(authUser: Record<string, unknown>) {
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  const { authUser, appUser } = await requireVibeRaisingFounder(env, request);
+  const { authUser, appUser } = await requireVibeRaisingFounderForLoader(context, request);
   const companyId = resolveActiveCompanyId(appUser);
   const runId = params.runId ?? "";
   // These reads share company scope but do not depend on one another. Keep
