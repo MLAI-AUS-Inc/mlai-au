@@ -2,12 +2,13 @@ import { describe, expect, test } from "bun:test";
 
 import {
   findRecoverableDiscoveryRun,
+  findDiscoveryPickerCandidate,
   forgetRememberedDiscoveryRun,
   pollDiscoveryRunStatus,
   readRememberedDiscoveryRun,
   rememberDiscoveryRun,
 } from "../app/lib/vibe-marketing-discovery-recovery";
-import type { VibeMarketingRunSummary } from "../app/types/vibe-marketing";
+import type { VibeMarketingRunSummary, VibeMarketingTopicCandidate, VibeMarketingTopicPillar } from "../app/types/vibe-marketing";
 
 function run(partial: Partial<VibeMarketingRunSummary>): VibeMarketingRunSummary {
   return { runId: "run", workflow: "auto_discovery", status: "running", ...partial } as unknown as VibeMarketingRunSummary;
@@ -104,5 +105,31 @@ describe("content island research recovery", () => {
       previous,
     );
     expect(next).toEqual({ run: recovered, unavailable: false });
+  });
+});
+
+describe("discovery result handoff", () => {
+  const topic = (id: string, sourceRunId: string, alreadyWritten = false): VibeMarketingTopicCandidate => ({
+    id, keyword: id, title: id, sourceRunId, alreadyWritten,
+  });
+  const pillar = (topics: VibeMarketingTopicCandidate[]): VibeMarketingTopicPillar => ({
+    id: "island:ai", slug: "ai", name: "AI", description: "", ideaCount: topics.length,
+    iconKey: "brain", colorKey: "purple", source: "content_island", topicCandidates: topics,
+  });
+
+  test("does not treat a changed inventory or an older same-island idea as this run's result", () => {
+    expect(findDiscoveryPickerCandidate("new-run", [topic("old", "old-run")], [pillar([topic("old-pillar", "old-run")])])).toBeNull();
+    expect(findDiscoveryPickerCandidate("new-run", [topic("written", "new-run", true)], [])).toBeNull();
+    expect(findDiscoveryPickerCandidate("new-run", [], [])).toBeNull();
+  });
+
+  test("selects an unwritten idea from the exact run in the visible picker source", () => {
+    expect(findDiscoveryPickerCandidate("new-run", [topic("new", "new-run")], [])).toEqual({ topic: topic("new", "new-run"), pillarSlug: null });
+    expect(findDiscoveryPickerCandidate("new-run", [topic("old", "old-run")], [pillar([topic("new-pillar", "new-run")])])).toEqual({ topic: topic("new-pillar", "new-run"), pillarSlug: "ai" });
+  });
+
+  test("does not select a top-level idea hidden behind the dashboard's eight-item limit", () => {
+    expect(findDiscoveryPickerCandidate("new-run", [...Array.from({ length: 8 }, (_, index) => topic(`old-${index}`, "old-run")), topic("hidden", "new-run")], [])).toBeNull();
+    expect(findDiscoveryPickerCandidate("new-run", [], [pillar([...Array.from({ length: 8 }, (_, index) => topic(`old-${index}`, "old-run")), topic("hidden", "new-run")])])).toBeNull();
   });
 });

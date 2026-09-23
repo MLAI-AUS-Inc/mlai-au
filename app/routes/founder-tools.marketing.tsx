@@ -39,6 +39,7 @@ import {
 import { clsx } from "clsx";
 
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
+import ContentIslandDiscoveryResult from "~/components/ContentIslandDiscoveryResult";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import CustomContentIslandBuilder from "~/components/CustomContentIslandBuilder";
 import AvatarModal from "~/components/AvatarModal";
@@ -60,6 +61,7 @@ import {
 } from "~/lib/vibe-marketing-autofill-state";
 import { isDashboardGithubConnected, shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
 import {
+  findDiscoveryPickerCandidate,
   findRecoverableDiscoveryRun,
   forgetRememberedDiscoveryRun,
   pollDiscoveryRunStatus,
@@ -68,11 +70,11 @@ import {
   type RememberedDiscoveryRun,
 } from "~/lib/vibe-marketing-discovery-recovery";
 import {
-  VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
-  VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS,
   clearContentIslandResearchRequestId,
   contentIslandResearchRequestId,
   createVibeMarketingClientRequestId,
+  vibeMarketingArticleCostPoints,
+  vibeMarketingContentIslandTopicCostPoints,
 } from "~/lib/vibe-marketing-billing";
 import {
   filterOptimisticallyDeletedDrafts,
@@ -2469,6 +2471,7 @@ type TopicIslandVisual = {
 
 function TopicRow({
   topic,
+  articleCostPoints,
   selected,
   submitting,
   continueDisabled = false,
@@ -2478,6 +2481,7 @@ function TopicRow({
   onDecline,
 }: {
   topic: VibeMarketingTopicCandidate;
+  articleCostPoints: number;
   selected: boolean;
   submitting?: boolean;
   continueDisabled?: boolean;
@@ -2571,7 +2575,7 @@ function TopicRow({
             <>
               <span>Continue</span>
               <span aria-hidden="true">(</span>
-              <RooPointCost points={-VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} />
+              {articleCostPoints === 0 ? <span>Free</span> : <RooPointCost points={-articleCostPoints} />}
               <span aria-hidden="true">)</span>
             </>
           ) : "Select"}
@@ -3351,7 +3355,8 @@ function contentIslandDiscoveryStepLabel(run: VibeMarketingRunSummary | null, ac
   if (!run && activeRun?.runId.endsWith("-starting")) return `Sending the research request for ${islandName}. Waiting for server confirmation.`;
   if (!run) return `Checking article idea research for ${islandName}.`;
   if (isContentIslandDiscoveryFailedStatus(run.status)) return `Article idea research needs attention for ${islandName}.`;
-  if (isContentIslandDiscoveryDoneStatus(run.status)) return `New article ideas for ${islandName} are ready. Updating the topic picker.`;
+  if (normalizeContentIslandDiscoveryStatus(run.status) === "awaiting_confirmation") return `New article ideas for ${islandName} are ready to review.`;
+  if (normalizeContentIslandDiscoveryStatus(run.status) === "completed") return `Article idea research for ${islandName} is finished.`;
   const currentStep = String(run.currentStep || "").trim().toLowerCase();
   if (currentStep.includes("research")) return `Researching and scoring article ideas for ${islandName}.`;
   if (currentStep.includes("final")) return `Preparing the highest-value ideas for ${islandName}.`;
@@ -3379,6 +3384,7 @@ function ContentIslandActions({ submitting, discoverySubmitting, onCreateIsland 
 
 function TopicPillarsSection({
   pillars,
+  costPoints,
   submitting,
   generatingPillarSlug,
   confirmingPillarSlug,
@@ -3388,6 +3394,7 @@ function TopicPillarsSection({
   actions,
 }: {
   pillars: VibeMarketingTopicPillar[];
+  costPoints: number;
   submitting: boolean;
   generatingPillarSlug?: string | null;
   confirmingPillarSlug?: string | null;
@@ -3435,7 +3442,9 @@ function TopicPillarsSection({
                 disabled={submitting || generating}
                 aria-label={
                   confirming
-                    ? `Confirm topic idea generation for ${pillar.name} for ${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point`
+                    ? costPoints === 0
+                      ? `Confirm free topic idea generation for ${pillar.name}`
+                      : `Confirm topic idea generation for ${pillar.name} for ${costPoints} Roo ${costPoints === 1 ? "Point" : "Points"}`
                     : `Generate topic ideas for ${pillar.name}`
                 }
                 className={clsx(
@@ -3453,7 +3462,7 @@ function TopicPillarsSection({
                     {confirming ? (
                       <>
                         Confirm
-                        <RooPointCost points={-VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} />
+                        {costPoints === 0 ? <span>Free</span> : <RooPointCost points={-costPoints} />}
                       </>
                     ) : (
                       <>
@@ -3521,7 +3530,6 @@ function ReturningTopicPickerPage({
   const [companyAvatarPreviewUrl, setCompanyAvatarPreviewUrl] = useState<string | null>(null);
   const undoRequestedTopicIds = useRef<Set<string>>(new Set());
   const completedContentIslandDiscoveryRuns = useRef<Set<string>>(new Set());
-  const contentIslandRefreshStartCount = useRef(0);
   const companyAvatarPreviewObjectUrl = useRef<string | null>(null);
   const handledDeleteActionRef = useRef<unknown>(null);
   const handledDiscardActionRef = useRef<unknown>(null);
@@ -3595,6 +3603,9 @@ function ReturningTopicPickerPage({
         : "This will generate article copy and images for manual publishing.";
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
+  const billingDomain = bootstrap.organization.domain || bootstrap.company.domain;
+  const articleCostPoints = vibeMarketingArticleCostPoints(billingDomain);
+  const contentIslandCostPoints = vibeMarketingContentIslandTopicCostPoints(billingDomain);
   const tags = startupTags(bootstrap);
   const githubConnected = isDashboardGithubConnected(bootstrap);
   const websiteDomainDisplay = normalizeDashboardDomain(domain) || "Add your domain";
@@ -4126,10 +4137,13 @@ function ReturningTopicPickerPage({
     const run = contentIslandPolledRun;
     if (!run || !contentIslandDiscoveryRun || run.runId !== contentIslandDiscoveryRun.runId) return;
     const status = String(run.status || "").trim().toLowerCase();
-    if (isContentIslandDiscoveryDoneStatus(status)) {
+    if (status === "awaiting_confirmation") {
+      setActiveTab("choose");
+      return;
+    }
+    if (status === "completed") {
       if (!completedContentIslandDiscoveryRuns.current.has(run.runId)) {
         completedContentIslandDiscoveryRuns.current.add(run.runId);
-        contentIslandRefreshStartCount.current = bootstrap.topicCandidates.length;
         setContentIslandRefreshRunId(run.runId);
         setActivePillarSlug(null);
         setActiveTab("choose");
@@ -4146,30 +4160,22 @@ function ReturningTopicPickerPage({
       setContentIslandRefreshRunId(null);
       setToast(null);
     }
-  }, [bootstrap.topicCandidates.length, contentIslandDiscoveryRun, contentIslandPolledRun, revalidator]);
+  }, [contentIslandDiscoveryRun, contentIslandPolledRun, revalidator]);
 
   useEffect(() => {
     if (!contentIslandRefreshRunId || revalidator.state !== "idle") return;
-    const refreshedFromRun =
-      latestDiscoveryRunId === contentIslandRefreshRunId ||
-      bootstrap.topicCandidates.some((topic) => topic.sourceRunId === contentIslandRefreshRunId) ||
-      bootstrap.topicCandidates.length !== contentIslandRefreshStartCount.current;
-    if (!refreshedFromRun) return;
-    const refreshedTopic =
-      bootstrap.topicCandidates.find((topic) => topic.sourceRunId === contentIslandRefreshRunId && !topic.alreadyWritten) ??
-      (contentIslandDiscoveryRun?.islandSlug
-        ? bootstrap.topicCandidates.find(
-            (topic) => topic.pillarSlug === contentIslandDiscoveryRun.islandSlug && !topic.alreadyWritten,
-          )
-        : null);
-    if (refreshedTopic) {
-      const refreshedTopicIndex = bootstrap.topicCandidates
-        .filter((topic) => !topic.alreadyWritten)
-        .findIndex((topic) => topic.id === refreshedTopic.id);
-      setSelectedTopicId(refreshedTopic.id);
-      if (refreshedTopicIndex >= 0) {
-        setVisibleCount((current) => Math.max(current, Math.min(Math.max(refreshedTopicIndex + 1, 5), 8)));
-      }
+    const matched = findDiscoveryPickerCandidate(contentIslandRefreshRunId, bootstrap.topicCandidates, bootstrap.topicPillars);
+    if (!matched) return;
+    setActivePillarSlug(matched.pillarSlug);
+    const source = matched.pillarSlug
+      ? bootstrap.topicPillars.find((pillar) => pillar.slug === matched.pillarSlug)?.topicCandidates ?? []
+      : bootstrap.topicCandidates;
+    const refreshedTopicIndex = source
+      .filter((topic) => !topic.alreadyWritten)
+      .findIndex((topic) => topic.id === matched.topic.id);
+    setSelectedTopicId(matched.topic.id);
+    if (refreshedTopicIndex >= 0) {
+      setVisibleCount((current) => Math.max(current, Math.min(Math.max(refreshedTopicIndex + 1, 5), 8)));
     }
     forgetRememberedDiscoveryRun(discoverySessionStorage(), companyId, contentIslandRefreshRunId);
     setContentIslandDiscoveryRun((current) =>
@@ -4178,11 +4184,9 @@ function ReturningTopicPickerPage({
     setContentIslandRefreshRunId(null);
   }, [
     bootstrap.topicCandidates,
-    bootstrap.topicCandidates.length,
-    contentIslandDiscoveryRun?.islandSlug,
+    bootstrap.topicPillars,
     contentIslandRefreshRunId,
     companyId,
-    latestDiscoveryRunId,
     revalidator.state,
   ]);
 
@@ -4277,6 +4281,7 @@ function ReturningTopicPickerPage({
   const topicPillarsCards = (
     <TopicPillarsSection
       pillars={bootstrap.topicPillars}
+      costPoints={contentIslandCostPoints}
       submitting={isSubmitting || contentIslandDiscoveryBusy}
       generatingPillarSlug={generatingPillarSlug}
       confirmingPillarSlug={confirmingContentIslandSlug}
@@ -4292,6 +4297,7 @@ function ReturningTopicPickerPage({
       <CustomContentIslandBuilder
         key={bootstrap.company.id}
         companyId={bootstrap.company.id}
+        costPoints={contentIslandCostPoints}
         open={customIslandOpen}
         onClose={() => setCustomIslandOpen(false)}
         onAdded={(island) => { setActivePillarSlug(island.slug); revalidator.revalidate(); }}
@@ -4424,6 +4430,15 @@ function ReturningTopicPickerPage({
                         Status updates are temporarily unavailable. Your research request is still tracked here, and we are retrying automatically.
                       </p>
                     ) : null}
+                    {contentIslandPolledRun && contentIslandProgressState.runId === contentIslandPolledRun.runId &&
+                      (contentIslandPolledStatus !== "completed" ||
+                        !findDiscoveryPickerCandidate(contentIslandPolledRun.runId, bootstrap.topicCandidates, bootstrap.topicPillars)) ? (
+                      <ContentIslandDiscoveryResult
+                        status={contentIslandPolledStatus}
+                        runId={contentIslandPolledRun.runId}
+                        onRefresh={() => revalidator.revalidate()}
+                      />
+                    ) : null}
                   </div>
                 ) : null}
                 <div className="mt-5 space-y-3">
@@ -4432,6 +4447,7 @@ function ReturningTopicPickerPage({
                       <TopicRow
                         key={topic.id}
                         topic={topic}
+                        articleCostPoints={articleCostPoints}
                         selected={topic.id === selectedTopicId}
                         submitting={articleSubmitting}
                         continueDisabled={!editorialAvailable}
@@ -4575,6 +4591,7 @@ function ReturningTopicPickerPage({
             <VibeMarketingIslandGraphSection
               graph={bootstrap.islandGraph}
               pillars={bootstrap.topicPillars}
+              costPoints={contentIslandCostPoints}
               submitting={isSubmitting || contentIslandDiscoveryBusy}
               generatingPillarSlug={generatingPillarSlug}
               confirmingPillarSlug={confirmingContentIslandSlug}

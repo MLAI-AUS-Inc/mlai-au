@@ -83,6 +83,14 @@ function props(overrides: Partial<VibeMarketingIslandGraphProps> = {}): VibeMark
 }
 
 describe("VibeMarketingIslandGraph", () => {
+  test("shows the free-domain research price in the island confirmation", () => {
+    const markup = renderToStaticMarkup(createElement(VibeMarketingIslandGraph, props({
+      activePillarSlug: "healthcare-ai", confirmingPillarSlug: "healthcare-ai", costPoints: 0,
+    })));
+    expect(markup).toContain("Confirm below to start for free");
+    expect(markup).toContain("Confirm free topic idea generation");
+    expect(markup).not.toContain("use 1 Roo Point");
+  });
   test("renders an accessible island map server-side with wrapped labels and edges", () => {
     const markup = renderToStaticMarkup(createElement(VibeMarketingIslandGraph, props()));
 

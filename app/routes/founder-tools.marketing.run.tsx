@@ -41,8 +41,8 @@ import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { apiErrorDetail, isApiNotFoundError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
 import {
-  VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
   createVibeMarketingClientRequestId,
+  vibeMarketingArticleCostPoints,
 } from "~/lib/vibe-marketing-billing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
@@ -687,7 +687,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         deliveryMode: String(formData.get("deliveryMode") ?? ""),
       });
     } else if (intent === "start-article") {
-      const bootstrap = await getVibeMarketingBootstrap(env, request, companyId);
+      const bootstrap = await getVibeMarketingBootstrap(env, request, companyId, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return { intent, error: "Publish the articles setup before generating articles. If you've already published it, refresh status." };
       }
@@ -5191,7 +5191,9 @@ export default function FounderToolsMarketingRun() {
                           <>
                             <span>Generate draft article</span>
                             <span aria-hidden="true">(</span>
-                            <RooPointCost points={-VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} />
+                            {vibeMarketingArticleCostPoints(bootstrap.organization.domain || bootstrap.company.domain) === 0
+                              ? <span>Free</span>
+                              : <RooPointCost points={-vibeMarketingArticleCostPoints(bootstrap.organization.domain || bootstrap.company.domain)} />}
                             <span aria-hidden="true">)</span>
                           </>
                         )}

@@ -252,6 +252,7 @@ function islandAccessibleLabel(node: IslandGraphNode): string {
 export interface VibeMarketingIslandGraphProps {
   graph: VibeMarketingIslandGraph;
   pillars: VibeMarketingTopicPillar[];
+  costPoints?: number;
   submitting: boolean;
   generatingPillarSlug?: string | null;
   confirmingPillarSlug?: string | null;
@@ -268,6 +269,7 @@ export interface VibeMarketingIslandGraphProps {
 export default function VibeMarketingIslandGraph({
   graph,
   pillars,
+  costPoints = VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS,
   submitting,
   generatingPillarSlug,
   confirmingPillarSlug,
@@ -396,6 +398,7 @@ export default function VibeMarketingIslandGraph({
     <SelectedIslandPanel
       node={selectedNode}
       pillar={selectedPillar}
+      costPoints={costPoints}
       confirming={selectedConfirming}
       generating={selectedGenerating}
       busy={busy}
@@ -714,6 +717,7 @@ function ListMetric({ label, value }: { label: string; value: string }) {
 function SelectedIslandPanel({
   node,
   pillar,
+  costPoints,
   confirming,
   generating,
   busy,
@@ -722,6 +726,7 @@ function SelectedIslandPanel({
 }: {
   node: IslandGraphNode;
   pillar: VibeMarketingTopicPillar | null;
+  costPoints: number;
   confirming: boolean;
   generating: boolean;
   busy: boolean;
@@ -776,10 +781,10 @@ function SelectedIslandPanel({
         <div className="text-xs font-semibold leading-5 text-slate-500">
           {confirming ? (
             <p className="font-bold text-violet-800">
-              Ready to research? Confirm below to use {VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point.
+              {costPoints === 0 ? "Ready to research? Confirm below to start for free." : `Ready to research? Confirm below to use ${costPoints} Roo ${costPoints === 1 ? "Point" : "Points"}.`}
             </p>
           ) : (
-            <p>Reviewing an island is free. Roo Points are only used after you confirm generation.</p>
+            <p>{costPoints === 0 ? "Reviewing an island and generating article ideas are free for this domain." : "Reviewing an island is free. Roo Points are only used after you confirm generation."}</p>
           )}
         </div>
         <button
@@ -788,7 +793,9 @@ function SelectedIslandPanel({
           disabled={busy || !pillar}
           aria-label={
             confirming
-              ? `Confirm topic idea generation for ${node.name} for ${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} Roo Point`
+              ? costPoints === 0
+                ? `Confirm free topic idea generation for ${node.name}`
+                : `Confirm topic idea generation for ${node.name} for ${costPoints} Roo ${costPoints === 1 ? "Point" : "Points"}`
               : `Generate topic ideas for ${node.name}`
           }
           className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-700 bg-violet-700 px-4 text-sm font-black text-white shadow-sm transition hover:border-violet-800 hover:bg-violet-800 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-200 disabled:cursor-not-allowed disabled:opacity-60"
@@ -802,7 +809,7 @@ function SelectedIslandPanel({
             <>
               <Check className="h-4 w-4" />
               Confirm
-              <RooPointCost points={-VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} />
+              {costPoints === 0 ? <span>Free</span> : <RooPointCost points={-costPoints} />}
             </>
           ) : (
             <>

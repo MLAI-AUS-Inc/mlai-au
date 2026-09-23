@@ -35,8 +35,8 @@ import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
-  VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
   createVibeMarketingClientRequestId,
+  vibeMarketingArticleCostPoints,
 } from "~/lib/vibe-marketing-billing";
 import { repoScanProgressRefreshKey } from "~/lib/vibe-marketing-run-polling";
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
@@ -1807,7 +1807,9 @@ export default function FounderToolsMarketingCreate() {
                         <>
                           <span>Generate draft article</span>
                           <span aria-hidden="true">(</span>
-                          <RooPointCost points={-VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} />
+                          {vibeMarketingArticleCostPoints(bootstrap.organization.domain || bootstrap.company.domain) === 0
+                            ? <span>Free</span>
+                            : <RooPointCost points={-vibeMarketingArticleCostPoints(bootstrap.organization.domain || bootstrap.company.domain)} />}
                           <span aria-hidden="true">)</span>
                         </>
                       )}

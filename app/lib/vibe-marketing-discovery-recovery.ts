@@ -1,4 +1,4 @@
-import type { VibeMarketingRunSummary } from "~/types/vibe-marketing";
+import type { VibeMarketingRunSummary, VibeMarketingTopicCandidate, VibeMarketingTopicPillar } from "~/types/vibe-marketing";
 
 // Discovery workflows whose in-flight runs the dashboard can recover from
 // bootstrap.latestRuns after a navigation, so the topic-research progress card
@@ -129,4 +129,25 @@ export function findRecoverableDiscoveryRun(
         !completedRunIds.has(run.runId),
     ) ?? null
   );
+}
+
+/**
+ * A completed discovery only leaves the dashboard card when an unwritten idea
+ * from that exact run is available to select. A newer latest-run ID, a changed
+ * topic count, or an older idea in the same island cannot prove that result.
+ */
+export function findDiscoveryPickerCandidate(
+  runId: string,
+  topics: readonly VibeMarketingTopicCandidate[],
+  pillars: readonly VibeMarketingTopicPillar[],
+): { topic: VibeMarketingTopicCandidate; pillarSlug: string | null } | null {
+  const inRun = (topic: VibeMarketingTopicCandidate) => topic.sourceRunId === runId && !topic.alreadyWritten;
+  // The dashboard only shows the first eight top-level candidates.
+  const topLevel = topics.filter((topic) => !topic.alreadyWritten).slice(0, 8).find(inRun);
+  if (topLevel) return { topic: topLevel, pillarSlug: null };
+  for (const pillar of pillars) {
+    const topic = pillar.topicCandidates.filter((candidate) => !candidate.alreadyWritten).slice(0, 8).find(inRun);
+    if (topic) return { topic, pillarSlug: pillar.slug };
+  }
+  return null;
 }

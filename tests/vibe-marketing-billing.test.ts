@@ -6,12 +6,25 @@ import {
   clearContentIslandResearchRequestId,
   contentIslandResearchRequestId,
   createVibeMarketingClientRequestId,
+  vibeMarketingArticleCostPoints,
+  vibeMarketingContentIslandTopicCostPoints,
 } from "../app/lib/vibe-marketing-billing";
 
 describe("vibe marketing billing", () => {
   test("exposes current Roo point costs", () => {
     expect(VIBE_MARKETING_ARTICLE_JOB_COST_POINTS).toBe(6);
     expect(VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS).toBe(1);
+  });
+
+  test("displays the backend's free mlai.au pricing only for the mlai.au domain", () => {
+    for (const domain of ["mlai.au", "https://www.mlai.au/articles", "MLAI.AU."]) {
+      expect(vibeMarketingArticleCostPoints(domain)).toBe(0);
+      expect(vibeMarketingContentIslandTopicCostPoints(domain)).toBe(0);
+    }
+    for (const domain of ["another.au", "sub.mlai.au", "fake-mlai.au", ""]) {
+      expect(vibeMarketingArticleCostPoints(domain)).toBe(6);
+      expect(vibeMarketingContentIslandTopicCostPoints(domain)).toBe(1);
+    }
   });
 
   test("creates scoped client request ids for paid actions", () => {
