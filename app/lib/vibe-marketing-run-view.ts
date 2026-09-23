@@ -49,6 +49,7 @@ const ACTIVE_ARTICLE_STATUSES = new Set([
   "preview_verifying",
   "repair_preview_building",
 ]);
+const BLOCKED_ARTICLE_STATUSES = new Set(["failed", "blocked", "blocked_verification"]);
 const ACTIVE_REPAIR_STATUSES = new Set([
   "queued",
   "pending",
@@ -251,6 +252,16 @@ export function isArticleGenerationActivelyRunning(run: VibeMarketingRunSummary)
   );
 }
 
+function isArticleGenerationBlockedBeforeReview(run: VibeMarketingRunSummary) {
+  return Boolean(
+    ARTICLE_CREATION_WORKFLOWS.has(String(run.workflow ?? "")) &&
+      BLOCKED_ARTICLE_STATUSES.has(normalized(run.status)) &&
+      !(run.componentManifest && articleReviewPreviewUrlForRun(run)) &&
+      !publishPrUrlForRun(run) &&
+      !hasPublishChildReference(run),
+  );
+}
+
 export function articlePreconditionRepairStateForRun(run: VibeMarketingRunSummary): ArticlePreconditionRepairState {
   const repairStatus = normalized(
     run.repairStatus || stringResultValue(run, "repair_status", "repairStatus"),
@@ -363,20 +374,25 @@ export function articleWorkflowProgressForRunPage(
   if (!progress || !ARTICLE_CREATION_WORKFLOWS.has(String(run.workflow ?? ""))) return progress;
 
   const repair = articlePreconditionRepairStateForRun(run);
-  const forceGenerate = isArticleGenerationActivelyRunning(run) || repair.isPrecondition;
+  const blockedBeforeReview = !repair.isPrecondition && isArticleGenerationBlockedBeforeReview(run);
+  const forceGenerate = isArticleGenerationActivelyRunning(run) || repair.isPrecondition || blockedBeforeReview;
   if (!forceGenerate) return progress;
+  const generateStatus = blockedBeforeReview ? "blocked" : repair.requiresUserAction ? "needs_action" : "running";
+  const generateSummary = blockedBeforeReview
+    ? "Article generation stopped before a reviewable preview was ready. Inspect the failure and resume this run."
+    : repair.autoRecovering
+      ? "Checking the website article setup before research starts automatically."
+      : repair.requiresUserAction
+        ? "Finish the required article setup before research can continue."
+        : "Researching, drafting, and preparing this article for review.";
 
   const normalizedSteps = progress.steps.map((step) => {
     if (step.id === "generate") {
       return {
         ...step,
         href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}?articleStep=generate`,
-        status: repair.requiresUserAction ? "needs_action" : "running",
-        summary: repair.autoRecovering
-          ? "Checking the website article setup before research starts automatically."
-          : repair.requiresUserAction
-            ? "Finish the required article setup before research can continue."
-            : "Researching, drafting, and preparing this article for review.",
+        status: generateStatus,
+        summary: generateSummary,
         primaryAction: null,
       };
     }
@@ -391,13 +407,9 @@ export function articleWorkflowProgressForRunPage(
       id: "generate",
       label: "Generate article",
       phase: "article",
-      status: repair.requiresUserAction ? "needs_action" : "running",
+      status: generateStatus,
       href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}?articleStep=generate`,
-      summary: repair.autoRecovering
-        ? "Checking the website article setup before research starts automatically."
-        : repair.requiresUserAction
-          ? "Finish the required article setup before research can continue."
-          : "Researching, drafting, and preparing this article for review.",
+      summary: generateSummary,
       primaryAction: null,
     };
     normalizedSteps.splice(insertAt >= 0 ? insertAt : normalizedSteps.length, 0, generateStep);
@@ -406,7 +418,7 @@ export function articleWorkflowProgressForRunPage(
   return {
     ...progress,
     currentStepId: "generate",
-    nextStepId: repair.requiresUserAction ? null : "review",
+    nextStepId: blockedBeforeReview || repair.requiresUserAction ? null : "review",
     steps: normalizedSteps,
   };
 }
@@ -471,7 +483,7 @@ export function publishPreviewUrlForRun(run: VibeMarketingRunSummary) {
 export function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
   if (isArticleReviewPreviewReady(run)) return false;
   const repair = articlePreconditionRepairStateForRun(run);
-  if (isArticleGenerationActivelyRunning(run) || repair.autoRecovering) return false;
+  if (isArticleGenerationActivelyRunning(run) || repair.autoRecovering || isArticleGenerationBlockedBeforeReview(run)) return false;
   return Boolean(
     publishPrUrlForRun(run) ||
       publishPreviewUrlForRun(run) ||
@@ -528,7 +540,7 @@ export function viewedWorkflowStepIdForRun(
     // A newly-started or self-healing article always belongs on Generate. The
     // organisation-level workflow progress can still point at the previous
     // article's Review/Publish step while this run is only checking its repo.
-    if (isArticleGenerationActivelyRunning(run) || repair.isPrecondition) return "generate";
+    if (isArticleGenerationActivelyRunning(run) || repair.isPrecondition || isArticleGenerationBlockedBeforeReview(run)) return "generate";
   }
   // Explicit user override (e.g. ?articleStep=review) lets the user jump back to
   // the article preview at any point, even after the run has moved to publish.

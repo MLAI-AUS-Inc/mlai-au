@@ -193,6 +193,72 @@ describe("vibe marketing run view state", () => {
     });
   });
 
+  test("keeps a failed article without a review preview on blocked Generate despite stale organisation progress", () => {
+    const run = articleRun({
+      status: "failed",
+      currentStep: "verify_static",
+      approvalState: null,
+      previewUrl: null,
+      componentManifest: null,
+      livePreview: null,
+      workflowProgress: null,
+      result: {},
+    });
+    const staleProgress = {
+      currentStepId: "profile",
+      nextStepId: "publish",
+      steps: [
+        { id: "profile", label: "Startup profile", phase: "setup", status: "needs_action", href: "/profile" },
+        { id: "generate", label: "Generate article", phase: "article", status: "complete", href: "/generate" },
+        { id: "review", label: "Review article", phase: "article", status: "ready", href: "/review" },
+        { id: "package", label: "Package", phase: "article", status: "ready", href: "/package" },
+        { id: "publish", label: "Publish", phase: "article", status: "ready", href: "/publish" },
+      ],
+    };
+
+    expect(viewedWorkflowStepIdForRun(run, null, null, "publish")).toBe("generate");
+    expect(articleWorkflowProgressForRunPage(run, staleProgress)).toMatchObject({
+      currentStepId: "generate",
+      nextStepId: null,
+      steps: [
+        { id: "profile", status: "needs_action" },
+        { id: "generate", status: "blocked", primaryAction: null },
+        { id: "review", status: "locked", primaryAction: null },
+        { id: "package", status: "locked", primaryAction: null },
+        { id: "publish", status: "locked", primaryAction: null },
+      ],
+    });
+    const staleRunProgress = articleRun({ ...run, workflowProgress: { ...staleProgress, currentStepId: "publish" } });
+    expect(hasPublishHandoffEvidence(staleRunProgress)).toBe(false);
+    const recoveredProgress = articleWorkflowProgressForRunPage(staleRunProgress, null);
+    expect(recoveredProgress?.currentStepId).toBe("generate");
+    expect(recoveredProgress?.steps.find((step) => step.id === "generate")?.status).toBe("blocked");
+    expect(recoveredProgress?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
+  });
+
+  test("does not move a failed publish handoff back to Generate", () => {
+    const run = articleRun({
+      status: "failed",
+      currentStep: "create_pull_request",
+      approvalState: null,
+      prUrl: "https://github.com/MLAI-AUS-Inc/mlai-au/pull/123",
+      previewUrl: null,
+      componentManifest: null,
+      livePreview: null,
+      result: {},
+    });
+
+    expect(viewedWorkflowStepIdForRun(run)).toBe("publish");
+    expect(articleWorkflowProgressForRunPage(run, null)).toBe(run.workflowProgress);
+  });
+
+  test("keeps a failed run with an actual review preview on Review", () => {
+    const run = articleRun({ status: "failed", currentStep: "verify_browser", approvalState: null });
+
+    expect(viewedWorkflowStepIdForRun(run)).toBe("review");
+    expect(articleWorkflowProgressForRunPage(run, null)).toBe(run.workflowProgress);
+  });
+
   test("shows an automatic setup repair as Generate and keeps polling on the article run", () => {
     const run = articleRun({
       status: "blocked",
