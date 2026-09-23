@@ -290,9 +290,14 @@ function StageIcon({ status }: { status: StageStatus }) {
 export function deriveArticleProgressStages(run: VibeMarketingRunSummary): StageView[] {
   const total = Math.max(run.stepOrder.length, run.steps.length, 1);
   const repair = articlePreconditionRepairStateForRun(run);
+  // Hosted preview runs after the recorded generation steps. Its failure is
+  // reported as currentStep, without a corresponding failed step in run.steps.
+  const previewFailed = FAILED_RUN_STATUSES.has(run.status) && normalizedKey(run.currentStep) === "preview_failed";
   const activeStep = currentInternalStep(run);
   const activeStage = repair.isPrecondition
     ? "article_system"
+    : previewFailed
+      ? "preview"
     : stageForStep(activeStep ?? run.currentStep, activeStep ? run.steps.indexOf(activeStep) : 0, total);
   const failingStep = run.steps.find((step) => FAILED_STEP_STATUSES.has(step.status)) ?? null;
   const failingStage = repair.requiresUserAction
@@ -318,7 +323,9 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
       failingStage === stage.id ||
       (runFailed && stage.id === activeStage);
     const running = runRunning && stage.id === activeStage && !attention;
-    const complete = runComplete || allStageStepsComplete || (runRunning && stageIndex < activeStageIndex && !attention);
+    const complete = runComplete ||
+      (allStageStepsComplete && !(previewFailed && stage.id === "review")) ||
+      (runRunning && stageIndex < activeStageIndex && !attention);
     const status: StageStatus = attention ? "attention" : running ? "running" : complete ? "complete" : "up_next";
 
     return {

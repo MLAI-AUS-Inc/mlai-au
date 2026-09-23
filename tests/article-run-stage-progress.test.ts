@@ -107,6 +107,56 @@ describe("article generation asset stage", () => {
   );
 });
 
+describe("hosted article preview progress", () => {
+  test("attributes a post-generation preview build failure to preview verification", () => {
+    const stepOrder = [
+      "fetch_org_config",
+      "load_context",
+      "discover_research_landscape",
+      "plan_article",
+      "draft_section:intro",
+      "assemble_article",
+      "generate_content_images",
+      "package_content_delivery",
+      "render_article",
+      "validate_render_dependencies",
+      "verify_static",
+      "finalize",
+    ];
+    const run = repairingArticle({
+      status: "blocked",
+      currentStep: "preview_failed",
+      errorCode: null,
+      preconditionStatus: null,
+      repairStatus: null,
+      requiresUserAction: false,
+      stepOrder,
+      // The API can return every recorded check as complete. Hosted preview
+      // failure is a later outcome and does not create a failed step entry.
+      steps: [...stepOrder.filter((key) => key !== "draft_section:intro"), "draft_section:intro"].map((key) => ({
+        key,
+        name: key,
+        required: true,
+        status: "completed",
+        attempts: 1,
+        artifacts: [],
+      })),
+      errors: ["Hosted preview build failed. Inspect the build logs for details."],
+    });
+
+    const stages = deriveArticleProgressStages(run);
+    const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+
+    expect(stages.find((stage) => stage.id === "drafting")?.status).toBe("complete");
+    expect(stages.find((stage) => stage.id === "assets")?.status).toBe("complete");
+    expect(stages.find((stage) => stage.id === "preview")?.status).toBe("attention");
+    expect(stages.find((stage) => stage.id === "review")?.status).toBe("up_next");
+    expect(stages.filter((stage) => stage.status === "attention")).toHaveLength(1);
+    expect(markup).toContain("Step 9 of 10");
+    expect(markup).toContain("Verifying preview");
+  });
+});
+
 describe("article run failure display", () => {
   const comparisonError = Array.from({ length: 10 }, (_, index) =>
     `candidate_fit: matched/incomplete: Batch ${index + 1} found a usable task, but the body cites no current primary-source citations.`,
