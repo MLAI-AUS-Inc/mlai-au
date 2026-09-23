@@ -219,6 +219,8 @@ export function stageForStep(step: VibeMarketingStepState | string | null | unde
   }
 
   if (
+    key.includes("plan_resource_asset") ||
+    key.includes("generate_resource_pdf") ||
     key.includes("generate_content_images") ||
     key.includes("package_content_delivery") ||
     key.includes("package_publish_bundle")

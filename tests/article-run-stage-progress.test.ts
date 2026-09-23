@@ -6,6 +6,7 @@ import ArticleRunStageProgress, {
   articleRunFailureSummary,
   articleRunVisibleError,
   deriveArticleProgressStages,
+  stageForStep,
 } from "../app/components/ArticleRunStageProgress";
 import { summarizeRunError } from "../app/lib/vibe-marketing-run-failures";
 import type { VibeMarketingRunSummary } from "../app/types/vibe-marketing";
@@ -64,6 +65,46 @@ describe("article generation stage progress during setup repair", () => {
     });
     expect(articleRunVisibleError(run)).toBe("Approve the generated article setup before continuing.");
   });
+});
+
+describe("article generation asset stage", () => {
+  const completedStep = (key: string) => ({
+    key,
+    name: key,
+    required: true,
+    status: "completed",
+    attempts: 1,
+    artifacts: [],
+  });
+
+  test.each(["plan_resource_asset", "generate_resource_pdf"])(
+    "shows %s as preparing images and assets after article assembly",
+    (currentStep) => {
+      // The live run has many section steps, so the old index fallback mapped
+      // these late resource steps to startup context instead of assets.
+      const run = repairingArticle({
+        status: "running",
+        currentStep,
+        errorCode: null,
+        preconditionStatus: null,
+        repairStatus: null,
+        requiresUserAction: false,
+        stepOrder: Array.from({ length: 32 }, (_, index) => `step-${index}`),
+        steps: [
+          ...Array.from({ length: 10 }, (_, index) => completedStep(index === 9 ? "assemble_article" : `completed-${index}`)),
+          { key: currentStep, name: currentStep, required: true, status: "running", attempts: 1, artifacts: [] },
+        ],
+      });
+      const stages = deriveArticleProgressStages(run);
+      const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+
+      expect(stageForStep(currentStep, 10, 32)).toBe("assets");
+      expect(stages.find((stage) => stage.id === "assets")?.status).toBe("running");
+      expect(markup).toContain("Step 8 of 10");
+      expect(markup).toContain("Preparing images and assets");
+      expect(markup).not.toContain("Loading startup context</h2>");
+    },
+  );
 });
 
 describe("article run failure display", () => {
