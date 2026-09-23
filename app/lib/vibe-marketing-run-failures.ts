@@ -30,6 +30,27 @@ function cleanString(value: unknown): string {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
+const MAX_VISIBLE_ERROR_LENGTH = 210;
+
+/** Keep verbose worker diagnostics out of the default run view. The original
+ * message is still available in the expandable technical details. */
+export function summarizeRunError(value: unknown): string {
+  const message = cleanString(value).replace(/\s+/g, " ");
+  if (message.length <= MAX_VISIBLE_ERROR_LENGTH) return message;
+
+  if (/candidate_fit|canonical.{0,32}reader[ -]?task comparison/i.test(message)) {
+    if (/(?:no|missing|lack|without|cannot verify).{0,80}primary[ -]?source.{0,50}(?:citation|reference|link)?/i.test(message)) {
+      return "Draft review could not verify current primary-source citations. Review the source findings before resuming.";
+    }
+    return "The draft did not pass its reader-task comparison. Review the findings before resuming.";
+  }
+
+  const sentence = message.slice(0, MAX_VISIBLE_ERROR_LENGTH + 1).match(/^.{1,210}?[.!?](?=\s|$)/)?.[0];
+  if (sentence) return sentence;
+  const cutoff = message.lastIndexOf(" ", MAX_VISIBLE_ERROR_LENGTH - 1);
+  return `${message.slice(0, cutoff > 120 ? cutoff : MAX_VISIBLE_ERROR_LENGTH - 1).trimEnd()}…`;
+}
+
 function collectFailureRecords(value: unknown, seen = new Set<unknown>(), depth = 0): FailureRecord[] {
   const record = asRecord(value);
   if (!Object.keys(record).length || seen.has(record) || depth > 4) return [];

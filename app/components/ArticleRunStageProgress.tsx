@@ -12,6 +12,7 @@ import {
   articlePreconditionRepairStateForRun,
   isArticleGenerationActivelyRunning,
 } from "~/lib/vibe-marketing-run-view";
+import { summarizeRunError } from "~/lib/vibe-marketing-run-failures";
 import type { VibeMarketingRunSummary, VibeMarketingStepState } from "~/types/vibe-marketing";
 
 type StageId =
@@ -331,7 +332,7 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
           : status === "running"
             ? stage.activeText
             : status === "attention"
-              ? failingStep?.error || run.errors[0] || "Review the technical details before continuing."
+              ? summarizeRunError(failingStep?.error || run.errors[0]) || "Review the technical details before continuing."
               : stage.pendingText,
     };
   });
@@ -349,10 +350,26 @@ export function articleRunVisibleError(run: VibeMarketingRunSummary) {
   return run.errors[0] ?? "";
 }
 
+export function articleRunFailureSummary(run: VibeMarketingRunSummary) {
+  return summarizeRunError(articleRunVisibleError(run) || run.steps.find((step) => FAILED_STEP_STATUSES.has(step.status))?.error || run.failure?.message) ||
+    "Review the failed step before resuming.";
+}
+
+function articleRunFailureDetails(run: VibeMarketingRunSummary) {
+  const repair = articlePreconditionRepairStateForRun(run);
+  if (repair.autoRecovering || isRunRecovering(run)) return [];
+  if (!FAILED_RUN_STATUSES.has(run.status) && !articleRunVisibleError(run)) return [];
+  return [...new Set([
+    ...run.errors,
+    ...run.steps.filter((step) => FAILED_STEP_STATUSES.has(step.status)).map((step) => step.error),
+    run.failure?.message,
+  ].filter((detail): detail is string => typeof detail === "string" && Boolean(detail.trim())))];
+}
+
 export default function ArticleRunStageProgress({ run, variant = "standalone", reviewHref }: ArticleRunStageProgressProps) {
   const stages = deriveArticleProgressStages(run);
   const repair = articlePreconditionRepairStateForRun(run);
-  const visibleError = articleRunVisibleError(run);
+  const failureDetails = articleRunFailureDetails(run);
   const embedded = variant === "embedded";
   const activeStage =
     stages.find((stage) => stage.status === "attention") ??
@@ -461,10 +478,13 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
         })}
       </div>
 
-      {visibleError ? (
-        <div className={clsx("rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700", !embedded && "mt-3")}>
-          {visibleError}
-        </div>
+      {failureDetails.length > 0 ? (
+        <details className={clsx("rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700", !embedded && "mt-3")}>
+          <summary className="cursor-pointer font-semibold">View full failure details</summary>
+          <div className="mt-3 max-h-80 space-y-3 overflow-y-auto border-t border-red-200 pt-3 font-mono text-xs font-normal leading-5">
+            {failureDetails.map((detail, index) => <p key={index} className="whitespace-pre-wrap break-words">{detail}</p>)}
+          </div>
+        </details>
       ) : null}
     </section>
   );

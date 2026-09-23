@@ -28,7 +28,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
-import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
+import ArticleRunStageProgress, { articleRunFailureSummary } from "~/components/ArticleRunStageProgress";
 import DailyReminderChannels from "~/components/DailyReminderChannels";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
@@ -40,6 +40,7 @@ import { RooPointCost } from "~/components/RooPointCost";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { apiErrorDetail, isApiNotFoundError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
+import { summarizeRunError } from "~/lib/vibe-marketing-run-failures";
 import {
   createVibeMarketingClientRequestId,
   vibeMarketingArticleCostPoints,
@@ -5229,7 +5230,7 @@ export default function FounderToolsMarketingRun() {
                   <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
                   <div>
                     <p className="font-black">This run needs attention</p>
-                    <p className="mt-1">{run.errors[0] ?? "Review the failed step and resume when ready."}</p>
+                    <p className="mt-1">{isArticleGenerationRun ? articleRunFailureSummary(run) : summarizeRunError(run.errors[0]) || "Review the failed step and resume when ready."}</p>
                   </div>
                 </div>
                 {canResume ? (
