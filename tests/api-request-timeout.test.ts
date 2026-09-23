@@ -1,6 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
-import { API_REQUEST_TIMEOUT_MS, axiosInstance, createApiClient } from "../app/lib/api";
+// The full Bun suite includes module mocks for the API client. Verify these
+// real-client contracts in an isolated process so test order cannot replace it.
+if (process.env.API_REQUEST_TIMEOUT_CHILD !== "1") {
+  test("real API client timeout, adapter and Origin contracts", () => {
+    const result = Bun.spawnSync([process.execPath, "test", import.meta.path], {
+      cwd: process.cwd(),
+      env: { ...process.env, API_REQUEST_TIMEOUT_CHILD: "1" },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    expect(result.exitCode, result.stdout.toString() + result.stderr.toString()).toBe(0);
+  });
+} else {
+const { API_REQUEST_TIMEOUT_MS, axiosInstance, createApiClient } = await import("../app/lib/api");
 
 // Regression: a hung backend call (e.g. a server-side reset action whose request
 // never returns) used to leave the UI spinning forever because the axios clients
@@ -67,3 +80,4 @@ describe("api client preserves cookie-authenticated mutation origin", () => {
     expect(client.defaults.headers.Origin).toBeUndefined();
   });
 });
+}

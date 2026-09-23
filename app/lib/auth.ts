@@ -1,4 +1,4 @@
-import { axiosInstance, API_URL, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
+import { axiosInstance, API_URL, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub, toSafeApiError } from "./api";
 import axios from "axios";
 import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
@@ -6,6 +6,8 @@ export type AuthAppName = "esafety" | "hospital" | "founder-tools" | "vibe-raisi
 type GetCurrentUserOptions = {
     allowDevBypass?: boolean;
 };
+
+export const AUTH_REQUEST_TIMEOUT_MS = 10_000;
 
 function resolveAuthApp(body: {
     app?: AuthAppName;
@@ -34,7 +36,7 @@ function getBaseUrl(env: Env): string {
 }
 
 // Helper to create an axios instance for a specific request
-function getAxios(env: Env, request?: Request, baseUrlOverride?: string) {
+export function getAxios(env: Env, request?: Request, baseUrlOverride?: string) {
     const baseURL = baseUrlOverride || getBaseUrl(env);
     const headers: Record<string, string> = {};
 
@@ -45,11 +47,17 @@ function getAxios(env: Env, request?: Request, baseUrlOverride?: string) {
         }
     }
 
-    return axios.create({
+    const client = axios.create({
         baseURL,
         withCredentials: true,
-        headers
+        headers,
+        timeout: AUTH_REQUEST_TIMEOUT_MS,
     });
+    client.interceptors.response.use(
+        (response) => response,
+        (error) => Promise.reject(toSafeApiError(error)),
+    );
+    return client;
 }
 
 export async function sendMagicLink(env: Env, body: {
@@ -152,7 +160,11 @@ export async function getCurrentUser(env: Env, request?: Request, options: GetCu
 
     try {
         return await getCurrentUserFromBackend(env, request);
-    } catch (error: any) {
+    } catch (rawError: unknown) {
+        const error = toSafeApiError(rawError) as Error & {
+            response?: { status?: number };
+            code?: string;
+        };
         if (error.response && error.response.status === 401) {
             if (allowDevBypass && shouldUseDevAuthBypass()) {
                 console.warn("No backend auth session in local dev; using Dev User auth bypass.");
@@ -168,8 +180,7 @@ export async function getCurrentUser(env: Env, request?: Request, options: GetCu
             console.warn("Backend unavailable in local dev; using auth stub for preview.");
             return DEV_AUTH_STUB;
         }
-        // Log the error for debugging
-        console.error("getCurrentUser error:", error.message, error.response?.status, error.response?.data);
+        console.error("getCurrentUser failed", { status: error.response?.status ?? null, code: error.code ?? null });
         throw error;
     }
 }
@@ -213,7 +224,7 @@ export async function getHospitalTeams(env: Env, request: Request) {
         const response = await client.get("/api/v1/hackathons/hospital/teams/");
         return response.data || [];
     } catch (error) {
-        console.error("Failed to fetch hospital teams:", error);
+        console.error("Failed to fetch hospital teams", { status: (error as { response?: { status?: number } })?.response?.status ?? null });
         return [];
     }
 }
@@ -229,7 +240,7 @@ export async function getHospitalTeam(env: Env, request: Request, userId: number
         }
         return null;
     } catch (error) {
-        console.error("Failed to fetch hospital team:", error);
+        console.error("Failed to fetch hospital team", { status: (error as { response?: { status?: number } })?.response?.status ?? null });
         return null;
     }
 }
@@ -287,11 +298,9 @@ export async function updateUser(env: Env, body: {
                 }
             });
             return response.data;
-        } catch (e) {
-            console.warn("Failed to load form-data or convert body, falling back to standard FormData", e);
+        } catch {
+            console.warn("Failed to load form-data or convert body, falling back to standard FormData");
         }
-    } else {
-        console.log("updateUser: Body is NOT FormData", body);
     }
 
     const response = await client.patch("/api/v1/auth/update-profile/", body);

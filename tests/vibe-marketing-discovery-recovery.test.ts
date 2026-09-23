@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { findRecoverableDiscoveryRun } from "../app/lib/vibe-marketing-discovery-recovery";
+import {
+  findRecoverableDiscoveryRun,
+  forgetRememberedDiscoveryRun,
+  pollDiscoveryRunStatus,
+  readRememberedDiscoveryRun,
+  rememberDiscoveryRun,
+} from "../app/lib/vibe-marketing-discovery-recovery";
 import type { VibeMarketingRunSummary } from "../app/types/vibe-marketing";
 
 function run(partial: Partial<VibeMarketingRunSummary>): VibeMarketingRunSummary {
@@ -42,5 +48,61 @@ describe("findRecoverableDiscoveryRun", () => {
       run({ runId: "older", workflow: "auto_discovery", status: "queued" }),
     ];
     expect(findRecoverableDiscoveryRun(runs, new Set())?.runId).toBe("newest");
+  });
+});
+
+function memoryStorage() {
+  const values = new Map<string, string>();
+  return {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+    removeItem: (key: string) => { values.delete(key); },
+  } as Storage;
+}
+
+describe("content island research recovery", () => {
+  test("keeps an accepted run after reload for the correct company, including failed runs", () => {
+    const storage = memoryStorage();
+    const accepted = {
+      runId: "accepted-1",
+      kind: "island" as const,
+      islandSlug: "ai-small-business",
+      islandName: "AI For Small Business",
+      iconKey: "sparkles",
+      colorKey: "purple",
+    };
+    rememberDiscoveryRun(storage, "company-1", accepted);
+    expect(readRememberedDiscoveryRun(storage, "company-1")).toEqual(accepted);
+    expect(readRememberedDiscoveryRun(storage, "company-2")).toBeNull();
+    forgetRememberedDiscoveryRun(storage, "company-1", "different-run");
+    expect(readRememberedDiscoveryRun(storage, "company-1")?.runId).toBe("accepted-1");
+    forgetRememberedDiscoveryRun(storage, "company-1", "accepted-1");
+    expect(readRememberedDiscoveryRun(storage, "company-1")).toBeNull();
+  });
+
+  test("keeps the previous status through lost connections and bad responses, then accepts recovery", async () => {
+    const previous = run({ runId: "accepted-1", status: "queued" });
+    const lost = await pollDiscoveryRunStatus(
+      (async () => { throw new Error("Network connection lost."); }) as typeof fetch,
+      "/founder-tools/marketing/runs/accepted-1/status",
+      "accepted-1",
+      previous,
+    );
+    expect(lost).toEqual({ run: previous, unavailable: true });
+    const failedResponse = await pollDiscoveryRunStatus(
+      (async () => new Response("Unavailable", { status: 503 })) as typeof fetch,
+      "/founder-tools/marketing/runs/accepted-1/status",
+      "accepted-1",
+      previous,
+    );
+    expect(failedResponse).toEqual({ run: previous, unavailable: true });
+    const recovered = run({ runId: "accepted-1", status: "failed", errors: ["Research worker failed"] });
+    const next = await pollDiscoveryRunStatus(
+      (async () => Response.json(recovered)) as typeof fetch,
+      "/founder-tools/marketing/runs/accepted-1/status",
+      "accepted-1",
+      previous,
+    );
+    expect(next).toEqual({ run: recovered, unavailable: false });
   });
 });

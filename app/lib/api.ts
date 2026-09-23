@@ -31,6 +31,8 @@ export function shouldUseDevBackendFallback(error?: unknown) {
         code === "ECONNRESET" ||
         code === "ENOTFOUND" ||
         code === "ETIMEDOUT" ||
+        code === "ECONNABORTED" ||
+        code === "ERR_NETWORK" ||
         message.includes("network connection lost") ||
         message.includes("network error") ||
         message.includes("failed to fetch") ||
@@ -38,15 +40,84 @@ export function shouldUseDevBackendFallback(error?: unknown) {
     );
 }
 
+type SafeBackendError = Error & {
+    status?: number;
+    code?: string;
+    response?: { status: number; data?: unknown };
+};
+
+function errorStatus(error: unknown): number | undefined {
+    const candidate = error as { status?: unknown; response?: { status?: unknown } } | null;
+    const status = candidate?.response?.status ?? candidate?.status;
+    return typeof status === "number" && Number.isInteger(status) ? status : undefined;
+}
+
+function redactErrorData(value: unknown, depth = 0): unknown {
+    if (depth > 5) return "[redacted]";
+    if (typeof value === "string") {
+        return value
+            .replace(/\bBearer\s+[A-Za-z0-9._~+/-]+/gi, "Bearer [redacted]")
+            .replace(/\b(access_token|refresh_token|authorization|cookie|sessionid|csrf(?:token)?|password|secret|api[_-]?key)\s*[:=]\s*[^\s;,]+/gi, "$1=[redacted]")
+            .slice(0, 2000);
+    }
+    if (Array.isArray(value)) return value.slice(0, 20).map((item) => redactErrorData(item, depth + 1));
+    if (value && typeof value === "object") {
+        return Object.fromEntries(
+            Object.entries(value as Record<string, unknown>).slice(0, 30).map(([key, item]) => [
+                key,
+                /cookie|authorization|token|secret|password|credential|api[_-]?key|session/i.test(key)
+                    ? "[redacted]"
+                    : redactErrorData(item, depth + 1),
+            ]),
+        );
+    }
+    return value;
+}
+
+// Axios errors contain the complete outgoing request config, including the
+// forwarded session Cookie. Never let that object reach a route boundary or a
+// console logger. Keep only the status and redacted response details callers use.
+export function toSafeApiError(error: unknown): Error {
+    if (error instanceof Error && error.name === "BackendRequestError") return error;
+    const status = errorStatus(error);
+    const candidate = error as { code?: unknown; response?: { data?: unknown } } | null;
+    const code = typeof candidate?.code === "string" && /^[A-Z][A-Z0-9_]*$/.test(candidate.code)
+        ? candidate.code
+        : undefined;
+    const safe = new Error(status ? `Backend request failed (${status}).` : "Backend request failed.") as SafeBackendError;
+    safe.name = "BackendRequestError";
+    // Non-enumerable metadata remains available to existing status/error-detail
+    // handling without being serialized into Worker logs.
+    if (status !== undefined) {
+        const responseData = candidate?.response?.data;
+        Object.defineProperty(safe, "status", { value: status });
+        Object.defineProperty(safe, "response", {
+            value: {
+                status,
+                data: typeof responseData === "string" && looksLikeHtml(responseData)
+                    ? undefined
+                    : redactErrorData(responseData),
+            },
+        });
+    }
+    if (code) Object.defineProperty(safe, "code", { value: code });
+    return safe;
+}
+
+export function isApiUnavailableError(error: unknown): boolean {
+    const status = errorStatus(error);
+    if (status !== undefined) return status >= 500 && status <= 599;
+    const code = (error as { code?: unknown } | null)?.code;
+    return code === "ECONNABORTED" || code === "ETIMEDOUT" || code === "ERR_NETWORK" ||
+        code === "ERR_BAD_RESPONSE" || code === "ECONNRESET" || code === "ECONNREFUSED" || code === "ENOTFOUND";
+}
+
 // True when a backend call rejected with HTTP 404. Works across axios adapters — the
 // xhr/http/fetch adapters all populate `error.response.status`, and some thrown shapes
 // only carry a top-level `status`. SSR loaders use this to treat a deleted/reset run as
 // "gone" instead of letting the 404 throw and SSR-500 the whole page.
 export function isApiNotFoundError(error: unknown): boolean {
-    const status =
-        (error as { response?: { status?: number } } | null)?.response?.status ??
-        (error as { status?: number } | null)?.status;
-    return status === 404;
+    return errorStatus(error) === 404;
 }
 
 // Extract the human-readable failure reason a backend returned, across every thrown shape:
@@ -203,32 +274,14 @@ export function createApiClient(env: any, request?: Request) {
                 }
                 config.headers.set('X-CSRFToken', csrfToken);
             }
-            const headerObject =
-                config.headers && typeof config.headers.toJSON === "function"
-                    ? config.headers.toJSON()
-                    : config.headers;
-            console.log(`[API] Request ${config.method?.toUpperCase()} ${config.url}`, {
-                baseURL: config.baseURL,
-                headers: sanitizeHeaders(headerObject),
-                dataIsFormData: config.data instanceof FormData
-            });
             return config;
         },
-        (error) => Promise.reject(error)
+        (error) => Promise.reject(toSafeApiError(error))
     );
 
     client.interceptors.response.use(
         (response) => response,
-        async (error) => {
-            if (!error.response) {
-                return Promise.reject(error);
-            }
-            const { status } = error.response;
-            if (status === 403) {
-                return Promise.reject(error);
-            }
-            return Promise.reject(error);
-        }
+        (error) => Promise.reject(toSafeApiError(error))
     );
 
     return client;
@@ -253,22 +306,6 @@ const getCSRFToken = () => {
     return cookieValue;
 };
 
-function sanitizeHeaders(
-    headers: Record<string, unknown> | AxiosHeaders | undefined,
-): Record<string, unknown> | undefined {
-    if (!headers || typeof headers !== "object") {
-        return headers as Record<string, unknown> | undefined;
-    }
-
-    const clone: Record<string, unknown> = { ...(headers as Record<string, unknown>) };
-    for (const key of Object.keys(clone)) {
-        if (key.toLowerCase() === "cookie") {
-            clone[key] = "[redacted]";
-        }
-    }
-    return clone;
-}
-
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const csrfToken = getCSRFToken();
@@ -280,40 +317,13 @@ axiosInstance.interceptors.request.use(
             // Set the CSRF token
             config.headers.set('X-CSRFToken', csrfToken);
         }
-        const headerObject =
-            config.headers && typeof config.headers.toJSON === "function"
-                ? config.headers.toJSON()
-                : config.headers;
-        console.log(`[API] Request ${config.method?.toUpperCase()} ${config.url}`, {
-            headers: sanitizeHeaders(headerObject),
-            dataIsFormData: config.data instanceof FormData
-        });
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => Promise.reject(toSafeApiError(error))
 );
 
-// Global response interceptor to catch auth errors
+// Keep request internals and forwarded credentials out of thrown errors.
 axiosInstance.interceptors.response.use(
     (response) => response,
-    async (error) => {
-        // If there is no response object, just reject
-        if (!error.response) {
-            return Promise.reject(error);
-        }
-
-        const { status } = error.response;
-        // const originalRequest = error.config;
-
-        // Handle 401 (unauthenticated)
-        // For now, we'll just let the error propagate, but we could add refresh logic here later
-        // similar to the user's example if we have a refresh token endpoint.
-
-        // Handle 403 (forbidden)
-        if (status === 403) {
-            return Promise.reject(error);
-        }
-
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(toSafeApiError(error))
 );

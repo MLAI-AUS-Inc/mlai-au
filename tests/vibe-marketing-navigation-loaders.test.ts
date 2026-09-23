@@ -34,6 +34,7 @@ if (process.env.MARKETING_LOADER_REGRESSION_CHILD !== "1") {
     bootstrapGate?: Promise<void>;
     onBootstrap?: () => void;
     onRun?: () => void;
+    onEditorial?: () => void;
     runStatus?: number;
     authStatus?: number;
     otherCompany?: boolean;
@@ -58,6 +59,10 @@ if (process.env.MARKETING_LOADER_REGRESSION_CHILD !== "1") {
           options.onBootstrap?.();
           await options.bootstrapGate;
           return Response.json({ company: { id: companyId }, settings: { githubConnectionState: "connected" }, checks: {} });
+        }
+        if (url.pathname === "/api/v1/vibe-marketing/editorial-catalog/") {
+          options.onEditorial?.();
+          return Response.json({ editorial_catalog_version: 0, audience_options: [], cta_options: [], review_entries: [] });
         }
         if (url.pathname === `/api/v1/vibe-marketing/runs/${runId}`) {
           options.onRun?.();
@@ -94,19 +99,41 @@ if (process.env.MARKETING_LOADER_REGRESSION_CHILD !== "1") {
       expect(fixture.requests.filter((request) => request.path.includes("bootstrap")).map((request) => request.company)).toEqual([companyId, companyId]);
     });
 
+    test("starts the dashboard editorial read while bootstrap is still waiting", async () => {
+      const gate = deferred();
+      const bootstrapStarted = deferred();
+      const editorialStarted = deferred();
+      const fixture = backend({ bootstrapGate: gate.promise, onBootstrap: bootstrapStarted.resolve, onEditorial: editorialStarted.resolve });
+      const loading = dashboardLoader(fixture.args(marketingPath));
+      let deadline: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await bootstrapStarted.promise;
+        await Promise.race([
+          editorialStarted.promise,
+          new Promise((_, reject) => { deadline = setTimeout(() => reject(new Error("Editorial read waited for bootstrap")), 1000); }),
+        ]);
+      } finally {
+        clearTimeout(deadline);
+        gate.resolve();
+        await loading;
+      }
+      expect((await loading).editorialState.catalog?.editorial_catalog_version).toBe(0);
+    });
+
     test("starts the full run read while bootstrap is still waiting", async () => {
       const gate = deferred();
       const bootstrapStarted = deferred();
       const runStarted = deferred();
-      const fixture = backend({ bootstrapGate: gate.promise, onBootstrap: bootstrapStarted.resolve, onRun: runStarted.resolve });
+      const editorialStarted = deferred();
+      const fixture = backend({ bootstrapGate: gate.promise, onBootstrap: bootstrapStarted.resolve, onRun: runStarted.resolve, onEditorial: editorialStarted.resolve });
       const loading = runLoader(fixture.args(runPath));
       let deadline: ReturnType<typeof setTimeout> | undefined;
       try {
         await bootstrapStarted.promise;
         // The old sequential loader cannot reach the run endpoint until gate opens.
         await Promise.race([
-          runStarted.promise,
-          new Promise((_, reject) => { deadline = setTimeout(() => reject(new Error("Run waited for bootstrap")), 1000); }),
+          Promise.all([runStarted.promise, editorialStarted.promise]),
+          new Promise((_, reject) => { deadline = setTimeout(() => reject(new Error("Run or editorial read waited for bootstrap")), 1000); }),
         ]);
       } finally {
         clearTimeout(deadline);

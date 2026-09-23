@@ -50,6 +50,7 @@ import VibeMarketingIslandGraphSection from "~/components/VibeMarketingIslandGra
 import { PillarIcon } from "~/components/VibeMarketingPillarIcon";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
+import { isApiUnavailableError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
@@ -58,10 +59,19 @@ import {
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
 import { isDashboardGithubConnected, shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
-import { findRecoverableDiscoveryRun } from "~/lib/vibe-marketing-discovery-recovery";
+import {
+  findRecoverableDiscoveryRun,
+  forgetRememberedDiscoveryRun,
+  pollDiscoveryRunStatus,
+  readRememberedDiscoveryRun,
+  rememberDiscoveryRun,
+  type RememberedDiscoveryRun,
+} from "~/lib/vibe-marketing-discovery-recovery";
 import {
   VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
   VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS,
+  clearContentIslandResearchRequestId,
+  contentIslandResearchRequestId,
   createVibeMarketingClientRequestId,
 } from "~/lib/vibe-marketing-billing";
 import {
@@ -319,21 +329,21 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       editorialState: await loadEditorialCatalog(env, request, null),
       billingRequestIds: {
         articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
-        contentIslandTopics: createVibeMarketingClientRequestId("vibe-content-island-topics"),
       },
     };
   }
 
   const activeCompanyId = resolveActiveCompanyId(vibeContext.appUser);
-  const bootstrap = await getVibeMarketingBootstrap(env, request, activeCompanyId, "summary");
-  const editorialState = await loadEditorialCatalog(env, request, activeCompanyId);
+  const [bootstrap, editorialState] = await Promise.all([
+    getVibeMarketingBootstrap(env, request, activeCompanyId, "summary"),
+    loadEditorialCatalog(env, request, activeCompanyId),
+  ]);
   return {
     bootstrap,
     hasFounderCompany: true,
     editorialState,
     billingRequestIds: {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
-      contentIslandTopics: createVibeMarketingClientRequestId("vibe-content-island-topics"),
     },
   };
 }
@@ -780,6 +790,12 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (error instanceof Response) throw error;
     const conflict = companyDomainConflictFromError(error, intent);
     if (conflict) return { intent, domainConflict: conflict };
+    if (["start-content-island-discovery", "research-custom-topic"].includes(intent) && isApiUnavailableError(error)) {
+      return {
+        intent,
+        error: "We could not confirm that research started because the service is temporarily unavailable. Try Generate again to retry the request.",
+      };
+    }
     const fallback =
       intent === "start-autofill"
         ? "AI research could not start. Check the backend logs and try again."
@@ -3068,14 +3084,15 @@ type CompanyAvatarActionData = {
 // dashboard. `kind` distinguishes a content-island run (island icon + name) from a
 // free-form custom-topic research run (generic "your topic" label). Both are the
 // same backend `auto_discovery` workflow.
-type ContentIslandDiscoveryRunState = {
-  runId: string;
-  kind?: "island" | "custom";
-  islandSlug: string;
-  islandName: string;
-  iconKey: string;
-  colorKey: string;
-};
+type ContentIslandDiscoveryRunState = RememberedDiscoveryRun;
+
+function discoverySessionStorage(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
 
 type TopicToast =
   | {
@@ -3268,7 +3285,9 @@ function buildContentIslandDiscoveryRunSummary({
   domain?: string | null;
 }): VibeMarketingRunSummary | null {
   if (!run && !activeRun && !submitting) return null;
-  const status = run?.status ?? (submitting ? "queued" : "running");
+  // A pending POST is not a queued backend run. Show confirmation is pending
+  // until the server returns a durable run ID.
+  const status = run?.status ?? (submitting ? "starting" : "running");
   const failed = isContentIslandDiscoveryFailedStatus(status);
   const activeIndex = failed
     ? Math.max(0, Math.min(contentIslandDiscoveryStepIndex(run), CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length - 1))
@@ -3329,7 +3348,8 @@ function buildContentIslandDiscoveryRunSummary({
 
 function contentIslandDiscoveryStepLabel(run: VibeMarketingRunSummary | null, activeRun: ContentIslandDiscoveryRunState | null) {
   const islandName = activeRun?.islandName || "this content island";
-  if (!run) return `Starting article idea research for ${islandName}.`;
+  if (!run && activeRun?.runId.endsWith("-starting")) return `Sending the research request for ${islandName}. Waiting for server confirmation.`;
+  if (!run) return `Checking article idea research for ${islandName}.`;
   if (isContentIslandDiscoveryFailedStatus(run.status)) return `Article idea research needs attention for ${islandName}.`;
   if (isContentIslandDiscoveryDoneStatus(run.status)) return `New article ideas for ${islandName} are ready. Updating the topic picker.`;
   const currentStep = String(run.currentStep || "").trim().toLowerCase();
@@ -3464,7 +3484,7 @@ function ReturningTopicPickerPage({
 }: {
   bootstrap: VibeMarketingBootstrap;
   editorialState: EditorialCatalogState;
-  billingRequestIds: { articleJob: string; contentIslandTopics: string };
+  billingRequestIds: { articleJob: string };
   error: string | null;
   errorIntent?: string | null;
   setupMergedNotice?: boolean;
@@ -3476,7 +3496,6 @@ function ReturningTopicPickerPage({
   const [editorialAvailable, setEditorialAvailable] = useState(false);
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
   const contentIslandDiscoveryFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "content-island-discovery" });
-  const contentIslandRunStatusFetcher = useFetcher<VibeMarketingRunSummary>({ key: "content-island-discovery-status" });
   const customResearchFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "custom-research" });
   const companyAvatarFetcher = useFetcher<CompanyAvatarActionData>({ key: "company-avatar" });
   const topicListRef = useRef<HTMLDivElement | null>(null);
@@ -3492,7 +3511,11 @@ function ReturningTopicPickerPage({
   const [confirmingContentIslandSlug, setConfirmingContentIslandSlug] = useState<string | null>(null);
   const [customIslandOpen, setCustomIslandOpen] = useState(false);
   useEffect(() => { setCustomIslandOpen(false); }, [bootstrap.company.id]);
+  const companyId = String(bootstrap.company.id);
+  const [discoveryCompanyId, setDiscoveryCompanyId] = useState(companyId);
   const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<ContentIslandDiscoveryRunState | null>(null);
+  const [contentIslandRunStatus, setContentIslandRunStatus] = useState<VibeMarketingRunSummary | null>(null);
+  const [contentIslandPollUnavailable, setContentIslandPollUnavailable] = useState(false);
   const [contentIslandRefreshRunId, setContentIslandRefreshRunId] = useState<string | null>(null);
   const [companyAvatarModalOpen, setCompanyAvatarModalOpen] = useState(false);
   const [companyAvatarPreviewUrl, setCompanyAvatarPreviewUrl] = useState<string | null>(null);
@@ -3503,6 +3526,19 @@ function ReturningTopicPickerPage({
   const handledDeleteActionRef = useRef<unknown>(null);
   const handledDiscardActionRef = useRef<unknown>(null);
   const articleFormRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    setDiscoveryCompanyId(companyId);
+    setContentIslandDiscoveryRun(readRememberedDiscoveryRun(discoverySessionStorage(), companyId));
+    setContentIslandRunStatus(null);
+    setContentIslandPollUnavailable(false);
+    setContentIslandRefreshRunId(null);
+    completedContentIslandDiscoveryRuns.current.clear();
+  }, [companyId]);
+  useEffect(() => {
+    if (discoveryCompanyId === companyId && contentIslandDiscoveryRun) {
+      rememberDiscoveryRun(discoverySessionStorage(), companyId, contentIslandDiscoveryRun);
+    }
+  }, [companyId, contentIslandDiscoveryRun, discoveryCompanyId]);
   const activePillar = useMemo(
     () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
     [activePillarSlug, bootstrap.topicPillars],
@@ -3602,8 +3638,8 @@ function ReturningTopicPickerPage({
         }
       : null;
   const contentIslandPolledRun =
-    contentIslandRunStatusFetcher.data && contentIslandDiscoveryRun?.runId && contentIslandRunStatusFetcher.data.runId === contentIslandDiscoveryRun.runId
-      ? contentIslandRunStatusFetcher.data
+    contentIslandRunStatus && contentIslandDiscoveryRun?.runId && contentIslandRunStatus.runId === contentIslandDiscoveryRun.runId
+      ? contentIslandRunStatus
       : null;
   const contentIslandPolledStatus = normalizeContentIslandDiscoveryStatus(contentIslandPolledRun?.status);
   const contentIslandRunTerminal = Boolean(contentIslandPolledRun && isContentIslandDiscoveryTerminalStatus(contentIslandPolledStatus));
@@ -3765,18 +3801,23 @@ function ReturningTopicPickerPage({
 
   function handleGenerateContentIslandIdeas(pillar: VibeMarketingTopicPillar) {
     if (contentIslandDiscoveryBusy) return;
+    forgetRememberedDiscoveryRun(discoverySessionStorage(), companyId);
     setConfirmingContentIslandSlug(null);
     setActivePillarSlug(null);
     setActiveTab("choose");
     setVisibleCount(5);
     setToast(null);
     setContentIslandDiscoveryRun(null);
+    setContentIslandRunStatus(null);
+    setContentIslandPollUnavailable(false);
     setContentIslandRefreshRunId(null);
     const formData = new FormData();
     formData.set("intent", "start-content-island-discovery");
     formData.set("researchAudienceId", researchAudienceId);
     formData.set("researchCatalogVersion", String(editorialState.catalog?.editorial_catalog_version ?? 0));
-    formData.set("clientRequestId", `${billingRequestIds.contentIslandTopics}:${pillar.slug}`);
+    formData.set("clientRequestId", contentIslandResearchRequestId(
+      discoverySessionStorage(), companyId, pillar.slug,
+    ));
     formData.set("contentIslandSlug", pillar.slug);
     formData.set("contentIslandName", pillar.name);
     formData.set(
@@ -3810,12 +3851,15 @@ function ReturningTopicPickerPage({
     formData.set("intent", "research-custom-topic");
     formData.set("researchAudienceId", researchAudienceId);
     formData.set("researchCatalogVersion", String(editorialState.catalog?.editorial_catalog_version ?? 0));
+    forgetRememberedDiscoveryRun(discoverySessionStorage(), companyId);
     setConfirmingContentIslandSlug(null);
     setActivePillarSlug(null);
     setActiveTab("choose");
     setVisibleCount(5);
     setToast(null);
     setContentIslandDiscoveryRun(null);
+    setContentIslandRunStatus(null);
+    setContentIslandPollUnavailable(false);
     setContentIslandRefreshRunId(null);
     customResearchFetcher.submit(formData, { method: "POST" });
   }
@@ -3985,11 +4029,13 @@ function ReturningTopicPickerPage({
     const data = contentIslandDiscoveryFetcher.data;
     if (contentIslandDiscoveryFetcher.state !== "idle" || !data || data.intent !== "start-content-island-discovery") return;
     const startStatusFailed = isContentIslandDiscoveryFailedStatus(data.status);
-    if (!data.runId || (data.error && startStatusFailed)) {
+    if (!data.runId) {
       setContentIslandDiscoveryRun(null);
       setToast({ kind: "error", message: data.error || "Could not start article idea research for that content island." });
       return;
     }
+    if (startStatusFailed) setToast({ kind: "error", message: data.error || "Article idea research needs attention." });
+    clearContentIslandResearchRequestId(discoverySessionStorage(), companyId, data.islandSlug || "");
     const pillar = bootstrap.topicPillars.find((item) => item.slug === data.islandSlug);
     setContentIslandDiscoveryRun({
       runId: data.runId,
@@ -3998,7 +4044,7 @@ function ReturningTopicPickerPage({
       iconKey: data.islandIconKey || pillar?.iconKey || "default",
       colorKey: data.islandColorKey || pillar?.colorKey || "purple",
     });
-  }, [bootstrap.topicPillars, contentIslandDiscoveryFetcher.data, contentIslandDiscoveryFetcher.state]);
+  }, [bootstrap.topicPillars, companyId, contentIslandDiscoveryFetcher.data, contentIslandDiscoveryFetcher.state]);
 
   // Custom-topic research: once the fetcher returns a runId, drive the same progress
   // card + polling machinery as content islands (kind="custom" → generic label).
@@ -4006,11 +4052,12 @@ function ReturningTopicPickerPage({
     const data = customResearchFetcher.data;
     if (customResearchFetcher.state !== "idle" || !data || data.intent !== "research-custom-topic") return;
     const startStatusFailed = isContentIslandDiscoveryFailedStatus(data.status);
-    if (!data.runId || (data.error && startStatusFailed)) {
+    if (!data.runId) {
       setContentIslandDiscoveryRun(null);
       setToast({ kind: "error", message: data.error || "Research could not start for that idea." });
       return;
     }
+    if (startStatusFailed) setToast({ kind: "error", message: data.error || "Research needs attention." });
     setContentIslandDiscoveryRun({
       runId: data.runId,
       kind: "custom",
@@ -4031,7 +4078,7 @@ function ReturningTopicPickerPage({
     if (contentIslandDiscoveryFetcher.state !== "idle" || customResearchFetcher.state !== "idle") return;
     const inflight = findRecoverableDiscoveryRun(bootstrap.latestRuns, completedContentIslandDiscoveryRuns.current);
     if (!inflight) return;
-    setContentIslandDiscoveryRun({
+    setContentIslandDiscoveryRun((current) => current?.runId === inflight.runId ? current : {
       runId: inflight.runId,
       kind: "custom",
       islandSlug: "",
@@ -4051,13 +4098,28 @@ function ReturningTopicPickerPage({
     if (contentIslandRunTerminal) return;
     const runId = contentIslandDiscoveryRun.runId;
     const statusPath = `/founder-tools/marketing/runs/${encodeURIComponent(runId)}/status`;
-    contentIslandRunStatusFetcher.load(statusPath);
-    const intervalId = window.setInterval(() => {
-      if (contentIslandRunStatusFetcher.state === "idle") {
-        contentIslandRunStatusFetcher.load(statusPath);
+    let active = true;
+    let inFlight = false;
+    let lastRun: VibeMarketingRunSummary | null = null;
+    const poll = async () => {
+      if (inFlight || document.visibilityState === "hidden") return;
+      inFlight = true;
+      try {
+        const result = await pollDiscoveryRunStatus(fetch, statusPath, runId, lastRun);
+        if (!active) return;
+        lastRun = result.run;
+        setContentIslandRunStatus(result.run);
+        setContentIslandPollUnavailable(result.unavailable);
+      } finally {
+        inFlight = false;
       }
-    }, 3000);
-    return () => window.clearInterval(intervalId);
+    };
+    void poll();
+    const intervalId = window.setInterval(() => { void poll(); }, 3000);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
   }, [contentIslandDiscoveryRun?.runId, contentIslandRunTerminal]);
 
   useEffect(() => {
@@ -4109,6 +4171,7 @@ function ReturningTopicPickerPage({
         setVisibleCount((current) => Math.max(current, Math.min(Math.max(refreshedTopicIndex + 1, 5), 8)));
       }
     }
+    forgetRememberedDiscoveryRun(discoverySessionStorage(), companyId, contentIslandRefreshRunId);
     setContentIslandDiscoveryRun((current) =>
       current?.runId === contentIslandRefreshRunId ? null : current,
     );
@@ -4118,6 +4181,7 @@ function ReturningTopicPickerPage({
     bootstrap.topicCandidates.length,
     contentIslandDiscoveryRun?.islandSlug,
     contentIslandRefreshRunId,
+    companyId,
     latestDiscoveryRunId,
     revalidator.state,
   ]);
@@ -4355,6 +4419,11 @@ function ReturningTopicPickerPage({
                       }
                       theme={contentIslandProgressTheme}
                     />
+                    {contentIslandPollUnavailable ? (
+                      <p className="mt-2 text-sm font-semibold text-amber-700" role="status">
+                        Status updates are temporarily unavailable. Your research request is still tracked here, and we are retrying automatically.
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
                 <div className="mt-5 space-y-3">

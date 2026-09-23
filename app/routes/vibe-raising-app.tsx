@@ -4,8 +4,10 @@ import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { useEffect, useState } from "react";
 import {
   Outlet,
+  isRouteErrorResponse,
   redirect,
   useLoaderData,
+  useLocation,
   useNavigation,
 } from "react-router";
 import {
@@ -16,6 +18,7 @@ import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import CompanySwitcher from "~/components/CompanySwitcher";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
+import { isApiUnavailableError } from "~/lib/api";
 import { progressEnabled } from "~/lib/startup-progress";
 import { getCurrentRooPointsBalance } from "~/lib/roo-points";
 import {
@@ -90,7 +93,15 @@ function shouldRefreshShellAfterAction(actionResult: unknown) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  const vibeContext = await getOptionalVibeRaisingContext(env, request);
+  let vibeContext: Awaited<ReturnType<typeof getOptionalVibeRaisingContext>>;
+  try {
+    vibeContext = await getOptionalVibeRaisingContext(env, request);
+  } catch (error) {
+    if (isApiUnavailableError(error)) {
+      throw new Response(null, { status: 503, statusText: "Founder tools temporarily unavailable" });
+    }
+    throw error;
+  }
   const pathname = new URL(request.url).pathname;
 
   if (!vibeContext.authUser) {
@@ -119,6 +130,34 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     backendBaseUrl: String(env.BACKEND_BASE_URL || "https://api.mlai.au"),
     progressAvailable: progressEnabled(env),
   };
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const location = useLocation();
+  const marketing = location.pathname.startsWith("/founder-tools/marketing");
+  const unavailable = isApiUnavailableError(error) || (isRouteErrorResponse(error) && error.status === 503);
+  const title = unavailable
+    ? marketing ? "Vibe Marketing is temporarily unavailable" : "Founder tools are temporarily unavailable"
+    : "Founder tools could not load";
+
+  return (
+    <main className="mx-auto max-w-2xl px-6 py-20" role="alert">
+      <div className="rounded-2xl border border-amber-200 bg-white p-8 shadow-sm">
+        <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+        <p className="mt-3 text-slate-600">
+          {unavailable
+            ? "The service did not respond. Try this page again in a moment."
+            : "Please try this page again. If the problem continues, contact MLAI support."}
+        </p>
+        <a
+          href={`${location.pathname}${location.search}`}
+          className="mt-6 inline-flex rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+        >
+          Try again
+        </a>
+      </div>
+    </main>
+  );
 }
 
 export default function VibeRaisingApp() {
