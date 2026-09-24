@@ -5,7 +5,7 @@ import { parseChartSelections, type ProgressChartSpec, type ProgressChartSnapsho
 import { getStartupProgress } from "~/lib/startup-progress.server";
 import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
 import UpdateDialog from "~/components/vibe-raising/UpdateDialog";
-import { isImportedMetric, readUpdateWorkingCopy, writeUpdateWorkingCopy, updateWorkingCopyKey } from "~/lib/update-working-copy";
+import { isImportedMetric, readUpdateWorkingCopy, recoverUpdateWorkingCopy, writeUpdateWorkingCopy, updateWorkingCopyKey } from "~/lib/update-working-copy";
 import "~/styles/update-editor.css";
 import "~/styles/update-gallery.css";
 import { hasUpdateWriting } from "~/lib/update-draft-writing";
@@ -4309,8 +4309,9 @@ function CreateUpdateEditor() {
     const [workingIdentity] = useState(() => existingData?.id ? `id:${existingData.id}` : `new:${creationKey}`);
     const workingScope = updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", workingIdentity);
     useEffect(() => {
-        const saved = readUpdateWorkingCopy(workingScope) || (creationKey ? readUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `new:${creationKey}`)) : null);
         const base: Record<string, any> = existingData || {};
+        const local = readUpdateWorkingCopy(workingScope) || (creationKey ? readUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `new:${creationKey}`)) : null);
+        const saved = recoverUpdateWorkingCopy(local, base);
         const restored: Record<string, any> = saved || base;
         if (restored.activeUpdateId || base.id) setActiveUpdateId(String(restored.activeUpdateId || base.id));
         if ("updateDate" in restored) setUpdateDate(restored.updateDate || "");
