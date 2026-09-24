@@ -1,20 +1,29 @@
 import { describe, expect, test } from "bun:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createMemoryRouter, RouterProvider } from "react-router";
+
+import { LiveArticlePreviewPanel, PublishAndAutomateDetail, PublishApprovalPanel } from "../app/routes/founder-tools.marketing.run";
 
 import {
   articlePreconditionRepairStateForRun,
   articlePublishQualityGateForRun,
+  articlePublishChildApprovalTargetForRun,
   articlePreviewQualityStateForRun,
+  articleReviewApprovalTargetForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
   articleRunPathAfterStart,
   articleWorkflowProgressForRunPage,
+  hasRecordedArticlePublishApprovalOrHandoff,
   hasPublishHandoffEvidence,
   isArticleReviewPreviewReady,
   isPublishApprovalGate,
+  isRecordedArticlePublishChildRun,
   publishPreviewUrlForRun,
   viewedWorkflowStepIdForRun,
 } from "../app/lib/vibe-marketing-run-view";
-import type { VibeMarketingRunSummary } from "../app/types/vibe-marketing";
+import type { VibeMarketingBootstrap, VibeMarketingRunSummary } from "../app/types/vibe-marketing";
 
 function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarketingRunSummary {
   return {
@@ -40,6 +49,7 @@ function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarke
       status: "ready",
       previewUrl: "https://preview.example/articles/generated",
       exactRender: true,
+      commitSha: "preview-commit-3",
     },
     workflowProgress: {
       currentStepId: "publish",
@@ -84,6 +94,109 @@ describe("vibe marketing run view state", () => {
       idle: "Approve article and create PR",
       pending: "Approving...",
     });
+  });
+
+  test("targets the visible latest revision even when the page URL names an older source", () => {
+    const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("revision-3");
+  });
+
+  test("submits the preview identity actually shown on a stale source URL", () => {
+    const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
+    const router = createMemoryRouter([{
+      path: "/founder-tools/marketing/runs/:runId",
+      element: createElement(LiveArticlePreviewPanel, {
+        run: latest,
+        selectedComponent: null,
+        onSelectComponent: () => {},
+        isSubmitting: false,
+        initiallyExpanded: true,
+      }),
+    }], { initialEntries: ["/founder-tools/marketing/runs/source-1"] });
+    try {
+      const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
+      expect(markup).toContain('name="reviewedRunId" value="revision-3"');
+      expect(markup).toContain('name="reviewedPreviewUrl" value="https://preview.example/articles/generated"');
+      expect(markup).toContain('name="reviewedPreviewRevision" value="preview-commit-3"');
+      expect(markup).toContain("Approve article and create PR");
+      expect(markup).not.toContain('name="reviewedRunId" value="source-1"');
+    } finally {
+      router.dispose();
+    }
+  });
+
+  test("fails closed when the draft identity changes after the approval form was rendered", () => {
+    const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
+    expect(articleReviewApprovalTargetForRun(latest, "", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-2", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/older", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-2")).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, status: "failed", approvalState: null }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, sectionIssues: [{ id: "issue", sectionId: "section:intro", claimId: "claim", claimExcerpt: "Claim", reason: "Missing source", sourceHint: "", state: "needs_review" }] }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, result: { ...latest.result, article_preview_quality: { status: "blocking_findings" } } }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+  });
+
+  test("a forced Publish view waits for review but keeps recorded publish recovery", () => {
+    const renderPublish = (run: VibeMarketingRunSummary) => {
+      const router = createMemoryRouter([{
+        path: "/founder-tools/marketing/runs/:runId",
+        element: createElement(PublishAndAutomateDetail, {
+          run,
+          bootstrap: { checks: {}, settings: { dailyDiscoveryEnabled: false } } as unknown as VibeMarketingBootstrap,
+          isSubmitting: false,
+        }),
+      }], { initialEntries: ["/founder-tools/marketing/runs/source-1?articleStep=publish"] });
+      try { return renderToStaticMarkup(createElement(RouterProvider, { router })); }
+      finally { router.dispose(); }
+    };
+    const unapproved = articleRun({ runId: "revision-3", workflow: "article_revision" });
+    expect(viewedWorkflowStepIdForRun(unapproved, null, null, "publish")).toBe("publish");
+    expect(hasRecordedArticlePublishApprovalOrHandoff(unapproved)).toBe(false);
+    const preapprovalPr = articleRun({ runId: "revision-3", workflow: "article_revision",
+      prUrl: "https://github.example/draft-pr", result: { ...unapproved.result,
+        pr_url: "https://github.example/draft-pr", draft_pr_url: "https://github.example/setup-pr",
+        publish_child_preview_url: "https://preview.example/old-publish" } });
+    expect(hasRecordedArticlePublishApprovalOrHandoff(preapprovalPr)).toBe(false);
+    expect(renderPublish(preapprovalPr)).not.toContain('value="promote-bundle"');
+    expect(isArticleReviewPreviewReady(preapprovalPr)).toBe(true);
+    expect(articleReviewApprovalTargetForRun(preapprovalPr, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("revision-3");
+    expect(hasRecordedArticlePublishApprovalOrHandoff({ ...unapproved, result: {
+      ...unapproved.result, latest_control_response: { publish_child_run_id: "old-child" },
+    } })).toBe(false);
+    const blockedMarkup = renderPublish(unapproved);
+    expect(blockedMarkup).toContain("Review and approve the latest article draft before publishing.");
+    expect(blockedMarkup).not.toContain('value="promote-bundle"');
+
+    const recovering = articleRun({
+      runId: "revision-3", workflow: "article_revision", publishChildRecoverable: true,
+      result: { ...unapproved.result, publish_child_run_id: "existing-publish-child", publish_child_recoverable: true },
+    });
+    expect(hasRecordedArticlePublishApprovalOrHandoff(recovering)).toBe(true);
+    expect(isRecordedArticlePublishChildRun(recovering)).toBe(false);
+    expect(isRecordedArticlePublishChildRun({ ...recovering, workflow: "article_generation", runId: "existing-publish-child" })).toBe(true);
+    const recoveryMarkup = renderPublish(recovering);
+    expect(recoveryMarkup).toContain('value="promote-bundle"');
+    expect(recoveryMarkup).toContain("Resume publishing");
+  });
+
+  test("publish-child approval form binds its own PR evidence", () => {
+    const child = articleRun({
+      runId: "publish-child", workflow: "article_generation", componentManifest: null,
+      livePreview: null, previewUrl: null, prUrl: "https://github.example/publish-pr",
+      result: { publish_child_run_id: "publish-child", pr_url: "https://github.example/publish-pr" },
+    });
+    expect(articlePublishChildApprovalTargetForRun(child, "publish-child", "https://github.example/publish-pr", "")).toBe("publish-child");
+    expect(articlePublishChildApprovalTargetForRun(child, "publish-child", "https://github.example/old-pr", "")).toBe("");
+    const router = createMemoryRouter([{
+      path: "/founder-tools/marketing/runs/:runId",
+      element: createElement(PublishApprovalPanel, { run: child, isSubmitting: false }),
+    }], { initialEntries: ["/founder-tools/marketing/runs/publish-child"] });
+    try {
+      const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
+      expect(markup).toContain('name="reviewedRunId" value="publish-child"');
+      expect(markup).toContain('name="reviewedPublishEvidenceUrl" value="https://github.example/publish-pr"');
+      expect(markup).toContain("Approve publish");
+    } finally { router.dispose(); }
   });
 
   test("blocks approval while required editorial quality evidence is missing", () => {
@@ -158,32 +271,16 @@ describe("vibe marketing run view state", () => {
     }))).toBeNull();
   });
 
-  test("moves to publish only after publish child or PR evidence exists", () => {
-    expect(
-      viewedWorkflowStepIdForRun(
-        articleRun({
-          result: {
-            status: "preview_ready",
-            review_surface_kind: "component_live_preview",
-            preview_url: "https://preview.example/articles/generated",
-            publish_child_run_id: "article-publish-child",
-          },
-        }),
-      ),
-    ).toBe("publish");
-
-    expect(
-      viewedWorkflowStepIdForRun(
-        articleRun({
-          prUrl: "https://github.com/MLAI-AUS-Inc/mlai-au/pull/123",
-          result: {
-            status: "preview_ready",
-            review_surface_kind: "component_live_preview",
-            preview_url: "https://preview.example/articles/generated",
-          },
-        }),
-      ),
-    ).toBe("publish");
+  test("keeps preapproval child or PR evidence on Review until approval is recorded", () => {
+    const withChild = articleRun({ result: {
+      status: "preview_ready", review_surface_kind: "component_live_preview",
+      preview_url: "https://preview.example/articles/generated", publish_child_run_id: "article-publish-child",
+    } });
+    const withPr = articleRun({ prUrl: "https://github.com/MLAI-AUS-Inc/mlai-au/pull/123" });
+    expect(viewedWorkflowStepIdForRun(withChild)).toBe("review");
+    expect(viewedWorkflowStepIdForRun(withPr)).toBe("review");
+    expect(viewedWorkflowStepIdForRun({ ...withChild, status: "completed", approvalState: "approved" })).toBe("publish");
+    expect(viewedWorkflowStepIdForRun({ ...withPr, status: "completed", approvalState: "approved" })).toBe("publish");
   });
 
   test("keeps a newly-running article on Generate despite stale publish progress", () => {

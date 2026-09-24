@@ -476,13 +476,95 @@ export function articleReviewPreviewUrlForRun(run: VibeMarketingRunSummary) {
   return "";
 }
 
+/** The preview actually shown by the article inspector must identify an approval. */
+export function articleReviewApprovalPreviewUrlForRun(run: VibeMarketingRunSummary) {
+  return String(run.livePreview?.previewUrl || articleReviewPreviewUrlForRun(run)).trim();
+}
+
+export function articleReviewPreviewRevisionForRun(run: VibeMarketingRunSummary) {
+  const proof = run.livePreview?.proof && typeof run.livePreview.proof === "object"
+    ? (run.livePreview.proof as Record<string, unknown>)
+    : {};
+  return [proof.commitSha, proof.commit_sha, run.livePreview?.commitSha, run.result?.["branch_commit_sha"]]
+    .map((value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : ""))
+    .find(Boolean) ?? "";
+}
+
+export function articleReviewApprovalTargetForRun(
+  run: VibeMarketingRunSummary,
+  reviewedRunId: string,
+  reviewedPreviewUrl: string,
+  reviewedPreviewRevision: string,
+) {
+  const currentRunId = run.runId.trim();
+  const currentPreviewUrl = articleReviewApprovalPreviewUrlForRun(run);
+  const reviewIsOpen = (isArticleReviewPreviewReady(run) && (isRunApprovalRequired(run) || run.status === "completed")) || Boolean(
+    run.status === "completed" && run.componentManifest && run.contentPackage?.contentPackaged && !hasPublishHandoffEvidence(run),
+  );
+  if (
+    !isArticleWorkflow(run.workflow) ||
+    !reviewIsOpen ||
+    !run.componentManifest ||
+    (run.sectionIssues ?? []).some((issue) => issue.state === "needs_review") ||
+    articlePreviewQualityStateForRun(run).blocksApproval ||
+    !currentRunId ||
+    !currentPreviewUrl ||
+    reviewedRunId.trim() !== currentRunId ||
+    reviewedPreviewUrl.trim() !== currentPreviewUrl ||
+    reviewedPreviewRevision.trim() !== articleReviewPreviewRevisionForRun(run)
+  ) return "";
+  return currentRunId;
+}
+
+/** Backend-recorded approval or publish work, never workflow step progress alone. */
+export function hasRecordedArticlePublishApprovalOrHandoff(run: VibeMarketingRunSummary) {
+  if (!isArticleWorkflow(run.workflow)) return false;
+  const result = run.result ?? {};
+  const recordedString = (value: unknown) => typeof value === "string" ? value.trim() : "";
+  const recordedId = recordedString(result.publish_child_run_id) || recordedString(result.promoted_publish_job_id);
+  return Boolean(
+    normalized(run.approvalState) === "approved" ||
+    recordedId ||
+    result.publish_handoff_pending === true ||
+    result.publish_child_recoverable === true ||
+    run.publishChildRecoverable === true,
+  );
+}
+
+export function isRecordedArticlePublishChildRun(run: VibeMarketingRunSummary) {
+  if (!isArticleWorkflow(run.workflow) || run.workflow === "article_revision" || !run.runId.trim()) return false;
+  const result = run.result ?? {};
+  return result.publish_child_run_id === run.runId || result.promoted_publish_job_id === run.runId;
+}
+
+export function articlePublishChildApprovalEvidenceUrlForRun(run: VibeMarketingRunSummary) {
+  if (!isRecordedArticlePublishChildRun(run)) return "";
+  const result = run.result ?? {};
+  const value = run.previewUrl || result.publish_child_preview_url || result.preview_url || run.prUrl || result.pr_url;
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export function articlePublishChildApprovalTargetForRun(
+  run: VibeMarketingRunSummary,
+  reviewedRunId: string,
+  reviewedEvidenceUrl: string,
+  reviewedPreviewRevision: string,
+) {
+  const evidenceUrl = articlePublishChildApprovalEvidenceUrlForRun(run);
+  return isRecordedArticlePublishChildRun(run) && isRunApprovalRequired(run) && evidenceUrl &&
+    reviewedRunId.trim() === run.runId && reviewedEvidenceUrl.trim() === evidenceUrl &&
+    reviewedPreviewRevision.trim() === articleReviewPreviewRevisionForRun(run)
+    ? run.runId : "";
+}
+
 export function isArticleReviewPreviewReady(run: VibeMarketingRunSummary) {
   return Boolean(
     isArticleWorkflow(run.workflow) &&
       run.componentManifest &&
       articleReviewPreviewUrlForRun(run) &&
-      !publishPrUrlForRun(run) &&
-      !hasPublishChildReference(run) &&
+      !isRecordedArticlePublishChildRun(run) &&
+      run.approvalState !== "approved" &&
+      (isRunApprovalRequired(run) || !hasRecordedArticlePublishApprovalOrHandoff(run)) &&
       (hasArticleReviewPreviewMarker(run) || isRunApprovalRequired(run)),
   );
 }

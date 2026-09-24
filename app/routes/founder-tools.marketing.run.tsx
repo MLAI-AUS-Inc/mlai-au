@@ -49,14 +49,21 @@ import {
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   articlePreconditionRepairStateForRun,
+  articlePublishChildApprovalEvidenceUrlForRun,
+  articlePublishChildApprovalTargetForRun,
   articlePublishQualityGateForRun,
   articlePreviewQualityStateForRun,
+  articleReviewApprovalPreviewUrlForRun,
+  articleReviewApprovalTargetForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
+  articleReviewPreviewRevisionForRun,
   articleWorkflowProgressForRunPage,
+  hasRecordedArticlePublishApprovalOrHandoff,
   hasPublishHandoffEvidence,
   isArticleGenerationActivelyRunning,
   isArticleReviewPreviewReady,
+  isRecordedArticlePublishChildRun,
   isPublishApprovalGate,
   isPublishFlowSettled,
   publishPreviewUrlForRun,
@@ -666,15 +673,43 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (["approve", "deny", "resume", "restart", "retry-preview-quality", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const targetRunId = stringFromForm(formData, "targetRunId");
+      const reviewedRunId = stringFromForm(formData, "reviewedRunId");
+      const reviewedPreviewUrl = stringFromForm(formData, "reviewedPreviewUrl");
+      const reviewedPublishEvidenceUrl = stringFromForm(formData, "reviewedPublishEvidenceUrl");
+      const reviewedPreviewRevision = stringFromForm(formData, "reviewedPreviewRevision");
+      let verifiedReviewRunId = "";
+      if (["approve", "promote-bundle", "publish-pr"].includes(intent) || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
+        // A forced Publish view must not promote an unapproved article. An
+        // older source URL may also render a newer review-ready revision.
+        const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
+        const initialArticlePromotion =
+          ["promote-bundle", "publish-pr"].includes(intent) &&
+          isArticleWorkflow(currentRun.workflow) &&
+          !hasRecordedArticlePublishApprovalOrHandoff(currentRun);
+        const articleApproval = intent === "approve" && isArticleWorkflow(currentRun.workflow);
+        if (initialArticlePromotion || articleApproval || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
+          verifiedReviewRunId = articleApproval && isRecordedArticlePublishChildRun(currentRun)
+            ? articlePublishChildApprovalTargetForRun(currentRun, reviewedRunId, reviewedPublishEvidenceUrl, reviewedPreviewRevision)
+            : articleReviewApprovalTargetForRun(currentRun, reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
+          if (!verifiedReviewRunId) {
+            return {
+              intent,
+              error: !reviewedRunId || !(reviewedPreviewUrl || reviewedPublishEvidenceUrl)
+                ? "Review and approve the latest article draft before publishing."
+                : "The article preview changed. Reload and review the latest draft before approving it.",
+            };
+          }
+        }
+      }
       const autoMerge =
         stringFromForm(formData, "autoMerge") === "true" &&
         ["approve", "promote-bundle", "publish-pr"].includes(intent);
       const controlRunId =
-        intent === "promote-bundle" || intent === "publish-pr"
+        verifiedReviewRunId || (intent === "promote-bundle" || intent === "publish-pr"
           ? sourceRunId || runId
           : (intent === "resume" || intent === "restart") && targetRunId
             ? targetRunId
-            : runId;
+            : runId);
       const payload: Record<string, unknown> = { companyId };
       if (sourceRunId) payload.sourceRunId = sourceRunId;
       if (autoMerge) payload.autoMerge = true;
@@ -917,11 +952,13 @@ function RunStepTimeline({ run, framed = true }: { run: VibeMarketingRunSummary;
 }
 
 function RunApprovalActions({
+  run,
   isSubmitting,
   isActionPending,
   approveLabel = "Approve",
   denyLabel = "Deny",
 }: {
+  run: VibeMarketingRunSummary;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
   approveLabel?: string;
@@ -929,6 +966,10 @@ function RunApprovalActions({
 }) {
   const approvePending = isActionPending?.("approve") ?? isSubmitting;
   const denyPending = isActionPending?.("deny") ?? isSubmitting;
+  const articlePublishEvidenceUrl = isArticleWorkflow(run.workflow)
+    ? articlePublishChildApprovalEvidenceUrlForRun(run)
+    : "";
+  const canApprove = !isArticleWorkflow(run.workflow) || Boolean(articlePublishEvidenceUrl);
   return (
     <div className="flex flex-wrap gap-2">
       <Form method="POST">
@@ -944,11 +985,18 @@ function RunApprovalActions({
         </button>
       </Form>
       <Form method="POST">
+        {articlePublishEvidenceUrl ? (
+          <>
+            <input type="hidden" name="reviewedRunId" value={run.runId} />
+            <input type="hidden" name="reviewedPublishEvidenceUrl" value={articlePublishEvidenceUrl} />
+            <input type="hidden" name="reviewedPreviewRevision" value={articleReviewPreviewRevisionForRun(run)} />
+          </>
+        ) : null}
         <button
           type="submit"
           name="intent"
           value="approve"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !canApprove}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
         >
           {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
@@ -959,7 +1007,7 @@ function RunApprovalActions({
   );
 }
 
-function PublishApprovalPanel({
+export function PublishApprovalPanel({
   run,
   isSubmitting,
   isActionPending,
@@ -1002,7 +1050,7 @@ function PublishApprovalPanel({
             ) : null}
           </div>
         </div>
-        <RunApprovalActions isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
+        <RunApprovalActions run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
       </div>
     </section>
   );
@@ -2587,11 +2635,7 @@ export function LivePreviewCommentInspectorPanel({
   // Revision rebuilds redeploy to the SAME preview URL, so the iframe would never
   // reload on its own. Key the src by the deployed commit so a fresh deployment
   // remounts the iframe and the user sees the revised page instead of the stale one.
-  const proofRecord = preview?.proof && typeof preview.proof === "object" ? (preview.proof as Record<string, unknown>) : {};
-  const previewRevisionKey =
-    [proofRecord.commitSha, proofRecord.commit_sha, preview?.commitSha, run.result?.["branch_commit_sha"]]
-      .map((value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : ""))
-      .find(Boolean) ?? "";
+  const previewRevisionKey = articleReviewPreviewRevisionForRun(run);
   const previewSrc = useReviewDraftHtml ? "" : previewIframeSrc(preview?.previewUrl, previewRevisionKey);
 
   return (
@@ -3007,7 +3051,7 @@ export function ArticleEvidenceIssueOverlay({
   );
 }
 
-function LiveArticlePreviewPanel({
+export function LiveArticlePreviewPanel({
   run,
   selectedComponent,
   onSelectComponent,
@@ -3150,6 +3194,9 @@ function LiveArticlePreviewPanel({
               {canAcceptArticleForPublish ? (
                 <Form method="POST">
                   <input type="hidden" name="autoMerge" value="true" />
+                  <input type="hidden" name="reviewedRunId" value={run.runId} />
+                  <input type="hidden" name="reviewedPreviewUrl" value={articleReviewApprovalPreviewUrlForRun(run)} />
+                  <input type="hidden" name="reviewedPreviewRevision" value={articleReviewPreviewRevisionForRun(run)} />
                   <button
                     type="submit"
                     name="intent"
@@ -4040,7 +4087,7 @@ function PublishDailyResearchReminderCard({
   );
 }
 
-function PublishAndAutomateDetail({
+export function PublishAndAutomateDetail({
   run,
   bootstrap,
   isSubmitting,
@@ -4064,6 +4111,7 @@ function PublishAndAutomateDetail({
   const publishQualityGate = articlePublishQualityGateForRun(run);
   const previewQuality = articlePreviewQualityStateForRun(run);
   const hasUnresolvedEvidence = (run.sectionIssues ?? []).some((issue) => issue.state === "needs_review");
+  const hasApprovedPublishHandoff = hasRecordedArticlePublishApprovalOrHandoff(run);
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
@@ -4188,7 +4236,7 @@ function PublishAndAutomateDetail({
             status={
               isMerged || publishedWithoutPr
                 ? "complete"
-                : hasUnresolvedEvidence || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
+                : hasUnresolvedEvidence || !hasApprovedPublishHandoff || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
                   ? "blocked"
                   : prUrl || publishPending || publishQualityGate === "running"
                     ? "running"
@@ -4201,6 +4249,8 @@ function PublishAndAutomateDetail({
                   ? "Published"
               : hasUnresolvedEvidence
                 ? "Evidence needs review"
+                : !hasApprovedPublishHandoff
+                  ? "Article review required"
                 : mergeBlocked
                     ? "Merge blocked"
                     : prUrl
@@ -4260,6 +4310,15 @@ function PublishAndAutomateDetail({
                 {canViewArticle ? (
                   <Link to={viewArticleHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black">
                     Review evidence issues
+                  </Link>
+                ) : null}
+              </div>
+            ) : !hasApprovedPublishHandoff ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">Review and approve the latest article draft before publishing.</p>
+                {canViewArticle ? (
+                  <Link to={viewArticleHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black">
+                    Review article
                   </Link>
                 ) : null}
               </div>
@@ -4435,7 +4494,7 @@ function PublishAndAutomateDetail({
                     Open publish review
                   </a>
                 ) : (
-                  <RunApprovalActions isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
+                  <RunApprovalActions run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
                 )}
               </div>
             ) : publishHandoffStale ? (
@@ -5015,6 +5074,7 @@ function ArticleWorkflowPrimaryAction({
   if (isArticleReviewPreviewReady(run)) return null;
   if (isPublishApprovalGate(run)) return null;
   if ((run.sectionIssues ?? []).some((issue) => issue.state === "needs_review")) return null;
+  if (!hasRecordedArticlePublishApprovalOrHandoff(run)) return null;
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
     const publishPending = isActionPending?.(publishStep.primaryAction.intent) ?? isSubmitting;
