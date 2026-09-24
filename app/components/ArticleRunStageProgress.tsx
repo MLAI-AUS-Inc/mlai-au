@@ -129,6 +129,7 @@ const ACTIVE_STEP_STATUSES = new Set(["running", "retrying", "queued"]);
 const FAILED_RUN_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied", "cancelled"]);
 const RUNNING_RUN_STATUSES = new Set([
   "queued",
+  "processing",
   "running",
   "awaiting_confirmation",
   "awaiting_delivery_mode",
@@ -290,6 +291,7 @@ function StageIcon({ status }: { status: StageStatus }) {
 export function deriveArticleProgressStages(run: VibeMarketingRunSummary): StageView[] {
   const total = Math.max(run.stepOrder.length, run.steps.length, 1);
   const repair = articlePreconditionRepairStateForRun(run);
+  const buildingHostedPreview = normalizedKey(run.currentStep) === "start_hosted_preview" && RUNNING_RUN_STATUSES.has(run.status);
   // Hosted preview runs after the recorded generation steps. Its failure is
   // reported as currentStep, without a corresponding failed step in run.steps.
   const previewFailed = FAILED_RUN_STATUSES.has(run.status) && normalizedKey(run.currentStep) === "preview_failed";
@@ -297,6 +299,8 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
   const activeStage = repair.isPrecondition
     ? "article_system"
     : previewFailed
+      ? "preview"
+    : buildingHostedPreview
       ? "preview"
     : stageForStep(activeStep ?? run.currentStep, activeStep ? run.steps.indexOf(activeStep) : 0, total);
   const failingStep = run.steps.find((step) => FAILED_STEP_STATUSES.has(step.status)) ?? null;
@@ -332,6 +336,7 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
 
     return {
       ...stage,
+      label: buildingHostedPreview && stage.id === "preview" ? "Building hosted preview" : stage.label,
       status,
       detail:
         repair.isPrecondition && stage.id === "article_system" && status === "running"
@@ -340,6 +345,8 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
             ? repair.message
             : status === "complete"
           ? stage.completeText
+          : buildingHostedPreview && stage.id === "preview" && status === "running"
+            ? "Building the exact hosted preview for article review."
           : status === "running"
             ? stage.activeText
             : status === "attention"

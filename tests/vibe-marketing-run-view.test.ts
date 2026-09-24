@@ -314,6 +314,46 @@ describe("vibe marketing run view state", () => {
     });
   });
 
+  test("locks Publish for a revision until its own preview quality and approval are current", () => {
+    const previewUrl = "https://preview.example/articles/generated";
+    const revision = articleRun({
+      runId: "component-revision-5",
+      workflow: "article_revision",
+      status: "processing",
+      currentStep: "start_hosted_preview",
+      approvalState: "not_required",
+      resumeGeneration: 0,
+      livePreview: { available: false, status: "building", previewUrl, exactRender: true },
+      workflowProgress: {
+        currentStepId: "publish",
+        steps: [
+          { id: "revise", label: "Revise", phase: "article", status: "running", href: "/revise" },
+          { id: "publish", label: "Publish", phase: "article", status: "ready", href: "/publish",
+            primaryAction: { label: "Publish", intent: "promote-bundle" } },
+          { id: "automation", label: "Automate", phase: "article", status: "ready", href: "/automation" },
+        ],
+      },
+      result: { status: "preview_building", article_preview_quality: { status: "queued", preview_url: previewUrl, resume_generation: 0 } },
+    });
+    const locked = articleWorkflowProgressForRunPage(revision, null);
+    expect(locked).toMatchObject({ currentStepId: "revise", nextStepId: null });
+    expect(locked?.steps.find((step) => step.id === "publish")).toMatchObject({ status: "locked", primaryAction: null });
+    expect(locked?.steps.find((step) => step.id === "automation")?.status).toBe("locked");
+    expect(viewedWorkflowStepIdForRun(revision)).toBe("revise");
+
+    const passed = articleRun({
+      ...revision,
+      status: "completed",
+      approvalState: "approved",
+      livePreview: { available: true, status: "ready", previewUrl, exactRender: true },
+      result: { status: "preview_ready", article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0 } },
+    });
+    expect(articleWorkflowProgressForRunPage(passed, null)).toBe(passed.workflowProgress);
+    expect(viewedWorkflowStepIdForRun(passed)).toBe("publish");
+    expect(articleWorkflowProgressForRunPage({ ...passed, approvalState: "not_required" }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
+    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 1 } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
+  });
+
   test("keeps a failed article without a review preview on blocked Generate despite stale organisation progress", () => {
     const run = articleRun({
       status: "failed",

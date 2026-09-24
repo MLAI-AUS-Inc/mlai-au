@@ -132,6 +132,39 @@ describe("article generation asset stage", () => {
 });
 
 describe("hosted article preview progress", () => {
+  test("shows a revision building its hosted preview after every recorded step completes", () => {
+    const stepOrder = ["load_revision_context", "plan_article", "render_article", "finalize"];
+    const run = repairingArticle({
+      workflow: "article_revision",
+      status: "processing",
+      currentStep: "start_hosted_preview",
+      errorCode: null,
+      preconditionStatus: null,
+      repairStatus: null,
+      stepOrder,
+      // Replayed work can append an early step after finalize in the API order.
+      steps: ["load_revision_context", "render_article", "finalize", "plan_article"].map((key) => ({
+        key,
+        name: key,
+        required: true,
+        status: "completed",
+        attempts: 1,
+        artifacts: [],
+      })),
+    });
+    const stages = deriveArticleProgressStages(run);
+    const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+
+    expect(stages.find((stage) => stage.id === "planning")?.status).toBe("complete");
+    expect(stages.find((stage) => stage.id === "preview")).toMatchObject({
+      label: "Building hosted preview",
+      status: "running",
+    });
+    expect(markup).toContain("Step 9 of 10");
+    expect(markup).toContain("Building hosted preview</h2>");
+    expect(markup).not.toContain("Planning article</h2>");
+  });
+
   test("attributes a post-generation preview build failure to preview verification", () => {
     const stepOrder = [
       "fetch_org_config",

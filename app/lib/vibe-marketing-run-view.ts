@@ -371,7 +371,20 @@ export function articleWorkflowProgressForRunPage(
   fallbackProgress: VibeMarketingWorkflowProgress | null | undefined,
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
-  if (!progress || !ARTICLE_CREATION_WORKFLOWS.has(String(run.workflow ?? ""))) return progress;
+  if (!progress) return progress;
+  if (run.workflow === "article_revision" && !revisionHasCurrentPublishApproval(run)) {
+    return {
+      ...progress,
+      currentStepId: ["publish", "automation"].includes(progress.currentStepId) ? "revise" : progress.currentStepId,
+      nextStepId: null,
+      steps: progress.steps.map((step) =>
+        ["publish", "automation"].includes(step.id)
+          ? { ...step, status: "locked", primaryAction: null }
+          : step,
+      ),
+    };
+  }
+  if (!ARTICLE_CREATION_WORKFLOWS.has(String(run.workflow ?? ""))) return progress;
 
   const repair = articlePreconditionRepairStateForRun(run);
   const blockedBeforeReview = !repair.isPrecondition && isArticleGenerationBlockedBeforeReview(run);
@@ -531,6 +544,19 @@ export function hasRecordedArticlePublishApprovalOrHandoff(run: VibeMarketingRun
   );
 }
 
+function revisionHasCurrentPublishApproval(run: VibeMarketingRunSummary) {
+  if (run.workflow !== "article_revision") return true;
+  const quality = objectResultValue(run, "article_preview_quality", "articlePreviewQuality");
+  const qualityStatus = normalized(typeof quality.status === "string" ? quality.status : "");
+  const qualityUrl = String(quality.preview_url ?? quality.previewUrl ?? "").trim();
+  const previewUrl = String(run.livePreview?.internalPreviewUrl || run.livePreview?.previewUrl || articleReviewPreviewUrlForRun(run)).trim();
+  const qualityGeneration = Number(quality.resume_generation ?? quality.resumeGeneration ?? 0);
+  const runGeneration = Number(run.resumeGeneration ?? run.result?.["resume_generation"] ?? 0);
+  return run.status === "completed" && normalized(run.approvalState) === "approved" &&
+    (qualityStatus === "passed" || qualityStatus === "advisory_findings") &&
+    Boolean(qualityUrl && previewUrl && qualityUrl === previewUrl) && qualityGeneration === runGeneration;
+}
+
 export function isRecordedArticlePublishChildRun(run: VibeMarketingRunSummary) {
   if (!isArticleWorkflow(run.workflow) || run.workflow === "article_revision" || !run.runId.trim()) return false;
   const result = run.result ?? {};
@@ -578,6 +604,7 @@ export function publishPreviewUrlForRun(run: VibeMarketingRunSummary) {
 
 export function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
   if (isArticleReviewPreviewReady(run)) return false;
+  if (!revisionHasCurrentPublishApproval(run)) return false;
   const repair = articlePreconditionRepairStateForRun(run);
   if (isArticleGenerationActivelyRunning(run) || repair.autoRecovering || isArticleGenerationBlockedBeforeReview(run)) return false;
   return Boolean(
