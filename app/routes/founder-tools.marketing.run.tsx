@@ -49,6 +49,8 @@ import {
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   articlePreconditionRepairStateForRun,
+  articlePublishChildApprovalEvidenceUrlForRun,
+  articlePublishChildApprovalTargetForRun,
   articlePublishQualityGateForRun,
   articlePreviewQualityStateForRun,
   articleReviewApprovalPreviewUrlForRun,
@@ -61,6 +63,7 @@ import {
   hasPublishHandoffEvidence,
   isArticleGenerationActivelyRunning,
   isArticleReviewPreviewReady,
+  isRecordedArticlePublishChildRun,
   isPublishApprovalGate,
   isPublishFlowSettled,
   publishPreviewUrlForRun,
@@ -672,9 +675,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const targetRunId = stringFromForm(formData, "targetRunId");
       const reviewedRunId = stringFromForm(formData, "reviewedRunId");
       const reviewedPreviewUrl = stringFromForm(formData, "reviewedPreviewUrl");
+      const reviewedPublishEvidenceUrl = stringFromForm(formData, "reviewedPublishEvidenceUrl");
       const reviewedPreviewRevision = stringFromForm(formData, "reviewedPreviewRevision");
       let verifiedReviewRunId = "";
-      if (["approve", "promote-bundle", "publish-pr"].includes(intent) || reviewedRunId || reviewedPreviewUrl || reviewedPreviewRevision) {
+      if (["approve", "promote-bundle", "publish-pr"].includes(intent) || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
         // A forced Publish view must not promote an unapproved article. An
         // older source URL may also render a newer review-ready revision.
         const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
@@ -682,16 +686,15 @@ export async function action({ request, params, context }: Route.ActionArgs) {
           ["promote-bundle", "publish-pr"].includes(intent) &&
           isArticleWorkflow(currentRun.workflow) &&
           !hasRecordedArticlePublishApprovalOrHandoff(currentRun);
-        const initialArticleApproval =
-          intent === "approve" &&
-          isArticleWorkflow(currentRun.workflow) &&
-          !hasRecordedArticlePublishApprovalOrHandoff(currentRun);
-        if (initialArticlePromotion || initialArticleApproval || reviewedRunId || reviewedPreviewUrl || reviewedPreviewRevision) {
-          verifiedReviewRunId = articleReviewApprovalTargetForRun(currentRun, reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
+        const articleApproval = intent === "approve" && isArticleWorkflow(currentRun.workflow);
+        if (initialArticlePromotion || articleApproval || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
+          verifiedReviewRunId = articleApproval && isRecordedArticlePublishChildRun(currentRun)
+            ? articlePublishChildApprovalTargetForRun(currentRun, reviewedRunId, reviewedPublishEvidenceUrl, reviewedPreviewRevision)
+            : articleReviewApprovalTargetForRun(currentRun, reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
           if (!verifiedReviewRunId) {
             return {
               intent,
-              error: !reviewedRunId || !reviewedPreviewUrl
+              error: !reviewedRunId || !(reviewedPreviewUrl || reviewedPublishEvidenceUrl)
                 ? "Review and approve the latest article draft before publishing."
                 : "The article preview changed. Reload and review the latest draft before approving it.",
             };
@@ -949,11 +952,13 @@ function RunStepTimeline({ run, framed = true }: { run: VibeMarketingRunSummary;
 }
 
 function RunApprovalActions({
+  run,
   isSubmitting,
   isActionPending,
   approveLabel = "Approve",
   denyLabel = "Deny",
 }: {
+  run: VibeMarketingRunSummary;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
   approveLabel?: string;
@@ -961,6 +966,10 @@ function RunApprovalActions({
 }) {
   const approvePending = isActionPending?.("approve") ?? isSubmitting;
   const denyPending = isActionPending?.("deny") ?? isSubmitting;
+  const articlePublishEvidenceUrl = isArticleWorkflow(run.workflow)
+    ? articlePublishChildApprovalEvidenceUrlForRun(run)
+    : "";
+  const canApprove = !isArticleWorkflow(run.workflow) || Boolean(articlePublishEvidenceUrl);
   return (
     <div className="flex flex-wrap gap-2">
       <Form method="POST">
@@ -976,11 +985,18 @@ function RunApprovalActions({
         </button>
       </Form>
       <Form method="POST">
+        {articlePublishEvidenceUrl ? (
+          <>
+            <input type="hidden" name="reviewedRunId" value={run.runId} />
+            <input type="hidden" name="reviewedPublishEvidenceUrl" value={articlePublishEvidenceUrl} />
+            <input type="hidden" name="reviewedPreviewRevision" value={articleReviewPreviewRevisionForRun(run)} />
+          </>
+        ) : null}
         <button
           type="submit"
           name="intent"
           value="approve"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !canApprove}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
         >
           {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
@@ -991,7 +1007,7 @@ function RunApprovalActions({
   );
 }
 
-function PublishApprovalPanel({
+export function PublishApprovalPanel({
   run,
   isSubmitting,
   isActionPending,
@@ -1034,7 +1050,7 @@ function PublishApprovalPanel({
             ) : null}
           </div>
         </div>
-        <RunApprovalActions isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
+        <RunApprovalActions run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
       </div>
     </section>
   );
@@ -4478,7 +4494,7 @@ export function PublishAndAutomateDetail({
                     Open publish review
                   </a>
                 ) : (
-                  <RunApprovalActions isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
+                  <RunApprovalActions run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
                 )}
               </div>
             ) : publishHandoffStale ? (

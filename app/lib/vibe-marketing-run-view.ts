@@ -522,17 +522,39 @@ export function hasRecordedArticlePublishApprovalOrHandoff(run: VibeMarketingRun
   const result = run.result ?? {};
   const recordedString = (value: unknown) => typeof value === "string" ? value.trim() : "";
   const recordedId = recordedString(result.publish_child_run_id) || recordedString(result.promoted_publish_job_id);
-  const recordedPr = recordedString(run.prUrl) || recordedString(result.pr_url);
-  const publishedPreview = recordedString(result.publish_child_preview_url);
   return Boolean(
     normalized(run.approvalState) === "approved" ||
     recordedId ||
     result.publish_handoff_pending === true ||
     result.publish_child_recoverable === true ||
-    run.publishChildRecoverable === true ||
-    recordedPr ||
-    publishedPreview,
+    run.publishChildRecoverable === true,
   );
+}
+
+export function isRecordedArticlePublishChildRun(run: VibeMarketingRunSummary) {
+  if (!isArticleWorkflow(run.workflow) || run.workflow === "article_revision" || !run.runId.trim()) return false;
+  const result = run.result ?? {};
+  return result.publish_child_run_id === run.runId || result.promoted_publish_job_id === run.runId;
+}
+
+export function articlePublishChildApprovalEvidenceUrlForRun(run: VibeMarketingRunSummary) {
+  if (!isRecordedArticlePublishChildRun(run)) return "";
+  const result = run.result ?? {};
+  const value = run.previewUrl || result.publish_child_preview_url || result.preview_url || run.prUrl || result.pr_url;
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export function articlePublishChildApprovalTargetForRun(
+  run: VibeMarketingRunSummary,
+  reviewedRunId: string,
+  reviewedEvidenceUrl: string,
+  reviewedPreviewRevision: string,
+) {
+  const evidenceUrl = articlePublishChildApprovalEvidenceUrlForRun(run);
+  return isRecordedArticlePublishChildRun(run) && isRunApprovalRequired(run) && evidenceUrl &&
+    reviewedRunId.trim() === run.runId && reviewedEvidenceUrl.trim() === evidenceUrl &&
+    reviewedPreviewRevision.trim() === articleReviewPreviewRevisionForRun(run)
+    ? run.runId : "";
 }
 
 export function isArticleReviewPreviewReady(run: VibeMarketingRunSummary) {
@@ -540,8 +562,9 @@ export function isArticleReviewPreviewReady(run: VibeMarketingRunSummary) {
     isArticleWorkflow(run.workflow) &&
       run.componentManifest &&
       articleReviewPreviewUrlForRun(run) &&
-      !publishPrUrlForRun(run) &&
-      !hasPublishChildReference(run) &&
+      !isRecordedArticlePublishChildRun(run) &&
+      run.approvalState !== "approved" &&
+      (isRunApprovalRequired(run) || !hasRecordedArticlePublishApprovalOrHandoff(run)) &&
       (hasArticleReviewPreviewMarker(run) || isRunApprovalRequired(run)),
   );
 }
