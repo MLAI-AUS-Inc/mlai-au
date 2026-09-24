@@ -18,11 +18,11 @@ import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import CompanySwitcher from "~/components/CompanySwitcher";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
+import { getOptionalVibeRaisingContextForLoader } from "~/lib/vibe-raising-loader-context.server";
 import { isApiUnavailableError } from "~/lib/api";
 import { progressEnabled } from "~/lib/startup-progress";
 import { getCurrentRooPointsBalance } from "~/lib/roo-points";
 import {
-  getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
   resolveActiveCompanyId,
   setVibeRaisingBrowserCompanyScope,
@@ -93,9 +93,9 @@ function shouldRefreshShellAfterAction(actionResult: unknown) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  let vibeContext: Awaited<ReturnType<typeof getOptionalVibeRaisingContext>>;
+  let vibeContext: Awaited<ReturnType<typeof getOptionalVibeRaisingContextForLoader>>;
   try {
-    vibeContext = await getOptionalVibeRaisingContext(env, request);
+    vibeContext = await getOptionalVibeRaisingContextForLoader(context, request);
   } catch (error) {
     if (isApiUnavailableError(error)) {
       throw new Response(null, { status: 503, statusText: "Founder tools temporarily unavailable" });

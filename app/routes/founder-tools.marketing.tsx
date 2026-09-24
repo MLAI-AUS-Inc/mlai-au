@@ -53,6 +53,7 @@ import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartup
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { isApiUnavailableError } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
+import { getOptionalVibeRaisingContextForLoader } from "~/lib/vibe-raising-loader-context.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
   autofillProgressState,
@@ -314,7 +315,7 @@ function emptyBootstrapFromProfile(profile: VibeRaisingProfile | null): VibeMark
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  const vibeContext = await getOptionalVibeRaisingContext(env, request);
+  const vibeContext = await getOptionalVibeRaisingContextForLoader(context, request);
 
   if (!vibeContext.authUser) {
     throw redirect(getVibeRaisingLoginHref(request));
