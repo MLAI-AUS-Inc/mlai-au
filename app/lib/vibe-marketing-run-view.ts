@@ -216,17 +216,24 @@ export function articlePreviewQualityStateForRun(run: VibeMarketingRunSummary): 
         .filter(Boolean)
     : [];
   const checking = status === "queued" || status === "running" || status === "transient_findings";
-  const blocksApproval = checking || status === "blocking_findings";
-  const advisory = status === "advisory_findings";
   const editorialScoreMissing = findings.includes("editorial:score_missing");
+  const revisionQualityNeedsRetry = run.workflow === "article_revision" &&
+    run.livePreview?.available === true && run.livePreview.exactRender === true &&
+    Boolean(run.livePreview.previewUrl) && !checking &&
+    (!status || status === "review_error" || status === "queue_failed" ||
+      (["passed", "passed_no_baseline", "advisory_findings"].includes(status) && !revisionHasCurrentPreviewQuality(run)));
+  const blocksApproval = checking || status === "blocking_findings" || revisionQualityNeedsRetry;
+  const advisory = status === "advisory_findings" && !revisionQualityNeedsRetry;
   const blockerMessage = String(blocker.message ?? blocker.detail ?? "").trim();
   const message = blockerMessage || (checking
     ? "The hosted article quality check is running. Publishing will unlock automatically when it finishes."
     : editorialScoreMissing
       ? "The editorial reviewer did not return the required score. The article content rendered successfully; retry this quality check without regenerating the draft."
+      : revisionQualityNeedsRetry
+        ? "This article preview does not have a current quality result. Retry the quality check before approving or publishing."
       : status === "blocking_findings"
         ? "The hosted preview has a blocking quality finding that must be resolved before publishing."
-        : advisory
+      : advisory
           ? "The preview passed its publishing gate with advisory style feedback. You can publish it as-is or send a revision comment."
           : "");
   return {
@@ -236,7 +243,7 @@ export function articlePreviewQualityStateForRun(run: VibeMarketingRunSummary): 
     advisory,
     canRetry: Boolean(
       !checking &&
-        (editorialScoreMissing || status === "review_error" || status === "queue_failed"),
+        (editorialScoreMissing || status === "review_error" || status === "queue_failed" || revisionQualityNeedsRetry),
     ),
     message,
     findings,
@@ -520,6 +527,7 @@ export function articleReviewApprovalTargetForRun(
     !run.componentManifest ||
     (run.sectionIssues ?? []).some((issue) => issue.state === "needs_review") ||
     articlePreviewQualityStateForRun(run).blocksApproval ||
+    !revisionHasCurrentPreviewQuality(run) ||
     !currentRunId ||
     !currentPreviewUrl ||
     reviewedRunId.trim() !== currentRunId ||
@@ -544,7 +552,7 @@ export function hasRecordedArticlePublishApprovalOrHandoff(run: VibeMarketingRun
   );
 }
 
-export function revisionHasCurrentPublishApproval(run: VibeMarketingRunSummary) {
+export function revisionHasCurrentPreviewQuality(run: VibeMarketingRunSummary) {
   if (run.workflow !== "article_revision") return true;
   const quality = objectResultValue(run, "article_preview_quality", "articlePreviewQuality");
   const qualityStatus = normalized(typeof quality.status === "string" ? quality.status : "");
@@ -554,11 +562,15 @@ export function revisionHasCurrentPublishApproval(run: VibeMarketingRunSummary) 
   const currentGeneration = rawPreview.resumeGeneration ?? rawPreview.resume_generation ??
     run.resumeGeneration ?? run.result?.["resume_generation"] ?? 0;
   const qualityGeneration = Number(quality.resume_generation ?? quality.resumeGeneration ?? 0);
-  return run.status === "completed" && normalized(run.approvalState) === "approved" &&
-    run.livePreview?.available === true && run.livePreview.exactRender === true &&
+  return run.livePreview?.available === true && run.livePreview.exactRender === true &&
     ["passed", "passed_no_baseline", "advisory_findings"].includes(qualityStatus) &&
     Boolean(qualityUrl && previewUrl && qualityUrl === previewUrl) &&
     Number.isInteger(qualityGeneration) && qualityGeneration === Number(currentGeneration);
+}
+
+export function revisionHasCurrentPublishApproval(run: VibeMarketingRunSummary) {
+  return run.workflow !== "article_revision" ||
+    (run.status === "completed" && normalized(run.approvalState) === "approved" && revisionHasCurrentPreviewQuality(run));
 }
 
 /** An existing publish child can be retried without reapproving its source draft. */

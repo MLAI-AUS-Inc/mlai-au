@@ -22,6 +22,7 @@ import {
   isPublishApprovalGate,
   isRecordedArticlePublishChildRun,
   publishPreviewUrlForRun,
+  revisionHasCurrentPreviewQuality,
   revisionHasCurrentPublishApproval,
   viewedWorkflowStepIdForRun,
 } from "../app/lib/vibe-marketing-run-view";
@@ -72,6 +73,7 @@ function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarke
       review_surface_kind: "component_live_preview",
       preview_url: "https://preview.example/articles/generated",
       promote_bundle_url: "/api/runs/article-review-source/promote-bundle",
+      article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/generated", resume_generation: 0 },
     },
     ...overrides,
   };
@@ -386,6 +388,31 @@ describe("vibe marketing run view state", () => {
       expect(markup).toContain("Review and approve the latest article draft before publishing.");
       expect(markup).not.toContain('value="promote-bundle"');
     } finally { router.dispose(); }
+  });
+
+  test("offers a quality retry and hides Approve when a revision's preview has no current quality result", () => {
+    const revision = articleRun({ runId: "revision-3", workflow: "article_revision", result: { status: "preview_ready" } });
+    expect(revisionHasCurrentPreviewQuality(revision)).toBe(false);
+    expect(articlePreviewQualityStateForRun(revision)).toMatchObject({ canRetry: true, blocksApproval: true });
+    expect(articleReviewApprovalTargetForRun(revision, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    const router = createMemoryRouter([{
+      path: "/founder-tools/marketing/runs/:runId",
+      element: createElement(LiveArticlePreviewPanel, {
+        run: revision, selectedComponent: null, onSelectComponent: () => {}, isSubmitting: false, initiallyExpanded: true,
+      }),
+    }], { initialEntries: ["/founder-tools/marketing/runs/revision-3"] });
+    try {
+      const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
+      expect(markup).toContain("This article preview does not have a current quality result");
+      expect(markup).toContain('value="retry-preview-quality"');
+      expect(markup).not.toContain('value="approve"');
+    } finally { router.dispose(); }
+
+    const staleAdvisory = articleRun({ ...revision, result: {
+      article_preview_quality: { status: "advisory_findings", preview_url: "https://preview.example/articles/old", resume_generation: 0 },
+    } });
+    expect(articlePreviewQualityStateForRun(staleAdvisory)).toMatchObject({ canRetry: true, blocksApproval: true, advisory: false });
+    expect(articlePreviewQualityStateForRun(staleAdvisory).message).toContain("does not have a current quality result");
   });
 
   test("keeps a failed article without a review preview on blocked Generate despite stale organisation progress", () => {

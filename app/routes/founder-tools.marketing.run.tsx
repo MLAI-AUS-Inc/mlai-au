@@ -69,6 +69,7 @@ import {
   isPublishFlowSettled,
   publishPreviewUrlForRun,
   publishPrUrlForRun,
+  revisionHasCurrentPreviewQuality,
   revisionHasCurrentPublishApproval,
   viewedWorkflowStepIdForRun,
 } from "~/lib/vibe-marketing-run-view";
@@ -681,7 +682,18 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const reviewedPreviewRevision = stringFromForm(formData, "reviewedPreviewRevision");
       let verifiedReviewRunId = "";
       let currentRevisionPromotionRunId = "";
-      if (["approve", "promote-bundle", "publish-pr"].includes(intent) || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
+      if (intent === "retry-preview-quality") {
+        const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
+        if (currentRun.workflow === "article_revision") {
+          const currentPreviewUrl = String(currentRun.livePreview?.previewUrl ?? "").trim();
+          if (!currentRun.livePreview?.available || !currentRun.livePreview.exactRender || !currentPreviewUrl ||
+              reviewedRunId !== currentRun.runId || reviewedPreviewUrl !== currentPreviewUrl ||
+              reviewedPreviewRevision !== articleReviewPreviewRevisionForRun(currentRun)) {
+            return { intent, error: "The article preview changed. Reload before retrying its quality check." };
+          }
+          verifiedReviewRunId = currentRun.runId;
+        }
+      } else if (["approve", "promote-bundle", "publish-pr"].includes(intent) || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
         // A forced Publish view must not promote an unapproved article. An
         // older source URL may also render a newer review-ready revision.
         const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
@@ -3089,6 +3101,7 @@ export function LiveArticlePreviewPanel({
     previewQuality.checking ||
       previewQuality.blocksApproval ||
       previewQuality.advisory ||
+      previewQuality.canRetry ||
       previewQuality.status === "review_error" ||
       previewQuality.status === "queue_failed",
   );
@@ -3137,6 +3150,13 @@ export function LiveArticlePreviewPanel({
             </div>
             {previewQuality.canRetry ? (
               <Form method="POST">
+                {run.workflow === "article_revision" ? (
+                  <>
+                    <input type="hidden" name="reviewedRunId" value={run.runId} />
+                    <input type="hidden" name="reviewedPreviewUrl" value={run.livePreview?.previewUrl ?? ""} />
+                    <input type="hidden" name="reviewedPreviewRevision" value={articleReviewPreviewRevisionForRun(run)} />
+                  </>
+                ) : null}
                 <button
                   type="submit"
                   name="intent"
@@ -3183,6 +3203,7 @@ export function LiveArticlePreviewPanel({
               !reviewState.hasPendingRevisionBatch &&
               (reviewApprovalReady || publishStep?.status === "ready") &&
               !previewQuality.blocksApproval &&
+              revisionHasCurrentPreviewQuality(run) &&
               acceptArticleIntent,
           );
           const acceptArticlePending = isActionPending?.(acceptArticleIntent) ?? isSubmitting;
