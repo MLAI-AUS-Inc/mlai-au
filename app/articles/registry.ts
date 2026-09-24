@@ -80,6 +80,17 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
+        title: "Build an AI Personal Assistant for One Small Business Task",
+        date: "2026-09-23",
+        dateModified: "2026-09-23",
+        description: "Start with one low-risk admin task, test an AI assistant on fictional data, and use a two-week pilot to measure time saved, corrections and cost.",
+        author: "Dr Sam Donegan",
+        slug: "featured/build-an-ai-personal-assistant-for-one-small-business-task",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d60ebaf1-cc0c-49f0-8cd9-80084dcb1c32.jpg?alt=media&token=b0bc3200-6a81-4bef-ab86-0736283d82b9",
+        imageAlt: "Person writing notes beside an open laptop at a desk",
+    },
     'featured/startups-in-melbourne-for-ai-builders-and-new-founders': {
         title: "Startups in Melbourne for AI Builders and New Founders",
         date: "2026-09-13",
