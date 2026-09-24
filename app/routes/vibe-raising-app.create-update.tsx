@@ -3459,6 +3459,7 @@ function CreateUpdateEditor() {
     const [draftCandidate, setDraftCandidate] = useState<any>(null);
     const [loadedWorkingScope, setLoadedWorkingScope] = useState<string | null>(null);
     const [localRecoveryAvailable, setLocalRecoveryAvailable] = useState(true);
+    const [staleWorkingCopy, setStaleWorkingCopy] = useState(false);
     const [lastSavedContent, setLastSavedContent] = useState("");
     const [saveAttemptContent, setSaveAttemptContent] = useState("");
     const editorMountedRef = useRef(true);
@@ -4312,6 +4313,7 @@ function CreateUpdateEditor() {
         const base: Record<string, any> = existingData || {};
         const local = readUpdateWorkingCopy(workingScope) || (creationKey ? readUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `new:${creationKey}`)) : null);
         const saved = recoverUpdateWorkingCopy(local, base);
+        setStaleWorkingCopy(Boolean(local && base.revisionId && Number(local.expectedRevision) !== Number(base.revisionId) && saved === local));
         const restored: Record<string, any> = saved || base;
         if (restored.activeUpdateId || base.id) setActiveUpdateId(String(restored.activeUpdateId || base.id));
         if ("updateDate" in restored) setUpdateDate(restored.updateDate || "");
@@ -4488,6 +4490,18 @@ function CreateUpdateEditor() {
             : saveDraftFetcher.data?.step === "validation-error"
                 ? String(saveDraftFetcher.data.error || "")
                 : "";
+    const revisionConflict = staleWorkingCopy || founderQuestionGateError === "This update changed. Reload and review the latest revision.";
+    const loadLatestSavedUpdate = () => {
+        if (!window.confirm("Load the latest saved update? Copy any unsaved writing you want to keep first. Your browser copy will be replaced.")) return;
+        try {
+            window.localStorage.removeItem(workingScope);
+            if (creationKey) window.localStorage.removeItem(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `new:${creationKey}`));
+        } catch {
+            setLocalRecoveryAvailable(false);
+            return;
+        }
+        window.location.reload();
+    };
     const returnToMonthSelection = useCallback(() => {
         setMonthConfirmed(false);
         setSelectedDraftStage(null);
@@ -5499,6 +5513,14 @@ function CreateUpdateEditor() {
                         <p className="update-notice" role="alert">
                             {founderQuestionGateError}
                         </p>
+                    )}
+                    {revisionConflict && existingData?.revisionId && (
+                        <div className="update-notice" role="status">
+                            <p>A newer saved version is available. Copy any unsaved writing you want to keep before loading it.</p>
+                            <button type="button" className="update-button secondary" onClick={loadLatestSavedUpdate}>
+                                Load latest saved update
+                            </button>
+                        </div>
                     )}
                     {!localRecoveryAvailable && (
                         <p className="update-notice" role="alert">
