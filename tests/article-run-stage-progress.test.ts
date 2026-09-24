@@ -89,6 +89,22 @@ describe("article revision stage progress", () => {
     expect(stages.find((stage) => stage.id === "planning")?.status).toBe("running");
     expect(stages.find((stage) => stage.id === "preview")?.status).toBe("up_next");
   });
+
+  test("shows comment application as revising even when the last recorded step is planning", () => {
+    const run = repairingArticle({
+      runId: "component-revision-6", workflow: "article_revision", status: "running",
+      currentStep: "apply_component_feedback", errorCode: null, preconditionStatus: null, repairStatus: null,
+      stepOrder: ["load_revision_context", "plan_article"],
+      steps: [
+        { key: "load_revision_context", status: "completed" },
+        { key: "plan_article", status: "completed" },
+      ] as VibeMarketingRunSummary["steps"],
+    });
+    const drafting = deriveArticleProgressStages(run).find((stage) => stage.id === "drafting");
+    expect(drafting).toMatchObject({ label: "Revising draft", status: "running",
+      detail: "Applying your comments to the article draft and delivery files." });
+    expect(renderToStaticMarkup(createElement(ArticleRunStageProgress, { run }))).toContain("Revising draft");
+  });
 });
 
 describe("article generation asset stage", () => {
