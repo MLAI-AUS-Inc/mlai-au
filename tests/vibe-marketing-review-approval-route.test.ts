@@ -19,6 +19,8 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
   let latestRunId: string;
   let latestPreviewUrl: string;
   let latestCommitSha: string;
+  let publishRecovery: boolean;
+  let manifestPresent: boolean;
   let originalFetch: typeof fetch;
 
   beforeEach(() => {
@@ -26,6 +28,8 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
     latestRunId = "revision-3";
     latestPreviewUrl = previewUrl;
     latestCommitSha = "commit-3";
+    publishRecovery = false;
+    manifestPresent = true;
     server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
       const url = new URL(request.url);
       const path = url.pathname + url.search;
@@ -37,13 +41,17 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
         return Response.json({
           runId: latestRunId, workflow: "article_revision", domain: "example.test", status: "approval_required",
           currentStep: "await_review", approvalState: "approval_required",
-          componentManifest: { components: [{ id: "section:intro", type: "section", label: "Introduction" }] },
+          componentManifest: manifestPresent ? { components: [{ id: "section:intro", type: "section", label: "Introduction" }] } : null,
           contentPackage: { title: "Latest draft", contentPackaged: true },
+          publishChildRecoverable: publishRecovery,
           livePreview: { available: true, status: "ready", previewUrl: latestPreviewUrl, exactRender: true, commitSha: latestCommitSha },
-          result: { status: "preview_ready", review_surface_kind: "component_live_preview", preview_url: latestPreviewUrl },
+          result: { status: "preview_ready", review_surface_kind: "component_live_preview", preview_url: latestPreviewUrl,
+            ...(publishRecovery ? { publish_child_run_id: "existing-publish-child", publish_child_recoverable: true } : {}) },
         });
       }
-      if (url.pathname === `/api/v1/vibe-marketing/runs/${latestRunId}/approve` && request.method === "POST") {
+      if ([`/api/v1/vibe-marketing/runs/${latestRunId}/approve`,
+        `/api/v1/vibe-marketing/runs/${latestRunId}/promote-bundle`,
+        "/api/v1/vibe-marketing/runs/source-1/promote-bundle"].includes(url.pathname) && request.method === "POST") {
         return Response.json({ runId: "publish-child-1", workflow: "article_generation", domain: "example.test", status: "queued" });
       }
       return Response.json({ detail: `Unexpected ${request.method} ${path}` }, { status: 404 });
@@ -61,9 +69,9 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
     server.stop(true);
   });
 
-  async function approve(reviewedRunId: string, reviewedPreviewUrl: string, reviewedPreviewRevision = "commit-3") {
+  async function submit(intent: string, reviewedRunId = "", reviewedPreviewUrl = "", reviewedPreviewRevision = "") {
     const form = new FormData();
-    form.set("intent", "approve");
+    form.set("intent", intent);
     form.set("reviewedRunId", reviewedRunId);
     form.set("reviewedPreviewUrl", reviewedPreviewUrl);
     form.set("reviewedPreviewRevision", reviewedPreviewRevision);
@@ -79,20 +87,22 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
     }
   }
 
-  const approvals = () => calls.filter((call) => call.method === "POST" && call.path.endsWith("/approve"));
+  const approve = (reviewedRunId: string, reviewedPreviewUrl: string, reviewedPreviewRevision = "commit-3") =>
+    submit("approve", reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
+  const publishMutations = () => calls.filter((call) => call.method === "POST" && /\/(approve|promote-bundle|publish-pr)$/.test(call.path));
 
   describe("article review approval identity", () => {
     test("posts to the newest draft displayed on an old source URL", async () => {
       const response = await approve("revision-3", previewUrl);
       expect(response).toBeInstanceOf(Response);
       expect((response as Response).headers.get("Location")).toBe("/founder-tools/marketing/runs/publish-child-1");
-      expect(approvals()).toEqual([{ method: "POST", path: "/api/v1/vibe-marketing/runs/revision-3/approve", body: { companyId: "owned", autoMerge: true } }]);
+      expect(publishMutations()).toEqual([{ method: "POST", path: "/api/v1/vibe-marketing/runs/revision-3/approve", body: { companyId: "owned", autoMerge: true } }]);
     });
 
     test("does not approve if a newer revision appeared after the page rendered", async () => {
       latestRunId = "revision-4";
       expect(await approve("revision-3", previewUrl)).toMatchObject({ intent: "approve", error: expect.stringContaining("preview changed") });
-      expect(approvals()).toHaveLength(0);
+      expect(publishMutations()).toHaveLength(0);
     });
 
     test("does not approve a rebuilt preview or an unbound form", async () => {
@@ -101,8 +111,29 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
       latestPreviewUrl = previewUrl;
       latestCommitSha = "commit-4";
       expect(await approve("revision-3", previewUrl)).toMatchObject({ intent: "approve", error: expect.stringContaining("preview changed") });
-      expect(await approve("", "", "")).toMatchObject({ intent: "approve", error: expect.stringContaining("preview changed") });
-      expect(approvals()).toHaveLength(0);
+      expect(await approve("", "", "")).toMatchObject({ intent: "approve", error: expect.stringContaining("Review and approve") });
+      expect(publishMutations()).toHaveLength(0);
+    });
+
+    test("rejects a forced Publish view's unbound initial promotion", async () => {
+      for (const intent of ["promote-bundle", "publish-pr"]) {
+        expect(await submit(intent)).toMatchObject({ intent, error: expect.stringContaining("Review and approve") });
+      }
+      expect(publishMutations()).toHaveLength(0);
+    });
+
+    test("does not allow an unbound article approval when review proof is absent", async () => {
+      manifestPresent = false;
+      expect(await submit("approve")).toMatchObject({ intent: "approve", error: expect.stringContaining("Review and approve") });
+      expect(publishMutations()).toHaveLength(0);
+    });
+
+    test("permits a matched review promotion and an existing publish-child recovery", async () => {
+      expect(await submit("promote-bundle", "revision-3", previewUrl, "commit-3")).toBeInstanceOf(Response);
+      expect(publishMutations().at(-1)?.path).toBe("/api/v1/vibe-marketing/runs/revision-3/promote-bundle");
+      publishRecovery = true;
+      expect(await submit("promote-bundle")).toBeInstanceOf(Response);
+      expect(publishMutations().at(-1)?.path).toBe("/api/v1/vibe-marketing/runs/source-1/promote-bundle");
     });
   });
 }

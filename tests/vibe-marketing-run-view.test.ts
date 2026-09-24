@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { LiveArticlePreviewPanel } from "../app/routes/founder-tools.marketing.run";
+import { LiveArticlePreviewPanel, PublishAndAutomateDetail } from "../app/routes/founder-tools.marketing.run";
 
 import {
   articlePreconditionRepairStateForRun,
@@ -14,13 +14,14 @@ import {
   articleReviewApproveLabelForRun,
   articleRunPathAfterStart,
   articleWorkflowProgressForRunPage,
+  hasRecordedArticlePublishApprovalOrHandoff,
   hasPublishHandoffEvidence,
   isArticleReviewPreviewReady,
   isPublishApprovalGate,
   publishPreviewUrlForRun,
   viewedWorkflowStepIdForRun,
 } from "../app/lib/vibe-marketing-run-view";
-import type { VibeMarketingRunSummary } from "../app/types/vibe-marketing";
+import type { VibeMarketingBootstrap, VibeMarketingRunSummary } from "../app/types/vibe-marketing";
 
 function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarketingRunSummary {
   return {
@@ -131,6 +132,39 @@ describe("vibe marketing run view state", () => {
     expect(articleReviewApprovalTargetForRun({ ...latest, status: "failed", approvalState: null }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
     expect(articleReviewApprovalTargetForRun({ ...latest, sectionIssues: [{ id: "issue", sectionId: "section:intro", claimId: "claim", claimExcerpt: "Claim", reason: "Missing source", sourceHint: "", state: "needs_review" }] }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
     expect(articleReviewApprovalTargetForRun({ ...latest, result: { ...latest.result, article_preview_quality: { status: "blocking_findings" } } }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+  });
+
+  test("a forced Publish view waits for review but keeps recorded publish recovery", () => {
+    const renderPublish = (run: VibeMarketingRunSummary) => {
+      const router = createMemoryRouter([{
+        path: "/founder-tools/marketing/runs/:runId",
+        element: createElement(PublishAndAutomateDetail, {
+          run,
+          bootstrap: { checks: {}, settings: { dailyDiscoveryEnabled: false } } as unknown as VibeMarketingBootstrap,
+          isSubmitting: false,
+        }),
+      }], { initialEntries: ["/founder-tools/marketing/runs/source-1?articleStep=publish"] });
+      try { return renderToStaticMarkup(createElement(RouterProvider, { router })); }
+      finally { router.dispose(); }
+    };
+    const unapproved = articleRun({ runId: "revision-3", workflow: "article_revision" });
+    expect(viewedWorkflowStepIdForRun(unapproved, null, null, "publish")).toBe("publish");
+    expect(hasRecordedArticlePublishApprovalOrHandoff(unapproved)).toBe(false);
+    expect(hasRecordedArticlePublishApprovalOrHandoff({ ...unapproved, result: {
+      ...unapproved.result, latest_control_response: { publish_child_run_id: "old-child" },
+    } })).toBe(false);
+    const blockedMarkup = renderPublish(unapproved);
+    expect(blockedMarkup).toContain("Review and approve the latest article draft before publishing.");
+    expect(blockedMarkup).not.toContain('value="promote-bundle"');
+
+    const recovering = articleRun({
+      runId: "revision-3", workflow: "article_revision", publishChildRecoverable: true,
+      result: { ...unapproved.result, publish_child_run_id: "existing-publish-child", publish_child_recoverable: true },
+    });
+    expect(hasRecordedArticlePublishApprovalOrHandoff(recovering)).toBe(true);
+    const recoveryMarkup = renderPublish(recovering);
+    expect(recoveryMarkup).toContain('value="promote-bundle"');
+    expect(recoveryMarkup).toContain("Resume publishing");
   });
 
   test("blocks approval while required editorial quality evidence is missing", () => {

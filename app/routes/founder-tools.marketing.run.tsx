@@ -57,6 +57,7 @@ import {
   articleReviewApproveLabelForRun,
   articleReviewPreviewRevisionForRun,
   articleWorkflowProgressForRunPage,
+  hasRecordedArticlePublishApprovalOrHandoff,
   hasPublishHandoffEvidence,
   isArticleGenerationActivelyRunning,
   isArticleReviewPreviewReady,
@@ -673,14 +674,27 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const reviewedPreviewUrl = stringFromForm(formData, "reviewedPreviewUrl");
       const reviewedPreviewRevision = stringFromForm(formData, "reviewedPreviewRevision");
       let verifiedReviewRunId = "";
-      if (intent === "approve" || reviewedRunId || reviewedPreviewUrl || reviewedPreviewRevision) {
-        // An older source URL can render a newer revision. Resolve the current
-        // visible review identity again before approving, then mutate that run.
+      if (["approve", "promote-bundle", "publish-pr"].includes(intent) || reviewedRunId || reviewedPreviewUrl || reviewedPreviewRevision) {
+        // A forced Publish view must not promote an unapproved article. An
+        // older source URL may also render a newer review-ready revision.
         const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
-        if (isArticleReviewPreviewReady(currentRun) || reviewedRunId || reviewedPreviewUrl || reviewedPreviewRevision) {
+        const initialArticlePromotion =
+          ["promote-bundle", "publish-pr"].includes(intent) &&
+          isArticleWorkflow(currentRun.workflow) &&
+          !hasRecordedArticlePublishApprovalOrHandoff(currentRun);
+        const initialArticleApproval =
+          intent === "approve" &&
+          isArticleWorkflow(currentRun.workflow) &&
+          !hasRecordedArticlePublishApprovalOrHandoff(currentRun);
+        if (initialArticlePromotion || initialArticleApproval || reviewedRunId || reviewedPreviewUrl || reviewedPreviewRevision) {
           verifiedReviewRunId = articleReviewApprovalTargetForRun(currentRun, reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
           if (!verifiedReviewRunId) {
-            return { intent, error: "The article preview changed. Reload and review the latest draft before approving it." };
+            return {
+              intent,
+              error: !reviewedRunId || !reviewedPreviewUrl
+                ? "Review and approve the latest article draft before publishing."
+                : "The article preview changed. Reload and review the latest draft before approving it.",
+            };
           }
         }
       }
@@ -4057,7 +4071,7 @@ function PublishDailyResearchReminderCard({
   );
 }
 
-function PublishAndAutomateDetail({
+export function PublishAndAutomateDetail({
   run,
   bootstrap,
   isSubmitting,
@@ -4081,6 +4095,7 @@ function PublishAndAutomateDetail({
   const publishQualityGate = articlePublishQualityGateForRun(run);
   const previewQuality = articlePreviewQualityStateForRun(run);
   const hasUnresolvedEvidence = (run.sectionIssues ?? []).some((issue) => issue.state === "needs_review");
+  const hasApprovedPublishHandoff = hasRecordedArticlePublishApprovalOrHandoff(run);
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
@@ -4205,7 +4220,7 @@ function PublishAndAutomateDetail({
             status={
               isMerged || publishedWithoutPr
                 ? "complete"
-                : hasUnresolvedEvidence || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
+                : hasUnresolvedEvidence || !hasApprovedPublishHandoff || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
                   ? "blocked"
                   : prUrl || publishPending || publishQualityGate === "running"
                     ? "running"
@@ -4218,6 +4233,8 @@ function PublishAndAutomateDetail({
                   ? "Published"
               : hasUnresolvedEvidence
                 ? "Evidence needs review"
+                : !hasApprovedPublishHandoff
+                  ? "Article review required"
                 : mergeBlocked
                     ? "Merge blocked"
                     : prUrl
@@ -4277,6 +4294,15 @@ function PublishAndAutomateDetail({
                 {canViewArticle ? (
                   <Link to={viewArticleHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black">
                     Review evidence issues
+                  </Link>
+                ) : null}
+              </div>
+            ) : !hasApprovedPublishHandoff ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">Review and approve the latest article draft before publishing.</p>
+                {canViewArticle ? (
+                  <Link to={viewArticleHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black">
+                    Review article
                   </Link>
                 ) : null}
               </div>
@@ -5032,6 +5058,7 @@ function ArticleWorkflowPrimaryAction({
   if (isArticleReviewPreviewReady(run)) return null;
   if (isPublishApprovalGate(run)) return null;
   if ((run.sectionIssues ?? []).some((issue) => issue.state === "needs_review")) return null;
+  if (!hasRecordedArticlePublishApprovalOrHandoff(run)) return null;
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
     const publishPending = isActionPending?.(publishStep.primaryAction.intent) ?? isSubmitting;

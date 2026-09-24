@@ -516,6 +516,25 @@ export function articleReviewApprovalTargetForRun(
   return currentRunId;
 }
 
+/** Backend-recorded approval or publish work, never workflow step progress alone. */
+export function hasRecordedArticlePublishApprovalOrHandoff(run: VibeMarketingRunSummary) {
+  if (!isArticleWorkflow(run.workflow)) return false;
+  const result = run.result ?? {};
+  const recordedString = (value: unknown) => typeof value === "string" ? value.trim() : "";
+  const recordedId = recordedString(result.publish_child_run_id) || recordedString(result.promoted_publish_job_id);
+  const recordedPr = recordedString(run.prUrl) || recordedString(result.pr_url);
+  const publishedPreview = recordedString(result.publish_child_preview_url);
+  return Boolean(
+    normalized(run.approvalState) === "approved" ||
+    recordedId ||
+    result.publish_handoff_pending === true ||
+    result.publish_child_recoverable === true ||
+    run.publishChildRecoverable === true ||
+    recordedPr ||
+    publishedPreview,
+  );
+}
+
 export function isArticleReviewPreviewReady(run: VibeMarketingRunSummary) {
   return Boolean(
     isArticleWorkflow(run.workflow) &&
