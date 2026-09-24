@@ -29,6 +29,32 @@ export function writeUpdateWorkingCopy(
     return false;
   }
 }
+
+/** Keep unsaved browser edits, but let a newer server revision replace a clean copy. */
+export function recoverUpdateWorkingCopy(
+  local: Record<string, any> | null,
+  server: { revisionId?: number | null } | null,
+): Record<string, any> | null {
+  if (!local || !server?.revisionId) return local;
+  if (Number(local.expectedRevision) === server.revisionId) return local;
+
+  const currentContent = JSON.stringify({
+    updateDate: local.updateDate,
+    narrativeStart: local.narrativeStart,
+    narrativeEnd: local.narrativeEnd,
+    summary: local.summary,
+    highlights: local.highlights,
+    challenges: local.challenges,
+    learnings: local.learnings,
+    next30Days: local.next30Days,
+    asks: local.asks,
+    coverImage: local.coverImage,
+    audienceVisibility: local.audienceVisibility,
+    metrics: local.metrics,
+    chartSelections: local.chartSelections,
+  });
+  return local.lastSavedContent === currentContent ? null : local;
+}
 export const IMPORTED_FINANCIAL_KEYS = new Set([
   "revenue",
   "monthlyCosts",
