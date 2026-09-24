@@ -61,6 +61,7 @@ import {
   articleWorkflowProgressForRunPage,
   hasRecordedArticlePublishApprovalOrHandoff,
   hasPublishHandoffEvidence,
+  hasApprovedArticlePublishChildRecovery,
   isArticleGenerationActivelyRunning,
   isArticleReviewPreviewReady,
   isRecordedArticlePublishChildRun,
@@ -68,6 +69,8 @@ import {
   isPublishFlowSettled,
   publishPreviewUrlForRun,
   publishPrUrlForRun,
+  revisionHasCurrentPreviewQuality,
+  revisionHasCurrentPublishApproval,
   viewedWorkflowStepIdForRun,
 } from "~/lib/vibe-marketing-run-view";
 import { shouldSkipVibeMarketingRunRevalidation } from "~/lib/vibe-marketing-step-revalidation";
@@ -678,16 +681,38 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const reviewedPublishEvidenceUrl = stringFromForm(formData, "reviewedPublishEvidenceUrl");
       const reviewedPreviewRevision = stringFromForm(formData, "reviewedPreviewRevision");
       let verifiedReviewRunId = "";
-      if (["approve", "promote-bundle", "publish-pr"].includes(intent) || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
+      let currentRevisionPromotionRunId = "";
+      if (intent === "retry-preview-quality") {
+        const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
+        if (currentRun.workflow === "article_revision") {
+          const currentPreviewUrl = String(currentRun.livePreview?.previewUrl ?? "").trim();
+          if (!currentRun.livePreview?.available || !currentRun.livePreview.exactRender || !currentPreviewUrl ||
+              reviewedRunId !== currentRun.runId || reviewedPreviewUrl !== currentPreviewUrl ||
+              reviewedPreviewRevision !== articleReviewPreviewRevisionForRun(currentRun)) {
+            return { intent, error: "The article preview changed. Reload before retrying its quality check." };
+          }
+          verifiedReviewRunId = currentRun.runId;
+        }
+      } else if (["approve", "promote-bundle", "publish-pr"].includes(intent) || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
         // A forced Publish view must not promote an unapproved article. An
         // older source URL may also render a newer review-ready revision.
         const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
+        const articlePromotion = ["promote-bundle", "publish-pr"].includes(intent) && isArticleWorkflow(currentRun.workflow);
+        if (articlePromotion && currentRun.workflow === "article_revision") {
+          if (sourceRunId && sourceRunId !== currentRun.runId) {
+            return { intent, error: "The article preview changed. Reload and review the latest draft before publishing." };
+          }
+          currentRevisionPromotionRunId = currentRun.runId;
+        }
         const initialArticlePromotion =
-          ["promote-bundle", "publish-pr"].includes(intent) &&
-          isArticleWorkflow(currentRun.workflow) &&
-          !hasRecordedArticlePublishApprovalOrHandoff(currentRun);
+          articlePromotion &&
+          (!hasRecordedArticlePublishApprovalOrHandoff(currentRun) ||
+            (!revisionHasCurrentPublishApproval(currentRun) && !hasApprovedArticlePublishChildRecovery(currentRun)));
+        if (initialArticlePromotion) {
+          return { intent, error: "Review and approve the latest article draft before publishing." };
+        }
         const articleApproval = intent === "approve" && isArticleWorkflow(currentRun.workflow);
-        if (initialArticlePromotion || articleApproval || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
+        if (articleApproval || reviewedRunId || reviewedPreviewUrl || reviewedPublishEvidenceUrl || reviewedPreviewRevision) {
           verifiedReviewRunId = articleApproval && isRecordedArticlePublishChildRun(currentRun)
             ? articlePublishChildApprovalTargetForRun(currentRun, reviewedRunId, reviewedPublishEvidenceUrl, reviewedPreviewRevision)
             : articleReviewApprovalTargetForRun(currentRun, reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
@@ -705,7 +730,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         stringFromForm(formData, "autoMerge") === "true" &&
         ["approve", "promote-bundle", "publish-pr"].includes(intent);
       const controlRunId =
-        verifiedReviewRunId || (intent === "promote-bundle" || intent === "publish-pr"
+        verifiedReviewRunId || currentRevisionPromotionRunId || (intent === "promote-bundle" || intent === "publish-pr"
           ? sourceRunId || runId
           : (intent === "resume" || intent === "restart") && targetRunId
             ? targetRunId
@@ -3076,6 +3101,7 @@ export function LiveArticlePreviewPanel({
     previewQuality.checking ||
       previewQuality.blocksApproval ||
       previewQuality.advisory ||
+      previewQuality.canRetry ||
       previewQuality.status === "review_error" ||
       previewQuality.status === "queue_failed",
   );
@@ -3124,6 +3150,13 @@ export function LiveArticlePreviewPanel({
             </div>
             {previewQuality.canRetry ? (
               <Form method="POST">
+                {run.workflow === "article_revision" ? (
+                  <>
+                    <input type="hidden" name="reviewedRunId" value={run.runId} />
+                    <input type="hidden" name="reviewedPreviewUrl" value={run.livePreview?.previewUrl ?? ""} />
+                    <input type="hidden" name="reviewedPreviewRevision" value={articleReviewPreviewRevisionForRun(run)} />
+                  </>
+                ) : null}
                 <button
                   type="submit"
                   name="intent"
@@ -3170,6 +3203,7 @@ export function LiveArticlePreviewPanel({
               !reviewState.hasPendingRevisionBatch &&
               (reviewApprovalReady || publishStep?.status === "ready") &&
               !previewQuality.blocksApproval &&
+              revisionHasCurrentPreviewQuality(run) &&
               acceptArticleIntent,
           );
           const acceptArticlePending = isActionPending?.(acceptArticleIntent) ?? isSubmitting;
@@ -4111,12 +4145,13 @@ export function PublishAndAutomateDetail({
   const publishQualityGate = articlePublishQualityGateForRun(run);
   const previewQuality = articlePreviewQualityStateForRun(run);
   const hasUnresolvedEvidence = (run.sectionIssues ?? []).some((issue) => issue.state === "needs_review");
-  const hasApprovedPublishHandoff = hasRecordedArticlePublishApprovalOrHandoff(run);
+  const hasApprovedPublishHandoff = hasRecordedArticlePublishApprovalOrHandoff(run) &&
+    (revisionHasCurrentPublishApproval(run) || hasApprovedArticlePublishChildRecovery(run));
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
   const publishSourceRunId =
-    run.sourceRunId ||
+    (run.workflow === "article_revision" ? run.runId : run.sourceRunId) ||
     stringResultValue(run, "source_run_id", "sourceRunId", "review_source_run_id", "reviewSourceRunId");
   const publishChildWaitReason =
     run.publishChildWaitReason || stringResultValue(run, "publish_child_wait_reason", "publishChildWaitReason");
@@ -5058,7 +5093,7 @@ function ArticleRunActionsMenu({
   );
 }
 
-function ArticleWorkflowPrimaryAction({
+export function ArticleWorkflowPrimaryAction({
   run,
   isSubmitting,
   isActionPending,
@@ -5074,7 +5109,8 @@ function ArticleWorkflowPrimaryAction({
   if (isArticleReviewPreviewReady(run)) return null;
   if (isPublishApprovalGate(run)) return null;
   if ((run.sectionIssues ?? []).some((issue) => issue.state === "needs_review")) return null;
-  if (!hasRecordedArticlePublishApprovalOrHandoff(run)) return null;
+  if (!hasRecordedArticlePublishApprovalOrHandoff(run) ||
+      (!revisionHasCurrentPublishApproval(run) && !hasApprovedArticlePublishChildRecovery(run))) return null;
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
     const publishPending = isActionPending?.(publishStep.primaryAction.intent) ?? isSubmitting;

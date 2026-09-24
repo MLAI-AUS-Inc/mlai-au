@@ -89,6 +89,22 @@ describe("article revision stage progress", () => {
     expect(stages.find((stage) => stage.id === "planning")?.status).toBe("running");
     expect(stages.find((stage) => stage.id === "preview")?.status).toBe("up_next");
   });
+
+  test("shows comment application as revising even when the last recorded step is planning", () => {
+    const run = repairingArticle({
+      runId: "component-revision-6", workflow: "article_revision", status: "running",
+      currentStep: "apply_component_feedback", errorCode: null, preconditionStatus: null, repairStatus: null,
+      stepOrder: ["load_revision_context", "plan_article"],
+      steps: [
+        { key: "load_revision_context", status: "completed" },
+        { key: "plan_article", status: "completed" },
+      ] as VibeMarketingRunSummary["steps"],
+    });
+    const drafting = deriveArticleProgressStages(run).find((stage) => stage.id === "drafting");
+    expect(drafting).toMatchObject({ label: "Revising draft", status: "running",
+      detail: "Applying your comments to the article draft and delivery files." });
+    expect(renderToStaticMarkup(createElement(ArticleRunStageProgress, { run }))).toContain("Revising draft");
+  });
 });
 
 describe("article generation asset stage", () => {
@@ -132,6 +148,39 @@ describe("article generation asset stage", () => {
 });
 
 describe("hosted article preview progress", () => {
+  test("shows a revision building its hosted preview after every recorded step completes", () => {
+    const stepOrder = ["load_revision_context", "plan_article", "render_article", "finalize"];
+    const run = repairingArticle({
+      workflow: "article_revision",
+      status: "processing",
+      currentStep: "start_hosted_preview",
+      errorCode: null,
+      preconditionStatus: null,
+      repairStatus: null,
+      stepOrder,
+      // Replayed work can append an early step after finalize in the API order.
+      steps: ["load_revision_context", "render_article", "finalize", "plan_article"].map((key) => ({
+        key,
+        name: key,
+        required: true,
+        status: "completed",
+        attempts: 1,
+        artifacts: [],
+      })),
+    });
+    const stages = deriveArticleProgressStages(run);
+    const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+
+    expect(stages.find((stage) => stage.id === "planning")?.status).toBe("complete");
+    expect(stages.find((stage) => stage.id === "preview")).toMatchObject({
+      label: "Building hosted preview",
+      status: "running",
+    });
+    expect(markup).toContain("Step 9 of 10");
+    expect(markup).toContain("Building hosted preview</h2>");
+    expect(markup).not.toContain("Planning article</h2>");
+  });
+
   test("attributes a post-generation preview build failure to preview verification", () => {
     const stepOrder = [
       "fetch_org_config",
