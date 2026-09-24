@@ -67,6 +67,30 @@ describe("article generation stage progress during setup repair", () => {
   });
 });
 
+describe("article revision stage progress", () => {
+  test("does not show inherited preview checks as complete while planning a revision", () => {
+    const run = repairingArticle({
+      runId: "component-revision-1",
+      workflow: "article_revision",
+      status: "running",
+      currentStep: "plan_article",
+      errorCode: null,
+      preconditionStatus: null,
+      repairStatus: null,
+      stepOrder: ["load_revision_context", "plan_article", "review_preview_quality"],
+      steps: [
+        { key: "load_revision_context", status: "completed" },
+        { key: "plan_article", status: "running" },
+        { key: "review_preview_quality", status: "completed" },
+      ] as VibeMarketingRunSummary["steps"],
+    });
+    const stages = deriveArticleProgressStages(run);
+
+    expect(stages.find((stage) => stage.id === "planning")?.status).toBe("running");
+    expect(stages.find((stage) => stage.id === "preview")?.status).toBe("up_next");
+  });
+});
+
 describe("article generation asset stage", () => {
   const completedStep = (key: string) => ({
     key,

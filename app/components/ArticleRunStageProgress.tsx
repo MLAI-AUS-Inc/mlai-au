@@ -323,9 +323,11 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
       failingStage === stage.id ||
       (runFailed && stage.id === activeStage);
     const running = runRunning && stage.id === activeStage && !attention;
-    const complete = runComplete ||
-      (allStageStepsComplete && !(previewFailed && stage.id === "review")) ||
-      (runRunning && stageIndex < activeStageIndex && !attention);
+    // Revision runs may carry completed checks from an earlier preview. A later
+    // stage is still ahead of the current revision until it reaches that stage.
+    const complete = runComplete || (runRunning
+      ? stageIndex < activeStageIndex && !attention
+      : allStageStepsComplete && !(previewFailed && stage.id === "review"));
     const status: StageStatus = attention ? "attention" : running ? "running" : complete ? "complete" : "up_next";
 
     return {
