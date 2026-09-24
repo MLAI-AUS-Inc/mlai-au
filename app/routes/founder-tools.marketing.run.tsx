@@ -3205,7 +3205,7 @@ function LiveArticlePreviewPanel({
   );
 }
 
-function ArticlePreviewEmptyState({
+export function ArticlePreviewEmptyState({
   run,
   isSubmitting,
   isActionPending,
@@ -3233,6 +3233,18 @@ function ArticlePreviewEmptyState({
   const hostedPreview = preview?.previewMode === "platform_deployment";
   const failed = isFailedArticlePreview(preview);
   const contentOnlyNoRender = isContentOnlyNoRenderPreview(preview);
+  const runStoppedBeforePreview =
+    !hasActiveLivePreview(preview) &&
+    !articlePreconditionRepairStateForRun(run).autoRecovering &&
+    (isTerminalAttentionStatus(run.status) || ["cancelled", "canceled", "denied"].includes(run.status));
+  const failedStep = String(
+    run.steps.find((step) => ["failed", "blocked"].includes(step.status))?.key ||
+      run.result?.failed_step ||
+      run.result?.failedStep ||
+      run.currentStep ||
+      "",
+  ).toLowerCase();
+  const packageDeliveryFailed = failedStep.includes("package_content_delivery") && !run.contentPackage?.contentPackaged;
   const retryablePreviewCodes = new Set([
     "clone_auth_failed",
     "dev_server_startup_failed",
@@ -3351,6 +3363,24 @@ function ArticlePreviewEmptyState({
     );
   }
 
+  if (runStoppedBeforePreview) {
+    return (
+      <section className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
+        <div className="flex items-start gap-3">
+          <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 flex-shrink-0" />
+          <div>
+            <h2 className="text-base font-black text-red-950">Article preview unavailable</h2>
+            <p className="mt-1 font-semibold">
+              {packageDeliveryFailed
+                ? "The run stopped while packaging article content, before a reviewable preview could be created. Check the failed step above before trying again."
+                : "The run ended before a reviewable preview was available. Check the run progress above before trying again."}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (hasManifest) {
     return (
       <section className="rounded-xl border border-violet-100 bg-violet-50/70 p-5">
@@ -3362,8 +3392,8 @@ function ArticlePreviewEmptyState({
             <h2 className="text-base font-black text-gray-950">{hostedPreview ? "Building hosted preview" : "Preparing article preview"}</h2>
             <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-gray-600">
               {hostedPreview
-                ? "The article is ready for review. We are building and deploying an isolated preview URL for the exact website route."
-                : "The article is ready for review. We are preparing the exact website preview and comment layer."}
+                ? "We are building and deploying an isolated preview URL for the exact website route. Review and comments will be available when it is ready."
+                : "We are preparing the exact website preview and comment layer. Review will be available when the preview is ready."}
             </p>
             <p className="mt-2 text-xs font-black uppercase tracking-wide text-violet-700">
               Preview status: {platformStatus || statusLabel}
@@ -3378,7 +3408,7 @@ function ArticlePreviewEmptyState({
     <section className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-5">
       <h2 className="text-base font-black text-gray-950">Article preview</h2>
       <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-gray-500">
-        Article preview will appear here when the article reaches Ready for review.
+        The article preview will appear here after the content package and website preview are ready.
       </p>
     </section>
   );
