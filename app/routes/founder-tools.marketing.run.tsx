@@ -99,6 +99,7 @@ import type {
   VibeMarketingComponentCommentAnchor,
   VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackComment,
+  VibeMarketingSectionIssue,
   VibeMarketingNotificationChannel,
   VibeMarketingBootstrap,
   VibeMarketingGithubReposResponse,
@@ -208,12 +209,10 @@ function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): Articl
   return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
 }
 
-function hasReadyArticlePreview(run: VibeMarketingRunSummary) {
+export function hasReadyArticlePreview(run: VibeMarketingRunSummary) {
   return Boolean(
     isArticleWorkflow(run.workflow) &&
-      run.componentManifest &&
-      run.livePreview?.available &&
-      run.livePreview.previewUrl,
+      ((run.componentManifest && run.livePreview?.available && run.livePreview.previewUrl) || run.reviewDraftHtml),
   );
 }
 
@@ -455,6 +454,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const runId = params.runId ?? "";
   const formData = await request.formData();
   const intent = String(formData.get("intent") ?? "");
+  const clientMutationId = stringFromForm(formData, "clientMutationId");
 
   try {
     if (intent === "connect-github") {
@@ -485,19 +485,19 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "add-component-comment") {
       const targetRunId = stringFromForm(formData, "targetRunId") || runId;
       const comment = await addVibeMarketingComponentComment(env, request, targetRunId, componentCommentPayloadFromForm(formData));
-      return { ok: true, comment };
+      return { ok: true, comment, clientMutationId };
     } else if (intent === "update-component-comment") {
       const commentId = stringFromForm(formData, "commentId");
-      if (!commentId) return { intent, error: "Comment id is required." };
+      if (!commentId) return { intent, error: "Comment id is required.", clientMutationId };
       const targetRunId = stringFromForm(formData, "targetRunId") || runId;
       const comment = await updateVibeMarketingComponentComment(env, request, targetRunId, commentId, componentCommentPayloadFromForm(formData));
-      return { ok: true, comment };
+      return { ok: true, comment, clientMutationId };
     } else if (intent === "delete-component-comment") {
       const commentId = stringFromForm(formData, "commentId");
-      if (!commentId) return { intent, error: "Comment id is required." };
+      if (!commentId) return { intent, error: "Comment id is required.", clientMutationId };
       const targetRunId = stringFromForm(formData, "targetRunId") || runId;
       const componentFeedback = await deleteVibeMarketingComponentComment(env, request, targetRunId, commentId);
-      return { ok: true, componentFeedback };
+      return { ok: true, componentFeedback, clientMutationId };
     } else if (intent === "submit-component-comments") {
       const result = await submitVibeMarketingComponentComments(env, request, runId);
       if (result.runId && result.runId !== runId) {
@@ -732,7 +732,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     if (error instanceof Response) throw error;
     // Surface the real backend reason (e.g. a revision 409 detail) across every thrown shape,
     // instead of genericizing to axios's opaque "Request failed with status code 409".
-    return { intent, error: apiErrorDetail(error) };
+    return { intent, error: apiErrorDetail(error), clientMutationId };
   }
 
   throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(runId)}`);
@@ -745,6 +745,7 @@ function stringFromForm(formData: FormData, key: string) {
 function componentCommentPayloadFromForm(formData: FormData) {
   const anchor = componentCommentAnchorFromForm(formData);
   const context = componentCommentContextFromForm(formData);
+  const requestedAction = stringFromForm(formData, "requestedAction");
   return {
     componentId: stringFromForm(formData, "componentId"),
     componentType: stringFromForm(formData, "componentType"),
@@ -753,6 +754,7 @@ function componentCommentPayloadFromForm(formData: FormData) {
     selector: stringFromForm(formData, "selector"),
     ...(anchor ? { anchor } : {}),
     ...(context ? { context } : {}),
+    ...(requestedAction === "delete_section" ? { requestedAction } : {}),
     body: stringFromForm(formData, "body"),
   };
 }
@@ -1421,7 +1423,7 @@ export function ArticleSystemSetupPreviewPanel({
           actionSlot={(reviewState) => {
             if (setupAlreadyApproved) return null;
             const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
-            const approveDisabled = isSubmitting || needsCommentSubmitFirst || !previewUrl;
+            const approveDisabled = isSubmitting || needsCommentSubmitFirst || !previewUrl || reviewState.evidenceSavePending || reviewState.commentSavePending || reviewState.evidenceIssueCount > 0;
             // Submit revision comments through a dedicated fetcher: a failed POST
             // (e.g. a content-factory 500) then leaves the pinned draft comments in
             // place and surfaces the error inline for retry, while only a successful
@@ -1938,6 +1940,10 @@ function previewDisplayUrl(previewUrl: string | null | undefined) {
   }
 }
 
+export function reviewDraftSrcDoc(articleHtml: string) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; form-action 'none'"><base target="_blank"><style>html{scroll-behavior:smooth}body{margin:0;background:#fff;color:#172033;font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:760px;margin:auto;padding:32px 24px 80px}section{margin:0 0 24px;padding:12px 16px;border:1px solid #e5e7eb;border-radius:12px;scroll-margin-top:16px}h1,h2,h3{line-height:1.25;color:#111827}h1{font-size:2rem}h2{font-size:1.5rem}h3{font-size:1.2rem}p,ul,ol{margin:0 0 1rem}a{color:#6d28d9}blockquote{border-left:3px solid #d8b4fe;padding-left:1rem}</style></head><body><main>${articleHtml}</main></body></html>`;
+}
+
 function numberMapFromPayload(value: unknown, keys: string[]) {
   const payload = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
   if (!payload) return null;
@@ -2110,6 +2116,8 @@ function feedbackCommentFromPayload(value: unknown): VibeMarketingComponentFeedb
     anchor: anchorFromPayload(payload.anchor),
     context: contextPayload ? commentContextFromPayload(contextPayload, null) : null,
     body: typeof payload.body === "string" ? payload.body : "",
+    requestedAction:
+      (payload.requestedAction ?? payload.requested_action) === "delete_section" ? "delete_section" : null,
     status: typeof payload.status === "string" ? payload.status : "draft",
     batchId:
       typeof payload.batchId === "string"
@@ -2159,6 +2167,9 @@ function reconcileSavedComment(
 
 interface LivePreviewCommentInspectorState {
   draftComments: VibeMarketingComponentFeedbackComment[];
+  evidenceSavePending: boolean;
+  commentSavePending: boolean;
+  evidenceIssueCount: number;
   latestBatch: NonNullable<VibeMarketingRunSummary["componentFeedback"]>["latestBatch"] | null;
   latestBatchStatus: string;
   hasPendingRevisionBatch: boolean;
@@ -2169,7 +2180,7 @@ interface LivePreviewCommentInspectorState {
   sourceRunId: string;
 }
 
-function LivePreviewCommentInspectorPanel({
+export function LivePreviewCommentInspectorPanel({
   run,
   targetRunId,
   selectedComponent,
@@ -2232,13 +2243,18 @@ function LivePreviewCommentInspectorPanel({
       inspectorMode: null,
     } as NonNullable<VibeMarketingRunSummary["livePreview"]>;
   }, [previewUrlFallback, requiresExactPreview, run.livePreview]);
-  const canRenderPreview = Boolean(preview?.available && preview.previewUrl);
-  const contentOnlyPreviewActive =
+  const reviewDraftHtml = run.reviewDraftHtml ?? "";
+  const hostedPreviewReady = Boolean(preview?.available && preview.previewUrl);
+  const useReviewDraftHtml = !hostedPreviewReady && Boolean(reviewDraftHtml);
+  const canRenderPreview = hostedPreviewReady || useReviewDraftHtml;
+  const draftActionsAvailable = !useReviewDraftHtml || run.reviewDraftActionsAvailable === true;
+  const contentOnlyPreviewActive = useReviewDraftHtml || Boolean(
     canRenderPreview &&
-    (String(preview?.previewQuality ?? "").trim().toLowerCase() === "content_only" ||
-      String(preview?.previewMode ?? "").trim().toLowerCase() === "content_only");
+      (String(preview?.previewQuality ?? "").trim().toLowerCase() === "content_only" ||
+        String(preview?.previewMode ?? "").trim().toLowerCase() === "content_only"),
+  );
   const contentOnlyPreviewBanner =
-    String(preview?.previewBanner ?? "").trim() ||
+    (useReviewDraftHtml ? "Evidence review draft: correct or remove the highlighted claims, then send your comments for a new revision." : String(preview?.previewBanner ?? "").trim()) ||
     "Exact preview unavailable — showing a content-only preview of the article.";
   const [componentMeasurements, setComponentMeasurements] = useState<Record<string, InspectorComponentMeasurement>>({});
   const [pendingPin, setPendingPin] = useState<PendingCommentPin | null>(null);
@@ -2253,7 +2269,66 @@ function LivePreviewCommentInspectorPanel({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const serverComments = useMemo(() => run.componentFeedback?.comments ?? [], [run.componentFeedback?.comments]);
   const [comments, setComments] = useState<VibeMarketingComponentFeedbackComment[]>(serverComments);
+  const evidenceIssues = (run.sectionIssues ?? []).filter((issue) => issue.state === "needs_review");
+  const evidenceFetcher = useFetcher();
+  const [openEvidenceIssueId, setOpenEvidenceIssueId] = useState<string | null>(null);
+  const [evidenceCommentBody, setEvidenceCommentBody] = useState("");
+  const [evidenceSaveError, setEvidenceSaveError] = useState<string | null>(null);
+  const [evidenceMutationId, setEvidenceMutationId] = useState<string | null>(null);
+  const evidenceSavePending = evidenceFetcher.state !== "idle" || Boolean(evidenceMutationId);
+  const [commentSavePending, setCommentSavePending] = useState(false);
   const draftComments = comments.filter((comment) => comment.status === "draft" && comment.body.trim());
+
+  useEffect(() => {
+    const payload = evidenceFetcher.data && typeof evidenceFetcher.data === "object" && !Array.isArray(evidenceFetcher.data)
+      ? (evidenceFetcher.data as Record<string, unknown>) : null;
+    if (!evidenceMutationId || evidenceFetcher.state !== "idle" || payload?.clientMutationId !== evidenceMutationId) return;
+    const saved = savedCommentFromFetcherData(evidenceFetcher.data);
+    if (saved) {
+      setComments((current) => reconcileSavedComment(current, saved));
+      setOpenEvidenceIssueId(null);
+      setEvidenceCommentBody("");
+      setEvidenceSaveError(null);
+    } else {
+      setEvidenceSaveError(typeof payload.error === "string" ? payload.error : "The comment could not be saved. Please retry.");
+    }
+    setEvidenceMutationId(null);
+  }, [evidenceFetcher.data, evidenceFetcher.state, evidenceMutationId]);
+
+  function queueEvidenceComment(issue: VibeMarketingSectionIssue, body: string, deleteSection = false) {
+    if (readOnly || !draftActionsAvailable || evidenceSavePending || !issue.sectionId.startsWith("section:") || !body.trim()) return;
+    if (deleteSection && !canRemoveEvidenceIssue(issue)) return;
+    const component = components.find((item) => item.id === issue.sectionId) ?? {
+      id: issue.sectionId,
+      type: "section",
+      label: issue.sectionId.slice(8).replace(/-/g, " "),
+      sourceSectionId: issue.sectionId.slice(8),
+      selector: `[data-cf-component-id="${issue.sectionId}"]`,
+      editable: true,
+    };
+    const formData = new FormData();
+    formData.set("intent", "add-component-comment");
+    const clientMutationId = `evidence-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    formData.set("clientMutationId", clientMutationId);
+    if (targetRunId) formData.set("targetRunId", targetRunId);
+    appendCommentFormFields(formData, component, body.trim());
+    if (deleteSection) formData.set("requestedAction", "delete_section");
+    setOpenEvidenceIssueId(issue.id);
+    setEvidenceSaveError(null);
+    setEvidenceMutationId(clientMutationId);
+    evidenceFetcher.submit(formData, { method: "POST" });
+  }
+
+  function addSuggestedEvidenceSources(issue: VibeMarketingSectionIssue) {
+    const urls = suggestedEvidenceSourceUrls(issue.sourceHint);
+    if (!urls.length) return;
+    setEvidenceCommentBody((current) => {
+      const newUrls = urls.filter((url) => !current.includes(url));
+      if (!newUrls.length) return current;
+      const request = `Please verify the relevant claims against these saved sources, revise any unsupported wording, and add accurate attribution to the visible reference trail and article exports:\n${newUrls.join("\n")}`;
+      return [current.trim(), request].filter(Boolean).join("\n\n");
+    });
+  }
   const latestBatch = run.componentFeedback?.latestBatch ?? null;
   const latestBatchStatus = String(latestBatch?.status ?? "");
   const hasPendingRevisionBatch = Boolean(
@@ -2270,8 +2345,8 @@ function LivePreviewCommentInspectorPanel({
       draftComments.length === 0 &&
       (canRetryFailedRevisionBatch || ["submitted", "failed"].includes(String(latestBatch.status || ""))),
   );
-  const canSendRevisionRequest = draftComments.length > 0 || canRetrySubmittedBatch;
-  const commentModeActive = Boolean(inspectorProtocolVersion && inspectorProtocolVersion >= 2 && inspectorMode === "comment");
+  const canSendRevisionRequest = (draftComments.length > 0 || canRetrySubmittedBatch) && !evidenceSavePending && !commentSavePending && draftActionsAvailable;
+  const commentModeActive = useReviewDraftHtml ? draftActionsAvailable : Boolean(inspectorProtocolVersion && inspectorProtocolVersion >= 2 && inspectorMode === "comment");
   const previewWarnings = useMemo(
     () => {
       const visualFallback =
@@ -2314,6 +2389,9 @@ function LivePreviewCommentInspectorPanel({
   const previewMessageOrigin = useMemo(() => previewOriginFromUrl(preview?.previewUrl), [preview?.previewUrl]);
   const reviewState: LivePreviewCommentInspectorState = {
     draftComments,
+    evidenceSavePending,
+    commentSavePending,
+    evidenceIssueCount: evidenceIssues.length,
     latestBatch,
     latestBatchStatus,
     hasPendingRevisionBatch,
@@ -2330,6 +2408,38 @@ function LivePreviewCommentInspectorPanel({
     targetWindow.postMessage({ source: "founder-tools-inspector", ...message }, previewMessageOrigin);
   }, [previewMessageOrigin]);
 
+  const measureReviewDraftSections = useCallback(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    const next: Record<string, InspectorComponentMeasurement> = {};
+    for (const element of doc.querySelectorAll<HTMLElement>('[data-cf-component-id^="section:"]')) {
+      const id = element.getAttribute("data-cf-component-id") ?? "";
+      if (!/^section:[a-zA-Z0-9_-]+$/.test(id)) continue;
+      const rect = element.getBoundingClientRect();
+      const component = components.find((item) => item.id === id);
+      next[id] = {
+        id,
+        type: component?.type || "section",
+        label: component?.label || element.querySelector("h2,h3")?.textContent?.trim() || id.slice(8).replace(/-/g, " "),
+        selector: `[data-cf-component-id="${id}"]`,
+        sourceSectionId: id.slice(8),
+        editable: true,
+        rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
+      };
+    }
+    setComponentMeasurements(next);
+  }, [components]);
+
+  function scrollToEvidenceIssue(issue: VibeMarketingSectionIssue) {
+    if (!useReviewDraftHtml) {
+      sendInspectorCommand({ type: "scrollToComponent", componentId: issue.sectionId });
+      return;
+    }
+    const element = iframeRef.current?.contentDocument?.querySelector(`[data-cf-component-id="${issue.sectionId}"]`);
+    element?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(measureReviewDraftSections, 120);
+  }
+
   const mergeMeasurement = useCallback((measurement: InspectorComponentMeasurement) => {
     setComponentMeasurements((current) => ({ ...current, [measurement.id]: measurement }));
   }, []);
@@ -2344,8 +2454,20 @@ function LivePreviewCommentInspectorPanel({
     setLegacyInspectorWarning(null);
     setPendingPin(null);
     setOpenCommentId(null);
+    setOpenEvidenceIssueId(null);
     setComponentMeasurements({});
-  }, [preview?.previewUrl, preview?.inspectorMode, preview?.inspectorProtocolVersion]);
+  }, [preview?.previewUrl, preview?.inspectorMode, preview?.inspectorProtocolVersion, reviewDraftHtml]);
+
+  useEffect(() => {
+    if (!useReviewDraftHtml) return;
+    const frameWindow = iframeRef.current?.contentWindow;
+    frameWindow?.addEventListener("scroll", measureReviewDraftSections);
+    window.addEventListener("resize", measureReviewDraftSections);
+    return () => {
+      frameWindow?.removeEventListener("scroll", measureReviewDraftSections);
+      window.removeEventListener("resize", measureReviewDraftSections);
+    };
+  }, [measureReviewDraftSections, reviewDraftHtml, useReviewDraftHtml]);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
@@ -2427,7 +2549,7 @@ function LivePreviewCommentInspectorPanel({
   }, [canRenderPreview, expansionRunKey, initiallyExpanded]);
 
   useEffect(() => {
-    if (!previewExpanded) return;
+    if (!previewExpanded && !openEvidenceIssueId) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -2438,11 +2560,16 @@ function LivePreviewCommentInspectorPanel({
   useEffect(() => {
     if (!previewExpanded) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !pendingPin && !openCommentId) setPreviewExpanded(false);
+      if (event.key !== "Escape") return;
+      if (openEvidenceIssueId) {
+        setOpenEvidenceIssueId(null);
+      } else if (!pendingPin && !openCommentId) {
+        setPreviewExpanded(false);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [openCommentId, pendingPin, previewExpanded]);
+  }, [openCommentId, openEvidenceIssueId, pendingPin, previewExpanded]);
 
   useEffect(() => {
     if (!canRenderPreview) {
@@ -2450,10 +2577,11 @@ function LivePreviewCommentInspectorPanel({
       return;
     }
     const measurementTimer = window.setTimeout(() => {
-      sendInspectorCommand({ type: "measureComponents" });
+      if (useReviewDraftHtml) measureReviewDraftSections();
+      else sendInspectorCommand({ type: "measureComponents" });
     }, 160);
     return () => window.clearTimeout(measurementTimer);
-  }, [canRenderPreview, previewExpanded, sendInspectorCommand]);
+  }, [canRenderPreview, measureReviewDraftSections, previewExpanded, sendInspectorCommand, useReviewDraftHtml]);
 
   const displayPreviewUrl = previewDisplayUrl(preview?.previewUrl);
   // Revision rebuilds redeploy to the SAME preview URL, so the iframe would never
@@ -2464,7 +2592,7 @@ function LivePreviewCommentInspectorPanel({
     [proofRecord.commitSha, proofRecord.commit_sha, preview?.commitSha, run.result?.["branch_commit_sha"]]
       .map((value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : ""))
       .find(Boolean) ?? "";
-  const previewSrc = previewIframeSrc(preview?.previewUrl, previewRevisionKey);
+  const previewSrc = useReviewDraftHtml ? "" : previewIframeSrc(preview?.previewUrl, previewRevisionKey);
 
   return (
     <div className={clsx("space-y-4", compactMobileControls && "pb-20 sm:pb-0")}>
@@ -2522,8 +2650,8 @@ function LivePreviewCommentInspectorPanel({
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 shadow-inner">
                     <LockClosedIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" aria-hidden="true" />
-                    <span className="min-w-0 truncate" aria-label={`Preview URL: ${displayPreviewUrl}`}>
-                      {displayPreviewUrl}
+                    <span className="min-w-0 truncate" aria-label={useReviewDraftHtml ? "Content-only evidence review draft" : `Preview URL: ${displayPreviewUrl}`}>
+                      {useReviewDraftHtml ? "Content-only evidence review draft" : displayPreviewUrl}
                     </span>
                   </div>
                   <button
@@ -2566,8 +2694,66 @@ function LivePreviewCommentInspectorPanel({
                   <span>
                     {contentOnlyPreviewBanner}
                     {" "}
-                    You can still review and pin comments on the article content.
+                    {draftActionsAvailable ? "You can still review and pin comments on the article content." : "This draft is read-only because its section anchors cannot be safely edited. Request a new revision from a reviewed draft."}
                   </span>
+                </div>
+              ) : null}
+              {evidenceIssues.length ? (
+                <div role="status" className="max-h-56 overflow-y-auto border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                  <p className="font-black">
+                    {evidenceIssues.length} claim{evidenceIssues.length === 1 ? "" : "s"} {evidenceIssues.length === 1 ? "needs" : "need"} evidence review
+                  </p>
+                  <p className="mt-1">{evidenceIssues.some(canRemoveEvidenceIssue)
+                    ? "Select an amber highlight in the draft to see the claim, leave a comment, or queue its section for removal."
+                    : "Select an amber highlight in the draft to see the evidence gap and comment on the reference trail."}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {evidenceIssues.map((issue) => (
+                      <button
+                        key={issue.id}
+                        type="button"
+                        onClick={() => {
+                          setOpenEvidenceIssueId(openEvidenceIssueId === issue.id ? null : issue.id);
+                          setEvidenceCommentBody("");
+                          setEvidenceSaveError(null);
+                          scrollToEvidenceIssue(issue);
+                        }}
+                        disabled={evidenceSavePending}
+                        className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-black text-amber-900 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        aria-expanded={openEvidenceIssueId === issue.id}
+                        aria-controls={openEvidenceIssueId === issue.id ? `evidence-card-${issue.id}` : undefined}
+                      >
+                        {issue.sectionId.slice(8).replace(/-/g, " ")}
+                      </button>
+                    ))}
+                  </div>
+                  {evidenceIssues.filter((issue) => issue.id === openEvidenceIssueId).map((issue) => (
+                    <div key={issue.id} id={`evidence-card-${issue.id}`} className="mt-3 rounded-lg border border-amber-200 bg-white p-3">
+                      {issue.claimExcerpt ? <p className="font-semibold">“{issue.claimExcerpt}”</p> : null}
+                      <p className="mt-1">{issue.reason}</p>
+                      {issue.sourceHint ? <p className="mt-1 break-all text-xs">Source: {issue.sourceHint}</p> : null}
+                      {!readOnly && draftActionsAvailable ? (
+                        <div className="mt-3 space-y-2">
+                          <label className="block text-xs font-black" htmlFor={`evidence-comment-${issue.id}`}>Comment on this section</label>
+                          <textarea
+                            id={`evidence-comment-${issue.id}`}
+                            value={evidenceCommentBody}
+                            onChange={(event) => setEvidenceCommentBody(event.target.value)}
+                            rows={2}
+                            placeholder="Explain what to verify, revise, or remove"
+                            className="w-full rounded-lg border border-amber-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            <button type="button" disabled={!evidenceCommentBody.trim() || evidenceSavePending} onClick={() => queueEvidenceComment(issue, evidenceCommentBody)} className="rounded-lg bg-gray-950 px-3 py-2 text-xs font-black text-white disabled:opacity-50">{evidenceSavePending ? "Saving..." : "Save comment"}</button>
+                            {suggestedEvidenceSourceUrls(issue.sourceHint).length ? <button type="button" disabled={evidenceSavePending} onClick={() => addSuggestedEvidenceSources(issue)} className="rounded-lg border border-amber-400 px-3 py-2 text-xs font-black text-amber-900 hover:bg-amber-50 disabled:opacity-50">Use suggested sources</button> : null}
+                            {canRemoveEvidenceIssue(issue) ? <button type="button" disabled={evidenceSavePending} onClick={() => queueEvidenceComment(issue, `Remove this section because the claim cannot be substantiated: ${issue.claimExcerpt || issue.reason}`, true)} className="rounded-lg border border-red-300 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-50 disabled:opacity-50">Queue section removal</button> : null}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                  {evidenceSaveError ? (
+                    <p role="alert" className="mt-2 font-bold text-red-700">{evidenceSaveError}</p>
+                  ) : null}
                 </div>
               ) : null}
               <div className={clsx("relative", previewExpanded && "min-h-0 flex-1")}>
@@ -2578,22 +2764,65 @@ function LivePreviewCommentInspectorPanel({
                 ) : null}
                 <iframe
                   ref={iframeRef}
-                  key={previewSrc}
+                  key={useReviewDraftHtml ? `review-draft-${run.runId}` : previewSrc}
                   title={previewTitle}
-                  src={previewSrc}
+                  src={useReviewDraftHtml ? undefined : previewSrc}
+                  srcDoc={useReviewDraftHtml ? reviewDraftSrcDoc(reviewDraftHtml) : undefined}
                   className={clsx(
                     "w-full bg-white",
                     previewExpanded
                       ? "h-full min-h-0"
                       : "h-[calc(100dvh-11rem)] min-h-[560px] sm:h-[820px]",
                   )}
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  sandbox={useReviewDraftHtml ? "allow-same-origin" : "allow-scripts allow-same-origin allow-forms allow-popups"}
                   onLoad={() => {
-                    window.setTimeout(() => {
-                      sendInspectorCommand({ type: "setMode", mode: "comment" });
-                      sendInspectorCommand({ type: "measureComponents" });
-                    }, 120);
+                    if (useReviewDraftHtml) {
+                      measureReviewDraftSections();
+                    } else {
+                      window.setTimeout(() => {
+                        sendInspectorCommand({ type: "setMode", mode: "comment" });
+                        sendInspectorCommand({ type: "measureComponents" });
+                      }, 120);
+                    }
                   }}
+                />
+                <ArticleEvidenceIssueOverlay
+                  issues={evidenceIssues}
+                  measurements={componentMeasurements}
+                  viewportHeight={iframeRef.current?.clientHeight || 820}
+                  openIssueId={openEvidenceIssueId}
+                  onToggleIssue={(id) => {
+                    if (evidenceSavePending) return;
+                    setOpenEvidenceIssueId(id);
+                    setEvidenceCommentBody("");
+                    setEvidenceSaveError(null);
+                  }}
+                  onComment={(issue) => {
+                    if (issue.claimId === "evidence-support") {
+                      setOpenEvidenceIssueId(issue.id);
+                      setEvidenceSaveError(null);
+                      addSuggestedEvidenceSources(issue);
+                      window.requestAnimationFrame(() => document.getElementById(`evidence-card-${issue.id}`)?.scrollIntoView({ block: "nearest" }));
+                      return;
+                    }
+                    const component = components.find((item) => item.id === issue.sectionId) ?? {
+                      id: issue.sectionId,
+                      type: "section",
+                      label: issue.sectionId.slice(8).replace(/-/g, " "),
+                      sourceSectionId: issue.sectionId.slice(8),
+                      editable: true,
+                    };
+                    setOpenEvidenceIssueId(null);
+                    onSelectComponent(component);
+                    setPendingPin({ component, anchor: { x: 0.5, y: 0.1, createdFrom: "evidence_issue" } });
+                  }}
+                  onRemove={(issue) => queueEvidenceComment(
+                    issue,
+                    `Remove this section because the claim cannot be substantiated: ${issue.claimExcerpt || issue.reason}`,
+                    true,
+                  )}
+                  removePending={evidenceSavePending}
+                  readOnly={readOnly || !draftActionsAvailable}
                 />
                 <ArticleCommentCanvas
                   comments={comments}
@@ -2605,8 +2834,9 @@ function LivePreviewCommentInspectorPanel({
                   onOpenComment={setOpenCommentId}
                   onClearPending={() => setPendingPin(null)}
                   onCommentsChange={setComments}
+                  onMutationPendingChange={setCommentSavePending}
                   onSelectComponent={onSelectComponent}
-                  readOnly={readOnly}
+                  readOnly={readOnly || !draftActionsAvailable}
                 />
               </div>
               {previewExpanded ? (
@@ -2664,6 +2894,115 @@ function LivePreviewCommentInspectorPanel({
           {actionSlot(reviewState)}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+export function canRemoveEvidenceIssue(issue: VibeMarketingSectionIssue) {
+  return issue.claimId !== "evidence-support";
+}
+
+export function suggestedEvidenceSourceUrls(sourceHint: string) {
+  const candidates = sourceHint.match(/https:\/\/[^\s<>"'()]+/g) ?? [];
+  const urls: string[] = [];
+  for (const candidate of candidates) {
+    const clean = candidate.replace(/[.,;\]]+$/, "");
+    try {
+      const parsed = new URL(clean);
+      if (parsed.protocol !== "https:" || parsed.username || parsed.password || clean.length > 2048) continue;
+      if (!urls.includes(clean)) urls.push(clean);
+    } catch {
+      continue;
+    }
+    if (urls.length >= 4) break;
+  }
+  return urls;
+}
+
+export function ArticleEvidenceIssueOverlay({
+  issues,
+  measurements,
+  viewportHeight,
+  openIssueId,
+  onToggleIssue,
+  onComment,
+  onRemove,
+  removePending,
+  readOnly,
+}: {
+  issues: VibeMarketingSectionIssue[];
+  measurements: Record<string, InspectorComponentMeasurement>;
+  viewportHeight: number;
+  openIssueId: string | null;
+  onToggleIssue: (id: string | null) => void;
+  onComment: (issue: VibeMarketingSectionIssue) => void;
+  onRemove: (issue: VibeMarketingSectionIssue) => void;
+  removePending: boolean;
+  readOnly: boolean;
+}) {
+  const sectionIds = Array.from(new Set(issues.map((issue) => issue.sectionId)));
+  if (!sectionIds.length) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[9] overflow-hidden">
+      {sectionIds.map((sectionId) => {
+        const measurement = measurements[sectionId];
+        if (!measurement) return null;
+        const sectionIssues = issues.filter((issue) => issue.sectionId === sectionId);
+        const firstIssue = sectionIssues[0];
+        const removableIssue = sectionIssues.find(canRemoveEvidenceIssue);
+        const isOpen = sectionIssues.some((issue) => issue.id === openIssueId);
+        const markerTop = Math.min(Math.max(8, 8 - measurement.rect.top), Math.max(8, measurement.rect.height - 34));
+        const markerY = measurement.rect.top + markerTop;
+        const panelMaxHeight = Math.max(120, Math.min(360, viewportHeight - 16));
+        const panelY = markerY + 36 + panelMaxHeight <= viewportHeight - 8
+          ? markerY + 36
+          : Math.max(8, markerY - panelMaxHeight - 8);
+        const popoverId = `evidence-popover-${sectionId}`;
+        return (
+          <div
+            key={sectionId}
+            className="pointer-events-none absolute rounded-lg border-2 border-amber-500 bg-amber-300/10"
+            style={{
+              left: measurement.rect.left,
+              top: measurement.rect.top,
+              width: measurement.rect.width,
+              height: measurement.rect.height,
+            }}
+          >
+            <button
+              type="button"
+              className="pointer-events-auto absolute right-2 rounded-full border border-amber-600 bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-950 shadow-lg hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              style={{ top: markerTop }}
+              onClick={() => onToggleIssue(isOpen ? null : firstIssue.id)}
+              aria-expanded={isOpen}
+              aria-haspopup="dialog"
+              aria-controls={isOpen ? popoverId : undefined}
+              aria-label={`Review evidence for ${measurement.label || sectionId}`}
+              title={sectionIssues.map((issue) => issue.reason).join(" ")}
+            >
+              Evidence to review
+            </button>
+            {isOpen ? (
+              <div id={popoverId} role="dialog" aria-label={`Evidence review for ${measurement.label || sectionId}`} className="pointer-events-auto absolute right-2 z-20 w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-amber-300 bg-white p-3 text-sm text-gray-900 shadow-xl" style={{ top: panelY - measurement.rect.top, maxHeight: panelMaxHeight }}>
+                <p className="font-black">This section has a claim without confirmed evidence</p>
+                {sectionIssues.map((issue) => (
+                  <div key={issue.id} className="mt-2 border-t border-gray-100 pt-2">
+                    {issue.claimExcerpt ? <p className="font-semibold">“{issue.claimExcerpt}”</p> : null}
+                    <p className="mt-1 text-gray-700">{issue.reason}</p>
+                    {issue.sourceHint ? <p className="mt-1 text-xs text-gray-500">Source: {issue.sourceHint}</p> : null}
+                  </div>
+                ))}
+                {!readOnly ? (
+                  <div className="mt-3 flex gap-2">
+                    <button type="button" onClick={() => onComment(firstIssue)} className="rounded-lg bg-gray-950 px-3 py-2 text-xs font-black text-white hover:bg-black">Comment</button>
+                    {removableIssue ? <button type="button" disabled={removePending} onClick={() => onRemove(removableIssue)} className="rounded-lg border border-red-300 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-50 disabled:opacity-50">Remove section</button> : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -2771,6 +3110,8 @@ function LiveArticlePreviewPanel({
           const canAcceptRevision =
             run.workflow === "article_revision" &&
             run.status === "completed" &&
+            reviewState.evidenceIssueCount === 0 &&
+            reviewState.draftComments.length === 0 &&
             reviewState.latestBatch?.status !== "accepted" &&
             Boolean(reviewState.batchId);
           const canAcceptArticleForPublish = Boolean(
@@ -2778,6 +3119,9 @@ function LiveArticlePreviewPanel({
               (run.contentPackage?.contentPackaged || reviewApprovalReady) &&
               reviewState.canRenderPreview &&
               reviewState.draftComments.length === 0 &&
+              !reviewState.evidenceSavePending &&
+              !reviewState.commentSavePending &&
+              reviewState.evidenceIssueCount === 0 &&
               !canAcceptRevision &&
               !reviewState.hasPendingRevisionBatch &&
               (reviewApprovalReady || publishStep?.status === "ready") &&
@@ -2810,7 +3154,7 @@ function LiveArticlePreviewPanel({
                     type="submit"
                     name="intent"
                     value={acceptArticleIntent}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || reviewState.evidenceSavePending || reviewState.commentSavePending}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                   >
                     {acceptArticlePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
@@ -2825,7 +3169,7 @@ function LiveArticlePreviewPanel({
                   <input type="hidden" name="sourceRunId" value={reviewState.sourceRunId} />
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || reviewState.evidenceSavePending || reviewState.commentSavePending}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                   >
                     {acceptRevisionPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
@@ -2839,7 +3183,7 @@ function LiveArticlePreviewPanel({
                     type="submit"
                     name="intent"
                     value="submit-component-comments"
-                    disabled={isSubmitting || !reviewState.canSendRevisionRequest}
+                    disabled={isSubmitting || reviewState.evidenceSavePending || reviewState.commentSavePending || !reviewState.canSendRevisionRequest}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
                   >
                     {submitCommentsPending ? (
@@ -3070,6 +3414,27 @@ function ArticleGenerationReviewDetail({
         />
       ) : (
         <>
+          {(run.sectionIssues ?? []).some((issue) => issue.state === "needs_review") ? (
+            <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" aria-label="Draft evidence review">
+              <h2 className="font-black">Draft sections needing evidence</h2>
+              <p className="mt-1">The article preview is still being prepared. These claims need a source or a revised draft before they can be published.</p>
+              <ul className="mt-3 space-y-3">
+                {(run.sectionIssues ?? []).filter((issue) => issue.state === "needs_review").map((issue) => (
+                  <li key={issue.id} className="rounded-lg border border-amber-200 bg-white p-3">
+                    <p className="font-black">{issue.sectionId.slice(8).replace(/-/g, " ")}</p>
+                    {issue.claimExcerpt ? <p className="mt-1 font-semibold">“{issue.claimExcerpt}”</p> : null}
+                    <p className="mt-1">{issue.reason}</p>
+                    {issue.sourceHint ? <p className="mt-1 text-xs">Source: {issue.sourceHint}</p> : null}
+                  </li>
+                ))}
+              </ul>
+              {run.resumeAvailable ? (
+                <Form method="POST" className="mt-3">
+                  <button type="submit" name="intent" value="resume" disabled={isSubmitting} className="rounded-lg bg-amber-900 px-3 py-2 text-xs font-black text-white disabled:opacity-50">Retry draft generation</button>
+                </Form>
+              ) : null}
+            </section>
+          ) : null}
           <ArticleRunStageProgress run={run} variant="embedded" />
           <ArticlePreviewEmptyState run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} />
         </>
@@ -3668,6 +4033,7 @@ function PublishAndAutomateDetail({
   const automationStep = run.workflowProgress?.steps.find((step) => step.id === "automation");
   const publishQualityGate = articlePublishQualityGateForRun(run);
   const previewQuality = articlePreviewQualityStateForRun(run);
+  const hasUnresolvedEvidence = (run.sectionIssues ?? []).some((issue) => issue.state === "needs_review");
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
@@ -3792,7 +4158,7 @@ function PublishAndAutomateDetail({
             status={
               isMerged || publishedWithoutPr
                 ? "complete"
-                : mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
+                : hasUnresolvedEvidence || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
                   ? "blocked"
                   : prUrl || publishPending || publishQualityGate === "running"
                     ? "running"
@@ -3803,7 +4169,9 @@ function PublishAndAutomateDetail({
                 ? "Merged"
                 : publishedWithoutPr
                   ? "Published"
-                  : mergeBlocked
+              : hasUnresolvedEvidence
+                ? "Evidence needs review"
+                : mergeBlocked
                     ? "Merge blocked"
                     : prUrl
                       ? checksStatus
@@ -3855,6 +4223,15 @@ function PublishAndAutomateDetail({
                 >
                   Open published article
                 </a>
+              </div>
+            ) : hasUnresolvedEvidence ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">Resolve the highlighted evidence issues in the article draft before publishing.</p>
+                {canViewArticle ? (
+                  <Link to={viewArticleHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black">
+                    Review evidence issues
+                  </Link>
+                ) : null}
               </div>
             ) : mergeBlocked ? (
               <div className="space-y-3">
@@ -4168,6 +4545,7 @@ function ArticleCommentCanvas({
   onOpenComment,
   onClearPending,
   onCommentsChange,
+  onMutationPendingChange,
   onSelectComponent,
   readOnly = false,
 }: {
@@ -4180,19 +4558,44 @@ function ArticleCommentCanvas({
   onOpenComment: (id: string | null) => void;
   onClearPending: () => void;
   onCommentsChange: (updater: (comments: VibeMarketingComponentFeedbackComment[]) => VibeMarketingComponentFeedbackComment[]) => void;
+  onMutationPendingChange: (pending: boolean) => void;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
   readOnly?: boolean;
 }) {
   const fetcher = useFetcher();
-  const isSaving = fetcher.state !== "idle";
+  const pendingMutationRef = useRef<{ id: string; intent: "add-component-comment" | "update-component-comment" | "delete-component-comment"; commentId?: string } | null>(null);
+  const [mutationPending, setMutationPending] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const isSaving = fetcher.state !== "idle" || mutationPending;
   const legacyFallbackStackByComponent = new Map<string, number>();
 
   useEffect(() => {
-    const savedComment = savedCommentFromFetcherData(fetcher.data);
-    if (savedComment) {
-      onCommentsChange((current) => reconcileSavedComment(current, savedComment));
+    const payload = fetcher.data && typeof fetcher.data === "object" && !Array.isArray(fetcher.data)
+      ? (fetcher.data as Record<string, unknown>) : null;
+    const pending = pendingMutationRef.current;
+    if (!pending || fetcher.state !== "idle" || payload?.clientMutationId !== pending.id) return;
+    if (payload.ok === true) {
+      if (pending.intent === "delete-component-comment") {
+        onCommentsChange((current) => current.filter((comment) => comment.id !== pending.commentId));
+        onOpenComment(null);
+      } else {
+        const savedComment = savedCommentFromFetcherData(payload);
+        if (savedComment) {
+          onCommentsChange((current) => reconcileSavedComment(current, savedComment));
+          if (pending.intent === "add-component-comment") onClearPending();
+          else onOpenComment(null);
+        } else {
+          setSaveError("The comment response was incomplete. Please retry after refreshing the draft.");
+        }
+      }
+      if (pending.intent === "delete-component-comment" || savedCommentFromFetcherData(payload)) setSaveError(null);
+    } else {
+      setSaveError(typeof payload.error === "string" ? payload.error : "The comment could not be saved. Please retry.");
     }
-  }, [fetcher.data, onCommentsChange]);
+    pendingMutationRef.current = null;
+    setMutationPending(false);
+    onMutationPendingChange(false);
+  }, [fetcher.data, fetcher.state, onClearPending, onCommentsChange, onMutationPendingChange, onOpenComment]);
 
   function submitComment(intent: "add-component-comment" | "update-component-comment", options: {
     commentId?: string;
@@ -4201,58 +4604,33 @@ function ArticleCommentCanvas({
     anchor?: VibeMarketingComponentCommentAnchor | null;
     context?: VibeMarketingComponentCommentContext | null;
   }) {
+    if (pendingMutationRef.current) return;
     const formData = new FormData();
     formData.set("intent", intent);
+    const clientMutationId = `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    formData.set("clientMutationId", clientMutationId);
     if (targetRunId) formData.set("targetRunId", targetRunId);
     if (options.commentId) formData.set("commentId", options.commentId);
     appendCommentFormFields(formData, options.component, options.body, options.anchor, options.context);
-    if (intent === "add-component-comment") {
-      const now = new Date().toISOString();
-      const optimisticComment: VibeMarketingComponentFeedbackComment = {
-        id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        componentId: options.component.id,
-        componentType: options.component.type || "component",
-        componentLabel: options.component.label ?? options.component.id,
-        sourceSectionId: options.component.sourceSectionId ?? null,
-        selector: options.component.selector ?? `[data-cf-component-id="${options.component.id}"]`,
-        anchor: options.anchor ?? null,
-        context: options.context ?? null,
-        body: options.body,
-        status: "draft",
-        batchId: null,
-        createdAt: now,
-        updatedAt: now,
-      };
-      onCommentsChange((current) => [...current, optimisticComment]);
-    } else if (options.commentId) {
-      onCommentsChange((current) =>
-        current.map((comment) =>
-          comment.id === options.commentId
-            ? {
-                ...comment,
-                componentId: options.component.id,
-                componentType: options.component.type || comment.componentType,
-                componentLabel: options.component.label ?? comment.componentLabel,
-                sourceSectionId: options.component.sourceSectionId ?? comment.sourceSectionId,
-                selector: options.component.selector ?? comment.selector,
-                anchor: options.anchor ?? comment.anchor,
-                context: options.context ?? comment.context,
-                body: options.body,
-                updatedAt: new Date().toISOString(),
-              }
-            : comment,
-        ),
-      );
-    }
+    pendingMutationRef.current = { id: clientMutationId, intent, commentId: options.commentId };
+    setMutationPending(true);
+    setSaveError(null);
+    onMutationPendingChange(true);
     fetcher.submit(formData, { method: "POST" });
   }
 
   function deleteComment(commentId: string) {
+    if (pendingMutationRef.current) return;
     const formData = new FormData();
     formData.set("intent", "delete-component-comment");
+    const clientMutationId = `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    formData.set("clientMutationId", clientMutationId);
     if (targetRunId) formData.set("targetRunId", targetRunId);
     formData.set("commentId", commentId);
-    onCommentsChange((current) => current.filter((comment) => comment.id !== commentId));
+    pendingMutationRef.current = { id: clientMutationId, intent: "delete-component-comment", commentId };
+    setMutationPending(true);
+    setSaveError(null);
+    onMutationPendingChange(true);
     fetcher.submit(formData, { method: "POST" });
   }
 
@@ -4275,7 +4653,9 @@ function ArticleCommentCanvas({
           <div key={comment.id} className="pointer-events-auto absolute" style={{ left, top }}>
             <button
               type="button"
+              disabled={isSaving}
               onClick={() => {
+                setSaveError(null);
                 onSelectComponent(component);
                 onOpenComment(isOpen ? null : comment.id);
               }}
@@ -4294,7 +4674,9 @@ function ArticleCommentCanvas({
                 title={comment.componentLabel || component.label || comment.componentId}
                 status={comment.status}
                 initialBody={comment.body}
-                readOnly={readOnly || comment.status !== "draft"}
+                readOnly={readOnly || !canEditComponentComment(comment)}
+                intentLabel={comment.requestedAction === "delete_section" ? "Section removal" : undefined}
+                error={saveError}
                 isSaving={isSaving}
                 onSave={(body) => {
                   submitComment("update-component-comment", {
@@ -4304,14 +4686,12 @@ function ArticleCommentCanvas({
                     anchor: comment.anchor,
                     context: comment.context,
                   });
-                  onOpenComment(null);
                 }}
                 onCancel={() => onOpenComment(null)}
                 onDelete={
                   !readOnly && comment.status === "draft"
                     ? () => {
                         deleteComment(comment.id);
-                        onOpenComment(null);
                       }
                     : undefined
                 }
@@ -4333,6 +4713,7 @@ function ArticleCommentCanvas({
             title={pendingPin.component.label || pendingPin.component.id}
             status="draft"
             initialBody=""
+            error={saveError}
             isSaving={isSaving}
             onSave={(body) => {
               submitComment("add-component-comment", {
@@ -4341,7 +4722,6 @@ function ArticleCommentCanvas({
                 anchor: pendingPin.anchor,
                 context: pendingPin.context,
               });
-              onClearPending();
             }}
             onCancel={onClearPending}
           />
@@ -4351,11 +4731,17 @@ function ArticleCommentCanvas({
   );
 }
 
-function CommentPopover({
+export function canEditComponentComment(comment: VibeMarketingComponentFeedbackComment) {
+  return comment.status === "draft" && comment.requestedAction !== "delete_section";
+}
+
+export function CommentPopover({
   title,
   status,
   initialBody,
   readOnly = false,
+  intentLabel,
+  error,
   isSaving,
   onSave,
   onCancel,
@@ -4365,6 +4751,8 @@ function CommentPopover({
   status: string;
   initialBody: string;
   readOnly?: boolean;
+  intentLabel?: string;
+  error?: string | null;
   isSaving: boolean;
   onSave: (body: string) => void;
   onCancel: () => void;
@@ -4374,6 +4762,7 @@ function CommentPopover({
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   const commit = useCallback(() => {
+    if (isSaving) return;
     if (readOnly) {
       onCancel();
       return;
@@ -4388,13 +4777,14 @@ function CommentPopover({
       return;
     }
     onSave(trimmed);
-  }, [body, initialBody, onCancel, onSave, readOnly]);
+  }, [body, initialBody, isSaving, onCancel, onSave, readOnly]);
 
   return (
     <div
       ref={popoverRef}
       className="fixed inset-x-3 bottom-3 z-50 w-auto max-w-none rounded-xl border border-gray-200 bg-white p-3 text-left shadow-2xl sm:absolute sm:bottom-auto sm:left-4 sm:right-auto sm:top-4 sm:z-30 sm:w-80 sm:max-w-[calc(100vw-3rem)]"
       onBlurCapture={() => {
+        if (isSaving) return;
         window.setTimeout(() => {
           if (!popoverRef.current?.contains(document.activeElement)) commit();
         }, 0);
@@ -4402,7 +4792,7 @@ function CommentPopover({
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.stopPropagation();
-          onCancel();
+          if (!isSaving) onCancel();
           return;
         }
         if ((event.metaKey || event.ctrlKey) && event.key === "Enter") commit();
@@ -4414,19 +4804,24 @@ function CommentPopover({
           <span className={clsx("mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-black uppercase", statusTone(status))}>
             {status}
           </span>
+          {intentLabel ? <span className="ml-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-black uppercase text-red-800">{intentLabel}</span> : null}
         </div>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg px-2 py-1 text-xs font-black text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+          disabled={isSaving}
+          className="rounded-lg px-2 py-1 text-xs font-black text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
         >
           Close
         </button>
       </div>
       {readOnly ? (
-        <p className="max-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-gray-50 px-3 py-2 text-sm leading-6 text-gray-700">
-          {body}
-        </p>
+        <>
+          <p className="max-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-gray-50 px-3 py-2 text-sm leading-6 text-gray-700">
+            {body}
+          </p>
+          {intentLabel && onDelete ? <p className="mt-2 text-xs font-semibold text-red-800">This section will be removed when you send comments. Cancel the removal to keep it.</p> : null}
+        </>
       ) : (
         <textarea
           value={body}
@@ -4437,7 +4832,8 @@ function CommentPopover({
           className="w-full resize-none rounded-lg border border-violet-200 px-3 py-2 text-sm font-medium leading-6 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
         />
       )}
-      {!readOnly ? (
+      {error ? <p role="alert" className="mt-2 text-xs font-bold text-red-700">{error}</p> : null}
+      {!readOnly || onDelete ? (
         <div className="mt-3 flex items-center justify-between gap-2">
           {onDelete ? (
             <button
@@ -4447,19 +4843,21 @@ function CommentPopover({
               className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
             >
               <TrashIcon className="h-3.5 w-3.5" />
-              Delete
+              {intentLabel ? "Cancel removal" : "Delete"}
             </button>
           ) : (
             <span />
           )}
-          <button
-            type="button"
-            onClick={commit}
-            disabled={isSaving || !body.trim()}
-            className="rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-violet-700 disabled:opacity-50"
-          >
-            {isSaving ? "Saving..." : "Save"}
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              onClick={commit}
+              disabled={isSaving || !body.trim()}
+              className="rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-violet-700 disabled:opacity-50"
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -4586,6 +4984,7 @@ function ArticleWorkflowPrimaryAction({
 
   if (isArticleReviewPreviewReady(run)) return null;
   if (isPublishApprovalGate(run)) return null;
+  if ((run.sectionIssues ?? []).some((issue) => issue.state === "needs_review")) return null;
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
     const publishPending = isActionPending?.(publishStep.primaryAction.intent) ?? isSubmitting;

@@ -78,6 +78,9 @@ export interface VibeMarketingRunSummary {
   componentManifest?: VibeMarketingComponentManifest | null;
   livePreview?: VibeMarketingLivePreview | null;
   componentFeedback?: VibeMarketingComponentFeedback | null;
+  sectionIssues?: VibeMarketingSectionIssue[];
+  reviewDraftHtml?: string | null;
+  reviewDraftActionsAvailable?: boolean;
   scanProgress?: VibeMarketingScanProgress | null;
   workflowProgress?: VibeMarketingWorkflowProgress | null;
   publishChildStatus?: string | null;
@@ -731,10 +734,21 @@ export interface VibeMarketingComponentFeedbackComment {
   anchor?: VibeMarketingComponentCommentAnchor | null;
   context?: VibeMarketingComponentCommentContext | null;
   body: string;
+  requestedAction?: "delete_section" | null;
   status: VibeMarketingComponentCommentStatus;
   batchId?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+}
+
+export interface VibeMarketingSectionIssue {
+  id: string;
+  sectionId: string;
+  claimId: string;
+  claimExcerpt: string;
+  reason: string;
+  state: "needs_review" | "removed";
+  sourceHint: string;
 }
 
 export interface VibeMarketingComponentFeedbackBatch {

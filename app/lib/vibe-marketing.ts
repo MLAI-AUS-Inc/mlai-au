@@ -12,6 +12,7 @@ import type {
   VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackBatch,
   VibeMarketingComponentFeedbackComment,
+  VibeMarketingSectionIssue,
   VibeMarketingComponentManifest,
   VibeMarketingComponentManifestItem,
   VibeMarketingContentPackage,
@@ -452,6 +453,9 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     componentManifest: normalizeComponentManifest(payload.componentManifest ?? payload.component_manifest),
     livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
     componentFeedback: normalizeComponentFeedback(payload.componentFeedback ?? payload.component_feedback),
+    sectionIssues: normalizeSectionIssues(payload.sectionIssues ?? payload.section_issues),
+    reviewDraftHtml: asNullableString(payload.reviewDraftHtml ?? payload.review_draft_html),
+    reviewDraftActionsAvailable: (payload.reviewDraftActionsAvailable ?? payload.review_draft_actions_available) === true,
     scanProgress: normalizeScanProgress(payload.scanProgress ?? payload.scan_progress ?? result.scanProgress ?? result.scan_progress),
     workflowProgress: normalizeWorkflowProgress(payload.workflowProgress ?? payload.workflow_progress),
     publishChildStatus: asNullableString(payload.publishChildStatus) ?? asNullableString(payload.publish_child_status),
@@ -1222,11 +1226,35 @@ function normalizeComponentFeedbackComment(raw: unknown): VibeMarketingComponent
     anchor: normalizeComponentCommentAnchor(payload.anchor),
     context: normalizeComponentCommentContext(payload.context),
     body: asNullableString(payload.body) ?? "",
+    requestedAction:
+      (payload.requestedAction ?? payload.requested_action) === "delete_section" ? "delete_section" : null,
     status: asNullableString(payload.status) ?? "draft",
     batchId: asNullableString(payload.batchId) ?? asNullableString(payload.batch_id),
     createdAt: asNullableString(payload.createdAt) ?? asNullableString(payload.created_at),
     updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
   };
+}
+
+function normalizeSectionIssues(raw: unknown): VibeMarketingSectionIssue[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(0, 50).flatMap((value) => {
+    const item = value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>) : null;
+    if (!item) return [];
+    const sectionId = asNullableString(item.sectionId) ?? asNullableString(item.section_id) ?? "";
+    const id = asNullableString(item.id) ?? "";
+    const state = asNullableString(item.state);
+    if (!/^section:[a-zA-Z0-9_-]+$/.test(sectionId) || !id || (state !== "needs_review" && state !== "removed")) return [];
+    return [{
+      id,
+      sectionId,
+      claimId: asNullableString(item.claimId) ?? asNullableString(item.claim_id) ?? "",
+      claimExcerpt: asNullableString(item.claimExcerpt) ?? asNullableString(item.claim_excerpt) ?? "",
+      reason: asNullableString(item.reason) ?? "Evidence for this claim could not be confirmed.",
+      state,
+      sourceHint: asNullableString(item.sourceHint) ?? asNullableString(item.source_hint) ?? "",
+    }];
+  });
 }
 
 function normalizeComponentFeedbackBatch(raw: unknown): VibeMarketingComponentFeedbackBatch | null {
