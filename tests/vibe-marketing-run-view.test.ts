@@ -1,9 +1,15 @@
 import { describe, expect, test } from "bun:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createMemoryRouter, RouterProvider } from "react-router";
+
+import { LiveArticlePreviewPanel } from "../app/routes/founder-tools.marketing.run";
 
 import {
   articlePreconditionRepairStateForRun,
   articlePublishQualityGateForRun,
   articlePreviewQualityStateForRun,
+  articleReviewApprovalTargetForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
   articleRunPathAfterStart,
@@ -40,6 +46,7 @@ function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarke
       status: "ready",
       previewUrl: "https://preview.example/articles/generated",
       exactRender: true,
+      commitSha: "preview-commit-3",
     },
     workflowProgress: {
       currentStepId: "publish",
@@ -84,6 +91,46 @@ describe("vibe marketing run view state", () => {
       idle: "Approve article and create PR",
       pending: "Approving...",
     });
+  });
+
+  test("targets the visible latest revision even when the page URL names an older source", () => {
+    const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("revision-3");
+  });
+
+  test("submits the preview identity actually shown on a stale source URL", () => {
+    const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
+    const router = createMemoryRouter([{
+      path: "/founder-tools/marketing/runs/:runId",
+      element: createElement(LiveArticlePreviewPanel, {
+        run: latest,
+        selectedComponent: null,
+        onSelectComponent: () => {},
+        isSubmitting: false,
+        initiallyExpanded: true,
+      }),
+    }], { initialEntries: ["/founder-tools/marketing/runs/source-1"] });
+    try {
+      const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
+      expect(markup).toContain('name="reviewedRunId" value="revision-3"');
+      expect(markup).toContain('name="reviewedPreviewUrl" value="https://preview.example/articles/generated"');
+      expect(markup).toContain('name="reviewedPreviewRevision" value="preview-commit-3"');
+      expect(markup).toContain("Approve article and create PR");
+      expect(markup).not.toContain('name="reviewedRunId" value="source-1"');
+    } finally {
+      router.dispose();
+    }
+  });
+
+  test("fails closed when the draft identity changes after the approval form was rendered", () => {
+    const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
+    expect(articleReviewApprovalTargetForRun(latest, "", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-2", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/older", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-2")).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, status: "failed", approvalState: null }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, sectionIssues: [{ id: "issue", sectionId: "section:intro", claimId: "claim", claimExcerpt: "Claim", reason: "Missing source", sourceHint: "", state: "needs_review" }] }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, result: { ...latest.result, article_preview_quality: { status: "blocking_findings" } } }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
   });
 
   test("blocks approval while required editorial quality evidence is missing", () => {

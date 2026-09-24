@@ -51,8 +51,11 @@ import {
   articlePreconditionRepairStateForRun,
   articlePublishQualityGateForRun,
   articlePreviewQualityStateForRun,
+  articleReviewApprovalPreviewUrlForRun,
+  articleReviewApprovalTargetForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
+  articleReviewPreviewRevisionForRun,
   articleWorkflowProgressForRunPage,
   hasPublishHandoffEvidence,
   isArticleGenerationActivelyRunning,
@@ -666,15 +669,30 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (["approve", "deny", "resume", "restart", "retry-preview-quality", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const targetRunId = stringFromForm(formData, "targetRunId");
+      const reviewedRunId = stringFromForm(formData, "reviewedRunId");
+      const reviewedPreviewUrl = stringFromForm(formData, "reviewedPreviewUrl");
+      const reviewedPreviewRevision = stringFromForm(formData, "reviewedPreviewRevision");
+      let verifiedReviewRunId = "";
+      if (intent === "approve" || reviewedRunId || reviewedPreviewUrl || reviewedPreviewRevision) {
+        // An older source URL can render a newer revision. Resolve the current
+        // visible review identity again before approving, then mutate that run.
+        const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
+        if (isArticleReviewPreviewReady(currentRun) || reviewedRunId || reviewedPreviewUrl || reviewedPreviewRevision) {
+          verifiedReviewRunId = articleReviewApprovalTargetForRun(currentRun, reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
+          if (!verifiedReviewRunId) {
+            return { intent, error: "The article preview changed. Reload and review the latest draft before approving it." };
+          }
+        }
+      }
       const autoMerge =
         stringFromForm(formData, "autoMerge") === "true" &&
         ["approve", "promote-bundle", "publish-pr"].includes(intent);
       const controlRunId =
-        intent === "promote-bundle" || intent === "publish-pr"
+        verifiedReviewRunId || (intent === "promote-bundle" || intent === "publish-pr"
           ? sourceRunId || runId
           : (intent === "resume" || intent === "restart") && targetRunId
             ? targetRunId
-            : runId;
+            : runId);
       const payload: Record<string, unknown> = { companyId };
       if (sourceRunId) payload.sourceRunId = sourceRunId;
       if (autoMerge) payload.autoMerge = true;
@@ -2587,11 +2605,7 @@ export function LivePreviewCommentInspectorPanel({
   // Revision rebuilds redeploy to the SAME preview URL, so the iframe would never
   // reload on its own. Key the src by the deployed commit so a fresh deployment
   // remounts the iframe and the user sees the revised page instead of the stale one.
-  const proofRecord = preview?.proof && typeof preview.proof === "object" ? (preview.proof as Record<string, unknown>) : {};
-  const previewRevisionKey =
-    [proofRecord.commitSha, proofRecord.commit_sha, preview?.commitSha, run.result?.["branch_commit_sha"]]
-      .map((value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : ""))
-      .find(Boolean) ?? "";
+  const previewRevisionKey = articleReviewPreviewRevisionForRun(run);
   const previewSrc = useReviewDraftHtml ? "" : previewIframeSrc(preview?.previewUrl, previewRevisionKey);
 
   return (
@@ -3007,7 +3021,7 @@ export function ArticleEvidenceIssueOverlay({
   );
 }
 
-function LiveArticlePreviewPanel({
+export function LiveArticlePreviewPanel({
   run,
   selectedComponent,
   onSelectComponent,
@@ -3150,6 +3164,9 @@ function LiveArticlePreviewPanel({
               {canAcceptArticleForPublish ? (
                 <Form method="POST">
                   <input type="hidden" name="autoMerge" value="true" />
+                  <input type="hidden" name="reviewedRunId" value={run.runId} />
+                  <input type="hidden" name="reviewedPreviewUrl" value={articleReviewApprovalPreviewUrlForRun(run)} />
+                  <input type="hidden" name="reviewedPreviewRevision" value={articleReviewPreviewRevisionForRun(run)} />
                   <button
                     type="submit"
                     name="intent"

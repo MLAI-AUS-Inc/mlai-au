@@ -476,6 +476,46 @@ export function articleReviewPreviewUrlForRun(run: VibeMarketingRunSummary) {
   return "";
 }
 
+/** The preview actually shown by the article inspector must identify an approval. */
+export function articleReviewApprovalPreviewUrlForRun(run: VibeMarketingRunSummary) {
+  return String(run.livePreview?.previewUrl || articleReviewPreviewUrlForRun(run)).trim();
+}
+
+export function articleReviewPreviewRevisionForRun(run: VibeMarketingRunSummary) {
+  const proof = run.livePreview?.proof && typeof run.livePreview.proof === "object"
+    ? (run.livePreview.proof as Record<string, unknown>)
+    : {};
+  return [proof.commitSha, proof.commit_sha, run.livePreview?.commitSha, run.result?.["branch_commit_sha"]]
+    .map((value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : ""))
+    .find(Boolean) ?? "";
+}
+
+export function articleReviewApprovalTargetForRun(
+  run: VibeMarketingRunSummary,
+  reviewedRunId: string,
+  reviewedPreviewUrl: string,
+  reviewedPreviewRevision: string,
+) {
+  const currentRunId = run.runId.trim();
+  const currentPreviewUrl = articleReviewApprovalPreviewUrlForRun(run);
+  const reviewIsOpen = (isArticleReviewPreviewReady(run) && (isRunApprovalRequired(run) || run.status === "completed")) || Boolean(
+    run.status === "completed" && run.componentManifest && run.contentPackage?.contentPackaged && !hasPublishHandoffEvidence(run),
+  );
+  if (
+    !isArticleWorkflow(run.workflow) ||
+    !reviewIsOpen ||
+    !run.componentManifest ||
+    (run.sectionIssues ?? []).some((issue) => issue.state === "needs_review") ||
+    articlePreviewQualityStateForRun(run).blocksApproval ||
+    !currentRunId ||
+    !currentPreviewUrl ||
+    reviewedRunId.trim() !== currentRunId ||
+    reviewedPreviewUrl.trim() !== currentPreviewUrl ||
+    reviewedPreviewRevision.trim() !== articleReviewPreviewRevisionForRun(run)
+  ) return "";
+  return currentRunId;
+}
+
 export function isArticleReviewPreviewReady(run: VibeMarketingRunSummary) {
   return Boolean(
     isArticleWorkflow(run.workflow) &&
