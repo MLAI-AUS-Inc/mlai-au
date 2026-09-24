@@ -442,6 +442,20 @@ function hasPublishChildReference(run: VibeMarketingRunSummary) {
   );
 }
 
+export function articlePublishQualityGateForRun(run: VibeMarketingRunSummary): "blocked" | "running" | null {
+  if (
+    !isArticleWorkflow(run.workflow) ||
+    publishPrUrlForRun(run) ||
+    publishPreviewUrlForRun(run) ||
+    hasPublishChildReference(run)
+  ) {
+    return null;
+  }
+  const quality = articlePreviewQualityStateForRun(run);
+  if (!quality.blocksApproval) return null;
+  return quality.checking ? "running" : "blocked";
+}
+
 function hasArticleReviewPreviewMarker(run: VibeMarketingRunSummary) {
   if (!isArticleWorkflow(run.workflow)) return false;
   const reviewSurfaceKind = normalized(stringResultValue(run, "review_surface_kind", "reviewSurfaceKind"));
