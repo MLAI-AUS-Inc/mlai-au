@@ -2274,24 +2274,29 @@ export function LivePreviewCommentInspectorPanel({
   const [openEvidenceIssueId, setOpenEvidenceIssueId] = useState<string | null>(null);
   const [evidenceCommentBody, setEvidenceCommentBody] = useState("");
   const [evidenceSaveError, setEvidenceSaveError] = useState<string | null>(null);
-  const evidenceSavePending = evidenceFetcher.state !== "idle";
+  const [evidenceMutationId, setEvidenceMutationId] = useState<string | null>(null);
+  const evidenceSavePending = evidenceFetcher.state !== "idle" || Boolean(evidenceMutationId);
   const [commentSavePending, setCommentSavePending] = useState(false);
   const draftComments = comments.filter((comment) => comment.status === "draft" && comment.body.trim());
 
   useEffect(() => {
+    const payload = evidenceFetcher.data && typeof evidenceFetcher.data === "object" && !Array.isArray(evidenceFetcher.data)
+      ? (evidenceFetcher.data as Record<string, unknown>) : null;
+    if (!evidenceMutationId || evidenceFetcher.state !== "idle" || payload?.clientMutationId !== evidenceMutationId) return;
     const saved = savedCommentFromFetcherData(evidenceFetcher.data);
     if (saved) {
       setComments((current) => reconcileSavedComment(current, saved));
       setOpenEvidenceIssueId(null);
       setEvidenceCommentBody("");
       setEvidenceSaveError(null);
-    } else if (evidenceFetcher.data && typeof evidenceFetcher.data === "object" && "error" in evidenceFetcher.data) {
-      setEvidenceSaveError(String(evidenceFetcher.data.error));
+    } else {
+      setEvidenceSaveError(typeof payload.error === "string" ? payload.error : "The comment could not be saved. Please retry.");
     }
-  }, [evidenceFetcher.data]);
+    setEvidenceMutationId(null);
+  }, [evidenceFetcher.data, evidenceFetcher.state, evidenceMutationId]);
 
   function queueEvidenceComment(issue: VibeMarketingSectionIssue, body: string, deleteSection = false) {
-    if (readOnly || !draftActionsAvailable || !issue.sectionId.startsWith("section:") || !body.trim()) return;
+    if (readOnly || !draftActionsAvailable || evidenceSavePending || !issue.sectionId.startsWith("section:") || !body.trim()) return;
     if (deleteSection && !canRemoveEvidenceIssue(issue)) return;
     const component = components.find((item) => item.id === issue.sectionId) ?? {
       id: issue.sectionId,
@@ -2303,12 +2308,26 @@ export function LivePreviewCommentInspectorPanel({
     };
     const formData = new FormData();
     formData.set("intent", "add-component-comment");
+    const clientMutationId = `evidence-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    formData.set("clientMutationId", clientMutationId);
     if (targetRunId) formData.set("targetRunId", targetRunId);
     appendCommentFormFields(formData, component, body.trim());
     if (deleteSection) formData.set("requestedAction", "delete_section");
     setOpenEvidenceIssueId(issue.id);
     setEvidenceSaveError(null);
+    setEvidenceMutationId(clientMutationId);
     evidenceFetcher.submit(formData, { method: "POST" });
+  }
+
+  function addSuggestedEvidenceSources(issue: VibeMarketingSectionIssue) {
+    const urls = suggestedEvidenceSourceUrls(issue.sourceHint);
+    if (!urls.length) return;
+    setEvidenceCommentBody((current) => {
+      const newUrls = urls.filter((url) => !current.includes(url));
+      if (!newUrls.length) return current;
+      const request = `Please verify the relevant claims against these saved sources, revise any unsupported wording, and add accurate attribution to the visible reference trail and article exports:\n${newUrls.join("\n")}`;
+      return [current.trim(), request].filter(Boolean).join("\n\n");
+    });
   }
   const latestBatch = run.componentFeedback?.latestBatch ?? null;
   const latestBatchStatus = String(latestBatch?.status ?? "");
@@ -2711,7 +2730,7 @@ export function LivePreviewCommentInspectorPanel({
                     <div key={issue.id} id={`evidence-card-${issue.id}`} className="mt-3 rounded-lg border border-amber-200 bg-white p-3">
                       {issue.claimExcerpt ? <p className="font-semibold">“{issue.claimExcerpt}”</p> : null}
                       <p className="mt-1">{issue.reason}</p>
-                      {issue.sourceHint ? <p className="mt-1 text-xs">Source: {issue.sourceHint}</p> : null}
+                      {issue.sourceHint ? <p className="mt-1 break-all text-xs">Source: {issue.sourceHint}</p> : null}
                       {!readOnly && draftActionsAvailable ? (
                         <div className="mt-3 space-y-2">
                           <label className="block text-xs font-black" htmlFor={`evidence-comment-${issue.id}`}>Comment on this section</label>
@@ -2725,6 +2744,7 @@ export function LivePreviewCommentInspectorPanel({
                           />
                           <div className="flex flex-wrap gap-2">
                             <button type="button" disabled={!evidenceCommentBody.trim() || evidenceSavePending} onClick={() => queueEvidenceComment(issue, evidenceCommentBody)} className="rounded-lg bg-gray-950 px-3 py-2 text-xs font-black text-white disabled:opacity-50">{evidenceSavePending ? "Saving..." : "Save comment"}</button>
+                            {suggestedEvidenceSourceUrls(issue.sourceHint).length ? <button type="button" disabled={evidenceSavePending} onClick={() => addSuggestedEvidenceSources(issue)} className="rounded-lg border border-amber-400 px-3 py-2 text-xs font-black text-amber-900 hover:bg-amber-50 disabled:opacity-50">Use suggested sources</button> : null}
                             {canRemoveEvidenceIssue(issue) ? <button type="button" disabled={evidenceSavePending} onClick={() => queueEvidenceComment(issue, `Remove this section because the claim cannot be substantiated: ${issue.claimExcerpt || issue.reason}`, true)} className="rounded-lg border border-red-300 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-50 disabled:opacity-50">Queue section removal</button> : null}
                           </div>
                         </div>
@@ -2778,6 +2798,13 @@ export function LivePreviewCommentInspectorPanel({
                     setEvidenceSaveError(null);
                   }}
                   onComment={(issue) => {
+                    if (issue.claimId === "evidence-support") {
+                      setOpenEvidenceIssueId(issue.id);
+                      setEvidenceSaveError(null);
+                      addSuggestedEvidenceSources(issue);
+                      window.requestAnimationFrame(() => document.getElementById(`evidence-card-${issue.id}`)?.scrollIntoView({ block: "nearest" }));
+                      return;
+                    }
                     const component = components.find((item) => item.id === issue.sectionId) ?? {
                       id: issue.sectionId,
                       type: "section",
@@ -2873,6 +2900,23 @@ export function LivePreviewCommentInspectorPanel({
 
 export function canRemoveEvidenceIssue(issue: VibeMarketingSectionIssue) {
   return issue.claimId !== "evidence-support";
+}
+
+export function suggestedEvidenceSourceUrls(sourceHint: string) {
+  const candidates = sourceHint.match(/https:\/\/[^\s<>"'()]+/g) ?? [];
+  const urls: string[] = [];
+  for (const candidate of candidates) {
+    const clean = candidate.replace(/[.,;\]]+$/, "");
+    try {
+      const parsed = new URL(clean);
+      if (parsed.protocol !== "https:" || parsed.username || parsed.password || clean.length > 2048) continue;
+      if (!urls.includes(clean)) urls.push(clean);
+    } catch {
+      continue;
+    }
+    if (urls.length >= 4) break;
+  }
+  return urls;
 }
 
 export function ArticleEvidenceIssueOverlay({

@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { ArticleEvidenceIssueOverlay, CommentPopover, LivePreviewCommentInspectorPanel, canEditComponentComment, canRemoveEvidenceIssue, hasReadyArticlePreview, reviewDraftSrcDoc } from "../app/routes/founder-tools.marketing.run";
+import { ArticleEvidenceIssueOverlay, CommentPopover, LivePreviewCommentInspectorPanel, canEditComponentComment, canRemoveEvidenceIssue, hasReadyArticlePreview, reviewDraftSrcDoc, suggestedEvidenceSourceUrls } from "../app/routes/founder-tools.marketing.run";
 import type { VibeMarketingRunSummary, VibeMarketingSectionIssue } from "../app/types/vibe-marketing";
 
 const issue: VibeMarketingSectionIssue = {
@@ -94,6 +94,15 @@ describe("article evidence overlay", () => {
     }));
     expect(markup).toContain("Comment");
     expect(markup).not.toContain("Remove section");
+  });
+
+  test("extracts only bounded saved HTTPS suggestions for a source comment", () => {
+    expect(suggestedEvidenceSourceUrls(
+      "Saved primary sources: https://business.gov.au/online-and-digital/artificial-intelligence; https://www.oaic.gov.au/privacy/guidance. https://business.gov.au/online-and-digital/artificial-intelligence http://insecure.example/guide",
+    )).toEqual([
+      "https://business.gov.au/online-and-digital/artificial-intelligence",
+      "https://www.oaic.gov.au/privacy/guidance",
+    ]);
   });
 
   test("keeps the content-only draft isolated from scripts and forms", () => {
