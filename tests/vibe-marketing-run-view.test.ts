@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   articlePreconditionRepairStateForRun,
+  articlePublishQualityGateForRun,
   articlePreviewQualityStateForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
@@ -132,6 +133,29 @@ describe("vibe marketing run view state", () => {
       advisory: true,
       canRetry: false,
     });
+  });
+
+  test("the publish card follows the draft quality gate until a publish handoff exists", () => {
+    const draftWithQuality = (status: string) => articleRun({
+      result: {
+        status: "preview_ready",
+        review_surface_kind: "component_live_preview",
+        preview_url: "https://preview.example/articles/generated",
+        article_preview_quality: { status },
+      },
+    });
+
+    expect(articlePublishQualityGateForRun(draftWithQuality("blocking_findings"))).toBe("blocked");
+    expect(articlePublishQualityGateForRun(draftWithQuality("queued"))).toBe("running");
+    expect(articlePublishQualityGateForRun(draftWithQuality("running"))).toBe("running");
+    expect(articlePublishQualityGateForRun(draftWithQuality("passed"))).toBeNull();
+    expect(articlePublishQualityGateForRun(draftWithQuality("advisory_findings"))).toBeNull();
+    expect(articlePublishQualityGateForRun(articleRun({
+      result: {
+        ...draftWithQuality("blocking_findings").result,
+        publish_child_run_id: "publish-article-1",
+      },
+    }))).toBeNull();
   });
 
   test("moves to publish only after publish child or PR evidence exists", () => {

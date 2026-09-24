@@ -49,6 +49,7 @@ import {
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   articlePreconditionRepairStateForRun,
+  articlePublishQualityGateForRun,
   articlePreviewQualityStateForRun,
   articleReviewApproveIntentForRun,
   articleReviewApproveLabelForRun,
@@ -3665,6 +3666,8 @@ function PublishAndAutomateDetail({
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const automationStep = run.workflowProgress?.steps.find((step) => step.id === "automation");
+  const publishQualityGate = articlePublishQualityGateForRun(run);
+  const previewQuality = articlePreviewQualityStateForRun(run);
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
@@ -3780,7 +3783,7 @@ function PublishAndAutomateDetail({
               </Link>
             ) : null}
           </div>
-          <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishStep?.status ?? "ready"} />
+          <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishQualityGate ?? publishStep?.status ?? "ready"} />
         </div>
 
         <div className="mt-6 grid min-w-0 grid-cols-[minmax(0,1fr)] items-stretch gap-5 lg:grid-cols-2">
@@ -3789,9 +3792,9 @@ function PublishAndAutomateDetail({
             status={
               isMerged || publishedWithoutPr
                 ? "complete"
-                : mergeBlocked || publishChildFailed
+                : mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
                   ? "blocked"
-                  : prUrl || publishPending
+                  : prUrl || publishPending || publishQualityGate === "running"
                     ? "running"
                     : "ready"
             }
@@ -3816,7 +3819,11 @@ function PublishAndAutomateDetail({
                               ? "Review needed"
                               : publishHandoffStale
                                 ? "Retry needed"
-                                : "Ready"
+                                : publishQualityGate === "blocked"
+                                  ? "Preview needs fixes"
+                                  : publishQualityGate === "running"
+                                    ? "Quality check running"
+                                    : "Ready"
             }
           >
             {isMerged ? (
@@ -3973,6 +3980,21 @@ function PublishAndAutomateDetail({
                   ) : null}
                 </div>
               </div>
+            ) : publishQualityGate === "blocked" ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {previewQuality.message || "Resolve the hosted preview quality findings before publishing."}
+                </p>
+                {canViewArticle ? (
+                  <Link to={viewArticleHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black">
+                    Review preview findings
+                  </Link>
+                ) : null}
+              </div>
+            ) : publishQualityGate === "running" ? (
+              <p className="text-sm font-semibold text-gray-600">
+                The hosted preview quality check is running. Publishing will unlock when it finishes.
+              </p>
             ) : publishChildRecoverable ? (
               <Form method="POST" className="space-y-3">
                 {publishSourceRunId ? <input type="hidden" name="sourceRunId" value={publishSourceRunId} /> : null}
