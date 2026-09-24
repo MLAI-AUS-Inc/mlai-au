@@ -4033,6 +4033,7 @@ function PublishAndAutomateDetail({
   const automationStep = run.workflowProgress?.steps.find((step) => step.id === "automation");
   const publishQualityGate = articlePublishQualityGateForRun(run);
   const previewQuality = articlePreviewQualityStateForRun(run);
+  const hasUnresolvedEvidence = (run.sectionIssues ?? []).some((issue) => issue.state === "needs_review");
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
@@ -4157,7 +4158,7 @@ function PublishAndAutomateDetail({
             status={
               isMerged || publishedWithoutPr
                 ? "complete"
-                : mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
+                : hasUnresolvedEvidence || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
                   ? "blocked"
                   : prUrl || publishPending || publishQualityGate === "running"
                     ? "running"
@@ -4168,7 +4169,9 @@ function PublishAndAutomateDetail({
                 ? "Merged"
                 : publishedWithoutPr
                   ? "Published"
-                  : mergeBlocked
+              : hasUnresolvedEvidence
+                ? "Evidence needs review"
+                : mergeBlocked
                     ? "Merge blocked"
                     : prUrl
                       ? checksStatus
@@ -4220,6 +4223,15 @@ function PublishAndAutomateDetail({
                 >
                   Open published article
                 </a>
+              </div>
+            ) : hasUnresolvedEvidence ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">Resolve the highlighted evidence issues in the article draft before publishing.</p>
+                {canViewArticle ? (
+                  <Link to={viewArticleHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black">
+                    Review evidence issues
+                  </Link>
+                ) : null}
               </div>
             ) : mergeBlocked ? (
               <div className="space-y-3">
@@ -4972,6 +4984,7 @@ function ArticleWorkflowPrimaryAction({
 
   if (isArticleReviewPreviewReady(run)) return null;
   if (isPublishApprovalGate(run)) return null;
+  if ((run.sectionIssues ?? []).some((issue) => issue.state === "needs_review")) return null;
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
     const publishPending = isActionPending?.(publishStep.primaryAction.intent) ?? isSubmitting;
