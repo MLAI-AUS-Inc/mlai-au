@@ -93,11 +93,14 @@ export default function UpcomingEventsCTA({
                         weekday: 'short',
                         day: 'numeric',
                         month: 'short',
+                        timeZone: 'Australia/Melbourne',
                     })
                     const timeStr = date.toLocaleTimeString('en-AU', {
                         hour: 'numeric',
                         minute: '2-digit',
                         hour12: true,
+                        timeZone: 'Australia/Melbourne',
+                        timeZoneName: 'short',
                     })
 
                     return (

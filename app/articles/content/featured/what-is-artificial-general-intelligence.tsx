@@ -310,7 +310,7 @@ export default function ArticlePage() {
             },
             {
               id: 4,
-              href: 'https://industry.gov.au/guidance-for-ai-adoption',
+              href: 'https://www.ai.gov.au/staying-safe-and-responsible/essential-ai-practices/guidance-ai-adoption-foundations',
               title: 'Guidance for AI Adoption',
               publisher: 'Australian Government',
               category: 'government',

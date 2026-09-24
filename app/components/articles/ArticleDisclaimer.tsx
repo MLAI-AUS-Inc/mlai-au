@@ -21,7 +21,7 @@ export function ArticleDisclaimer({ className }: ArticleDisclaimerProps) {
       <p className="m-0 text-sm leading-relaxed font-normal text-white/90">
         <span className="font-medium text-white">Disclaimer:</span> This article provides general information and is not legal or technical advice. For official guidelines on the safe and responsible use of AI, please refer to the{' '}
         <a
-          href="https://industry.gov.au/guidance-for-ai-adoption"
+          href="https://www.ai.gov.au/staying-safe-and-responsible/essential-ai-practices/guidance-ai-adoption-foundations"
           target="_blank"
           rel="noopener noreferrer"
           className="text-white underline underline-offset-4 hover:opacity-80 transition-opacity"
