@@ -23,6 +23,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
   let manifestPresent: boolean;
   let preapprovalPr: boolean;
   let qualityMode: "passed" | "missing" | "stale";
+  let contentOnlyReady: boolean;
   let originalFetch: typeof fetch;
 
   beforeEach(() => {
@@ -34,6 +35,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
     manifestPresent = true;
     preapprovalPr = false;
     qualityMode = "passed";
+    contentOnlyReady = false;
     server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
       const url = new URL(request.url);
       const path = url.pathname + url.search;
@@ -51,8 +53,10 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
       }
       if (url.pathname === "/api/v1/vibe-marketing/runs/source-1" && request.method === "GET") {
         return Response.json({
-          runId: latestRunId, workflow: "article_revision", domain: "example.test", status: publishRecovery ? "completed" : "approval_required",
-          currentStep: publishRecovery ? "promote_bundle" : "await_review", approvalState: publishRecovery ? "approved" : "approval_required",
+          runId: latestRunId, workflow: "article_revision", domain: "example.test",
+          status: publishRecovery || contentOnlyReady ? "completed" : "approval_required",
+          currentStep: publishRecovery ? "promote_bundle" : "await_review",
+          approvalState: publishRecovery ? "approved" : contentOnlyReady ? null : "approval_required",
           componentManifest: manifestPresent ? { components: [{ id: "section:intro", type: "section", label: "Introduction" }] } : null,
           contentPackage: { title: "Latest draft", contentPackaged: true },
           prUrl: preapprovalPr ? "https://github.example/draft-article-pr" : null,
@@ -121,6 +125,13 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
       expect(publishMutations()).toEqual([{ method: "POST", path: "/api/v1/vibe-marketing/runs/revision-3/approve", body: { companyId: "owned", autoMerge: true } }]);
     });
 
+    test("posts a completed content-only draft's first approval to approve", async () => {
+      contentOnlyReady = true;
+      const response = await approve("revision-3", previewUrl);
+      expect(response).toBeInstanceOf(Response);
+      expect(publishMutations()).toEqual([{ method: "POST", path: "/api/v1/vibe-marketing/runs/revision-3/approve", body: { companyId: "owned", autoMerge: true } }]);
+    });
+
     test("does not approve if a newer revision appeared after the page rendered", async () => {
       latestRunId = "revision-4";
       expect(await approve("revision-3", previewUrl)).toMatchObject({ intent: "approve", error: expect.stringContaining("preview changed") });
@@ -179,10 +190,12 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
       expect(publishMutations()).toHaveLength(0);
     });
 
-    test("requires approval before initial promotion, then targets the exact revision for publish-child recovery", async () => {
-      expect(await submit("promote-bundle", "revision-3", previewUrl, "commit-3")).toMatchObject({
-        intent: "promote-bundle", error: expect.stringContaining("Review and approve"),
-      });
+    test("rejects direct initial promotion even with a matched preview, while allowing publish-child recovery", async () => {
+      for (const intent of ["promote-bundle", "publish-pr"]) {
+        expect(await submit(intent, "revision-3", previewUrl, "commit-3")).toMatchObject({
+          intent, error: expect.stringContaining("Review and approve"),
+        });
+      }
       expect(publishMutations()).toHaveLength(0);
       publishRecovery = true;
       expect(await submit("promote-bundle")).toBeInstanceOf(Response);

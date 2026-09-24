@@ -100,6 +100,32 @@ describe("vibe marketing run view state", () => {
     });
   });
 
+  test("uses semantic approve for a completed content-only draft's first approval", () => {
+    const run = articleRun({ status: "completed", approvalState: null });
+    expect(isArticleReviewPreviewReady(run)).toBe(true);
+    expect(articleReviewApproveIntentForRun(run, "promote-bundle")).toBe("approve");
+    expect(articleReviewApproveLabelForRun(run)).toEqual({
+      idle: "Approve article and create PR",
+      pending: "Approving...",
+    });
+
+    const router = createMemoryRouter([{
+      path: "/founder-tools/marketing/runs/:runId",
+      element: createElement(LiveArticlePreviewPanel, {
+        run,
+        selectedComponent: null,
+        onSelectComponent: () => {},
+        isSubmitting: false,
+        initiallyExpanded: true,
+      }),
+    }], { initialEntries: ["/founder-tools/marketing/runs/article-review-source"] });
+    try {
+      const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
+      expect(markup).toContain('value="approve"');
+      expect(markup).not.toContain('value="promote-bundle"');
+    } finally { router.dispose(); }
+  });
+
   test("targets the visible latest revision even when the page URL names an older source", () => {
     const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
     expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("revision-3");

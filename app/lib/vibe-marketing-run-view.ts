@@ -661,11 +661,11 @@ export function isPublishApprovalGate(run: VibeMarketingRunSummary) {
 }
 
 export function articleReviewApproveIntentForRun(run: VibeMarketingRunSummary, fallbackIntent: string | null | undefined) {
-  return isArticleReviewPreviewReady(run) && isRunApprovalRequired(run) ? "approve" : fallbackIntent || "promote-bundle";
+  return isArticleReviewPreviewReady(run) ? "approve" : fallbackIntent || "promote-bundle";
 }
 
 export function articleReviewApproveLabelForRun(run: VibeMarketingRunSummary) {
-  return isArticleReviewPreviewReady(run) && isRunApprovalRequired(run)
+  return isArticleReviewPreviewReady(run)
     ? { idle: "Approve article and create PR", pending: "Approving..." }
     : { idle: "Accept article and continue", pending: "Continuing..." };
 }
