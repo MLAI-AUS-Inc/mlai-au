@@ -379,6 +379,21 @@ export function articleWorkflowProgressForRunPage(
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (!progress) return progress;
+  const publishChildState = articlePublishHandoffProgressState(run);
+  if (run.workflow === "article_revision" && publishChildState) {
+    return {
+      ...progress,
+      currentStepId: "publish",
+      nextStepId: null,
+      steps: progress.steps.map((step) =>
+        step.id === "publish"
+          ? { ...step, status: publishChildState, primaryAction: null }
+          : step.id === "automation"
+            ? { ...step, status: "locked", primaryAction: null }
+            : step,
+      ),
+    };
+  }
   if (run.workflow === "article_revision" && !revisionHasCurrentPublishApproval(run) && !hasApprovedArticlePublishChildRecovery(run)) {
     return {
       ...progress,
@@ -460,6 +475,17 @@ function hasPublishChildReference(run: VibeMarketingRunSummary) {
     stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id", "promote_bundle_requested_at") ||
       boolResultValue(run, "publish_handoff_pending"),
   );
+}
+
+function articlePublishHandoffProgressState(run: VibeMarketingRunSummary): "running" | "blocked" | null {
+  const childRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
+  const status = normalized(run.publishChildStatus || stringResultValue(run, "publish_child_status", "publishChildStatus"));
+  if (childRunId && ["blocked", "failed"].includes(status)) return "blocked";
+  if (run.result?.["publish_handoff_pending"] === true) {
+    return run.result?.["publish_handoff_stale"] === true ? "blocked" : "running";
+  }
+  if (childRunId && ["queued", "running"].includes(status)) return "running";
+  return null;
 }
 
 export function articlePublishQualityGateForRun(run: VibeMarketingRunSummary): "blocked" | "running" | null {
@@ -558,14 +584,28 @@ export function revisionHasCurrentPreviewQuality(run: VibeMarketingRunSummary) {
   const qualityStatus = normalized(typeof quality.status === "string" ? quality.status : "");
   const qualityUrl = String(quality.preview_url ?? quality.previewUrl ?? "").trim();
   const previewUrl = String(run.livePreview?.previewUrl ?? "").trim();
+  const proof = run.livePreview?.proof && typeof run.livePreview.proof === "object"
+    ? run.livePreview.proof : {};
+  const proofSha = String(proof.commitSha ?? proof.commit_sha ?? "").trim();
+  const qualityHash = String(quality.inputs_sha256 ?? "").trim();
   const rawPreview = objectResultValue(run, "live_preview", "livePreview");
-  const currentGeneration = rawPreview.resumeGeneration ?? rawPreview.resume_generation ??
-    run.resumeGeneration ?? run.result?.["resume_generation"] ?? 0;
-  const qualityGeneration = Number(quality.resume_generation ?? quality.resumeGeneration ?? 0);
+  const parseGeneration = (value: unknown) => {
+    if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) return value;
+    if (typeof value === "string" && /^[0-9]+$/.test(value.trim())) {
+      const parsed = Number(value.trim());
+      return Number.isSafeInteger(parsed) ? parsed : null;
+    }
+    return null;
+  };
+  const currentGeneration = parseGeneration(rawPreview.resumeGeneration ?? rawPreview.resume_generation ??
+    run.result?.["resume_generation"] ?? run.resumeGeneration ?? 0);
+  const qualityGeneration = parseGeneration(quality.resume_generation ?? quality.resumeGeneration);
   return run.livePreview?.available === true && run.livePreview.exactRender === true &&
+    /^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/.test(proofSha) &&
+    /^[0-9a-fA-F]{64}$/.test(qualityHash) &&
     ["passed", "passed_no_baseline", "advisory_findings"].includes(qualityStatus) &&
     Boolean(qualityUrl && previewUrl && qualityUrl === previewUrl) &&
-    Number.isInteger(qualityGeneration) && qualityGeneration === Number(currentGeneration);
+    currentGeneration !== null && qualityGeneration !== null && qualityGeneration === currentGeneration;
 }
 
 export function revisionHasCurrentPublishApproval(run: VibeMarketingRunSummary) {
@@ -661,11 +701,11 @@ export function isPublishApprovalGate(run: VibeMarketingRunSummary) {
 }
 
 export function articleReviewApproveIntentForRun(run: VibeMarketingRunSummary, fallbackIntent: string | null | undefined) {
-  return isArticleReviewPreviewReady(run) && isRunApprovalRequired(run) ? "approve" : fallbackIntent || "promote-bundle";
+  return isArticleReviewPreviewReady(run) ? "approve" : fallbackIntent || "promote-bundle";
 }
 
 export function articleReviewApproveLabelForRun(run: VibeMarketingRunSummary) {
-  return isArticleReviewPreviewReady(run) && isRunApprovalRequired(run)
+  return isArticleReviewPreviewReady(run)
     ? { idle: "Approve article and create PR", pending: "Approving..." }
     : { idle: "Accept article and continue", pending: "Continuing..." };
 }
@@ -688,12 +728,13 @@ export function viewedWorkflowStepIdForRun(
     // A newly-started or self-healing article always belongs on Generate. The
     // organisation-level workflow progress can still point at the previous
     // article's Review/Publish step while this run is only checking its repo.
-    if (isArticleGenerationActivelyRunning(run) || repair.isPrecondition || isArticleGenerationBlockedBeforeReview(run)) return "generate";
+    if ((!hasPublishChildReference(run) && isArticleGenerationActivelyRunning(run)) ||
+        repair.isPrecondition || isArticleGenerationBlockedBeforeReview(run)) return "generate";
   }
   // Explicit user override (e.g. ?articleStep=review) lets the user jump back to
   // the article preview at any point, even after the run has moved to publish.
   if (requestedArticleStep && ARTICLE_GENERATION_WORKFLOWS.has(workflow)) return requestedArticleStep;
-  if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
+  if (workflow === "article_revision") return hasPublishChildReference(run) || hasPublishHandoffEvidence(run) ? "publish" : "revise";
   if (ARTICLE_GENERATION_WORKFLOWS.has(workflow)) {
     if (isArticleReviewPreviewReady(run)) return "review";
     if (hasPublishHandoffEvidence(run)) return "publish";

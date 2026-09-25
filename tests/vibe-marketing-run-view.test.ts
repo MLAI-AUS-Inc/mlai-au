@@ -28,6 +28,9 @@ import {
 } from "../app/lib/vibe-marketing-run-view";
 import type { VibeMarketingBootstrap, VibeMarketingRunSummary } from "../app/types/vibe-marketing";
 
+const previewCommitSha = "a".repeat(40);
+const qualityInputSha = "b".repeat(64);
+
 function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarketingRunSummary {
   return {
     runId: "article-review-source",
@@ -52,7 +55,8 @@ function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarke
       status: "ready",
       previewUrl: "https://preview.example/articles/generated",
       exactRender: true,
-      commitSha: "preview-commit-3",
+      commitSha: previewCommitSha,
+      proof: { commitSha: previewCommitSha },
     },
     workflowProgress: {
       currentStepId: "publish",
@@ -73,7 +77,7 @@ function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarke
       review_surface_kind: "component_live_preview",
       preview_url: "https://preview.example/articles/generated",
       promote_bundle_url: "/api/runs/article-review-source/promote-bundle",
-      article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/generated", resume_generation: 0 },
+      article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/generated", resume_generation: 0, inputs_sha256: qualityInputSha },
     },
     ...overrides,
   };
@@ -100,9 +104,35 @@ describe("vibe marketing run view state", () => {
     });
   });
 
+  test("uses semantic approve for a completed content-only draft's first approval", () => {
+    const run = articleRun({ status: "completed", approvalState: null });
+    expect(isArticleReviewPreviewReady(run)).toBe(true);
+    expect(articleReviewApproveIntentForRun(run, "promote-bundle")).toBe("approve");
+    expect(articleReviewApproveLabelForRun(run)).toEqual({
+      idle: "Approve article and create PR",
+      pending: "Approving...",
+    });
+
+    const router = createMemoryRouter([{
+      path: "/founder-tools/marketing/runs/:runId",
+      element: createElement(LiveArticlePreviewPanel, {
+        run,
+        selectedComponent: null,
+        onSelectComponent: () => {},
+        isSubmitting: false,
+        initiallyExpanded: true,
+      }),
+    }], { initialEntries: ["/founder-tools/marketing/runs/article-review-source"] });
+    try {
+      const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
+      expect(markup).toContain('value="approve"');
+      expect(markup).not.toContain('value="promote-bundle"');
+    } finally { router.dispose(); }
+  });
+
   test("targets the visible latest revision even when the page URL names an older source", () => {
     const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
-    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("revision-3");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("revision-3");
   });
 
   test("submits the preview identity actually shown on a stale source URL", () => {
@@ -121,7 +151,7 @@ describe("vibe marketing run view state", () => {
       const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
       expect(markup).toContain('name="reviewedRunId" value="revision-3"');
       expect(markup).toContain('name="reviewedPreviewUrl" value="https://preview.example/articles/generated"');
-      expect(markup).toContain('name="reviewedPreviewRevision" value="preview-commit-3"');
+      expect(markup).toContain(`name="reviewedPreviewRevision" value="${previewCommitSha}"`);
       expect(markup).toContain("Approve article and create PR");
       expect(markup).not.toContain('name="reviewedRunId" value="source-1"');
     } finally {
@@ -129,15 +159,122 @@ describe("vibe marketing run view state", () => {
     }
   });
 
+  test("disables feedback acceptance until this revision has current hosted quality", () => {
+    const renderAcceptance = (run: VibeMarketingRunSummary) => {
+      const router = createMemoryRouter([{
+        path: "/founder-tools/marketing/runs/:runId",
+        element: createElement(LiveArticlePreviewPanel, {
+          run, selectedComponent: null, onSelectComponent: () => {}, isSubmitting: false, initiallyExpanded: true,
+        }),
+      }], { initialEntries: ["/founder-tools/marketing/runs/source-1"] });
+      try {
+        const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
+        const labelAt = markup.indexOf("Accept revised article");
+        expect(labelAt).toBeGreaterThan(-1);
+        return markup.slice(markup.lastIndexOf("<button", labelAt), markup.indexOf("</button>", labelAt) + "</button>".length);
+      }
+      finally { router.dispose(); }
+    };
+    const revision = articleRun({
+      runId: "revision-3", workflow: "article_revision", status: "completed", approvalState: null,
+      componentFeedback: { comments: [], latestBatch: { id: "batch-1", sourceRunId: "source-1", revisionRunId: "revision-3", status: "completed" } },
+    });
+    for (const quality of [null, { status: "queued", preview_url: revision.livePreview?.previewUrl, resume_generation: 0 },
+      { status: "passed", preview_url: "https://preview.example/articles/old", resume_generation: 0, inputs_sha256: qualityInputSha },
+      { status: "passed", preview_url: revision.livePreview?.previewUrl, resume_generation: 0 }]) {
+      const run = { ...revision, result: { ...revision.result, article_preview_quality: quality } };
+      expect(renderAcceptance(run)).toContain('disabled=""');
+    }
+    for (const status of ["passed", "passed_no_baseline"]) {
+      const run = { ...revision, result: { ...revision.result, article_preview_quality: {
+        status, preview_url: revision.livePreview?.previewUrl, resume_generation: 0, inputs_sha256: qualityInputSha,
+      } } };
+      const markup = renderAcceptance(run);
+      expect(markup).toContain("Accept revised article");
+      expect(markup).not.toContain('disabled=""');
+    }
+  });
+
+  test("shows a queued publish child as progress while source approval catches up", () => {
+    const run = articleRun({
+      runId: "revision-3", workflow: "article_revision", status: "completed", approvalState: null,
+      publishChildStatus: "queued",
+      componentFeedback: { comments: [], latestBatch: { id: "batch-1", sourceRunId: "source-1", revisionRunId: "revision-3", status: "completed" } },
+      result: { ...articleRun().result, publish_child_run_id: "publish-child-3", publish_child_status: "queued" },
+    });
+    expect(viewedWorkflowStepIdForRun(run)).toBe("publish");
+    expect(articleWorkflowProgressForRunPage(run, null)).toMatchObject({
+      currentStepId: "publish", steps: [{ id: "review" }, { id: "publish", status: "running", primaryAction: null }],
+    });
+    const blockedChild = { ...run, publishChildStatus: "blocked", result: { ...run.result, publish_child_status: "blocked" } };
+    expect(viewedWorkflowStepIdForRun(blockedChild)).toBe("publish");
+    expect(articleWorkflowProgressForRunPage(blockedChild, null)?.steps.find((step) => step.id === "publish")).toMatchObject({
+      status: "blocked", primaryAction: null,
+    });
+    const render = (element: ReturnType<typeof createElement>) => {
+      const router = createMemoryRouter([{
+        path: "/founder-tools/marketing/runs/:runId", element,
+      }], { initialEntries: ["/founder-tools/marketing/runs/revision-3"] });
+      try { return renderToStaticMarkup(createElement(RouterProvider, { router })); }
+      finally { router.dispose(); }
+    };
+    const review = render(createElement(LiveArticlePreviewPanel, {
+      run, selectedComponent: null, onSelectComponent: () => {}, isSubmitting: false, initiallyExpanded: true,
+    }));
+    expect(review).not.toContain('value="approve"');
+    expect(review).not.toContain("Accept revised article");
+    expect(render(createElement(ArticleWorkflowPrimaryAction, { run, isSubmitting: false }))).not.toContain('value="promote-bundle"');
+    expect(render(createElement(ArticleWorkflowPrimaryAction, { run: { ...run, approvalState: "approved" }, isSubmitting: false }))).not.toContain('value="promote-bundle"');
+    const publish = render(createElement(PublishAndAutomateDetail, {
+      run, bootstrap: { checks: {}, settings: { dailyDiscoveryEnabled: false } } as unknown as VibeMarketingBootstrap,
+      isSubmitting: false,
+    }));
+    expect(publish).toContain("Preparing publish");
+    expect(publish).toContain("publish run is queued");
+    expect(publish).not.toContain("Review and approve the latest article draft before publishing.");
+    expect(publish).not.toContain('value="promote-bundle"');
+
+    const pending = { ...run, publishChildStatus: null, result: {
+      ...run.result, publish_child_run_id: undefined, publish_child_status: undefined, publish_handoff_pending: true,
+    } };
+    expect(viewedWorkflowStepIdForRun(pending)).toBe("publish");
+    expect(articleWorkflowProgressForRunPage(pending, null)?.steps.find((step) => step.id === "publish")).toMatchObject({
+      status: "running", primaryAction: null,
+    });
+    const pendingPublish = render(createElement(PublishAndAutomateDetail, {
+      run: pending, bootstrap: { checks: {}, settings: { dailyDiscoveryEnabled: false } } as unknown as VibeMarketingBootstrap,
+      isSubmitting: false,
+    }));
+    expect(pendingPublish).toContain("Preparing publish");
+    expect(pendingPublish).toContain("publish run is pending");
+    expect(pendingPublish).not.toContain("Review and approve the latest article draft before publishing.");
+
+    const childWaitingForHandoff = { ...run, publishChildStatus: "blocked", publishChildRecoverable: true, result: {
+      ...run.result, publish_child_status: "blocked", publish_child_recoverable: true, publish_handoff_pending: true,
+    } };
+    expect(articleWorkflowProgressForRunPage(childWaitingForHandoff, null)?.steps.find((step) => step.id === "publish")).toMatchObject({
+      status: "blocked", primaryAction: null,
+    });
+    const waitingPublish = render(createElement(PublishAndAutomateDetail, {
+      run: childWaitingForHandoff,
+      bootstrap: { checks: {}, settings: { dailyDiscoveryEnabled: false } } as unknown as VibeMarketingBootstrap,
+      isSubmitting: false,
+    }));
+    expect(waitingPublish).toContain("existing publish run is blocked while the article&#x27;s approval handoff is being prepared");
+    expect(waitingPublish).not.toContain("Preparing publish");
+    expect(waitingPublish).not.toContain("Review and approve the latest article draft before publishing.");
+    expect(waitingPublish).not.toContain('value="promote-bundle"');
+  });
+
   test("fails closed when the draft identity changes after the approval form was rendered", () => {
     const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
-    expect(articleReviewApprovalTargetForRun(latest, "", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
-    expect(articleReviewApprovalTargetForRun(latest, "revision-2", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
-    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/older", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-2", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/older", previewCommitSha)).toBe("");
     expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-2")).toBe("");
-    expect(articleReviewApprovalTargetForRun({ ...latest, status: "failed", approvalState: null }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
-    expect(articleReviewApprovalTargetForRun({ ...latest, sectionIssues: [{ id: "issue", sectionId: "section:intro", claimId: "claim", claimExcerpt: "Claim", reason: "Missing source", sourceHint: "", state: "needs_review" }] }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
-    expect(articleReviewApprovalTargetForRun({ ...latest, result: { ...latest.result, article_preview_quality: { status: "blocking_findings" } } }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, status: "failed", approvalState: null }, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, sectionIssues: [{ id: "issue", sectionId: "section:intro", claimId: "claim", claimExcerpt: "Claim", reason: "Missing source", sourceHint: "", state: "needs_review" }] }, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, result: { ...latest.result, article_preview_quality: { status: "blocking_findings" } } }, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
   });
 
   test("a forced Publish view waits for review but keeps recorded publish recovery", () => {
@@ -163,7 +300,7 @@ describe("vibe marketing run view state", () => {
     expect(hasRecordedArticlePublishApprovalOrHandoff(preapprovalPr)).toBe(false);
     expect(renderPublish(preapprovalPr)).not.toContain('value="promote-bundle"');
     expect(isArticleReviewPreviewReady(preapprovalPr)).toBe(true);
-    expect(articleReviewApprovalTargetForRun(preapprovalPr, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("revision-3");
+    expect(articleReviewApprovalTargetForRun(preapprovalPr, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("revision-3");
     expect(hasRecordedArticlePublishApprovalOrHandoff({ ...unapproved, result: {
       ...unapproved.result, latest_control_response: { publish_child_run_id: "old-child" },
     } })).toBe(false);
@@ -352,16 +489,21 @@ describe("vibe marketing run view state", () => {
       ...revision,
       status: "completed",
       approvalState: "approved",
-      livePreview: { available: true, status: "running", platformStatus: "ready", previewUrl, exactRender: true },
-      result: { status: "preview_ready", article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0 } },
+      livePreview: { available: true, status: "running", platformStatus: "ready", previewUrl, exactRender: true,
+        proof: { commitSha: previewCommitSha } },
+      result: { status: "preview_ready", article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0,
+        inputs_sha256: qualityInputSha } },
     });
     expect(articleWorkflowProgressForRunPage(passed, null)).toBe(passed.workflowProgress);
     expect(viewedWorkflowStepIdForRun(passed)).toBe("publish");
     expect(revisionHasCurrentPublishApproval(passed)).toBe(true);
-    expect(revisionHasCurrentPublishApproval({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed_no_baseline", preview_url: previewUrl, resume_generation: 0 } } })).toBe(true);
+    expect(revisionHasCurrentPublishApproval({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed_no_baseline", preview_url: previewUrl, resume_generation: 0,
+      inputs_sha256: qualityInputSha } } })).toBe(true);
     expect(articleWorkflowProgressForRunPage({ ...passed, approvalState: "not_required" }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
-    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/old", resume_generation: 0 } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
-    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, live_preview: { resumeGeneration: 1 }, article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0 } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
+    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/old", resume_generation: 0,
+      inputs_sha256: qualityInputSha } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
+    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, live_preview: { resumeGeneration: 1 }, article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0,
+      inputs_sha256: qualityInputSha } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
     expect(articleWorkflowProgressForRunPage({ ...passed, livePreview: { available: false, status: "building", previewUrl, exactRender: false } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
   });
 
@@ -394,7 +536,7 @@ describe("vibe marketing run view state", () => {
     const revision = articleRun({ runId: "revision-3", workflow: "article_revision", result: { status: "preview_ready" } });
     expect(revisionHasCurrentPreviewQuality(revision)).toBe(false);
     expect(articlePreviewQualityStateForRun(revision)).toMatchObject({ canRetry: true, blocksApproval: true });
-    expect(articleReviewApprovalTargetForRun(revision, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(revision, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
     const router = createMemoryRouter([{
       path: "/founder-tools/marketing/runs/:runId",
       element: createElement(LiveArticlePreviewPanel, {

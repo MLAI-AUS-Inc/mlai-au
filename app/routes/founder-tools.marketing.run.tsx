@@ -524,10 +524,24 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
     } else if (intent === "accept-component-revision") {
+      const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
+      const reviewedRunId = stringFromForm(formData, "reviewedRunId");
+      const reviewedPreviewUrl = stringFromForm(formData, "reviewedPreviewUrl");
+      const reviewedPreviewRevision = stringFromForm(formData, "reviewedPreviewRevision");
+      if (
+        currentRun.workflow !== "article_revision" ||
+        currentRun.status !== "completed" ||
+        articleReviewApprovalTargetForRun(currentRun, reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision) !== currentRun.runId
+      ) {
+        return { intent, error: "The revised article preview or quality check changed. Reload and review the current draft before accepting it." };
+      }
       const sourceRunId = stringFromForm(formData, "sourceRunId");
-      const result = await acceptVibeMarketingComponentRevision(env, request, runId, {
+      const result = await acceptVibeMarketingComponentRevision(env, request, currentRun.runId, {
         batchId: stringFromForm(formData, "batchId"),
         sourceRunId,
+        reviewedRunId,
+        reviewedPreviewUrl,
+        reviewedPreviewRevision,
       });
       const nextRunId = sourceRunId || result.runId;
       if (nextRunId && nextRunId !== runId) {
@@ -3185,13 +3199,16 @@ export function LiveArticlePreviewPanel({
         initiallyExpanded={initiallyExpanded}
         compactMobileControls
         actionSlot={(reviewState) => {
-          const canAcceptRevision =
+          const canOfferRevisionAcceptance =
             run.workflow === "article_revision" &&
             run.status === "completed" &&
+            !hasRecordedArticlePublishApprovalOrHandoff(run) &&
             reviewState.evidenceIssueCount === 0 &&
             reviewState.draftComments.length === 0 &&
             reviewState.latestBatch?.status !== "accepted" &&
             Boolean(reviewState.batchId);
+          const canAcceptRevision = canOfferRevisionAcceptance &&
+            !previewQuality.blocksApproval && revisionHasCurrentPreviewQuality(run);
           const canAcceptArticleForPublish = Boolean(
             (run.status === "completed" || reviewApprovalReady) &&
               (run.contentPackage?.contentPackaged || reviewApprovalReady) &&
@@ -3202,6 +3219,7 @@ export function LiveArticlePreviewPanel({
               reviewState.evidenceIssueCount === 0 &&
               !canAcceptRevision &&
               !reviewState.hasPendingRevisionBatch &&
+              !hasRecordedArticlePublishApprovalOrHandoff(run) &&
               (reviewApprovalReady || publishStep?.status === "ready") &&
               !previewQuality.blocksApproval &&
               revisionHasCurrentPreviewQuality(run) &&
@@ -3244,14 +3262,18 @@ export function LiveArticlePreviewPanel({
                   </button>
                 </Form>
               ) : null}
-              {canAcceptRevision ? (
+              {canOfferRevisionAcceptance ? (
                 <Form method="POST">
                   <input type="hidden" name="intent" value="accept-component-revision" />
                   <input type="hidden" name="batchId" value={reviewState.batchId} />
                   <input type="hidden" name="sourceRunId" value={reviewState.sourceRunId} />
+                  <input type="hidden" name="reviewedRunId" value={run.runId} />
+                  <input type="hidden" name="reviewedPreviewUrl" value={articleReviewApprovalPreviewUrlForRun(run)} />
+                  <input type="hidden" name="reviewedPreviewRevision" value={articleReviewPreviewRevisionForRun(run)} />
                   <button
                     type="submit"
-                    disabled={isSubmitting || reviewState.evidenceSavePending || reviewState.commentSavePending}
+                    disabled={!canAcceptRevision || isSubmitting || reviewState.evidenceSavePending || reviewState.commentSavePending}
+                    title={!canAcceptRevision ? "Wait for the current hosted quality check, then review this revision before accepting it." : undefined}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                   >
                     {acceptRevisionPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
@@ -4187,13 +4209,16 @@ export function PublishAndAutomateDetail({
       !prUrl &&
       !previewUrl,
   );
+  const publishChildAwaitingHandoff = Boolean(
+    publishHandoffPending && run.result?.["publish_handoff_stale"] !== true &&
+      publishChildRunId && publishChildStatus === "blocked" && !prUrl && !previewUrl,
+  );
   const publishPending = Boolean(
     !publishHandoffStale &&
-      !publishChildRecoverable &&
       !publishChildApprovalRequired &&
-      (publishStep?.status === "running" ||
-        publishChildRunning ||
-        (publishHandoffPending && !publishChildRunId)),
+      !["blocked", "failed"].includes(publishChildStatus) &&
+      ((publishHandoffPending && !prUrl && !previewUrl) ||
+        (!publishChildRecoverable && (publishStep?.status === "running" || publishChildRunning))),
   );
   const prNumber =
     stringResultValue(run, "pr_number", "pull_request_number", "draft_pr_number") ||
@@ -4272,10 +4297,12 @@ export function PublishAndAutomateDetail({
             status={
               isMerged || publishedWithoutPr
                 ? "complete"
-                : hasUnresolvedEvidence || !hasApprovedPublishHandoff || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
+                : hasUnresolvedEvidence || mergeBlocked || publishChildFailed || publishChildAwaitingHandoff || publishQualityGate === "blocked"
                   ? "blocked"
                   : prUrl || publishPending || publishQualityGate === "running"
                     ? "running"
+                    : !hasApprovedPublishHandoff
+                      ? "blocked"
                     : "ready"
             }
             eyebrow={
@@ -4285,6 +4312,10 @@ export function PublishAndAutomateDetail({
                   ? "Published"
               : hasUnresolvedEvidence
                 ? "Evidence needs review"
+                : publishPending
+                  ? "Creating PR"
+                : publishChildAwaitingHandoff
+                  ? "Waiting for handoff"
                 : !hasApprovedPublishHandoff
                   ? "Article review required"
                 : mergeBlocked
@@ -4293,9 +4324,7 @@ export function PublishAndAutomateDetail({
                       ? checksStatus
                         ? `Checks ${checksStatus}`
                         : "Waiting for checks"
-                      : publishPending
-                        ? "Creating PR"
-                        : publishChildFailed
+                      : publishChildFailed
                           ? "Publish failed"
                           : publishChildRecoverable
                             ? "Resume needed"
@@ -4349,6 +4378,20 @@ export function PublishAndAutomateDetail({
                   </Link>
                 ) : null}
               </div>
+            ) : publishPending ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  The article's publish handoff is being prepared. The publish run is {publishChildStatus || "pending"}; this page updates automatically.
+                </p>
+                <button type="button" disabled className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-black text-gray-500">
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                  Preparing publish
+                </button>
+              </div>
+            ) : publishChildAwaitingHandoff ? (
+              <p className="text-sm font-semibold text-gray-600">
+                The existing publish run is blocked while the article's approval handoff is being prepared. This page updates automatically.
+              </p>
             ) : !hasApprovedPublishHandoff ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">Review and approve the latest article draft before publishing.</p>
@@ -4438,20 +4481,6 @@ export function PublishAndAutomateDetail({
                   </a>
                 </div>
               </Form>
-            ) : publishPending ? (
-              <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-600">
-                  Creating the publish PR. Once checks pass it merges to main automatically — this page updates on its own.
-                </p>
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-black text-gray-500"
-                >
-                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                  Creating PR
-                </button>
-              </div>
             ) : publishChildFailed ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
@@ -5113,7 +5142,9 @@ export function ArticleWorkflowPrimaryAction({
   if (!hasRecordedArticlePublishApprovalOrHandoff(run) ||
       (!revisionHasCurrentPublishApproval(run) && !hasApprovedArticlePublishChildRecovery(run))) return null;
 
-  if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
+  if (publishStep?.status === "ready" && publishStep.primaryAction?.intent &&
+      !stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id") &&
+      run.result?.["publish_handoff_pending"] !== true) {
     const publishPending = isActionPending?.(publishStep.primaryAction.intent) ?? isSubmitting;
     return (
       <Form method="POST">
