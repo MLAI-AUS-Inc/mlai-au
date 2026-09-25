@@ -14,6 +14,8 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
 } else {
   const { action } = await import("../app/routes/founder-tools.marketing.run");
   const previewUrl = "https://preview.example/articles/latest";
+  const previewCommitSha = "a".repeat(40);
+  const qualityInputSha = "b".repeat(64);
   let server: ReturnType<typeof Bun.serve>;
   let calls: { method: string; path: string; body: unknown }[];
   let latestRunId: string;
@@ -22,7 +24,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
   let publishRecovery: boolean;
   let manifestPresent: boolean;
   let preapprovalPr: boolean;
-  let qualityMode: "passed" | "passed_no_baseline" | "queued" | "missing" | "stale";
+  let qualityMode: "passed" | "passed_no_baseline" | "queued" | "missing" | "stale" | "missing_digest" | "missing_proof";
   let contentOnlyReady: boolean;
   let originalFetch: typeof fetch;
 
@@ -30,7 +32,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
     calls = [];
     latestRunId = "revision-3";
     latestPreviewUrl = previewUrl;
-    latestCommitSha = "commit-3";
+    latestCommitSha = previewCommitSha;
     publishRecovery = false;
     manifestPresent = true;
     preapprovalPr = false;
@@ -61,10 +63,13 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
           contentPackage: { title: "Latest draft", contentPackaged: true },
           prUrl: preapprovalPr ? "https://github.example/draft-article-pr" : null,
           publishChildRecoverable: publishRecovery,
-          livePreview: { available: true, status: "ready", previewUrl: latestPreviewUrl, exactRender: true, commitSha: latestCommitSha },
+          livePreview: { available: true, status: "ready", previewUrl: latestPreviewUrl, exactRender: true, commitSha: latestCommitSha,
+            proof: qualityMode === "missing_proof" ? {} : { commitSha: latestCommitSha } },
           result: { status: "preview_ready", review_surface_kind: "component_live_preview", preview_url: latestPreviewUrl,
             ...(qualityMode === "missing" ? {} : { article_preview_quality: {
-              status: qualityMode === "stale" ? "passed" : qualityMode, preview_url: qualityMode === "stale" ? "https://preview.example/articles/old" : latestPreviewUrl, resume_generation: 0,
+              status: ["stale", "missing_digest", "missing_proof"].includes(qualityMode) ? "passed" : qualityMode,
+              preview_url: qualityMode === "stale" ? "https://preview.example/articles/old" : latestPreviewUrl, resume_generation: 0,
+              inputs_sha256: qualityMode === "missing_digest" ? undefined : qualityInputSha,
             } }),
             ...(preapprovalPr ? { pr_url: "https://github.example/draft-article-pr", draft_pr_url: "https://github.example/setup-pr",
               publish_child_preview_url: "https://preview.example/old-publish" } : {}),
@@ -115,7 +120,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
     }
   }
 
-  const approve = (reviewedRunId: string, reviewedPreviewUrl: string, reviewedPreviewRevision = "commit-3") =>
+  const approve = (reviewedRunId: string, reviewedPreviewUrl: string, reviewedPreviewRevision = previewCommitSha) =>
     submit("approve", reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
   const publishMutations = () => calls.filter((call) => call.method === "POST" && /\/(approve|promote-bundle|publish-pr)$/.test(call.path));
   const acceptMutations = () => calls.filter((call) => call.method === "POST" && call.path.endsWith("/comments/accept-revision"));
@@ -125,22 +130,22 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
       contentOnlyReady = true;
       for (const status of ["passed", "passed_no_baseline"] as const) {
         qualityMode = status;
-        const response = await submit("accept-component-revision", "revision-3", previewUrl, "commit-3", "source-1", "", "source-1");
+        const response = await submit("accept-component-revision", "revision-3", previewUrl, previewCommitSha, "source-1", "", "source-1");
         expect(response).toBeInstanceOf(Response);
         expect((response as Response).headers.get("Location")).toBe("/founder-tools/marketing/runs/source-1");
       }
       expect(acceptMutations()).toEqual(["passed", "passed_no_baseline"].map(() => ({
         method: "POST",
         path: "/api/v1/vibe-marketing/runs/revision-3/comments/accept-revision",
-        body: { batchId: "batch-1", sourceRunId: "source-1", reviewedRunId: "revision-3", reviewedPreviewUrl: previewUrl, reviewedPreviewRevision: "commit-3" },
+        body: { batchId: "batch-1", sourceRunId: "source-1", reviewedRunId: "revision-3", reviewedPreviewUrl: previewUrl, reviewedPreviewRevision: previewCommitSha },
       })));
     });
 
-    test("rejects feedback acceptance while quality is queued, absent, or stale", async () => {
+    test("rejects feedback acceptance while quality is queued, absent, stale, or missing exact proof", async () => {
       contentOnlyReady = true;
-      for (const status of ["queued", "missing", "stale"] as const) {
+      for (const status of ["queued", "missing", "stale", "missing_digest", "missing_proof"] as const) {
         qualityMode = status;
-        expect(await submit("accept-component-revision", "revision-3", previewUrl, "commit-3", "source-1", "", "source-1")).toMatchObject({
+        expect(await submit("accept-component-revision", "revision-3", previewUrl, previewCommitSha, "source-1", "", "source-1")).toMatchObject({
           intent: "accept-component-revision", error: expect.stringContaining("quality check changed"),
         });
       }
@@ -150,12 +155,12 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
     test("rejects feedback acceptance after an exact preview identity change", async () => {
       contentOnlyReady = true;
       latestPreviewUrl = "https://preview.example/articles/rebuilt";
-      expect(await submit("accept-component-revision", "revision-3", previewUrl, "commit-3", "source-1", "", "source-1")).toMatchObject({
+      expect(await submit("accept-component-revision", "revision-3", previewUrl, previewCommitSha, "source-1", "", "source-1")).toMatchObject({
         intent: "accept-component-revision", error: expect.stringContaining("quality check changed"),
       });
       latestPreviewUrl = previewUrl;
       latestCommitSha = "commit-4";
-      expect(await submit("accept-component-revision", "revision-3", previewUrl, "commit-3", "source-1", "", "source-1")).toMatchObject({
+      expect(await submit("accept-component-revision", "revision-3", previewUrl, previewCommitSha, "source-1", "", "source-1")).toMatchObject({
         intent: "accept-component-revision", error: expect.stringContaining("quality check changed"),
       });
       expect(acceptMutations()).toHaveLength(0);
@@ -201,10 +206,10 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
 
     test("retries missing quality on the exact displayed revision, not its ancestor URL", async () => {
       qualityMode = "missing";
-      expect(await submit("retry-preview-quality", "revision-3", previewUrl, "commit-3")).toBeInstanceOf(Response);
+      expect(await submit("retry-preview-quality", "revision-3", previewUrl, previewCommitSha)).toBeInstanceOf(Response);
       expect(calls.filter((call) => call.method === "POST").at(-1)?.path).toBe("/api/v1/vibe-marketing/runs/revision-3/retry-preview-quality");
       latestCommitSha = "commit-4";
-      expect(await submit("retry-preview-quality", "revision-3", previewUrl, "commit-3")).toMatchObject({
+      expect(await submit("retry-preview-quality", "revision-3", previewUrl, previewCommitSha)).toMatchObject({
         intent: "retry-preview-quality", error: expect.stringContaining("preview changed"),
       });
       expect(calls.filter((call) => call.method === "POST")).toHaveLength(1);
@@ -235,7 +240,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
 
     test("rejects direct initial promotion even with a matched preview, while allowing publish-child recovery", async () => {
       for (const intent of ["promote-bundle", "publish-pr"]) {
-        expect(await submit(intent, "revision-3", previewUrl, "commit-3")).toMatchObject({
+        expect(await submit(intent, "revision-3", previewUrl, previewCommitSha)).toMatchObject({
           intent, error: expect.stringContaining("Review and approve"),
         });
       }

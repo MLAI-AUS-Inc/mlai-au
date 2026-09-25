@@ -558,14 +558,28 @@ export function revisionHasCurrentPreviewQuality(run: VibeMarketingRunSummary) {
   const qualityStatus = normalized(typeof quality.status === "string" ? quality.status : "");
   const qualityUrl = String(quality.preview_url ?? quality.previewUrl ?? "").trim();
   const previewUrl = String(run.livePreview?.previewUrl ?? "").trim();
+  const proof = run.livePreview?.proof && typeof run.livePreview.proof === "object"
+    ? run.livePreview.proof : {};
+  const proofSha = String(proof.commitSha ?? proof.commit_sha ?? "").trim();
+  const qualityHash = String(quality.inputs_sha256 ?? "").trim();
   const rawPreview = objectResultValue(run, "live_preview", "livePreview");
-  const currentGeneration = rawPreview.resumeGeneration ?? rawPreview.resume_generation ??
-    run.resumeGeneration ?? run.result?.["resume_generation"] ?? 0;
-  const qualityGeneration = Number(quality.resume_generation ?? quality.resumeGeneration ?? 0);
+  const parseGeneration = (value: unknown) => {
+    if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) return value;
+    if (typeof value === "string" && /^[0-9]+$/.test(value.trim())) {
+      const parsed = Number(value.trim());
+      return Number.isSafeInteger(parsed) ? parsed : null;
+    }
+    return null;
+  };
+  const currentGeneration = parseGeneration(rawPreview.resumeGeneration ?? rawPreview.resume_generation ??
+    run.result?.["resume_generation"] ?? run.resumeGeneration ?? 0);
+  const qualityGeneration = parseGeneration(quality.resume_generation ?? quality.resumeGeneration);
   return run.livePreview?.available === true && run.livePreview.exactRender === true &&
+    /^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/.test(proofSha) &&
+    /^[0-9a-fA-F]{64}$/.test(qualityHash) &&
     ["passed", "passed_no_baseline", "advisory_findings"].includes(qualityStatus) &&
     Boolean(qualityUrl && previewUrl && qualityUrl === previewUrl) &&
-    Number.isInteger(qualityGeneration) && qualityGeneration === Number(currentGeneration);
+    currentGeneration !== null && qualityGeneration !== null && qualityGeneration === currentGeneration;
 }
 
 export function revisionHasCurrentPublishApproval(run: VibeMarketingRunSummary) {

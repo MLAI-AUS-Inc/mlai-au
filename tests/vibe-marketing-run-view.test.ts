@@ -28,6 +28,9 @@ import {
 } from "../app/lib/vibe-marketing-run-view";
 import type { VibeMarketingBootstrap, VibeMarketingRunSummary } from "../app/types/vibe-marketing";
 
+const previewCommitSha = "a".repeat(40);
+const qualityInputSha = "b".repeat(64);
+
 function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarketingRunSummary {
   return {
     runId: "article-review-source",
@@ -52,7 +55,8 @@ function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarke
       status: "ready",
       previewUrl: "https://preview.example/articles/generated",
       exactRender: true,
-      commitSha: "preview-commit-3",
+      commitSha: previewCommitSha,
+      proof: { commitSha: previewCommitSha },
     },
     workflowProgress: {
       currentStepId: "publish",
@@ -73,7 +77,7 @@ function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarke
       review_surface_kind: "component_live_preview",
       preview_url: "https://preview.example/articles/generated",
       promote_bundle_url: "/api/runs/article-review-source/promote-bundle",
-      article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/generated", resume_generation: 0 },
+      article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/generated", resume_generation: 0, inputs_sha256: qualityInputSha },
     },
     ...overrides,
   };
@@ -128,7 +132,7 @@ describe("vibe marketing run view state", () => {
 
   test("targets the visible latest revision even when the page URL names an older source", () => {
     const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
-    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("revision-3");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("revision-3");
   });
 
   test("submits the preview identity actually shown on a stale source URL", () => {
@@ -147,7 +151,7 @@ describe("vibe marketing run view state", () => {
       const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
       expect(markup).toContain('name="reviewedRunId" value="revision-3"');
       expect(markup).toContain('name="reviewedPreviewUrl" value="https://preview.example/articles/generated"');
-      expect(markup).toContain('name="reviewedPreviewRevision" value="preview-commit-3"');
+      expect(markup).toContain(`name="reviewedPreviewRevision" value="${previewCommitSha}"`);
       expect(markup).toContain("Approve article and create PR");
       expect(markup).not.toContain('name="reviewedRunId" value="source-1"');
     } finally {
@@ -176,13 +180,14 @@ describe("vibe marketing run view state", () => {
       componentFeedback: { comments: [], latestBatch: { id: "batch-1", sourceRunId: "source-1", revisionRunId: "revision-3", status: "completed" } },
     });
     for (const quality of [null, { status: "queued", preview_url: revision.livePreview?.previewUrl, resume_generation: 0 },
-      { status: "passed", preview_url: "https://preview.example/articles/old", resume_generation: 0 }]) {
+      { status: "passed", preview_url: "https://preview.example/articles/old", resume_generation: 0, inputs_sha256: qualityInputSha },
+      { status: "passed", preview_url: revision.livePreview?.previewUrl, resume_generation: 0 }]) {
       const run = { ...revision, result: { ...revision.result, article_preview_quality: quality } };
       expect(renderAcceptance(run)).toContain('disabled=""');
     }
     for (const status of ["passed", "passed_no_baseline"]) {
       const run = { ...revision, result: { ...revision.result, article_preview_quality: {
-        status, preview_url: revision.livePreview?.previewUrl, resume_generation: 0,
+        status, preview_url: revision.livePreview?.previewUrl, resume_generation: 0, inputs_sha256: qualityInputSha,
       } } };
       const markup = renderAcceptance(run);
       expect(markup).toContain("Accept revised article");
@@ -192,13 +197,13 @@ describe("vibe marketing run view state", () => {
 
   test("fails closed when the draft identity changes after the approval form was rendered", () => {
     const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
-    expect(articleReviewApprovalTargetForRun(latest, "", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
-    expect(articleReviewApprovalTargetForRun(latest, "revision-2", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
-    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/older", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-2", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
+    expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/older", previewCommitSha)).toBe("");
     expect(articleReviewApprovalTargetForRun(latest, "revision-3", "https://preview.example/articles/generated", "preview-commit-2")).toBe("");
-    expect(articleReviewApprovalTargetForRun({ ...latest, status: "failed", approvalState: null }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
-    expect(articleReviewApprovalTargetForRun({ ...latest, sectionIssues: [{ id: "issue", sectionId: "section:intro", claimId: "claim", claimExcerpt: "Claim", reason: "Missing source", sourceHint: "", state: "needs_review" }] }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
-    expect(articleReviewApprovalTargetForRun({ ...latest, result: { ...latest.result, article_preview_quality: { status: "blocking_findings" } } }, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, status: "failed", approvalState: null }, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, sectionIssues: [{ id: "issue", sectionId: "section:intro", claimId: "claim", claimExcerpt: "Claim", reason: "Missing source", sourceHint: "", state: "needs_review" }] }, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
+    expect(articleReviewApprovalTargetForRun({ ...latest, result: { ...latest.result, article_preview_quality: { status: "blocking_findings" } } }, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
   });
 
   test("a forced Publish view waits for review but keeps recorded publish recovery", () => {
@@ -224,7 +229,7 @@ describe("vibe marketing run view state", () => {
     expect(hasRecordedArticlePublishApprovalOrHandoff(preapprovalPr)).toBe(false);
     expect(renderPublish(preapprovalPr)).not.toContain('value="promote-bundle"');
     expect(isArticleReviewPreviewReady(preapprovalPr)).toBe(true);
-    expect(articleReviewApprovalTargetForRun(preapprovalPr, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("revision-3");
+    expect(articleReviewApprovalTargetForRun(preapprovalPr, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("revision-3");
     expect(hasRecordedArticlePublishApprovalOrHandoff({ ...unapproved, result: {
       ...unapproved.result, latest_control_response: { publish_child_run_id: "old-child" },
     } })).toBe(false);
@@ -413,16 +418,21 @@ describe("vibe marketing run view state", () => {
       ...revision,
       status: "completed",
       approvalState: "approved",
-      livePreview: { available: true, status: "running", platformStatus: "ready", previewUrl, exactRender: true },
-      result: { status: "preview_ready", article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0 } },
+      livePreview: { available: true, status: "running", platformStatus: "ready", previewUrl, exactRender: true,
+        proof: { commitSha: previewCommitSha } },
+      result: { status: "preview_ready", article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0,
+        inputs_sha256: qualityInputSha } },
     });
     expect(articleWorkflowProgressForRunPage(passed, null)).toBe(passed.workflowProgress);
     expect(viewedWorkflowStepIdForRun(passed)).toBe("publish");
     expect(revisionHasCurrentPublishApproval(passed)).toBe(true);
-    expect(revisionHasCurrentPublishApproval({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed_no_baseline", preview_url: previewUrl, resume_generation: 0 } } })).toBe(true);
+    expect(revisionHasCurrentPublishApproval({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed_no_baseline", preview_url: previewUrl, resume_generation: 0,
+      inputs_sha256: qualityInputSha } } })).toBe(true);
     expect(articleWorkflowProgressForRunPage({ ...passed, approvalState: "not_required" }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
-    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/old", resume_generation: 0 } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
-    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, live_preview: { resumeGeneration: 1 }, article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0 } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
+    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, article_preview_quality: { status: "passed", preview_url: "https://preview.example/articles/old", resume_generation: 0,
+      inputs_sha256: qualityInputSha } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
+    expect(articleWorkflowProgressForRunPage({ ...passed, result: { ...passed.result, live_preview: { resumeGeneration: 1 }, article_preview_quality: { status: "passed", preview_url: previewUrl, resume_generation: 0,
+      inputs_sha256: qualityInputSha } } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
     expect(articleWorkflowProgressForRunPage({ ...passed, livePreview: { available: false, status: "building", previewUrl, exactRender: false } }, null)?.steps.find((step) => step.id === "publish")?.status).toBe("locked");
   });
 
@@ -455,7 +465,7 @@ describe("vibe marketing run view state", () => {
     const revision = articleRun({ runId: "revision-3", workflow: "article_revision", result: { status: "preview_ready" } });
     expect(revisionHasCurrentPreviewQuality(revision)).toBe(false);
     expect(articlePreviewQualityStateForRun(revision)).toMatchObject({ canRetry: true, blocksApproval: true });
-    expect(articleReviewApprovalTargetForRun(revision, "revision-3", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
+    expect(articleReviewApprovalTargetForRun(revision, "revision-3", "https://preview.example/articles/generated", previewCommitSha)).toBe("");
     const router = createMemoryRouter([{
       path: "/founder-tools/marketing/runs/:runId",
       element: createElement(LiveArticlePreviewPanel, {
