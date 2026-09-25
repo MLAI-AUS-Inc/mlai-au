@@ -4388,9 +4388,15 @@ export function PublishAndAutomateDetail({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
-            <h2 className="mt-1 text-xl font-black text-gray-950">Finish publishing this article</h2>
+            <h2 className="mt-1 text-xl font-black text-gray-950">
+              {isMerged || publishedWithoutPr ? "Publishing complete" : "Finish publishing this article"}
+            </h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Publish the article — the PR merges to main automatically once checks pass — then choose WhatsApp or Slack for daily research topics and email for completed drafts.
+              {isMerged || publishedWithoutPr
+                ? dailyEnabled
+                  ? "The publishing run is complete and daily topic discovery is enabled."
+                  : "The publishing run is complete. Enable daily topic discovery below if you want new suggestions."
+                : "Publish the article — the PR merges to main automatically once checks pass — then choose WhatsApp or Slack for daily research topics and email for completed drafts."}
             </p>
             {canViewArticle ? (
               <Link
