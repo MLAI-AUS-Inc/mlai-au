@@ -82,7 +82,7 @@ export function removeCategoryPrefix(slug: string): string {
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
-        date: "2026-09-25",
+        date: "2026-09-23",
         dateModified: "2026-09-23",
         description: "Start with one low-risk admin task, test an AI assistant on fictional data, and use a two-week pilot to measure time saved, corrections and cost.",
         author: "Dr Sam Donegan",
