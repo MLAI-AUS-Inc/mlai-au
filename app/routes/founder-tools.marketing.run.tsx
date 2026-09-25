@@ -5468,6 +5468,7 @@ function articleStepViewFromSearch(search: string): "generate" | "review" | "pub
 function workflowProgressForRunPage(
   run: VibeMarketingRunSummary,
   fallbackProgress: VibeMarketingWorkflowProgress | null | undefined,
+  dailyDiscoveryEnabled = false,
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (progress && run.workflow === "article_system_setup") {
@@ -5541,7 +5542,7 @@ function workflowProgressForRunPage(
       }),
     };
   }
-  return articleWorkflowProgressForRunPage(run, progress);
+  return articleWorkflowProgressForRunPage(run, progress, dailyDiscoveryEnabled);
 }
 
 export default function FounderToolsMarketingRun() {
@@ -5623,7 +5624,7 @@ export default function FounderToolsMarketingRun() {
   const requestedArticleStep = isArticleGenerationRun ? articleStepViewFromSearch(location.search) : null;
   const notificationReviewExpanded = isArticleGenerationRun && shouldOpenExpandedArticleReview(location.search);
   const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run), requestedArticleStep);
-  const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
+  const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress, bootstrap.settings.dailyDiscoveryEnabled);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
   const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));

@@ -115,6 +115,13 @@ describe("vibe marketing run view state", () => {
     expect(articleWorkflowProgressForRunPage(running, null)?.steps.find((step) => step.id === "publish")?.status).toBe("running");
     const done = normalizeMarketingRun({ ...raw, status: "completed" });
     expect(articleWorkflowProgressForRunPage(done, null)).toMatchObject({ currentStepId: "publish", nextStepId: "automation" });
+    expect(articleWorkflowProgressForRunPage(done, null, true)).toMatchObject({
+      currentStepId: "automation", nextStepId: null,
+      steps: [
+        { id: "profile", status: "complete" }, { id: "review", status: "complete" },
+        { id: "publish", status: "complete" }, { id: "automation", status: "complete", summary: "Recurring topic discovery is enabled.", primaryAction: null },
+      ],
+    });
   });
 
   test("keeps approval-ready article previews on the review step", () => {

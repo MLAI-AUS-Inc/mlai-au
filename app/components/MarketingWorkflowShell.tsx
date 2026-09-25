@@ -301,9 +301,12 @@ export default function MarketingWorkflowShell({
   const viewingRequiredGroup = viewedGroup.id === requiredGroup.id;
   const viewedIndex = Math.max(0, displayGroups.findIndex((group) => group.id === viewedGroup.id));
   const completeCount = displayGroups.filter((group) => group.status === "complete").length;
+  const workflowComplete = completeCount === displayGroups.length;
   const activeProgressCount = viewedGroup.status === "running" ? viewedIndex + 1 : completeCount;
   const percent = Math.max(4, Math.round((Math.max(completeCount, activeProgressCount) / displayGroups.length) * 100));
-  const headerLabel = viewingRequiredGroup
+  const headerLabel = workflowComplete
+    ? "Workflow complete"
+    : viewingRequiredGroup
     ? viewedGroup.status === "running"
       ? `Current step: ${viewedGroup.label}`
       : `Next required step: ${requiredGroup.label}`
