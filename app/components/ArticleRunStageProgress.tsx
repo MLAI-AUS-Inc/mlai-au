@@ -11,6 +11,8 @@ import ArticleRecoveryNotice, { isRunRecovering } from "./ArticleRecoveryNotice"
 import {
   articlePreconditionRepairStateForRun,
   isArticleGenerationActivelyRunning,
+  isPublishFlowSettled,
+  isRecordedArticlePublishChildRun,
 } from "~/lib/vibe-marketing-run-view";
 import { summarizeRunError } from "~/lib/vibe-marketing-run-failures";
 import type { VibeMarketingRunSummary, VibeMarketingStepState } from "~/types/vibe-marketing";
@@ -320,6 +322,7 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
   const runFailed = FAILED_RUN_STATUSES.has(run.status) && !repair.autoRecovering && !activeArticle;
   const runRunning = RUNNING_RUN_STATUSES.has(run.status) || repair.autoRecovering || activeArticle;
   const runComplete = run.status === "completed";
+  const publishedChild = runComplete && isRecordedArticlePublishChildRun(run) && isPublishFlowSettled(run);
   const activeStageIndex = STAGE_INDEX.get(activeStage) ?? 0;
 
   return ARTICLE_PROGRESS_STAGES.map((stage) => {
@@ -341,11 +344,14 @@ export function deriveArticleProgressStages(run: VibeMarketingRunSummary): Stage
 
     return {
       ...stage,
-      label: buildingHostedPreview && stage.id === "preview" ? "Building hosted preview" :
+      label: publishedChild && stage.id === "review" ? "Publishing complete" :
+        buildingHostedPreview && stage.id === "preview" ? "Building hosted preview" :
         applyingRevisionFeedback && stage.id === "drafting" ? "Revising draft" : stage.label,
       status,
       detail:
-        repair.isPrecondition && stage.id === "article_system" && status === "running"
+        publishedChild && stage.id === "review"
+          ? "The article pull request is merged. Check the public page for the live version."
+          : repair.isPrecondition && stage.id === "article_system" && status === "running"
           ? "Refreshing the repository article setup before topic research starts automatically."
           : repair.requiresUserAction && stage.id === "article_system" && status === "attention"
             ? repair.message
@@ -394,6 +400,7 @@ function articleRunFailureDetails(run: VibeMarketingRunSummary) {
 
 export default function ArticleRunStageProgress({ run, variant = "standalone", reviewHref }: ArticleRunStageProgressProps) {
   const stages = deriveArticleProgressStages(run);
+  const publishedChild = run.status === "completed" && isRecordedArticlePublishChildRun(run) && isPublishFlowSettled(run);
   const repair = articlePreconditionRepairStateForRun(run);
   const failureDetails = articleRunFailureDetails(run);
   const embedded = variant === "embedded";
@@ -412,7 +419,7 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
         : activeStage?.status === "attention"
       ? "This article run needs attention"
       : run.status === "completed"
-        ? "Article ready for review"
+        ? publishedChild ? "Article publishing complete" : "Article ready for review"
         : activeStage?.label ?? "Generating article";
 
   return (
@@ -420,7 +427,7 @@ export default function ArticleRunStageProgress({ run, variant = "standalone", r
       <ArticleRecoveryNotice run={run} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-wide text-violet-600">Generating article</p>
+          <p className="text-xs font-black uppercase tracking-wide text-violet-600">{publishedChild ? "Publishing article" : "Generating article"}</p>
           <h2 className={clsx("mt-1 font-black text-gray-950", embedded ? "text-lg" : "text-xl")}>{headline}</h2>
           <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-gray-600">
             {activeStage?.detail ?? "We are preparing the generated article package."}

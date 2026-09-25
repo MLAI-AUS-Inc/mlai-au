@@ -148,6 +148,41 @@ describe("article generation asset stage", () => {
 });
 
 describe("hosted article preview progress", () => {
+  test("shows a merged publish child as publishing complete without reopening review", () => {
+    const run = repairingArticle({
+      runId: "publish-approved-article",
+      sourceRunId: "component-revision-approved",
+      workflow: "direct_generate",
+      status: "completed",
+      currentStep: "finalize",
+      errorCode: null,
+      preconditionStatus: null,
+      repairStatus: null,
+      stepOrder: ["load_context", "verify_build", "publish_preview_draft", "finalize"],
+      steps: ["load_context", "verify_build", "publish_preview_draft", "finalize"].map((key) => ({
+        key, name: key, required: true, status: "completed", attempts: 1, artifacts: [],
+      })),
+      result: { merge_status: "merged", pr_url: "https://github.com/example/site/pull/1" },
+    });
+    const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+
+    expect(deriveArticleProgressStages(run).find((stage) => stage.id === "review")).toMatchObject({
+      label: "Publishing complete", status: "complete",
+    });
+    expect(markup).toContain("Article publishing complete");
+    expect(markup).toContain("The article pull request is merged");
+    expect(markup).not.toContain("Article ready for review");
+  });
+
+  test("keeps an ordinary completed draft ready for review", () => {
+    const run = repairingArticle({
+      status: "completed", currentStep: "finalize", errorCode: null,
+      preconditionStatus: null, repairStatus: null,
+    });
+    const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+    expect(markup).toContain("Article ready for review");
+  });
+
   test("shows a revision building its hosted preview after every recorded step completes", () => {
     const stepOrder = ["load_revision_context", "plan_article", "render_article", "finalize"];
     const run = repairingArticle({
