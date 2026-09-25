@@ -627,7 +627,7 @@ export function currentHostedQualityIssuesForRun(run: VibeMarketingRunSummary): 
   ) return [];
   const components = run.componentManifest?.components ?? [];
   return (run.hostedQualityIssues ?? []).map((issue) => (
-    issue.componentId && !components.some((component) => component.id === issue.componentId)
+    issue.componentId && !components.some((component) => component.id === issue.componentId && component.editable === true)
       ? { ...issue, componentId: null, sectionId: null, canRemoveSection: false }
       : issue
   ));
