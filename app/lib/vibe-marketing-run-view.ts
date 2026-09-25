@@ -379,6 +379,21 @@ export function articleWorkflowProgressForRunPage(
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (!progress) return progress;
+  const publishChildState = articlePublishHandoffProgressState(run);
+  if (run.workflow === "article_revision" && publishChildState) {
+    return {
+      ...progress,
+      currentStepId: "publish",
+      nextStepId: null,
+      steps: progress.steps.map((step) =>
+        step.id === "publish"
+          ? { ...step, status: publishChildState, primaryAction: null }
+          : step.id === "automation"
+            ? { ...step, status: "locked", primaryAction: null }
+            : step,
+      ),
+    };
+  }
   if (run.workflow === "article_revision" && !revisionHasCurrentPublishApproval(run) && !hasApprovedArticlePublishChildRecovery(run)) {
     return {
       ...progress,
@@ -460,6 +475,17 @@ function hasPublishChildReference(run: VibeMarketingRunSummary) {
     stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id", "promote_bundle_requested_at") ||
       boolResultValue(run, "publish_handoff_pending"),
   );
+}
+
+function articlePublishHandoffProgressState(run: VibeMarketingRunSummary): "running" | "blocked" | null {
+  const childRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
+  const status = normalized(run.publishChildStatus || stringResultValue(run, "publish_child_status", "publishChildStatus"));
+  if (childRunId && ["blocked", "failed"].includes(status)) return "blocked";
+  if (run.result?.["publish_handoff_pending"] === true) {
+    return run.result?.["publish_handoff_stale"] === true ? "blocked" : "running";
+  }
+  if (childRunId && ["queued", "running"].includes(status)) return "running";
+  return null;
 }
 
 export function articlePublishQualityGateForRun(run: VibeMarketingRunSummary): "blocked" | "running" | null {
@@ -702,12 +728,13 @@ export function viewedWorkflowStepIdForRun(
     // A newly-started or self-healing article always belongs on Generate. The
     // organisation-level workflow progress can still point at the previous
     // article's Review/Publish step while this run is only checking its repo.
-    if (isArticleGenerationActivelyRunning(run) || repair.isPrecondition || isArticleGenerationBlockedBeforeReview(run)) return "generate";
+    if ((!hasPublishChildReference(run) && isArticleGenerationActivelyRunning(run)) ||
+        repair.isPrecondition || isArticleGenerationBlockedBeforeReview(run)) return "generate";
   }
   // Explicit user override (e.g. ?articleStep=review) lets the user jump back to
   // the article preview at any point, even after the run has moved to publish.
   if (requestedArticleStep && ARTICLE_GENERATION_WORKFLOWS.has(workflow)) return requestedArticleStep;
-  if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
+  if (workflow === "article_revision") return hasPublishChildReference(run) || hasPublishHandoffEvidence(run) ? "publish" : "revise";
   if (ARTICLE_GENERATION_WORKFLOWS.has(workflow)) {
     if (isArticleReviewPreviewReady(run)) return "review";
     if (hasPublishHandoffEvidence(run)) return "publish";

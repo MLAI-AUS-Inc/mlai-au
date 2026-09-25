@@ -199,7 +199,17 @@ describe("vibe marketing run view state", () => {
     const run = articleRun({
       runId: "revision-3", workflow: "article_revision", status: "completed", approvalState: null,
       publishChildStatus: "queued",
+      componentFeedback: { comments: [], latestBatch: { id: "batch-1", sourceRunId: "source-1", revisionRunId: "revision-3", status: "completed" } },
       result: { ...articleRun().result, publish_child_run_id: "publish-child-3", publish_child_status: "queued" },
+    });
+    expect(viewedWorkflowStepIdForRun(run)).toBe("publish");
+    expect(articleWorkflowProgressForRunPage(run, null)).toMatchObject({
+      currentStepId: "publish", steps: [{ id: "review" }, { id: "publish", status: "running", primaryAction: null }],
+    });
+    const blockedChild = { ...run, publishChildStatus: "blocked", result: { ...run.result, publish_child_status: "blocked" } };
+    expect(viewedWorkflowStepIdForRun(blockedChild)).toBe("publish");
+    expect(articleWorkflowProgressForRunPage(blockedChild, null)?.steps.find((step) => step.id === "publish")).toMatchObject({
+      status: "blocked", primaryAction: null,
     });
     const render = (element: ReturnType<typeof createElement>) => {
       const router = createMemoryRouter([{
@@ -212,6 +222,7 @@ describe("vibe marketing run view state", () => {
       run, selectedComponent: null, onSelectComponent: () => {}, isSubmitting: false, initiallyExpanded: true,
     }));
     expect(review).not.toContain('value="approve"');
+    expect(review).not.toContain("Accept revised article");
     expect(render(createElement(ArticleWorkflowPrimaryAction, { run, isSubmitting: false }))).not.toContain('value="promote-bundle"');
     expect(render(createElement(ArticleWorkflowPrimaryAction, { run: { ...run, approvalState: "approved" }, isSubmitting: false }))).not.toContain('value="promote-bundle"');
     const publish = render(createElement(PublishAndAutomateDetail, {
@@ -222,6 +233,37 @@ describe("vibe marketing run view state", () => {
     expect(publish).toContain("publish run is queued");
     expect(publish).not.toContain("Review and approve the latest article draft before publishing.");
     expect(publish).not.toContain('value="promote-bundle"');
+
+    const pending = { ...run, publishChildStatus: null, result: {
+      ...run.result, publish_child_run_id: undefined, publish_child_status: undefined, publish_handoff_pending: true,
+    } };
+    expect(viewedWorkflowStepIdForRun(pending)).toBe("publish");
+    expect(articleWorkflowProgressForRunPage(pending, null)?.steps.find((step) => step.id === "publish")).toMatchObject({
+      status: "running", primaryAction: null,
+    });
+    const pendingPublish = render(createElement(PublishAndAutomateDetail, {
+      run: pending, bootstrap: { checks: {}, settings: { dailyDiscoveryEnabled: false } } as unknown as VibeMarketingBootstrap,
+      isSubmitting: false,
+    }));
+    expect(pendingPublish).toContain("Preparing publish");
+    expect(pendingPublish).toContain("publish run is pending");
+    expect(pendingPublish).not.toContain("Review and approve the latest article draft before publishing.");
+
+    const childWaitingForHandoff = { ...run, publishChildStatus: "blocked", publishChildRecoverable: true, result: {
+      ...run.result, publish_child_status: "blocked", publish_child_recoverable: true, publish_handoff_pending: true,
+    } };
+    expect(articleWorkflowProgressForRunPage(childWaitingForHandoff, null)?.steps.find((step) => step.id === "publish")).toMatchObject({
+      status: "blocked", primaryAction: null,
+    });
+    const waitingPublish = render(createElement(PublishAndAutomateDetail, {
+      run: childWaitingForHandoff,
+      bootstrap: { checks: {}, settings: { dailyDiscoveryEnabled: false } } as unknown as VibeMarketingBootstrap,
+      isSubmitting: false,
+    }));
+    expect(waitingPublish).toContain("existing publish run is blocked while the article&#x27;s approval handoff is being prepared");
+    expect(waitingPublish).not.toContain("Preparing publish");
+    expect(waitingPublish).not.toContain("Review and approve the latest article draft before publishing.");
+    expect(waitingPublish).not.toContain('value="promote-bundle"');
   });
 
   test("fails closed when the draft identity changes after the approval form was rendered", () => {

@@ -3202,6 +3202,7 @@ export function LiveArticlePreviewPanel({
           const canOfferRevisionAcceptance =
             run.workflow === "article_revision" &&
             run.status === "completed" &&
+            !hasRecordedArticlePublishApprovalOrHandoff(run) &&
             reviewState.evidenceIssueCount === 0 &&
             reviewState.draftComments.length === 0 &&
             reviewState.latestBatch?.status !== "accepted" &&
@@ -4208,13 +4209,16 @@ export function PublishAndAutomateDetail({
       !prUrl &&
       !previewUrl,
   );
+  const publishChildAwaitingHandoff = Boolean(
+    publishHandoffPending && run.result?.["publish_handoff_stale"] !== true &&
+      publishChildRunId && publishChildStatus === "blocked" && !prUrl && !previewUrl,
+  );
   const publishPending = Boolean(
     !publishHandoffStale &&
-      !publishChildRecoverable &&
       !publishChildApprovalRequired &&
-      (publishStep?.status === "running" ||
-        publishChildRunning ||
-      (publishHandoffPending && !publishChildRunId)),
+      !["blocked", "failed"].includes(publishChildStatus) &&
+      ((publishHandoffPending && !prUrl && !previewUrl) ||
+        (!publishChildRecoverable && (publishStep?.status === "running" || publishChildRunning))),
   );
   const prNumber =
     stringResultValue(run, "pr_number", "pull_request_number", "draft_pr_number") ||
@@ -4293,7 +4297,7 @@ export function PublishAndAutomateDetail({
             status={
               isMerged || publishedWithoutPr
                 ? "complete"
-                : hasUnresolvedEvidence || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
+                : hasUnresolvedEvidence || mergeBlocked || publishChildFailed || publishChildAwaitingHandoff || publishQualityGate === "blocked"
                   ? "blocked"
                   : prUrl || publishPending || publishQualityGate === "running"
                     ? "running"
@@ -4310,6 +4314,8 @@ export function PublishAndAutomateDetail({
                 ? "Evidence needs review"
                 : publishPending
                   ? "Creating PR"
+                : publishChildAwaitingHandoff
+                  ? "Waiting for handoff"
                 : !hasApprovedPublishHandoff
                   ? "Article review required"
                 : mergeBlocked
@@ -4382,6 +4388,10 @@ export function PublishAndAutomateDetail({
                   Preparing publish
                 </button>
               </div>
+            ) : publishChildAwaitingHandoff ? (
+              <p className="text-sm font-semibold text-gray-600">
+                The existing publish run is blocked while the article's approval handoff is being prepared. This page updates automatically.
+              </p>
             ) : !hasApprovedPublishHandoff ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">Review and approve the latest article draft before publishing.</p>
