@@ -1,4 +1,4 @@
-import type { VibeMarketingRunSummary, VibeMarketingWorkflowProgress } from "~/types/vibe-marketing";
+import type { VibeMarketingHostedQualityIssue, VibeMarketingRunSummary, VibeMarketingWorkflowProgress } from "~/types/vibe-marketing";
 
 const ARTICLE_WORKFLOWS = new Set([
   "article_generation",
@@ -606,6 +606,31 @@ export function revisionHasCurrentPreviewQuality(run: VibeMarketingRunSummary) {
     ["passed", "passed_no_baseline", "advisory_findings"].includes(qualityStatus) &&
     Boolean(qualityUrl && previewUrl && qualityUrl === previewUrl) &&
     currentGeneration !== null && qualityGeneration !== null && qualityGeneration === currentGeneration;
+}
+
+/** Render hosted findings only beside the exact preview attempt that was checked. */
+export function currentHostedQualityIssuesForRun(run: VibeMarketingRunSummary): VibeMarketingHostedQualityIssue[] {
+  const quality = objectResultValue(run, "article_preview_quality", "articlePreviewQuality");
+  const qualityUrl = String(quality.preview_url ?? quality.previewUrl ?? "").trim();
+  const previewUrl = String(run.livePreview?.previewUrl ?? "").trim();
+  const rawPreview = objectResultValue(run, "live_preview", "livePreview");
+  const rawGeneration = rawPreview.resumeGeneration ?? rawPreview.resume_generation ??
+    run.resumeGeneration ?? run.result?.["resume_generation"] ?? 0;
+  const qualityGeneration = quality.resume_generation ?? quality.resumeGeneration;
+  if (
+    quality.status !== "blocking_findings" ||
+    run.livePreview?.available !== true || run.livePreview.exactRender !== true ||
+    !qualityUrl || qualityUrl !== previewUrl ||
+    qualityGeneration === undefined || qualityGeneration === null ||
+    !Number.isInteger(Number(qualityGeneration)) ||
+    Number(qualityGeneration) !== Number(rawGeneration)
+  ) return [];
+  const components = run.componentManifest?.components ?? [];
+  return (run.hostedQualityIssues ?? []).map((issue) => (
+    issue.componentId && !components.some((component) => component.id === issue.componentId)
+      ? { ...issue, componentId: null, sectionId: null, canRemoveSection: false }
+      : issue
+  ));
 }
 
 export function revisionHasCurrentPublishApproval(run: VibeMarketingRunSummary) {

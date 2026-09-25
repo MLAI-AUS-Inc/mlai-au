@@ -13,6 +13,7 @@ import type {
   VibeMarketingComponentFeedbackBatch,
   VibeMarketingComponentFeedbackComment,
   VibeMarketingSectionIssue,
+  VibeMarketingHostedQualityIssue,
   VibeMarketingComponentManifest,
   VibeMarketingComponentManifestItem,
   VibeMarketingContentPackage,
@@ -454,6 +455,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
     componentFeedback: normalizeComponentFeedback(payload.componentFeedback ?? payload.component_feedback),
     sectionIssues: normalizeSectionIssues(payload.sectionIssues ?? payload.section_issues),
+    hostedQualityIssues: normalizeHostedQualityIssues(payload.hostedQualityIssues ?? payload.hosted_quality_issues),
     reviewDraftHtml: asNullableString(payload.reviewDraftHtml ?? payload.review_draft_html),
     reviewDraftActionsAvailable: (payload.reviewDraftActionsAvailable ?? payload.review_draft_actions_available) === true,
     scanProgress: normalizeScanProgress(payload.scanProgress ?? payload.scan_progress ?? result.scanProgress ?? result.scan_progress),
@@ -1253,6 +1255,28 @@ function normalizeSectionIssues(raw: unknown): VibeMarketingSectionIssue[] {
       reason: asNullableString(item.reason) ?? "Evidence for this claim could not be confirmed.",
       state,
       sourceHint: asNullableString(item.sourceHint) ?? asNullableString(item.source_hint) ?? "",
+    }];
+  });
+}
+
+function normalizeHostedQualityIssues(raw: unknown): VibeMarketingHostedQualityIssue[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(0, 30).flatMap((value) => {
+    const item = value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>) : null;
+    if (!item) return [];
+    const claimId = asNullableString(item.claimId) ?? "";
+    const id = asNullableString(item.id) ?? "";
+    const componentId = asNullableString(item.componentId);
+    const sectionId = asNullableString(item.sectionId);
+    if (!/^claim-[0-9]{1,6}$/.test(claimId) || id !== `hosted:${claimId}` ||
+      (componentId && !/^[A-Za-z0-9][A-Za-z0-9:_-]{0,119}$/.test(componentId)) ||
+      (sectionId && !/^section:[A-Za-z0-9][A-Za-z0-9_-]{0,119}$/.test(sectionId))) return [];
+    return [{
+      id, claimId, componentId, sectionId,
+      reason: (asNullableString(item.reason) ?? "Hosted quality review needs a correction.").slice(0, 320),
+      sourceHint: (asNullableString(item.sourceHint) ?? "Hosted article quality review").slice(0, 120),
+      canRemoveSection: item.canRemoveSection === true && Boolean(componentId && sectionId && componentId === sectionId),
     }];
   });
 }
