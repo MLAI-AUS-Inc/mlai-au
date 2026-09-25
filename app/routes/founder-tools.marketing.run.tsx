@@ -5624,7 +5624,12 @@ export default function FounderToolsMarketingRun() {
   const requestedArticleStep = isArticleGenerationRun ? articleStepViewFromSearch(location.search) : null;
   const notificationReviewExpanded = isArticleGenerationRun && shouldOpenExpandedArticleReview(location.search);
   const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run), requestedArticleStep);
-  const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress, bootstrap.settings.dailyDiscoveryEnabled);
+  const dailyDiscoveryEnabled = Boolean(
+    bootstrap.settings.dailyDiscoveryEnabled ||
+    bootstrap.checks.dailyAutomation?.enabled ||
+    bootstrap.checks.dailyAutomation?.passed,
+  );
+  const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress, dailyDiscoveryEnabled);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
   const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));
