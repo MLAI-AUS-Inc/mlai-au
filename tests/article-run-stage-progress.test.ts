@@ -183,6 +183,18 @@ describe("hosted article preview progress", () => {
     expect(markup).toContain("Article ready for review");
   });
 
+  test("shows an approved source revision as published after its merged handoff", () => {
+    const run = repairingArticle({
+      runId: "component-revision-approved", workflow: "article_revision", status: "completed",
+      approvalState: "approved", currentStep: "finalize", errorCode: null,
+      preconditionStatus: null, repairStatus: null,
+      result: { merge_status: "merged", pr_url: "https://github.com/example/site/pull/1" },
+    });
+    const markup = renderToStaticMarkup(createElement(ArticleRunStageProgress, { run, variant: "embedded" }));
+    expect(markup).toContain("Article publishing complete");
+    expect(markup).not.toContain("Article ready for review");
+  });
+
   test("shows a revision building its hosted preview after every recorded step completes", () => {
     const stepOrder = ["load_revision_context", "plan_article", "render_article", "finalize"];
     const run = repairingArticle({

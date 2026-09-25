@@ -380,9 +380,12 @@ export function articleWorkflowProgressForRunPage(
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (!progress) return progress;
-  if (isRecordedArticlePublishChildRun(run)) {
+  const publishedSource = run.workflow === "article_revision" && isCompletedPublishedArticleRun(run);
+  if (isRecordedArticlePublishChildRun(run) || publishedSource) {
     const state = normalized(run.status);
-    const publishStatus = ["blocked", "failed"].includes(state)
+    const publishStatus = publishedSource
+      ? "complete"
+      : ["blocked", "failed"].includes(state)
       ? "blocked"
       : state === "completed"
         ? "complete"
@@ -744,6 +747,13 @@ export function isPublishFlowSettled(run: VibeMarketingRunSummary) {
   const previewEvidence =
     publishPreviewUrlForRun(run) || stringResultValue(run, "publish_child_preview_url", "publishChildPreviewUrl");
   return childStatus === "completed" && Boolean(previewEvidence);
+}
+
+export function isCompletedPublishedArticleRun(run: VibeMarketingRunSummary) {
+  return run.status === "completed" && isPublishFlowSettled(run) && (
+    isRecordedArticlePublishChildRun(run) ||
+    (run.workflow === "article_revision" && run.approvalState === "approved")
+  );
 }
 
 export function isPublishApprovalGate(run: VibeMarketingRunSummary) {

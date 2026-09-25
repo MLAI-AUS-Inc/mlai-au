@@ -122,6 +122,28 @@ describe("vibe marketing run view state", () => {
         { id: "publish", status: "complete" }, { id: "automation", status: "complete", summary: "Recurring topic discovery is enabled.", primaryAction: null },
       ],
     });
+    const publishedSource = articleRun({
+      runId: "component-revision-approved", workflow: "article_revision", status: "completed",
+      approvalState: "approved", publishChildStatus: "completed",
+      workflowProgress: {
+        currentStepId: "publish",
+        steps: [
+          { id: "review", label: "Review article", phase: "article", status: "complete", href: "/review" },
+          { id: "publish", label: "Publish article", phase: "article", status: "ready", href: "/publish" },
+          { id: "automation", label: "Daily automation", phase: "article", status: "ready", href: "/automation" },
+        ],
+      },
+      result: {
+        ...articleRun().result, merge_status: "merged",
+        pr_url: "https://github.com/example/site/pull/1",
+        publish_child_run_id: "publish-approved-child",
+      },
+    });
+    expect(articleWorkflowProgressForRunPage(publishedSource, null, true)).toMatchObject({
+      currentStepId: "automation", nextStepId: null,
+    });
+    expect(articleWorkflowProgressForRunPage(publishedSource, null, true)?.steps.find((step) => step.id === "publish")?.status).toBe("complete");
+    expect(articleWorkflowProgressForRunPage(publishedSource, null, true)?.steps.find((step) => step.id === "automation")?.status).toBe("complete");
   });
 
   test("keeps approval-ready article previews on the review step", () => {
