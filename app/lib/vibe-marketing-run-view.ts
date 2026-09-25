@@ -379,6 +379,28 @@ export function articleWorkflowProgressForRunPage(
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (!progress) return progress;
+  if (isRecordedArticlePublishChildRun(run)) {
+    const state = normalized(run.status);
+    const publishStatus = ["blocked", "failed"].includes(state)
+      ? "blocked"
+      : state === "completed"
+        ? "complete"
+        : ["queued", "running", "processing", "in_progress"].includes(state)
+          ? "running"
+          : "ready";
+    return {
+      ...progress,
+      currentStepId: "publish",
+      nextStepId: publishStatus === "complete" ? "automation" : null,
+      steps: progress.steps.map((step) =>
+        step.id === "publish"
+          ? { ...step, status: publishStatus, primaryAction: null }
+          : step.id === "automation"
+            ? { ...step, status: publishStatus === "complete" ? step.status : "locked" }
+            : { ...step, status: "complete", primaryAction: null },
+      ),
+    };
+  }
   const publishChildState = articlePublishHandoffProgressState(run);
   if (run.workflow === "article_revision" && publishChildState) {
     return {
@@ -650,7 +672,8 @@ export function hasApprovedArticlePublishChildRecovery(run: VibeMarketingRunSumm
 export function isRecordedArticlePublishChildRun(run: VibeMarketingRunSummary) {
   if (!isArticleWorkflow(run.workflow) || run.workflow === "article_revision" || !run.runId.trim()) return false;
   const result = run.result ?? {};
-  return result.publish_child_run_id === run.runId || result.promoted_publish_job_id === run.runId;
+  return result.publish_child_run_id === run.runId || result.promoted_publish_job_id === run.runId ||
+    (run.runId.startsWith("publish-") && Boolean(run.sourceRunId?.trim()));
 }
 
 export function articlePublishChildApprovalEvidenceUrlForRun(run: VibeMarketingRunSummary) {
@@ -742,6 +765,7 @@ export function viewedWorkflowStepIdForRun(
   requestedArticleStep?: ArticleStepViewForRun | null,
 ) {
   const workflow = String(run.workflow ?? "");
+  if (isRecordedArticlePublishChildRun(run)) return requestedArticleStep ?? "publish";
   if (DISCOVERY_WORKFLOWS.has(workflow)) {
     return run.status === "awaiting_confirmation" ? "choose_topic" : "research";
   }

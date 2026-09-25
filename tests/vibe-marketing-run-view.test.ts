@@ -27,6 +27,7 @@ import {
   viewedWorkflowStepIdForRun,
 } from "../app/lib/vibe-marketing-run-view";
 import type { VibeMarketingBootstrap, VibeMarketingRunSummary } from "../app/types/vibe-marketing";
+import { normalizeMarketingRun } from "../app/lib/vibe-marketing";
 
 const previewCommitSha = "a".repeat(40);
 const qualityInputSha = "b".repeat(64);
@@ -84,6 +85,38 @@ function articleRun(overrides: Partial<VibeMarketingRunSummary> = {}): VibeMarke
 }
 
 describe("vibe marketing run view state", () => {
+  test("keeps an approved publish child on Publish through retries", () => {
+    const raw = {
+      runId: "publish-approved-child", workflow: "direct_generate", sourceRunId: "component-revision-reviewed",
+      status: "blocked", currentStep: "verify_build", result: { status: "blocked_promotion_snapshot" },
+      workflowProgress: {
+        currentStepId: "profile",
+        steps: [
+          { id: "profile", label: "Startup profile", phase: "setup", status: "needs_action", href: "/profile" },
+          { id: "review", label: "Review article", phase: "article", status: "needs_action", href: "/review" },
+          { id: "publish", label: "Publish article", phase: "article", status: "ready", href: "/publish" },
+          { id: "automation", label: "Automation", phase: "article", status: "ready", href: "/automation" },
+        ],
+      },
+    };
+    const child = normalizeMarketingRun(raw);
+    expect(child.sourceRunId).toBe("component-revision-reviewed");
+    expect(isRecordedArticlePublishChildRun(child)).toBe(true);
+    expect(viewedWorkflowStepIdForRun(child)).toBe("publish");
+    expect(viewedWorkflowStepIdForRun(child, null, null, "review")).toBe("review");
+    expect(articleWorkflowProgressForRunPage(child, null)).toMatchObject({
+      currentStepId: "publish", nextStepId: null,
+      steps: [
+        { id: "profile", status: "complete" }, { id: "review", status: "complete" },
+        { id: "publish", status: "blocked", primaryAction: null }, { id: "automation", status: "locked" },
+      ],
+    });
+    const running = normalizeMarketingRun({ ...raw, status: "running" });
+    expect(articleWorkflowProgressForRunPage(running, null)?.steps.find((step) => step.id === "publish")?.status).toBe("running");
+    const done = normalizeMarketingRun({ ...raw, status: "completed" });
+    expect(articleWorkflowProgressForRunPage(done, null)).toMatchObject({ currentStepId: "publish", nextStepId: "automation" });
+  });
+
   test("keeps approval-ready article previews on the review step", () => {
     const run = articleRun();
 
