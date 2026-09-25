@@ -79,6 +79,7 @@ export interface VibeMarketingRunSummary {
   livePreview?: VibeMarketingLivePreview | null;
   componentFeedback?: VibeMarketingComponentFeedback | null;
   sectionIssues?: VibeMarketingSectionIssue[];
+  hostedQualityIssues?: VibeMarketingHostedQualityIssue[];
   reviewDraftHtml?: string | null;
   reviewDraftActionsAvailable?: boolean;
   scanProgress?: VibeMarketingScanProgress | null;
@@ -749,6 +750,16 @@ export interface VibeMarketingSectionIssue {
   reason: string;
   state: "needs_review" | "removed";
   sourceHint: string;
+}
+
+export interface VibeMarketingHostedQualityIssue {
+  id: string;
+  claimId: string;
+  componentId: string | null;
+  sectionId: string | null;
+  reason: string;
+  sourceHint: string;
+  canRemoveSection: boolean;
 }
 
 export interface VibeMarketingComponentFeedbackBatch {

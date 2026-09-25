@@ -54,6 +54,7 @@ import {
   articlePublishChildApprovalTargetForRun,
   articlePublishQualityGateForRun,
   articlePreviewQualityStateForRun,
+  currentHostedQualityIssuesForRun,
   articleReviewApprovalPreviewUrlForRun,
   articleReviewApprovalTargetForRun,
   articleReviewApproveIntentForRun,
@@ -111,6 +112,7 @@ import type {
   VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackComment,
   VibeMarketingSectionIssue,
+  VibeMarketingHostedQualityIssue,
   VibeMarketingNotificationChannel,
   VibeMarketingBootstrap,
   VibeMarketingGithubReposResponse,
@@ -2358,8 +2360,10 @@ export function LivePreviewCommentInspectorPanel({
   const serverComments = useMemo(() => run.componentFeedback?.comments ?? [], [run.componentFeedback?.comments]);
   const [comments, setComments] = useState<VibeMarketingComponentFeedbackComment[]>(serverComments);
   const evidenceIssues = (run.sectionIssues ?? []).filter((issue) => issue.state === "needs_review");
+  const hostedQualityIssues = currentHostedQualityIssuesForRun(run);
   const evidenceFetcher = useFetcher();
   const [openEvidenceIssueId, setOpenEvidenceIssueId] = useState<string | null>(null);
+  const [openHostedIssueId, setOpenHostedIssueId] = useState<string | null>(null);
   const [evidenceCommentBody, setEvidenceCommentBody] = useState("");
   const [evidenceSaveError, setEvidenceSaveError] = useState<string | null>(null);
   const [evidenceMutationId, setEvidenceMutationId] = useState<string | null>(null);
@@ -2543,6 +2547,7 @@ export function LivePreviewCommentInspectorPanel({
     setPendingPin(null);
     setOpenCommentId(null);
     setOpenEvidenceIssueId(null);
+    setOpenHostedIssueId(null);
     setComponentMeasurements({});
   }, [preview?.previewUrl, preview?.inspectorMode, preview?.inspectorProtocolVersion, reviewDraftHtml]);
 
@@ -2637,19 +2642,21 @@ export function LivePreviewCommentInspectorPanel({
   }, [canRenderPreview, expansionRunKey, initiallyExpanded]);
 
   useEffect(() => {
-    if (!previewExpanded && !openEvidenceIssueId) return;
+    if (!previewExpanded && !openEvidenceIssueId && !openHostedIssueId) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [previewExpanded]);
+  }, [previewExpanded, openEvidenceIssueId, openHostedIssueId]);
 
   useEffect(() => {
     if (!previewExpanded) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (openEvidenceIssueId) {
+      if (openHostedIssueId) {
+        setOpenHostedIssueId(null);
+      } else if (openEvidenceIssueId) {
         setOpenEvidenceIssueId(null);
       } else if (!pendingPin && !openCommentId) {
         setPreviewExpanded(false);
@@ -2657,7 +2664,7 @@ export function LivePreviewCommentInspectorPanel({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [openCommentId, openEvidenceIssueId, pendingPin, previewExpanded]);
+  }, [openCommentId, openEvidenceIssueId, openHostedIssueId, pendingPin, previewExpanded]);
 
   useEffect(() => {
     if (!canRenderPreview) {
@@ -2840,6 +2847,31 @@ export function LivePreviewCommentInspectorPanel({
                   ) : null}
                 </div>
               ) : null}
+              {hostedQualityIssues.length ? (
+                <div role="status" className="max-h-56 overflow-y-auto border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                  <p className="font-black">{hostedQualityIssues.length} hosted quality finding{hostedQualityIssues.length === 1 ? "" : "s"} to review</p>
+                  <p className="mt-1">Select a highlighted part of the article to see why it was flagged and leave a revision comment.</p>
+                  <ul className="mt-2 space-y-2">
+                    {hostedQualityIssues.map((issue) => (
+                      <li key={issue.id} className="rounded-lg border border-amber-200 bg-white p-2">
+                        {issue.componentId ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenHostedIssueId(issue.id);
+                              sendInspectorCommand({ type: "scrollToComponent", componentId: issue.componentId });
+                            }}
+                            className="font-black underline decoration-amber-400 underline-offset-2 hover:text-amber-700"
+                          >
+                            {components.find((component) => component.id === issue.componentId)?.label || issue.componentId}
+                          </button>
+                        ) : <span className="font-black">{issue.claimId}: No exact page location recorded</span>}
+                        <p className="mt-1">{issue.reason}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               <div className={clsx("relative", previewExpanded && "min-h-0 flex-1")}>
                 {legacyInspectorWarning ? (
                   <div className="absolute left-4 right-4 top-4 z-30 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 shadow-sm">
@@ -2906,6 +2938,21 @@ export function LivePreviewCommentInspectorPanel({
                     true,
                   )}
                   removePending={evidenceSavePending}
+                  readOnly={readOnly || !draftActionsAvailable}
+                />
+                <ArticleHostedQualityIssueOverlay
+                  issues={hostedQualityIssues}
+                  measurements={componentMeasurements}
+                  viewportHeight={iframeRef.current?.clientHeight || 820}
+                  openIssueId={openHostedIssueId}
+                  onToggleIssue={(id) => setOpenHostedIssueId(id)}
+                  onComment={(issue) => {
+                    const component = components.find((item) => item.id === issue.componentId);
+                    if (!component || readOnly || !draftActionsAvailable) return;
+                    setOpenHostedIssueId(null);
+                    onSelectComponent(component);
+                    setPendingPin({ component, anchor: { x: 0.5, y: 0.1, createdFrom: "hosted_quality_issue" } });
+                  }}
                   readOnly={readOnly || !draftActionsAvailable}
                 />
                 <ArticleCommentCanvas
@@ -3082,6 +3129,73 @@ export function ArticleEvidenceIssueOverlay({
                     {removableIssue ? <button type="button" disabled={removePending} onClick={() => onRemove(removableIssue)} className="rounded-lg border border-red-300 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-50 disabled:opacity-50">Remove section</button> : null}
                   </div>
                 ) : null}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function ArticleHostedQualityIssueOverlay({
+  issues,
+  measurements,
+  viewportHeight,
+  openIssueId,
+  onToggleIssue,
+  onComment,
+  readOnly,
+}: {
+  issues: VibeMarketingHostedQualityIssue[];
+  measurements: Record<string, InspectorComponentMeasurement>;
+  viewportHeight: number;
+  openIssueId: string | null;
+  onToggleIssue: (id: string | null) => void;
+  onComment: (issue: VibeMarketingHostedQualityIssue) => void;
+  readOnly: boolean;
+}) {
+  const componentIds = Array.from(new Set(issues.flatMap((issue) => issue.componentId ? [issue.componentId] : [])));
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[9] overflow-hidden">
+      {componentIds.map((componentId) => {
+        const measurement = measurements[componentId];
+        if (!measurement) return null;
+        const componentIssues = issues.filter((issue) => issue.componentId === componentId);
+        const firstIssue = componentIssues[0];
+        const isOpen = componentIssues.some((issue) => issue.id === openIssueId);
+        const markerTop = Math.min(Math.max(8, 8 - measurement.rect.top), Math.max(8, measurement.rect.height - 34));
+        const markerY = measurement.rect.top + markerTop;
+        const panelMaxHeight = Math.max(120, Math.min(360, viewportHeight - 16));
+        const panelY = markerY + 36 + panelMaxHeight <= viewportHeight - 8
+          ? markerY + 36 : Math.max(8, markerY - panelMaxHeight - 8);
+        const popoverId = `hosted-quality-popover-${componentId}`;
+        return (
+          <div
+            key={componentId}
+            className="pointer-events-none absolute rounded-lg border-2 border-orange-500 bg-orange-300/10"
+            style={{ left: measurement.rect.left, top: measurement.rect.top, width: measurement.rect.width, height: measurement.rect.height }}
+          >
+            <button
+              type="button"
+              className="pointer-events-auto absolute right-2 rounded-full border border-orange-600 bg-orange-50 px-2.5 py-1 text-xs font-black text-orange-950 shadow-lg hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              style={{ top: markerTop }}
+              onClick={() => onToggleIssue(isOpen ? null : firstIssue.id)}
+              aria-expanded={isOpen}
+              aria-haspopup="dialog"
+              aria-controls={isOpen ? popoverId : undefined}
+              aria-label={`Review quality finding for ${measurement.label || componentId}`}
+              title={componentIssues.map((issue) => issue.reason).join(" ")}
+            >
+              Quality finding
+            </button>
+            {isOpen ? (
+              <div id={popoverId} role="dialog" aria-label={`Quality review for ${measurement.label || componentId}`} className="pointer-events-auto absolute right-2 z-20 w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-orange-300 bg-white p-3 text-sm text-gray-900 shadow-xl" style={{ top: panelY - measurement.rect.top, maxHeight: panelMaxHeight }}>
+                <p className="font-black">Hosted article quality review</p>
+                {componentIssues.map((issue) => (
+                  <p key={issue.id} className="mt-2 border-t border-gray-100 pt-2 text-gray-700"><span className="font-bold">{issue.claimId}:</span> {issue.reason}</p>
+                ))}
+                {!readOnly ? <button type="button" onClick={() => onComment(firstIssue)} className="mt-3 rounded-lg bg-gray-950 px-3 py-2 text-xs font-black text-white hover:bg-black">Comment on this part</button> : null}
               </div>
             ) : null}
           </div>
