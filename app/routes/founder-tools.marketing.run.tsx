@@ -524,10 +524,24 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
     } else if (intent === "accept-component-revision") {
+      const currentRun = await getVibeMarketingRun(env, request, runId, companyId);
+      const reviewedRunId = stringFromForm(formData, "reviewedRunId");
+      const reviewedPreviewUrl = stringFromForm(formData, "reviewedPreviewUrl");
+      const reviewedPreviewRevision = stringFromForm(formData, "reviewedPreviewRevision");
+      if (
+        currentRun.workflow !== "article_revision" ||
+        currentRun.status !== "completed" ||
+        articleReviewApprovalTargetForRun(currentRun, reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision) !== currentRun.runId
+      ) {
+        return { intent, error: "The revised article preview or quality check changed. Reload and review the current draft before accepting it." };
+      }
       const sourceRunId = stringFromForm(formData, "sourceRunId");
-      const result = await acceptVibeMarketingComponentRevision(env, request, runId, {
+      const result = await acceptVibeMarketingComponentRevision(env, request, currentRun.runId, {
         batchId: stringFromForm(formData, "batchId"),
         sourceRunId,
+        reviewedRunId,
+        reviewedPreviewUrl,
+        reviewedPreviewRevision,
       });
       const nextRunId = sourceRunId || result.runId;
       if (nextRunId && nextRunId !== runId) {
@@ -3185,13 +3199,15 @@ export function LiveArticlePreviewPanel({
         initiallyExpanded={initiallyExpanded}
         compactMobileControls
         actionSlot={(reviewState) => {
-          const canAcceptRevision =
+          const canOfferRevisionAcceptance =
             run.workflow === "article_revision" &&
             run.status === "completed" &&
             reviewState.evidenceIssueCount === 0 &&
             reviewState.draftComments.length === 0 &&
             reviewState.latestBatch?.status !== "accepted" &&
             Boolean(reviewState.batchId);
+          const canAcceptRevision = canOfferRevisionAcceptance &&
+            !previewQuality.blocksApproval && revisionHasCurrentPreviewQuality(run);
           const canAcceptArticleForPublish = Boolean(
             (run.status === "completed" || reviewApprovalReady) &&
               (run.contentPackage?.contentPackaged || reviewApprovalReady) &&
@@ -3244,14 +3260,18 @@ export function LiveArticlePreviewPanel({
                   </button>
                 </Form>
               ) : null}
-              {canAcceptRevision ? (
+              {canOfferRevisionAcceptance ? (
                 <Form method="POST">
                   <input type="hidden" name="intent" value="accept-component-revision" />
                   <input type="hidden" name="batchId" value={reviewState.batchId} />
                   <input type="hidden" name="sourceRunId" value={reviewState.sourceRunId} />
+                  <input type="hidden" name="reviewedRunId" value={run.runId} />
+                  <input type="hidden" name="reviewedPreviewUrl" value={articleReviewApprovalPreviewUrlForRun(run)} />
+                  <input type="hidden" name="reviewedPreviewRevision" value={articleReviewPreviewRevisionForRun(run)} />
                   <button
                     type="submit"
-                    disabled={isSubmitting || reviewState.evidenceSavePending || reviewState.commentSavePending}
+                    disabled={!canAcceptRevision || isSubmitting || reviewState.evidenceSavePending || reviewState.commentSavePending}
+                    title={!canAcceptRevision ? "Wait for the current hosted quality check, then review this revision before accepting it." : undefined}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                   >
                     {acceptRevisionPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}

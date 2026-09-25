@@ -22,7 +22,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
   let publishRecovery: boolean;
   let manifestPresent: boolean;
   let preapprovalPr: boolean;
-  let qualityMode: "passed" | "missing" | "stale";
+  let qualityMode: "passed" | "passed_no_baseline" | "queued" | "missing" | "stale";
   let contentOnlyReady: boolean;
   let originalFetch: typeof fetch;
 
@@ -64,7 +64,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
           livePreview: { available: true, status: "ready", previewUrl: latestPreviewUrl, exactRender: true, commitSha: latestCommitSha },
           result: { status: "preview_ready", review_surface_kind: "component_live_preview", preview_url: latestPreviewUrl,
             ...(qualityMode === "missing" ? {} : { article_preview_quality: {
-              status: "passed", preview_url: qualityMode === "stale" ? "https://preview.example/articles/old" : latestPreviewUrl, resume_generation: 0,
+              status: qualityMode === "stale" ? "passed" : qualityMode, preview_url: qualityMode === "stale" ? "https://preview.example/articles/old" : latestPreviewUrl, resume_generation: 0,
             } }),
             ...(preapprovalPr ? { pr_url: "https://github.example/draft-article-pr", draft_pr_url: "https://github.example/setup-pr",
               publish_child_preview_url: "https://preview.example/old-publish" } : {}),
@@ -73,6 +73,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
       }
       if ([`/api/v1/vibe-marketing/runs/${latestRunId}/approve`,
         `/api/v1/vibe-marketing/runs/${latestRunId}/retry-preview-quality`,
+        `/api/v1/vibe-marketing/runs/${latestRunId}/comments/accept-revision`,
         `/api/v1/vibe-marketing/runs/${latestRunId}/promote-bundle`,
         "/api/v1/vibe-marketing/runs/source-1/promote-bundle",
         "/api/v1/vibe-marketing/runs/existing-publish-child/approve"].includes(url.pathname) && request.method === "POST") {
@@ -101,6 +102,7 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
     form.set("reviewedPublishEvidenceUrl", reviewedPublishEvidenceUrl);
     form.set("reviewedPreviewRevision", reviewedPreviewRevision);
     if (sourceRunId) form.set("sourceRunId", sourceRunId);
+    if (intent === "accept-component-revision") form.set("batchId", "batch-1");
     form.set("autoMerge", "true");
     const request = new Request(`https://mlai.au/founder-tools/marketing/runs/${routeRunId}`, {
       method: "POST", body: form, headers: { Cookie: "access_token=fixture-only", Origin: "https://mlai.au" },
@@ -116,8 +118,49 @@ if (process.env.REVIEW_APPROVAL_ROUTE_CHILD !== "1") {
   const approve = (reviewedRunId: string, reviewedPreviewUrl: string, reviewedPreviewRevision = "commit-3") =>
     submit("approve", reviewedRunId, reviewedPreviewUrl, reviewedPreviewRevision);
   const publishMutations = () => calls.filter((call) => call.method === "POST" && /\/(approve|promote-bundle|publish-pr)$/.test(call.path));
+  const acceptMutations = () => calls.filter((call) => call.method === "POST" && call.path.endsWith("/comments/accept-revision"));
 
   describe("article review approval identity", () => {
+    test("accepts feedback only for a completed revision with current passed hosted quality", async () => {
+      contentOnlyReady = true;
+      for (const status of ["passed", "passed_no_baseline"] as const) {
+        qualityMode = status;
+        const response = await submit("accept-component-revision", "revision-3", previewUrl, "commit-3", "source-1", "", "source-1");
+        expect(response).toBeInstanceOf(Response);
+        expect((response as Response).headers.get("Location")).toBe("/founder-tools/marketing/runs/source-1");
+      }
+      expect(acceptMutations()).toEqual(["passed", "passed_no_baseline"].map(() => ({
+        method: "POST",
+        path: "/api/v1/vibe-marketing/runs/revision-3/comments/accept-revision",
+        body: { batchId: "batch-1", sourceRunId: "source-1", reviewedRunId: "revision-3", reviewedPreviewUrl: previewUrl, reviewedPreviewRevision: "commit-3" },
+      })));
+    });
+
+    test("rejects feedback acceptance while quality is queued, absent, or stale", async () => {
+      contentOnlyReady = true;
+      for (const status of ["queued", "missing", "stale"] as const) {
+        qualityMode = status;
+        expect(await submit("accept-component-revision", "revision-3", previewUrl, "commit-3", "source-1", "", "source-1")).toMatchObject({
+          intent: "accept-component-revision", error: expect.stringContaining("quality check changed"),
+        });
+      }
+      expect(acceptMutations()).toHaveLength(0);
+    });
+
+    test("rejects feedback acceptance after an exact preview identity change", async () => {
+      contentOnlyReady = true;
+      latestPreviewUrl = "https://preview.example/articles/rebuilt";
+      expect(await submit("accept-component-revision", "revision-3", previewUrl, "commit-3", "source-1", "", "source-1")).toMatchObject({
+        intent: "accept-component-revision", error: expect.stringContaining("quality check changed"),
+      });
+      latestPreviewUrl = previewUrl;
+      latestCommitSha = "commit-4";
+      expect(await submit("accept-component-revision", "revision-3", previewUrl, "commit-3", "source-1", "", "source-1")).toMatchObject({
+        intent: "accept-component-revision", error: expect.stringContaining("quality check changed"),
+      });
+      expect(acceptMutations()).toHaveLength(0);
+    });
+
     test("posts to the newest draft displayed on an old source URL", async () => {
       const response = await approve("revision-3", previewUrl);
       expect(response).toBeInstanceOf(Response);

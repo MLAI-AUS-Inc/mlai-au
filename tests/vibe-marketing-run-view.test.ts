@@ -155,6 +155,41 @@ describe("vibe marketing run view state", () => {
     }
   });
 
+  test("disables feedback acceptance until this revision has current hosted quality", () => {
+    const renderAcceptance = (run: VibeMarketingRunSummary) => {
+      const router = createMemoryRouter([{
+        path: "/founder-tools/marketing/runs/:runId",
+        element: createElement(LiveArticlePreviewPanel, {
+          run, selectedComponent: null, onSelectComponent: () => {}, isSubmitting: false, initiallyExpanded: true,
+        }),
+      }], { initialEntries: ["/founder-tools/marketing/runs/source-1"] });
+      try {
+        const markup = renderToStaticMarkup(createElement(RouterProvider, { router }));
+        const labelAt = markup.indexOf("Accept revised article");
+        expect(labelAt).toBeGreaterThan(-1);
+        return markup.slice(markup.lastIndexOf("<button", labelAt), markup.indexOf("</button>", labelAt) + "</button>".length);
+      }
+      finally { router.dispose(); }
+    };
+    const revision = articleRun({
+      runId: "revision-3", workflow: "article_revision", status: "completed", approvalState: null,
+      componentFeedback: { comments: [], latestBatch: { id: "batch-1", sourceRunId: "source-1", revisionRunId: "revision-3", status: "completed" } },
+    });
+    for (const quality of [null, { status: "queued", preview_url: revision.livePreview?.previewUrl, resume_generation: 0 },
+      { status: "passed", preview_url: "https://preview.example/articles/old", resume_generation: 0 }]) {
+      const run = { ...revision, result: { ...revision.result, article_preview_quality: quality } };
+      expect(renderAcceptance(run)).toContain('disabled=""');
+    }
+    for (const status of ["passed", "passed_no_baseline"]) {
+      const run = { ...revision, result: { ...revision.result, article_preview_quality: {
+        status, preview_url: revision.livePreview?.previewUrl, resume_generation: 0,
+      } } };
+      const markup = renderAcceptance(run);
+      expect(markup).toContain("Accept revised article");
+      expect(markup).not.toContain('disabled=""');
+    }
+  });
+
   test("fails closed when the draft identity changes after the approval form was rendered", () => {
     const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
     expect(articleReviewApprovalTargetForRun(latest, "", "https://preview.example/articles/generated", "preview-commit-3")).toBe("");
