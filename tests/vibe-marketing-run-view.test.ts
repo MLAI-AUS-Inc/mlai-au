@@ -195,6 +195,35 @@ describe("vibe marketing run view state", () => {
     }
   });
 
+  test("shows a queued publish child as progress while source approval catches up", () => {
+    const run = articleRun({
+      runId: "revision-3", workflow: "article_revision", status: "completed", approvalState: null,
+      publishChildStatus: "queued",
+      result: { ...articleRun().result, publish_child_run_id: "publish-child-3", publish_child_status: "queued" },
+    });
+    const render = (element: ReturnType<typeof createElement>) => {
+      const router = createMemoryRouter([{
+        path: "/founder-tools/marketing/runs/:runId", element,
+      }], { initialEntries: ["/founder-tools/marketing/runs/revision-3"] });
+      try { return renderToStaticMarkup(createElement(RouterProvider, { router })); }
+      finally { router.dispose(); }
+    };
+    const review = render(createElement(LiveArticlePreviewPanel, {
+      run, selectedComponent: null, onSelectComponent: () => {}, isSubmitting: false, initiallyExpanded: true,
+    }));
+    expect(review).not.toContain('value="approve"');
+    expect(render(createElement(ArticleWorkflowPrimaryAction, { run, isSubmitting: false }))).not.toContain('value="promote-bundle"');
+    expect(render(createElement(ArticleWorkflowPrimaryAction, { run: { ...run, approvalState: "approved" }, isSubmitting: false }))).not.toContain('value="promote-bundle"');
+    const publish = render(createElement(PublishAndAutomateDetail, {
+      run, bootstrap: { checks: {}, settings: { dailyDiscoveryEnabled: false } } as unknown as VibeMarketingBootstrap,
+      isSubmitting: false,
+    }));
+    expect(publish).toContain("Preparing publish");
+    expect(publish).toContain("publish run is queued");
+    expect(publish).not.toContain("Review and approve the latest article draft before publishing.");
+    expect(publish).not.toContain('value="promote-bundle"');
+  });
+
   test("fails closed when the draft identity changes after the approval form was rendered", () => {
     const latest = articleRun({ runId: "revision-3", workflow: "article_revision" });
     expect(articleReviewApprovalTargetForRun(latest, "", "https://preview.example/articles/generated", previewCommitSha)).toBe("");

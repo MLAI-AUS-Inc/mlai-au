@@ -3218,6 +3218,7 @@ export function LiveArticlePreviewPanel({
               reviewState.evidenceIssueCount === 0 &&
               !canAcceptRevision &&
               !reviewState.hasPendingRevisionBatch &&
+              !hasRecordedArticlePublishApprovalOrHandoff(run) &&
               (reviewApprovalReady || publishStep?.status === "ready") &&
               !previewQuality.blocksApproval &&
               revisionHasCurrentPreviewQuality(run) &&
@@ -4213,7 +4214,7 @@ export function PublishAndAutomateDetail({
       !publishChildApprovalRequired &&
       (publishStep?.status === "running" ||
         publishChildRunning ||
-        (publishHandoffPending && !publishChildRunId)),
+      (publishHandoffPending && !publishChildRunId)),
   );
   const prNumber =
     stringResultValue(run, "pr_number", "pull_request_number", "draft_pr_number") ||
@@ -4292,10 +4293,12 @@ export function PublishAndAutomateDetail({
             status={
               isMerged || publishedWithoutPr
                 ? "complete"
-                : hasUnresolvedEvidence || !hasApprovedPublishHandoff || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
+                : hasUnresolvedEvidence || mergeBlocked || publishChildFailed || publishQualityGate === "blocked"
                   ? "blocked"
                   : prUrl || publishPending || publishQualityGate === "running"
                     ? "running"
+                    : !hasApprovedPublishHandoff
+                      ? "blocked"
                     : "ready"
             }
             eyebrow={
@@ -4305,6 +4308,8 @@ export function PublishAndAutomateDetail({
                   ? "Published"
               : hasUnresolvedEvidence
                 ? "Evidence needs review"
+                : publishPending
+                  ? "Creating PR"
                 : !hasApprovedPublishHandoff
                   ? "Article review required"
                 : mergeBlocked
@@ -4313,9 +4318,7 @@ export function PublishAndAutomateDetail({
                       ? checksStatus
                         ? `Checks ${checksStatus}`
                         : "Waiting for checks"
-                      : publishPending
-                        ? "Creating PR"
-                        : publishChildFailed
+                      : publishChildFailed
                           ? "Publish failed"
                           : publishChildRecoverable
                             ? "Resume needed"
@@ -4368,6 +4371,16 @@ export function PublishAndAutomateDetail({
                     Review evidence issues
                   </Link>
                 ) : null}
+              </div>
+            ) : publishPending ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  The article's publish handoff is being prepared. The publish run is {publishChildStatus || "pending"}; this page updates automatically.
+                </p>
+                <button type="button" disabled className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-black text-gray-500">
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                  Preparing publish
+                </button>
               </div>
             ) : !hasApprovedPublishHandoff ? (
               <div className="space-y-3">
@@ -4458,20 +4471,6 @@ export function PublishAndAutomateDetail({
                   </a>
                 </div>
               </Form>
-            ) : publishPending ? (
-              <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-600">
-                  Creating the publish PR. Once checks pass it merges to main automatically — this page updates on its own.
-                </p>
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-black text-gray-500"
-                >
-                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                  Creating PR
-                </button>
-              </div>
             ) : publishChildFailed ? (
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
@@ -5133,7 +5132,9 @@ export function ArticleWorkflowPrimaryAction({
   if (!hasRecordedArticlePublishApprovalOrHandoff(run) ||
       (!revisionHasCurrentPublishApproval(run) && !hasApprovedArticlePublishChildRecovery(run))) return null;
 
-  if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
+  if (publishStep?.status === "ready" && publishStep.primaryAction?.intent &&
+      !stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id") &&
+      run.result?.["publish_handoff_pending"] !== true) {
     const publishPending = isActionPending?.(publishStep.primaryAction.intent) ?? isSubmitting;
     return (
       <Form method="POST">
