@@ -376,6 +376,7 @@ export function articleRunPathAfterStart(result: { runId?: string | null }) {
 export function articleWorkflowProgressForRunPage(
   run: VibeMarketingRunSummary,
   fallbackProgress: VibeMarketingWorkflowProgress | null | undefined,
+  dailyDiscoveryEnabled = false,
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (!progress) return progress;
@@ -388,15 +389,21 @@ export function articleWorkflowProgressForRunPage(
         : ["queued", "running", "processing", "in_progress"].includes(state)
           ? "running"
           : "ready";
+    const automationComplete = publishStatus === "complete" && dailyDiscoveryEnabled;
     return {
       ...progress,
-      currentStepId: "publish",
-      nextStepId: publishStatus === "complete" ? "automation" : null,
+      currentStepId: automationComplete ? "automation" : "publish",
+      nextStepId: publishStatus === "complete" && !automationComplete ? "automation" : null,
       steps: progress.steps.map((step) =>
         step.id === "publish"
           ? { ...step, status: publishStatus, primaryAction: null }
           : step.id === "automation"
-            ? { ...step, status: publishStatus === "complete" ? step.status : "locked" }
+            ? {
+                ...step,
+                status: automationComplete ? "complete" : publishStatus === "complete" ? step.status : "locked",
+                summary: automationComplete ? "Recurring topic discovery is enabled." : step.summary,
+                primaryAction: automationComplete ? null : step.primaryAction,
+              }
             : { ...step, status: "complete", primaryAction: null },
       ),
     };
