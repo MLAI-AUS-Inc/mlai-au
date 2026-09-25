@@ -398,6 +398,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     workflow: asNullableString(payload.workflow) ?? "",
     domain: asNullableString(payload.domain) ?? "",
     githubRepo: asNullableString(payload.githubRepo) ?? asNullableString(payload.github_repo),
+    sourceRunId: asNullableString(payload.sourceRunId) ?? asNullableString(payload.source_run_id),
     status: asNullableString(payload.status) ?? "queued",
     currentStep: asNullableString(payload.currentStep) ?? asNullableString(payload.current_step),
     approvalState: asNullableString(payload.approvalState) ?? asNullableString(payload.approval_state),
