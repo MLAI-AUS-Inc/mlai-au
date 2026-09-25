@@ -4,11 +4,19 @@ import {
   isArticleSystemSetupTerminalRun,
   isArticleSystemSetupTerminalStatus,
   repoScanProgressRefreshKey,
+  runStatusPollDelayMs,
   shouldPollArticleSystemSetupRun,
   statusPollRefreshKey,
 } from "../app/lib/vibe-marketing-run-polling";
 
 describe("vibe marketing run polling", () => {
+  test("refreshes an active run immediately when a hidden tab becomes visible", () => {
+    expect(runStatusPollDelayMs({ hasLoadedCurrentRun: true, idleMs: 10 * 60_000, resumedFromHidden: true })).toBe(0);
+    expect(runStatusPollDelayMs({ hasLoadedCurrentRun: true, idleMs: 10 * 60_000, resumedFromHidden: false })).toBe(15_000);
+    expect(runStatusPollDelayMs({ hasLoadedCurrentRun: false, idleMs: 0, resumedFromHidden: false })).toBe(0);
+    expect(runStatusPollDelayMs({ hasLoadedCurrentRun: true, idleMs: 0, resumedFromHidden: false })).toBe(2_500);
+  });
+
   test("does not poll failed article setup runs", () => {
     expect(
       shouldPollArticleSystemSetupRun({

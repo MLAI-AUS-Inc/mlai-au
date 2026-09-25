@@ -96,6 +96,21 @@ export function shouldPollArticleSystemSetupRun(run: RunLike) {
   return true;
 }
 
+export function runStatusPollDelayMs({
+  hasLoadedCurrentRun,
+  idleMs,
+  resumedFromHidden,
+}: {
+  hasLoadedCurrentRun: boolean;
+  idleMs: number;
+  resumedFromHidden: boolean;
+}) {
+  if (!hasLoadedCurrentRun || resumedFromHidden) return 0;
+  if (idleMs > 60_000) return 15_000;
+  if (idleMs > 10_000) return 5_000;
+  return 2_500;
+}
+
 export function statusPollRefreshKey(run: RunLike) {
   if (run.workflow === "article_system_setup" && !shouldPollArticleSystemSetupRun(run)) {
     return [

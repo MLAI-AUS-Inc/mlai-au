@@ -47,6 +47,7 @@ import {
   vibeMarketingArticleCostPoints,
 } from "~/lib/vibe-marketing-billing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
+import { runStatusPollDelayMs } from "~/lib/vibe-marketing-run-polling";
 import {
   articlePreconditionRepairStateForRun,
   articlePublishChildApprovalEvidenceUrlForRun,
@@ -5420,8 +5421,11 @@ export default function FounderToolsMarketingRun() {
   const statusRefreshRef = useRef("");
   const lastProgressSignatureRef = useRef("");
   const lastProgressAtRef = useRef(Date.now());
+  const wasPageHiddenRef = useRef(false);
+  const handledVisibilityRefreshRef = useRef(0);
   const [polledRun, setPolledRun] = useState<VibeMarketingRunSummary | null>(null);
   const [pageVisible, setPageVisible] = useState(true);
+  const [visibilityRefreshEpoch, setVisibilityRefreshEpoch] = useState(0);
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
   const workflow = String(run.workflow ?? "");
@@ -5529,7 +5533,12 @@ export default function FounderToolsMarketingRun() {
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const updateVisibility = () => setPageVisible(document.visibilityState !== "hidden");
+    const updateVisibility = () => {
+      const visible = document.visibilityState !== "hidden";
+      if (visible && wasPageHiddenRef.current) setVisibilityRefreshEpoch((epoch) => epoch + 1);
+      wasPageHiddenRef.current = !visible;
+      setPageVisible(visible);
+    };
     updateVisibility();
     document.addEventListener("visibilitychange", updateVisibility);
     return () => document.removeEventListener("visibilitychange", updateVisibility);
@@ -5603,15 +5612,17 @@ export default function FounderToolsMarketingRun() {
     if (!pageVisible) return;
     const hasLoadedCurrentRun = runStatusFetcher.data?.runId === pollRunId;
     const idleMs = Date.now() - lastProgressAtRef.current;
-    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
+    const resumedFromHidden = visibilityRefreshEpoch > handledVisibilityRefreshRef.current;
+    const pollDelay = runStatusPollDelayMs({ hasLoadedCurrentRun, idleMs, resumedFromHidden });
     const timer = window.setTimeout(
       () => {
+        if (resumedFromHidden) handledVisibilityRefreshRef.current = visibilityRefreshEpoch;
         void runStatusFetcher.load(statusUrl);
       },
       pollDelay,
     );
     return () => window.clearTimeout(timer);
-  }, [pageVisible, pollRunId, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl]);
+  }, [pageVisible, pollRunId, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl, visibilityRefreshEpoch]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
