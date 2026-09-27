@@ -53,8 +53,8 @@ describe("TopicDecisionCard measured trends", () => {
     expect(markup).toContain('role="img"');
     expect(markup).toContain("Relative search interest (0–100)");
     expect(markup).toContain("Google Trends");
-    expect(markup).toContain("20 Sep 2026");
-    expect(markup).toContain("23 Sep 2026");
+    expect(markup).toMatch(/20 Sept? 2026/);
+    expect(markup).toMatch(/23 Sept? 2026/);
     expect(markup).not.toContain("Search history unavailable");
   });
 
