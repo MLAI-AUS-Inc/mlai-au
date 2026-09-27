@@ -1,0 +1,245 @@
+[
+  {
+    "id": "0",
+    "keyword": "monthly growth",
+    "title": "Measured six month breakout",
+    "reason": "",
+    "source": "discovery",
+    "intent": null,
+    "difficulty": 0,
+    "difficultySource": "dataforseo_bulk",
+    "opportunityScore": null,
+    "volume": null,
+    "volumeDisplay": null,
+    "trend": null,
+    "trendStatus": "breakout",
+    "trendPercent": 120.0,
+    "trendDescription": "Search interest has grown sharply over the measured period.",
+    "trendLabel": null,
+    "trendSource": "dataforseo_labs",
+    "trendSourceLabel": null,
+    "trendBasis": "search_volume",
+    "trendPeriodLabel": "Mar 2026 \u2013 Aug 2026",
+    "trendIsEstimated": true,
+    "statsMeaning": null,
+    "whyRecommended": null,
+    "recommendationReason": null,
+    "aiSearches": null,
+    "aiVolumeDisplay": null,
+    "monthlySearches": [
+      {
+        "year": 2026,
+        "month": 3,
+        "search_volume": 100.0
+      },
+      {
+        "year": 2026,
+        "month": 4,
+        "search_volume": 100.0
+      },
+      {
+        "year": 2026,
+        "month": 5,
+        "search_volume": 100.0
+      },
+      {
+        "year": 2026,
+        "month": 6,
+        "search_volume": 220.0
+      },
+      {
+        "year": 2026,
+        "month": 7,
+        "search_volume": 220.0
+      },
+      {
+        "year": 2026,
+        "month": 8,
+        "search_volume": 220.0
+      }
+    ],
+    "relatedKeywords": [],
+    "paaQuestions": [],
+    "sourceRunId": null,
+    "difficultyStatus": "available",
+    "difficultyReason": "",
+    "monthlySearchesSource": "dataforseo_labs",
+    "monthlySearchesBasis": "search_volume",
+    "trendReason": "",
+    "trendCountry": "Australia",
+    "trendLanguage": "en"
+  },
+  {
+    "id": "1",
+    "keyword": "provider unavailable",
+    "title": "provider unavailable",
+    "reason": "",
+    "source": "discovery",
+    "intent": null,
+    "difficulty": null,
+    "difficultySource": "missing",
+    "opportunityScore": null,
+    "volume": null,
+    "volumeDisplay": null,
+    "trend": "unknown",
+    "trendStatus": "unknown",
+    "trendPercent": null,
+    "trendDescription": "There is not enough consecutive search history to establish a trend.",
+    "trendLabel": null,
+    "trendSource": "unknown",
+    "trendSourceLabel": null,
+    "trendBasis": "unknown",
+    "trendPeriodLabel": "",
+    "trendIsEstimated": true,
+    "statsMeaning": null,
+    "whyRecommended": null,
+    "recommendationReason": null,
+    "aiSearches": null,
+    "aiVolumeDisplay": null,
+    "monthlySearches": [],
+    "relatedKeywords": [],
+    "paaQuestions": [],
+    "sourceRunId": null,
+    "difficultyStatus": "error",
+    "difficultyReason": "Provider lookup failed.",
+    "monthlySearchesSource": "unknown",
+    "monthlySearchesBasis": "unknown",
+    "trendReason": "Provider did not return monthly history.",
+    "trendCountry": null,
+    "trendLanguage": null
+  },
+  {
+    "id": "2",
+    "keyword": "relative interest",
+    "title": "relative interest",
+    "reason": "",
+    "source": "discovery",
+    "intent": null,
+    "difficulty": null,
+    "difficultySource": "missing",
+    "opportunityScore": null,
+    "volume": null,
+    "volumeDisplay": null,
+    "trend": null,
+    "trendStatus": "declining",
+    "trendPercent": -50.0,
+    "trendDescription": "Search interest is declining over the measured period.",
+    "trendLabel": null,
+    "trendSource": "google_trends",
+    "trendSourceLabel": null,
+    "trendBasis": "relative_interest",
+    "trendPeriodLabel": "",
+    "trendIsEstimated": false,
+    "statsMeaning": null,
+    "whyRecommended": null,
+    "recommendationReason": null,
+    "aiSearches": null,
+    "aiVolumeDisplay": null,
+    "monthlySearches": [
+      {
+        "date": "2026-08-01",
+        "volume": 20.0
+      },
+      {
+        "date": "2026-08-08",
+        "volume": 20.0
+      },
+      {
+        "date": "2026-08-15",
+        "volume": 20.0
+      },
+      {
+        "date": "2026-08-22",
+        "volume": 10.0
+      },
+      {
+        "date": "2026-08-29",
+        "volume": 10.0
+      },
+      {
+        "date": "2026-09-05",
+        "volume": 10.0
+      }
+    ],
+    "relatedKeywords": [],
+    "paaQuestions": [],
+    "sourceRunId": null,
+    "difficultyStatus": "unavailable",
+    "difficultyReason": "The search provider did not return a verified difficulty score for this keyword.",
+    "monthlySearchesSource": "google_trends",
+    "monthlySearchesBasis": "relative_interest",
+    "trendReason": "",
+    "trendCountry": null,
+    "trendLanguage": null
+  },
+  {
+    "id": "3",
+    "keyword": "nested monthly",
+    "title": "nested monthly",
+    "reason": "",
+    "source": "discovery",
+    "intent": null,
+    "difficulty": 35,
+    "difficultySource": "dataforseo_labs",
+    "opportunityScore": null,
+    "volume": null,
+    "volumeDisplay": null,
+    "trend": null,
+    "trendStatus": "breakout",
+    "trendPercent": 120.0,
+    "trendDescription": "Search interest has grown sharply over the measured period.",
+    "trendLabel": null,
+    "trendSource": "dataforseo_labs",
+    "trendSourceLabel": null,
+    "trendBasis": "search_volume",
+    "trendPeriodLabel": "Mar 2026 \u2013 Aug 2026",
+    "trendIsEstimated": false,
+    "statsMeaning": null,
+    "whyRecommended": null,
+    "recommendationReason": null,
+    "aiSearches": null,
+    "aiVolumeDisplay": null,
+    "monthlySearches": [
+      {
+        "year": 2026,
+        "month": 3,
+        "search_volume": 100.0
+      },
+      {
+        "year": 2026,
+        "month": 4,
+        "search_volume": 100.0
+      },
+      {
+        "year": 2026,
+        "month": 5,
+        "search_volume": 100.0
+      },
+      {
+        "year": 2026,
+        "month": 6,
+        "search_volume": 220.0
+      },
+      {
+        "year": 2026,
+        "month": 7,
+        "search_volume": 220.0
+      },
+      {
+        "year": 2026,
+        "month": 8,
+        "search_volume": 220.0
+      }
+    ],
+    "relatedKeywords": [],
+    "paaQuestions": [],
+    "sourceRunId": null,
+    "difficultyStatus": "available",
+    "difficultyReason": "",
+    "monthlySearchesSource": "dataforseo_labs",
+    "monthlySearchesBasis": "search_volume",
+    "trendReason": "",
+    "trendCountry": null,
+    "trendLanguage": null
+  }
+]

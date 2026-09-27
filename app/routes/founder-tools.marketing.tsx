@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 
+import TopicResearchRow from "~/components/TopicResearchRow";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import ContentIslandDiscoveryResult from "~/components/ContentIslandDiscoveryResult";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
@@ -2491,103 +2492,24 @@ function TopicRow({
   onContinue: () => void;
   onDecline: () => void;
 }) {
-  const score = opportunityLabel(topic.opportunityScore);
-  const title = topic.title || topic.keyword;
   const islandTheme = islandVisual ? pillarTheme(islandVisual.colorKey) : null;
-  const rowTheme = islandTheme?.row;
-  const selectOrContinue = () => {
-    if (selected) {
-      if (submitting || continueDisabled) return;
-      onContinue();
-      return;
-    }
-    onSelect();
-  };
-
-  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      selectOrContinue();
-    }
-  }
-
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={selectOrContinue}
-      onKeyDown={handleKeyDown}
-      className={clsx(
-        "grid w-full cursor-pointer grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4",
-        rowTheme?.focus ?? "focus:ring-violet-100",
-        selected
-          ? rowTheme?.selected ?? "border-violet-300 bg-violet-50/60"
-          : rowTheme?.idle ?? "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
-      )}
-      aria-label={selected ? `Continue with topic: ${title}` : `Select topic: ${title}`}
-      aria-pressed={selected}
-      aria-disabled={selected && (submitting || continueDisabled)}
-    >
-      {islandTheme ? (
-        <span
-          className={clsx("inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm", islandTheme.iconWrap)}
-          title={islandVisual?.name ?? undefined}
-        >
+    <TopicResearchRow
+      topic={topic}
+      articleCostPoints={articleCostPoints}
+      selected={selected}
+      submitting={submitting}
+      continueDisabled={continueDisabled}
+      theme={islandTheme?.row}
+      icon={islandTheme ? (
+        <span className={clsx("inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm", islandTheme.iconWrap)} title={islandVisual?.name ?? undefined}>
           <PillarIcon iconKey={islandVisual?.iconKey} className="h-4 w-4" />
         </span>
-      ) : (
-        <Flame className="h-5 w-5 text-violet-600" />
-      )}
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-black text-slate-950">{title}</span>
-        <span className="mt-1 block text-sm font-semibold text-slate-500">
-          {volumeLabel(topic.volume)} · {difficultyLabel(topic)}
-          {score ? ` · Opportunity ${score}` : ""}
-        </span>
-      </span>
-      <span className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onDecline();
-          }}
-          title={`Ignore suggestion: ${topic.keyword}`}
-          aria-label={`Ignore suggestion: ${topic.keyword}`}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100"
-        >
-          <ThumbsDown className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            selectOrContinue();
-          }}
-          disabled={selected && (submitting || continueDisabled)}
-          className={clsx(
-            "inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-60",
-            selected
-              ? rowTheme?.selectedButton ?? "bg-white text-violet-700 hover:bg-violet-50"
-              : rowTheme?.idleButton ?? "bg-violet-50 text-violet-700 hover:bg-violet-100",
-          )}
-        >
-          {selected ? (
-            <>
-              <span>Continue</span>
-              <span aria-hidden="true">(</span>
-              {articleCostPoints === 0 ? <span>Free</span> : <RooPointCost points={-articleCostPoints} />}
-              <span aria-hidden="true">)</span>
-            </>
-          ) : "Select"}
-          {selected && submitting ? (
-            <Loader2 className={clsx("h-4 w-4 animate-spin", rowTheme?.arrow ?? "text-violet-500")} />
-          ) : (
-            <ArrowRight className={clsx("h-4 w-4", rowTheme?.arrow ?? "text-violet-500")} />
-          )}
-        </button>
-      </span>
-    </div>
+      ) : undefined}
+      onSelect={onSelect}
+      onContinue={onContinue}
+      onDecline={onDecline}
+    />
   );
 }
 

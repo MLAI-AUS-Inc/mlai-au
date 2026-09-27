@@ -402,12 +402,16 @@ export interface VibeMarketingTopicCandidate {
   intent?: unknown;
   difficulty?: unknown;
   difficultySource?: unknown;
+  difficultyStatus?: unknown;
+  difficultyReason?: string | null;
   opportunityScore?: unknown;
   volume?: unknown;
   volumeDisplay?: string | null;
   tier?: unknown;
   velocity?: unknown;
   monthlySearches?: unknown;
+  monthlySearchesSource?: unknown;
+  monthlySearchesBasis?: unknown;
   aiSaturation?: unknown;
   trendStatus?: unknown;
   trendPercent?: unknown;
@@ -417,6 +421,11 @@ export interface VibeMarketingTopicCandidate {
   trendSourceLabel?: string | null;
   trendBasis?: string | null;
   trendPeriodLabel?: string | null;
+  trendReason?: string | null;
+  trendCountry?: string | null;
+  trendLanguage?: string | null;
+  metricsCheckedAt?: string | null;
+  trendLastUpdatedAt?: string | null;
   trendIsEstimated?: boolean;
   statsMeaning?: string | null;
   whyRecommended?: string | null;

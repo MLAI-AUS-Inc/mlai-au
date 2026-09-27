@@ -637,7 +637,7 @@ function normalizeStartupProfile(payload: Record<string, unknown>): VibeMarketin
   };
 }
 
-function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
+export function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const keyword = asNullableString(payload.keyword) ?? asNullableString(payload.target_keyword) ?? "Topic";
   const serverId = asNullableString(payload.id);
@@ -683,11 +683,15 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     intent: payload.intent,
     difficulty: payload.difficulty,
     difficultySource: payload.difficultySource ?? payload.difficulty_source,
+    difficultyStatus: payload.difficultyStatus ?? payload.difficulty_status,
+    difficultyReason: asNullableString(payload.difficultyReason) ?? asNullableString(payload.difficulty_reason),
     opportunityScore: payload.opportunityScore ?? payload.opportunity_score,
     volume: payload.volume,
     volumeDisplay: asNullableString(payload.volumeDisplay) ?? asNullableString(payload.volume_display),
     tier: payload.tier,
     velocity: payload.velocity ?? payload.velocity_data ?? payload.latestVelocity ?? payload.latest_velocity,
+    monthlySearchesSource: payload.monthlySearchesSource ?? payload.monthly_searches_source,
+    monthlySearchesBasis: payload.monthlySearchesBasis ?? payload.monthly_searches_basis,
     monthlySearches:
       payload.monthlySearches ??
       payload.monthly_searches ??
@@ -711,6 +715,11 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     trendBasis: asNullableString(payload.trendBasis) ?? asNullableString(payload.trend_basis),
     trendPeriodLabel:
       asNullableString(payload.trendPeriodLabel) ?? asNullableString(payload.trend_period_label),
+    trendReason: asNullableString(payload.trendReason) ?? asNullableString(payload.trend_reason),
+    trendCountry: asNullableString(payload.trendCountry) ?? asNullableString(payload.trend_country),
+    trendLanguage: asNullableString(payload.trendLanguage) ?? asNullableString(payload.trend_language),
+    metricsCheckedAt: asNullableString(payload.metricsCheckedAt) ?? asNullableString(payload.metrics_checked_at),
+    trendLastUpdatedAt: asNullableString(payload.trendLastUpdatedAt) ?? asNullableString(payload.trend_last_updated_at),
     trendIsEstimated: asOptionalBoolean(payload.trendIsEstimated ?? payload.trend_is_estimated) ?? undefined,
     statsMeaning: asNullableString(payload.statsMeaning) ?? asNullableString(payload.stats_meaning),
     whyRecommended: asNullableString(payload.whyRecommended) ?? asNullableString(payload.why_recommended),
