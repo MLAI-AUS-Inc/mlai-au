@@ -49,7 +49,7 @@ const navigation = [
   },
   {
     number: "7",
-    name: "Login",
+    name: "Hackathons",
     href: "/hackathons",
     color: "#00ffd7", // Mint (external route - no section)
   },

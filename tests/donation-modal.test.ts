@@ -9,11 +9,12 @@ function source(path: string) {
 }
 
 describe("homepage donation modal", () => {
-  test("places a Donate action between the Slack and Events actions", () => {
+  test("places a Donate action between Log in and Events", () => {
     const hero = source("app/components/hero.tsx");
 
     expect(hero).toContain('import DonationModal from "~/components/DonationModal"');
-    expect(hero.indexOf("Join Slack")).toBeLessThan(hero.indexOf("<DonationModal"));
+    expect(hero).toContain('href="https://chat.mlai.au"');
+    expect(hero.indexOf("Log in")).toBeLessThan(hero.indexOf("<DonationModal"));
     expect(hero.indexOf("<DonationModal")).toBeLessThan(hero.indexOf("See Events"));
     expect(hero).toContain("lg:grid-cols-[1fr_auto_1fr]");
     expect(hero).toContain('className="relative z-10 grid grid-cols-1');
