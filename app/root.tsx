@@ -74,6 +74,8 @@ export default function Layout() {
     : undefined;
   const routeOwnsFullMetadata =
     Boolean(routeArticle) ||
+    location.pathname.replace(/\/+$/, "") === "/mlai-studio" ||
+    location.pathname.replace(/\/+$/, "") === "/mlai-studio/build-with-us" ||
     location.pathname === "/mlai-studio/start-project" ||
     location.pathname === "/founder-tools/start";
   const canonicalPath = location.pathname.replace(/\/$/, "") || "/";
