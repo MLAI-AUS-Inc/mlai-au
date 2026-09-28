@@ -5,6 +5,7 @@ export default [
   route("/dashboard", "routes/dashboard.tsx"),
   route("/sponsors", "routes/sponsors.tsx"),
   route("/mlai-studio", "routes/mlai-studio.tsx"),
+  route("/mlai-studio/build-with-us", "routes/mlai-studio.build-with-us.tsx"),
   route("/mlai-studio/start-project", "routes/mlai-studio.start-project.tsx"),
   route("/press-kit", "routes/press-kit.tsx"),
   route("/volunteers", "routes/volunteers.tsx"),

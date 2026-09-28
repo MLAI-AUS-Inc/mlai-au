@@ -94,7 +94,7 @@ export default function MlaiStudioStartProject() {
                 to deliver Studio projects.
               </p>
               <Link
-                to="/mlai-studio#apply"
+                to="/mlai-studio/build-with-us#apply"
                 className="mt-5 inline-flex text-sm font-black text-[#4b1bd1] underline decoration-2 underline-offset-4"
               >
                 Apply as a builder →

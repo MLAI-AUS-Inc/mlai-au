@@ -65,6 +65,7 @@ const staticPages: SitemapEntry[] = [
     { path: "/vibe-raising", changefreq: "monthly", priority: 0.7 },
     { path: "/sponsors", changefreq: "monthly", priority: 0.5 },
     { path: "/mlai-studio", changefreq: "weekly", priority: 0.8 },
+    { path: "/mlai-studio/build-with-us", changefreq: "monthly", priority: 0.6 },
     { path: "/mlai-studio/start-project", changefreq: "monthly", priority: 0.8 },
     { path: "/founder-tools/start", changefreq: "monthly", priority: 0.8 },
     { path: "/press-kit", changefreq: "monthly", priority: 0.6 },

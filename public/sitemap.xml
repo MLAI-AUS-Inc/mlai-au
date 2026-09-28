@@ -56,6 +56,11 @@
   <priority>0.8</priority>
  </url>
  <url>
+  <loc>https://mlai.au/mlai-studio/build-with-us</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.6</priority>
+ </url>
+ <url>
   <loc>https://mlai.au/mlai-studio/start-project</loc>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
