@@ -4,6 +4,8 @@ export interface Event {
   _id: string;
   name: string;
   startDate: string;
+  /** Organiser-provided IANA timezone, when available. */
+  timezone?: string;
   endDate?: string;
   bannerImage?: { url: string };
   eventLocation: {
@@ -28,6 +30,7 @@ interface LumaEventEntry {
     api_id: string;
     name: string;
     start_at: string;
+    timezone?: string;
     end_at?: string;
     cover_url?: string;
     geo_address_json?: {
@@ -74,6 +77,7 @@ function lumaEntryToEvent(entry: LumaEventEntry): Event {
     _id: entry.api_id || event.api_id,
     name: event.name,
     startDate: event.start_at,
+    timezone: event.timezone,
     endDate: event.end_at,
     bannerImage: event.cover_url ? { url: event.cover_url } : undefined,
     eventLocation: {

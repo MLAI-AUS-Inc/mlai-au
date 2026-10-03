@@ -4,7 +4,8 @@ import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
 import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA"
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config"
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
 import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
@@ -258,13 +259,10 @@ export default function ArticlePage() {
             </ul>
           </div>
 
-          <ArticleCompanyCTA
-            title={`Need help with ${TOPIC}?`}
-            body="MLAI is a not‑for‑profit community empowering the Australian AI community. Join in and connect with peers across Australia."
-            buttonText="Join the MLAI community"
-            buttonHref="/contact"
-            note="Community‑first, no hard sell—just people helping people."
-          />
+          <div>
+        <p className="mb-4">Before your next event, prepare a short introduction, one genuine question and a clear way to decline further contact. Follow up only where interest is mutual; attending a session does not guarantee a job, client or collaborator.</p>
+        <ArticleConversionCTA articleSlug="community/how-to-network-at-networking-events" config={BASE_ARTICLE_SEO_CONFIG["/articles/community/how-to-network-at-networking-events"].conversion!} events={[]} placement="article-inline" />
+      </div>
         </div>
         <ArticleFAQ items={faqItems} />
 

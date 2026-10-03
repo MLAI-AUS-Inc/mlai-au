@@ -1,0 +1,21 @@
+import { expect, test } from 'bun:test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import Article, { DATE_PUBLISHED, DATE_MODIFIED, DESCRIPTION } from '../app/articles/content/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+test('footprint issue keeps estimates distinct from measurement and provides community exercise', () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ const entry = ARTICLE_REGISTRY['community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3'];
+ expect(entry.date).toBe(DATE_PUBLISHED);
+ expect(entry.dateModified).toBe(DATE_MODIFIED);
+ expect(entry.description).toBe(DESCRIPTION);
+ expect(entry.authors).toHaveLength(4);
+ for (const text of ['2505.09598v6', 'statistically inferred hardware', 'not direct metering', 'Entirely hypothetical inputs', 'not a statistical confidence interval', 'AI environmental claim record', 'do not add the retries again', 'already included']) expect(html).toContain(text);
+ expect(html).toContain('data-article-icp="COMMUNITY"');
+ expect(html).toContain('href="/events"');
+ for (const residue of ['17.15 Wh', '33 Wh', '500 Olympic', 'Three questions people are hammering', 'paper you should pretend']) expect(html).not.toContain(residue);
+ expect(0.5 * 10_000 / 1000).toBe(5);
+ expect(1.5 * 10_000 / 1000).toBe(15);
+ expect(0.5 * 12_000 / 1000).toBe(6);
+ expect(1.5 * 12_000 / 1000).toBe(18);
+});

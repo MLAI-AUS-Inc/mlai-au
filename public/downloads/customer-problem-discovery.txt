@@ -1,0 +1,121 @@
+MLAI — Customer problem discovery worksheet
+Version: customer-problem-v1; prepared 10 September 2026
+Article: https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6
+Purpose: test a customer-problem hypothesis before pitching or automating outreach.
+Editorial working aid, not a validated research instrument or legal advice.
+Keep identifying/confidential details out. Agree participation, note use and any follow-up separately. Do not generate interviews, quotes or missing evidence with AI.
+
+1. CONVERSATION PROMPTS
+1. Tell me about the last time this happened.
+   Follow the trigger, people, tools, exceptions and result.
+2. What did you do instead?
+   Ask what is satisfactory about the current workaround, including doing nothing.
+3. How often does that happen, and how do you know?
+   Label recollections as estimates; do not turn an anecdote into a market statistic.
+4. What makes changing this difficult?
+   Explore responsibilities, permissions, training, switching effort and competing priorities.
+5. Who uses it, and who decides whether to change it?
+   A user's enthusiasm is not purchasing approval.
+6. What have I misunderstood?
+   Invite correction rather than endorsement of a proposed feature.
+
+2. BLANK DECISION LOG — use for your own separately permitted test
+Customer problem test — keep identifying and confidential details out
+Date / segment / participant role:
+Hypothesis and what would contradict it:
+Recruitment method / invitations / refusals / completed conversations:
+Recent workflow described / current workaround:
+Observed evidence versus my interpretation:
+Frequency / effort / cost: measured, estimated or unknown?
+User / decision maker / approval constraints:
+Small next test / time and spending limit:
+Expected observable action / stop condition:
+Result, including non-response and contrary evidence:
+Decision: investigate, change scope, test or stop — and why:
+
+3. COMPLETED FICTIONAL EXAMPLE
+Entirely fictional example: all people, dates, counts and notes below are invented. No interviews or outreach occurred. No market demand, permission or customer result is established.
+Date / segment / participant role:
+Fictional review on 7 September 2026. A Melbourne idea-stage founder explores enquiry handling with owners of small service businesses. Fit rule: personally handles or supervises the workflow and can describe a recent instance.
+
+Hypothesis and what would contradict it:
+Hypothesis: missed replies mainly result from drafting effort, so an AI reply tool may help. Contrary evidence: existing software is adequate, ownership is unclear, or the issue is not important enough to change.
+
+Recruitment method / invitations / refusals / completed conversations:
+Fictional permission-first introductions through an existing professional network, 1–7 September. Eight invitations, three completed conversations, two declines and three without a response by the cutoff. No real contact details or permission records exist.
+
+Recent workflow described / current workaround:
+P1 reports adequate shared-inbox assignment. P3 describes a handoff with no clear owner. P5 describes after-hours checking. These invented participant reports are not observed customer behaviour.
+
+Observed evidence versus my interpretation:
+No actual observations were collected. Within the teaching scenario, the notes are participant reports; the founder's ownership hypothesis is an interpretation. No quote, transcript, inbox or customer document is supplied.
+
+Frequency / effort / cost: measured, estimated or unknown?
+Frequency unknown; active effort unknown; error cost unknown. Do not replace missing values with zero or claim recovered hours, sales or margin.
+
+User / decision maker / approval constraints:
+Owner perspectives only; staff users and buying authority for a proposed change remain unverified. No participant has agreed to a trial, follow-up or paid terms.
+
+Small next test / time and spending limit:
+Propose an unrun manual ownership-card exercise, only after fresh participant agreement. Cap total founder effort at two hours and external spend at A$0; founder time still has an opportunity cost.
+
+Expected observable action / stop condition:
+Observe whether willing participants can assign or escalate eight invented enquiries and explain responsibility. Record time, confusion and current-process preference; no market-validation threshold is claimed.
+
+Result, including non-response and contrary evidence:
+The hypothetical three conversations challenge the drafting premise; P1 is contrary evidence. Two declines and three non-responses remain recruitment outcomes, not proof that the problem is absent. The mockup test is UNRUN.
+
+Decision: investigate, change scope, test or stop — and why:
+CHANGE SCOPE: stop building the automatic-reply feature for now. Investigate ownership with a manual mockup before considering any AI implementation. Revisit only if suitable participants demonstrate a consequential drafting problem that their existing process cannot address.
+
+Fictional recruitment ledger — status at 7 September 2026:
+P1 | invited 2026-09-01 | completed | status/cutoff 2026-09-03
+P2 | invited 2026-09-01 | declined | status/cutoff 2026-09-02
+P3 | invited 2026-09-01 | completed | status/cutoff 2026-09-04
+P4 | invited 2026-09-01 | no-response | status/cutoff 2026-09-07
+P5 | invited 2026-09-02 | completed | status/cutoff 2026-09-06
+P6 | invited 2026-09-02 | declined | status/cutoff 2026-09-03
+P7 | invited 2026-09-02 | no-response | status/cutoff 2026-09-07
+P8 | invited 2026-09-02 | no-response | status/cutoff 2026-09-07
+Total: 8 invitations = 3 completed + 2 declined + 3 no response. Not real conversion data.
+
+Fictional conversation notes — not quotes or transcripts:
+P1 (2026-09-03)
+Invented report: The owner describes last Tuesday's enquiry handoff and reports that an existing shared-inbox assignment handles it adequately.
+Interpretation: Contradicts the assumption that this owner needs new reply software.
+Not established: No inbox, time record or purchase decision was inspected. Do not count this as lost revenue or a lost sale.
+
+P3 (2026-09-04)
+Invented report: The owner reports one enquiry that two staff each assumed the other would handle. They describe unclear responsibility, not a difficult reply to write.
+Interpretation: Reframe the question around ownership before considering automated drafting.
+Not established: Frequency, business impact and whether a simple process change works are unknown. No customer messages were collected.
+
+P5 (2026-09-06)
+Invented report: The owner describes checking for replies after hours and asks whether the example could show who is responsible for each enquiry.
+Interpretation: A possible question for a manual mockup; not willingness to pay for an agent.
+Not established: The request is not consent to a trial or follow-up, and no staff user or budget approval has been established.
+
+4. NEXT-TEST PLAN — FICTIONAL AND UNRUN
+Question: Would making responsibility visible address the described handoff confusion without new AI software?
+
+Status and participants: UNRUN. Seek agreement from up to two relevant participants and confirm an appropriate staff role. None has consented or been recruited for this test.
+
+Materials: Prepare eight invented enquiry cards: four with a stated responsible role, two with conflicting ownership and two outside the proposed workflow. No real messages, contact details, model or integration.
+
+Procedure: First ask how each participant would handle the cards today. Then show a paper owner/status column. Ask them to assign or escalate each card and explain the choice; do not coach them toward the preferred result.
+
+Limits: Proposed window: 8–11 September 2026, entirely fictional. At most two hours of total founder effort, including preparation and review, with at most 30 minutes per session. A$0 external spend; the time is not free.
+
+Record: For each of the eight cards: current approach, proposed approach, assigned/escalated/unclear result, participant explanation and observed time. Keep missing observations unknown. Include refusals and interrupted sessions.
+
+Decision rule: If both completed sessions prefer the existing approach and reveal no useful change, stop this mockup. If ownership stays unclear, revise the responsibility rule before testing again. No completed sessions means an access problem to investigate, not proof of no demand. These are editorial choices, not statistically validated thresholds.
+
+Stop and follow-up: Stop immediately if a participant wishes to stop or private information is introduced. Do not connect a live inbox or send messages. Discuss any future invitation separately; this plan grants no contact permission.
+
+Actual result: UNRUN — no participant behaviour, timing, improvement, customer or willingness-to-pay result is available.
+
+5. DISCUSS THE UNRESOLVED QUESTION
+Bring your own non-confidential problem statement and one contrary observation to a suitable MLAI event: https://mlai.au/events
+Check the actual date, topic, location, format and availability. Attendance is not a sales invitation or a promise of customers, introductions or individual review.
+Once a problem warrants an offer, the next-stage guide is https://mlai.au/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026
+No real participant research, independent review, registration or commercial result is claimed. Codex assisted this fictional teaching material; it is not a finding of the AI-in-sales paper.

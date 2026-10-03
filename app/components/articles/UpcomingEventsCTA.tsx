@@ -1,16 +1,21 @@
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
+import { eventCalendarHref, parseEventPreference, type EventPreference } from '~/lib/event-preference'
 import {
     CalendarIcon,
     ClockIcon,
     MapPinIcon,
 } from '@heroicons/react/24/outline'
 import { getEventUrl, type Event } from '~/lib/events'
+import { EVENT_AVAILABILITY_NOTE, EVENT_DETAILS_LABEL, compareEventStarts, formatEventStart } from '~/lib/event-display'
 
 interface UpcomingEventsCTAProps {
     events: Event[]
     maxEvents?: number
     className?: string
     onCtaClick?: (destination: string) => void
+    copy?: { title: string; body: string; button: string }
+    defaultEventPreference?: EventPreference
+    calendarOnly?: boolean
 }
 
 export default function UpcomingEventsCTA({
@@ -18,14 +23,19 @@ export default function UpcomingEventsCTA({
     maxEvents = 3,
     className = '',
     onCtaClick,
+    copy,
+    defaultEventPreference = 'all',
+    calendarOnly = false,
 }: UpcomingEventsCTAProps) {
+    const [searchParams] = useSearchParams()
+    const calendarHref = eventCalendarHref(parseEventPreference(searchParams, defaultEventPreference))
     const cardStyles = [
         {
             bg: 'bg-[#ff3d00]', // sidebar "Hello" orange
-            text: 'text-white',
-            meta: 'text-white/90',
+            text: 'text-black',
+            meta: 'text-black/85',
             border: 'border-transparent',
-            icon: 'text-white',
+            icon: 'text-black',
         },
         {
             bg: 'bg-[#4b1bd1]', // sidebar deep purple
@@ -45,9 +55,9 @@ export default function UpcomingEventsCTA({
 
     // Events are already filtered to upcoming on the server to avoid hydration mismatch
     // Just sort and slice here
-    const upcomingEvents = events
+    const upcomingEvents = (calendarOnly ? [] : events)
         .slice()
-        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+        .sort((a, b) => compareEventStarts(a.startDate, b.startDate))
         .slice(0, maxEvents)
 
     if (upcomingEvents.length === 0) {
@@ -56,17 +66,18 @@ export default function UpcomingEventsCTA({
                 data-cf-component-id="events-cta"
                 data-cf-component-type="events-cta"
                 data-cf-component-label="Upcoming events CTA"
-                className={`relative overflow-hidden rounded-[32px] bg-[#4b1bd1] p-8 sm:p-10 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.45)] ${className}`}
+                className={`not-prose relative overflow-hidden rounded-[32px] bg-[#4b1bd1] p-8 sm:p-10 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.45)] ${className}`}
             >
                 <div className="text-center text-white">
-                    <h3 className="text-3xl font-semibold mb-2">Join our community events</h3>
-                    <p className="text-white/85 mb-6">Stay tuned for upcoming AI and ML events in Australia.</p>
+                    <h3 className="text-3xl font-semibold mb-2">{copy?.title ?? 'Join our community events'}</h3>
+                    <p className="text-white/85 mb-6">{copy?.body ?? 'Stay tuned for upcoming AI and ML events in Australia.'}</p>
                     <Link
-                        to="/events"
-                        onClick={() => onCtaClick?.("/events")}
-                        className="inline-flex items-center justify-center rounded-full bg-[#ff3d00] px-7 py-3 text-base font-semibold text-white shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-nowrap"
+                        to={calendarHref}
+                        onClick={() => onCtaClick?.(calendarHref)}
+                        className="inline-flex max-w-full items-center justify-center gap-2 rounded-full bg-[#ff3d00] px-7 py-3 text-center text-base font-semibold text-black shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-normal focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
                     >
-                        View Event Calendar&nbsp;→
+                        <span className="min-w-0 break-words">{copy?.button ?? 'View Event Calendar'}</span>
+                        <span aria-hidden="true" className="shrink-0">→</span>
                     </Link>
                 </div>
             </div>
@@ -78,30 +89,18 @@ export default function UpcomingEventsCTA({
             data-cf-component-id="events-cta"
             data-cf-component-type="events-cta"
             data-cf-component-label="Upcoming events CTA"
-            className={`relative overflow-hidden rounded-[32px] bg-[#4b1bd1] p-6 sm:p-10 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.45)] ${className}`}
+            className={`not-prose relative overflow-hidden rounded-[32px] bg-[#4b1bd1] p-6 sm:p-10 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.45)] ${className}`}
         >
             <div className="text-center mb-8 sm:mb-10 text-white">
-                <h3 className="text-3xl sm:text-4xl font-bold mb-3">Join our upcoming events</h3>
-                <p className="text-white/85 text-base sm:text-lg">Connect with the AI & ML community at our next gatherings.</p>
+                <h3 className="text-3xl sm:text-4xl font-bold mb-3">{copy?.title ?? 'Join our upcoming events'}</h3>
+                <p className="text-white/85 text-base sm:text-lg">{copy?.body ?? 'Connect with the AI & ML community at our next gatherings.'}</p>
+                <p className="mt-3 text-sm text-white/85">{EVENT_AVAILABILITY_NOTE}</p>
             </div>
 
             <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
                 {upcomingEvents.map((event, idx) => {
                     const style = cardStyles[idx % cardStyles.length]
-                    const date = new Date(event.startDate)
-                    const dateStr = date.toLocaleDateString('en-AU', {
-                        weekday: 'short',
-                        day: 'numeric',
-                        month: 'short',
-                        timeZone: 'Australia/Melbourne',
-                    })
-                    const timeStr = date.toLocaleTimeString('en-AU', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true,
-                        timeZone: 'Australia/Melbourne',
-                        timeZoneName: 'short',
-                    })
+                    const start = formatEventStart(event.startDate, event.timezone)
 
                     return (
                     <a
@@ -121,11 +120,11 @@ export default function UpcomingEventsCTA({
                             <div className={`space-y-2 text-sm mt-auto ${style.meta}`}>
                                 <div className="flex items-center gap-2">
                                     <CalendarIcon className={`w-4 h-4 flex-shrink-0 ${style.icon}`} />
-                                    <span suppressHydrationWarning>{dateStr}</span>
+                                    <span>{start.date}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <ClockIcon className={`w-4 h-4 flex-shrink-0 ${style.icon}`} />
-                                    <span suppressHydrationWarning>{timeStr}</span>
+                                    <time dateTime={start.valid ? event.startDate : undefined} title={start.timeZone}>{start.time}</time>
                                 </div>
                                 {event.eventLocation?.address && (
                                     <div className="flex items-start gap-2">
@@ -134,6 +133,7 @@ export default function UpcomingEventsCTA({
                                     </div>
                                 )}
                             </div>
+                            <p className={`mt-4 text-sm font-semibold ${style.text}`}>{EVENT_DETAILS_LABEL} <span aria-hidden="true">↗</span><span className="sr-only"> (opens in a new tab)</span></p>
                         </div>
                     </a>
                 )})}
@@ -141,11 +141,12 @@ export default function UpcomingEventsCTA({
 
             <div className="text-center mt-8">
                 <Link
-                    to="/events"
-                    onClick={() => onCtaClick?.("/events")}
-                    className="inline-flex items-center justify-center rounded-full bg-[#ff3d00] px-8 py-3 text-base font-semibold text-white shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-nowrap"
+                    to={calendarHref}
+                    onClick={() => onCtaClick?.(calendarHref)}
+                    className="inline-flex max-w-full items-center justify-center gap-2 rounded-full bg-[#ff3d00] px-8 py-3 text-center text-base font-semibold text-black shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-normal focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
                 >
-                    View All Events&nbsp;→
+                    <span className="min-w-0 break-words">{copy?.button ?? 'View All Events'}</span>
+                    <span aria-hidden="true" className="shrink-0">→</span>
                 </Link>
             </div>
         </div>
