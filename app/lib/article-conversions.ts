@@ -5,7 +5,8 @@ const ATTRIBUTION_KEY = "mlai_article_conversion_attribution";
 export type ArticleConversionAttribution = {
   articleSlug: string;
   ctaType: ArticleConversionType;
-  placement: "article-bottom" | "article-secondary";
+  placement: "article-bottom" | "article-secondary" | "article-inline";
+  primaryIcp?: "SMB" | "BUILDER" | "FOUNDER_BUILDER" | "COMMUNITY" | "OUTSIDE";
   destination: string;
   version: string;
   clickedAt: string;
@@ -47,6 +48,7 @@ export function trackArticleCtaClick(
     placement: payload.placement,
     destination: payload.destination,
     content_version: payload.version,
+    primary_icp: payload.primaryIcp ?? "unassigned",
   });
 }
 

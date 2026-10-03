@@ -1,0 +1,126 @@
+{
+  "version": "environment-handover-run-v1",
+  "recordedAt": "2026-09-10T00:20:40.359Z",
+  "operator": "Codex-assisted local verification; no independent recipient",
+  "fileInspection": {
+    "version": "learning-handover-v1",
+    "status": "FILES_MATCH",
+    "environment": {
+      "node": "v25.2.1",
+      "v8": "14.1.146.11-node.14",
+      "platform": "darwin",
+      "architecture": "arm64",
+      "kernel": "25.6.0"
+    },
+    "files": [
+      {
+        "name": "triage.mjs",
+        "expectedSha256": "4d29b0d9cc1696a1efac7dabcafd4606d882190f7467dcc83d2437d173d8e384",
+        "actualSha256": "4d29b0d9cc1696a1efac7dabcafd4606d882190f7467dcc83d2437d173d8e384",
+        "status": "match"
+      },
+      {
+        "name": "triage.test.mjs",
+        "expectedSha256": "7546908244d00e980be5e5701c7836e44056cc62ce837fe33f17c70866d05057",
+        "actualSha256": "7546908244d00e980be5e5701c7836e44056cc62ce837fe33f17c70866d05057",
+        "status": "match"
+      },
+      {
+        "name": "change-review.mjs",
+        "expectedSha256": "645306851c898fd6bc329a26b8d3ed30ea926745b5b32029dad893415d186c5b",
+        "actualSha256": "645306851c898fd6bc329a26b8d3ed30ea926745b5b32029dad893415d186c5b",
+        "status": "match"
+      },
+      {
+        "name": "change-review.test.mjs",
+        "expectedSha256": "f88b1ae83ad746a94079882dd61b3fd2b2e5d304cbfbb9b8ce0e242c81e01ecc",
+        "actualSha256": "f88b1ae83ad746a94079882dd61b3fd2b2e5d304cbfbb9b8ce0e242c81e01ecc",
+        "status": "match"
+      },
+      {
+        "name": "change-record.json",
+        "expectedSha256": "8d2a8d3c47c7589280f6da4f08ae0a01818c288bee6774db50d96a72c329a490",
+        "actualSha256": "8d2a8d3c47c7589280f6da4f08ae0a01818c288bee6774db50d96a72c329a490",
+        "status": "match"
+      },
+      {
+        "name": "PORTFOLIO.md",
+        "expectedSha256": "544d55f426f170e793c2206688c64dd380fae0e2041a4806257b0bb70260c4f2",
+        "actualSha256": "544d55f426f170e793c2206688c64dd380fae0e2041a4806257b0bb70260c4f2",
+        "status": "match"
+      },
+      {
+        "name": "README.md",
+        "expectedSha256": "85c2e24993b1d337f9f130255d85b3275a09b44b245da7b3e2961d7766c4b237",
+        "actualSha256": "85c2e24993b1d337f9f130255d85b3275a09b44b245da7b3e2961d7766c4b237",
+        "status": "match"
+      }
+    ],
+    "scope": "Only the seven named files were checked; other files and runtime behaviour were not inspected.",
+    "testsExecuted": false,
+    "independentReproduction": false,
+    "deliveryApproval": false,
+    "capturedAt": "2026-09-10T00:20:39.879Z",
+    "checkerSha256": "b326a7972acfbf7c1db2095359d6e3feeedc028d607d207e5ab0605d20fbad6c"
+  },
+  "commands": [
+    {
+      "command": "node environment-handover/inspect.mjs",
+      "exitStatus": 0
+    },
+    {
+      "command": "node --test --test-reporter=tap ai-builder-lab/triage.test.mjs ai-builder-lab/change-review.test.mjs environment-handover/inspect.test.mjs",
+      "exitStatus": 0,
+      "counts": {
+        "tests": 24,
+        "pass": 24,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "outputSha256": "8d8ad926250bb8c6176e186b7663927b8427b776feabd1c7885c375cf823e508"
+    },
+    {
+      "command": "node ai-builder-lab/change-review.mjs",
+      "exitStatus": 2,
+      "exactMatchToSuppliedRecord": true,
+      "summary": {
+        "total": 14,
+        "baselineCorrect": 9,
+        "candidateCorrect": 12,
+        "remainingFailures": 2,
+        "regressions": 1,
+        "rejectedPredictions": 0
+      },
+      "decision": "HOLD"
+    }
+  ],
+  "negativeChecks": [
+    {
+      "case": "Missing triage.mjs in a separate disposable copy",
+      "exitStatus": 2,
+      "file": {
+        "name": "triage.mjs",
+        "expectedSha256": "4d29b0d9cc1696a1efac7dabcafd4606d882190f7467dcc83d2437d173d8e384",
+        "actualSha256": null,
+        "status": "missing"
+      }
+    },
+    {
+      "case": "Changed triage.mjs in the same disposable copy",
+      "exitStatus": 2,
+      "file": {
+        "name": "triage.mjs",
+        "expectedSha256": "4d29b0d9cc1696a1efac7dabcafd4606d882190f7467dcc83d2437d173d8e384",
+        "actualSha256": "47104a2eb63cbe936d182961c1a76e202038781e8f61331b65c387c0ac1dc1d3",
+        "status": "different"
+      }
+    }
+  ],
+  "limitations": [
+    "One macOS arm64 machine and Node version; no Windows/Linux or second-person reproduction",
+    "Files matching is not code execution, authenticity, isolation or release approval",
+    "All fourteen classification cases are synthetic and visible during authoring",
+    "The candidate retains c3 regression and c5 failure; delivery remains HOLD"
+  ]
+}

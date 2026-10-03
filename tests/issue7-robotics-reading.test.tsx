@@ -1,0 +1,20 @@
+import { expect, test } from 'bun:test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import Article, { DATE_PUBLISHED, DATE_MODIFIED, DESCRIPTION } from '../app/articles/content/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+test('OpenVLA issue keeps source scope and correct result with contextual events', () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ const entry = ARTICLE_REGISTRY['community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7'];
+ expect(entry.date).toBe(DATE_PUBLISHED);
+ expect(entry.dateModified).toBe(DATE_MODIFIED);
+ expect(entry.description).toBe(DESCRIPTION);
+ expect(entry.authors).toHaveLength(4);
+ for (const text of ['16.5-percentage-point', 'RT-2-X', '29 tasks', '970,000', 'fine-tuned Franka', 'Robotics research discussion record', 'Fictional arithmetic', 'not an MLAI replication']) expect(html).toContain(text);
+ expect(html).toContain('href="https://arxiv.org/abs/2406.09246v3"');
+ expect(html).toContain('data-article-icp="COMMUNITY"');
+ expect(html).toContain('href="/events"');
+ for (const residue of ['17.5%', 'Universal Remote', 'Embodiment Agnostic', 'Trust Ceiling', '$10,000 humanoid']) expect(html).not.toContain(residue);
+ expect((50 - 40) / 40).toBe(0.25);
+ expect(50 - 40).toBe(10);
+});

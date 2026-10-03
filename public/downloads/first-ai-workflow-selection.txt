@@ -1,0 +1,112 @@
+MLAI first AI workflow selection record
+Version: 2026-09-11
+Article: https://mlai.au/articles/featured/how-to-get-started-with-ai-2026
+
+PURPOSE
+Choose a business task before buying software. Invented planning inputs, not a client result, forecast, supplier quote, security assessment or working-system validation. Independent owner/technical review pending.
+Use non-confidential observations. Keep personal records, credentials and customer details out. All business tests are NOT RUN.
+
+COMPLETED FICTIONAL EXAMPLE — NOT OBSERVED MLAI CUSTOMER DATA
+Routine FAQ replies
+40 × 6 = 240 minutes/week including existing checks/correction; 8 rework/escalation cases are within that total.
+Approved public FAQ has a named operations owner.
+First compare a clearer FAQ and reply template. Then test draft assistance only if it adds useful value.
+Invoice categorisation
+25 × 4 = 100 minutes/week including existing checks/correction; 5 rework/escalation cases are within that total.
+Record access and reviewer capacity are unresolved.
+Pause AI testing. Ask the bookkeeper to identify the cause of rework and assess existing accounting rules first.
+Hire application decisions
+10 × 15 = 150 minutes/week including existing checks/correction; 2 rework/escalation cases are within that total.
+Personal information and consequential decisions are involved.
+Keep the decision with the existing responsible person. Do not choose it merely because a demo looks fast.
+Recorded choice: investigate FAQ replies with the operations manager, beginning with the improved template. If it resolves the problem, stop there. Source repair, no reviewer or a consequential error can stop the proposed AI test regardless of arithmetic.
+
+FIRST WEEK IS NOT A REPEAT WEEK — INVENTED ARITHMETIC
+Baseline: 40 × 6 = 240 minutes. Planned review: 40 × 3 = 120 minutes.
+Additional exception correction: 30 minutes; source upkeep/maintenance: 20 minutes; one-off setup: 30 minutes. These are distinct activities, not the same review time counted twice.
+First week: 120 + 30 + 20 + 30 = 200 minutes; 40 minutes released, not 120 minutes.
+Repeat week without setup: 170 minutes; 70 minutes released only if the invented workload and performance repeat. This is not an annual projection.
+External setup: A$90; internal setup capacity: 30 minutes at A$60/hour = A$30. Combined economic setup A$120, not all a cash expense.
+
+WHAT HAPPENS TO MARGIN UNDER THESE ASSUMPTIONS?
+All monetary figures are invented, weekly and GST-exclusive. Revenue and existing payroll/other expenses are assumed unchanged. Cash timing, depreciation, financing, tax and unpriced consequential losses are not modelled; this is not a statutory P&L or after-tax net-margin forecast.
+Weekly revenue: A$5,000. Other listed expenses including existing wages: A$4,000 in every case.
+Additional weekly subscription A$10 + usage A$4 + support A$6 = A$20. Internal review/upkeep stays within existing wages, not a second cash charge.
+Customer-remedy allowance: baseline A$8, proposed A$12; incremental A$4. Invented cash allowances, not measured error rates, costs per error or a cap on harm. They do not include the internal correction minutes again.
+Baseline result after listed expenses: A$992 / 19.84% of revenue.
+Proposed first-week result: A$878 / 17.56%; change −A$114 (-2.28 percentage points).
+Proposed repeat-week result: A$968 / 19.36%; change −A$24 (-0.48 percentage points).
+Decision: less handling time is not enough to approve this AI proposal. No payroll is avoided and no new revenue is evidenced. No positive cash payback is established. Confirm actual costs and the simpler-template result before any paid pilot.
+Sensitivity: five review minutes per reply makes repeat-week effort 250 minutes and first-week effort 280 minutes; net capacity -10/-40 minutes. Cash costs do not disappear when time performance worsens.
+
+COMPLETED FAQ WORKFLOW BRIEF — PREPARATION ONLY
+1. Business and process owner:
+Fictional equipment-hire business; operations manager owns the public FAQ, review capacity and the decision to pause. No actual business has approved this brief.
+2. One repeated task and current workaround:
+Prepare routine FAQ replies using approved public passages. First improve the FAQ and saved reply template; keep those as the non-AI comparison.
+3. Representative period, volume and active work time:
+Invented one-week baseline: 40 replies × 6 minutes = 240 minutes including current checking/correction. Record elapsed waiting separately. A real representative period has not been observed.
+4. Current error/rework and required quality:
+Eight baseline replies need correction within the 240 minutes; this is not an additional time allowance. Replies must be supported by current passages. No unsupported price, availability or safety claims are acceptable.
+5. Allowed input sources and data permissions:
+Synthetic questions and approved public FAQ passages only for preparation. Live-record access, vendor handling and applicable obligations need review; no customer records or credentials.
+6. Expected output and person responsible for review:
+A proposed reply beside its source passage or a visible unresolved reason. The operations manager checks the complete output against the approved version before any separate manual communication.
+7. Actions the system must never take:
+No automatic sends, bookings, availability promises, hire approvals, payments or source-policy changes. The implementer must demonstrate unavailable capabilities and access controls; this brief does not implement them.
+8. Systems involved; unknowns to investigate:
+A permitted test-question list, source document and review sheet. Real product, integration quote, access, support and privacy assessment are unresolved. Cost unknown—request a bounded estimate rather than treating the invented allowances as an offer.
+9. Test cases: normal, missing, conflicting and out-of-scope input:
+Answer supported by a current FAQ passage; missing availability detail; two conflicting passage versions; request for a safety assessment or an automatic booking. Actual outcomes: NOT RUN. Retain source/version, expected and actual result, reviewer and handling time.
+10. Spend/time cap and stop conditions:
+Caps require owner/implementer agreement before testing; no budget is approved. Stop for stale sources, missing reviewer, unsupported consequential output or a forbidden action. A percentage saving cannot override these conditions.
+11. Manual fallback and person who can disable the test:
+Return unresolved questions to the operations manager and approved reply template. The implementer must show how that owner pauses new drafts and revokes access; no live controls have been evaluated.
+12. Desired outcome and evidence required before expansion:
+Useful supported replies with acceptable complete handling effort and cost versus the improved template. First/repeat-week plans release 40/70 minutes but worsen the result after listed expenses by A$114/A$24. Do not approve AI on those figures; verify assumptions, cost of errors and quality first. No pilot has passed.
+
+BLANK COMPARISON — REPEAT FOR EACH CANDIDATE
+Task / current method / representative period / task count:
+Active minutes including existing checks/corrections / rework subset / separate waiting:
+Source owner and permitted input / output / reviewer capacity:
+Consequential errors / simpler comparison / investigate, fix prerequisite, keep manual or reject:
+Decision owner / reason / evidence that changes the choice / next review date:
+
+BLANK WEEKLY ECONOMICS — mark unknowns explicitly
+Comparable replies / baseline minutes / planned per-reply review:
+Additional correction / recurring upkeep / one-off internal setup minutes:
+External setup cash / internal capacity value (not avoidable payroll):
+Weekly subscription / usage / external support / any additional wage cash:
+Baseline and proposed customer-remedy spending / other error consequences:
+Comparable weekly revenue / unchanged other expenses / confirmed avoidable costs:
+GST basis / first-week versus repeat-week treatment / excluded costs:
+Result after listed costs / percentage of revenue only when revenue is positive:
+Quality and access stop conditions / owner review / actual quotes / spend cap:
+
+YOUR IMPLEMENTATION BRIEF
+Business and process owner:
+One repeated task and current workaround:
+Representative period, volume and active work time:
+Current error/rework and required quality:
+Allowed input sources and data permissions:
+Expected output and person responsible for review:
+Actions the system must never take:
+Systems involved; unknowns to investigate:
+Test cases: normal, missing, conflicting and out-of-scope input:
+Spend/time cap and stop conditions:
+Manual fallback and person who can disable the test:
+Desired outcome and evidence required before expansion:
+
+ACTUAL CASE LOG — NOT RUN UNTIL OBSERVED
+Case / permitted source and version / expected result / actual result:
+Reviewer / complete handling time / correction and maintenance / actual cash cost:
+Pass, fail, unresolved or NOT RUN / consequential error / stop and recovery:
+Include every attempted case and exception; a few examples do not establish general reliability.
+
+Optional next step: https://mlai.au/mlai-studio/start-project
+The file is not automatically attached. Share only a permitted summary. An enquiry is not a project commitment, a free assessment or promised savings. Confirm delivery-market eligibility with MLAI.
+
+SOURCES — checked 11 September 2026
+https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/guidance-on-privacy-and-the-use-of-commercially-available-ai-products — privacy due diligence, not compliance approval.
+https://business.gov.au/finance/financial-tools-and-templates/set-up-a-profit-and-loss-statement — sales/expense records, labelled estimates and GST basis, not the invented figures.
+Codex assisted the example, arithmetic, download and local checks. Independent review, actual business evidence and any live trial remain pending.

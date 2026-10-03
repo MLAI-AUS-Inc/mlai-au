@@ -30,11 +30,11 @@ const CONTENT: Record<ArticleConversionType, ConversionContent> = {
     destination: "/events",
     background: "bg-[#4b1bd1]",
     foreground: "text-white",
-    buttonClass: "bg-[#ff3d00] text-white hover:bg-[#e93700]",
+    buttonClass: "bg-[#ff3d00] text-black hover:bg-[#e93700]",
   },
   "studio-builder": {
     title: "Build real AI systems with MLAI Studio",
-    body: "Work on scoped, paid startup projects spanning AI agents, workflows, integrations, automations and MVPs.",
+    body: "Apply with your delivery experience, skills and availability to be considered for scoped, paid AI projects. Selection and project matching are not guaranteed.",
     button: "Apply to the builder pool",
     destination: "/mlai-studio#apply",
     background: "bg-[#00ffd7]",
@@ -47,7 +47,7 @@ const CONTENT: Record<ArticleConversionType, ConversionContent> = {
     button: "Start a Studio project brief",
     destination: "/mlai-studio/start-project",
     background: "bg-[#ff3d00]",
-    foreground: "text-white",
+    foreground: "text-black",
     buttonClass: "bg-white text-gray-950 hover:bg-gray-100",
   },
   "founder-tools": {
@@ -75,7 +75,8 @@ function trackedClick(
   ctaType: ArticleConversionType,
   destination: string,
   version: string,
-  placement: "article-bottom" | "article-secondary",
+  placement: "article-bottom" | "article-secondary" | "article-inline",
+  primaryIcp?: ArticleConversionConfig["primaryIcp"],
 ) {
   return () => {
     trackArticleCtaClick({
@@ -84,6 +85,7 @@ function trackedClick(
       placement,
       destination,
       version,
+      primaryIcp,
     });
   };
 }
@@ -92,10 +94,12 @@ function SecondaryConversion({
   articleSlug,
   type,
   version,
+  primaryIcp,
 }: {
   articleSlug: string;
   type: ArticleConversionType;
   version: string;
+  primaryIcp?: ArticleConversionConfig["primaryIcp"];
 }) {
   const content = CONTENT[type];
 
@@ -113,6 +117,7 @@ function SecondaryConversion({
           content.destination,
           version,
           "article-secondary",
+          primaryIcp,
         )}
         className="inline-flex shrink-0 items-center gap-2 text-sm font-black text-[#4b1bd1] underline decoration-2 underline-offset-4"
       >
@@ -128,28 +133,36 @@ export default function ArticleConversionCTA({
   config,
   events,
   className = "",
+  placement = "article-bottom",
 }: {
   articleSlug: string;
   config: ArticleConversionConfig;
   events: Event[];
   className?: string;
+  placement?: "article-bottom" | "article-inline";
 }) {
+  // No inferred commercial intent: do not render primary or secondary offers.
+  if (config.primary === "none" || config.primaryIcp === "OUTSIDE") return null;
   const version = config.version ?? "article-conversion-v1";
-  const primary = CONTENT[config.primary];
+  const primary = { ...CONTENT[config.primary], ...config.copy };
 
   if (config.primary === "events") {
     return (
-      <div className={className}>
+      <div className={`not-prose ${className}`} data-article-conversion="events" data-article-icp={config.primaryIcp}>
         <UpcomingEventsCTA
           events={events}
+          copy={config.copy}
+          defaultEventPreference={config.defaultEventPreference}
+          calendarOnly={config.eventCalendarOnly}
           maxEvents={3}
           onCtaClick={(destination) => {
             trackArticleCtaClick({
               articleSlug,
               ctaType: "events",
-              placement: "article-bottom",
+              placement,
               destination,
               version,
+              primaryIcp: config.primaryIcp,
             });
           }}
         />
@@ -158,6 +171,7 @@ export default function ArticleConversionCTA({
             articleSlug={articleSlug}
             type={config.secondary}
             version={version}
+            primaryIcp={config.primaryIcp}
           />
         ) : null}
       </div>
@@ -167,12 +181,13 @@ export default function ArticleConversionCTA({
   return (
     <section
       data-article-conversion={config.primary}
-      className={`overflow-hidden rounded-[32px] p-7 shadow-[0_25px_80px_-35px_rgba(0,0,0,0.55)] sm:p-10 ${primary.background} ${primary.foreground} ${className}`}
+      data-article-icp={config.primaryIcp}
+      className={`not-prose overflow-hidden rounded-[32px] p-7 shadow-[0_25px_80px_-35px_rgba(0,0,0,0.55)] sm:p-10 ${primary.background} ${primary.foreground} ${className}`}
     >
-      <p className="text-xs font-black uppercase tracking-[0.2em] opacity-70">
+      <p className="text-xs font-black uppercase tracking-[0.2em] opacity-85">
         A practical next step with MLAI
       </p>
-      <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-tight sm:text-4xl">
+      <h2 className="mt-3 max-w-3xl scroll-mt-28 text-3xl font-black tracking-tight sm:text-4xl">
         {primary.title}
       </h2>
       <p className="mt-4 max-w-2xl text-base leading-7 opacity-85 sm:text-lg">
@@ -185,7 +200,8 @@ export default function ArticleConversionCTA({
           config.primary,
           primary.destination,
           version,
-          "article-bottom",
+          placement,
+          config.primaryIcp,
         )}
         className={`mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-black transition ${primary.buttonClass}`}
       >
@@ -197,6 +213,7 @@ export default function ArticleConversionCTA({
           articleSlug={articleSlug}
           type={config.secondary}
           version={version}
+          primaryIcp={config.primaryIcp}
         />
       ) : null}
     </section>

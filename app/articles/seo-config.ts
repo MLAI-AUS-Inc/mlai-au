@@ -27,9 +27,13 @@ export type ArticleConversionType =
     | "vibe-raising"
 
 export type ArticleConversionConfig = {
-    primary: ArticleConversionType
+    primary: ArticleConversionType | "none"
     secondary?: ArticleConversionType
     version?: string
+    primaryIcp?: "SMB" | "BUILDER" | "FOUNDER_BUILDER" | "COMMUNITY" | "OUTSIDE"
+    copy?: { title: string; body: string; button: string }
+    defaultEventPreference?: "all" | "melbourne" | "sydney" | "online"
+    eventCalendarOnly?: boolean
 }
 
 export type ArticleSeoConfig = {
@@ -136,6 +140,11 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         mediaObject: false,
         citations: false,
         internalLinks: [],
+        conversion: { primary: 'events', primaryIcp: 'COMMUNITY', version: 'idea-conversation-v3', eventCalendarOnly: true, copy: {
+            title: 'Bring one clearer question to an MLAI event',
+            body: 'Still exploring an AI idea? Choose a relevant online or in-person event and bring the question your rehearsal exposed. Check the listing and ask before sharing; attendance does not include a pitch slot, review or introduction.',
+            button: 'Explore upcoming MLAI events',
+        } }
     },
     '/articles/featured/how-many-people-use-artificial-intelligence-in-2026': {
         toc: true,
@@ -183,7 +192,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             "enabled": true
         }
     }
-},
+    },
     '/articles/featured/what-is-an-agent-in-artificial-intelligence': {
     "toc": true,
     "howTo": false,
@@ -200,7 +209,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             "enabled": true
         }
     }
-},
+    },
     '/articles/featured/how-to-startup-a-small-business-in-australia': {
         toc: true,
         howTo: false,
@@ -281,7 +290,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             "enabled": true
         }
     }
-},
+    },
     '/articles/featured/how-to-assess-cofounder-values-match-before-you-commit': {
         toc: true,
         howTo: false,
@@ -355,7 +364,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             "enabled": true
         }
     }
-},
+    },
     '/articles/featured/how-to-find-networking-events': {
         toc: true,
         howTo: false,
@@ -379,7 +388,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             "enabled": true
         }
     }
-},
+    },
     '/articles/featured/how-technology-has-changed-education': {
         toc: true,
         howTo: false,
@@ -446,7 +455,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             "enabled": true
         }
     }
-},
+    },
     '/articles/featured/how-to-get-data-science-job': {
     "toc": true,
     "howTo": false,
@@ -463,7 +472,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             "enabled": true
         }
     }
-},
+    },
     '/articles/featured/how-much-do-data-scientists-make': {
         toc: true,
         howTo: false,
@@ -688,6 +697,11 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             article: true,
             faq: { enabled: true },
         },
+        conversion: { primary: 'events', primaryIcp: 'COMMUNITY', version: 'classification-reading-v2', copy: {
+            title: 'Discuss what an AI result really shows',
+            body: 'Find a relevant MLAI learning event and bring one question about a paper’s evidence or limitations. Check the listing; attendance does not provide scientific review or deployment approval.',
+            button: 'Find a relevant learning event',
+        } }
     },
     '/articles/featured/how-to-start-a-startup-and-use-ai-to-make-it-easy': {
         toc: true,
@@ -710,6 +724,11 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             article: true,
             faq: { enabled: true },
         },
+        conversion: { primary: 'studio-project', primaryIcp: 'SMB', version: 'first-workflow-cost-v3', copy: {
+            title: 'Start with one workflow',
+            body: 'Chosen a process worth investigating after comparing the simpler option and its costs? Share the current steps, review needs, permitted inputs and success criterion with MLAI Studio. We can discuss whether a scoped implementation is a fit; you do not need to arrive with a tool chosen.',
+            button: 'Describe your workflow',
+        } }
     },
     '/articles/featured/ai-hackathons-and-events-melbourne': {
         toc: true,
@@ -765,6 +784,78 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         }
     }
 },
+"/articles/community/how-to-network-at-networking-events": {
+        conversion: {
+            primary: "events", primaryIcp: "COMMUNITY", version: "network-participation-v2",
+            copy: { title: "Practise a genuine conversation", body: "Find an MLAI session that matches your interests. Bring one question, listen to other participants and agree any follow-up together.", button: "Find an MLAI event" },
+        },
+        toc: true,
+        citations: true
+},
+"/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2": {
+        conversion: { primary: 'events', primaryIcp: 'COMMUNITY', version: 'answer-preference-v2', copy: {
+            title: 'Explore what makes an AI answer useful',
+            body: 'Find a relevant MLAI learning event and bring a permitted example or question. Check the listing; participation does not guarantee model advice or individual feedback.',
+            button: 'Find an AI learning event',
+        } },
+        toc: true,
+        citations: true
+},
+"/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3": {
+        conversion: { primary: 'events', primaryIcp: 'COMMUNITY', version: 'footprint-reading-v2', copy: {
+            title: 'Ask better questions about AI’s footprint',
+            body: 'Find a relevant MLAI discussion and bring a source plus one question about its assumptions. Check the topic and format; participation is not environmental certification or professional assurance.',
+            button: 'Explore relevant MLAI events',
+        } },
+        toc: true,
+        citations: true
+},
+"/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4": {
+        conversion: { primary: 'studio-builder', primaryIcp: 'BUILDER', version: 'delivery-effort-v3', copy: {
+            title: 'Show the review behind your AI-assisted build',
+            body: 'Share your own permitted project, what you checked, the review decision and handover limits. Include your skills and availability; consideration for scoped paid work depends on suitability and available projects.',
+            button: 'Apply with your build evidence',
+        } },
+        toc: true,
+        citations: true
+},
+"/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6": {
+        conversion: {
+            primary: "events",
+            primaryIcp: "COMMUNITY",
+            version: "issue6-discovery-v3",
+            copy: {
+                title: "Bring a question, not a sales script",
+                body: "Bring your own non-confidential problem statement, one contrary observation and the next question you need to test. Find a suitable MLAI session by topic, location and online or in-person format; attendance does not guarantee customers, introductions or an individual review.",
+                button: "Find a suitable MLAI event",
+            },
+        },
+        toc: true,
+        citations: true
+},
+"/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7": {
+        conversion: { primary: 'events', primaryIcp: 'COMMUNITY', version: 'robotics-reading-v2', copy: {
+            title: 'Discuss the evidence behind robotics headlines',
+            body: 'Find a relevant MLAI learning event and bring one question from your research record. Check the topic and format; attendance does not provide robotics training or deployment approval.',
+            button: 'Find a relevant AI event',
+        } },
+        toc: true,
+        citations: true
+},
+"/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8": {
+        conversion: {
+            primary: "studio-builder",
+            primaryIcp: "BUILDER",
+            version: "issue8-reproducibility-v3",
+            copy: {
+                title: "Can someone else reproduce what you built?",
+                body: "Have your own AI-assisted build that another operator can inspect? Share a permitted demo or repository, your contribution, tests and handover limits. Apply for consideration for scoped, paid projects; selection and matching depend on fit and availability.",
+                button: "Apply with delivery evidence",
+            },
+        },
+        toc: true,
+        citations: true
+}
 };
 
 export const canonical = (path: string) => {

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Await, useLoaderData } from "react-router";
 import type { Route } from "./+types/events";
 import UpcomingEvents from "~/components/UpcomingEvents";
+import EventFormatPreference from "~/components/EventFormatPreference";
 import EventsCalendar from "~/components/EventsCalendar";
 import { fetchEvents, type Event } from "~/lib/events";
 import { getEnv } from "~/lib/env.server";
@@ -83,6 +84,8 @@ export default function EventsCalendarPage() {
   const { events: eventsPromise, serverDate } = useLoaderData<typeof loader>();
 
   return (
+    <>
+    <EventFormatPreference />
     <Suspense fallback={<EventsSkeleton />}>
       <Await
         resolve={eventsPromise}
@@ -107,5 +110,6 @@ export default function EventsCalendarPage() {
         }}
       </Await>
     </Suspense>
+    </>
   );
 }

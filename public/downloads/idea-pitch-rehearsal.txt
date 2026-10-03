@@ -1,0 +1,154 @@
+MLAI IDEA PITCH REHEARSAL — 11 September 2026
+
+https://mlai.au/articles/featured/how-to-pitch-your-idea
+
+Fictional teaching example—not a real MLAI project or participant result. All dialogue, observations and permissions in this exercise are invented.
+
+AI-assisted editorial exercise; independent source, accessibility and founder review pending. Retest not run.
+
+Use: read the supplied fictional example; then fill the blank fields with your own evidence or explicit unknowns. This file does not contain the original videos' transcripts or a copy of their deck. No signup is required. It does not authorise contact, recording, AI uploads or publication of real participant information.
+
+
+BLANK TEN-FIELD RECORD
+
+1. Intended user and task:
+
+
+2. Observation versus assumption:
+
+
+3. What exists and what is proposed:
+
+
+4. One question for this conversation:
+
+
+5. Permission and setting:
+
+
+6. Listener understanding before clarification:
+
+
+7. Relevant experience or lack of it:
+
+
+8. Objection or contradictory information:
+
+
+9. Next change, owner and investigation:
+
+
+10. Follow-up permission and note handling:
+
+
+
+FICTIONAL BEFORE / DRAFT / REVISION
+
+Before: Our revolutionary AI platform eliminates event admin and guarantees a better experience. Sign up now before you miss out.
+
+Draft: I’m exploring a draft assistant for volunteer event organisers. In this fictional scenario, an organiser described repeatedly answering questions about arrival instructions. The idea would draft replies using approved event notes, with the organiser checking every reply before sending. It is only a sketch; I have not tested whether it saves time. If you organise events, how do you handle changes to arrival instructions today?
+
+Replacement proposed-change sentence: The proposed assistant would prepare a reply inside a review screen. It would not send messages or update the event page. The organiser would check each draft against the latest approved notes and decide whether to copy it into their existing messaging tool. This is a proposed boundary, not a feature we have built or tested.
+
+
+SUPPLIED FICTIONAL EXCHANGE
+
+P1: Share the draft with a willing peer
+Fictional peer: “I can read one draft and tell you what I think it does. Please do not record me or contact me afterwards.” The writer shares the draft above, not a working demo.
+Boundary: Permission covers this one written exchange only. No recording, mailing-list signup or follow-up.
+
+P2: Read the retelling before explaining
+Fictional peer: “It answers attendees automatically after the organiser approves the event notes. I have not organised an event, so I cannot tell you whether this solves a real problem.”
+Boundary: A specific misunderstanding of sending authority; no evidence of customer demand or workflow effectiveness.
+
+P3: Revise internally; leave the retest open
+The proposed assistant would prepare a reply inside a review screen. It would not send messages or update the event page. The organiser would check each draft against the latest approved notes and decide whether to copy it into their existing messaging tool. This is a proposed boundary, not a feature we have built or tested.
+Boundary: Retest not run. Do not send another version to this peer. A future rehearsal requires a different willing listener or fresh explicit permission; the revised wording is not proven clearer.
+
+
+COMPLETED TEN-FIELD RECORD
+
+1. Intended user and task:
+Volunteer event organiser preparing answers to arrival-information questions.
+
+2. Observation versus assumption:
+The organiser report is invented. Actual question frequency, time cost and priority remain unknown; no customer interview occurred.
+
+3. What exists and what is proposed:
+A written sketch only. Review-screen drafting, approved-note retrieval and no-send controls are proposed, not implemented or tested.
+
+4. One question for this conversation:
+What do you think the assistant would do, and who would send the reply?
+
+5. Permission and setting:
+P1: one written peer exchange; no recording and no subsequent contact. This fictional permission is not permission to contact a real person.
+
+6. Listener understanding before clarification:
+P2: the peer assumed automatic sending after approval of the notes, rather than review of each individual reply.
+
+7. Relevant experience or lack of it:
+P2: the peer has not organised events. Their retelling tests wording, not whether organisers need or would buy the idea.
+
+8. Objection or contradictory information:
+The claimed review boundary was misunderstood. No evidence yet establishes that drafting is preferable to clearer event information or an existing reply template.
+
+9. Next change, owner and investigation:
+P3: writer replaces the proposed-change sentence with the explicit no-send wording. Retest not run; no measured clarity improvement, saved time or demand claim.
+
+10. Follow-up permission and note handling:
+No follow-up permitted for P1–P3. For real notes, agree use and storage, minimise identifiers and do not publish quotes or upload them to AI tools without appropriate permission.
+
+
+WORDING COMPARISON — editorial interpretation, not a validated score
+
+Specific user and task
+Before: Broad event administration; no clear task.
+Draft: Volunteer organisers answering arrival questions.
+After P3: Same scope; no extra industry-wide claim.
+
+Evidence and status
+Before: Guaranteed benefit without evidence.
+Draft: Fictional observation; sketch; savings untested.
+After P3: Proposed controls explicitly remain unbuilt and untested.
+
+Human action boundary
+Before: Unclear who does what.
+Draft: Per-reply review stated, but P2 reads it as automatic sending.
+After P3: No sending or page updates; organiser decides whether to copy. Retest not run.
+
+Learning request and permission
+Before: Urgent signup without a learning question.
+Draft: Asks about current practice; P1 limits this exercise to clarity.
+After P3: No further contact with this peer; no customer or endorsement inferred.
+
+
+SEVEN-SLIDE FICTIONAL OUTLINE — newly authored text, not third-party deck assets
+
+1. Introduction
+Arrival Draft — a proposed reply-preparation aid for volunteer organisers.
+
+2. Problem
+Hypothesis: arrival questions take repeated effort. No real interview or frequency measurement yet.
+
+3. Solution
+Proposed drafts from approved notes; organiser checks and copies each reply. No automatic sending.
+
+4. Demonstration / technical detail
+Text sketch only. No working retrieval, permission controls or accuracy test to demonstrate.
+
+5. Team
+No real team is claimed in this teaching example. Replace with your actual role and relevant experience; leave unsupported affiliations out.
+
+6. Evidence or next work
+One fictional peer misunderstood the wording; a sentence was revised. No customers, traction graph or measured improvement. Next: a permission-based clarity check.
+
+7. Ask
+Would you be willing to read this sketch and explain who sends the reply? No signup, purchase or introduction requested.
+
+
+NEXT STEP
+
+Choose a relevant MLAI event only if you want to learn through its advertised format. Bring one question, ask before requesting feedback, and check whether pitch practice is actually offered. No pitch slot, customer, review or introduction is guaranteed.
+
+Local notes are not submitted or imported by an event CTA. Original video/deck access, reuse permission and independently verified claims are separate checks; see the article for source links and limits.
+

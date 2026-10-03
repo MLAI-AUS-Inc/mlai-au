@@ -1,404 +1,79 @@
-import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
-
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import { QuoteBlock } from '../../../components/articles/QuoteBlock'
-import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
-import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { RocketLaunchIcon } from '@heroicons/react/24/outline'
-
-/** ========== INPUTS (replace all placeholders) ========== */
-const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
-const NEWSLETTER = 'AI Bits for Techies'
-const TITLE = `${NEWSLETTER} | Issue #3 | 26 Jan 2026`
-const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
-const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
-const TOOLS_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/tools%20image.png?alt=media&token=da31d7a6-37f4-4519-b665-b81a997248c8'
-const GEEKY_THOUGHT_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/geeky%20thought.png?alt=media&token=872aa2d4-e473-446a-bbf1-c1ed0d66e5e5'
-const BOOK_RECOMMENDATION_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/book%20recommendation.png?alt=media&token=4e4ef417-d76a-48e4-b2e0-e3b8ba92fb51'
-
-/** ===== FAQ ===== */
-interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
-}
-
-export const faqItems: FAQ[] = [
-  {
-    id: 1,
-    question: 'Does a "Thinking" model use more electricity?',
-    answer:
-      'Yes, significantly. For a medium-length query, GPT-5\'s average energy consumption ranges from 2.33 Wh for minimal reasoning to 17.15 Wh for high reasoning—a more than seven-fold increase.',
-  },
-  {
-    id: 2,
-    question: 'How does one AI query compare to a Google search?',
-    answer:
-      'A single short GPT-4o query consumes 0.42 Wh, which exceeds the footprint of a traditional Google search (0.30 Wh) by approximately 40%.',
-  },
-  {
-    id: 3,
-    question: 'Why is water usage a factor in AI?',
-    answer:
-      'Data centers require massive amounts of water for cooling and off-site electricity generation. GPT-4o alone is projected to evaporate enough freshwater to fill over 500 Olympic-sized pools annually.',
-  },
-  {
-    id: 4,
-    question: 'Can developers reduce this impact?',
-    answer:
-      'Yes. Improving batch sizes is one of the most effective levers; moving from a batch size of 4 to 8 can reduce the energy per prompt by approximately 45%.',
-  },
-
-  // Strategic / Framework Questions
-  {
-    id: 5,
-    question: 'Do I need to change my privacy notices for new AI features?',
-    answer:
-      'If you introduce new AI features that process personal or sensitive information, update your privacy notice and consent flows. Reference the OAIC APPs and include a short, plain-English description of what the model does, inputs needed, retention, and human oversight.',
-  },
-  {
-    id: 6,
-    question: 'What is the safest way to start a pilot?',
-    answer:
-      'Begin with low-risk internal content (policies, FAQs), apply rate limits, log prompts/outputs, and perform red-team style testing. Use feature flags and role-based access. Run a DPIA/PIA if personal data is involved.',
-  },
-  {
-    id: 7,
-    question: 'How should teams validate model performance?',
-    answer:
-      'Create a small, labeled evaluation set that mirrors your domain. Track accuracy, hallucination rate, latency, and cost per request. Re-test after any model switch or prompt change, and record changes in a decision log.',
-  },
-  {
-    id: 8,
-    question: 'Are there grants or programs in Australia for AI experiments?',
-    answer:
-      'Check current state-based innovation vouchers, CSIRO Kick-Start, and university accelerator programs. Funding cycles shift, so confirm eligibility windows and co-contribution rules before committing spend.',
-  },
-]
-
-export const summaryHighlights = {
-  heading: `${NEWSLETTER} | Issue #3`,
-  intro:
-    'Three questions people are hammering into search and chat right now, plus the short answers you can steal.',
-  items: [
-    {
-      label:
-        'Do "thinking" models use significantly more electricity?',
-      description:
-        'Yes. GPT-5\'s energy consumption ranges from 2.33 Wh for minimal reasoning to 17.15 Wh for high reasoning—a more than seven-fold increase. The most energy-hungry models can exceed ~33 Wh per long prompt, which is 70x+ more than efficient deployments.',
-    },
-    {
-      label:
-        'Is "Model Quality" actually just "Infrastructure Efficiency"?',
-      description:
-        'This week\'s research suggests a model\'s "goodness" is an emergent property of the data center it lives in. The same model can use 70% less energy and water by switching infrastructure, meaning "quality" isn\'t just about weights and biases—it\'s about the grid, cooling, and hardware.',
-    },
-    {
-      label:
-        'Can developers reduce AI\'s environmental impact?',
-      description:
-        'Yes. Improving batch sizes from 4 to 8 can reduce energy per prompt by approximately 45%. The real question for builders: are you optimizing for capability only, or for capability per watt, per litre, per tonne of CO₂ at the scale your product is heading?',
-    },
-  ],
-}
-
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
 export const useCustomHeader = true
-
+export const CATEGORY = 'community'
+export const SLUG = 'weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3'
+export const DATE_PUBLISHED = '2026-01-26'
+export const DATE_MODIFIED = '2026-09-09'
+export const DESCRIPTION = 'Interpret AI energy and water estimates without false precision: inspect measurement boundaries, work through a labelled scenario and prepare better research questions.'
+const TITLE = 'AI Bits #3: How to read an AI environmental-footprint estimate'
+export const faqItems = [
+ { id: 1, question: 'Does every AI query have the same footprint?', answer: 'Do not assume so. Check the workload, model/version, hardware assumptions and accounting boundary behind any quoted number. This article does not measure your provider’s infrastructure.' },
+ { id: 2, question: 'Can I convert an electricity estimate straight into water use or emissions?', answer: 'Not without additional, compatible assumptions or measurements. State the factor, geography, period and boundary used. Missing information should remain unknown, not become zero.' },
+ { id: 3, question: 'Is a lower footprint proof that a model is better?', answer: 'No. Fitness for a task and environmental impact are different questions. Compare task acceptance and resource accounting separately; a failed answer is not equivalent to a useful one.' },
+]
 export default function ArticlePage() {
-  const authors = [
-    {
-      name: 'Dr Sam Donegan',
-      role: 'Founder & Lead Editor',
-      bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
-      url: 'https://www.linkedin.com/in/samueldonegan',
-    },
-    {
-      name: 'Jun Kai (Luc) Chang',
-      role: 'AI Software Developer',
-      bio: "Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.",
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
-      url: 'https://www.linkedin.com/in/jkchangjobs',
-    },
-    {
-      name: 'Julia Ponder',
-      role: 'Technical Writer',
-      bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
-      url: 'https://www.linkedin.com/in/julia-ponder-australia/',
-    },
-    {
-      name: 'Shivang Shekhar',
-      role: 'Technical Writer',
-      bio: 'Shivang is a mechanical engineer and AI masters student at Monash University with a diverse science background. He is the main author for AI Bits for Techies each week.',
-      avatarUrl:
-        '/authors/shivang-shekhar.jpg',
-      url: 'https://www.linkedin.com/in/shivang-s-466458191',
-    },
-  ]
-
-  const breadcrumbs = [
-    { label: 'Home', href: '/articles', icon: Home },
-    { label: NEWSLETTER, current: true },
-  ]
-
-  return (
-    <div>
-      <ArticleHeroHeader
-        breadcrumbs={breadcrumbs}
-        title={TITLE}
-        titleHighlight="Issue #3"
-        headerBgColor="cyan"
-        summary={{
-          heading: summaryHighlights.heading,
-          intro: summaryHighlights.intro,
-          items: summaryHighlights.items,
-        }}
-        heroImage={HERO_IMAGE}
-        heroImageAlt={HERO_IMAGE_ALT}
-      />
-
-      <QuoteBlock
-        variant="purple"
-        title="Quick note"
-        icon={<span className="text-xl">💡</span>}
-        className="my-6"
-      >
-        This guide is part of our broader series on {SERIES}. Prefer to jump ahead?{' '}
-        <a href="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
-          Browse related articles →
-        </a>
-      </QuoteBlock>
-
-      <ArticleTocPlaceholder className="mb-12">
-        {/* Rendered via portal by ArticleEnhancer */}
-      </ArticleTocPlaceholder>
-
-      <AudienceGrid
-        heading="Read this if you are:"
-        cards={[
-          {
-            title: 'Founders & Teams',
-            description: 'For leaders validating ideas, seeking funding, or managing teams.',
-            variant: 'orange',
-            icon: <RocketLaunchIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
-          },
-          {
-            title: 'Students & Switchers',
-            description: 'For those building portfolios, learning new skills, or changing careers.',
-            variant: 'purple',
-            icon: (
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
-                />
-              </svg>
-            ),
-          },
-          {
-            title: 'Community Builders',
-            description: 'For workshop facilitators, mentors, and ecosystem supporters.',
-            variant: 'yellow',
-            icon: (
-              <svg
-                className="w-5 h-5 text-black"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                />
-              </svg>
-            ),
-          },
-        ]}
-        className="my-10"
-      />
-
-      {/* Main content */}
-      <div className="">
-        <h2>{TITLE}</h2>
-
-        <p>
-          Your weekly Aussie-flavoured deep dive into what changed in AI/ML, what matters, and what to do
-          next (without living on release-note social media).
-        </p>
-
-        <p>
-          <strong>This week in one breath:</strong> A paper benchmarking the energy, water, and carbon footprint of LLM inference showing 70x+ differences between models, tools for local image generation and multilingual translation, and a shift in thinking: "model quality" might actually be "infrastructure efficiency"—the same model can use 70% less energy just by switching infrastructure.
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} />
-
-        <h2>The one paper you should pretend you read at lunch</h2>
-        <h3>How Hungry is AI? Benchmarking Energy, Water, and Carbon Footprint of LLM Inference</h3>
-
-        <h4>What is the setup?</h4>
-        <p>
-          Everyone argues about training being expensive, but the real day-to-day bill is inference: the prompts you send all day, every day. The paper's point is simple: we still lack clean, standardised, prompt-level numbers that factor in infrastructure, not just "the model."
-        </p>
-
-        <h4>What they did (yes, really)</h4>
-        <p>
-          They benchmarked 30 models using public API performance data, then layered on infrastructure multipliers like PUE and regional carbon intensity, with hardware configurations inferred statistically. They also use a probabilistic (Monte Carlo) approach and rank "eco-efficiency" with cross-efficiency DEA.
-        </p>
-
-        <h4>What happened</h4>
-        <p>
-          The spread is massive. The most energy-hungry models (they call out o3 and DeepSeek-R1) can exceed ~33 Wh per long prompt, which is 70x+ more than much smaller/efficient deployments. At the other end, they note a single short GPT-4o query at about 0.43 Wh, which looks tiny until you scale it.
-        </p>
-
-        <h4>Why it is interesting (beyond the number)</h4>
-        <p>
-          Because "same model" does not mean "same footprint." Datacentre overhead and where the workload runs can swing the outcome dramatically. In other words: model choice matters, but infrastructure choice is right behind it.
-        </p>
-
-        <h4>The real question</h4>
-        <p>
-          If per-query costs keep getting cheaper and faster, usage will explode anyway (Jevons vibes). So the real builder question becomes: are you optimising for capability only, or for capability per watt, per litre, per tonne of CO₂, at the scale your product is heading?
-        </p>
-
-        <p>
-          <strong>Full paper:</strong>{' '}
-          <a href="https://arxiv.org/abs/2505.09598" target="_blank" rel="noopener noreferrer">
-            https://arxiv.org/abs/2505.09598
-          </a>
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        {TOOLS_IMAGE && (
-          <ArticleImageBlock
-            src={TOOLS_IMAGE}
-            alt="Tools worth poking this week"
-          />
-        )}
-
-        <h2>Tools worth poking this week (in a sandbox first)</h2>
-
-        <h3>FLUX.2 [klein] (Black Forest Labs)</h3>
-        <p>
-          <strong>Best for:</strong> Developers and creators with consumer-grade hardware. These compressed models allow for
-          professional-grade image generation and multi-reference editing directly on local GPUs (like the RTX
-          3090/4090) with sub-second response times.
-          <br />
-          <a href="https://bfl.ai/" target="_blank" rel="noopener noreferrer">
-            https://bfl.ai/
-          </a>
-        </p>
-
-        <h3>TranslateGemma (Google)</h3>
-        <p>
-          <strong>Best for:</strong> Building low-latency, multilingual applications. These open-weights models are optimized for
-          speed and accuracy across 55 languages, fitting on everything from H100 GPUs down to mobile devices
-          while maintaining high-fidelity translation.
-          <br />
-          <a href="https://deepmind.google/models/gemma/" target="_blank" rel="noopener noreferrer">
-            https://deepmind.google/models/gemma/
-          </a>
-        </p>
-
-        <h3>GLM-Image (Zhipu AI)</h3>
-        <p>
-          <strong>Best for:</strong> Designers requiring precise text rendering and multi-subject consistency. This hybrid model
-          combines autoregressive and diffusion techniques to excel at complex tasks like style transfer and
-          generating high-resolution images with legible text.
-          <br />
-          <a href="https://github.com/THUDM/GLM-Image" target="_blank" rel="noopener noreferrer">
-            https://github.com/THUDM/GLM-Image
-          </a>
-        </p>
-
-        <ArticleImageBlock
-          src={BOOK_RECOMMENDATION_IMAGE}
-          alt="Book cover"
-        />
-
-        <h2>Book recommendation (because your brain deserves more than changelogs)</h2>
-        <h3>The Atlas of AI – Kate Crawford</h3>
-        <p>
-          Crawford's work is the grounding counterweight to this week's paper. It zooms out and maps the physical
-          stuff AI is actually made of.
-        </p>
-        <p>
-          Her core argument is blunt: AI is neither artificial nor intelligent. It is an extractive industry. One that runs
-          on lithium mines, exploited labour, and relentless data harvesting.
-        </p>
-        <p>
-          Where this week's paper measures the operational hunger of LLMs, Crawford exposes the deeper,
-          structural costs. The supply chains, the labour, the land.
-        </p>
-        <p>
-          The "cloud" stops looking fluffy very quickly. In her framing, it is a planetary-scale industrial system that
-          centralises power and steadily drains natural resources.
-        </p>
-        <p>
-          Same story. Different layers.
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        {GEEKY_THOUGHT_IMAGE && (
-          <ArticleImageBlock
-            src={GEEKY_THOUGHT_IMAGE}
-            alt="Geeky thought of the day"
-          />
-        )}
-
-        <h2>Geeky thought of the day</h2>
-        <p className="font-semibold">
-          Is "Model Quality" actually just "Infrastructure Efficiency"?
-        </p>
-        <p>
-          We often treat an AI's intelligence as a fixed property, but this research suggests that a model's
-          "goodness" is actually an emergent property of the data center it lives in. If the same model uses 70%
-          less energy and water simply by switching from a proprietary server to a highly optimized cloud provider,
-          then a model's "quality" isn't just about weights and biases—it's about the grid, the cooling, and the
-          hardware.
-        </p>
-        <p>
-          In an era of adaptive routing, we have to stop asking "How smart is this AI?" and start asking
-          "How effectively can this infrastructure support its reasoning?"
-        </p>
-
-        <hr className="my-10 border-gray-100" />
-
-        <h2>Housekeeping (so we stay honest)</h2>
-        <p>
-          This is general information, not legal advice. If you ship user-facing AI, be transparent about
-          where AI is used, what it cannot do, and where humans stay in the loop.
-        </p>
-
-        <AuthorBio authors={authors} className="mt-8" />
-      </div>
-
-      <div className="mt-12">
-        <ArticleFAQ items={faqItems} />
-      </div>
-
-      <ArticleFooterNav />
-    </div>
-  )
+ return <div className="bg-white">
+  <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: 'AI Bits #3', current: true }]}
+   title={TITLE} titleHighlight="environmental-footprint estimate" headerBgColor="cyan"
+   summary={{ heading: 'Check what is being counted', intro: 'For AI-curious readers discussing environmental claims—not a provider ranking or a measurement of your own usage.', items: [
+    { label: 'Measured or modelled?', description: 'Identify direct observations, inferred inputs and scenario assumptions.' },
+    { label: 'Same boundary?', description: 'Check what each estimate includes before comparing numbers.' },
+    { label: 'Useful next question', description: 'Ask what evidence would make the comparison meaningful.' },
+   ] }}
+  />
+  <article className="prose prose-lg max-w-3xl mx-auto px-4 py-10">
+   <p><strong>Correction, 9 September 2026:</strong> the earlier issue stated precise per-query figures and broad reduction claims without keeping their assumptions visible. This revision removes those universal claims and distinguishes estimation from direct measurement. The original January issue date is retained.</p>
+   <h2 id="source">What the cited paper actually describes</h2>
+   <p><a href="https://arxiv.org/abs/2505.09598v6">Jegham and colleagues’ “How Hungry is AI?”, version 6</a>, dated 24 November 2025, describes an infrastructure-aware framework covering 30 models. Its abstract says it combines public API performance data, company-specific environmental multipliers and statistically inferred hardware configurations. That is not direct metering of every commercial query.</p>
+   <p>The abstract reports estimates above 29 Wh for some long prompts and a spread exceeding 65 times between systems. These are attributed results within its framework—not current measurements for your requests. This revision checked the abstract and version history, not a complete reanalysis of its data or assumptions.</p>
+   <p>Our interpretation: a useful discussion starts by identifying how a number was obtained. Do not repeat a dramatic comparison without its workload and uncertainty. A dated estimate can be informative without becoming a universal constant.</p>
+   <h2 id="boundaries">Five checks before comparing two headlines</h2>
+   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Environmental footprint claim boundaries" tabIndex={0}><table><thead><tr><th>Check</th><th>Question to ask</th><th>Common mismatch</th></tr></thead><tbody>
+    <tr><td>Unit and denominator</td><td>Is it Wh per request, per token, per completed task or for an entire period?</td><td>Comparing a single answer with a multi-step workflow</td></tr>
+    <tr><td>Workload</td><td>What input/output lengths, reasoning settings, retries and caching assumptions apply?</td><td>Comparing short drafts with long reasoning runs</td></tr>
+    <tr><td>System boundary</td><td>Does it include only computation, facility overhead, training or hardware manufacture?</td><td>Treating an operational estimate as a whole-life total</td></tr>
+    <tr><td>Location and date</td><td>Which infrastructure and environmental factors were used, and when?</td><td>Applying an overseas historical factor to an unknown deployment</td></tr>
+    <tr><td>Method and uncertainty</td><td>Which inputs were measured, disclosed, inferred or assumed?</td><td>Presenting a modelled point estimate as exact metered consumption</td></tr>
+   </tbody></table></div>
+   <p>For a water claim, also ask whether the quantity refers to withdrawal or consumption and whether electricity-related and on-site uses are included. For a carbon claim, ask which emissions boundary and conversion factor apply. Keep the terms used by the source; these quantities are not interchangeable labels.</p>
+   <h2 id="scenario">A worked scenario—not your provider’s footprint</h2>
+   <p><strong>Entirely hypothetical inputs:</strong> suppose an operational estimate is 0.5–1.5 Wh per request and a workflow makes 10,000 requests in a month. Assume the estimate already includes the overhead being discussed. No actual model or provider is represented.</p>
+   <ul>
+    <li>Lower scenario: 0.5 × 10,000 = 5,000 Wh = 5 kWh.</li>
+    <li>Upper scenario: 1.5 × 10,000 = 15,000 Wh = 15 kWh.</li>
+    <li>If those 10,000 requests include 2,000 retries, do not add the retries again.</li>
+    <li>If 10,000 means initial requests and another 2,000 retries occur, the scenario becomes 6–18 kWh.</li>
+   </ul>
+   <p>The interval comes from chosen assumptions; it is not a statistical confidence interval. It omits training and equipment manufacture. It also supplies no water or emissions factors, so those results remain unknown. Multiplying a precise request count by an uncertain input does not remove the uncertainty.</p>
+   <p>Do not multiply by facility overhead again if it is already included. Before changing a factor, explain the new boundary. Before claiming a reduction, check that both scenarios deliver comparable accepted outputs and count unsuccessful attempts consistently.</p>
+   <h2 id="claims">Practice: rewrite an overconfident statement</h2>
+   <p><strong>Fictional claim:</strong> “Moving our chatbot saves 70% of water and makes the model smarter.”</p>
+   <p><strong>Evidence-aware alternative:</strong> “We do not yet have a comparable water estimate for both deployments. We need the workload, location, accounting boundary and factor sources. We will assess answer quality separately using the same task criteria.”</p>
+   <p>This is not a finding that a migration cannot help. It is a statement that the supplied evidence is insufficient. An appropriate next step is to request the missing methodology, not choose a more convincing number or claim that environmental efficiency is model intelligence.</p>
+   <h2 id="record">Copy an environmental-claim reading record</h2>
+   <pre className="whitespace-pre-wrap" aria-label="AI environmental claim record">{[
+    'Exact claim and source/version/date:',
+    'Quantity, unit and denominator:',
+    'Workload and accepted-task definition:',
+    'Request count and treatment of retries:',
+    'What is included and excluded:',
+    'Measured, disclosed, inferred or assumed inputs:',
+    'Location, period and factor source:',
+    'Uncertainty and sensitivity to assumptions:',
+    'What the comparison does not establish:',
+    'Missing evidence and next question:',
+   ].join('\n')}</pre>
+   <p>No account or download is needed to use this record. If provider information is unavailable, label the result as incomplete. Do not substitute an unrelated model’s estimate simply because it is public.</p>
+   <h2 id="discussion">Bring a specific question to an MLAI event</h2>
+   <p>For an AI discussion, try: “Does this footprint estimate count retries and overhead, and how were the inputs obtained?” Bring the source rather than only a screenshot of the headline. Choose a relevant topic, experience level and online or in-person format; attendance does not provide environmental assurance or certify a product.</p>
+   <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+   <h2 id="scope">Editorial scope</h2>
+   <p>The linked paper abstract and version history were checked on 9 September 2026. The checklist and hypothetical arithmetic are editorial teaching material, not a measured MLAI footprint, procurement recommendation or lifecycle assessment. Previous tool and book endorsements were removed to keep this issue focused on interpreting the research.</p>
+   <ArticleFAQ items={faqItems} />
+  </article>
+ </div>
 }

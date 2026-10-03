@@ -1,0 +1,50 @@
+MLAI AI-assisted delivery record — delivery-effort-v3
+User-entered record; not verified by MLAI and not a release approval
+
+Task and scope:
+Not recorded
+
+Repository or artifact version:
+Not recorded
+
+AI tool, model, date and permitted actions:
+Not recorded
+
+Data and sharing permission:
+Not recorded
+
+Acceptance criteria fixed before work:
+Not recorded
+
+Checks actually run and results:
+Not recorded
+
+Rejected suggestions and review corrections:
+Not recorded
+
+Recorded decision, reviewer and unresolved limits:
+Not recorded
+
+Run instructions and handover evidence:
+Not recorded
+
+Excluded effort, costs and comparison limits:
+Not recorded
+
+Time recording:
+Author implementation and self-check minutes: Not recorded
+Reviewer minutes: Not recorded
+Corrections and re-check minutes: Not recorded
+Elapsed start-to-decision minutes: Not recorded
+Queue minutes within that elapsed interval: Not recorded
+
+Known active effort subtotal: No active effort recorded
+Recorded active effort total: Unavailable — one or more active-effort fields are not recorded
+Missing active-effort fields: author, reviewer, rework
+Queue time is a subset of elapsed time, not extra person-effort.
+
+The subtotal sums known values only; missing values are not measured zeros.
+Person-minutes can overlap across people and are not calendar duration. Count review/rework once.
+Totals cover only the recorded categories. Describe excluded coordination, handover, costs and later defects.
+A filled record, passing tests or a stated decision is not independently verified approval, productivity gain or proof of causal impact.
+Review private data, prompts, paths and client permission before sharing. This worksheet sends no record to Studio.

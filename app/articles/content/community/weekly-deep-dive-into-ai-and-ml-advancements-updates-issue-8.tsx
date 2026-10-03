@@ -1,416 +1,143 @@
-import type { ReactNode } from 'react'
-import { Home } from 'lucide-react'
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+import ArticleTocPlaceholder from "~/components/articles/ArticleTocPlaceholder";
+import handover from "../../../../public/downloads/environment-handover/recorded-run.json";
 
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import { QuoteBlock } from '../../../components/articles/QuoteBlock'
-import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
-import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { RocketLaunchIcon } from '@heroicons/react/24/outline'
-
-/** ========== INPUTS (replace all placeholders) ========== */
-const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
-const NEWSLETTER = 'AI Bits for Techies'
-const TITLE = `${NEWSLETTER} | Issue #8 | 11 Mar 2026`
-const HERO_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
-const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
-const GEEKY_THOUGHT_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/geeky%20thought.png?alt=media&token=872aa2d4-e473-446a-bbf1-c1ed0d66e5e5'
-const TOOLS_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/tools%20image.png?alt=media&token=da31d7a6-37f4-4519-b665-b81a997248c8'
-const BOOK_RECOMMENDATION_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/book%20recommendation.png?alt=media&token=4e4ef417-d76a-48e4-b2e0-e3b8ba92fb51'
-
-/** ===== FAQ ===== */
-interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
-}
-
-export const faqItems: FAQ[] = [
-  {
-    id: 1,
-    question: 'How does Proton work without a virtual machine?',
-    answer:
-      'Proton uses a combination of Wine (a Windows API reimplementation for Linux), DXVK (a Vulkan-based DirectX translation layer), and VKD3D-Proton (for DirectX 12). Together, these translate Windows system calls and graphics API calls into their Linux and Vulkan equivalents in real time—entirely in user space, on the same kernel. There is no hardware virtualization, no separate OS instance, and no hypervisor overhead. It is translation, not emulation, which is why the performance gap is far smaller than intuition suggests.',
-  },
-  {
-    id: 2,
-    question: "Does the 'Proton advantage' apply to developer workloads, not just games?",
-    answer:
-      'Directly, no—the paper benchmarks GPU-bound gaming workloads specifically. But the underlying principle applies everywhere: Windows background overhead (telemetry services, Update Orchestrator, service host processes) is a fixed CPU and RAM cost regardless of what you are running. Developer workloads—compilers, container runtimes, ML training loops—are often more sensitive to idle overhead than GPU-bound games. If Proton can close the gap in the domain Windows was built to dominate, native Linux toolchains have a stronger advantage in the domains it was not.',
-  },
-  {
-    id: 3,
-    question: 'Is WSL2 the Windows equivalent of Proton—a compatibility layer that closes the gap?',
-    answer:
-      'Architecturally similar, practically different. WSL2 runs a full Linux kernel inside a Hyper-V lightweight VM—so it is virtualization, not translation. Proton runs Windows API calls natively on a Linux kernel without a VM boundary. WSL2 is excellent for developer tooling and has minimal overhead for most tasks, but it still crosses a hypervisor boundary for I/O and networking. Proton has no such boundary. For raw Linux performance on Windows hardware, WSL2 is the closest analogue—but the architectural gap means it cannot replicate a bare-metal Linux environment.',
-  },
-]
-
+export const useCustomHeader = true;
+export const SLUG = "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8";
+export const articleMeta = {
+  title: "AI Bits #8: Environment handovers and a 2023 Proton correction",
+  description: "Download a tested environment-handover kit, inspect source hashes and reproduce a held classification review. Includes the corrected scope of a 2023 Proton gaming paper.",
+  datePublished: "2026-03-11",
+  dateModified: "2026-09-10",
+};
 export const summaryHighlights = {
-  heading: `${NEWSLETTER} | Issue #8`,
-  intro:
-    'A peer-reviewed Springer paper from ICCCI 2023 benchmarks Proton (Linux’s Windows compatibility layer) against native Windows and finds that Linux’s lower idle overhead can neutralise—and sometimes reverse—the expected performance penalty of running through a translation layer.',
+  heading: "Make the next operator's first run inspectable",
+  intro: "For AI-assisted builders documenting a development environment—not a recommendation to switch operating systems.",
   items: [
-    {
-      label: 'Where does the compatibility layer actually bite?',
-      description:
-        'Kopel & Bożek (Wroclaw University of Science and Technology) put Proton head-to-head against native Windows across a controlled benchmark suite. In several workloads, Linux running Windows software through a translation layer matched or beat native Windows—largely because Windows’ own background overhead quietly bled performance on the native side.',
-    },
-    {
-      label: 'What is the “translation tax”—and why is it sometimes negative?',
-      description:
-        'Proton (a fork of Wine) strips away Windows session management, telemetry, and service-host overhead that native Windows carries as fixed cost. For compute-heavy, GPU-bound workloads, Proton’s translation overhead can be smaller than the Windows idle tax. The better question becomes: how much is Windows losing to itself?',
-    },
-    {
-      label: 'What should builders take away?',
-      description:
-        'Stop treating compatibility as the enemy of performance. A lean, transparent kernel with explicit overhead (Proton) can outperform a “native” environment burdened by opaque system load. If Proton can neutralise Windows’ gaming advantage, what does that signal for your containerised dev stack, CI pipelines, and inference workloads? The floor has shifted.',
-    },
+    { label: "What does the source establish?", description: "The public abstract describes a 2023 comparison of Proton and native Windows for video gaming. Full methods and results were not available for this correction." },
+    { label: "What was corrected?", description: "Removed unsupported causal attributions about Windows background services and extrapolation to AI inference or developer productivity." },
+    { label: "What can you use?", description: "A twelve-file kit, a completed local record and a checker that distinguishes file identity from executed tests and delivery approval." },
   ],
-}
+};
+export const ENVIRONMENT_MANIFEST = [
+  "Environment handover — redact identifying paths and secrets",
+  "Task, repository URL and exact commit:",
+  "Host OS/version and architecture:",
+  "Runtime and package-manager versions:",
+  "Dependency lockfile and clean-install command:",
+  "Container/VM layer and image digest, if used:",
+  "GPU/driver/accelerator versions, or not applicable:",
+  "Required configuration variable names (never secret values):",
+  "Permitted fixture input and expected output:",
+  "Test/run commands and observed exit status:",
+  "Known failures, unsupported environments and manual fallback:",
+  "Reproduction date, operator and evidence location:",
+  "What was not tested:",
+].join("\n");
+const counts = handover.commands[1].counts!;
+const comparison = handover.commands[2].summary!;
+export const HANDOVER_FILES = ["inspect.mjs", "inspect.test.mjs", "expected-files.json", "recorded-run.json", "HANDOVER.md"];
+export const faqItems = [
+  { question: "Does this paper prove Linux is faster for AI inference?", answer: "No such conclusion is established here. The accessible abstract describes gaming. This correction did not inspect the full methods or results, and a result on one workload cannot be assumed for another." },
+  { question: "Is Proton a general solution for Windows development tools?", answer: "Valve describes Proton as a Steam Play compatibility tool based on Wine and additional components, intended for Windows games on Linux. Do not infer support for an arbitrary development tool; verify the exact application and supported setup independently." },
+  { question: "Does passing a local test prove a handover is reproducible?", answer: "It proves that run in that environment. A recipient must follow the documented setup independently, compare outputs and report differences before you claim a reproduced handover." },
+  { question: "Should I change operating systems to build AI projects?", answer: "Start with your project's supported dependencies, hardware, team requirements and actual failure. This article supplies no evidence that an OS change will improve your performance. Test a representative workload before making a consequential change." },
+];
 
-export const useCustomHeader = true
+export default function ArticleContent() {
+  return <div>
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "AI Bits #8", current: true }]} title={articleMeta.title} titleHighlight="Environment handovers" headerBgColor="cyan" summary={summaryHighlights} />
+    <div data-cf-article-body className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-indigo">
+      <p>An AI-assisted build that runs on your laptop is not yet a demonstrated handover. If you want to deliver a scoped project for someone else, give its next operator the source identity, setup, commands, expected result and known failures. This guide supplies a completed teaching example you can inspect and repeat; it does not qualify you for client work or recommend an operating-system change.</p>
+      <ArticleTocPlaceholder />
+      <aside aria-label="Editorial correction" className="border-l-4 border-amber-500 pl-4">
+        <p><strong>Correction — 9 September 2026:</strong> the original March issue attributed specific performance effects to Windows background services and used a gaming comparison to suggest advantages for development and AI workloads. We could not substantiate those detailed attributions from the accessible source, so they have been removed. This does not establish that the paper's results are false; it establishes a limit on what this article can responsibly report.</p>
+      </aside>
+      <h2 id="source-scope" className="scroll-mt-28">What the 2023 paper actually covers</h2>
+      <p>Marek Kopel and Michał Bożek’s <a href="https://link.springer.com/chapter/10.1007/978-3-031-41456-5_48">“Is Proton Good Enough?” — A Performance Comparison Between Gaming on Windows and Linux</a> was published online on 13 September 2023 in the ICCCI 2023 proceedings. Its public abstract describes comparing Proton with native Windows for video gaming.</p>
+      <p>The publisher page exposes an abstract, not the complete methods and results available through subscription access. This correction has not verified individual game outcomes, hardware configurations, driver versions, measured overhead or a causal explanation for any difference. We therefore give no numeric result, winner or recommendation based on those unavailable details.</p>
+      <p>Valve’s <a href="https://github.com/ValveSoftware/Proton">official Proton repository</a> describes a Steam Play compatibility tool based on Wine and additional components for running Windows games on Linux. That is a specific purpose, not a blanket compatibility promise for development applications.</p>
 
-export default function ArticlePage() {
-  const authors = [
-    {
-      name: 'Dr Sam Donegan',
-      role: 'Founder & Lead Editor',
-      bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
-      avatarUrl:
-        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
-      url: 'https://www.linkedin.com/in/samueldonegan',
-    },
-    {
-      name: 'Jun Kai (Luc) Chang',
-      role: 'AI Software Developer',
-      bio: 'Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.',
-      avatarUrl:
-        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
-      url: 'https://www.linkedin.com/in/jkchangjobs',
-    },
-    {
-      name: 'Julia Ponder',
-      role: 'Technical Writer',
-      bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
-      avatarUrl:
-        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
-      url: 'https://www.linkedin.com/in/julia-ponder-australia/',
-    },
-    {
-      name: 'Shivang Shekhar',
-      role: 'Technical Writer',
-      bio: 'Shivang is a mechanical engineer and AI masters student at Monash University with a diverse science background. He is the main author for AI Bits for Techies each week.',
-      avatarUrl:
-        '/authors/shivang-shekhar.jpg',
-      url: 'https://www.linkedin.com/in/shivang-s-466458191',
-    },
-  ]
+      <h2 id="claim-boundary" className="scroll-mt-28">Separate a benchmark result from a new claim</h2>
+      <div role="region" aria-label="Benchmark claim boundaries" tabIndex={0} className="max-w-full overflow-x-auto"><table className="min-w-[42rem]">
+        <caption>Evidence needed before repeating a performance claim</caption>
+        <thead><tr><th>Claim</th><th>Needed evidence</th><th>Status in this article</th></tr></thead>
+        <tbody>
+          <tr><td>The paper compares gaming environments.</td><td>Publisher abstract and bibliographic record.</td><td>Checked.</td></tr>
+          <tr><td>A particular game performed better on one setup.</td><td>Full results with workload, versions, settings and measurement method.</td><td>Not verified here.</td></tr>
+          <tr><td>Background services caused the difference.</td><td>A design isolating that factor and considering alternatives.</td><td>Not established by the accessible abstract.</td></tr>
+          <tr><td>The same advantage applies to AI inference or build pipelines.</td><td>A separate relevant benchmark with comparable output correctness and conditions.</td><td>No such benchmark was run for this article.</td></tr>
+        </tbody>
+      </table></div>
+      <p>“Plausible explanation” and “measured cause” are different statements. Drivers, settings, caching, workload mix and measurement choices can change a comparison. Do not select a favourite explanation without evidence that separates it from alternatives.</p>
 
-  const breadcrumbs = [
-    { label: 'Home', href: '/articles', icon: Home },
-    { label: NEWSLETTER, current: true },
-  ]
+      <h2 id="builder-task" className="scroll-mt-28">The builder task: make your environment inspectable</h2>
+      <p>If you use AI coding tools to deliver software, a more useful next step than choosing an OS winner is documenting the environment someone else needs to reproduce your work. Code that runs only on your laptop is not yet a demonstrated handover.</p>
+      <p>The completed record below uses the <Link to="/articles/featured/best-way-to-learn-about-ai-2026">learning guide's review-only classification lab</Link>. Its seven existing files remain unchanged; this article adds five handover files. Both classifiers are keyword rules, <strong>not an AI model or client system</strong>. All fourteen examples are fictional and were visible during authoring.</p>
+      <p>The read-only checker compares seven named files with <code>expected-files.json</code> and reports Node/V8, platform, architecture and kernel. It does not execute those files, inspect extra files, install dependencies or open a network connection. Its report excludes usernames, hostnames, local paths and environment-variable values. Hashes establish identity against this manifest, not authenticity if both are altered, runtime compatibility or protection against later file changes.</p>
+      <details><summary>Copy a blank manifest for your own permitted project</summary><p>This template is not a completed reproduction claim. Fill it from actual observations, including container/VM layers where used.</p><pre className="whitespace-pre-wrap break-words"><code>{ENVIRONMENT_MANIFEST}</code></pre></details>
+      <p>Keep secrets out of manifests and logs. Name required variables and how an authorised operator obtains them; do not publish tokens, customer records or unredacted machine paths. Ask permission before sharing client source or a reproduction bundle.</p>
 
-  return (
-    <div>
-      <ArticleHeroHeader
-        breadcrumbs={breadcrumbs}
-        title={TITLE}
-        titleHighlight="Issue #8"
-        headerBgColor="cyan"
-        summary={{
-          heading: summaryHighlights.heading,
-          intro: summaryHighlights.intro,
-          items: summaryHighlights.items,
-        }}
-        heroImage={HERO_IMAGE}
-        heroImageAlt={HERO_IMAGE_ALT}
-      />
+      <h2 id="reproduction-exercise" className="scroll-mt-28">Download and repeat the recorded handover</h2>
+      <p><a href="/downloads/environment-handover-kit.zip" download="environment-handover-kit.zip">Download the complete environment handover kit</a> — twelve files in two folders, including all seven learning-lab files. No package installation, API key, GPU or container is needed for these dependency-free Node scripts. The recorded run used Node {handover.fileInspection.environment.node} on macOS arm64; other versions and operating systems need their own verification.</p>
+      <p>Extract the ZIP, keep its two folders together and open a terminal in their parent folder. Inspect the JavaScript first, then run each command separately:</p>
+      <pre className="whitespace-pre-wrap break-words"><code>{"node --version\nnode environment-handover/inspect.mjs\nnode --test --test-reporter=tap ai-builder-lab/triage.test.mjs ai-builder-lab/change-review.test.mjs environment-handover/inspect.test.mjs\nnode ai-builder-lab/change-review.mjs"}</code></pre>
+      <p>The inspector exits 0 for <code>FILES_MATCH</code>, 2 for a mismatch and 1 for invalid usage or manifest. The test command exits 0. The final change review deliberately exits <strong>2 / HOLD</strong> because the classifier still fails the teaching task. These are different checks: 24 passing code tests do not cancel that HOLD. See the handover for recording exit status in your shell.</p>
+      <div role="region" aria-label="Recorded handover outcomes" tabIndex={0} className="max-w-full overflow-x-auto"><table className="min-w-[42rem]">
+        <caption>Actual local execution, 10 September 2026; not an independent recipient run</caption>
+        <thead><tr><th>Check</th><th>Recorded outcome</th><th>What it does not establish</th></tr></thead>
+        <tbody>
+          <tr><td>File identity</td><td>{handover.fileInspection.files.length}/7 files match; exit {handover.commands[0].exitStatus}</td><td>The checker itself did not execute the lab or approve it.</td></tr>
+          <tr><td>Executed code tests</td><td>{counts.pass}/{counts.tests} pass; {counts.fail} fail; exit {handover.commands[1].exitStatus}</td><td>15 lab tests and 9 checker tests reproduce behaviour, including known defects.</td></tr>
+          <tr><td>Executed classification comparison</td><td>Baseline {comparison.baselineCorrect}/{comparison.total}; candidate {comparison.candidateCorrect}/{comparison.total}; {handover.commands[2].decision}, exit {handover.commands[2].exitStatus}</td><td>The full output matches the supplied change record, but retains {comparison.remainingFailures} failures including {comparison.regressions} regression.</td></tr>
+          {handover.negativeChecks.map(row => <tr key={row.case}><td>{row.case}</td><td>{row.file.status}; exit {row.exitStatus}</td><td>Deliberately altered disposable copy; no source was executed by the checker.</td></tr>)}
+        </tbody>
+      </table></div>
+      <p>For the candidate, c3 loses the active appointment-date request when the whole “not about” clause is discarded; c5 still misses “Can I reschedule?”. Keep both. The higher combined count is not general language understanding, customer accuracy or evidence from independent evaluation.</p>
+      <p>The complete <a href="/downloads/environment-handover/HANDOVER.md" download="HANDOVER.md">HANDOVER.md</a> records all manifest fields, actual macOS/runtime versions, excluded dependencies, failure handling and pending recipient review. Other inspectable files:</p>
+      <ul>{HANDOVER_FILES.filter(name => name !== "HANDOVER.md").map(name => <li key={name}><a href={"/downloads/environment-handover/" + name} download={name}>{name}</a></li>)}</ul>
+      <p>The record was generated by a Codex-assisted local run. It identifies this uncommitted draft by file hashes; it does not attest a Git release or independent human review. Review even a minimal version/hash record before sharing. The checker does not sanitise other programs' logs, which may contain private paths or data.</p>
+      <h3 className="scroll-mt-28" id="recipient-reproduction">What a recipient still needs to do</h3>
+      <ol>
+        <li>Record the downloaded source hashes, date, actual environment and exact commands. Do not overwrite the supplied author's record with your result.</li>
+        <li>Run the tests and compare the full classification output with <code>change-record.json</code>. Preserve all failures and exit statuses, not only a headline score.</li>
+        <li>Ask another person to follow the same instructions without your unstated setup steps. Record their environment and outcome separately. Their runtime fields may differ even if the source and deterministic result match.</li>
+        <li>If the outcomes differ, reduce the problem to the smallest reproducible input. Note the mismatch before modifying dependencies or deleting a failing test.</li>
+        <li>Update the manifest with both the working setup and what remains untested. A second local run is not an independent reproduction.</li>
+      </ol>
+      <p>No independent recipient has completed that review here. A second local run is <strong>not an independent reproduction</strong>. No Windows/Linux, clean-OS installation, GPU or API compatibility is claimed. If your project needs those, document and test them separately.</p>
 
-      <QuoteBlock
-        variant="purple"
-        title="Quick note"
-        icon={<span className="text-xl">💡</span>}
-        className="my-6"
-      >
-        This issue zooms in on an unexpected finding from a Springer-published ICCCI 2023 paper: that Linux running
-        Windows software through the Proton compatibility layer can match or exceed native Windows performance—exposing
-        the hidden cost of Windows&apos; own service stack. Part of the {SERIES} series.
-      </QuoteBlock>
+      <h2 id="troubleshooting" className="scroll-mt-28">Troubleshoot the first difference, not the whole operating system</h2>
+      <div role="region" aria-label="Environment handover troubleshooting" tabIndex={0} className="max-w-full overflow-x-auto"><table className="min-w-[42rem]">
+        <caption>Keep the first failure and change one relevant thing</caption>
+        <thead><tr><th>Observation</th><th>Next check</th></tr></thead>
+        <tbody>
+          <tr><td>Node is unavailable</td><td>Use your team's approved runtime setup and record its version. This kit does not install it.</td></tr>
+          <tr><td>Inspector exits 1</td><td>Check arguments and the supplied manifest. For a different folder use <code>--lab "PATH TO COPY"</code>.</td></tr>
+          <tr><td>Missing or different file</td><td>Check extraction and exact names, then inspect the diff. Do not update the expected hash merely to hide a mismatch.</td></tr>
+          <tr><td>File check passes, execution fails</td><td>Retain Node/OS, the first failing test and permitted input/output. Same source bytes do not prove compatibility.</td></tr>
+          <tr><td>Tests pass, change review is HOLD</td><td>That is expected for this fixture. Correct the task failure in a separately versioned change; do not delete the failure case.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Practise a missing-file check only in a disposable copy: move <code>triage.mjs</code> out, inspect that copy, then restore it. The recorded demonstration did this and also checked a changed file. Neither result is evidence about an operating system's speed.</p>
 
-      <ArticleTocPlaceholder className="mb-12">
-        {/* Rendered via portal by ArticleEnhancer */}
-      </ArticleTocPlaceholder>
+      <h2 id="comparison-plan" className="scroll-mt-28">If performance matters, write a comparison plan first</h2>
+      <p>Define the actual task, equivalent correct output, hardware/resource constraints and metric. For an inference workflow, distinguish completion latency, throughput and output quality; a faster wrong result is not an equivalent result. Record model/version, input set, concurrency, cache state and failures.</p>
+      <p>Repeat runs under a documented procedure, preserve individual observations and report variability instead of choosing the fastest run. Separate setup or warm-up from measured work, explain which costs are included and avoid changing several factors while attributing the result to one. These are planning questions, not a completed experimental protocol or benchmark.</p>
+      <p>Only claim support for the configurations tested. A local comparison does not establish a universal OS ranking, a customer's future workload performance or business savings.</p>
 
-      <AudienceGrid
-        heading="Read this if you are:"
-        cards={[
-          {
-            title: 'Founders & Engineering Teams',
-            description:
-              "The Proton findings are a business case in disguise. If a compatibility layer on Linux can match native Windows in the most hardware-optimized consumer software category on earth, your engineering team's argument for a Linux dev and deployment stack just got peer-reviewed backing. The “but our tools only run on Windows” objection has an answer now—and it is called Bottles.",
-            variant: 'orange',
-            icon: <RocketLaunchIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
-          },
-          {
-            title: 'Students & Career Switchers',
-            description:
-              "The Springer paper is your cheat code for the “but Linux is hard” conversation. Bookmark the DOI. The data shows that not only is Linux viable for Windows workloads via Proton—it is sometimes faster. Understanding why (idle overhead, driver model, kernel transparency) is the conceptual foundation for systems interviews, cloud certifications, and DevOps roles where Linux fluency is table stakes.",
-            variant: 'purple',
-            icon: (
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
-                />
-              </svg>
-            ),
-          },
-          {
-            title: 'Community Builders & Open Source Contributors',
-            description:
-              'Proton is one of the most consequential open-source projects of the last decade—not because it is technically brilliant (though it is), but because it changed the economic calculus of Linux adoption for millions of users. The Steam Deck put a Linux kernel in the hands of people who had never heard of a kernel. That is community building at infrastructure scale. The lesson: the best way to grow an open ecosystem is to make switching cost zero.',
-            variant: 'yellow',
-            icon: (
-              <svg
-                className="w-5 h-5 text-black"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                />
-              </svg>
-            ),
-          },
-        ]}
-        className="my-10"
-      />
-
-      {/* Main content */}
-      <div className="">
-        <h2>{TITLE}</h2>
-
-        <p>
-          Your weekly Aussie-flavoured deep dive into what changed in AI/ML, what matters, and what to do next (without
-          living on release-note social media).
-        </p>
-
-        <p>
-          <strong>This week in one breath:</strong> A Springer LNCS paper from ICCCI 2023 benchmarks Proton (Linux&apos;s
-          Windows compatibility layer) against native Windows across GPU-bound workloads, revealing that Linux&apos;s
-          lower idle overhead can neutralise and sometimes reverse the expected performance penalty of running software
-          through a translation layer. The &quot;Compatibility Tax&quot; is real—but so is the &quot;Windows Idle Tax,&quot;
-          and on many workloads, the latter is larger. Plus three tools redefining cross-platform development, and a
-          book that asks why we keep building walls between operating environments in the first place.
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} />
-
-        <h2>Journal Paper of the Week</h2>
-        <h3>
-          <strong>
-            &quot;Is Proton Good Enough?&quot; — A Performance Comparison Between Gaming on Windows and Linux
-          </strong>
-        </h3>
-
-        <h4>The Context</h4>
-        <p>
-          Proton is Valve&apos;s fork of Wine—a compatibility layer that allows Windows-native software to run on Linux
-          without a virtual machine. It gained mainstream relevance with the Steam Deck: a Linux-based handheld console
-          whose entire game library is Windows-native. The core question Kopel &amp; Bożek set out to answer was
-          deceptively simple: when a Linux system runs Windows games through Proton, how much performance does it
-          sacrifice compared to running those same games on native Windows? The answer complicated the question
-          entirely.
-        </p>
-
-        <h4>The Method &amp; Results</h4>
-        <p>
-          The researchers ran standardised GPU-bound gaming benchmarks across identical hardware configurations—one
-          running Windows natively, one running Linux with Proton as the translation layer. Key findings:
-        </p>
-        <ul>
-          <li>
-            <strong>Proton overhead is real but bounded:</strong> The compatibility layer introduces measurable
-            translation overhead—but it is GPU-bound overhead, which modern hardware absorbs efficiently. The per-frame
-            CPU cost of translation was consistently smaller than expected.
-          </li>
-          <li>
-            <strong>Windows idle tax closes the gap:</strong> Native Windows&apos; background service stack—telemetry,
-            Windows Update scheduling, service host processes—consumed enough CPU and memory headroom that the net
-            performance gap between native Windows and Proton/Linux was narrower than any compatibility-layer theory
-            would predict.
-          </li>
-          <li>
-            <strong>Workload-dependent crossover:</strong> In several tested titles, Linux via Proton matched native
-            Windows frame rates. In GPU-constrained scenarios, the lower Linux idle baseline gave Proton the headroom to
-            perform comparably—sometimes marginally faster.
-          </li>
-          <li>
-            <strong>Steam Deck validation:</strong> The findings directly validate Valve&apos;s architectural bet: that a
-            Linux kernel with Proton can serve as a credible Windows-game platform, not in spite of the compatibility
-            layer, but partly because of Linux&apos;s lower system overhead.
-          </li>
-        </ul>
-
-        <h4>Why It Matters</h4>
-        <p>
-          This paper matters beyond gaming. It is a controlled, peer-reviewed demonstration that the &quot;native OS
-          advantage&quot; is not fixed—it is a function of what the OS is doing when you are not looking. If
-          Windows&apos; background load is large enough, a compatibility layer running on a leaner kernel can neutralise
-          it.
-        </p>
-        <p>
-          For developers, this is the empirical basis for a harder question: if Proton can close the gap in gaming, what
-          can a native Linux stack do for your containerised workloads, your ML training runs, your build pipelines—
-          where you do not even need a compatibility layer at all?
-        </p>
-
-        <p>
-          <strong>Full paper link:</strong>
-          <br />
-          <a href="https://link.springer.com/chapter/10.1007/978-3-031-41456-5_48" target="_blank" rel="noopener noreferrer">
-            https://link.springer.com/chapter/10.1007/978-3-031-41456-5_48
-          </a>
-          <br />
-          <a href="https://www.researchgate.net/publication/373891609" target="_blank" rel="noopener noreferrer">
-            https://www.researchgate.net/publication/373891609
-          </a>
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        {TOOLS_IMAGE && (
-          <ArticleImageBlock src={TOOLS_IMAGE} alt="Tools worth poking this week" />
-        )}
-
-        <h2>AI tools worth checking out</h2>
-
-        <h3>Proton (Valve / Steam)</h3>
-        <p>
-          <strong>Best for:</strong> Running the Windows software ecosystem on Linux without a VM. The subject of this
-          week&apos;s paper, Proton has matured into a production-grade compatibility layer—not a workaround. For
-          developers who need Windows-only tools but want a Linux kernel underneath, it is the most battle-tested bridge
-          available.
-          <br />
-          <a href="https://github.com/ValveSoftware/Proton" target="_blank" rel="noopener noreferrer">
-            https://github.com/ValveSoftware/Proton
-          </a>
-        </p>
-
-        <h3>Distrobox</h3>
-        <p>
-          <strong>Best for:</strong> Running any Linux distribution inside any other, with full hardware and display
-          access. Distrobox lets you run a containerised Ubuntu environment inside Arch, or a Fedora toolbox inside
-          Ubuntu—eliminating the &quot;but my distro doesn&apos;t have this package&quot; friction without leaving your
-          kernel.
-          <br />
-          <a href="https://github.com/89luca89/distrobox" target="_blank" rel="noopener noreferrer">
-            https://github.com/89luca89/distrobox
-          </a>
-        </p>
-
-        <h3>Bottles</h3>
-        <p>
-          <strong>Best for:</strong> Running Windows applications on Linux through a polished, GUI-managed Wine/Proton
-          environment. Where Proton is Steam-centric, Bottles is generalist—letting you create isolated Windows
-          &quot;bottles&quot; for any app: productivity tools, proprietary CAD software, legacy enterprise apps.
-          <br />
-          <a href="https://usebottles.com/" target="_blank" rel="noopener noreferrer">
-            https://usebottles.com/
-          </a>
-        </p>
-
-        <ArticleImageBlock src={BOOK_RECOMMENDATION_IMAGE} alt="Book cover" />
-
-        <h2>Book recommendation (because your brain deserves more than changelogs)</h2>
-        <h3>Just for Fun: The Story of an Accidental Revolutionary — Linus Torvalds &amp; David Diamond</h3>
-        <p>
-          <strong>Why it matters:</strong> If the Kopel &amp; Bożek paper is about what Linux can do, this book is about
-          why Linux exists at all—and why that origin story is inseparable from its architecture. Torvalds did not build
-          Linux to beat Windows. He built it because he wanted a kernel he could understand completely, control
-          entirely, and modify freely. The performance advantages we measure today—the lower idle overhead, the
-          transparent driver model, the modularity that lets Proton work at all—are downstream of that original
-          motivation.
-        </p>
-        <p>
-          <strong>The gist:</strong> What makes this book essential reading for builders is not the nostalgia. It is the
-          lesson that the best infrastructure is often built by someone solving their own problem with total clarity of
-          purpose, not by a committee optimising for market share. Torvalds did not ask permission to make a different
-          kind of OS. He just wrote one. The Springer paper this week is, in a sense, peer-reviewed evidence that it
-          worked. If you want to understand not just how Linux performs but why it is the way it is—this is the origin
-          story your dev stack is running on.
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        {GEEKY_THOUGHT_IMAGE && (
-          <ArticleImageBlock
-            src={GEEKY_THOUGHT_IMAGE}
-            alt="Geeky thought of the week"
-          />
-        )}
-
-        <h2>Geeky thought of the week</h2>
-        <p className="font-semibold">
-          The Proton paradox is a mirror for every abstraction debate in engineering.
-        </p>
-        <p>
-          We spend enormous energy trying to go &quot;native&quot;—native cloud, native ARM, native GPU. The assumption is
-          that proximity to the metal always wins. But the Kopel &amp; Bożek data suggests the real question is not
-          &quot;how close are you to the hardware?&quot;—it is &quot;how much is everything else between you and the
-          hardware costing you?&quot;
-        </p>
-        <p>
-          A well-designed abstraction layer on a clean foundation can outperform a native implementation on a cluttered
-          one. This is true of Proton on Linux vs. native Windows. It is also true of a well-written interpreted
-          language on an efficient runtime vs. poorly optimised compiled code. The &quot;native&quot; label is a ceiling,
-          not a guarantee.
-        </p>
-        <p>
-          So here is the uncomfortable question: if your &quot;native&quot; environment is carrying enough invisible
-          load, is the &quot;compatibility tax&quot; you feared actually cheaper than the &quot;familiarity tax&quot; you
-          never measured?
-        </p>
-
-        <hr className="my-10 border-gray-100" />
-
-        <h2>Housekeeping (so we stay honest)</h2>
-        <p>
-          This is general information, not legal advice. If you ship user-facing AI, be transparent about
-          where AI is used, what it cannot do, and where humans stay in the loop.
-        </p>
-
-        <AuthorBio authors={authors} className="mt-8" />
-      </div>
-
-      <div className="mt-12">
-        <ArticleFAQ items={faqItems} />
-      </div>
-
-      <ArticleFooterNav />
+      <h2 id="handover" className="scroll-mt-28">Turn evidence into a useful handover</h2>
+      <p>Include the manifest, permitted inputs, commands, expected output, failed cases and a clear account of your own contribution. Explain what AI coding tools generated, what you reviewed and why the result satisfies the requested behaviour. Ask a systems reviewer to reproduce consequential setup and compatibility claims before relying on them in client delivery.</p>
+      <p>For a client project, also account for review and rework time: the <Link to="/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4">coding delivery-effort guide</Link> separates code-writing speed from accepted delivery. When you have your own permitted build evidence—not just this supplied starter—you can use it in a Studio application.</p>
+      <ArticleConversionCTA articleSlug={SLUG} config={BASE_ARTICLE_SEO_CONFIG["/articles/" + SLUG].conversion!} events={[]} placement="article-inline" />
+      <p>Studio's public positioning is Australian; New Zealand contractor eligibility has not been verified here. <Link to="/contact">Confirm eligibility</Link> before assuming acceptance. If you are simply curious about these questions, find a relevant <Link to="/events">MLAI event</Link>. Application and project matching are not guaranteed.</p>
+      <p><small>Source scope rechecked 10 September 2026: Springer public abstract and Valve repository documentation. The new kit was run locally; no full-text paper review, independent environment reproduction or OS/AI performance benchmark is claimed.</small></p>
+      <ArticleFAQ items={faqItems} />
     </div>
-  )
+  </div>;
 }
-

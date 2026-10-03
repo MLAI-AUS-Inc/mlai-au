@@ -1,433 +1,78 @@
-import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
-
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import { QuoteBlock } from '../../../components/articles/QuoteBlock'
-import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
-import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { RocketLaunchIcon } from '@heroicons/react/24/outline'
-
-/** ========== INPUTS ========== */
-const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
-const NEWSLETTER = 'AI Bits for Techies'
-const TITLE = `${NEWSLETTER} | Issue #1 | 8 Jan 2026`
-const HERO_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
-const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
-const TOOLS_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/tools%20image.png?alt=media&token=da31d7a6-37f4-4519-b665-b81a997248c8'
-const GEEKY_THOUGHT_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/geeky%20thought.png?alt=media&token=872aa2d4-e473-446a-bbf1-c1ed0d66e5e5'
-const BOOK_RECOMMENDATION_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/book%20recommendation.png?alt=media&token=4e4ef417-d76a-48e4-b2e0-e3b8ba92fb51'
-
-/** ===== FAQ ===== */
-interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
-}
-
-export const faqItems: FAQ[] = [
-  // Issue #1 Specifics
-  {
-    id: 1,
-    question: 'What is the "Journal Paper of the Week"?',
-    answer:
-      'It discusses a paper on "Textual interpretation of transient image classifications," showing how Gemini can classify astronomical images with high accuracy using just 15 labelled examples and text instructions.',
-  },
-  {
-    id: 2,
-    question: 'Which AI tools are worth checking out this week?',
-    answer:
-      'We highlight MiniMax M2.1 for coding agents, SCP for scientific experimentation contexts, DeepFabric for synthetic data generation, and NVIDIA Nemotron 3 for scalable reasoning.',
-  },
-  {
-    id: 3,
-    question: 'What book is recommended in this issue?',
-    answer:
-      'Max Tegmark’s "Life 3.0", which explores the future impact of superintelligence on society, work, and humanity itself.',
-  },
-
-  // Strategic / Framework Questions
-  {
-    id: 4,
-    question: 'Do I need to change my privacy notices for new AI features?',
-    answer:
-      'If you introduce new AI features that process personal or sensitive information, update your privacy notice and consent flows. Reference the OAIC APPs and include a short, plain-English description of what the model does, inputs needed, retention, and human oversight.',
-  },
-  {
-    id: 5,
-    question: 'What is the safest way to start a pilot?',
-    answer:
-      'Begin with low-risk internal content (policies, FAQs), apply rate limits, log prompts/outputs, and perform red-team style testing. Use feature flags and role-based access. Run a DPIA/PIA if personal data is involved.',
-  },
-  {
-    id: 6,
-    question: 'How should teams validate model performance?',
-    answer:
-      'Create a small, labeled evaluation set that mirrors your domain. Track accuracy, hallucination rate, latency, and cost per request. Re-test after any model switch or prompt change, and record changes in a decision log.',
-  },
-  {
-    id: 7,
-    question: 'Are there grants or programs in Australia for AI experiments?',
-    answer:
-      'Check current state-based innovation vouchers, CSIRO Kick-Start, and university accelerator programs. Funding cycles shift, so confirm eligibility windows and co-contribution rules before committing spend.',
-  },
-]
-
-export const summaryHighlights = {
-  heading: `${NEWSLETTER} | Issue #1`,
-  intro:
-    'Three questions people are hammering into search and chat right now, plus the short answers you can steal.',
-  items: [
-    {
-      label:
-        'Can Gemini (or other LLMs) really classify scientific images with almost no training data?',
-      description:
-        'Yes. In this week’s paper, Gemini is given 15 labelled examples plus instructions and still hits around 93% accuracy across multiple astronomy datasets, with readable explanations for each call.',
-    },
-    {
-      label: "What is an AI agent, and why are 'agentic coding' models suddenly everywhere?",
-      description:
-        'Agents are systems that can plan, use tools, and run multi-step work (not just answer one prompt). That is why models tuned for coding and tool-driven workflows are getting so much attention.',
-    },
-    {
-      label:
-        'If we are using GenAI at work in Australia, do we need to update our privacy notice or collection notice?',
-      description:
-        'Often, yes. If you start processing new kinds of personal data, using new vendors, or changing how outputs are used, your notices and comms should match reality in plain English.',
-    },
-  ],
-}
-
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
 export const useCustomHeader = true
-
+export const CATEGORY = 'community'
+export const SLUG = 'weekly-deep-dive-into-ai-and-ml-advancements-updates'
+export const DATE_PUBLISHED = '2026-01-08'
+export const DATE_MODIFIED = '2026-09-09'
+export const DESCRIPTION = 'Read a scientific image-classification result carefully: distinguish prompt examples from pretraining, inspect missed cases and question generated explanations.'
+const TITLE = 'AI Bits #1: What a scientific image-classification score leaves out'
+export const faqItems = [
+ { id: 1, question: 'Does using 15 examples mean the model learned everything from 15 images?', answer: 'No. Examples supplied for a task are not the same thing as the data used to pretrain a foundation model. This article does not establish the model’s complete pretraining dataset.' },
+ { id: 2, question: 'Does a readable explanation prove why a model made a decision?', answer: 'Not by itself. Check the explanation against the input and independent evidence. Fluent wording or agreement from another model is not a substitute for a verified label.' },
+ { id: 3, question: 'Can I apply the reported accuracy to my own images?', answer: 'Not without a relevant evaluation. Record your task, label definitions, image conditions and failure types instead of importing a percentage from a different dataset.' },
+]
 export default function ArticlePage() {
-  const authors = [
-    {
-      name: 'Dr Sam Donegan',
-      role: 'Founder & Lead Editor',
-      bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
-      avatarUrl:
-        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
-      url: 'https://www.linkedin.com/in/samueldonegan',
-    },
-    {
-      name: 'Jun Kai (Luc) Chang',
-      role: 'AI Software Developer',
-      bio: "Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.",
-      avatarUrl:
-        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
-      url: 'https://www.linkedin.com/in/jkchangjobs',
-    },
-    {
-      name: 'Julia Ponder',
-      role: 'Technical Writer',
-      bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
-      avatarUrl:
-        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
-      url: 'https://www.linkedin.com/in/julia-ponder-australia/',
-    },
-    {
-      name: 'Shivang Shekhar',
-      role: 'Technical Writer',
-      bio: 'Shivang is a mechanical engineer and AI masters student at Monash University with a diverse science background. He is the main author for AI Bits for Techies each week.',
-      avatarUrl:
-        '/authors/shivang-shekhar.jpg',
-      url: 'https://www.linkedin.com/in/shivang-s-466458191',
-    },
-  ]
-
-  const breadcrumbs = [
-    { label: 'Home', href: '/articles', icon: Home },
-    { label: NEWSLETTER, current: true },
-  ]
-
-  return (
-    <div>
-      <ArticleHeroHeader
-        breadcrumbs={breadcrumbs}
-        title={TITLE}
-        titleHighlight="Issue #1"
-        headerBgColor="cyan"
-        summary={{
-          heading: summaryHighlights.heading,
-          intro: summaryHighlights.intro,
-          items: summaryHighlights.items,
-        }}
-        heroImage={HERO_IMAGE}
-        heroImageAlt={HERO_IMAGE_ALT}
-      />
-
-      <QuoteBlock
-        variant="purple"
-        title="Quick note"
-        icon={<span className="text-xl">💡</span>}
-        className="my-6"
-      >
-        This guide is part of our broader series on {SERIES}. Prefer to jump ahead?{' '}
-        <a href="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
-          Browse related articles →
-        </a>
-      </QuoteBlock>
-
-      <ArticleTocPlaceholder className="mb-12">
-        {/* Rendered via portal by ArticleEnhancer */}
-      </ArticleTocPlaceholder>
-
-      <AudienceGrid
-        heading="Read this if you are:"
-        cards={[
-          {
-            title: 'Founders & Teams',
-            description: 'For leaders validating ideas, seeking funding, or managing teams.',
-            variant: 'orange',
-            icon: <RocketLaunchIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
-          },
-          {
-            title: 'Students & Switchers',
-            description: 'For those building portfolios, learning new skills, or changing careers.',
-            variant: 'purple',
-            icon: (
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
-                />
-              </svg>
-            ),
-          },
-          {
-            title: 'Community Builders',
-            description: 'For workshop facilitators, mentors, and ecosystem supporters.',
-            variant: 'yellow',
-            icon: (
-              <svg
-                className="w-5 h-5 text-black"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                />
-              </svg>
-            ),
-          },
-        ]}
-        className="my-10"
-      />
-
-      {/* Main content */}
-      <div className="">
-        <h2>{TITLE}</h2>
-
-        <p>
-          Your weekly Aussie-flavoured deep dive into what changed in AI/ML, what matters, and what to do
-          next (without living on release-note social media).
-        </p>
-
-        <p>
-          <strong>This week in one breath:</strong> Gemini doing science with basically no training data,
-          MiniMax shipping an agent-friendly model, and an evergreen ritual you can steal for your team so
-          you stop getting surprised by costs, policy, and silent model updates.
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} />
-
-        <h2>The one paper you should pretend you read at lunch</h2>
-        <h3>Textual interpretation of transient image classifications from large language models</h3>
-
-        <h4>What is the setup?</h4>
-        <p>
-          A lot of scientific ML still looks like: label a mountain of data, build a custom model, retrain
-          when the universe changes its mind. This paper tries a different trick: use a foundation model
-          like Gemini as a low-data classifier.
-        </p>
-
-        <h4>What they did (yes, really)</h4>
-        <p>
-          They gave Gemini <strong>15 labelled examples</strong> plus a short instruction set, then asked
-          it to classify astronomical images. No fine-tuning. No custom architecture. No “we trained for
-          three weeks on a GPU that costs more than my car.”
-        </p>
-
-        <h4>What happened</h4>
-        <p>
-          Across three datasets, they report <strong>around 93% accuracy</strong>, which is in the same
-          ballpark as a traditional CNN pipeline.
-        </p>
-
-        <h4>Why it is interesting (beyond the number)</h4>
-        <p>
-          The model also gives a plain-English explanation for each prediction. That means you can audit
-          what it thinks it is doing, instead of staring at a probability score like it is going to
-          confess its sins.
-        </p>
-
-        <h4>The real question</h4>
-        <p>
-          Does this “prompted reasoning + tiny labelled set” approach generalise, or do we end up with
-          hybrid systems where smaller models do the heavy lifting and LLMs handle orchestration and
-          explanation? Either way, it is a strong signal that “LLMs in science” is graduating from vibes
-          to workflows.
-        </p>
-
-        <p>
-          <strong>Full paper:</strong>{' '}
-          <a href="https://arxiv.org/pdf/2510.06931" target="_blank" rel="noopener noreferrer">
-            https://arxiv.org/pdf/2510.06931
-          </a>
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        {TOOLS_IMAGE && (
-          <ArticleImageBlock
-            src={TOOLS_IMAGE}
-            alt="Tools worth poking this week"
-          />
-        )}
-
-        <h2>Tools worth poking this week (in a sandbox first)</h2>
-
-        <h3>MiniMax M2.1</h3>
-        <p>
-          Fast, cheaper, geared for agent and coding workflows, with stronger instruction-following than
-          the previous version.
-        </p>
-        <p>
-          <strong>Best for:</strong> tool-using agents, multi-language code, app/web dev without paying
-          enterprise-sadness prices.
-          <br />
-          <a href="https://www.minimax.io/news/minimax-m21" target="_blank" rel="noopener noreferrer">
-            https://www.minimax.io/news/minimax-m21
-          </a>
-        </p>
-
-        <h3>SCP (Scientific Context Protocol)</h3>
-        <p>
-          A protocol for connecting agents to scientific tools, datasets, models, and even lab
-          instruments behind a unified interface.
-        </p>
-        <p>
-          <strong>Best for:</strong> orchestrating end-to-end experiments from planning to execution with
-          fewer glue scripts held together by hope.
-          <br />
-          <a href="https://github.com/InternScience/scp" target="_blank" rel="noopener noreferrer">
-            https://github.com/InternScience/scp
-          </a>
-        </p>
-
-        <h3>DeepFabric</h3>
-        <p>Generate structured synthetic datasets using LLMs.</p>
-        <p>
-          <strong>Best for:</strong> training and stress-testing when real data is scarce, expensive, or
-          legally annoying.
-          <br />
-          <a
-            href="https://github.com/always-further/deepfabric"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            https://github.com/always-further/deepfabric
-          </a>
-        </p>
-
-        <h3>NVIDIA Nemotron 3</h3>
-        <p>
-          An open family of large language models designed for reasoning, long context, and agentic
-          workflows.
-        </p>
-        <p>
-          <strong>Best for:</strong> teams that want customisable models and control over deployment at
-          scale.
-          <br />
-          <a
-            href="https://research.nvidia.com/labs/nemotron/Nemotron-3/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            https://research.nvidia.com/labs/nemotron/Nemotron-3/
-          </a>
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        <ArticleImageBlock
-          src={BOOK_RECOMMENDATION_IMAGE}
-          alt="Book cover of Life 3.0 by Max Tegmark"
-        />
-
-        <h2>Book recommendation (because your brain deserves more than changelogs)</h2>
-        <h3>Life 3.0 (Max Tegmark)</h3>
-        <p>
-          This is not “AI will fold your laundry” optimism. It is “what happens if we build systems that
-          can outthink us, redesign themselves, and change the rules” seriousness, explained in a way
-          that does not feel like a policy briefing.
-        </p>
-        <p>
-          If you build products, invest, or lead teams, this book forces one uncomfortable but useful
-          thought: even if your roadmap is boring, the underlying game board might not be.
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        {GEEKY_THOUGHT_IMAGE && (
-          <ArticleImageBlock
-            src={GEEKY_THOUGHT_IMAGE}
-            alt="Geeky thought of the day"
-          />
-        )}
-
-        <h2>Geeky thought of the day</h2>
-        <p className="font-semibold">
-          Have LLMs passed the Turing Test, or are we just extremely easy to impress?
-        </p>
-        <p>
-          LLMs can convincingly impersonate a human in short bursts, especially when the conversation
-          stays on rails. But pattern prediction is not the same thing as understanding, and long, messy
-          conversations still expose cracks.
-        </p>
-        <p>
-          Still, the wild part is not whether they are “human.” It is that they are already changing
-          work, creativity, support, coding, research, and how people make decisions. The bar is not “is
-          it conscious?” The bar is “is it useful, safe, and correctly governed for this job?”
-        </p>
-
-        <hr className="my-10 border-gray-100" />
-
-        <h2>Housekeeping (so we stay honest)</h2>
-        <p>
-          This is general information, not legal advice. If you ship user-facing AI, be transparent about
-          where AI is used, what it cannot do, and where humans stay in the loop.
-        </p>
-
-        <AuthorBio authors={authors} className="mt-8" />
-      </div>
-
-      <div className="mt-12">
-        <ArticleFAQ items={faqItems} />
-      </div>
-
-      <ArticleFooterNav />
-    </div>
-  )
+ return <div className="bg-white">
+  <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: 'AI Bits #1', current: true }]}
+   title={TITLE} titleHighlight="classification score leaves out" headerBgColor="cyan"
+   summary={{ heading: 'Look beyond the headline accuracy', intro: 'For AI-curious readers discussing a scientific result—not a guide to deploying an image classifier.', items: [
+    { label: 'Name the task', description: 'A result for one scientific classification problem is not general image understanding.' },
+    { label: 'Inspect the errors', description: 'A single average can hide which cases are missed.' },
+    { label: 'Check explanations', description: 'Readable output creates something to inspect, not automatic proof.' },
+   ] }}
+  />
+  <article className="prose prose-lg max-w-3xl mx-auto px-4 py-10">
+   <p><strong>Correction, 9 September 2026:</strong> this issue previously described a pretrained model as doing science with almost no training data and overstated what generated explanations establish. The original January publication date remains. This revision separates the source finding from wider claims.</p>
+   <h2 id="paper">What the paper reports</h2>
+   <p><a href="https://arxiv.org/abs/2510.06931v1">Stoppa and colleagues’ 2025 paper</a> studies real-versus-bogus optical transient classification across Pan-STARRS, MeerLICHT and ATLAS datasets. Its abstract reports 93% average accuracy using Gemini with 15 examples and concise instructions, alongside textual descriptions. It also describes a second model assessing output coherence.</p>
+   <p>Those are the authors’ findings for that task, not an MLAI replication. The 15 examples are not the foundation model’s entire training history. A coherence check is not an independent ground-truth label. This revision checked the abstract and publication record; it does not verify every experiment or determine performance on a new dataset.</p>
+   <h2 id="meaning">Separate three claims before repeating them</h2>
+   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Scientific classification reading comparisons" tabIndex={0}><table><thead><tr><th>Claim</th><th>Evidence needed</th><th>What not to infer</th></tr></thead><tbody>
+    <tr><td>The classification is correct.</td><td>A trustworthy reference label and the actual prediction</td><td>A convincing explanation must mean the label is correct</td></tr>
+    <tr><td>The explanation describes visible evidence.</td><td>Comparison with the input and a qualified interpretation where needed</td><td>A second model agreeing establishes truth</td></tr>
+    <tr><td>The approach transfers to another dataset.</td><td>An evaluation under that dataset’s conditions</td><td>The original average applies to any image task</td></tr>
+   </tbody></table></div>
+   <h2 id="accuracy">A 95% score that misses every target</h2>
+   <p><strong>Fictional arithmetic—not the paper’s data:</strong> imagine 1,000 labelled candidates: 50 genuine targets and 950 non-targets. A classifier labels every candidate a non-target.</p>
+   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Scientific classification reading comparisons" tabIndex={0}><table><thead><tr><th>Reference label</th><th>Predicted target</th><th>Predicted non-target</th></tr></thead><tbody>
+    <tr><td>50 actual targets</td><td>0</td><td>50</td></tr>
+    <tr><td>950 actual non-targets</td><td>0</td><td>950</td></tr>
+   </tbody></table></div>
+   <p>It gets 950 of 1,000 labels right: 95% accuracy. But it finds zero of the 50 targets: target recall is 0%. Precision for target predictions has a zero denominator because there are no positive predictions; do not present it as a meaningful measured percentage without stating the convention used.</p>
+   <p>This does not show that the published study made this error. It shows why a headline score is insufficient by itself. Ask for class counts, the confusion matrix and the consequences of false positives and false negatives. A higher overall score need not answer the question you care about.</p>
+   <h2 id="explanation">Exercise: turn an explanation into checkable observations</h2>
+   <p><strong>Fictional output:</strong> “This is a real target because the bright feature is compact and appears consistently.” Before accepting that statement, separate its parts:</p>
+   <ul>
+    <li>What input supports “compact”, and how is that property defined?</li>
+    <li>Were multiple observations supplied to support “consistently”, or did the explanation invent them?</li>
+    <li>Does the reference label agree, and who or what established it?</li>
+    <li>What would count as contradictory evidence?</li>
+   </ul>
+   <p>If the required input or expertise is missing, record that limitation. Do not generate a second confident paragraph to fill the gap. This is a reading exercise; it does not teach astronomical classification or certify a model explanation.</p>
+   <h2 id="record">Copy a classification-result reading record</h2>
+   <pre className="whitespace-pre-wrap" aria-label="Classification result reading record">{[
+    'Paper/version and exact task:',
+    'Model and supplied examples versus pretraining:',
+    'Dataset and reference-label method:',
+    'Class counts and evaluation split:',
+    'Metric definition and aggregation:',
+    'False positives, false negatives and missing results:',
+    'Explanation claim and supporting input:',
+    'Independent checks and their limitations:',
+    'What cannot be inferred for another dataset:',
+    'Question to investigate next:',
+   ].join('\n')}</pre>
+   <p>Use “not reported in the material I checked” rather than inventing a value. Keep training examples separate from evaluation cases, and record whether the full methods or only the abstract were reviewed. No account, model run or download is needed for this exercise.</p>
+   <h2 id="discussion">Bring a better question to an MLAI discussion</h2>
+   <p>Try: “Which errors are hidden by this average, and what evidence supports the explanation?” Bring the source and one uncertainty. Choose an event whose topic and experience level fit, then check its location or online format. Attending does not provide scientific validation or deployment approval.</p>
+   <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+   <h2 id="scope">Source and editorial scope</h2>
+   <p>The linked abstract and publication record were checked on 9 September 2026. The confusion matrix, explanation example and record are editorial teaching material, not a new experiment. Previous product recommendations and unrelated general advice were removed to focus on interpreting this scientific result.</p>
+   <ArticleFAQ items={faqItems} />
+  </article>
+ </div>
 }

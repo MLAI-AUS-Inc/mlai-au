@@ -450,17 +450,18 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
       "People in a tech startup environment, reflecting 90s film aesthetic, showcasing technology's negative impact on education.",
   },
   "featured/how-to-get-started-with-ai-2026": {
-    title: "How to get started with AI in Australia (2026)",
+    title: "Getting started with AI: choose one business workflow",
     date: "2025-02-10",
     description:
-      "A practical 2026 playbook for Australians starting with AI—covering skills, tools, governance, and fast pilot ideas for teams and individuals.",
+      "An Australian small-business owner's workflow-selection guide: compare candidates, check data and review needs, and prepare a scoped implementation brief.",
     author: "Dr Sam Donegan",
     slug: "featured/how-to-get-started-with-ai-2026",
     image:
       "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d712d9d4-9358-43a8-a5c1-be38741f4d8e.jpg?alt=media&token=a4aa21de-513d-4d48-82d9-c7ef58e21268",
     imageAlt:
-      "Team collaborating on AI data charts with laptops and whiteboard",
+      "Illustration of a team reviewing workflow notes",
     hasContent: true,
+    dateModified: "2026-09-11"
   },
   "featured/best-way-to-learn-about-ai-2026": {
     title: "Best way to learn about AI in 2026",
@@ -535,7 +536,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b4a9a55e-4254-4bb3-9eed-5b80dfbc4432.jpg?alt=media&token=54ee6558-bb42-4528-812c-7377691e9f9f",
     "imageAlt": "Hands using a laptop at a shared table (illustrative image)",
     "hasContent": true
-},
+  },
   "featured/how-to-find-networking-events": {
     title: "How to find networking events in Australia (2026)",
     date: "2026-01-03",
@@ -558,7 +559,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     "imageAlt": "Illustration of a small robot on a desk with books, headphones and digital devices",
     "hasContent": true,
     "dateModified": "2026-09-15"
-},
+  },
   "featured/how-technology-has-changed-education": {
     title: "How technology has changed education (2026)",
     date: "2025-12-21",
@@ -658,7 +659,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     "imageAlt": "The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide",
     "hasContent": true,
     "dateModified": "2026-09-15"
-},
+  },
   "featured/how-to-get-data-science-job": {
     "title": "How to get a data science job in Australia: build evidence of delivery",
     "date": "2025-11-19",
@@ -670,16 +671,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     "imageAlt": "Laptop displaying charts on a desk beside an Australian flag",
     "hasContent": true,
     "dateModified": "2026-09-15"
-},
+  },
   "featured/how-to-pitch-your-idea": {
-    title: "How to Pitch Your Big Idea",
+    title: "How to pitch an early idea and ask for useful feedback",
     date: "2025-06-01",
-    description: "MLAI's guide to pitching your big idea. Learn how to communicate complex ideas effectively in a short timeframe.",
+    description: "Explain an early idea with annotated pitch videos, a seven-slide example and an editable rehearsal record that separates clear wording from evidence of demand.",
     author: "Dr Sam Donegan",
     slug: "featured/how-to-pitch-your-idea",
     image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1968fb96-80f9-49e4-95d6-42c5a359b4ce.jpg?alt=media&token=2884e0cc-4793-4155-a69c-0468133ece8b",
     imageAlt: "Laptop showing pitch deck charts on a desk with printed startup materials",
     hasContent: true,
+    dateModified: "2026-09-11"
   },
   "featured/how-much-do-data-scientists-make": {
     title: "How Much Do Data Scientists Make in Australia?",
@@ -702,10 +704,10 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
 
   // Newsletter pillar + issues (merge conflict resolved)
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates": {
-    title: "Weekly Deep Dive into AI and ML Advancements & Updates",
+    title: "AI Bits #1: What a scientific image-classification score leaves out",
     date: "2026-01-08",
     description:
-      "Issue #1: Journal paper breakdowns, new AI tools (MiniMax, Nemotron 3), book recommendations, and thoughts on valid Turing Tests.",
+      "Read a scientific image-classification result carefully: distinguish prompt examples from pretraining, inspect missed cases and question generated explanations.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates",
@@ -713,39 +715,43 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
       "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_40_55%20PM%20(1).png?alt=media&token=dc0a3df1-837b-4549-be70-bc59ba215777",
     imageAlt: "Abstract data visualisation representing AI and machine learning signals",
     hasContent: true,
+    dateModified: "2026-09-09"
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2": {
-  title: "AI Bits for Techies | Issue #2 | 19 Jan 2026",
+  title: "AI Bits #2: Liking an AI answer is not the same as trusting it",
   date: "2026-01-19",
-  description: "AI Bits Issue #2: LLM personality preferences, model-user compatibility research, T3 Chat, LTX Studio, Auralix, and The Alignment Problem book pick.",
+  description: "Separate model preference from correctness with a source-based comparison exercise, a clear reading of a small user study and a practical feedback record.",
   author: "MLAI Editorial Team",
   authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
   slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2",
   image: ARTICLE_FALLBACK_IMAGE,
   imageAlt: "AI Bits for Techies newsletter banner",
   hasContent: true,
+    dateModified: "2026-09-09"
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3": {
-    title: "AI Bits for Techies | Issue #3 | 26 Jan 2026",
+    title: "AI Bits #3: How to read an AI environmental-footprint estimate",
     date: "2026-01-26",
-    description: "AI Bits Issue #3: LLM energy and water footprint benchmarks, FLUX.2 image generation, TranslateGemma, GLM-Image, and The Atlas of AI book recommendation.",
+    description: "Interpret AI energy and water estimates without false precision: inspect measurement boundaries, work through a labelled scenario and prepare better research questions.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3",
     image: ARTICLE_FALLBACK_IMAGE,
     imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
+    dateModified: "2026-09-09"
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4": {
-    title: "AI Bits for Techies | Issue #4 | 5 Feb 2026",
+    title: "AI Bits #4: Do AI coding tools save delivery time?",
     date: "2026-02-05",
-    description: "AI Bits Issue #4: AI coding tool productivity research, open-source developer impact studies, Qwen3-Max, OpenAI Prism, and AI governance book pick.",
+    description: "Compare two historical AI coding studies, distinguish effort from elapsed time, and use an editable acceptance log that preserves missing values and review limits.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4",
-    image: ARTICLE_FALLBACK_IMAGE,
-    imageAlt: "AI Bits for Techies newsletter banner",
+    image: "https://mlai.au/press-kit/logo-wide-black.png",
+    imageAlt: "MLAI logo with a kangaroo wearing sunglasses",
     hasContent: true,
+    dateModified: "2026-09-10"
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5": {
     "title": "AI Bits #5: What agent activity logs can—and cannot—prove",
@@ -763,39 +769,42 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     "imageAlt": "AI Bits for Techies newsletter banner",
     "hasContent": true,
     "dateModified": "2026-09-15"
-},
+  },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6": {
-    title: "AI Bits for Techies | Issue #6 | 25 Feb 2026",
+    title: "AI Bits #6: Test the customer problem before scaling outreach",
     date: "2026-02-25",
-    description: "AI Bits Issue #6: Journal Paper of the Week on AI in sales research—where AI wins (lead scoring, CRM, forecasting) and where it stalls (trust ceiling, noise floor). Why 'Better Tech' does not equal 'Market Share.'",
+    description: "Test an AI startup's customer problem with interview prompts, a completed fictional discovery record and an unrun experiment plan. Download the worksheet and discuss your next question.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6",
-    image: ARTICLE_FALLBACK_IMAGE,
-    imageAlt: "AI Bits for Techies newsletter banner",
+    image: "https://mlai.au/press-kit/logo-wide-black.png",
+    imageAlt: "MLAI logo with a kangaroo wearing sunglasses",
     hasContent: true,
+    dateModified: "2026-09-10"
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7": {
-    title: "AI Bits for Techies | Issue #7 | 4 Mar 2026",
+    title: "AI Bits #7: What OpenVLA demonstrates—and what it does not",
     date: "2026-03-04",
-    description: "AI Bits Issue #7: This week explores the \"Physics Bottleneck\" and the shift from programming robots to prompting hardware via OpenVLA. We break down the Sim-to-Real gap, the scarcity of tactile data, and why the future of robotics belongs to those who own the \"physical miles\" of data.",
+    description: "Read OpenVLA results with their limits: distinguish robot demonstrations, adaptation and deployment claims, then build a research discussion record.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7",
     image: ARTICLE_FALLBACK_IMAGE,
     imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
+    dateModified: "2026-09-09"
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8": {
-    title: "AI Bits for Techies | Issue #8 | 11 Mar 2026",
+    title: "AI Bits #8: Environment handovers and a 2023 Proton correction",
     date: "2026-03-11",
-    description: "AI Bits Issue #8: This week's Springer LNCS paper from ICCCI 2023 flips the compatibility narrative—showing that a translation layer on a lean kernel can neutralise the native OS advantage. The \"Windows Idle Tax\" is real, measurable, and peer-reviewed. Build on the floor that does less when you are not looking.",
+    description: "Download a tested environment-handover kit, inspect source hashes and reproduce a held classification review. Includes the corrected scope of a 2023 Proton gaming paper.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8",
-    image: ARTICLE_FALLBACK_IMAGE,
-    imageAlt: "AI Bits for Techies newsletter banner",
+    image: "https://mlai.au/press-kit/logo-wide-black.png",
+    imageAlt: "MLAI logo with a kangaroo wearing sunglasses",
     hasContent: true,
+    dateModified: "2026-09-10"
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9": {
     title: "AI Bits for Techies | Issue #9 | 18 Mar 2026",

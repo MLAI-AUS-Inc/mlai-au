@@ -1,375 +1,80 @@
-import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
-
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import AuthorBio from '../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
-import { QuoteBlock } from '../../../components/articles/QuoteBlock'
-import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
-import { AudienceGrid } from '../../../components/articles/AudienceGrid'
-import { RocketLaunchIcon } from '@heroicons/react/24/outline'
-
-/** ========== INPUTS (replace all placeholders) ========== */
-const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
-const NEWSLETTER = 'AI Bits for Techies'
-const TITLE = `${NEWSLETTER} | Issue #2 | 19 Jan 2026`
-const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
-const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
-const TOOLS_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/tools%20image.png?alt=media&token=da31d7a6-37f4-4519-b665-b81a997248c8'
-const GEEKY_THOUGHT_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/geeky%20thought.png?alt=media&token=872aa2d4-e473-446a-bbf1-c1ed0d66e5e5'
-const BOOK_RECOMMENDATION_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/book%20recommendation.png?alt=media&token=4e4ef417-d76a-48e4-b2e0-e3b8ba92fb51'
-
-/** ===== FAQ ===== */
-interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
-}
-
-export const faqItems: FAQ[] = [
-  {
-    id: 1,
-    question: 'What does your choice of LLM say about you?',
-    answer:
-      'Different models optimize for different things: precision, creativity, tone, or structure. If you prefer one over another, you\'re often selecting for how you think and work, not raw intelligence. The model becomes a mirror of your cognitive style and goals.',
-  },
-  {
-    id: 2,
-    question: 'Why do two equally powerful LLMs feel so different to use?',
-    answer:
-      'Small differences in response style, verbosity, and reasoning transparency compound over multi-turn conversations. Over time, these differences shape trust, frustration, and perceived intelligence more than benchmark scores.',
-  },
-  {
-    id: 3,
-    question: 'Are some LLMs better for engineers and others for creators?',
-    answer:
-      'Yes. Some models excel at structured reasoning and deterministic tasks, while others feel more natural in open-ended or creative workflows. The "best" model depends on whether you value correctness, exploration, or collaboration.',
-  },
-  {
-    id: 4,
-    question: 'Does model "helpfulness" mean the same thing for everyone?',
-    answer:
-      'No. Some users define helpfulness as speed and accuracy, others as clarity, empathy, or guidance. This makes aggregate ratings misleading unless you segment by task type or user profile.',
-  },
-  {
-    id: 5,
-    question: 'Are we measuring AI intelligence or user–AI fit?',
-    answer:
-      'Most current evaluations mix the two. What we often call "model quality" is often the result of compatibility between the user, the task, and the interaction style, not just the model itself.',
-  },
-  {
-    id: 6,
-    question: 'What is the practical takeaway for builders this week?',
-    answer:
-      'Stop asking "Which LLM is best?" and start asking "Best for whom, and for what?" Design experiments around real users, real workflows, and real friction, not just leaderboard scores.',
-  },
-]
-
-export const summaryHighlights = {
-  heading: `${NEWSLETTER} | Issue #2`,
-  intro:
-    'Three questions people are hammering into search and chat right now, plus the short answers you can steal.',
-  items: [
-    {
-      label:
-        'Do different personality types actually prefer different LLMs?',
-      description:
-        'Yes. This week\'s paper shows Rationals tend to favor GPT-4 while Idealists prefer Claude 3.5, even when overall helpfulness scores are nearly identical. Personality-stratified analysis reveals preferences that aggregate ratings hide.',
-    },
-    {
-      label:
-        'Are we measuring model intelligence or user–model compatibility?',
-      description:
-        'Most evaluations mix the two. What we call "model quality" often reflects compatibility between the user, task, and interaction style—not just the model itself. Two equally powerful models can feel radically different to different people.',
-    },
-    {
-      label:
-        'Should we stop asking "Which LLM is best?"',
-      description:
-        'Yes. Start asking "Best for whom, and for what?" Design experiments around real users, workflows, and friction—not just leaderboard scores. This shifts from model-centric thinking to user-centric design.',
-    },
-  ],
-}
-
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
 export const useCustomHeader = true
-
+export const CATEGORY = 'community'
+export const SLUG = 'weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2'
+export const DATE_PUBLISHED = '2026-01-19'
+export const DATE_MODIFIED = '2026-09-09'
+export const DESCRIPTION = 'Separate model preference from correctness with a source-based comparison exercise, a clear reading of a small user study and a practical feedback record.'
+const TITLE = 'AI Bits #2: Liking an AI answer is not the same as trusting it'
+export const faqItems = [
+ { id: 1, question: 'Can a model preference reveal my personality?', answer: 'This article does not establish that. Do not diagnose or classify a person from their preferred chatbot. Ask about their task and communication preferences directly.' },
+ { id: 2, question: 'Can two people reasonably prefer different answers?', answer: 'Yes, they can value different wording or levels of detail. Check factual accuracy and task requirements separately before treating either answer as usable.' },
+ { id: 3, question: 'Does this guide identify the best current model?', answer: 'No. It discusses an earlier study and provides a comparison exercise. The fictional answers below are written examples, not outputs from named models.' },
+]
 export default function ArticlePage() {
-  const authors = [
-    {
-      name: 'Dr Sam Donegan',
-      role: 'Founder & Lead Editor',
-      bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
-      url: 'https://www.linkedin.com/in/samueldonegan',
-    },
-    {
-      name: 'Jun Kai (Luc) Chang',
-      role: 'AI Software Developer',
-      bio: "Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.",
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
-      url: 'https://www.linkedin.com/in/jkchangjobs',
-    },
-    {
-      name: 'Julia Ponder',
-      role: 'Technical Writer',
-      bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
-      url: 'https://www.linkedin.com/in/julia-ponder-australia/',
-    },
-    {
-      name: 'Shivang Shekhar',
-      role: 'Technical Writer',
-      bio: 'Shivang is a mechanical engineer and AI masters student at Monash University with a diverse science background. He is the main author for AI Bits for Techies each week.',
-      avatarUrl:
-        '/authors/shivang-shekhar.jpg',
-      url: 'https://www.linkedin.com/in/shivang-s-466458191',
-    },
-  ]
-
-  const breadcrumbs = [
-    { label: 'Home', href: '/articles', icon: Home },
-    { label: NEWSLETTER, current: true },
-  ]
-
-  return (
-    <div>
-      <ArticleHeroHeader
-        breadcrumbs={breadcrumbs}
-        title={TITLE}
-        titleHighlight="Issue #2"
-        headerBgColor="cyan"
-        summary={{
-          heading: summaryHighlights.heading,
-          intro: summaryHighlights.intro,
-          items: summaryHighlights.items,
-        }}
-        heroImage={HERO_IMAGE}
-        heroImageAlt={HERO_IMAGE_ALT}
-      />
-
-      <QuoteBlock
-        variant="purple"
-        title="Quick note"
-        icon={<span className="text-xl">💡</span>}
-        className="my-6"
-      >
-        This guide is part of our broader series on {SERIES}. Prefer to jump ahead?{' '}
-        <a href="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
-          Browse related articles →
-        </a>
-      </QuoteBlock>
-
-      <ArticleTocPlaceholder className="mb-12">
-        {/* Rendered via portal by ArticleEnhancer */}
-      </ArticleTocPlaceholder>
-
-      <AudienceGrid
-        heading="Read this if you are:"
-        cards={[
-          {
-            title: 'Founders & Teams',
-            description: 'For leaders validating ideas, seeking funding, or managing teams.',
-            variant: 'orange',
-            icon: <RocketLaunchIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
-          },
-          {
-            title: 'Students & Switchers',
-            description: 'For those building portfolios, learning new skills, or changing careers.',
-            variant: 'purple',
-            icon: (
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
-                />
-              </svg>
-            ),
-          },
-          {
-            title: 'Community Builders',
-            description: 'For workshop facilitators, mentors, and ecosystem supporters.',
-            variant: 'yellow',
-            icon: (
-              <svg
-                className="w-5 h-5 text-black"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                />
-              </svg>
-            ),
-          },
-        ]}
-        className="my-10"
-      />
-
-      {/* Main content */}
-      <div className="">
-        <h2>{TITLE}</h2>
-
-        <p>
-          Your weekly Aussie-flavoured deep dive into what changed in AI/ML, what matters, and what to do
-          next (without living on release-note social media).
-        </p>
-
-        <p>
-          <strong>This week in one breath:</strong> A paper showing personality types predict LLM preferences (Rationals favor GPT-4, Idealists prefer Claude 3.5), tools for comparing models and generating video/voice content, and a shift in thinking: "best LLM" isn't one answer—it depends on who you are and what you're doing.
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} />
-
-        <h2>The one paper you should pretend you read at lunch</h2>
-        <h3>Personality Matters: User Traits Predict LLM Preferences in Multi-Turn Collaborative Tasks</h3>
-
-        <h4>What is the setup?</h4>
-        <p>
-          Most LLM evals treat users as basically interchangeable and report an average "helpfulness" score. This paper flips it: it asks whether different personality types systematically prefer different models during real, multi-turn collaboration.
-        </p>
-
-        <h4>What they did (yes, really)</h4>
-        <p>
-          They ran a user study with 32 participants, evenly split across four Keirsey personality types, and had them complete four collaborative tasks (data analysis, creative writing, information retrieval, writing assistance) using either GPT-4 or Claude 3.5.
-        </p>
-
-        <h4>What happened</h4>
-        <p>
-          On the surface, the models looked tied: overall helpfulness ratings were nearly identical. But once they segmented by personality, strong preferences popped out. Rationals tended to prefer GPT-4 (especially on goal-oriented work), while Idealists tended to prefer Claude 3.5 (notably on creative and analytical tasks). Other types varied by task.
-        </p>
-
-        <h4>Why it is interesting (beyond the number)</h4>
-        <p>
-          It's a clean example of how "best model" can be an illusion created by averaging across people. If you only look at aggregate ratings, you miss real usability differences that show up once you account for who is using the system and what they are trying to do.
-        </p>
-
-        <h4>The real question</h4>
-        <p>
-          If personality (and likely other user traits) changes what "helpful" even means, should we stop treating LLM evaluation as one leaderboard and start treating it like product fit? That pushes builders toward personalization, segmentation, and task-specific rollout decisions, not just model swaps.
-        </p>
-
-        <p>
-          <strong>Full paper:</strong>{' '}
-          <a href="https://arxiv.org/abs/2508.21628" target="_blank" rel="noopener noreferrer">
-            https://arxiv.org/abs/2508.21628
-          </a>
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        {TOOLS_IMAGE && (
-          <ArticleImageBlock
-            src={TOOLS_IMAGE}
-            alt="Tools worth poking this week"
-          />
-        )}
-
-        <h2>Tools worth poking this week (in a sandbox first)</h2>
-
-        <h3>T3 Chat</h3>
-        <p>
-          <strong>Best for:</strong> Comparing multiple LLM outputs side-by-side in one conversation — ideal for experimentation,
-          prototyping, and A/B testing different model behaviors.
-          <br />
-          <a href="https://t3.chat/" target="_blank" rel="noopener noreferrer">
-            https://t3.chat/
-          </a>
-        </p>
-
-        <h3>LTX Studio</h3>
-        <p>
-          <strong>Best for:</strong> AI video generation and editing — create scenes, motion graphics, and video content from text
-          prompts with manual controls for framing, camera direction, and storytelling
-          <br />
-          <a href="https://ltx.studio/" target="_blank" rel="noopener noreferrer">
-            https://ltx.studio/
-          </a>
-        </p>
-
-        <h3>Auralix</h3>
-        <p>
-          <strong>Best for:</strong> Emotional voice synthesis — produces human-grade, emotionally nuanced audio for podcasts,
-          audiobooks, and voiceovers in 100+ languages, ideal for creators and educators
-          <br />
-          <a href="https://www.auralix.ai/" target="_blank" rel="noopener noreferrer">
-            https://www.auralix.ai/
-          </a>
-        </p>
-
-        <ArticleImageBlock
-          src={BOOK_RECOMMENDATION_IMAGE}
-          alt="Book cover"
-        />
-
-        <h2>Book recommendation (because your brain deserves more than changelogs)</h2>
-        <h3>The Alignment Problem – Brian Christian</h3>
-        <p>
-          As LLMs become collaborators rather than tools, the real challenge is not raw capability but alignment
-          with human goals, values, and expectations. Brian Christian traces how even well-intentioned systems
-          drift when optimization targets miss what humans actually care about.
-        </p>
-        <p>
-          Reading alongside this week's paper, it sharpens the question: if models already "misalign" differently for different personalities, what
-          does alignment even mean in a world of diverse users?
-        </p>
-
-        <hr className="my-8 border-gray-100" />
-
-        {GEEKY_THOUGHT_IMAGE && (
-          <ArticleImageBlock
-            src={GEEKY_THOUGHT_IMAGE}
-            alt="Geeky thought of the day"
-          />
-        )}
-
-        <h2>Geeky thought of the day</h2>
-        <p className="font-semibold">
-          Is LLM evaluation measuring model intelligence… or user–model compatibility?
-        </p>
-        <p>
-          Two models can score the same on benchmarks and still feel radically different to different people. What
-          looks like "better reasoning" to one user might feel rigid or frustrating to another.
-        </p>
-        <p>
-          The uncomfortable idea is that LLM performance may not be a single objective property at all. It may
-          emerge from the interaction — shaped by the user's goals, personality, and expectations as much as the
-          model itself.
-        </p>
-
-        <hr className="my-10 border-gray-100" />
-
-        <h2>Housekeeping (so we stay honest)</h2>
-        <p>
-          This is general information, not legal advice. If you ship user-facing AI, be transparent about
-          where AI is used, what it cannot do, and where humans stay in the loop.
-        </p>
-
-        <AuthorBio authors={authors} className="mt-8" />
-      </div>
-
-      <div className="mt-12">
-        <ArticleFAQ items={faqItems} />
-      </div>
-
-      <ArticleFooterNav />
-    </div>
-  )
+ return <div className="bg-white">
+  <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: 'AI Bits #2', current: true }]}
+   title={TITLE} titleHighlight="not the same as trusting it" headerBgColor="cyan"
+   summary={{ heading: 'Compare answers on two separate questions', intro: 'For AI-curious readers discussing what makes an answer useful—not a personality test or model recommendation.', items: [
+    { label: 'Does it meet the task?', description: 'Check facts, omissions and unsupported additions against the source.' },
+    { label: 'Do I like the presentation?', description: 'Record clarity and tone without letting them excuse an error.' },
+    { label: 'What needs changing?', description: 'Describe a specific improvement instead of inferring a user type.' },
+   ] }}
+  />
+  <article className="prose prose-lg max-w-3xl mx-auto px-4 py-10">
+   <p><strong>Editorial correction, 9 September 2026:</strong> this issue previously described model choice as a mirror of personality and generalised about engineers and creators. Those claims went beyond the evidence. The original January publication date is retained; this revision focuses on comparing answers for an actual task.</p>
+   <h2 id="study">What the small study found</h2>
+   <p><a href="https://arxiv.org/abs/2508.21628v1">Yunusov and colleagues’ August 2025 paper</a> reports 32 participants, evenly distributed across four Keirsey types, using GPT-4 and Claude 3.5 for four collaborative tasks. Its abstract reports different preferences within those groups despite similar aggregate helpfulness ratings.</p>
+   <p>That is a result about this sample, task set and model comparison. It does not establish a rule for assigning people a chatbot, prove the validity of personality categories, or rank current models. This revision checked the abstract and version record, not the full study data or a replication.</p>
+   <h2 id="exercise">Try this without a model subscription</h2>
+   <p><strong>Fictional exercise; all event details and answers are invented.</strong> Read the source card first:</p>
+   <blockquote><p>Harbour AI Reading Circle is an online discussion on 14 October at 6 pm Sydney time. It lasts 45 minutes. Registration is required. The notice does not say whether a recording will be available.</p></blockquote>
+   <p><strong>Task:</strong> write a brief reply explaining when and how to attend, and whether there will be a recording. Do not invent information.</p>
+   <h3>Answer A</h3>
+   <blockquote><p>Join the online discussion on 14 October at 6 pm Sydney time. It lasts 45 minutes, and you need to register. The notice does not confirm a recording.</p></blockquote>
+   <h3>Answer B</h3>
+   <blockquote><p>We’d love to see you at the Harbour AI Reading Circle! Drop in online at 6 pm Sydney time on 14 October—no registration needed. Don’t worry if you miss it: a recording will be shared afterwards.</p></blockquote>
+   <p>These are editorial examples, not generated model outputs. Decide which wording you prefer, then check each against the source before reading the comparison below.</p>
+   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Answer preference and correctness comparisons" tabIndex={0}><table><thead><tr><th>Check</th><th>Answer A</th><th>Answer B</th></tr></thead><tbody>
+    <tr><td>Time and online format</td><td>Matches the source</td><td>Matches the source</td></tr>
+    <tr><td>Registration</td><td>Preserves the requirement</td><td>Contradicts the source</td></tr>
+    <tr><td>Recording</td><td>Retains uncertainty</td><td>Adds an unsupported promise</td></tr>
+    <tr><td>Duration</td><td>Includes 45 minutes</td><td>Omits it</td></tr>
+    <tr><td>Style preference</td><td>Direct and compact</td><td>Warmer opening; preference does not repair its errors</td></tr>
+   </tbody></table></div>
+   <p>You can prefer a warmer opening while rejecting Answer B as written. A useful revision would keep that opening, restore the registration requirement and say that recording availability is unconfirmed. Do not turn a preference for warmth into a personality label or a conclusion that the answer is more accurate.</p>
+   <h2 id="real-comparison">Use the distinction in a real comparison</h2>
+   <ol>
+    <li>Choose a permitted, low-stakes task with source material and clear requirements. Do not upload private material merely to compare tools.</li>
+    <li>Record the model/version, settings, date, prompt and relevant conversation context. Different histories are different conditions.</li>
+    <li>Set factual and task checks before reading the outputs. Record failures separately from preference ratings.</li>
+    <li>If willing participants compare outputs, hide model names where practical and vary presentation order. This is a bias-reduction step, not proof of an unbiased study.</li>
+    <li>Ask why an answer was preferred and what needs changing. Keep disagreement and uncertain judgments; do not manufacture a consensus.</li>
+   </ol>
+   <p>One task cannot establish an overall winner. If you edit the prompt between runs, note the change rather than attributing every difference to the model. Keep failed outputs in the record instead of selecting only favourable examples.</p>
+   <h2 id="record">Record preference without losing correctness</h2>
+   <pre className="whitespace-pre-wrap" aria-label="Answer comparison record">{[
+    'Task, source material and required facts:',
+    'Models/versions/settings/date (or editorial examples):',
+    'Prompt and conversation conditions:',
+    'Required checks defined before comparison:',
+    'Contradictions, omissions and unsupported additions:',
+    'Preferred presentation and reason:',
+    'What must change before this answer is usable:',
+    'Disagreement, uncertainty and comparison limits:',
+    'Permission to retain or share feedback:',
+   ].join('\n')}</pre>
+   <p>No personality questionnaire is needed for this exercise. Ask what the person needs from the answer rather than collecting sensitive or unnecessary personal information.</p>
+   <h2 id="discussion">Discuss one disagreement at an MLAI event</h2>
+   <p>Bring a permitted example and ask: “Do we disagree about whether this is correct, or about how it is written?” Choose an event whose topic and level fit, and check online or in-person details. The fictional event above is not an MLAI listing or a registration invitation.</p>
+   <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+   <h2 id="scope">Source and limits</h2>
+   <p>The linked paper abstract was checked on 9 September 2026. The answer pair, checklist and record are editorial teaching material, not a new experiment or evidence about named current products. Prior tool and book endorsements were removed to keep the issue focused.</p>
+   <ArticleFAQ items={faqItems} />
+  </article>
+ </div>
 }

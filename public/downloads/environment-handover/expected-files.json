@@ -1,0 +1,12 @@
+{
+  "version": "learning-handover-v1",
+  "files": {
+    "triage.mjs": "4d29b0d9cc1696a1efac7dabcafd4606d882190f7467dcc83d2437d173d8e384",
+    "triage.test.mjs": "7546908244d00e980be5e5701c7836e44056cc62ce837fe33f17c70866d05057",
+    "change-review.mjs": "645306851c898fd6bc329a26b8d3ed30ea926745b5b32029dad893415d186c5b",
+    "change-review.test.mjs": "f88b1ae83ad746a94079882dd61b3fd2b2e5d304cbfbb9b8ce0e242c81e01ecc",
+    "change-record.json": "8d2a8d3c47c7589280f6da4f08ae0a01818c288bee6774db50d96a72c329a490",
+    "PORTFOLIO.md": "544d55f426f170e793c2206688c64dd380fae0e2041a4806257b0bb70260c4f2",
+    "README.md": "85c2e24993b1d337f9f130255d85b3275a09b44b245da7b3e2961d7766c4b237"
+  }
+}

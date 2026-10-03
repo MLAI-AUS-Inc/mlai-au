@@ -1,0 +1,50 @@
+MLAI AI-assisted delivery record — delivery-effort-v3
+Fictional teaching example; no work or review represented as performed
+
+Task and scope:
+Fictional CSV import change: reject missing required columns, preserve valid rows and explain errors without exposing private input.
+
+Repository or artifact version:
+illustrative-csv-import-v1; no repository or implementation supplied
+
+AI tool, model, date and permitted actions:
+Invented AI-assisted scenario; no actual tool/model run. No access to client systems or sending actions.
+
+Data and sharing permission:
+Invented inputs only. No client data or portfolio permission is implied.
+
+Acceptance criteria fixed before work:
+A: reject missing required columns. B: preserve valid rows. C: error messages do not include private row contents.
+
+Checks actually run and results:
+Illustration only: A and B assumed to pass; C not run. These are not actual test results.
+
+Rejected suggestions and review corrections:
+Invented review comment: proposed error text exposed the input row. Removing that text still needs a regression check.
+
+Recorded decision, reviewer and unresolved limits:
+HOLD in the fictional scenario: criterion C remains untested. No real reviewer has approved this example.
+
+Run instructions and handover evidence:
+No executable CSV project is supplied. Keep the illustrative change unapproved; use a permitted real task to practise the recording process.
+
+Excluded effort, costs and comparison limits:
+Figures are invented. Coordination, handover, later defects, software cost and maintenance are excluded. Rework is counted once. No controlled comparison or productivity/savings claim.
+
+Time recording:
+Author implementation and self-check minutes: 45 min
+Reviewer minutes: 35 min
+Corrections and re-check minutes: 25 min
+Elapsed start-to-decision minutes: 240 min
+Queue minutes within that elapsed interval: 120 min
+
+Known active effort subtotal: 105 min
+Recorded active effort total: 105 min
+Missing active-effort fields: None in these inputs
+Queue time is a subset of elapsed time, not extra person-effort.
+
+The subtotal sums known values only; missing values are not measured zeros.
+Person-minutes can overlap across people and are not calendar duration. Count review/rework once.
+Totals cover only the recorded categories. Describe excluded coordination, handover, costs and later defects.
+A filled record, passing tests or a stated decision is not independently verified approval, productivity gain or proof of causal impact.
+Review private data, prompts, paths and client permission before sharing. This worksheet sends no record to Studio.
