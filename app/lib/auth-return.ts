@@ -1,11 +1,14 @@
 import { isWattTheHackAuthRequest, isWattTheHackRoutePath } from "~/lib/watt-the-hack-access";
 
 export type AuthReturnAppName =
+  | "admin"
   | "esafety"
   | "hospital"
   | "founder-tools"
   | "vibe-raising"
   | "watt-the-hack";
+
+export const OPERATIONS_FRONTEND_ORIGIN = "https://ops.mlai.au";
 
 const LEGACY_FOUNDER_NEXT_PATHS: Record<string, string> = {
   "/vibe-raising": "/founder-tools",
@@ -26,6 +29,7 @@ function pathWithSearchAndHash(url: URL) {
 }
 
 export function getDefaultAuthNext(app: AuthReturnAppName | string | null | undefined, fallback = "/hackathons"): string {
+  if (app === "admin") return "/";
   if (app === "hospital") return "/hospital/app";
   if (app === "esafety") return "/esafety/dashboard";
   if (app === "watt-the-hack") return fallback;
@@ -38,6 +42,7 @@ export function normalizeAuthNextForApp(
   nextValue: string | null | undefined,
   options: { fallback?: string } = {},
 ): string {
+  if (app === "admin") return normalizeOperationsNext(nextValue);
   const fallback = options.fallback ?? getDefaultAuthNext(app);
   const next = nextValue?.trim() || fallback;
 
@@ -70,4 +75,26 @@ export function normalizeAuthNextForApp(
   }
 
   return next;
+}
+
+/** Operations destinations keep a fixed origin and a bounded relative path. */
+export function normalizeOperationsNext(value: string | null | undefined): string {
+  if (!value) return "/";
+  if (value !== value.trim() || !value.startsWith("/") || value.startsWith("//") || /[%](?:2f|5c)/i.test(value)) return "/";
+  let decoded = value;
+  for (let count = 0; count < 5; count++) {
+    if (/[\\\u0000-\u001f\u007f]/.test(decoded) || decoded.includes("#")) return "/";
+    try {
+      const target = new URL(decoded, OPERATIONS_FRONTEND_ORIGIN);
+      if (target.origin !== OPERATIONS_FRONTEND_ORIGIN || !decoded.startsWith("/") || decoded.startsWith("//")) return "/";
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) return value;
+      decoded = next;
+    } catch { return "/"; }
+  }
+  return "/";
+}
+
+export function getAuthRedirectForApp(app: AuthReturnAppName | string | null | undefined, next: string): string {
+  return app === "admin" ? OPERATIONS_FRONTEND_ORIGIN + normalizeOperationsNext(next) : next;
 }

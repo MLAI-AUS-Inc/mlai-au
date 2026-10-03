@@ -1,6 +1,6 @@
 import type { Route } from "./+types/verify-email";
 import { useLoaderData } from "react-router";
-import { normalizeAuthNextForApp } from "~/lib/auth-return";
+import { getAuthRedirectForApp, normalizeAuthNextForApp } from "~/lib/auth-return";
 import { getEnv } from "~/lib/env.server";
 import { verifyMagicLinkWithCookies } from "~/lib/auth";
 import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
@@ -92,7 +92,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             }
         }
 
-        headers.set("Location", next);
+        headers.set("Location", getAuthRedirectForApp(app, next));
         return new Response(null, { status: 302, headers });
     } catch (error: any) {
         console.error("Verification failed:", error.message, error.response?.status, error.response?.data);

@@ -6,7 +6,7 @@ import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
-import { normalizeAuthNextForApp } from "~/lib/auth-return";
+import { getAuthRedirectForApp, normalizeAuthNextForApp } from "~/lib/auth-return";
 import { assertWattTheHackAuthEnabled } from "~/lib/watt-the-hack-access";
 
 export const meta: Route.MetaFunction = () => [
@@ -17,7 +17,7 @@ export const meta: Route.MetaFunction = () => [
 
 function parseAuthApp(value: string | null): AuthAppName | null {
     if (value === "vibe-raising") return "founder-tools";
-    return value === "esafety" || value === "hospital" || value === "founder-tools"
+    return value === "admin" || value === "esafety" || value === "hospital" || value === "founder-tools"
         ? value
         : null;
 }
@@ -110,8 +110,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         return { healthHackAccessDenied: true };
     }
 
+    if (user && app === "admin" && user.is_vibe_raising_admin !== true) {
+        return { healthHackAccessDenied: false, operationsAccessDenied: true };
+    }
+
     if (user) {
-        return redirect(next);
+        return redirect(getAuthRedirectForApp(app, next));
     }
 
     return { healthHackAccessDenied: false };
@@ -133,6 +137,9 @@ export async function action({ request, context }: Route.ActionArgs) {
     const adminOnly = app === "hospital";
 
     if (intent === "create") {
+        if (app === "admin") {
+            return { error: "MLAI Operations administrator access only." };
+        }
         if (adminOnly) {
             return { error: "HealthHack has closed. Administrator access only." };
         }
@@ -169,6 +176,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         const userCheck = await checkUser(env, { email, next, app, adminOnly });
 
         if (!userCheck.user_exists) {
+            if (app === "admin") return { error: "MLAI Operations administrator access only." };
             return { userExists: false, email };
         }
 
@@ -211,6 +219,7 @@ export default function PlatformLogin() {
     const errorMessages: Record<string, string> = {
         invalid_link: "The verification link is invalid or missing. Please try logging in again.",
         verification_failed: "Email verification failed. The link may have expired. Please try logging in again.",
+        operations_access_denied: "MLAI Operations administrator access only.",
         healthhack_closed: "HealthHack has closed. Administrator access only.",
     };
 
@@ -239,6 +248,7 @@ export default function PlatformLogin() {
     };
 
     const getWelcomeText = () => {
+        if (app === "admin") return "Sign in to MLAI Operations";
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to HealthHack";
         if (app === "watt-the-hack") return "Sign in to Watt The Hack";
@@ -247,6 +257,7 @@ export default function PlatformLogin() {
     };
 
     const getSupportText = () => {
+        if (app === "admin") return "Sign-in is restricted to MLAI Operations administrators.";
         if (app === "founder-tools") {
             return "Use your email to sign in to Founder Tools. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
         }
@@ -341,6 +352,7 @@ export default function PlatformLogin() {
     const currentError =
         data?.error ||
         (loaderData.healthHackAccessDenied ? errorMessages.healthhack_closed : null) ||
+        (loaderData.operationsAccessDenied ? errorMessages.operations_access_denied : null) ||
         (error ? errorMessages[error] : null);
 
     return (
