@@ -1,0 +1,131 @@
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleReferences } from "~/components/articles/ArticleReferences";
+import ArticleTocPlaceholder from "~/components/articles/ArticleTocPlaceholder";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { useArticleReadMinute } from "~/components/articles/ArticleReadTime";
+import SydneyEventFitFinder from "~/components/articles/SydneyEventFitFinder";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+import { SYDNEY_AI_TECH_EVENTS, SYDNEY_EVENT_DATASET_OWNER, SYDNEY_STATUS_LABELS, sydneyEventStatus } from "~/lib/sydney-ai-tech-events";
+
+export const useCustomHeader = true;
+const TOPIC = "Sydney AI and Tech Meetups: A Dated Community Directory";
+export const CATEGORY = "featured";
+export const SLUG = "how-to-find-an-ai-and-tech-meetup-in-sydney";
+export const DATE_PUBLISHED = "2026-06-16";
+export const DATE_MODIFIED = "2026-09-10";
+export const DESCRIPTION = "Choose a Sydney or online AI event using dated organiser evidence, honest price and admission limits, a filterable shortlist and a practical participation record.";
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-46210747-b902-4e9d-8ffa-f3df1058658b.jpg?alt=media&token=2ecc04f5-87e3-4795-aba4-d59f1905b8e5";
+const HERO_IMAGE_ALT = "Illustrative image accompanying a Sydney AI and technology community guide";
+export const FEATURED_FOCUS = "community";
+export const articleMeta = { title: TOPIC, topic: TOPIC, category: CATEGORY, slug: SLUG, description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, image: HERO_IMAGE, imageAlt: HERO_IMAGE_ALT, featuredFocus: FEATURED_FOCUS };
+export const summaryHighlights = {
+  heading: "Choose the participation, then check the booking",
+  intro: "Eight organiser groups checked on 10 September 2026. Dates, cost and format belong to specific events, not every session a group runs.",
+  items: [
+    { label: "Sydney or online", description: "Keep your chosen format when you continue to the MLAI calendar." },
+    { label: "Current and historical stay separate", description: "Passed dates, overdue reviews and uncertain closing times cannot earn a current shortlist place." },
+    { label: "Check the remaining unknowns", description: "An RSVP link, a free listing or a future date is not confirmed admission." },
+  ],
+};
+export const faqItems = [
+  { id: 1, question: "Where can I find AI and tech meetups in Sydney?", answer: "Use organiser-controlled event pages and compare the actual agenda, date, format and admission terms. This directory keeps eight communities as source leads and separates specific current-date matches from historical listings. It is not a complete inventory or independent quality ranking." },
+  { id: 2, question: "Does an Upcoming label mean I can attend?", answer: "No. A page can retain an Upcoming or Next Event label after the date passes. Even a future date does not establish ticket availability, admission or cancellation status. Recheck the organiser before registering and again before travelling." },
+  { id: 3, question: "Are Sydney AI events free or available online?", answer: "Check the specific event and ticket. This review found a free in-person hackathon and a separate paid streaming conference pass; they are not a free online offer. A historical free Zoom seminar also does not establish a current online session. Unknown prices do not pass the free filter." },
+  { id: 4, question: "Which event suits a beginner?", answer: "Choose an agenda and prerequisites you understand. AI on Tap describes a nontechnical business audience; research seminars, JavaScript talks and engineering panels have different expectations. Ask whether listening is welcome or equipment and prior experience are required; there is no universal best meetup." },
+  { id: 5, question: "How are expired dates and disagreements handled?", answer: "Status uses the stated Australian timezone and a separate source-review deadline. After a listed end, the event is historical. When sources disagree on the finish, current matches stop at the earliest stated end. Day-level windows do not imply a continuously running session. Missing or overdue evidence requires an organiser check." },
+  { id: 6, question: "How can I correct a listing?", answer: "Send MLAI the organiser URL and the specific date, venue, price, format or access detail that changed. Public evidence is checked before a listing is revised. A review deadline does not promise that a future recheck has already happened." },
+];
+const REFERENCES = [...new Map(SYDNEY_AI_TECH_EVENTS.flatMap(group => [
+  { href: group.sourceUrl, title: group.name + " organiser page", publisher: group.name, description: "Dated group/source evidence checked 10 September 2026.", category: "industry" },
+  ...group.sessions.map(event => ({ href: event.sourceUrl, title: event.name, publisher: event.organiser, description: event.schedule + " Source check: 10 September 2026.", category: "industry" })),
+]).map(source => [source.href, source])).values()].map((source, index) => ({ ...source, id: index + 1 }));
+const conversion = BASE_ARTICLE_SEO_CONFIG["/articles/" + CATEGORY + "/" + SLUG].conversion!;
+
+export default function ArticleContent() {
+  const now = useArticleReadMinute();
+  return <>
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: TOPIC, current: true }]} title={TOPIC} titleHighlight="A Dated Community Directory" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO_IMAGE} heroImageAlt={HERO_IMAGE_ALT} />
+    <ArticleTocPlaceholder className="bg-transparent" />
+    <div data-cf-article-body className="prose prose-lg prose-slate mx-auto min-w-0 max-w-5xl px-4 py-8 [&_h2]:scroll-mt-28 [&_section]:scroll-mt-28">
+      <section id="choose-a-session">
+        <p><strong>Start with what you want to learn or do, then check the actual event—not the size of the group.</strong> A research seminar, JavaScript talk, business panel and hands-on hackathon offer different kinds of participation. This guide is for AI- and startup-curious people choosing a Sydney or online session, not an assumption that every reader wants a job, contractor work or an AI system built.</p>
+        <p>We reviewed public organiser pages on <time dateTime="2026-09-10">10 September 2026</time>. This is a selected directory, not a complete list or an independent event-quality ranking. MLAI publishes this guide and is explicitly named as a co-host of the Web Directions hackathon below. We did not register, purchase tickets, attend these events or test their streams. The header image is illustrative, not attendance evidence.</p>
+        <aside className="not-prose my-6 rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950">
+          <h2 className="text-xl font-bold">A source check is not a live booking check</h2>
+          <p className="mt-2">September and October times below are AEST (UTC+10); December uses AEDT (UTC+11), all in Australia/Sydney. Sources need a new check by <time dateTime="2026-09-17T00:00:00+10:00">17 September 2026 at midnight Sydney time</time>, or sooner if changed. Overdue listings stay visible as evidence but leave the current shortlist.</p>
+        </aside>
+      </section>
+
+      <SydneyEventFitFinder />
+
+      <section id="organiser-directory">
+        <h2>Eight communities, with event-specific evidence</h2>
+        <p>Use the group link to look for later dates. The records below preserve historical activity as well as future listings. We have not verified venue access adjustments, captioning or sensory conditions; ask the organiser where those affect participation. A venue address alone does not establish accessibility.</p>
+        <div role="region" aria-label="Sydney organiser comparison; scroll horizontally if needed" tabIndex={0} className="not-prose my-6 max-w-full overflow-x-auto rounded-xl border border-gray-300 focus:outline-2 focus:outline-purple-700">
+          <table className="w-full min-w-[58rem] text-left text-sm">
+            <caption className="bg-gray-950 p-4 text-left font-bold text-white">Organiser source record — checked 10 September 2026. Status is evaluated as you read.</caption>
+            <thead className="bg-gray-100"><tr><th scope="col" className="p-4">Community / audience</th><th scope="col" className="p-4">Specific listing and date status</th><th scope="col" className="p-4">Participation / format / place</th><th scope="col" className="p-4">Price, admission and unresolved checks</th></tr></thead>
+            <tbody>{SYDNEY_AI_TECH_EVENTS.map(group => <tr key={group.name} className="border-t border-gray-300 align-top">
+              <th scope="row" className="p-4 font-normal"><a className="font-bold text-purple-800 underline" href={group.sourceUrl}>{group.name}</a><p className="mt-2">{group.audience}</p></th>
+              <td className="p-4">{group.sessions.map(event => <div key={event.id} className="mb-5" data-sydney-source={event.id} data-date-status={sydneyEventStatus(event, now)}><a className="font-bold text-purple-800 underline" href={event.sourceUrl}>{event.name}</a><p className="mt-2 font-semibold">{SYDNEY_STATUS_LABELS[sydneyEventStatus(event, now)]}</p><p className="mt-2">{event.schedule}</p>{event.uncertainty && <p className="mt-2">{event.uncertainty}</p>}<p className="mt-2 text-xs">Source checked <time dateTime={event.checkedAt}>10 September 2026</time>; recheck due <time dateTime={event.reviewAfter}>17 September 2026, 00:00 AEST</time>.</p></div>)}</td>
+              <td className="p-4">{group.sessions.map(event => <div key={event.id} className="mb-5"><p className="font-semibold">{event.name}: {event.formats.join(" / ")}</p><p className="mt-2">{event.readerFit}</p><p className="mt-2">{event.location}</p></div>)}</td>
+              <td className="p-4">{group.sessions.map(event => <div key={event.id} className="mb-5"><p className="font-semibold">{event.name}</p><p className="mt-2">{event.price}</p><p className="mt-2">{event.admission}</p></div>)}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>
+        <p><strong>Two AI Week details need particular care.</strong> The programme hub says 4–11 December, while the conference site's navigation still says 6–13 December. We use the dedicated event dates—hackathon 4–5 and conference 7–8—not an inferred week-long booking. The hackathon page names Stone &amp; Chalk while the hub still says venue TBA; confirm the exact address and timetable before travel.</p>
+        <p>In-person free participation in that hackathon does not make the conference's online pass free. Likewise, the Sydney AI Meetup's past Zoom seminar cannot fill a current free-online search. Different offers within one community remain separate.</p>
+      </section>
+
+      <section id="shortlist-record">
+        <h2>Worked choice: a free Sydney build session</h2>
+        <p><strong>Fictional teaching example, using the 10 September source snapshot—not an attendee account.</strong> Alex is a Sydney-based developer seeking a free, hands-on team build. Alex can reserve Friday evening and Saturday in December, but needs to confirm accessible entry and whether equipment is supplied.</p>
+        <ol>
+          <li><strong>Reader task:</strong> build with a team, not listen to a business panel or take a paid client assignment.</li>
+          <li><strong>Shortlist:</strong> the AI Engineer hackathon describes team building, a free RSVP and 4–5 December dates. The paid conference/streaming offer is a separate decision. GDG's September agenda is talks, not the requested hands-on session.</li>
+          <li><strong>Outstanding checks:</strong> confirm exact hours, address, access arrangements, equipment, team rules and whether a place is offered. A visible form does not answer these questions.</li>
+          <li><strong>Decision:</strong> shortlist pending those answers; do not book non-refundable travel or describe attendance as confirmed. Recheck the listing before submitting an RSVP and again before attending.</li>
+          <li><strong>Participation question:</strong> “What are the team and demo requirements, and what should I bring?” No customer, job or portfolio outcome is assumed.</li>
+        </ol>
+        <h3>Counterexample: a free online first step</h3>
+        <p>A reader who needs free, online participation cannot use the hackathon's free label or the historical August Zoom seminar to satisfy that requirement. At this source check, neither is a current free online offer. The right result is no matching directory option—not a paid substitute presented as free. The MLAI calendar may have other relevant sessions; check the selected ticket format and terms.</p>
+        <p><a href="/downloads/sydney-event-shortlist/participation-record.txt" download>Download the editable Sydney participation record (TXT)</a>. It includes the completed fictional choice above and a blank record. Open it in a text editor; it does not submit an RSVP, save your choices automatically or confirm a place.</p>
+        <pre className="whitespace-pre-wrap break-words">{`My goal and prior experience:
+Sydney in person / online / either:
+Dates, total time and cost I can commit:
+Chosen specific event and organiser URL:
+Source checked at / recheck due:
+Actual format and price for my ticket:
+Unknowns: address, access, hours, equipment, admission:
+Question to ask the organiser:
+Decision: shortlist / ask / defer / not suitable:
+RSVP submitted? Admission actually confirmed?
+One question or contribution to bring:
+Follow-up only if mutually agreed:`}</pre>
+        <p>A brief introduction and one specific question are optional preparation aids, not a formula for networking success. Follow the organiser's code of conduct, ask before pitching or recording, and exchange contact details only by mutual agreement. Do not treat attendees as a lead list.</p>
+      </section>
+
+      <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={conversion} events={[]} placement="article-inline" />
+      <p>The calendar distinguishes source-checked MLAI or co-hosted options from its full feed. Keep your location/format preference when checking the actual registration. A Sydney preference must not silently become a Melbourne-only recommendation. For Melbourne-specific comparison, use the <Link to="/articles/featured/where-to-find-ai-events-in-melbourne">Melbourne event guide</Link>.</p>
+
+      <section id="method-and-corrections">
+        <h2>Method, changes and limitations</h2>
+        <p><strong>Selection:</strong> public organiser evidence connecting an AI, software, data or applied-AI community to Sydney or a specific online session. The directory retains some past activity for discovery; inclusion is not endorsement, a popularity ranking or evidence of a new booking.</p>
+        <p><strong>Date handling:</strong> exact published ends expire at that instant. Where no end is given, a labelled final-day boundary only identifies when the listed date is certainly past. Multiple-day windows include breaks. Conflicting finish times stop current matches at the earliest stated end; later uncertainty remains visible. Unknown clocks or invalid records cannot certify a current option.</p>
+        <p><strong>Maintenance:</strong> {SYDNEY_EVENT_DATASET_OWNER} owns the source records. This revision sets a seven-day review deadline because event details are volatile. It is not a claim that a future review has already happened.</p>
+        <ul>
+          <li><strong>10 September:</strong> refreshed all eight groups, separated the free hackathon from the paid conference, recorded admission requirements and exposed conflicting dates, venues and finish times.</li>
+          <li><strong>AI on Tap correction:</strong> the URL previously recorded against 6 August now redirects to a page displaying Episode 7 on 1 October. This records the observed change; it does not establish whether an event was rescheduled or the URL reused.</li>
+          <li><strong>Earlier snapshot:</strong> July dates and the targeted September AI Week correction are superseded by the dated source records here, not silently presented as current availability.</li>
+        </ul>
+        <p><strong>Experience and assistance:</strong> AI tools assisted discovery, drafting and implementation. Sources are organiser statements, not independent attendance reports. No interviews, testimonials, venue access tests or reader outcomes are claimed. The worksheet and worked decisions are MLAI editorial aids; further attributable experience may improve the guide but has not been invented.</p>
+        <p>Organisers or readers can <Link to="/contact">send a directory correction</Link> with the public source and exact changed detail. Check the organiser directly for booking, cancellation, access and admission questions.</p>
+      </section>
+      <ArticleReferences references={REFERENCES} heading="Sydney organiser sources" description="Group and event pages checked 10 September 2026; limitations and disagreements are retained beside the affected listing." previewCount={5} />
+      <ArticleFAQ items={faqItems} heading="Sydney AI and tech meetup questions" />
+    </div>
+  </>;
+}

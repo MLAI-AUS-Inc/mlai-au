@@ -1,0 +1,116 @@
+import { useEffect } from "react";
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+
+export const useCustomHeader = true;
+export const SLUG = "featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup";
+export const articleMeta = {
+  title: "Is an accelerator right for your AI startup? A decision worksheet",
+  description: "Decide whether a startup accelerator addresses your actual constraint. Compare eligibility, support, founder-time costs and alternatives before applying.",
+  datePublished: "2026-07-26",
+  dateModified: "2026-09-09",
+  author: "Dr Sam Donegan",
+  image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c41fdb6d-155e-4092-9490-bca493c02527.jpg?alt=media&token=2219af28-2507-4c87-b5e6-368ad4e5c45a",
+  imageAlt: "Illustration of founders reviewing programme notes",
+};
+export const summaryHighlights = {
+  heading: "Decide whether to apply before choosing a programme",
+  intro: "For Australian startup-curious founders weighing structured support against work they could do directly.",
+  items: [
+    { label: "What is a startup accelerator?", description: "A structured support programme that may combine mentoring, cohort activity, technical help and investment. The actual offer and obligations vary." },
+    { label: "Must I already have revenue?", description: "No universal rule applies. Some programmes consider idea-stage ventures; others specify traction or a funding stage. Check the particular cohort." },
+    { label: "What is the decision?", description: "Compare the support you can substantiate with founder time, terms, eligibility and the best alternative use of your resources." },
+  ],
+};
+export const ACCELERATOR_DECISION_SHEET = [
+  "Accelerator decision — record facts, not assumed benefits",
+  "Decision owner / date / programme and cohort:",
+  "Official eligibility and terms URL / checked on:",
+  "Current bottleneck / evidence that it matters:",
+  "Outcome needed / how we would observe it:",
+  "Stage, geography and founder availability: eligible, ineligible or unknown?",
+  "Specific support / who provides it / confirmed access:",
+  "Founder hours, travel, fees and other obligations:",
+  "Investment instrument and conditions / adviser questions:",
+  "Alumni evidence / selection limitations / unresolved claims:",
+  "Alternative use of the same time and resources:",
+  "Decision: apply, clarify, defer or decline / reason / review trigger:",
+].join("\n");
+
+const CONTENT_FACTORY_INSPECTOR_SCRIPT = "(function(){var p=new URLSearchParams(window.location.search);if(!p.has('cfInspector')||window.__cfArticleInspectorInstalled)return;window.__cfArticleInspectorInstalled=true;var post=function(payload){try{window.parent.postMessage(Object.assign({source:'content-factory-inspector',protocolVersion:3},payload),'*')}catch(e){}};var components=function(){return Array.prototype.slice.call(document.querySelectorAll('[data-cf-component-id]'))};var data=function(el,type,event){var r=el.getBoundingClientRect();var id=el.getAttribute('data-cf-component-id')||'';var payload={type:type,componentId:id,componentType:el.getAttribute('data-cf-component-type')||'',sourceSectionId:el.getAttribute('data-cf-source-section-id')||'',label:el.getAttribute('data-cf-component-label')||id,selector:'[data-cf-component-id=\\\"'+id+'\\\"]',rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},textExcerpt:String(el.textContent||'').replace(/\\s+/g,' ').trim().slice(0,500),pageUrl:window.location.href};if(event)payload.anchor={x:Math.max(0,Math.min(1,(event.clientX-r.left)/(r.width||1))),y:Math.max(0,Math.min(1,(event.clientY-r.top)/(r.height||1))),createdFrom:'live_preview_click'};return payload};var measure=function(){post({type:'measure',components:components().map(function(el){return data(el,'component')})})};document.addEventListener('click',function(event){var target=event.target&&event.target.closest?event.target.closest('[data-cf-component-id]'):null;if(!target)return;event.preventDefault();event.stopPropagation();post(data(target,'comment:create',event));measure()},true);window.addEventListener('resize',measure);window.addEventListener('message',function(event){var message=event.data;if(!message||message.source!=='founder-tools-inspector')return;if(message.type==='measureComponents')measure();if(message.type==='scrollToComponent'){var target=document.querySelector('[data-cf-component-id=\\\"'+(message.componentId||'')+'\\\"]');if(target)target.scrollIntoView({block:'center',inline:'nearest'})}});post({type:'ready',mode:'comment'});setTimeout(measure,0)})();"
+
+function ContentFactoryInspectorBridge() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!new URLSearchParams(window.location.search).has('cfInspector')) return
+    const script = document.createElement('script')
+    script.dataset.contentFactoryInspector = 'true'
+    script.textContent = CONTENT_FACTORY_INSPECTOR_SCRIPT
+    document.body.appendChild(script)
+    return () => {
+      script.remove()
+    }
+  }, [])
+  return null
+}
+
+
+export default function ArticleContent() {
+  return <div>
+    <ContentFactoryInspectorBridge />
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: articleMeta.title, current: true }]} title={articleMeta.title} titleHighlight="A decision worksheet" headerBgColor="cyan" summary={summaryHighlights} heroImage={articleMeta.image} heroImageAlt={articleMeta.imageAlt} />
+    <div className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-indigo">
+      <p><strong>An accelerator is a way of obtaining structured startup support—not proof that your startup needs it.</strong> Before preparing an application, name the constraint you need help with and compare the programme with addressing that constraint directly. This guide helps you decide whether to pursue a programme; the separate <Link to="/articles/featured/startup-accelerator-australia">Australian accelerator finder</Link> helps you investigate named options and their dated source records.</p>
+      <p>There is no universal accelerator-versus-incubator stage boundary. Organisations use these labels differently. Read the actual entry criteria, duration, support and obligations rather than automatically choosing an incubator because your company is early.</p>
+
+      <h2 id="stage">Programme-specific evidence beats a stage rule</h2>
+      <p>Two official descriptions checked on 9 September 2026 illustrate the difference. They are examples of programme design, not recommendations to apply or confirmation that an Australian applicant qualifies for every cohort.</p>
+      <div className="overflow-x-auto"><table>
+        <caption>What the provider says—and the question still to resolve</caption>
+        <thead><tr><th>Provider</th><th>Published description</th><th>Implication for your decision</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://www.startmate.com/accelerator/program">Startmate</a></td><td>Its programme page says each cohort has included an idea-stage, pre-MVP company. It describes a hybrid programme accessible from Australia or New Zealand, with in-person weeks.</td><td>Being pre-revenue is not an automatic exclusion. Confirm current selection criteria and whether the attendance commitment works for your team.</td></tr>
+          <tr><td><a href="https://startup.google.com/programs/accelerator/">Google for Startups Accelerator</a></td><td>The global overview describes equity-free support and generally looks for technical startups demonstrating traction, ideally Seed to Series A. Individual programmes have specific requirements.</td><td>Do not infer Australian eligibility or an open intake from the global overview. Select a regional programme and check its criteria and technical participation requirements.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Neither example proves a return on participation. Provider testimonials and portfolio successes are selected observations, not a comparison with similar companies that did not join. Ask what outcomes were measured, over what period and for which participants.</p>
+
+      <h2 id="constraint">1. Name the constraint and the help that would change it</h2>
+      <p>Replace “we need a network” with a specific question: whose input is missing, what decision would it affect, and why can you not obtain it now? An AI startup may need to test customer demand, evaluate a technical failure, clarify data access or learn how a buyer approves a pilot. These are different problems.</p>
+      <ul>
+        <li><strong>Customer uncertainty:</strong> ask whether the programme offers relevant access or research support, not merely a long mentor list.</li>
+        <li><strong>Technical uncertainty:</strong> ask who can work through your actual architecture or evaluation question, and what time they commit.</li>
+        <li><strong>Fundraising preparation:</strong> distinguish feedback on evidence and narrative from investment. Introductions do not guarantee meetings or funding.</li>
+        <li><strong>Founder isolation:</strong> compare a cohort with a lighter peer community or events before accepting a larger commitment.</li>
+      </ul>
+      <p>A programme cannot supply evidence you have not collected. Present prototypes, interviews and trial results honestly; label hypothetical examples and do not generate customers, revenue or test results to make an application appear stronger.</p>
+
+      <h2 id="cost">2. Make the commitment visible</h2>
+      <p>Ask for the schedule and terms in writing. Include preparation, sessions, travel and follow-up—not only calendar hours. Decide which customer or product work will be delayed. If investment is offered, have the instrument, ownership consequences and obligations explained by a suitably qualified adviser before signing. This worksheet is not legal or financial advice.</p>
+      <p><strong>Illustrative time comparison:</strong> two founders each spending six hours a week on programme activity for twelve weeks commit 144 founder-hours in total. That excludes travel and application work. Those are fictional planning assumptions, not a provider's workload estimate or a cash expense. Compare what those same hours could achieve through customer tests, targeted advice or delivery work.</p>
+      <p>Keep cash costs separate from founder time. Credits are not unrestricted cash, introductions are not contracts, and published funding is not a substitute for understanding the actual offer. Where a detail is unknown, ask; do not score it as a benefit.</p>
+
+      <h2 id="questions">3. Ask questions that can change your decision</h2>
+      <ol>
+        <li><strong>To the programme:</strong> “We need help with this specific constraint. Who would support it, in what format, and what access is actually included?”</li>
+        <li><strong>To the programme:</strong> “Which sessions are mandatory, where are they held, and what happens if a founder cannot attend?”</li>
+        <li><strong>To an alumnus:</strong> “What did you use, what took more time than expected, and what would you have done without the programme?”</li>
+        <li><strong>To your team:</strong> “What evidence would make us decline even if accepted?”</li>
+      </ol>
+      <p>Seek alumni with a comparable stage and problem, including experiences that were less positive where available. Record how you found them. A hand-picked testimonial cannot establish the typical outcome. Do not publish identifying quotes or private terms without permission.</p>
+
+      <h2 id="decision">4. Compare applying with a concrete alternative</h2>
+      <p><strong>Fictional example:</strong> a team has a working AI demo but does not know whether its intended buyer can provide the required data. Before committing to a general programme, it could run a bounded data-access conversation and technical test. A programme becomes more relevant if it can substantiate access to the specific expertise or buyer context the team lacks. The right answer may be “clarify first”, not simply yes or no.</p>
+      <pre className="whitespace-pre-wrap break-words" aria-label="Accelerator decision worksheet"><code>{ACCELERATOR_DECISION_SHEET}</code></pre>
+      <p>Use <strong>apply</strong> when eligibility and the support-to-constraint match are substantiated and the commitment is acceptable; <strong>clarify</strong> when a material fact is unknown; <strong>defer</strong> when timing is wrong; and <strong>decline</strong> when a better alternative exists. These are editorial decision prompts, not an admission predictor or validated scoring model.</p>
+
+      <h2 id="next">Discuss the constraint, then investigate programmes</h2>
+      <p>Bring a non-confidential version of your decision sheet to a suitable founder or AI community conversation. Ask peers to challenge the assumption that a programme is the next step. Check the <Link to="/articles/featured/startup-accelerator-australia">programme finder</Link> and the provider's current page before relying on dates or eligibility; this explainer is not an application calendar.</p>
+      <ArticleConversionCTA articleSlug={SLUG} config={BASE_ARTICLE_SEO_CONFIG["/articles/" + SLUG].conversion!} events={[]} placement="article-inline" />
+      <p className="text-sm">Correction, 9 September 2026: removed unrelated networking, software and property references and replaced the blanket startup-stage rule with programme-specific evidence. The decision sheet is supplied here instead of the earlier PDF promotion. Original registry publication date is retained; no new independent expert review or programme acceptance is claimed.</p>
+    </div>
+  </div>;
+}

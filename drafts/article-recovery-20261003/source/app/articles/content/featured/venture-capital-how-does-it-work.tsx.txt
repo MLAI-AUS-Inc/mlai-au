@@ -1,0 +1,128 @@
+import { Link } from 'react-router'
+import { Home } from 'lucide-react'
+import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import ArticleConversionCTA from '../../../components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '../../seo-config'
+import AuthorBio from '../../../components/AuthorBio'
+import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import { ArticleReferences } from '../../../components/articles/ArticleReferences'
+import { getDefaultArticleAuthorDetails } from '../../authors'
+
+export const useCustomHeader = true
+export const CATEGORY = 'featured'
+export const SLUG = 'venture-capital-how-does-it-work'
+export const DATE_PUBLISHED = '2025-12-05'
+export const DATE_MODIFIED = '2026-09-10'
+export const FEATURED_FOCUS = 'funding'
+const TOPIC = 'How venture capital works: capital choices and dilution'
+export const DESCRIPTION = 'Understand venture funding before planning a raise: compare capital obligations, follow a two-round ownership example and prepare a capital-fit discussion.'
+const AUTHOR = getDefaultArticleAuthorDetails()
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-fd28a08d-960c-4264-b8ee-8723810599db.jpg?alt=media&token=87ce9c67-c2a7-4870-8e7a-fb7c74658f0f'
+const HERO_IMAGE_ALT = 'Three people talking in an office, one holding a folder.'
+const FUNDING_SOURCE = 'https://business.gov.au/finance/funding/choose-your-funding'
+const PITCH_SOURCE = 'https://business.gov.au/finance/funding/pitch-for-venture-capital'
+const SEC_SOURCE = 'https://www.sec.gov/resources-small-businesses/capital-raising-building-blocks/private-funds'
+
+export const articleMeta = {
+  title: TOPIC, topic: TOPIC, category: CATEGORY, slug: SLUG, description: DESCRIPTION,
+  datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED,
+  author: AUTHOR.name, image: HERO_IMAGE, imageAlt: HERO_IMAGE_ALT,
+}
+export const summaryHighlights = {
+  heading: 'Understand the trade before choosing the money',
+  intro: 'For Australian founders and startup-curious readers: explain what external capital would change before treating a funding round as the next milestone.',
+  items: [
+    { label: 'What is venture capital?', description: 'A venture fund pools investors’ money to invest in businesses. An equity investment exchanges capital for part ownership, with negotiated rights.' },
+    { label: 'Why does ownership shrink?', description: 'In the fictional example, new shares increase the total: founders move from 100% to 80%, then 64%, without selling their original shares.' },
+    { label: 'What should I produce?', description: 'A capital-fit record: the milestone, evidence, alternatives, ownership assumptions and questions that need qualified advice.' },
+  ],
+}
+export const faqItems = [
+  { id: 1, question: 'Is venture capital a loan?', answer: 'The priced-equity example here exchanges investment for newly issued shares, not scheduled loan repayments. Different instruments and contractual rights change the analysis. Do not apply this example to a convertible note or assume that equity has no obligations.' },
+  { id: 2, question: 'What percentage do venture investors take?', answer: 'This guide supplies no typical Australian ownership range. In its simplified example, divide new investment by the sum of pre-money value and that investment. Pools, convertibles, secondary sales and different rights require a separate model.' },
+  { id: 3, question: 'Does a seed or Series A label prove a company is ready?', answer: 'No. A round label does not prove revenue, customer retention, investment approval or a specific valuation. Describe the actual evidence and ask each firm about its current mandate.' },
+  { id: 4, question: 'How long does a venture capital raise take?', answer: 'There is no verified market-wide timetable in this guide. Ask the actual firm which decision is next, what remains unresolved and whether any date is agreed. A term sheet, completed documentation and cash received are different states.' },
+  { id: 5, question: 'Can I use this model for a SAFE?', answer: 'No. This is two primary priced-share issues only. A SAFE or convertible note has its own conversion terms and may change later ownership. The separate valuation guide explains the scope difference; ask an Australian-qualified adviser about the actual documents.' },
+  { id: 6, question: 'Will an MLAI event help me raise money?', answer: 'The invitation is to learn and discuss general startup questions. It does not include funding, investor introductions, transaction advice or endorsement of a capital strategy. Check the session topic and experience level before registering.' },
+]
+const references = [
+  { id: 1, href: FUNDING_SOURCE, title: 'Choose your funding', publisher: 'Australian Government', description: 'Debt/equity distinction and funding sources; not adopted as a timetable or ownership benchmark.', category: 'government' },
+  { id: 2, href: PITCH_SOURCE, title: 'Pitch for venture capital', publisher: 'Australian Government', description: 'Preparation questions about capital use, company evidence and investor fit.', category: 'government' },
+  { id: 3, href: SEC_SOURCE, title: 'Private Funds — 12 June 2024', publisher: 'US Securities and Exchange Commission', description: 'Pooled-fund vocabulary only; US legal rules are not Australian requirements.', category: 'guide' },
+  { id: 4, href: 'https://www.cooleygo.com/glossary/post-money-valuation/', title: 'Post-money valuation', publisher: 'Cooley GO', description: 'Terminology for the simplified primary financing example, with US context.', category: 'guide' },
+]
+
+export default function ArticleContent() {
+  return <>
+    <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: TOPIC, current: true }]}
+      title={TOPIC} titleHighlight="capital choices and dilution" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO_IMAGE} heroImageAlt={HERO_IMAGE_ALT} />
+    <ArticleTocPlaceholder />
+    <div className="prose prose-lg prose-slate prose-headings:scroll-mt-24 max-w-none">
+      <p>Venture funding is a financing relationship, not a certificate that a startup is successful. This guide helps Australian founders and learners explain a capital choice and the arithmetic behind dilution. It does not tell you to raise, set a price or recommend an investor.</p>
+      <p>Start here for capital choices. Use the <Link to="/articles/featured/how-does-a-venture-capital-firm-work">VC firm research guide</Link> when your task is understanding a specific investor, and the <Link to="/articles/featured/how-vcs-value-startups">valuation and option-pool guide</Link> for the separate pricing-denominator exercise.</p>
+
+      <h2>What happens between a fund and a startup?</h2>
+      <p>The <a href={SEC_SOURCE}>SEC’s June 2024 private-funds explainer</a> describes a fund as pooled investor capital managed for investment; venture funds commonly invest for equity. This is useful vocabulary, not a statement of Australian securities law. The fund’s investors and the startup receiving an investment are different parties.</p>
+      <p>In the primary-share example below, money goes into the company and the investor receives new shares. Existing holders own a smaller fraction of a larger share count. That fraction alone does not establish voting control, board rights, exit proceeds or the value of anyone’s holding. Those depend on the transaction and its documents.</p>
+
+      <h2>Start with the milestone, then compare obligations</h2>
+      <p>The Australian Government’s <a href={FUNDING_SOURCE}>funding overview</a> distinguishes borrowing from exchanging part ownership and identifies sources such as self-funding and grants. Use that distinction to prepare questions; this article does not adopt the overview’s broad deal-size, control or timing generalisations.</p>
+      <div role="region" aria-label="Capital obligations comparison" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-purple-700">
+        <table className="min-w-[620px]"><caption>Questions for a capital discussion, not a suitability ranking.</caption><thead><tr><th scope="col">Path to investigate</th><th scope="col">What to check</th><th scope="col">Do not assume</th></tr></thead><tbody>
+          <tr><th scope="row">Existing cash or customer revenue</th><td>Which payments are actually collected, which obligations already exist, and what delivery capacity remains?</td><td>A signed proposal is cash, or existing money makes a project risk-free.</td></tr>
+          <tr><th scope="row">Loan or other debt</th><td>Repayments, interest, security, guarantees and downside cash scenarios with an adviser.</td><td>No dilution means no personal or business risk.</td></tr>
+          <tr><th scope="row">Equity from an angel or venture fund</th><td>Ownership, information and decision rights, growth expectations and how investors might realise returns.</td><td>Every investor wants the same outcome or is obliged to fund a later round.</td></tr>
+          <tr><th scope="row">A specific grant program</th><td>Current eligibility, permitted costs, co-contributions, payment timing and reporting.</td><td>An open program means your application or expense will qualify.</td></tr>
+        </tbody></table>
+      </div>
+      <p>The <a href={PITCH_SOURCE}>official venture-pitch preparation guide</a> asks applicants to explain the amount, use and intended outcome of capital. A useful first draft separates evidence from assumptions. An ambition to expand is not evidence that customers want the product.</p>
+
+      <h3>One AI prototype, two different capital questions</h3>
+      <p><strong>Fictional discussion exercise:</strong> Mila and Ben each have a document-triage prototype. Neither has decided to raise. These are invented situations, not MLAI client results or financing recommendations.</p>
+      <ul>
+        <li><strong>Mila:</strong> three local clients want different integrations. Her aim is a sustainable owner-operated service. She records the delivery hours, payment dates and support obligations before asking whether external capital would solve her actual constraint.</li>
+        <li><strong>Ben:</strong> wants to license one reusable product across many organisations. His pilot users have not agreed to pay. He records which functionality is genuinely shared, what customers did and which adoption assumption remains untested before discussing expansion funding.</li>
+      </ul>
+      <p>The distinction is not “small business bad, venture startup good”. They have different objectives and missing evidence. For Mila, the useful question may be delivery capacity; for Ben, it may be repeatable demand. Neither the AI label nor a prototype answers the financing question.</p>
+
+      <h2 id="two-round-dilution">Follow the shares through two fictional rounds</h2>
+      <p>All money figures are AUD. Assume founders initially hold all 4,000 shares; each round issues only new primary shares with identical economic rights. No options, reserves, convertibles, fees, secondary sales, splits or additional investment by existing holders. Round names are labels, not evidence of market norms.</p>
+      <ol>
+        <li><strong>Round one:</strong> A$4m pre-money plus A$1m new cash gives A$5m post-money. Price per share is A$4m ÷ 4,000 = A$1,000. The new investor buys 1,000 shares; total shares become 5,000.</li>
+        <li><strong>Round two:</strong> assume A$20m pre-money plus A$5m new cash. Price is A$20m ÷ 5,000 = A$4,000. The second investor buys 1,250 shares; total shares become 6,250.</li>
+      </ol>
+      <div role="region" aria-label="Two-round ownership example" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-purple-700">
+        <table className="min-w-[620px]"><caption>Fictional share counts and ownership after each primary issue.</caption><thead><tr><th scope="col">Holder</th><th scope="col">Before funding</th><th scope="col">After round one</th><th scope="col">After round two</th></tr></thead><tbody>
+          <tr><th scope="row">Founders together</th><td>4,000 / 100%</td><td>4,000 / 80%</td><td>4,000 / 64%</td></tr>
+          <tr><th scope="row">Round-one investor</th><td>0 / 0%</td><td>1,000 / 20%</td><td>1,000 / 16%</td></tr>
+          <tr><th scope="row">Round-two investor</th><td>0 / 0%</td><td>0 / 0%</td><td>1,250 / 20%</td></tr>
+          <tr><th scope="row">Total</th><td>4,000 / 100%</td><td>5,000 / 100%</td><td>6,250 / 100%</td></tr>
+        </tbody></table>
+      </div>
+      <p>Founders still have 4,000 shares. Their 80% after the first round is multiplied by the 80% retained by all existing holders after the second: 0.8 × 0.8 = 0.64. Subtracting 20 percentage points twice would incorrectly give 60%. The second dilution applies to the then-current ownership, not the original 100%.</p>
+      <p><a href="https://www.cooleygo.com/glossary/post-money-valuation/">Cooley’s post-money definition</a> supplies the vocabulary; the numbers above are MLAI’s fictional teaching model, not that source’s transaction example. The file below includes the formula for changing assumptions and an answer key. It is not a live cap table or independently approved professional advice.</p>
+      <p><a href="/downloads/venture-learning/two-round-dilution.md" download>Download the two-round calculations and capital-fit record (.md)</a>. This editable text file contains the complete model, assumptions and discussion prompts—not an automated spreadsheet.</p>
+
+      <h2>Separate interest, approval and cash received</h2>
+      <p>A positive meeting is not a completed investment. Record the state you actually know: a conversation, requested evidence, a decision still pending, proposed terms, documentation or receipt of funds. Ask what remains before the next state; do not forecast cash using a generic fundraising timetable.</p>
+      <p>For example, “an investor asked for our pilot results” supports only a request for information. It does not support “the round is approved”. If you report progress to existing stakeholders, <Link to="/vibe-raising">Vibe Raising</Link> can help prepare an update from your actual metrics and notes. It does not verify claims or secure investment.</p>
+
+      <h2 id="funding-discussion-record">Bring a capital-fit question to the conversation</h2>
+      <p>Complete this record before asking others for feedback. “I do not know yet” is a useful answer when it identifies the next evidence you need. Keep private financials and deal documents out of an open event.</p>
+      <pre className="whitespace-pre-wrap break-words text-sm" aria-label="Funding discussion record">{[
+        'Milestone the business is trying to reach:', 'Evidence that milestone needs external capital:',
+        'Alternatives I still need to understand:', 'Assumptions about timing, cost and ownership:',
+        'Question for a general discussion:', 'Questions that need my own qualified adviser:',
+      ].join('\n')}</pre>
+      <p>Choose an MLAI founder session that suits your question, topic and experience level, in person or online. Peer discussion is for learning, not selecting an investment or endorsing your financing terms.</p>
+      <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+      <p>Sources checked 10 September 2026. These worked examples are fictional and independent financial/legal review is pending. For an actual financing decision, obtain advice appropriate to your company and documents.</p>
+      <ArticleReferences references={references} heading="Sources" />
+      <ArticleFAQ items={faqItems} />
+      <AuthorBio author={{ name: AUTHOR.name, role: AUTHOR.role ?? AUTHOR.credentials, bio: AUTHOR.bio, avatarUrl: AUTHOR.avatarUrl }} />
+      <ArticleFooterNav />
+    </div>
+  </>
+}

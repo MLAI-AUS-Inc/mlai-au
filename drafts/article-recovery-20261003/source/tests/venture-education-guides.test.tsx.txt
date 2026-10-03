@@ -1,0 +1,125 @@
+import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import Capital, { articleMeta as capitalMeta, faqItems as capitalFaq } from '../app/articles/content/featured/venture-capital-how-does-it-work';
+import Firm, { articleMeta as firmMeta, faqItems as firmFaq } from '../app/articles/content/featured/how-does-a-venture-capital-firm-work';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+
+const capitalHtml = renderToStaticMarkup(<MemoryRouter><Capital /></MemoryRouter>);
+const firmHtml = renderToStaticMarkup(<MemoryRouter><Firm /></MemoryRouter>);
+const model = readFileSync('public/downloads/venture-learning/two-round-dilution.md', 'utf8');
+const checklist = readFileSync('public/downloads/venture-learning/firm-research-checklist.md', 'utf8');
+const guides = [
+  { html: capitalHtml, meta: capitalMeta, faq: capitalFaq, date: '2025-12-05', version: 'capital-fit-discussion-v3', file: 'two-round-dilution.md' },
+  { html: firmHtml, meta: firmMeta, faq: firmFaq, date: '2025-11-27', version: 'investor-process-v3', file: 'firm-research-checklist.md' },
+];
+
+test('both VC guides preserve public identity and align body, registry and scoped offers', () => {
+  for (const { html, meta, faq, date, version, file } of guides) {
+    const path = 'featured/' + meta.slug;
+    const registry = ARTICLE_REGISTRY[path];
+    for (const key of ['title', 'description', 'author', 'image', 'imageAlt', 'dateModified'] as const) expect(registry[key]).toBe(meta[key]);
+    expect(registry.date).toBe(date);
+    expect(meta.datePublished).toBe(date);
+    expect(meta.dateModified).toBe('2026-09-10');
+    const config = BASE_ARTICLE_SEO_CONFIG['/articles/' + path].conversion!;
+    expect(config.primaryIcp).toBe('COMMUNITY');
+    expect(config.primary).toBe('events');
+    expect(config.version).toBe(version);
+    expect(html).toContain(config.copy!.button);
+    expect(html.match(/<h1\b/g)).toHaveLength(1);
+    const heroImages = (html.match(/<img\b[^>]*>/g) ?? []).filter(tag => tag.includes('src="' + meta.image.replaceAll('&', '&amp;') + '"'));
+    expect(heroImages).toHaveLength(1);
+    for (const item of faq) expect(html).toContain(item.question.replaceAll('&', '&amp;').replaceAll("'", '&#x27;'));
+    expect(html).toContain('href="/downloads/venture-learning/' + file + '" download=""');
+    expect(html).toContain('href="/events"');
+    expect(html).toContain('href="/vibe-raising"');
+    expect(html).toContain('Funding discussion record');
+    expect(html).toContain('whitespace-pre-wrap break-words text-sm');
+    expect(html.toLowerCase()).toContain('independent financial/legal review is pending');
+    expect(html).not.toContain('data-article-icp="FOUNDER_BUILDER"');
+    expect(html).not.toContain('data-article-icp="BUILDER"');
+  }
+});
+
+test('generic deal norms, quotations and non-delivering resource cards are removed', () => {
+  for (const html of [capitalHtml, firmHtml]) {
+    for (const residue of ['Brief, factual overview', 'power‑law business', 'Evidence or expert insight', '2 and 20',
+      '10–25%', '15–25%', '8–16 weeks', '2–3 weeks', '4–8+', '18–24 months',
+      '1× non‑participating', 'Most local funds mirror', 'Download now', 'Get recommendations',
+      '90s film', 'founders reading about funding is not automatically']) expect(html).not.toContain(residue);
+    expect(html).not.toContain('<blockquote');
+    expect(html).not.toContain('https://www.investopedia.com');
+  }
+});
+
+test('the displayed two-round share counts agree with the downloadable model inputs', () => {
+  const input = (name: string) => {
+    const match = model.match(new RegExp(name + ' = (?:A\\$)?([\\d,]+)'));
+    if (!match) throw new Error('Missing model input ' + name);
+    return Number(match[1].replaceAll(',', ''));
+  };
+  const initial = input('S0');
+  const n1 = input('I1') / (input('V1') / initial);
+  const total1 = initial + n1;
+  const n2 = input('I2') / (input('V2') / total1);
+  const total2 = total1 + n2;
+  const table = capitalHtml.split('aria-label="Two-round ownership example"')[1].split('</table>')[0];
+  const format = (value: number) => value.toLocaleString('en-AU');
+  const expectedRows = [
+    ['Founders together', initial, 100, initial, initial / total1 * 100, initial, initial / total2 * 100],
+    ['Round-one investor', 0, 0, n1, n1 / total1 * 100, n1, n1 / total2 * 100],
+    ['Round-two investor', 0, 0, 0, 0, n2, n2 / total2 * 100],
+    ['Total', initial, 100, total1, 100, total2, 100],
+  ] as const;
+  for (const [label, ...numbers] of expectedRows) {
+    const cells = [0, 2, 4].map(i => '<td>' + format(numbers[i]) + ' / ' + format(numbers[i + 1]) + '%</td>').join('');
+    expect(table).toContain('<th scope="row">' + label + '</th>' + cells);
+  }
+  expect(initial).toBe(4000);
+  expect(total2).toBe(6250);
+  expect(capitalHtml).toContain('0.8 × 0.8 = 0.64');
+  expect(capitalHtml).toContain('incorrectly give 60%');
+  expect(model).toContain('previous fraction * V / (V + I)');
+  expect(model).toContain('60%');
+  expect(0.8 * 15 / (15 + 5)).toBe(0.6);
+  expect(0.2 * 15 / (15 + 5)).toBe(0.15);
+  for (const limit of ['No options, reserves, convertibles, fees, secondary sales', 'not an automated spreadsheet', 'not a live cap table']) expect(capitalHtml).toContain(limit);
+});
+
+test('the firm guide distinguishes attributed public process, legal program scope and unknowns', () => {
+  for (const source of ['https://www.blackbird.vc/get-investment',
+    'https://business.gov.au/grants-and-programs/early-stage-venture-capital-limited-partnerships',
+    'https://thefundlawyer.cooley.com/primer-structuring-the-general-partner-and-management-company-for-a-private-equity-or-venture-capital-fund/']) expect(firmHtml).toContain(source);
+  for (const text of ['10 September 2026', 'not independently verified service outcomes', 'not a shortlist, ranking or endorsement',
+    'five and fifteen years', 'subject to legislation', 'not a market-average fund life', 'not a direct grant application',
+    'unrelated to Blackbird', 'permission to circulate identifiable customer records', 'information requested']) expect(firmHtml).toContain(text);
+  for (const text of ['PUBLIC STATEMENT / DIRECTLY CONFIRMED / INFERRED / UNKNOWN', 'NOT AUTHORISED',
+    'Claim-by-claim sharing log', 'investing entity', 'not legal due', 'Independent financial/legal review is pending']) expect(checklist).toContain(text);
+});
+
+test('the trio has distinct reader tasks and each guide links the other tasks explicitly', () => {
+  expect(capitalHtml).toContain('Mila and Ben');
+  expect(capitalHtml).toContain('Two-round ownership example');
+  expect(capitalHtml).not.toContain('Blackbird source-reading example');
+  expect(firmHtml).toContain('Blackbird source-reading example');
+  expect(firmHtml).not.toContain('Two-round ownership example');
+  expect(capitalHtml).toContain('href="/articles/featured/how-does-a-venture-capital-firm-work"');
+  expect(firmHtml).toContain('href="/articles/featured/venture-capital-how-does-it-work"');
+  for (const html of [capitalHtml, firmHtml]) expect(html).toContain('href="/articles/featured/how-vcs-value-startups"');
+});
+
+test('comparison tables and discussion records expose keyboard and mobile markup', () => {
+  for (const [html, labels] of [
+    [capitalHtml, ['Capital obligations comparison', 'Two-round ownership example']],
+    [firmHtml, ['Venture firm roles', 'Blackbird source-reading example']],
+  ] as const) {
+    for (const label of labels) expect(html).toContain('role="region" aria-label="' + label + '" tabindex="0"');
+    expect(html.match(/<caption>/g)).toHaveLength(2);
+    expect(html).toContain('scope="col"');
+    expect(html).toContain('scope="row"');
+    expect(html).toContain('prose-headings:scroll-mt-24');
+  }
+});

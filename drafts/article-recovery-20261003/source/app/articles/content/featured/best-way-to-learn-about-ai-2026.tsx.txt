@@ -1,0 +1,107 @@
+import { Home } from "lucide-react";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+import ArticleTocPlaceholder from "~/components/articles/ArticleTocPlaceholder";
+import type { ReactNode } from "react";
+import changeRecord from "../../../../public/downloads/ai-builder-lab/change-record.json";
+
+export const useCustomHeader = true;
+export const SLUG = "featured/best-way-to-learn-about-ai-2026";
+const HERO = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1d8313de-82ba-4ddc-a776-52cee7f2fa1b.jpg?alt=media&token=e14f4ba6-f385-40ec-8453-017f0d7efffa";
+export const DOWNLOAD_FILES = ["triage.mjs", "triage.test.mjs", "change-review.mjs", "change-review.test.mjs", "change-record.json", "PORTFOLIO.md", "README.md"];
+function ScrollTable({ label, children }: { label: string; children: ReactNode }) {
+  return <div role="region" aria-label={label} tabIndex={0} className="my-6 overflow-x-auto rounded border border-slate-300 px-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"><table className="min-w-[640px]">{children}</table></div>;
+}
+export const articleMeta = {
+  title: "How to learn AI by building and testing a small workflow",
+  description: "A practical learning path for aspiring AI-assisted builders: fundamentals, a runnable synthetic triage lab, acceptance tests and honest portfolio evidence.",
+  datePublished: "2025-01-15",
+  dateModified: "2026-09-10",
+  author: "Dr Sam Donegan",
+  image: HERO,
+  imageAlt: "People gathered around a laptop, with one person wearing headphones around their neck",
+};
+export const summaryHighlights = {
+  heading: "Learn to explain, test and improve what you build",
+  intro: "For early-career Australian and New Zealand learners working towards small AI-assisted software projects.",
+  items: [
+    { label: "Where do I start?", description: "Learn enough programming to read and test a small change. Use one bounded project to discover the next concept you need." },
+    { label: "How do I show progress?", description: "Reproduce a baseline, explain improvements and regressions, and prepare a reviewable record. A generated repository alone is not delivery evidence." },
+    { label: "When should I apply for project work?", description: "When you can explain, test and maintain your work and describe its limits—not after an arbitrary number of study months." },
+  ],
+};
+
+export default function ArticlePage() {
+  return <div>
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: articleMeta.title, current: true }]} title={articleMeta.title} titleHighlight="building and testing" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
+    <ArticleTocPlaceholder />
+    <div data-cf-article-body className="prose prose-lg prose-slate max-w-none [&_h2]:scroll-mt-24">
+      <p><strong>A useful way to learn applied AI is to build a small workflow, establish what correct behaviour means and investigate where it fails.</strong> This path is for aspiring builders, not a promise of a job or a universal fastest route. You can use AI coding tools, but you remain responsible for understanding and verifying the result.</p>
+      <p>Separate three milestones: understanding a concept, completing a teaching exercise and delivering a client's system. Passing the exercise below supports the second. It does not establish security, operational readiness or suitability for paid work by itself.</p>
+
+      <h2 id="fundamentals">1. Learn the concepts your next test needs</h2>
+      <p>If you cannot yet read a function, trace input to output or understand a failing test, start there. Practise files, data structures, errors and version control before adding a model provider or deployment service. Ask your coding assistant to explain a small diff, then check the explanation against the code.</p>
+      <p>Choose the next resource by your actual skill gap. <a href="https://developers.google.com/machine-learning/crash-course">Google's Machine Learning Crash Course</a> teaches ML concepts with exercises; its <a href="https://developers.google.com/machine-learning/crash-course/prereqs-and-prework">prerequisite guide</a> recommends programming and mathematical foundations, with Python, NumPy and pandas preparation. The <a href="https://docs.python.org/3/tutorial/">official Python tutorial</a> is for programmers learning Python, not people learning programming for the first time. These provider pages were checked on 10 September 2026.</p>
+      <p className="text-sm">On small screens, scroll the tables sideways. Keyboard users can focus a table and use the arrow keys.</p>
+      <ScrollTable label="Choose your next learning step"><thead><tr><th>Your current gap</th><th>Next step</th><th>Evidence to produce</th></tr></thead><tbody>
+        <tr><td>You cannot trace a function or a failing test</td><td>Practise variables, branches, arrays and errors before adding model access; ask for help with one small function</td><td>Explain the starter's input, output and one failure without relying on the assistant's summary</td></tr>
+        <tr><td>You already program, but Python is unfamiliar</td><td>Use the Python tutorial for the language basics you need</td><td>Translate a small input-validation test and explain the result</td></tr>
+        <tr><td>You can program, but training and evaluation are unclear</td><td>Check Google's prerequisites, then work through the relevant ML course modules</td><td>Distinguish training data, development cases and independent evaluation before reporting a score</td></tr>
+      </tbody></ScrollTable>
+      <p>The lab here uses JavaScript so it can run without installing packages or buying model access. Its lessons—input boundaries, evaluation and failure handling—also apply when you later work in Python. Do not try to learn every framework at once.</p>
+      <p><strong>Credential correction:</strong> the earlier guide recommended AWS Machine Learning Specialty as a current path. <a href="https://aws.amazon.com/certification/certified-machine-learning-specialty/">AWS lists 31 March 2026 as the last exam date</a>. Check provider availability before paying for preparation. This guide makes no claim that a particular certificate is accepted by all employers.</p>
+
+      <h2 id="lab">2. Run the review-only enquiry lab</h2>
+      <p><strong>Project scope:</strong> suggest billing, appointment or other for fictional enquiries. Every output remains marked for human review. There is no send action, customer database, approval interface or model API call. The included predictor is a keyword baseline, not AI; the surrounding code is a small harness for comparing future predictors.</p>
+      <p>Save all seven files together in a new local folder. Inspect the four JavaScript files before running them. The download includes the original baseline, a worked change, its complete result and a filled portfolio example:</p>
+      <ul>{DOWNLOAD_FILES.map(file => <li key={file}><a href={"/downloads/ai-builder-lab/" + file} download>{file}</a></li>)}</ul>
+      <p>With Node.js installed, run the following from that folder. The supplied files were tested locally with Node 25.2.1; no package install or API key is required.</p>
+      <pre className="whitespace-pre-wrap break-words"><code>{'node --test triage.test.mjs change-review.test.mjs\nnode change-review.mjs'}</code></pre>
+      <p>Expect 15 passing code tests. The second command prints the complete review and exits with code 2 for its expected <strong>HOLD</strong> decision. That is not a crashed command: the report preserves a regression and another wrong route. Exit 1 means an execution or input error. Even a fixture with no known failures would need independent review, not automatic release.</p>
+      <p>The baseline reports five correct routes out of six synthetic cases. The sixth mentions an appointment only to say the question is about something else. The rule still routes it to appointments. That known failure is part of the exercise—not a benchmark of customer accuracy.</p>
+
+      <h2 id="checks">3. Understand what the tests do and do not prove</h2>
+      <ScrollTable label="Starter acceptance boundaries">
+        <caption>Acceptance evidence in the downloadable starter</caption>
+        <thead><tr><th>Check</th><th>Expected behaviour</th><th>Limit</th></tr></thead>
+        <tbody>
+          <tr><td>Clear and mixed enquiries</td><td>Route clear cases; mixed categories go to other.</td><td>Six fictional cases do not represent real messages.</td></tr>
+          <tr><td>Blank or oversized input</td><td>Reject before prediction.</td><td>This is not comprehensive input-security testing.</td></tr>
+          <tr><td>Malformed output or an extra send field</td><td>Reject the prediction and keep human review required.</td><td>A category can pass validation and still be wrong.</td></tr>
+          <tr><td>Predictor throws an error</td><td>Record a rejected prediction without authorising action.</td><td>A live adapter would also need deadlines and cost controls.</td></tr>
+          <tr><td>Evaluation answer leakage</td><td>Pass only input text to the predictor, not the expected label.</td><td>The starter cases are public, so create separate unseen cases for your experiment.</td></tr>
+        </tbody>
+      </ScrollTable>
+      <p>A test suite can pass while documenting known wrong model behaviour. Read both the assertions and the evaluation report. If you remove a difficult case to improve the score, you have weakened the evidence rather than improved the system.</p>
+
+      <h2 id="extend">4. Review a change, not only its headline score</h2>
+      <p>The worked candidate splits a message at punctuation, removes whole clauses containing “not about”, then applies the unchanged keyword baseline. This repairs the original opening-hours case—but it can also throw away a real request. Both algorithms are rules, not learned models. An AI assistant helping write them does not change that distinction.</p>
+      <p>The following numbers come directly from <a href="/downloads/ai-builder-lab/change-record.json" download>the complete change record</a>, version <code>{changeRecord.version}</code>, executed locally with Node 25.2.1 on 10 September 2026. It includes the exact outputs and source hashes. The six original cases and eight added contrast cases were all visible during authoring; neither set is an independent held-out benchmark.</p>
+      <ScrollTable label="Learning change comparison"><thead><tr><th>Visible case set</th><th>Original baseline</th><th>Changed rules</th><th>What the count misses</th></tr></thead><tbody>
+        <tr><td>Original development set</td><td>{changeRecord.development.baselineCorrect}/{changeRecord.development.total}</td><td>{changeRecord.development.candidateCorrect}/{changeRecord.development.total}</td><td>Repairs the one motivating failure</td></tr>
+        <tr><td>Added contrast set</td><td>{changeRecord.contrast.baselineCorrect}/{changeRecord.contrast.total}</td><td>{changeRecord.contrast.candidateCorrect}/{changeRecord.contrast.total}</td><td>Three improvements, one regression and one still-wrong route</td></tr>
+        <tr><td>Combined</td><td>{changeRecord.summary.baselineCorrect}/{changeRecord.summary.total}</td><td>{changeRecord.summary.candidateCorrect}/{changeRecord.summary.total}</td><td>Decision: {changeRecord.decision}; not approval to replace a real workflow</td></tr>
+      </tbody></ScrollTable>
+      <ScrollTable label="Learning change failure log"><thead><tr><th>Case and message</th><th>Expected / candidate</th><th>Why it remains open</th></tr></thead><tbody>
+        {changeRecord.failureLog.map(row => <tr key={row.id}><td>{row.id}: {row.text}</td><td>{row.expected} / {row.actual}</td><td>{row.id === "c3" ? "Regression: the baseline was right, but dropping the clause loses the request to change the date" : "Still wrong: neither keyword list recognises the reschedule paraphrase"}</td></tr>)}
+      </tbody></ScrollTable>
+      <p>A higher total score did not make this change uniformly better. Case c3 was correct before and wrong afterwards. The complete record preserves that regression, the c5 failure and every other row; do not delete difficult cases or change their expected answer just to get a green result. No latency, development-time saving or total operating cost was measured.</p>
+      <p>For your own change, ask an AI coding tool for one narrow proposal. Record the proposal, your diff and what you rejected. Add cases that challenge it as well as cases that must keep their old behaviour. Once you inspect and tune against a case, treat it as development data. For an independent evaluation, ask another person to prepare permitted cases and freeze the candidate before comparison. That review has not happened for this teaching example.</p>
+
+      <h2 id="learned-model">5. Connect the software lesson to a learned model</h2>
+      <p>If you can explain the comparison, continue with the <a href="/articles/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence">local event-reply model lab</a>. It fits a small classifier from synthetic examples and compares it with rules, including cases where the answer still fails. That is a separate experiment: it does not turn this keyword candidate into AI or prove that learning always beats rules.</p>
+      <p>The triage README also describes a future predictor interface returning only the permitted category; no live provider integration is included. If you build one, record actual model, prompt and dataset versions, rejected outputs, latency and cost. Never invent measurements or put secrets in public files. For service boundaries and measured local HTTP, use the <a href="/articles/featured/what-is-inference-in-artificial-intelligence-and-why-it-matters">inference and serving guide</a>.</p>
+      <p>Keep this exercise local with synthetic data. Do not connect it to a real inbox or publish an unauthenticated service. A real system would need authorised data handling, persistent review state, access control, monitoring and an accountable operational owner.</p>
+
+      <h2 id="portfolio">6. Turn the work into honest portfolio evidence</h2>
+      <p>Use <a href="/downloads/ai-builder-lab/PORTFOLIO.md" download>the completed portfolio record</a> to see the expected level of detail: scope, commands, actual results, both failure causes, AI-assistance limits, return-to-baseline instructions and explicitly pending independent review. It is an example to learn from, not a record of your own client work.</p>
+      <p>Publish your scope, reproduction commands, data assumptions, failure log and known limits alongside the code. Describe which changes AI tools suggested, what you rejected and what you verified. Credit this starter instead of presenting it unchanged as an original client engagement. Obtain permission before sharing any eventual client work.</p>
+      <p>Ask a reviewer to run the project from your instructions and challenge one test. Record their real feedback; if review is still pending, say so. You are ready for a delivery conversation when you can explain decisions, diagnose failures and maintain the work—not merely when a generated demo opens.</p>
+      <p>If you already have your own permitted project evidence, show the changes you can explain and maintain—not only a test badge or an unchanged starter. That gives MLAI Studio a more useful basis for a builder conversation.</p>
+      <ArticleConversionCTA articleSlug={SLUG} config={BASE_ARTICLE_SEO_CONFIG["/articles/" + SLUG].conversion!} events={[]} placement="article-inline" />
+      <p>Still learning the fundamentals? Browse <a href="/events">MLAI events</a> for an appropriate topic and experience level. Builder intake is currently Australia-focused; New Zealand readers should confirm contracting eligibility with MLAI before assuming a supported pathway.</p>
+      <p className="text-sm">Substantively revised 10 September 2026. The update supplies an executed change review and completed example, with source-checked learning prerequisites. The starter and this revision were AI-assisted and tested by the same agent; independent technical/recipient review and customer deployment have not occurred. No job-ready timeline, employer acceptance or paid-project outcome is claimed.</p>
+    </div>
+  </div>;
+}

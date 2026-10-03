@@ -1,0 +1,70 @@
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+import { ArticleTocPlaceholder } from "~/components/articles/ArticleTocPlaceholder";
+import { ArticleEventPreference } from "~/components/articles/ArticleEventPreference";
+import { STARTUP_MODEL_CASES, STARTUP_MODEL_FIELDS, STARTUP_MODEL_PROVENANCE, STARTUP_SETUP_SCENARIOS, compareSetupHours } from "~/lib/startup-model-evidence";
+export const useCustomHeader = true;
+export const CATEGORY = "featured";
+export const SLUG = "what-constitutes-a-startup-in-practice";
+export const DATE_PUBLISHED = "2026-04-06";
+export const DATE_MODIFIED = "2026-09-11";
+const TITLE = "What constitutes a startup? Examine the business, not the label";
+export const DESCRIPTION = "Distinguish startup ambition from a new small business using four fictional cases, setup-hour comparisons and a completed record with a printable decision sheet.";
+const HERO = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-778189b4-82c7-4e6b-9b96-c21abeb867eb.jpg?alt=media&token=ffccdbe3-bf8b-46f0-8fa6-a8da9fae2a13";
+export const articleMeta = {title:TITLE,topic:TITLE,category:CATEGORY,slug:SLUG,description:DESCRIPTION,datePublished:DATE_PUBLISHED,dateModified:DATE_MODIFIED,author:"Dr Sam Donegan",image:HERO,imageAlt:"Two people looking at a laptop, with an open notebook"};
+export const summaryHighlights = {heading:"New, small and startup describe different things",intro:"A useful working distinction is whether a venture is designed for rapid growth through a repeatable offering. That ambition is not proof it can achieve it.",items:[
+ {label:"State your meaning",description:"A startup label can describe an ambition, not a verified growth record."},
+ {label:"Examine the constraint",description:"Ask what must increase to serve another customer: founder hours, staff, infrastructure or a repeatable product."},
+ {label:"Keep uncertainty visible",description:"An idea, a trial, revenue and repeat purchases are different kinds of evidence."},
+]};
+export const faqItems = [
+ {id:1,question:"Does using AI make a business a startup?",answer:"No. AI can support an established business, a service business or a product experiment. Examine the offering, customers and delivery model rather than the technology label."},
+ {id:2,question:"Must a startup raise venture capital?",answer:"Not under the growth-oriented definition discussed here. Funding is a financing choice, not proof that customers want the product or that delivery is repeatable."},
+ {id:3,question:"Is a small business less worthwhile?",answer:"No. A sustainable service or local business may fit its owner's goals better than a rapid-growth venture. This distinction is not a ranking of social value or business quality."},
+];
+export default function ArticleContent() {
+ return <div data-cf-article-body>
+  <ArticleHeroHeader breadcrumbs={[{label:"Home",href:"/",icon:Home},{label:"Articles",href:"/articles"},{label:TITLE,current:true}]} title={TITLE} titleHighlight="not the label" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
+  <div className="prose prose-lg prose-slate max-w-none">
+   <p>If you are exploring Australia's startup community, it helps to know what someone means when they call a venture a startup. “Recently opened”, “uses AI” and “has investors” answer different questions. None tells you on its own how the business reaches customers or fulfils its promise.</p>
+   <ArticleTocPlaceholder />
+   <h2 id="definition" className="scroll-mt-28">A working definition, not a universal certification</h2>
+   <p>In his September 2012 essay <a href="https://paulgraham.com/growth.html">Startup = Growth</a>, Paul Graham uses a growth-oriented definition: the company is designed to grow quickly. He distinguishes that intention from merely being new, and does not make technology or venture funding necessary conditions. This is an influential practitioner's framing, not a legal classification, universal age limit or guarantee of success.</p>
+   <p>Steve Blank's <a href="https://steveblank.com/2010/01/25/whats-a-startup-first-principles/">What’s A Startup? First Principles.</a>, published 25 January 2010, instead foregrounds the search for a business model that can be repeated and scaled. It helps distinguish testing a model from executing one already understood. These are related practitioner perspectives, not identical definitions or a certification process.</p>
+   <p>For this discussion, ask whether the venture is trying to develop an offering it can sell and deliver repeatedly to a large enough market for its ambitions. “Trying” matters: it may still be discovering who wants the product. An early venture can have startup intent without yet having evidence of repeatable demand.</p>
+   <h2 id="examples" className="scroll-mt-28">Four fictional examples show the distinction</h2>
+   <p><strong>{STARTUP_MODEL_PROVENANCE}</strong> These are not MLAI companies, investment assessments or reported outcomes. A case's interpretation applies to its stated plan, not permanently to that industry.</p>
+   <dl className="space-y-7">{STARTUP_MODEL_CASES.map(item => <div key={item.id} data-startup-case={item.id}><dt className="font-bold">{item.id}: {item.venture}</dt><dd className="ml-0"><p><strong>Scenario:</strong> {item.facts}</p><p><strong>Interpretation:</strong> {item.interpretation}</p><p><strong>Next question or action:</strong> {item.next}</p></dd></div>)}</dl>
+   <p>Models can change. A consultancy might develop a product from recurring problems, while a product team might discover that customers need substantial services. Describe the current evidence instead of forcing a permanent label.</p>
+   <p>If you want to explore these distinctions with other people, take the question “What is still custom for each customer?” to a relevant <a href="#conversation">MLAI learning event</a>. You do not need to be raising money or seeking contract work to join a startup discussion.</p>
+   <h2 id="repeatability" className="scroll-mt-28">Inspect the setup assumptions, not just the smaller total</h2>
+   <p>For F2, compare the same proposed task: setting up a quote-drafting workflow for each assumed client. Neither option includes automatically sending quotes. <strong>Illustrative arithmetic:</strong> five bespoke setups at 20 hours each require 100 delivery hours in the plan. A common setup of 40 hours plus 4 per client gives 60 hours. Neither figure is a measured result.</p>
+   <p>The table exposes two ways that proposed advantage can disappear. On a small screen, scroll it sideways; keyboard users can focus the table region and use arrow keys. The editable download contains the same calculations in plain text.</p>
+   <div role="region" aria-label="Proposed setup-hour comparison" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4"><table className="min-w-[40rem]"><caption>Fictional setup estimates in hours; positive difference means fewer proposed shared hours</caption><thead><tr><th scope="col">Assumption</th><th scope="col">Clients</th><th scope="col">Bespoke per client</th><th scope="col">Common setup</th><th scope="col">Shared per client</th><th scope="col">Bespoke total</th><th scope="col">Shared total</th><th scope="col">Difference</th></tr></thead><tbody>{STARTUP_SETUP_SCENARIOS.map(row => { const total = compareSetupHours(row); return <tr key={row.label} data-startup-scenario={row.label}><th scope="row">{row.label}</th><td>{row.clients}</td><td>{row.bespokeHoursPerClient}</td><td>{row.commonHours}</td><td>{row.sharedHoursPerClient}</td><td>{total.bespoke}</td><td>{total.shared}</td><td>{total.difference}</td></tr>; })}</tbody></table></div>
+   <p>With only one setup, the shared route takes 44 rather than 20 hours. With 80 common hours and 8 per client, five shared setups take 120 rather than 100 hours. Those are alternative assumptions, not follow-up test results. At the original rates, 40 + 4n becomes less than 20n only above 2.5 setups: three whole setups. This is an arithmetic threshold, not evidence that three customers exist or that a product is profitable.</p>
+   <p><strong>The missing work matters:</strong> sales, support, maintenance, security and infrastructure remain unestimated, not zero. A different accounting integration or approval requirement could make the proposed tasks incomparable. Lower estimated setup effort alone does not prove demand, safe delivery or a scalable business. The example is not a margin forecast, cash-savings claim or recommendation to change business models.</p>
+   <h2 id="evidence" className="scroll-mt-28">Keep an evidence record, not a startup score</h2>
+   <p><a href="/downloads/startup-model-decision-sheet.pdf" download="startup-model-decision-sheet.pdf">Download the one-page printable decision sheet</a> for handwriting, or <a href="/downloads/startup-model-evidence.txt" download="startup-model-evidence.txt">download the editable record and completed example</a>. Both are real files with no signup. The PDF is a blank print sheet, not a fillable form; the text file includes all four cases, three calculations and the completed eight-field F2 record.</p>
+   <nav aria-label="Startup model record sections"><ul className="flex list-none flex-wrap gap-x-6 gap-y-2 pl-0"><li><a href="#completed-record">Completed record</a></li><li><a href="#eligibility">Programme boundaries</a></li><li><a href="#conversation">Discuss one question</a></li></ul></nav>
+   <pre className="whitespace-pre-wrap" aria-label="Startup model evidence record">{STARTUP_MODEL_FIELDS.map((field, index) => `${index + 1}. ${field.label}`).join("\n")}</pre>
+   <details className="my-6 rounded-xl border border-gray-300 p-4"><summary id="completed-record" className="cursor-pointer font-semibold scroll-mt-28">Completed eight-field record: F2's product hypothesis</summary><dl className="space-y-5">{STARTUP_MODEL_FIELDS.map((field, index) => <div key={field.label} data-startup-field={index + 1}><dt className="font-bold">{field.label}</dt><dd className="ml-0 mt-1">{field.value}</dd></div>)}</dl></details>
+   <p>The contradictory request changes the next step: investigate differences before repeating a scalability claim. It does not prove the product idea has failed. Replace fiction with permission-cleared notes when you have them, keep unknowns explicit, and revisit the interpretation when the offering changes.</p>
+   <h2 id="eligibility" className="scroll-mt-28">A programme decides eligibility under its own rules</h2>
+   <p>Do not add the eight answers into an invented eligibility score. As a dated example, the Australian Government's <a href="https://business.gov.au/grants-and-programs/industry-growth-program">Industry Growth Program page</a>, checked 11 September 2026, says the programme is paused to new applications. Its published Advisory Service rules include entity requirements, turnover conditions and an eligible commercialisation or growth project in specified priority areas. Calling F2 a startup would not establish any of those facts.</p>
+   <p>The same page distinguishes an Advisory Service report from eligibility for a grant and from a successful merit assessment. This is an example of why the actual programme and applicant matter, not a recommendation to apply or a full eligibility checklist. Check the current official rules and application status before acting; an accelerator, grant and tax scheme are different decisions. Seek appropriate professional advice for legal or tax questions.</p>
+   <h2 id="conversation" className="scroll-mt-28">Turn the definition into a useful conversation</h2>
+   <p>At an event, “What have you learned about who uses this?” usually invites more substance than “Are you a real startup?” Share your own uncertainty and ask before giving advice. A person who wants a steady small business does not need to adopt a venture-growth ambition to belong in a discussion about AI.</p>
+   <p>Bring one question from the record to an MLAI event whose topic and experience level fit. Attendance does not promise investors, cofounders or customers. If you are already testing an idea, the <Link to="/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026">first-customer conversation guide</Link> helps distinguish interest from stronger evidence.</p>
+   <ArticleEventPreference articlePath={"/articles/" + CATEGORY + "/" + SLUG} idPrefix="startup-model" description="Choose a preferred MLAI event format. This does not upload your business record, assess eligibility, book advice or reserve a pitch slot." />
+   <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={BASE_ARTICLE_SEO_CONFIG["/articles/" + CATEGORY + "/" + SLUG].conversion!} events={[]} placement="article-inline" />
+   <h2 id="sources" className="scroll-mt-28">Sources and limits of this exercise</h2>
+   <p>The linked Graham, Blank and Industry Growth Program pages were checked on 11 September 2026. The first two are historical practitioner definitions; the programme page supplies a specific administrative counterexample, not a universal meaning of startup. The cases, comparisons and worksheet are MLAI editorial teaching material, not research findings or third-party certification.</p>
+   <p>This revision adds a completed example and working downloads while preserving the original publication date. Independent founder and source review remain outstanding. No customer validation, legal classification, programme admission or event outcome has been established by this exercise.</p>
+  </div>
+  <ArticleFAQ items={faqItems} />
+ </div>;
+}

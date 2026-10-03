@@ -1,0 +1,447 @@
+{
+  "version": 1,
+  "maxAgeMs": 60000,
+  "evaluation": "Seven author-visible synthetic fixtures; not an independent or held-out benchmark.",
+  "change": "Same rule policy, new freshness permission enforced by the environment wrapper.",
+  "sourceSha256": {
+    "agent.mjs": "4f3de0c4692a53565f368fc5483219d01307a53f9160a9eece89bb9cd06cef47",
+    "agent.test.mjs": "c55f75a545c2f431f76b2e9bfb858eefa7771839825a32119544ec70db2b7d0c",
+    "freshness.mjs": "9ed70a735be5eb67ccb7b8f6ef7043fbcc9592a729c356ebfa9b449ccbbd5dbc",
+    "freshness.test.mjs": "f629a6b6e965f48915629f5f84a5fe9442c2a870f924576f497854bf7786a734"
+  },
+  "cases": [
+    {
+      "id": "fresh",
+      "label": "Age zero",
+      "input": {
+        "id": "fresh",
+        "hasLocation": true,
+        "lookupResult": "ok",
+        "requestedAction": "prepare-draft",
+        "checkedAtMs": 100000,
+        "recordedAtMs": 100000
+      },
+      "expected": "drafted",
+      "baseline": {
+        "status": "drafted",
+        "reason": "human-review-required",
+        "drafts": 1,
+        "actions": [
+          "lookup",
+          "draft"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "guarded": {
+        "status": "drafted",
+        "reason": "human-review-required",
+        "drafts": 1,
+        "actions": [
+          "lookup",
+          "draft"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "decisionTrace": [
+        {
+          "step": 1,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "not-run",
+            "recordStatus": "unobserved",
+            "recordAgeMs": null
+          },
+          "proposed": "lookup",
+          "enforced": "lookup",
+          "guardReason": null
+        },
+        {
+          "step": 2,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "ok",
+            "recordStatus": "fresh",
+            "recordAgeMs": 0
+          },
+          "proposed": "draft",
+          "enforced": "draft",
+          "guardReason": null
+        }
+      ]
+    },
+    {
+      "id": "boundary",
+      "label": "Exactly 60,000 ms old",
+      "input": {
+        "id": "boundary",
+        "hasLocation": true,
+        "lookupResult": "ok",
+        "requestedAction": "prepare-draft",
+        "checkedAtMs": 100000,
+        "recordedAtMs": 40000
+      },
+      "expected": "drafted",
+      "baseline": {
+        "status": "drafted",
+        "reason": "human-review-required",
+        "drafts": 1,
+        "actions": [
+          "lookup",
+          "draft"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "guarded": {
+        "status": "drafted",
+        "reason": "human-review-required",
+        "drafts": 1,
+        "actions": [
+          "lookup",
+          "draft"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "decisionTrace": [
+        {
+          "step": 1,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "not-run",
+            "recordStatus": "unobserved",
+            "recordAgeMs": null
+          },
+          "proposed": "lookup",
+          "enforced": "lookup",
+          "guardReason": null
+        },
+        {
+          "step": 2,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "ok",
+            "recordStatus": "fresh",
+            "recordAgeMs": 60000
+          },
+          "proposed": "draft",
+          "enforced": "draft",
+          "guardReason": null
+        }
+      ]
+    },
+    {
+      "id": "stale",
+      "label": "60,001 ms old",
+      "input": {
+        "id": "stale",
+        "hasLocation": true,
+        "lookupResult": "ok",
+        "requestedAction": "prepare-draft",
+        "checkedAtMs": 100000,
+        "recordedAtMs": 39999
+      },
+      "expected": "escalated",
+      "baseline": {
+        "status": "drafted",
+        "reason": "human-review-required",
+        "drafts": 1,
+        "actions": [
+          "lookup",
+          "draft"
+        ],
+        "externalActions": 0,
+        "matchesContract": false
+      },
+      "guarded": {
+        "status": "escalated",
+        "reason": "human-review",
+        "drafts": 0,
+        "actions": [
+          "lookup",
+          "escalate"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "decisionTrace": [
+        {
+          "step": 1,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "not-run",
+            "recordStatus": "unobserved",
+            "recordAgeMs": null
+          },
+          "proposed": "lookup",
+          "enforced": "lookup",
+          "guardReason": null
+        },
+        {
+          "step": 2,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "ok",
+            "recordStatus": "stale",
+            "recordAgeMs": 60001
+          },
+          "proposed": "draft",
+          "enforced": "escalate",
+          "guardReason": "freshness-stale"
+        }
+      ]
+    },
+    {
+      "id": "unknown",
+      "label": "Unknown record time",
+      "input": {
+        "id": "unknown",
+        "hasLocation": true,
+        "lookupResult": "ok",
+        "requestedAction": "prepare-draft",
+        "checkedAtMs": 100000,
+        "recordedAtMs": null
+      },
+      "expected": "escalated",
+      "baseline": {
+        "status": "drafted",
+        "reason": "human-review-required",
+        "drafts": 1,
+        "actions": [
+          "lookup",
+          "draft"
+        ],
+        "externalActions": 0,
+        "matchesContract": false
+      },
+      "guarded": {
+        "status": "escalated",
+        "reason": "human-review",
+        "drafts": 0,
+        "actions": [
+          "lookup",
+          "escalate"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "decisionTrace": [
+        {
+          "step": 1,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "not-run",
+            "recordStatus": "unobserved",
+            "recordAgeMs": null
+          },
+          "proposed": "lookup",
+          "enforced": "lookup",
+          "guardReason": null
+        },
+        {
+          "step": 2,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "ok",
+            "recordStatus": "unknown",
+            "recordAgeMs": null
+          },
+          "proposed": "draft",
+          "enforced": "escalate",
+          "guardReason": "freshness-unknown"
+        }
+      ]
+    },
+    {
+      "id": "future",
+      "label": "Future record time",
+      "input": {
+        "id": "future",
+        "hasLocation": true,
+        "lookupResult": "ok",
+        "requestedAction": "prepare-draft",
+        "checkedAtMs": 100000,
+        "recordedAtMs": 100001
+      },
+      "expected": "escalated",
+      "baseline": {
+        "status": "drafted",
+        "reason": "human-review-required",
+        "drafts": 1,
+        "actions": [
+          "lookup",
+          "draft"
+        ],
+        "externalActions": 0,
+        "matchesContract": false
+      },
+      "guarded": {
+        "status": "escalated",
+        "reason": "human-review",
+        "drafts": 0,
+        "actions": [
+          "lookup",
+          "escalate"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "decisionTrace": [
+        {
+          "step": 1,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "not-run",
+            "recordStatus": "unobserved",
+            "recordAgeMs": null
+          },
+          "proposed": "lookup",
+          "enforced": "lookup",
+          "guardReason": null
+        },
+        {
+          "step": 2,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "ok",
+            "recordStatus": "future",
+            "recordAgeMs": -1
+          },
+          "proposed": "draft",
+          "enforced": "escalate",
+          "guardReason": "freshness-future"
+        }
+      ]
+    },
+    {
+      "id": "unavailable",
+      "label": "Unavailable lookup",
+      "input": {
+        "id": "unavailable",
+        "hasLocation": true,
+        "lookupResult": "unavailable",
+        "requestedAction": "prepare-draft",
+        "checkedAtMs": 100000,
+        "recordedAtMs": 100000
+      },
+      "expected": "escalated",
+      "baseline": {
+        "status": "escalated",
+        "reason": "human-review",
+        "drafts": 0,
+        "actions": [
+          "lookup",
+          "escalate"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "guarded": {
+        "status": "escalated",
+        "reason": "human-review",
+        "drafts": 0,
+        "actions": [
+          "lookup",
+          "escalate"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "decisionTrace": [
+        {
+          "step": 1,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "not-run",
+            "recordStatus": "unobserved",
+            "recordAgeMs": null
+          },
+          "proposed": "lookup",
+          "enforced": "lookup",
+          "guardReason": null
+        },
+        {
+          "step": 2,
+          "observation": {
+            "hasLocation": true,
+            "requestedActionAllowed": true,
+            "lookup": "unavailable",
+            "recordStatus": "unobserved",
+            "recordAgeMs": null
+          },
+          "proposed": "escalate",
+          "enforced": "escalate",
+          "guardReason": null
+        }
+      ]
+    },
+    {
+      "id": "missing-location",
+      "label": "Missing location",
+      "input": {
+        "id": "missing-location",
+        "hasLocation": false,
+        "lookupResult": "ok",
+        "requestedAction": "prepare-draft",
+        "checkedAtMs": 100000,
+        "recordedAtMs": 100000
+      },
+      "expected": "escalated",
+      "baseline": {
+        "status": "escalated",
+        "reason": "human-review",
+        "drafts": 0,
+        "actions": [
+          "escalate"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "guarded": {
+        "status": "escalated",
+        "reason": "human-review",
+        "drafts": 0,
+        "actions": [
+          "escalate"
+        ],
+        "externalActions": 0,
+        "matchesContract": true
+      },
+      "decisionTrace": [
+        {
+          "step": 1,
+          "observation": {
+            "hasLocation": false,
+            "requestedActionAllowed": true,
+            "lookup": "not-run",
+            "recordStatus": "unobserved",
+            "recordAgeMs": null
+          },
+          "proposed": "escalate",
+          "enforced": "escalate",
+          "guardReason": null
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 7,
+    "baselineMatches": 4,
+    "guardedMatches": 7
+  },
+  "decision": "REVIEW_REQUIRED",
+  "independentReview": "Not performed. No client or production approval is implied by these fixtures."
+}

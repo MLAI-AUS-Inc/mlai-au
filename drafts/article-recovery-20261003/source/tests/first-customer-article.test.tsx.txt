@@ -1,0 +1,146 @@
+import { expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import Article, { articleMeta, conversationFields } from "../app/articles/content/featured/how-to-get-the-first-customers-for-my-startup-in-2026";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
+import { CUSTOMER_PROVENANCE, CUSTOMER_REVIEW_STATUS, CUSTOMER_INVITATION, CUSTOMER_NOTES, CUSTOMER_OUTLINE, CUSTOMER_DECLINE, CUSTOMER_EVENTS, CUSTOMER_STAGE_ROWS, CUSTOMER_COMPLETED_FIELDS, CUSTOMER_WEEKS, CUSTOMER_DECISION, firstCustomerWorksheetText } from "../app/lib/first-customer-conversation";
+
+const slug = "featured/how-to-get-the-first-customers-for-my-startup-in-2026";
+const render = (entry = "/articles/" + slug) => renderToStaticMarkup(<MemoryRouter initialEntries={[entry]}><Article /></MemoryRouter>);
+
+test("first-customer reader can follow the supplied notes through a declined next step", () => {
+  const html = render();
+  expect(html.match(/data-customer-record-field=/g)).toHaveLength(12);
+  expect(html.match(/data-customer-note=/g)).toHaveLength(6);
+  expect(html.match(/data-customer-event=/g)).toHaveLength(5);
+  expect(html).toContain("Stop contact with this participant");
+  expect(html).toContain("No interview, message, demonstration or pilot actually ran");
+  expect(html).toContain("Preferred MLAI event format");
+});
+
+test("first-customer guide supplies an execution record with honest evidence and follow-up boundaries", () => {
+  const html = render();
+  expect(conversationFields).toHaveLength(12);
+  expect(html).toContain('aria-label="First customer conversation record"');
+  expect(html).toContain("Week 4");
+  expect(html).toContain("Fictional example used throughout");
+  expect(html).toContain("silence is not agreement");
+  expect(html).toContain("receiving payment is a payment");
+  expect(html).toContain("not a promise of leads");
+  expect(html).toContain("not a replacement for gathering evidence");
+  expect(html).not.toContain("Founder-led outreach is the fastest");
+  expect(html).toContain('href="/downloads/first-customer-conversation.txt"');
+  const asset = readFileSync("public/downloads/first-customer-conversation.txt", "utf8");
+  for (const field of conversationFields) expect(asset).toContain(field);
+  expect(asset).toContain("COMPLETED FICTIONAL EXAMPLE");
+  expect(asset).toContain("no trial,");
+  expect(asset).toContain("no recording, AI upload or permission to publish");
+});
+
+test("first-customer execution task retains canonical identity and routes to a community offer", () => {
+  const config = BASE_ARTICLE_SEO_CONFIG["/articles/" + slug].conversion!;
+  expect(config.primary).toBe("events");
+  expect(config.primaryIcp).toBe("COMMUNITY");
+  expect(config.version).toBe("first-customer-decision-v3");
+  expect(config.eventCalendarOnly).toBe(true);
+  const html = render();
+  expect(html).toContain(config.copy!.button);
+  expect(html).toContain('data-article-icp="COMMUNITY"');
+  expect(html).not.toContain('href="/mlai-studio#apply"');
+  expect(ARTICLE_REGISTRY[slug].date).toBe("2026-04-04");
+  expect(ARTICLE_REGISTRY[slug].dateModified).toBe(articleMeta.dateModified);
+  expect(ARTICLE_REGISTRY[slug].title).toBe(articleMeta.title);
+  expect(ARTICLE_REGISTRY[slug].description).toBe(articleMeta.description);
+  expect(articleMeta.dateModified).toBe("2026-09-11");
+  expect(ARTICLE_REGISTRY[slug].imageAlt).toBe(articleMeta.imageAlt);
+  expect(articleMeta.imageAlt).toBe("Person holding a pen and notebook while another person holds a phone");
+  expect(articleMeta.title).not.toContain("2026");
+});
+
+test("the page and real download preserve every completed field, supplied answer and event", () => {
+  const html = render();
+  const text = readFileSync("public/downloads/first-customer-conversation.txt", "utf8");
+  expect(text).toBe(firstCustomerWorksheetText());
+  expect(CUSTOMER_COMPLETED_FIELDS).toHaveLength(12);
+  for (const field of CUSTOMER_COMPLETED_FIELDS) {
+    expect(text).toContain(field.label + ":"); expect(text).toContain(field.value);
+    expect(html).toContain(field.label); expect(html).toContain(field.value);
+  }
+  for (const note of CUSTOMER_NOTES) {
+    expect(html).toContain(`data-customer-note="${note.id}"`);
+    for (const key of ["question", "answer", "interpretation", "unknown"] as const) {
+      expect(text).toContain(note[key]); expect(html).toContain(note[key]);
+    }
+  }
+  for (const event of CUSTOMER_EVENTS) {
+    expect(html).toContain(`data-customer-event="${event.id}"`);
+    for (const key of ["date", "action", "source", "status"] as const) {
+      expect(text).toContain(event[key]); expect(html).toContain(event[key]);
+    }
+  }
+  for (const value of [CUSTOMER_PROVENANCE, CUSTOMER_REVIEW_STATUS, CUSTOMER_INVITATION, CUSTOMER_OUTLINE, CUSTOMER_DECLINE, CUSTOMER_DECISION]) {
+    expect(text).toContain(value); expect(html).toContain(value);
+  }
+  expect(text).toContain("ACTUAL-CASE FOLLOW-UP — DO NOT PREFILL A SUCCESS");
+  expect(html).toContain('download="first-customer-conversation.txt"');
+});
+
+test("the dated refusal supersedes the single-outline permission without inventing a price test", () => {
+  expect(CUSTOMER_EVENTS.map(e => e.id)).toEqual(["E1", "E2", "E3", "E4", "E5"]);
+  expect(CUSTOMER_EVENTS.map(e => e.date)).toEqual(["2026-09-14", "2026-09-16", "2026-09-17", "2026-09-18", "2026-09-21"]);
+  expect(CUSTOMER_NOTES[5].answer).toContain("one outline on Thursday");
+  expect(new Date(CUSTOMER_EVENTS[2].date + "T12:00:00Z").getUTCDay()).toBe(4);
+  expect(CUSTOMER_EVENTS[2].source).toBe(CUSTOMER_OUTLINE);
+  expect(CUSTOMER_EVENTS[3].source).toBe(CUSTOMER_DECLINE);
+  expect(CUSTOMER_EVENTS[4].status).toBe(CUSTOMER_DECISION);
+  expect(CUSTOMER_DECISION).toContain("cannot justify reminders or an owner approach");
+  expect(CUSTOMER_NOTES[3].answer).toContain("before adding another tool");
+  expect(CUSTOMER_NOTES[4].answer).toContain("not arranging an introduction");
+  expect(CUSTOMER_COMPLETED_FIELDS[8].value).toContain("Do not infer a price objection: no price was shown");
+  const html = render();
+  expect(html).not.toContain("the draft looks useful");
+  expect(html).not.toContain("The next step in this example is an agreed demonstration");
+  expect(html).toContain("not one of the companion GTM guide’s 28 records");
+});
+
+test("stages and the four-week plan preserve the non-sale and unperformed later work", () => {
+  const html = render(), text = firstCustomerWorksheetText();
+  expect(CUSTOMER_STAGE_ROWS).toHaveLength(6);
+  for (const row of CUSTOMER_STAGE_ROWS) for (const value of Object.values(row)) { expect(html).toContain(value); expect(text).toContain(value); }
+  expect(CUSTOMER_STAGE_ROWS[2].state).toBe("No booking and no attendance.");
+  expect(CUSTOMER_STAGE_ROWS[3].state).toBe("No trial, usage or completed pilot review.");
+  expect(CUSTOMER_STAGE_ROWS[4].state).toBe("No priced offer shown; no accepted paid terms.");
+  expect(CUSTOMER_STAGE_ROWS[5].state).toBe("No payment or completed delivery.");
+  expect(CUSTOMER_WEEKS).toHaveLength(4);
+  for (const week of CUSTOMER_WEEKS) for (const value of Object.values(week)) { expect(html).toContain(value); expect(text).toContain(value); }
+  expect(CUSTOMER_WEEKS[2].decision).toContain("Not run in this example");
+  expect(CUSTOMER_WEEKS[3].decision).toContain("Planned, not run here");
+  expect(html).toContain("One participant is not a market or channel-conversion sample");
+});
+
+test("event preference is allowlisted, requires application and never includes interview notes", () => {
+  for (const value of ["online", "melbourne"]) {
+    const html = render("/articles/" + slug + "?event_format=" + value + "&prospect=PRIVATE_SENTINEL");
+    expect(html).toContain(`href="/events?event_format=${value}"`);
+    expect(html).not.toContain("PRIVATE_SENTINEL");
+  }
+  for (const value of ["all", "unexpected"]) expect(render("/articles/" + slug + "?event_format=" + value)).toContain('href="/events"');
+  const html = render();
+  expect(html).toContain(`action="/articles/${slug}" method="get"`);
+  expect(html).toContain("Apply preference");
+  expect(html).toContain("Your interview notes and worksheet are not uploaded or attached");
+  expect(html).toContain("Opening a workspace requires an account");
+});
+
+test("reader navigation and keyboard tables keep the customer task separate from GTM", () => {
+  const html = render();
+  for (const label of ["First customer stage evidence", "First customer four-week plan"]) expect(html).toContain(`role="region" aria-label="${label}" tabindex="0"`);
+  for (const id of ["pick-person", "invitation", "interview", "supplied-notes", "record", "follow-up-sequence", "completed-record", "stage-check", "offer", "four-weeks", "peer-next-step"]) expect(html).toContain(`id="${id}" class="scroll-mt-28"`);
+  expect(html).toContain("data-article-toc-placeholder");
+  expect(html).toContain('aria-label="Conversation record sections"');
+  for (const id of ["follow-up-sequence", "completed-record", "stage-check"]) expect(html).toContain(`href="#${id}"`);
+  expect(html).toContain('href="/articles/featured/go-to-market-for-startups"');
+  expect(html).toContain("what to say, what evidence to record");
+});

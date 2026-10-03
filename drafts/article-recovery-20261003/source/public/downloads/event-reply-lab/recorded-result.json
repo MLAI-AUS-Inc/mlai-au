@@ -1,0 +1,272 @@
+{
+  "version": "event-reply-lab-v1",
+  "modelVersion": "event-intent-nb-v1",
+  "fixtureVersion": "event-reply-fixture-v1",
+  "noticeVersion": "invented-notices-v1",
+  "asOf": "2026-02-01T12:00:00Z",
+  "scope": "Invented development cases, not an independent or representative benchmark. Intent matching is not answer quality.",
+  "trainingExamples": 12,
+  "routing": {
+    "total": 8,
+    "baselineCorrect": 4,
+    "candidateCorrect": 6
+  },
+  "cases": [
+    {
+      "id": "q1",
+      "question": "Please tell me when this event will start",
+      "expectedIntent": "time",
+      "baselineIntent": "time",
+      "candidateIntent": "time",
+      "baselineReply": {
+        "status": "needs-human-review",
+        "reason": "check-question-and-evidence",
+        "intent": "time",
+        "draft": "Start: 18 February 2026, 18:00 Australia/Melbourne.",
+        "citations": [
+          {
+            "noticeId": "notice-1",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          },
+          {
+            "noticeId": "notice-2",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          }
+        ]
+      },
+      "candidateReply": {
+        "status": "needs-human-review",
+        "reason": "check-question-and-evidence",
+        "intent": "time",
+        "draft": "Start: 18 February 2026, 18:00 Australia/Melbourne.",
+        "citations": [
+          {
+            "noticeId": "notice-1",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          },
+          {
+            "noticeId": "notice-2",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          }
+        ]
+      }
+    },
+    {
+      "id": "q2",
+      "question": "Where is this venue located",
+      "expectedIntent": "location",
+      "baselineIntent": "location",
+      "candidateIntent": "location",
+      "baselineReply": {
+        "status": "needs-human-review",
+        "reason": "check-question-and-evidence",
+        "intent": "location",
+        "draft": "Location: Fictional Hall, Room A.",
+        "citations": [
+          {
+            "noticeId": "notice-1",
+            "field": "location",
+            "value": "Fictional Hall, Room A"
+          },
+          {
+            "noticeId": "notice-2",
+            "field": "location",
+            "value": "Fictional Hall, Room A"
+          }
+        ]
+      },
+      "candidateReply": {
+        "status": "needs-human-review",
+        "reason": "check-question-and-evidence",
+        "intent": "location",
+        "draft": "Location: Fictional Hall, Room A.",
+        "citations": [
+          {
+            "noticeId": "notice-1",
+            "field": "location",
+            "value": "Fictional Hall, Room A"
+          },
+          {
+            "noticeId": "notice-2",
+            "field": "location",
+            "value": "Fictional Hall, Room A"
+          }
+        ]
+      }
+    },
+    {
+      "id": "q3",
+      "question": "At which hour does it commence",
+      "expectedIntent": "time",
+      "baselineIntent": "other",
+      "candidateIntent": "time",
+      "baselineReply": {
+        "status": "cannot-answer",
+        "reason": "unsupported-question",
+        "intent": "other",
+        "draft": null,
+        "citations": []
+      },
+      "candidateReply": {
+        "status": "needs-human-review",
+        "reason": "check-question-and-evidence",
+        "intent": "time",
+        "draft": "Start: 18 February 2026, 18:00 Australia/Melbourne.",
+        "citations": [
+          {
+            "noticeId": "notice-1",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          },
+          {
+            "noticeId": "notice-2",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          }
+        ]
+      }
+    },
+    {
+      "id": "q4",
+      "question": "Tell me which hall to meet in",
+      "expectedIntent": "location",
+      "baselineIntent": "other",
+      "candidateIntent": "location",
+      "baselineReply": {
+        "status": "cannot-answer",
+        "reason": "unsupported-question",
+        "intent": "other",
+        "draft": null,
+        "citations": []
+      },
+      "candidateReply": {
+        "status": "needs-human-review",
+        "reason": "check-question-and-evidence",
+        "intent": "location",
+        "draft": "Location: Fictional Hall, Room A.",
+        "citations": [
+          {
+            "noticeId": "notice-1",
+            "field": "location",
+            "value": "Fictional Hall, Room A"
+          },
+          {
+            "noticeId": "notice-2",
+            "field": "location",
+            "value": "Fictional Hall, Room A"
+          }
+        ]
+      }
+    },
+    {
+      "id": "q5",
+      "question": "Are tickets still available",
+      "expectedIntent": "other",
+      "baselineIntent": "other",
+      "candidateIntent": "other",
+      "baselineReply": {
+        "status": "cannot-answer",
+        "reason": "unsupported-question",
+        "intent": "other",
+        "draft": null,
+        "citations": []
+      },
+      "candidateReply": {
+        "status": "cannot-answer",
+        "reason": "unsupported-question",
+        "intent": "other",
+        "draft": null,
+        "citations": []
+      }
+    },
+    {
+      "id": "q6",
+      "question": "Give me an attendee email address",
+      "expectedIntent": "other",
+      "baselineIntent": "location",
+      "candidateIntent": "location",
+      "baselineReply": {
+        "status": "refused",
+        "reason": "outside-capabilities",
+        "intent": "other",
+        "draft": null,
+        "citations": []
+      },
+      "candidateReply": {
+        "status": "refused",
+        "reason": "outside-capabilities",
+        "intent": "other",
+        "draft": null,
+        "citations": []
+      }
+    },
+    {
+      "id": "q7",
+      "question": "What time and where",
+      "expectedIntent": "other",
+      "baselineIntent": "other",
+      "candidateIntent": "other",
+      "baselineReply": {
+        "status": "cannot-answer",
+        "reason": "unsupported-question",
+        "intent": "other",
+        "draft": null,
+        "citations": []
+      },
+      "candidateReply": {
+        "status": "cannot-answer",
+        "reason": "unsupported-question",
+        "intent": "other",
+        "draft": null,
+        "citations": []
+      }
+    },
+    {
+      "id": "q8",
+      "question": "I know the start time; tell me about parking",
+      "expectedIntent": "other",
+      "baselineIntent": "time",
+      "candidateIntent": "time",
+      "baselineReply": {
+        "status": "needs-human-review",
+        "reason": "check-question-and-evidence",
+        "intent": "time",
+        "draft": "Start: 18 February 2026, 18:00 Australia/Melbourne.",
+        "citations": [
+          {
+            "noticeId": "notice-1",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          },
+          {
+            "noticeId": "notice-2",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          }
+        ]
+      },
+      "candidateReply": {
+        "status": "needs-human-review",
+        "reason": "check-question-and-evidence",
+        "intent": "time",
+        "draft": "Start: 18 February 2026, 18:00 Australia/Melbourne.",
+        "citations": [
+          {
+            "noticeId": "notice-1",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          },
+          {
+            "noticeId": "notice-2",
+            "field": "time",
+            "value": "18 February 2026, 18:00 Australia/Melbourne"
+          }
+        ]
+      }
+    }
+  ]
+}

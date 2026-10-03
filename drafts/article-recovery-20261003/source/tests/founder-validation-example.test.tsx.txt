@@ -1,0 +1,114 @@
+import { expect, test } from 'bun:test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import { readFileSync } from 'node:fs';
+import Article, { articleMeta } from '../app/articles/content/featured/a-practical-guide-for-australian-founders-building-an-ai-startup';
+import { FOUNDER_DRAFT_CASES, FOUNDER_TEST_PROVENANCE, FOUNDER_TEST_RECORD, founderTestTotals, founderValidationMarkdown } from '../app/lib/founder-workflow-test';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+
+const slug = 'featured/a-practical-guide-for-australian-founders-building-an-ai-startup';
+const render = (preference = '') => renderToStaticMarkup(<MemoryRouter initialEntries={['/articles/' + slug + preference]}><Article /></MemoryRouter>);
+
+test('founder validation separates prototype behaviour from demand and durable savings', () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ for (const text of ['Fictional teaching example', 'cannot send messages', 'Conflicting appointment dates', 'Passing these synthetic cases', 'Founder prototype decision record', 'five minutes slower', 'do not infer willingness to pay']) expect(html).toContain(text);
+ expect(html).toContain('data-article-icp="COMMUNITY"');
+ expect(html).toContain('https://business.gov.au/marketing-and-advertising/do-market-research');
+ expect(html).toContain('expert commentary, not a controlled evaluation');
+ expect(html).toContain('not a validated deadline');
+ expect(html).not.toContain('founders are often older');
+ expect(html).not.toContain('Australian business guidance consistently');
+ expect(html).not.toContain('angelinvestmentnetwork.net');
+ expect(html).toContain('no interactive form fields');
+ expect(html).toContain('/downloads/founder-validation-test-record.md');
+ const worksheet = readFileSync('public/downloads/founder-validation-test-record.md', 'utf8');
+ for (const text of ['Synthetic input cases', 'failure/stop conditions', 'Correction minutes', 'five minutes slower', 'customer demand']) expect(worksheet).toContain(text);
+ expect(20 + 20 + 15).toBe(55);
+ expect(55 - 50).toBe(5);
+ expect(20 + 15).toBe(35);
+});
+
+test('the supplied ten-case set preserves failed drafts and distinguishes corrections from execution', () => {
+ expect(FOUNDER_DRAFT_CASES).toHaveLength(10);
+ expect(new Set(FOUNDER_DRAFT_CASES.map(row => row.id)).size).toBe(10);
+ expect(FOUNDER_DRAFT_CASES.filter(row => row.verdict === 'needs-revision').map(row => row.id)).toEqual(['D-02', 'D-03', 'D-04']);
+ for (const row of FOUNDER_DRAFT_CASES) {
+  for (const key of ['input', 'expected', 'draft', 'reason', 'correction'] as const) expect(row[key].length).toBeGreaterThan(15);
+  expect(row.manualMinutes).toBe(5);
+  expect(row.reviewMinutes).toBe(2);
+  expect(row.correctionMinutes).toBe(row.verdict === 'needs-revision' ? 5 : 0);
+ }
+ expect(FOUNDER_TEST_PROVENANCE).toContain('Actual prototype test: NOT RUN');
+ expect(FOUNDER_DRAFT_CASES[2].draft).toContain('confirmed for 8 October');
+ expect(FOUNDER_DRAFT_CASES[2].correction).toContain('do not confirm either date');
+ expect(FOUNDER_DRAFT_CASES[3].reason).toContain('No payment or message was actually actioned');
+});
+
+test('the first and hypothetical repeat batch retain the complete effort comparison', () => {
+ expect(founderTestTotals()).toEqual({ count: 10, needsRevision: 3, manual: 50, review: 20, correction: 15, setup: 20, firstBatch: 55, repeatBatchAssumption: 35, extraFirstBatchMinutes: 5 });
+ const html = render();
+ expect(html).toContain('not a measured result');
+ expect(html).toContain('A faster second batch has not been demonstrated');
+ expect(html).toContain('Do not turn seven scripted drafts');
+ expect(html).toContain('A corrected sentence is not a working control');
+ expect(html).toContain('aria-label="Fictional ten-case effort comparison"');
+ expect(html).toContain('aria-label="Workflow example sections"');
+ for (const id of ['workflow-test-cases-title', 'workflow-test-effort-title', 'workflow-decision-title', 'validation-discussion-record']) {
+  expect(html).toContain('href="#' + id + '"');
+  expect(html).toContain('id="' + id + '" class="scroll-mt-28"');
+ }
+ expect(html.match(/<th scope="row">D-/g)).toHaveLength(10);
+});
+
+test('page and real Markdown deliver the same eight completed and blank fields and every case', () => {
+ const html = render();
+ const asset = readFileSync('public/downloads/founder-validation-test-record.md', 'utf8');
+ expect(asset).toBe(founderValidationMarkdown());
+ expect(FOUNDER_TEST_RECORD).toHaveLength(8);
+ for (const row of FOUNDER_DRAFT_CASES) {
+  expect(asset).toContain('### ' + row.id);
+  for (const value of [row.input, row.expected, row.draft, row.reason, row.correction]) expect(asset).toContain(value);
+  expect(html).toContain(row.id);
+ }
+ for (const field of FOUNDER_TEST_RECORD) {
+  expect(asset.split('### ' + field.label)).toHaveLength(3);
+  expect(asset).toContain(field.value);
+  expect(html).toContain(field.label);
+ }
+ expect(asset).toContain('model/prompt/tool version, reviewer');
+ expect(asset).toContain('not proof that a system will produce it');
+ expect(html).toContain('it does not contain the expanded example');
+});
+
+test('metadata matches the narrower reader task without changing the published date or URL', () => {
+ const registry = ARTICLE_REGISTRY[slug];
+ expect(articleMeta.title).toBe('Validate an AI startup idea in Australia: test one workflow');
+ expect(registry.title).toBe(articleMeta.title);
+ expect(registry.description).toBe(articleMeta.description);
+ expect(registry.dateModified).toBe(articleMeta.dateModified);
+ expect(articleMeta.dateModified).toBe('2026-09-11');
+ expect(registry.date).toBe('2026-07-26');
+ expect(articleMeta.datePublished).toBe(registry.date);
+ expect(registry.slug).toBe(slug);
+ expect(registry.imageAlt).toBe(articleMeta.imageAlt);
+ expect(articleMeta.imageAlt).toBe('Person holding a pen and an open notebook');
+ const html = render();
+ expect(html).not.toContain('Australian startup meetup in a shared workspace');
+ expect(html).toContain('not a verified MLAI event or participant record');
+});
+
+test('the unresolved question leads to a community event with only the applied format', () => {
+ const config = BASE_ARTICLE_SEO_CONFIG['/articles/' + slug];
+ expect(config.conversion!.primaryIcp).toBe('COMMUNITY');
+ expect(config.conversion!.version).toBe('validation-question-v3');
+ expect(config.conversion!.eventCalendarOnly).toBe(true);
+ expect(config.internalLinks).toEqual(['/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026']);
+ const html = render('?event_format=online&notes=private-note-marker');
+ expect(html).toContain('href="/events?event_format=online"');
+ expect(html).toContain('Preferred MLAI event format');
+ expect(html).toContain('Find a founder session for your next test question');
+ expect(html).not.toContain('private-note-marker');
+ expect(html).not.toContain('href="/mlai-studio#apply"');
+ expect(html.indexOf('Founder prototype decision record')).toBeLessThan(html.indexOf('data-article-icp="COMMUNITY"'));
+});

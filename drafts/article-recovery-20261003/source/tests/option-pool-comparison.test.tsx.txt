@@ -1,0 +1,131 @@
+import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import { compareOptionPoolDilution } from '../app/lib/option-pool-dilution';
+import OptionPoolComparison from '../app/components/articles/OptionPoolComparison';
+import Article, { articleMeta } from '../app/articles/content/featured/how-vcs-value-startups';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+
+const example = { preMoney: 8, newMoney: 2, poolPercent: 10 };
+const good = (input = example) => {
+  const result = compareOptionPoolDilution(input);
+  if (!result.ok) throw new Error(result.error);
+  return result;
+};
+
+test('the fictional example distinguishes no pool, pre-money inclusion and later pro-rata dilution', () => {
+  const result = good();
+  expect(result.noPool).toEqual({ existingPercent: 80, investorPercent: 20, poolPercent: 0 });
+  expect(result.preMoneyPool.existingPercent).toBeCloseTo(70, 10);
+  expect(result.preMoneyPool.investorPercent).toBe(20);
+  expect(result.postMoneyPool.existingPercent).toBeCloseTo(72, 10);
+  expect(result.postMoneyPool.investorPercent).toBeCloseTo(18, 10);
+  expect(result.preMoneyPool.poolPercent).toBe(10);
+  expect(result.postMoneyPool.poolPercent).toBe(10);
+  expect(result.existingDifferencePoints).toBeCloseTo(2, 10);
+  expect(result.postMoneyPool.existingPercent / result.preMoneyPool.existingPercent - 1).not.toBeCloseTo(0.02, 4);
+});
+
+test('percentage equations agree with separately constructed share-count scenarios', () => {
+  for (const preMoney of [1, 5, 8, 27]) for (const newMoney of [1, 2, 3, 10]) for (const poolPercent of [0, 1, 5, 10, 20]) {
+    const p = poolPercent / 100;
+    if (p >= preMoney / (preMoney + newMoney)) continue;
+    const result = good({ preMoney, newMoney, poolPercent });
+    const shares = 1_000_000;
+    const ratio = newMoney / preMoney;
+    const prePool = p * (1 + ratio) * shares / (1 - p * (1 + ratio));
+    const prePrice = preMoney / (shares + prePool);
+    const preNew = newMoney / prePrice;
+    const preTotal = shares + prePool + preNew;
+    expect(result.preMoneyPool.existingPercent).toBeCloseTo(shares / preTotal * 100, 9);
+    expect(result.preMoneyPool.investorPercent).toBeCloseTo(preNew / preTotal * 100, 9);
+    expect(result.preMoneyPool.poolPercent).toBeCloseTo(prePool / preTotal * 100, 9);
+    const noPoolPrice = preMoney / shares;
+    const laterNew = newMoney / noPoolPrice;
+    const laterPool = (shares + laterNew) * p / (1 - p);
+    const laterTotal = shares + laterNew + laterPool;
+    expect(result.postMoneyPool.existingPercent).toBeCloseTo(shares / laterTotal * 100, 9);
+    expect(result.postMoneyPool.investorPercent).toBeCloseTo(laterNew / laterTotal * 100, 9);
+    expect(result.postMoneyPool.poolPercent).toBeCloseTo(laterPool / laterTotal * 100, 9);
+    for (const allocation of [result.noPool, result.preMoneyPool, result.postMoneyPool]) {
+      expect(allocation.existingPercent + allocation.investorPercent + allocation.poolPercent).toBeCloseTo(100, 9);
+    }
+    expect(result.postMoneyPool.existingPercent - result.preMoneyPool.existingPercent).toBeCloseTo(result.existingDifferencePoints, 9);
+  }
+});
+
+test('a zero pool changes nothing and equal scaling of currency units changes no percentages', () => {
+  const zero = good({ ...example, poolPercent: 0 });
+  expect(zero.preMoneyPool).toEqual(zero.noPool);
+  expect(zero.postMoneyPool).toEqual(zero.noPool);
+  expect(zero.existingDifferencePoints).toBe(0);
+  expect(good({ preMoney: 8_000_000, newMoney: 2_000_000, poolPercent: 10 })).toEqual(good());
+  expect(example).toEqual({ preMoney: 8, newMoney: 2, poolPercent: 10 });
+});
+
+test('invalid, non-finite and impossible inputs fail instead of being clamped to a result', () => {
+  for (const key of ['preMoney', 'newMoney', 'poolPercent'] as const) {
+    for (const invalid of [NaN, Infinity, -Infinity, -1]) expect(compareOptionPoolDilution({ ...example, [key]: invalid }).ok).toBe(false);
+  }
+  for (const input of [
+    { ...example, preMoney: 0 }, { ...example, newMoney: 0 },
+    { ...example, poolPercent: 100 }, { ...example, poolPercent: 80 }, { ...example, poolPercent: 81 },
+    { ...example, preMoney: Number.MAX_VALUE, newMoney: Number.MAX_VALUE },
+    { ...example, preMoney: Number.MIN_VALUE, newMoney: 1 },
+    { ...example, preMoney: 1, newMoney: Number.MIN_VALUE },
+  ]) {
+    const result = compareOptionPoolDilution(input);
+    expect(result.ok).toBe(false);
+    expect(result).not.toHaveProperty('noPool');
+  }
+});
+
+test('the server-rendered calculator exposes a complete example, labels, limits and keyboard table region', () => {
+  const html = renderToStaticMarkup(<OptionPoolComparison />);
+  for (const text of ['Pre-money value (A$ millions)', 'New primary investment (A$ millions)', 'Final ungranted pool (%)',
+    '80.00%', '70.00%', '72.00%', '18.00%', '2.00 percentage points', 'no existing pool',
+    'not issued voting ownership', 'does not save or submit', 'not a recommendation',
+    'class="not-prose', 'role="status"', 'aria-live="polite"', 'aria-label="Option pool allocation comparison"',
+    'tabindex="0"', 'scope="row"', 'scope="col"', 'id="option-pool-comparison"', 'Reset fictional example']) expect(html).toContain(text);
+  const source = readFileSync('app/components/articles/OptionPoolComparison.tsx', 'utf8');
+  expect(source).toContain('a blank is not zero');
+  for (const forbidden of ['localStorage', 'sessionStorage', 'fetch(', 'axios', 'trackArticle']) expect(source).not.toContain(forbidden);
+});
+
+test('the revised article keeps identity, evidence limits and the community learning offer', () => {
+  const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+  const meta = ARTICLE_REGISTRY['featured/how-vcs-value-startups'];
+  const config = BASE_ARTICLE_SEO_CONFIG['/articles/featured/how-vcs-value-startups'].conversion!;
+  expect(meta.date).toBe('2026-01-22');
+  expect(meta.date).toBe(articleMeta.datePublished);
+  expect(meta.dateModified).toBe('2026-09-10');
+  expect(meta.dateModified).toBe(articleMeta.dateModified);
+  expect(meta.title).toBe(articleMeta.title);
+  expect(meta.description).toBe(articleMeta.description);
+  expect(meta.author).toBe(articleMeta.author);
+  expect(meta.imageAlt).toBe(articleMeta.imageAlt);
+  expect(config.primaryIcp).toBe('COMMUNITY');
+  expect(config.primary).toBe('events');
+  expect(config.version).toBe('valuation-evidence-v3');
+  expect(html).toContain(config.copy!.button);
+  expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
+  for (const path of ['/articles/featured/venture-capital-how-does-it-work', '/articles/featured/how-does-a-venture-capital-firm-work', '/vibe-raising', '/events']) expect(html).toContain(`href="${path}"`);
+  expect(html).toContain('not independently reviewed transactions');
+  expect(html).toContain('not an automated spreadsheet or a legal cap table');
+  expect(html).not.toContain('ArticleStepList');
+});
+
+test('the promised download contains the actual formulas, all worked cases and review record', () => {
+  const path = '/downloads/valuation-learning/option-pool-worked-example.md';
+  const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+  expect(html).toContain(`href="${path}" download=""`);
+  const text = readFileSync('public' + path, 'utf8');
+  for (const content of ['V = A$8,000,000', 'I = A$2,000,000', 'S = 1,000,000', '1,250,000',
+    'Q = p * (1 + r) * S / (1 - p * (1 + r))', '142,857.142857', '285,714.285714',
+    '80% * 90% = 72%', '20% * 90% = 18%', '138,888.888889', '1,388,888.888889',
+    'not a 2% relative increase', 'independent professional review is pending',
+    'Verified fact, assumption or unknown:', 'not presently issued/voting ownership',
+    'https://www.cooleygo.com/glossary/fully-diluted-shares/']) expect(text).toContain(content);
+});

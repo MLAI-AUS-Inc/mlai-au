@@ -1,0 +1,167 @@
+import { expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { renderToStaticMarkup, renderToReadableStream } from "react-dom/server";
+import { MemoryRouter, createMemoryRouter, RouterProvider } from "react-router";
+import { parseEventPreference, withEventPreference, eventCalendarHref, isEventCalendarHref } from "../app/lib/event-preference";
+import { currentMlaiFormatOptions } from "../app/lib/event-format-shortlist";
+import { MELBOURNE_AI_EVENTS as listings } from "../app/lib/melbourne-ai-events";
+import { parseArticleAttribution, matchArticleCompletion } from "../app/lib/article-conversions";
+import { ArticleReadTime } from "../app/components/articles/ArticleReadTime";
+import UpcomingEventsCTA from "../app/components/articles/UpcomingEventsCTA";
+import EventFormatPreference from "../app/components/EventFormatPreference";
+import MelbourneArticle from "../app/articles/content/featured/where-to-find-ai-events-in-melbourne";
+import { lumaEntryToEvent } from "../app/lib/events";
+import EventsCalendarPage from "../app/routes/events";
+
+const time = "2026-09-10T07:29:00Z";
+const now = Date.parse(time);
+const render = (node: React.ReactNode, path = "/events", clock: string | null = time) => renderToStaticMarkup(<MemoryRouter initialEntries={[path]}><ArticleReadTime.Provider value={clock}>{node}</ArticleReadTime.Provider></MemoryRouter>);
+
+test("only one explicitly supported preference is accepted", () => {
+  for (const value of ["online", "melbourne"]) expect(parseEventPreference(new URLSearchParams({ event_format: value }))).toBe(value);
+  for (const query of ["", "event_format=all", "event_format=ONLINE", "event_format=in-person", "event_format=online&event_format=melbourne", "event_format=online&event_format=online", "event_format=%2F%2Fevil.test", "event_format=%3Cscript%3E", "format=online"]) expect(parseEventPreference(new URLSearchParams(query))).toBe("all");
+});
+
+test("article preference updates preserve other parameters without mutating the source", () => {
+  const source = new URLSearchParams("cfInspector=1&event_format=bad&event_format=online&campaign=guide");
+  const selected = withEventPreference(source, "melbourne");
+  expect(selected.toString()).toBe("cfInspector=1&campaign=guide&event_format=melbourne");
+  expect(source.getAll("event_format")).toHaveLength(2);
+  expect(withEventPreference(selected, "all").toString()).toBe("cfInspector=1&campaign=guide");
+});
+
+test("calendar destinations cannot carry arbitrary input, article inspector state or redirects", () => {
+  expect(eventCalendarHref("all")).toBe("/events");
+  expect(eventCalendarHref("online")).toBe("/events?event_format=online");
+  expect(eventCalendarHref("melbourne")).toBe("/events?event_format=melbourne");
+  for (const value of ["/events?event_format=all", "/events?event_format=online&next=https://evil.test", "/events#online", "//evil.test/events", "/events?event_format=online&event_format=online", "/events?email=synthetic@example.test"]) expect(isEventCalendarHref(value)).toBe(false);
+});
+
+test("format options use explicitly checked modes and city, not generic offline metadata or absent addresses", () => {
+  expect(currentMlaiFormatOptions("online", now).map(e => e.id)).toEqual(["office-hours", "hype-to-practice"]);
+  expect(currentMlaiFormatOptions("melbourne", now).map(e => e.id)).toEqual(["hype-to-practice", "engineer-night"]);
+  const engineering = listings.find(e => e.id === "engineer-night")!;
+  expect(currentMlaiFormatOptions("melbourne", now, [{ ...engineering, inPersonCity: undefined }])).toEqual([]);
+  expect(currentMlaiFormatOptions("online", now, [{ ...engineering, location: "", formats: [] }])).toEqual([]);
+  expect(currentMlaiFormatOptions("all", now)).toEqual([]);
+  expect(currentMlaiFormatOptions("melbourne", now).every(e => e.organiser === "MLAI")).toBe(true);
+});
+
+test("no stale, past, unknown or invalid-time listing is presented as a current preference match", () => {
+  for (const clock of [null, NaN, Infinity, Date.parse("2026-09-09T00:00:00Z"), Date.parse("2026-09-16T14:00:00Z"), Date.parse("2026-10-01T00:00:00Z")]) {
+    expect(currentMlaiFormatOptions("online", clock)).toEqual([]);
+    expect(currentMlaiFormatOptions("melbourne", clock)).toEqual([]);
+  }
+  expect(currentMlaiFormatOptions("online", Date.parse("2026-09-10T08:29:59Z"))).toHaveLength(2);
+  expect(currentMlaiFormatOptions("online", Date.parse("2026-09-10T08:30:00Z")).map(e => e.id)).toEqual(["hype-to-practice"]);
+  const ongoing = { ...listings[0], endAt: "2026-10-01T00:00:00Z" };
+  expect(currentMlaiFormatOptions("online", Date.parse("2026-09-16T13:59:59Z"), [ongoing])).toHaveLength(1);
+  expect(currentMlaiFormatOptions("online", Date.parse("2026-09-16T14:00:00Z"), [ongoing])).toHaveLength(0);
+  expect(currentMlaiFormatOptions("online", now, [{ ...ongoing, endAt: "invalid" }])).toHaveLength(0);
+});
+
+test("the actual article server-rendered selection and primary CTA agree", () => {
+  const html = render(<MelbourneArticle />, "/articles/featured/where-to-find-ai-events-in-melbourne?event_format=online");
+  expect(html).toContain('<option value="online" selected="">Online options</option>');
+  expect(html).toContain('href="/events?event_format=online"');
+  expect(html).toContain('data-event-id="hype-to-practice"');
+  expect(html).not.toContain('data-event-id="engineer-night"');
+  expect(html).toContain("your preference is not a reservation");
+});
+
+test("shared calendar CTA carries only the supported preference with and without event cards", () => {
+  const event = lumaEntryToEvent({ api_id: "fixture", event: { api_id: "fixture", name: "Synthetic test event", start_at: time, timezone: "Australia/Melbourne", url: "https://luma.com/fixture" } });
+  for (const preference of ["online", "melbourne"] as const) for (const events of [[], [event]]) {
+    const html = render(<UpcomingEventsCTA events={events} />, `/articles/fixture?cfInspector=1&event_format=${preference}`);
+    expect(html).toContain(`href="${eventCalendarHref(preference)}"`);
+    expect(html).not.toContain('href="/events"');
+    expect(html).not.toContain("cfInspector");
+    if (events.length) {
+      expect(html).toContain('href="https://luma.com/fixture"');
+      expect(html).not.toContain('href="https://luma.com/fixture?');
+    }
+  }
+});
+
+test("destination renders retained preference, checked matches and admission limits before JavaScript", () => {
+  const html = render(<EventFormatPreference />, "/events?event_format=online");
+  expect(html).toContain('<option value="online" selected="">Online options</option>');
+  const form = html.match(/<form\b[^>]*>/)?.[0];
+  expect(form).toContain('method="get"');
+  expect(form).toContain('action="/events"');
+  expect(html).toContain('data-format-option="office-hours"');
+  expect(html).toContain('data-format-option="hype-to-practice"');
+  expect(html).not.toContain('data-format-option="engineer-night"');
+  expect(html).toContain("not that a ticket or place is available");
+  expect(html).toContain("The full calendar below is not filtered by format");
+  expect(html).toContain("Host approval required");
+  expect(html).toContain('dateTime="2026-09-10T04:33:00Z"');
+});
+
+test("a waitlisted engineering option retains its condition and unknown exact address", () => {
+  const html = render(<EventFormatPreference />, "/events?event_format=melbourne");
+  expect(html).toContain('data-format-option="engineer-night"');
+  expect(html).toContain("Event Full / Join Waitlist");
+  expect(html).toContain("requires registration to see the exact address");
+  expect(html).toContain("A waitlist entry is not admission");
+});
+
+test("empty, stale and no-clock states preserve preference without implying no events exist", () => {
+  for (const clock of [null, "2026-10-01T00:00:00Z"]) {
+    const html = render(<EventFormatPreference />, "/events?event_format=online", clock);
+    expect(html).toContain("Selected: Online options");
+    expect(html).not.toContain("data-format-option");
+    expect(html).toContain("That does not mean no suitable events exist");
+  }
+  const reset = render(<EventFormatPreference />, "/events?event_format=invalid");
+  expect(reset).toContain("Selected: All formats");
+  expect(reset).not.toContain("data-format-option");
+});
+
+test("attribution accepts only controlled preference links and still refuses unrelated completion credit", () => {
+  const click = { articleSlug: "featured/example", ctaType: "events", placement: "article-inline", primaryIcp: "COMMUNITY", version: "test-v1", clickedAt: time };
+  for (const preference of ["all", "melbourne", "online"] as const) {
+    const value = { ...click, destination: eventCalendarHref(preference) };
+    expect(parseArticleAttribution(value, now)?.destination).toBe(value.destination);
+    expect(matchArticleCompletion(value, "studio_project_brief_submitted", now)).toBeUndefined();
+    expect(matchArticleCompletion(value, "studio_builder_application_submitted", now)).toBeUndefined();
+  }
+  for (const destination of ["/events?next=https://evil.test", "/events?event_format=online&secret=x", "/events?event_format=online&event_format=melbourne"]) expect(parseArticleAttribution({ ...click, destination }, now)).toBeUndefined();
+});
+
+test("downloaded planner offers both exact preference destinations without claiming a booking", () => {
+  const txt = readFileSync("public/downloads/melbourne-event-shortlist.txt", "utf8");
+  expect(txt).toContain("https://mlai.au" + eventCalendarHref("online"));
+  expect(txt).toContain("https://mlai.au" + eventCalendarHref("melbourne"));
+  expect(txt).toContain("They do not book a place or guarantee a ticket");
+});
+
+test("actual destination route preserves an unfiltered feed, does not mutate it, and distinguishes missing configuration", async () => {
+  const entries = ["2030-09-22T08:00:00Z", "2030-09-20T08:00:00Z"].map((start, index) => lumaEntryToEvent({ api_id: `fixture-${index}`, event: { api_id: `fixture-${index}`, name: `Synthetic unknown-format event ${index}`, start_at: start, timezone: "Australia/Melbourne", url: `https://luma.com/fixture-${index}` } }));
+  // No inferred online/Melbourne label for feed entries with absent venue data.
+  Object.freeze(entries);
+  for (const state of ["missing", "empty", "populated"]) {
+    const router = createMemoryRouter([{ id: "events", path: "/events", Component: EventsCalendarPage }], {
+      initialEntries: ["/events?event_format=online"],
+      hydrationData: { loaderData: { events: { events: Promise.resolve(state === "populated" ? entries : []), serverDate: time, eventFeedConfigured: state !== "missing" } } },
+    });
+    try {
+      const stream = await renderToReadableStream(<RouterProvider router={router} />, { progressiveChunkSize: Number.MAX_SAFE_INTEGER });
+      await stream.allReady;
+      const html = await new Response(stream).text();
+      expect(html.replace(/<!--.*?-->/g, "")).toContain("Selected: Online options");
+      expect(html).toContain('data-format-option="office-hours"');
+      expect(html).not.toMatch(/hidden id="S:/);
+      if (state === "missing") {
+        expect(html).toContain("The calendar feed is unavailable");
+        expect(html).not.toContain("No calendar listings to show");
+      } else if (state === "empty") {
+        expect(html).toContain("The feed may be empty or unavailable");
+      } else {
+        for (const entry of entries) expect(html).toContain(entry.name);
+        expect(html.indexOf(entries[1].name)).toBeLessThan(html.indexOf(entries[0].name));
+      }
+    } finally { router.dispose(); }
+  }
+  expect(entries.map(entry => entry._id)).toEqual(["fixture-0", "fixture-1"]);
+});

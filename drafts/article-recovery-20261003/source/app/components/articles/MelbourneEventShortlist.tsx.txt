@@ -1,0 +1,42 @@
+import { useState } from "react";
+import { useSearchParams } from "react-router";
+import { eventCalendarHref, parseEventPreference, withEventPreference, type EventPreference } from "~/lib/event-preference";
+import { useArticleReadMinute } from "./ArticleReadTime";
+import { filterMelbourneEvents, melbourneEventStatus, MELBOURNE_STATUS_LABELS, type MelbourneEventFormat } from "~/lib/melbourne-ai-events";
+
+export default function MelbourneEventShortlist() {
+  const now = useArticleReadMinute();
+  const [params, setParams] = useSearchParams();
+  const preference = parseEventPreference(params);
+  const format: "all" | MelbourneEventFormat = preference === "melbourne" ? "in-person" : preference === "online" ? "online" : "all";
+  const [includePast, setIncludePast] = useState(false);
+  const events = preference === "sydney" ? [] : filterMelbourneEvents(format, includePast, now);
+  return <section aria-labelledby="melbourne-listings" className="my-8 min-w-0">
+    <h2 id="melbourne-listings">Compare the dated listings</h2>
+    <p>Sources checked 10 September 2026. This is a selected comparison, not a live ticket feed or a ranking. All scheduled times below are Melbourne time (AEST, UTC+10). Dates are evaluated again as you read; prices, admission and access conditions still require an organiser check.</p>
+    <form method="get" onSubmit={event => event.preventDefault()} className="not-prose my-5 flex flex-wrap items-end gap-4 text-gray-950">
+      <div className="flex flex-col gap-1 font-semibold">
+        <label htmlFor="melbourne-event-format">Format to shortlist</label>
+        <select id="melbourne-event-format" name="event_format" className="max-w-full rounded-lg border border-gray-400 bg-white p-3 text-base" value={preference} onChange={event => setParams(withEventPreference(params, event.target.value as EventPreference), { replace: true, preventScrollReset: true })}>
+          <option value="all">All formats</option><option value="melbourne">Melbourne in person</option><option value="online">Online options</option>{preference === "sydney" && <option value="sydney">Sydney in person — use the Sydney guide</option>}
+        </select>
+      </div>
+      <label className="flex items-center gap-2 py-3"><input type="checkbox" checked={includePast} onChange={event => setIncludePast(event.target.checked)} />Include past-date examples</label>
+      <noscript><button type="submit" className="rounded-lg bg-[#4b1bd1] px-5 py-3 text-white">Apply article format</button><p>The past-date toggle requires JavaScript; format selection works with this button.</p></noscript>
+    </form>
+    <p role="status">{events.length} {events.length === 1 ? "listing" : "listings"} match these filters. A match is not a confirmed place.</p>
+    {events.length ? <div className="max-w-full overflow-x-auto rounded-xl border border-gray-300 focus:outline-2 focus:outline-purple-700" role="region" aria-label="Melbourne event comparison; scroll horizontally if needed" tabIndex={0}>
+      <table className="m-0 w-full min-w-[48rem] text-sm">
+        <caption className="p-3 text-left">Organiser listings, participation fit and unresolved checks. No registrations were submitted during review.</caption>
+        <thead><tr><th scope="col">Listing / schedule</th><th scope="col">What you can do / where</th><th scope="col">Price and admission at source check</th></tr></thead>
+        <tbody>{events.map(event => <tr key={event.id} data-event-id={event.id} data-date-status={melbourneEventStatus(event, now)}>
+          <th scope="row" className="align-top p-3 font-normal"><strong>{event.name}</strong><p>{event.organiser}</p><p>{event.schedule}</p><p className="font-semibold">{MELBOURNE_STATUS_LABELS[melbourneEventStatus(event, now)]}</p><a href={event.sourceUrl}>Check {event.organiser} listing<span className="sr-only">: {event.name}</span></a></th>
+          <td className="align-top p-3"><p>{event.readerFit}</p><p>{event.location}</p><p>Formats: {event.formats.join(" / ")}</p></td>
+          <td className="align-top p-3"><p>{event.price}</p><p>{event.admission}</p>{event.priceSourceUrl && <a href={event.priceSourceUrl}>Historical price source</a>}</td>
+        </tr>)}</tbody>
+      </table>
+    </div> : <p>No retained listing meets this selection without a passed date. Try the current <a href={eventCalendarHref(preference)}>MLAI calendar</a> or the research/community sources below; do not assume a replacement session exists.</p>}
+    <p className="text-sm">Admission statements are dated observations, including sold-out tiers and waitlists. This comparison needs a source recheck by 17 September 2026, or sooner if an organiser changes a listing. Exact end times expire the four individual events; the two historical conference examples expire after their last listed calendar day because session end times were not rechecked. Keyboard users can focus and scroll the table. With JavaScript unavailable, the server still shows the comparison and date status.</p>
+    <p><a href="#shortlist-record">Use the shortlist worksheet</a> to record your chosen format, organiser questions and registration status before following an event link.</p>
+  </section>;
+}

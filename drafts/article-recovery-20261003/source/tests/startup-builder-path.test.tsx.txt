@@ -1,0 +1,69 @@
+import { test, expect } from 'bun:test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import Article from '../app/articles/content/featured/how-to-start-a-startup-as-an-ai-builder';
+import { articleMeta, DATE_PUBLISHED, DATE_MODIFIED, DESCRIPTION } from '../app/articles/content/featured/how-to-start-a-startup-as-an-ai-builder';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+import { STARTUP_DELIVERY_FILES, STARTUP_DELIVERY_ZIP } from '../app/lib/startup-builder-delivery';
+test('startup builder distinguishes learning from client work and supplies delivery evidence', () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ expect(html).toContain('data-article-icp="BUILDER"');
+ expect(html).toContain('Apply with your build evidence');
+ expect(html).toContain('Builder delivery evidence');
+ expect(html).toContain('14 hours total');
+ expect(html).toContain('gap is 6 hours');
+ expect(html).toContain('a synthetic project is not client experience');
+ expect(html).toContain('does not guarantee a project or job');
+ expect(html).not.toContain('Choose your first milestone');
+ expect(html).not.toContain('Registering becomes relevant once');
+ expect(html).not.toContain('Once the Test Is Clear');
+ expect(html).toContain('business.gov.au/registrations');
+ expect(html).toContain('An experimental label does not establish an exemption');
+ expect(html).not.toContain('learn.microsoft.com/en-us/ai-builder');
+ expect(html).not.toContain('podcasts.apple.com');
+ expect(html).toContain('/downloads/startup-builder-validation.txt');
+ expect(html).not.toContain('worksheet-8379f873.pdf');
+});
+
+test('builder article delivers the complete review after distinguishing demand and delivery', () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ expect(html).toContain('data-cf-article-body');
+ expect(html).toContain('22 passing code tests');
+ expect(html).toContain('5 / 8');
+ expect(html).toContain('7 / 8');
+ expect(html).toContain('HOLD');
+ expect(html).toContain('parking');
+ expect(html).toContain('needs human review');
+ expect(html).toContain('raw classification remains wrong');
+ expect(html).toContain('independent technical and recipient review remain outstanding');
+ expect(html).toContain('New Zealand contractor eligibility remains unverified');
+ expect(html).toContain('UNRUN');
+ expect(html).toContain('node delivery-check.mjs');
+ expect(html).toContain(STARTUP_DELIVERY_ZIP);
+ for (const file of STARTUP_DELIVERY_FILES) expect(html).toContain('href="' + file.href + '" download="' + file.name + '"');
+ for (const label of ['Builder evidence paths', 'First delivery acceptance results']) {
+   expect(html).toContain('role="region" aria-label="' + label + '" tabindex="0"');
+ }
+ expect(html.indexOf('id="delivery-results"')).toBeLessThan(html.indexOf('data-article-conversion="studio-builder"'));
+});
+
+test('builder module preserves the published identity and matches registry metadata', () => {
+ const entry = ARTICLE_REGISTRY['featured/how-to-start-a-startup-as-an-ai-builder'];
+ expect(DATE_PUBLISHED).toBe('2026-08-01');
+ expect(DATE_PUBLISHED).toBe(entry.date);
+ expect(DATE_MODIFIED).toBe('2026-09-10');
+ expect(DATE_MODIFIED).toBe(entry.dateModified);
+ expect(articleMeta.title).toBe(entry.title);
+ expect(DESCRIPTION).toBe(entry.description);
+ expect(articleMeta.imageAlt).toBe(entry.imageAlt);
+ expect(BASE_ARTICLE_SEO_CONFIG['/articles/' + entry.slug].conversion?.version).toBe('builder-delivery-v3');
+});
+
+test('startup worksheet retains evidence and operating boundaries', async () => {
+ const text = await Bun.file('public/downloads/startup-builder-validation.txt').text();
+ expect(text).toContain('FICTIONAL WORKED EXAMPLE');
+ expect(text).toContain('Actual result: UNRUN');
+ expect(text).toContain('Unresolved requirements (not approval');
+ expect(text).toContain('Contradictory evidence');
+});

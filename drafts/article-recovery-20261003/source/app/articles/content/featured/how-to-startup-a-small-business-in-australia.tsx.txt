@@ -1,0 +1,82 @@
+import { Home } from 'lucide-react'
+import { Link } from 'react-router'
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
+export const useCustomHeader = true
+export const CATEGORY = 'featured'
+export const SLUG = 'how-to-startup-a-small-business-in-australia'
+export const DATE_PUBLISHED = '2026-04-14'
+export const DATE_MODIFIED = '2026-09-09'
+export const DESCRIPTION = 'Prepare to start a small business in Australia: map customer demand, cash timing and official setup checks into a practical launch-decision record.'
+export const FEATURED_FOCUS = 'startups'
+const TITLE = 'Starting a small business in Australia: decisions before launch'
+export const faqItems = [
+ { id: 1, question: 'Should I wait until my idea is validated to check registrations?', answer: 'No. Check the requirements for your planned activities alongside your planning. An editorial checklist does not establish when legal or tax obligations begin, and calling work a pilot does not create an exemption.' },
+ { id: 2, question: 'Which business structure should I choose?', answer: 'This guide does not select one for you. Use the official structure guidance and discuss ownership, liability, tax and administration with a qualified adviser who understands your circumstances.' },
+ { id: 3, question: 'Is a fixed amount enough to start any small business?', answer: 'No universal amount is established here. List setup and ongoing costs, when payments fall due, when receipts may arrive and what happens if they arrive late. Keep estimates separate from quotes or commitments.' },
+ { id: 4, question: 'Do I need AI software before launching?', answer: 'Not simply because you are starting a business. First describe the work and its constraints. A manual process or existing tool may be enough; an AI build needs a defined task and evidence that it is worth investigating.' },
+]
+export default function ArticleContent() {
+ return <div className="bg-white">
+  <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: TITLE, current: true }]}
+   title={TITLE} titleHighlight="decisions before launch" headerBgColor="cyan"
+   summary={{ heading: 'Prepare questions, not just forms', intro: 'For Australians exploring a first business and deciding what to investigate before committing.', items: [
+    { label: 'Customer and offer', description: 'Separate what people have done from what you hope they will buy.' },
+    { label: 'Cash and timing', description: 'Map payments and receipts by date rather than looking only at totals.' },
+    { label: 'Applicable requirements', description: 'Check official guidance for the activity, structure and location in parallel with planning.' },
+   ] }}
+  />
+  <article className="prose prose-lg max-w-3xl mx-auto px-4 py-10">
+   <p>A useful starting plan explains what you intend to sell, who needs it, how you will deliver it and which questions must be resolved before you commit. This guide helps you prepare those decisions. It is not a complete legal, tax or licensing checklist, and a community discussion cannot approve your business to trade.</p>
+   <p><strong>Correction, 9 September 2026:</strong> the previous article inferred that registration checks should wait from the order of a government guide. Do not use a page’s section order as a legal timing rule. Check applicable requirements alongside demand and cost planning.</p>
+   <h2 id="offer">Describe one customer, offer and delivery path</h2>
+   <p>Start with a sentence you can test: “I intend to provide [specific service/product] to [specific customer] through [delivery method].” Then record what supports it. A compliment is different from an enquiry, and an enquiry is different from a paid order. Do not count projected sales as confirmed demand.</p>
+   <table><thead><tr><th>Decision</th><th>Evidence to collect</th><th>Unresolved question</th></tr></thead><tbody>
+    <tr><td>Who needs the offer?</td><td>Permission-cleared conversations about current behaviour and alternatives</td><td>Is this a recurring problem for the intended customer?</td></tr>
+    <tr><td>Can you deliver it?</td><td>Task list, supplier information, time and capability constraints</td><td>What depends on someone else or requires specialist work?</td></tr>
+    <tr><td>What will it cost?</td><td>Dated quotes, estimates and payment terms</td><td>Which costs occur before the first receipt?</td></tr>
+    <tr><td>What must be checked?</td><td>Official activity/location guidance and adviser questions</td><td>Which requirements or permissions remain unresolved?</td></tr>
+   </tbody></table>
+   <h2 id="official">Use official sources for setup decisions</h2>
+   <p>The <a href="https://business.gov.au/guide/starting">Australian Government starting guide</a> covers planning, structure, registration, finances and customers. Use it as a navigation aid, not a universal sequence that overrides an obligation.</p>
+   <p>The <a href="https://business.gov.au/planning/business-structures-and-types/business-structures">business-structures guide</a> explains sole trader, partnership, company and trust options. Structure affects more than paperwork. Record questions about ownership, liability, tax and future changes; do not select a structure solely because it seems easy to administer.</p>
+   <p>The <a href="https://business.gov.au/registrations">registrations hub</a> links to ABN, business-name, company, tax, licence and permit guidance. Identify what applies to your activity and location. Mark each item as confirmed applicable, confirmed not applicable with its basis, or unresolved. Ask a qualified adviser where your situation is unclear; do not infer that every business needs every registration.</p>
+   <h2 id="cash">A timing problem hidden by a positive total</h2>
+   <p><strong>Fictional planning example, AUD—not a recommended startup budget:</strong> imagine $3,000 of available business cash, $2,000 of setup payments due in week one and $1,500 of other payments due in week two. A $2,000 customer receipt is expected in week four, but is not guaranteed.</p>
+   <table><thead><tr><th>Point in the scenario</th><th>Cash movement</th><th>Illustrative balance</th></tr></thead><tbody>
+    <tr><td>Opening</td><td>$3,000 available</td><td>$3,000</td></tr>
+    <tr><td>Week one</td><td>Pay $2,000</td><td>$1,000</td></tr>
+    <tr><td>Week two</td><td>Pay $1,500</td><td>−$500</td></tr>
+    <tr><td>Week four, if the receipt arrives</td><td>Receive $2,000</td><td>$1,500</td></tr>
+   </tbody></table>
+   <p>The projected final balance is positive, but there is a $500 shortfall before the receipt. The negative line represents a funding gap, not permission or an assumed facility to overdraw. The example omits tax, personal living costs and other expenses; it is not a viability forecast.</p>
+   <p>For your plan, record payment dates and uncertainty, then examine a delayed-receipt case. Do not assume you can delay a contractual payment or borrow the difference. Resolve any gap and relevant obligations before committing to costs you cannot meet.</p>
+   <h2 id="record">Copy a launch-decision record</h2>
+   <pre className="whitespace-pre-wrap" aria-label="Small business launch decision record">{[
+    'Specific customer and offer:',
+    'Evidence of demand versus assumptions:',
+    'Delivery steps, capacity and dependencies:',
+    'Activity, operating location and planned start:',
+    'Structure questions for a qualified adviser:',
+    'Applicable registrations/permissions and source checked:',
+    'Unresolved requirements and person responsible:',
+    'Setup payments and dates:',
+    'Ongoing payments, receipts and uncertainty:',
+    'Cash gap if expected receipts are delayed:',
+    'Next research step before committing:',
+   ].join('\n')}</pre>
+   <p>Keep “unknown” visible. The record is a preparation tool, not a compliance certificate. For source-based setup details, return to the official pages rather than asking AI to invent a checklist for your circumstances.</p>
+   <h2 id="ai">Where AI belongs in this decision</h2>
+   <p>You can use an AI tool to organise non-sensitive notes or draft questions, then check its output against the source material. It cannot verify demand merely by generating a persuasive plan. Do not treat a polished forecast as evidence that customers will pay.</p>
+   <p>If you already run a business and can name a repeatable process with measurable costs, your next task is different: use the <Link to="/articles/featured/how-to-get-started-with-ai-2026">first AI workflow guide</Link> to decide what to scope before seeking implementation help. Starting a company does not by itself establish a need for an AI agent.</p>
+   <h2 id="community">Bring one unresolved question to the community</h2>
+   <p>For founder learning, choose a relevant MLAI event and ask about an operating experience or assumption you want to investigate. Do not share private financial details or rely on peer comments as professional advice. Check the topic, experience level and online or in-person format before registering.</p>
+   <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+   <h2 id="scope">Source and scope</h2>
+   <p>The three official pages were checked on 9 September 2026. The decision record and cash example are editorial teaching material, not an individual assessment, guaranteed launch plan or estimate of business success. This article does not determine your registration, tax or licensing position.</p>
+   <ArticleFAQ items={faqItems} />
+  </article>
+ </div>
+}

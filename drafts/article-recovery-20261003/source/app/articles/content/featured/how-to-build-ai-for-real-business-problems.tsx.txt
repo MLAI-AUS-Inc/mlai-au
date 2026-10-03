@@ -1,0 +1,137 @@
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+import { COMMISSIONING_BRIEF_FIELDS, COMMISSIONING_COST_ITEMS, COMMISSIONING_DOWNLOAD_PATH, COMMISSIONING_EXAMPLE_INPUTS, COMMISSIONING_EXAMPLE_RESULT, COMMISSIONING_HANDOVER_STEPS, commissioningAud, PROJECT_BRIEF_TEMPLATE } from "~/lib/business-ai-commissioning";
+export { PROJECT_BRIEF_TEMPLATE } from "~/lib/business-ai-commissioning";
+
+export const useCustomHeader = true;
+export const CATEGORY = "featured";
+export const SLUG = "how-to-build-ai-for-real-business-problems";
+export const DATE_PUBLISHED = "2026-04-06";
+export const DATE_MODIFIED = "2026-09-10";
+const TITLE = "How to build AI for a business problem: scope, test and hand over";
+export const DESCRIPTION = "Turn a business workflow into a scoped AI project brief, compare delivery proposals, agree acceptance tests and plan ownership before commissioning a build.";
+const PATH = "/articles/" + CATEGORY + "/" + SLUG;
+const HERO = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c50a0366-c987-4439-aa4d-10ba179a206c.jpg?alt=media&token=3a1e360a-3558-4f36-8257-3b17644d8c83";
+export const articleMeta = { title: TITLE, category: CATEGORY, slug: SLUG, description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, author: "Dr Sam Donegan", image: HERO, imageAlt: "Illustration of a team planning a business workflow" };
+export const summaryHighlights = {
+  heading: "Commission a result you can check",
+  intro: "For a business owner or manager who needs implementation help, not a course in training models.",
+  items: [
+    { label: "What should I ask a builder for?", description: "A bounded workflow with named inputs, permitted actions, acceptance evidence and an operational owner." },
+    { label: "Is a demo enough?", description: "No. Test unseen cases, permission boundaries, failures and handover—not only the happy path shown in a demonstration." },
+    { label: "When is it ready to use?", description: "When agreed tests pass, unresolved risks are accepted by the accountable owner and rollback, support and access arrangements work." },
+  ],
+};
+export const faqItems = [
+  { question: "Do I need to choose a model before speaking to a builder?", answer: "No. Start with the work, constraints and acceptance conditions. Ask the builder to explain why the simplest suitable approach meets them, including an existing product or non-AI automation where appropriate." },
+  { question: "What is an AI harness in a business project?", answer: "Here it means the surrounding software that controls inputs, tools, permissions, review, logs and failure handling around a model. Ask for those behaviours explicitly; the label alone does not promise a safe or reliable system." },
+  { question: "Does passing a small test set prove the system is safe?", answer: "No. A test set covers its cases, not every future input. Include representative and consequential failures, document gaps, limit release and monitor changes. Higher-consequence uses need appropriate specialist review." },
+  { question: "Can I use this brief as a contract?", answer: "No. It is an editorial scoping aid. Obtain appropriate advice for binding terms, privacy, intellectual property, liability and other obligations. A Studio enquiry does not commit either party to a build." },
+];
+
+export default function ArticleContent() {
+  return <div>
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: TITLE, current: true }]} title={TITLE} titleHighlight="scope, test and hand over" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
+    <div className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-indigo [&_h2]:scroll-mt-20 [&_h3]:scroll-mt-20 [&_[role=region]]:scroll-mt-20" data-cf-article-body>
+      <p><strong>You do not need to become an AI engineer to commission useful software. You do need to explain the work and recognise a correct result.</strong> This guide takes an owner or manager from “we need an AI agent” to a brief a delivery team can assess, a set of acceptance checks and a handover plan.</p>
+      <p>It starts after you have identified a bottleneck. If the value is still uncertain, first use the <Link to="/articles/featured/how-small-business-owners-can-get-started-with-ai-2026">small-business pilot worksheet</Link> to compare total effort and avoidable spending. Do not commission a build simply because a demonstration looks impressive.</p>
+
+      <h2 id="define-work">1. Replace the agent request with an operating boundary</h2>
+      <p>Describe what happens before and after the proposed tool. Who starts the task? What can it read? What may it change? Who catches a wrong answer? A narrow scope can still be consequential: sending a message, changing a price or accessing another customer's record is not made safe by a small interface.</p>
+      <p><strong>Illustrative brief, not a deployed MLAI project:</strong> a service business wants help drafting replies to routine enquiries. The first version receives synthetic messages and an approved policy document, suggests a category and a draft, and leaves every send decision to a staff member. It cannot issue refunds, update customer records, promise prices or send messages. The builder must show how those restrictions are enforced outside the model's instructions.</p>
+      <p>This makes the deliverable inspectable. “Improve customer support with AI” does not tell you what to buy, how much work remains with staff or whether an unsafe action occurred.</p>
+
+      <h2 id="delivery-choice">2. Ask whether this needs new software at all</h2>
+      <div className="overflow-x-auto" role="region" aria-label="Delivery approach comparison" tabIndex={0}><table className="min-w-[640px]">
+        <caption>Questions for a delivery discussion—not a ranking of products</caption>
+        <thead><tr><th>Approach</th><th>Useful when</th><th>Evidence to request</th></tr></thead>
+        <tbody>
+          <tr><td>Template or fixed automation</td><td>The decision follows a stable rule and the input is structured.</td><td>Show the rule covers actual cases and has an exception path.</td></tr>
+          <tr><td>Configure an existing product</td><td>Your existing workflow already has suitable access, review and integration controls.</td><td>Demonstrate the required behaviour on the actual subscription and configuration.</td></tr>
+          <tr><td>Commission a bounded build</td><td>Required integration or controls are missing from existing tools.</td><td>Explain implementation, test coverage, operating costs and who maintains each dependency.</td></tr>
+        </tbody>
+      </table></div>
+      <p>No-code does not mean no maintenance, and a developer platform is not automatically safer. Compare the delivered behaviour, data terms and support responsibilities. More agents or model choices do not establish business value.</p>
+
+      <h2 id="copy-brief">3. Copy this project brief before asking for a proposal</h2>
+      <p>Use “unknown” where you need help. Separate uncertainty from an agreed requirement, and avoid confidential data in an initial enquiry. This text is a scoping aid, not a legal agreement or a promise of project acceptance.</p>
+      <pre className="whitespace-pre-wrap break-words"><code>{PROJECT_BRIEF_TEMPLATE}</code></pre>
+      <p>For the enquiry example, “required output” could mean a suggested category, draft reply and cited policy passage; “human approval” means a worker sees and approves the exact text before sending. “Fallback” means the enquiry stays available in the existing inbox with a visible failure state. Agree how to handle a worker changing the draft after approval rather than treating approval as permanent.</p>
+      <h3 id="worked-brief">A completed commissioning brief</h3>
+      <p><strong>Fictional procurement exercise:</strong> the following fills all 13 fields for the enquiry scenario. People, volumes, costs and decisions are invented teaching assumptions. It is not a client case study, tested implementation, supplier quote or MLAI price list. The business has not approved a purchase.</p>
+      <dl className="space-y-5 [&_dd]:ml-0" aria-label="Completed fictional commissioning brief">
+        {COMMISSIONING_BRIEF_FIELDS.map((field, index) => <div key={field.label}>
+          <dt className="font-bold">{index + 1}. {field.label}</dt>
+          <dd className="ml-0 mt-1">{field.example}</dd>
+        </div>)}
+      </dl>
+      <p><a href={COMMISSIONING_DOWNLOAD_PATH} download>Download the blank brief, completed example and acceptance record (.txt)</a>. Replace the example with your own observations and leave genuine unknowns visible. Unlike the pilot calculator's explicit handoff, this static download is not automatically attached to the Studio form; copy the relevant non-confidential details yourself.</p>
+      <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={BASE_ARTICLE_SEO_CONFIG[PATH].conversion!} events={[]} placement="article-inline" />
+
+      <h2 id="compare-proposals">4. Compare proposals on the same scope</h2>
+      <p>Ask each potential builder to mark what is included, excluded and unresolved. A cheap prototype and an operated production service are different purchases. Request separate setup and ongoing cost estimates with assumptions about volume, seats, API usage, hosting, external support and your team's review time.</p>
+      <ul>
+        <li><strong>Deliverables:</strong> source/configuration, deployed environments, test evidence, documentation and staff walkthrough.</li>
+        <li><strong>Milestones:</strong> what you can inspect before increasing scope or granting more access.</li>
+        <li><strong>Dependencies:</strong> who provides data, account access and policy decisions, and what happens if those are delayed.</li>
+        <li><strong>Changes:</strong> how a new integration, extra user group or revised policy affects cost and acceptance.</li>
+        <li><strong>Support:</strong> who handles an incident, what support is actually included and when it ends.</li>
+      </ul>
+      <p>Acknowledge unknowns instead of demanding fictional precision. A short discovery stage can produce a clearer decision, but agree its deliverables and price first. Do not assume a briefing call, discovery stage or ongoing support is free.</p>
+      <h3 id="worked-costs">A costed scope can still be a “not yet” decision</h3>
+      <p>These amounts are invented planning allowances on a consistent AUD/GST basis, not market prices or a quote. A real proposal must state its tax treatment, assumptions, exclusions and support terms. The separate stages show what evidence an owner would request before expanding scope; they do not authorise payment.</p>
+      <div className="overflow-x-auto" role="region" aria-label="Illustrative commissioning costs" tabIndex={0}><table className="min-w-[640px]">
+        <caption>Fictional setup breakdown—not MLAI pricing</caption>
+        <thead><tr><th>Stage</th><th>External cash</th><th>Evidence requested</th></tr></thead>
+        <tbody>{COMMISSIONING_COST_ITEMS.map(item => <tr key={item.stage}><td>{item.stage}</td><td>{commissioningAud(item.cash)}</td><td>{item.evidence}</td></tr>)}</tbody>
+      </table></div>
+      <p>External setup totals <strong>{commissioningAud(COMMISSIONING_EXAMPLE_INPUTS.setupCashCost)}</strong>. Ten internal setup hours at A$45/hour add A$450 of effort, for <strong>{commissioningAud(COMMISSIONING_EXAMPLE_RESULT.setupEconomicCost)} total economic setup</strong>. That internal time is not another cash invoice. The A$100/month running allowance covers additional software, usage, hosting and external support only within whatever scope a real quote agrees; it is not a promise of unlimited support.</p>
+      <ol>
+        <li>Fictional baseline: 120 enquiries × 10 active minutes ÷ 60 = <strong>20 hours/month</strong>, including existing checks and corrections.</li>
+        <li>Unmeasured assisted assumption: 120 × 6 human minutes ÷ 60 = <strong>12 hours/month</strong>, including draft review, corrections and average manual fallback.</li>
+        <li>Add two internal support hours: the whole process needs 14 hours, releasing <strong>{COMMISSIONING_EXAMPLE_RESULT.netHours} net hours/month</strong>, not eight.</li>
+        <li>At A$45/hour, that capacity is worth A$270. After A$100 running cash costs, the net capacity value is <strong>{commissioningAud(COMMISSIONING_EXAMPLE_RESULT.netCapacityValue)}/month</strong>—not profit.</li>
+        <li>With no payroll or other labour spending actually avoided, the monthly cash change is <strong>{commissioningAud(COMMISSIONING_EXAMPLE_RESULT.monthlyCashChange)}</strong>. There is <strong>no positive cash payback</strong> on the setup invoice under these assumptions.</li>
+      </ol>
+      <p><strong>Decision: not approved on a cash-saving case.</strong> First compare a clearer policy and reply template, obtain actual provider/support quotes and establish whether an unmet need remains. Quality improvements or extra contribution might justify a different decision, but neither has been measured here. Do not count the same released hours as both avoided spending and extra sales. Taxes, financing, seasonality and unmeasured error benefits are excluded.</p>
+
+      <h2 id="acceptance">5. Make acceptance a demonstration you can repeat</h2>
+      <p>For the draft-only enquiry example, prepare cases with the expected behaviour before watching the final demo. Keep some out of development so the final review includes unseen inputs. Record the version, input, output, reviewer decision and any exception. The table below is an illustrative starting point, not sufficient assurance for every deployment.</p>
+      <div className="overflow-x-auto" role="region" aria-label="Commissioning acceptance cases" tabIndex={0}><table className="min-w-[640px]">
+        <thead><tr><th>Test case</th><th>Expected behaviour</th><th>Evidence to inspect</th></tr></thead>
+        <tbody>
+          <tr><td>Routine question covered by policy</td><td>Draft supported by the approved passage; no message sent.</td><td>Draft, policy version and send/audit history.</td></tr>
+          <tr><td>Missing or contradictory policy</td><td>Flag uncertainty and send the case to a person.</td><td>Visible unresolved status; no invented commitment.</td></tr>
+          <tr><td>Message asks it to ignore policy</td><td>Treat the message as untrusted content, not permission to change rules.</td><td>Restricted tool permissions and recorded test outcome.</td></tr>
+          <tr><td>Request for another customer's details</td><td>No unauthorised record access or disclosure.</td><td>Access-denial test using synthetic accounts.</td></tr>
+          <tr><td>Timeout or repeated processing</td><td>Keep work recoverable; do not duplicate an external action.</td><td>Failure/retry record and manual recovery demonstration.</td></tr>
+          <tr><td>Access revoked</td><td>Former users and expired credentials cannot continue operating.</td><td>A demonstrated permission-removal test.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Critical access failures, unsupported consequential commitments or unapproved sends stop this pilot. Fix and retest; do not average them away with a high overall success rate. Agree additional acceptance criteria appropriate to your actual risks. Passing these examples does not prove reliability across all future messages.</p>
+      <p>Measure the entire staff task, including review, corrections and fallback. A faster generated draft can still create more human work. Record whether the improvement is useful capacity or genuinely reduced expenditure rather than assuming either becomes profit.</p>
+
+      <h2 id="data">6. Set data conditions before access is granted</h2>
+      <p>The <a href="https://www.cyber.gov.au/business-government/secure-design/artificial-intelligence/artificial-intelligence-for-small-business">ACSC small-business AI guidance</a> identifies data exposure, unreliable or manipulated outputs and supplier dependencies as risks. Review platform settings, data terms and incident arrangements, and name the person responsible for ongoing checks.</p>
+      <p>The <a href="https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/guidance-on-privacy-and-the-use-of-commercially-available-ai-products">OAIC's commercial-AI guidance</a> recommends avoiding personal information, particularly sensitive information, in publicly available generative-AI tools. Start with synthetic inputs; obtain appropriate advice before connecting real records. Neither this checklist nor a “business” subscription establishes compliance.</p>
+
+      <h2 id="handover">7. Rehearse handover and exit before expanding</h2>
+      <p>Ask the builder to show your named owner how to pause the workflow, recover pending work, change an approved policy and find a failure log. Agree who owns accounts, source, configurations and data, subject to actual licence and contract terms. Obtain suitable advice for binding intellectual-property, privacy and liability provisions.</p>
+      <p>Keep an inventory of integrations, access, usage limits, costs and renewal dates. Test what happens if a model or API changes, a quota is reached or the builder is unavailable. An export is useful only if someone can open it and recover the required information; “you can leave anytime” is not an exit demonstration.</p>
+      <p>Begin release with limited users and permissions, a manual fallback, an accountable incident contact and a review date. Expand only when the evidence supports the next scope. If unresolved risks or operating costs exceed your limits, stop or choose a simpler process.</p>
+      <h3 id="worked-handover">Who signs off this example—and on what?</h3>
+      <p>This is a proposed rehearsal, not completed delivery evidence. The download provides a blank record for the actual version, case results, exceptions, costs and decision.</p>
+      <ul>{COMMISSIONING_HANDOVER_STEPS.map(step => <li key={step.owner}><strong>{step.owner}:</strong> {step.check}</li>)}</ul>
+      <p>Current example status: <strong>tests NOT RUN; handover not performed; release NOT APPROVED</strong>. If an owner cannot use the pause, recovery and access-removal controls without the builder, record that as unfinished handover—not as a successful demonstration.</p>
+
+      <h2 id="method">What this guide does and does not establish</h2>
+      <p>Substantively revised 10 September 2026. The brief, cost model and acceptance matrix are MLAI editorial aids for an implementation conversation, not a reported client engagement, independently validated procurement method or legal advice. The ACSC and OAIC pages were rechecked on that date for the specific security/privacy summaries above; neither source validates the fictional figures or approves this project. Real delivery evidence and appropriate specialist review remain necessary for your project.</p>
+      <p>When you can describe the workflow and constraints, bring them to Studio for review and a discussion of fit. You do not need to invent the technical solution first. If you are still exploring, <Link to="/events">an MLAI event</Link> is an optional place to discuss the underlying problem.</p>
+      <ArticleFAQ items={faqItems} />
+    </div>
+  </div>;
+}

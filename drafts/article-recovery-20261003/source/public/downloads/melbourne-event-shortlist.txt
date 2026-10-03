@@ -1,0 +1,43 @@
+MELBOURNE AI EVENT SHORTLIST
+Version: 10 September 2026. Blank worksheet plus a fictional worked decision.
+This file is a decision record, not a ticket, live calendar or promise of admission.
+
+BLANK RECORD — copy once per candidate
+My goal and experience level:
+Preferred format / dates / budget / travel limit:
+Event and official listing:
+Organiser and date I checked the listing:
+Scheduled start AND end / displayed timezone:
+Location or online joining instructions:
+Audience and prerequisites / what I will actually do:
+Ticket and travel cost / final charges and cancellation terms:
+Accessibility, captions or participation needs to confirm:
+What I want to learn or contribute:
+Information still to confirm / organiser response:
+Registration status: not submitted, pending approval, waitlisted or confirmed:
+Decision and why: attend, ask first, skip or wait:
+Afterwards: useful takeaway / agreed follow-up / would I return:
+
+FICTIONAL WORKED DECISION — not an attendee account or completed registration
+Reader: an AI-curious Melbourne office worker interested in healthcare examples.
+Constraint: cannot travel on 15 September; AUD $20 ticket budget; prefers a discussion, not a coding class.
+Candidate: MLAI AI Hype to Practice, https://luma.com/mlai-nu4n
+Source check: 10 September 2026; the reviewed page listed 15 September, 5:30–8:30 pm AEST.
+Comparison: Standard AUD $24.60 is above this reader's ticket budget and needs travel. Join Online was displayed at AUD $12.50. Early Bird AUD $14.60 was sold out, so it is not a usable cheaper option.
+Format fit: the healthcare panel/Q&A fits the learning question. It does not supply clinical advice, a recognised qualification or a hands-on build.
+Information still missing: joining instructions, whether online participants can ask questions, captioning, final checkout charges and cancellation terms. No assumption that the full 3-hour listing equals 3 hours of online programming.
+Provisional decision: inspect the Join Online ticket and ask the organiser about participation. Do not mark confirmed until registration is accepted.
+Question to bring: what evidence would distinguish a useful administrative AI workflow from an impressive demonstration?
+Registration: NOT SUBMITTED. Attendance, feedback and learning outcomes: NOT OBSERVED.
+
+WHY THE DATE CHECK MATTERS
+The AI Summit Australia homepage still listed 7–9 September 2026 when checked on 10 September: https://australia.theaisummit.com/
+Those listed dates had passed. A Book Now button is not evidence of a later event.
+An archived example is not today's recommendation. Recheck every price, date and condition before use.
+
+NEXT STEP
+Check the current MLAI calendar: https://mlai.au/events
+For Melbourne in person: https://mlai.au/events?event_format=melbourne
+For online options: https://mlai.au/events?event_format=online
+These links preserve your preference and show matching, recently source-checked options separately from the full calendar. They do not book a place or guarantee a ticket. Check the actual ticket type; do not assume every calendar event is Melbourne-based, online or suitable for your level.
+Do not include client secrets, private participant information or sensitive health details in questions or follow-up notes.

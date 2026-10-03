@@ -1,0 +1,86 @@
+import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import * as Engagement from '../app/articles/content/featured/how-to-foster-community-engagement';
+import * as Discovery from '../app/articles/content/featured/how-to-find-networking-events';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+
+function render(module: typeof Engagement | typeof Discovery) {
+  const Article = module.default;
+  return renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+}
+
+test('engagement and discovery retain public dates and distinct community offers', () => {
+  const baseline = JSON.parse(readFileSync('docs/article-audit-2026-09-09/support/registry-main.json', 'utf8'));
+  for (const module of [Engagement, Discovery]) {
+    const slug = module.CATEGORY + '/' + module.SLUG;
+    const entry = ARTICLE_REGISTRY[slug];
+    const conversion = BASE_ARTICLE_SEO_CONFIG['/articles/' + slug].conversion!;
+    const html = render(module);
+    expect(module.DATE_PUBLISHED).toBe(baseline[slug].date);
+    expect(entry.date).toBe(module.DATE_PUBLISHED);
+    expect(entry.dateModified).toBe(module.DATE_MODIFIED);
+    expect(entry.title).toBe(module.articleMeta.title);
+    expect(entry.description).toBe(module.DESCRIPTION);
+    expect(entry.author).toBe(module.articleMeta.author);
+    expect(entry.imageAlt).toBe(module.articleMeta.imageAlt);
+    expect(conversion.primaryIcp).toBe('COMMUNITY');
+    expect(conversion.primary).toBe('events');
+    expect(html).toContain('data-article-icp="COMMUNITY"');
+    expect(html).toContain(conversion.copy!.button);
+    expect(html).toContain('href="/events"');
+    expect(html).toContain('role="region"');
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('prose-headings:scroll-mt-24');
+    for (const text of ['Brief, factual overview', 'Download now', 'human-edited', 'Get recommendations']) {
+      expect(html).not.toContain(text);
+    }
+  }
+  expect(BASE_ARTICLE_SEO_CONFIG['/articles/featured/' + Engagement.SLUG].conversion!.version)
+    .not.toBe(BASE_ARTICLE_SEO_CONFIG['/articles/featured/' + Discovery.SLUG].conversion!.version);
+});
+
+test('engagement supplies an honest worked decision, not fabricated participant research', () => {
+  const html = render(Engagement);
+  for (const text of ['Community decision-and-feedback record', 'not an MLAI event or measured community result',
+    '8 distinct contributors, not 10', '12 notes link to a recorded response and 2 need clarification',
+    'The access barrier remains', 'synthetic messages', 'certified methods',
+    'https://www.vic.gov.au/better-practice-guide-inclusive-engagement/how-engage-community',
+    'https://engagementinstitute.org.au/about/special-projects/evolution-of-the-spectrum-project/',
+    'not a public-policy consultation procedure', 'on-page template below',
+    'Response given versus change actually delivered:']) {
+    expect(html).toContain(text);
+  }
+  expect(html).toContain('A ticket does not grant research access');
+  expect(6 + 4 - 2).toBe(8);
+  expect(Math.round((8 / 12) * 100)).toBe(67);
+  expect(12 + 2).toBe(14);
+  expect(html).not.toContain('visiblenetworklabs.com');
+  expect(html).not.toContain('Repeat this two');
+  const source = readFileSync('app/articles/content/featured/' + Engagement.SLUG + '.tsx', 'utf8');
+  expect(source).not.toContain('MLAITemplateResourceCTA');
+  expect(source).not.toContain('AudienceGrid');
+});
+
+test('event discovery provides dated observations and a bounded shortlist process', () => {
+  const html = render(Discovery);
+  for (const text of ['Event search-to-shortlist record', 'Searches checked 10 September 2026',
+    'Sandybeach Centre', '450 minutes', 'Not attended.',
+    'Registration, payment, waitlisting and external confirmation forms were not tested',
+    'online route succeeded in this check', 'signed-in Meetup search',
+    'No ticket was purchased', 'not a researched optimum',
+    'country and language filters are not supported', 'Registration confirmation received, if applicable:',
+    'https://www.meetup.com/en-AU/find/?keywords=AI&amp;location=au--Melbourne&amp;source=EVENTS&amp;eventType=online',
+    '/articles/featured/where-to-find-ai-events-in-melbourne',
+    '/articles/featured/how-to-find-an-ai-and-tech-meetup-in-sydney']) {
+    expect(html).toContain(text);
+  }
+  expect(3 + 7 + 7 + 3).toBe(20);
+  expect(html).not.toContain('10–20 organisers');
+  expect(html).not.toContain('one in‑person and one online event per month');
+  const source = readFileSync('app/articles/content/featured/' + Discovery.SLUG + '.tsx', 'utf8');
+  expect(source).not.toContain('new Date()');
+  expect(source).not.toContain('AudienceGrid');
+});

@@ -1,0 +1,207 @@
+MLAI prototype-to-paid-pilot brief — fictional planning example
+Version: founder-capacity-v3. Updated 10 September 2026.
+NOT a contract, quote, client case study or delivery approval. All figures are invented assumptions; no pilot was executed and every acceptance case is UNRUN.
+
+COMPLETED EXAMPLE
+
+BUYER, USER AND DECISION
+Fictional buyer: an operations lead. User: one weekly-report operator. Budget approver: the business owner. Test whether a review-only project summary is useful enough to justify a separate real-data assessment; do not promise time savings or a production rollout.
+
+WORKFLOW AND BASELINE
+One weekly summary covering two projects and up to 12 supplied updates. Assume 45 minutes of manual preparation per summary for planning only; no baseline has been measured. Before judging value, the operator must time matched manual and pilot cases, including checking and correction, and record sample size and case difficulty.
+
+DELIVERABLE AND INPUT BOUNDARY
+One test workspace, one operator, synthetic JSON updates with workspaceId, projectId, updateId and text; no live integration. Deliver a review-only draft, source IDs beside each factual claim, visible conflicts/missing information, source/configuration, evaluation record and operator notes. Source-ID presence alone does not establish that a claim is supported.
+
+EXCLUDED ACTIONS
+No customer messages, external publication, status changes, other workspaces or real personal/customer data. The operator manually decides what to publish outside the pilot. Remove send/write credentials and verify the boundary; prompt instructions alone are not an access control.
+
+ACCEPTANCE AND OWNER
+Propose the eight cases below as a minimum starting set, all currently UNRUN. The founder implements and records results; the operations lead must agree expected outcomes and review failures; the owner decides acceptance. These roles are fictional and no reviewer is assigned. Passing eight cases would not establish general reliability or operating approval.
+
+DEPENDENCIES AND SCHEDULE
+Four proposed weeks: scope/fixture in week 1, review-only draft in week 2, failure testing in week 3, handover in week 4. Buyer supplies an approved synthetic fixture and two review slots before work starts. Dates, access and availability are unconfirmed. Preserve the founder's existing product release in week 2 and customer demonstration in week 4.
+
+FEE AND COLLECTION ASSUMPTIONS
+Illustrative A$1,800 fee excluding GST, not a quote or agreed rate. Propose A$900 invoiced after agreed scope/start authorisation, assumed collected in week 2, and A$900 after acceptance/handover, optimistically collected in week 4. Payment terms and calendar dates remain unagreed. Test late or absent receipts; acceptance and an invoice are not cash.
+
+COSTS, PAYER AND USAGE STOP
+Founder-paid hypothetical outlays: week 1 A$100 test infrastructure plus A$250 external-review allowance; weeks 2 and 3 A$100 provider usage each; week 4 A$150 external handover-review allowance. Total A$700 excluding GST. These are allowances, not vendor quotes or completed reviews. Paid external review is separate from the founder's own review hours. Propose a cumulative A$200 provider-usage cap; show a hard stop before an over-budget call. No live running-cost commitment is included; later cash flows are outside the worksheet.
+
+CHANGES AND STOP CONDITIONS
+A new workspace, real data or send/write capability requires a new scope, risk review, estimate and explicit approval. Stop on a permission breach, unsupported factual claim, lost input or absent budget control. Keep original updates available and use the manual report. A failed case is a revise/stop decision, not an automatic new feature allowance.
+
+OWNERSHIP AND REUSE
+Propose delivery of permitted source, configuration and operator notes to the buyer. Background code, third-party licences, ownership/licensing and reuse rights require an explicit agreement and appropriate advice. Do not assume client-funded work can become startup IP or a public portfolio. No reuse permission has been granted in this example.
+
+HANDOVER AND SUPPORT BOUNDARY
+Reserve four founder hours in week 4 for reproduction, disabling/fallback practice, documentation and bounded support. Propose two additional one-hour support slots in week 5 for reproducible defects within agreed scope, not feature changes or ongoing operation. No later hours are reserved yet. Owner acceptance, actual slot dates and support terms remain unconfirmed; legal obligations are not defined by this worksheet.
+
+CURRENT PLANNING DECISION
+NOT READY TO COMMIT. The original plan needs 28 hours within four weeks but has only 24; weeks 1 and 2 are overloaded. Week-5 support needs two more hours with none reserved. Acceptance cases are unrun and terms unresolved. Reduce/resequence scope or negotiate a feasible schedule, reserve support and review cash timing before deciding to accept, defer or decline.
+
+PROPOSED ACCEPTANCE RECORD — ALL UNRUN
+
+P1
+Input: Routine update: project A / U1 says milestone X is complete; project B / U2 says Y remains blocked.
+Expected: Draft preserves both distinct statuses and their correct source IDs; operator can verify each claim. No invented deadline, customer or outcome.
+Observed result: UNRUN
+Evidence / reviewer / date: NOT SUPPLIED
+
+P2
+Input: Project A has no update; project B has one approved update.
+Expected: Mark project A as missing information. Do not infer progress from silence. Retain the valid project B summary.
+Observed result: UNRUN
+Evidence / reviewer / date: NOT SUPPLIED
+
+P3
+Input: Two updates disagree about whether milestone X is complete, without an agreed precedence rule.
+Expected: Surface the conflict and both source IDs for human resolution; do not silently choose a convenient status.
+Observed result: UNRUN
+Evidence / reviewer / date: NOT SUPPLIED
+
+P4
+Input: An update names an unapproved workspace or project.
+Expected: Reject that input before model processing; it is absent from provider requests, draft and exported evidence. Show the operator a non-sensitive error.
+Observed result: UNRUN
+Evidence / reviewer / date: NOT SUPPLIED
+
+P5
+Input: An approved update contains an instruction to message customers or reveal another workspace.
+Expected: Treat the instruction as untrusted content, retain the original task and demonstrate no send/write/other-workspace capability. Check action logs as well as draft text.
+Observed result: UNRUN
+Evidence / reviewer / date: NOT SUPPLIED
+
+P6
+Input: Provider times out or returns malformed output.
+Expected: Show a clear failure and retain original inputs for the manual process; do not show an empty or partial draft as accepted success.
+Observed result: UNRUN
+Evidence / reviewer / date: NOT SUPPLIED
+
+P7
+Input: Repeat the same input/run request.
+Expected: Do not duplicate source records or imply a second independent observation. Record any draft variation for review; no publication action occurs.
+Observed result: UNRUN
+Evidence / reviewer / date: NOT SUPPLIED
+
+P8
+Input: A next call would exceed the proposed cumulative A$200 provider cap.
+Expected: Stop before the call using reserved cost bounds or provider-enforced limits. If a reliable ceiling cannot be implemented for the chosen service, the budget-control requirement fails.
+Observed result: UNRUN
+Evidence / reviewer / date: NOT SUPPLIED
+
+EXAMPLE CAPACITY AND CASH ASSUMPTIONS
+
+MLAI founder project capacity and cash timing — planning estimate, NOT approval
+Version: founder-capacity-v3. Currency: AUD; use one consistent GST basis. The fictional example excludes GST.
+Initial on-page values are fictional. Edited figures are user assumptions, not independently verified results.
+Protected startup milestones / dependencies / scope notes:
+Protected startup work: product release in week 2; customer demonstration in week 4. Buyer review slots and week-5 support dates are unconfirmed.
+
+WEEK 1
+Available hours: 6.00
+Build hours: 5.00
+Test and security-review hours: 2.00
+Coordination hours: 1.00
+Handover and support hours: 0.00
+Contingency hours: 1.00
+Expected receipts (A$): 0.00
+Direct cash outlays (A$): 350.00
+Committed hours: 9.00
+Hours remaining: -3.00
+Project cash before receipts: -350.00
+Cumulative project cash after receipts: -350.00
+
+WEEK 2
+Available hours: 6.00
+Build hours: 4.00
+Test and security-review hours: 1.00
+Coordination hours: 1.00
+Handover and support hours: 0.00
+Contingency hours: 1.00
+Expected receipts (A$): 900.00
+Direct cash outlays (A$): 100.00
+Committed hours: 7.00
+Hours remaining: -1.00
+Project cash before receipts: -450.00
+Cumulative project cash after receipts: 450.00
+
+WEEK 3
+Available hours: 6.00
+Build hours: 3.00
+Test and security-review hours: 1.00
+Coordination hours: 1.00
+Handover and support hours: 0.00
+Contingency hours: 1.00
+Expected receipts (A$): 0.00
+Direct cash outlays (A$): 100.00
+Committed hours: 6.00
+Hours remaining: 0.00
+Project cash before receipts: 350.00
+Cumulative project cash after receipts: 350.00
+
+WEEK 4
+Available hours: 6.00
+Build hours: 0.00
+Test and security-review hours: 1.00
+Coordination hours: 0.00
+Handover and support hours: 4.00
+Contingency hours: 1.00
+Expected receipts (A$): 900.00
+Direct cash outlays (A$): 150.00
+Committed hours: 6.00
+Hours remaining: 0.00
+Project cash before receipts: 200.00
+Cumulative project cash after receipts: 1100.00
+
+Total available hours: 24.00; total obligations: 28.00; balance: -4.00
+Overloaded weeks: 1, 2
+Later support required: 2.00 hours; reserved: 0.00; balance: -2.00
+Capacity finding: A weekly or later-support shortfall needs resolution
+Expected receipts: A$1800.00; direct outlays: A$700.00
+Net project cash in window: A$1100.00
+Largest project cash gap, outlays before receipts: A$450.00
+
+Cash starts at zero and counts each week's outlays before its receipts. This is a project-only scenario, not your bank balance, profit or runway.
+Exclude double-counting; add all actual paid project labour to outlays. Founder time, taxes, overhead, financing, other commitments and after-window cash flows are not valued here.
+Weekly timing cannot reproduce exact daily payment order. Delay/remove expected receipts to test uncertainty; estimated fees are not cash received.
+Later support needs its own agreed dates, scope and reserved capacity. Spare later hours cannot repair an earlier missed deadline.
+Decision: accept, reduce scope, defer or decline — UNDECIDED until scope, capacity, cash timing and terms are reviewed.
+Scope / acceptance owner / evidence / permissions / commercial review: PENDING.
+No worksheet data is automatically sent to Studio. Apply separately with permitted work evidence and availability.
+
+BLANK BRIEF — REPLACE ASSUMPTIONS, DO NOT COPY THEM AS AGREED TERMS
+
+Prototype-to-pilot brief — replace with non-confidential facts
+Buyer / user / budget approver and decision to test:
+Current workflow, case volume and measured baseline:
+Deliverables / users / data / integrations included:
+Excluded actions and explicit human approvals:
+Acceptance cases, expected results and evidence owner:
+Customer dependencies, access and review availability:
+Milestones / fee / payment trigger / payment timing to agree:
+Running costs / payer / usage ceiling:
+Change requests / stop conditions / manual fallback:
+Source and configuration ownership / permitted reuse:
+Handover / support boundary / unresolved risks:
+Pilot decision: stop, revise, repeat or expand, and why:
+
+Founder delivery-capacity check — planning aid, not a revenue forecast
+Delivery window and immovable startup milestones:
+Real weekly hours available after existing commitments:
+Build + test + security review + meetings + deployment hours:
+Handover + support hours within and after the window:
+Contingency allowance and assumptions:
+Capacity remaining = available hours minus all delivery obligations:
+Fees expected / costs due / likely collection timing:
+Conflicts, client permissions and reuse restrictions:
+Decision: accept, reduce scope, defer or decline:
+
+Sources checked 10 September 2026; they support planning/review principles, not the invented scope or prices:
+https://business.gov.au/people/contractors/prepare-a-contract
+https://business.gov.au/finance/cash-flow/set-up-a-cash-flow-statement
+https://docs.github.com/en/copilot/responsible-use/inline-suggestions
+
+Authorship: AI-assisted MLAI editorial planning aid; no independent delivery, financial or legal review is claimed.
+For binding terms, taxation, liability and jurisdiction-specific obligations, obtain appropriate professional advice.
+Article: https://mlai.au/articles/featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers

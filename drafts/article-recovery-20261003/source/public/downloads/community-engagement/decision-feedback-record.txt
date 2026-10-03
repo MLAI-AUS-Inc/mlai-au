@@ -1,0 +1,106 @@
+MLAI community decision-and-feedback record — edited 10 September 2026
+Fictional teaching record — not an MLAI event, participant study or measured community result. Every person, note, date and delivery observation below is invented.
+Save and edit your own copy. No notes are submitted, no participant permission is granted and no event registration occurs.
+
+ORIGINAL FICTIONAL INVITATION
+We are choosing the exercise for a beginner AI session on 14 August 2026, 6–7pm AEST. Would spotting unsupported answers or drafting a reply be more useful, and what would help you take part? Send a short written response by 7 August, 5pm AEST, or join the optional 20-minute discussion on 5 August at 6pm AEST. The volunteer organiser, Lee, will decide within the booked room time and post a plain-text update in this same group on 10 August. Taking part is optional and unpaid; no expenses are offered. Use invented examples, not personal or workplace records. Contact Lee through the existing group route about participation needs; do not assume a recording, captions or other support is available until confirmed.
+
+COMPLETED FICTIONAL RECORD
+Activity, decision owner and actual dates/timezone:
+Invented beginner exercise, 14 August 2026, 6–7pm AEST; fictional volunteer organiser Lee owns the decision. Invitation 1 August; input closes 7 August at 5pm AEST; decision update 10 August; review snapshot 14 August. No actual event occurred.
+
+Decision still open / constraints already fixed:
+Open: answer checking versus reply drafting, non-code starting point, preparation and question route. Fixed: booked room/time, one-hour session, available volunteer effort and no private/client data. Lee retains the choice; no co-design or transfer of authority is claimed.
+
+Who is invited and why; whose input may be missing:
+Twelve invented existing members, P1–P12. Eight contribute. P9–P12 have no recorded input; reasons are unknown. Existing members do not represent all newcomers, non-members or the Australian AI community.
+
+Participation routes and confirmed access arrangements:
+Optional 20-minute discussion on 5 August at 6pm AEST, or written input in the existing group by 7 August, 5pm AEST. Using that group needs no new account for these invitees. No universal accessibility, remote event, recording or captions promise is made. The timing barrier remains.
+
+Time, payment/expenses and data-use expectations:
+Optional unpaid contribution; no expenses offered in this invented invitation. No sensitive data requested. Lee keeps the minimum working notes for the stated decision and contributor checks, not for marketing or AI-service uploads. A real organiser must confirm appropriate payment, support and data handling for their activity.
+
+Input received, with duplicates and uncertainties noted:
+All 14 invented notes N1–N14 are supplied below. Discussion contributors: P1–P6. Written: P2, P4, P7, P8. Overlap P2/P4: 6 + 4 − 2 = 8 distinct contributors. Notes are issues, not votes; repeated contributions cannot create extra people.
+
+Contributor check: is the summary accurate?:
+In the fiction, N1–N12 have summaries checked with their contributors before the decision update. N13/N14 still need clarification; their meaning is not inferred from a theme label. These are invented steps, not actual consent or member validation.
+
+Decision / reason / what did not change:
+D1: non-code answer checking before optional code. D2: advance plain-text example and written questions. D3: retain fixed room time, investigate a later online option. D4: synthetic data only. Reasons and note references are retained; disagreement is not erased.
+
+Response given versus change actually delivered:
+All 12 notes linked to D1–D4 have an organiser response dated 10 August in the fiction. The advance example is posted 11 August and the non-code synthetic exercise supplied 14 August. The response count does not mean 12 resolved issues or successful participation.
+
+Unresolved issue / responsible person / next update date:
+N13/N14 await clarification. D3's earlier-time need is not met; an online alternative is not confirmed. Lee owns the 21 August update. These remain open at the 14 August snapshot even though the session plan was delivered.
+
+Permission and identification check before sharing:
+Every ID and observation is invented, not de-identified MLAI research. Do not publish an equivalent real row-level log by default: combinations of route, timing and request can identify someone. Keep raw input private, obtain appropriate permission and review a safe summary before sharing.
+
+Participant feedback after delivery / next adjustment:
+No post-session participant feedback is included, even within this example. Delivery and response rates cannot establish trust, learning, retention, attendance improvement or that barriers were removed. Next ask what remains difficult; the response and next adjustment have not been observed.
+
+ALL 14 INVENTED INPUT NOTES — IDs are not real people; do not publish equivalent real raw records by default
+N1 | P1 | discussion | The code-first exercise is difficult to follow. | D1
+N2 | P2 | discussion | Practise checking an answer before learning a tool. | D1
+N3 | P3 | discussion | Start with a short answer and the source it claims to use. | D1
+N4 | P5 | discussion | Keep a code demonstration available after the basic exercise. | D1
+N5 | P2 | written | An example beforehand would help prepare a question. | D2
+N6 | P4 | discussion | Allow written questions rather than requiring speaking. | D2
+N7 | P7 | written | Use a short plain-text version, not only presentation slides. | D2
+N8 | P8 | written | Keep sharing in the existing group without a new account. | D2
+N9 | P1 | discussion | An earlier start is needed to attend. | D3
+N10 | P4 | written | Consider an online alternative if the room time is fixed. | D3
+N11 | P3 | discussion | Real client emails might make the exercise more familiar. | D4
+N12 | P6 | discussion | Keep private records out; invented examples are enough. | D4
+N13 | P7 | written | Make the discussion private — meaning still unclear. | Needs clarification; no decision/response recorded
+N14 | P8 | written | The recording arrangements are unclear — desired change not yet clarified. | Needs clarification; no decision/response recorded
+
+DECISION, RESPONSE AND DELIVERY RECORDS — every observation here is fictional
+D1 (N1, N2, N3, N4):
+A non-code starting point, with an optional code demonstration.
+Decision: Choose answer checking, not reply drafting. Provide an invented answer and source excerpt first; keep code optional. This is an organiser decision, not a vote count.
+Response: Lee posts the decision and reason on 10 August.
+Delivery/open issue: Within the fiction, the printed non-code exercise is supplied on 14 August. Its usefulness still needs participant feedback; supplying it does not establish comprehension.
+
+D2 (N5, N6, N7, N8):
+Preparation and written contribution without another account.
+Decision: Share a plain-text example in the existing group and accept written questions.
+Response: Lee posts the decision and reason on 10 August.
+Delivery/open issue: Within the fiction, the example is posted on 11 August and the written route offered. This does not show everyone received it or could use it.
+
+D3 (N9, N10):
+Earlier timing or an online alternative.
+Decision: The booked room time cannot change. Investigate a future online option, without promising it for this session.
+Response: Lee explains the constraint on 10 August; a response does not remove the barrier.
+Delivery/open issue: The access barrier remains. Lee owns the next update on 21 August; availability, cost and suitability of an alternative remain unconfirmed as of the fictional 14 August review.
+
+D4 (N11, N12):
+Conflicting requests about real client data.
+Decision: Use synthetic messages. There is no permission to use client records; realism does not override that limit.
+Response: Lee explains the boundary on 10 August rather than treating the two notes as votes.
+Delivery/open issue: Within the fiction, the demonstration uses invented material on 14 August. This is not evidence of permission to process real participant or client data.
+
+BLANK COPY — replace fictional values, keep unperformed steps marked not done
+Activity, decision owner and actual dates/timezone:
+Decision still open / constraints already fixed:
+Who is invited and why; whose input may be missing:
+Participation routes and confirmed access arrangements:
+Time, payment/expenses and data-use expectations:
+Input received, with duplicates and uncertainties noted:
+Contributor check: is the summary accurate?:
+Decision / reason / what did not change:
+Response given versus change actually delivered:
+Unresolved issue / responsible person / next update date:
+Permission and identification check before sharing:
+Participant feedback after delivery / next adjustment:
+
+PRIVATE INPUT LOG TEMPLATE — restrict access; do not collect identities beyond the activity's needs
+Note ID / appropriately managed contributor reference / route / input / summary checked or unclear / linked decision / response actually given / delivery evidence / remaining issue:
+
+PUBLIC UPDATE TEMPLATE — remove identifying combinations; confirm permission before sharing
+What you could influence / what we heard (safe themes, disagreement and missing input) / decision and reason / what changed or did not / what was delivered / still open, owner and next update / how to correct the summary:
+
+Guide: https://mlai.au/articles/featured/how-to-foster-community-engagement

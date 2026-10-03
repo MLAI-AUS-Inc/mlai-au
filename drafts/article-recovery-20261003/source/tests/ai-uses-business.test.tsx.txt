@@ -1,0 +1,80 @@
+import { expect, test } from 'bun:test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import Article, { articleMeta } from '../app/articles/content/featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+import { readFileSync } from 'node:fs';
+import { CAPABILITY_CANDIDATES, CAPABILITY_COST_RESULTS, CAPABILITY_BRIEF_FIELDS, CAPABILITY_BRIEF_TEMPLATE, INVOICE_SLOW_REVIEW, priorityMinutes, capabilityPriorityText } from '../app/lib/ai-capability-priorities';
+test('AI uses guide supplies the three-task prioritisation recommendation before its offer', () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ for (const text of ['Three tasks for one fictional retailer', 'Monthly workload and rework', 'Setup and operating cost assumptions', 'Fix the source first', 'Try the catalogue filter first', 'Investigate invoice extraction', 'No positive cash payback', '/downloads/ai-use-case-priorities.txt', 'not automatically attached']) expect(html).toContain(text);
+ expect(html.indexOf('Investigate invoice extraction')).toBeLessThan(html.indexOf('Describe your business task'));
+ expect(html).toContain('data-article-toc-placeholder');
+});
+test('AI uses guide maps capabilities to reviewable SMB outcomes', () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ expect(html).toContain('data-article-icp="SMB"');
+ expect(html).toContain('Describe your business task');
+ expect(html).toContain('href="/mlai-studio/start-project"');
+ expect(html).toContain('proposed acceptance cases, not passed tests');
+ expect(html).toContain('AI use-case translation record');
+ expect(html).toContain('An alert alone is not proof of fraud');
+ expect(html).toContain('business.gov.au/online-and-digital/artificial-intelligence');
+ expect(html).not.toContain('quantive.com');
+ expect(html).toContain('role="region" aria-label="AI capability scoping map" tabindex="0"');
+ expect(html).toContain('max-w-full overflow-x-auto');
+ expect(html).toContain('<table class="min-w-[42rem]">');
+});
+
+test('three invented tasks use consistent workload, non-duplicated rework and incremental cost assumptions', () => {
+ expect(CAPABILITY_CANDIDATES).toHaveLength(3);
+ expect(CAPABILITY_CANDIDATES.map(c => c.inputs.monthlyTasks * c.inputs.baselineMinutes)).toEqual([320, 300, 360]);
+ expect(CAPABILITY_CANDIDATES.map(c => c.reworkCases)).toEqual([6, 9, 12]);
+ for (const candidate of CAPABILITY_CANDIDATES) {
+  expect(candidate.reworkCases).toBeLessThanOrEqual(candidate.inputs.monthlyTasks);
+  expect(Object.values(candidate.cashBreakdown).reduce((sum, value) => sum + value, 0)).toBe(candidate.inputs.monthlyCashCost);
+  expect(candidate.inputs.cashablePercent).toBe(0);
+ }
+ expect(CAPABILITY_COST_RESULTS.map(r => priorityMinutes(r.netHours))).toEqual([100, 30, 60]);
+ expect(CAPABILITY_COST_RESULTS.map(r => r.setupEconomicCost)).toEqual([540, 330, 660]);
+ expect(CAPABILITY_COST_RESULTS.map(r => r.monthlyCashChange)).toEqual([-30, -25, -25]);
+ expect(CAPABILITY_COST_RESULTS.map(r => r.cashPaybackMonths)).toEqual([null, null, null]);
+ expect(priorityMinutes(INVOICE_SLOW_REVIEW.netHours)).toBe(-20);
+ expect(INVOICE_SLOW_REVIEW.monthlyCashChange).toBe(-30);
+ expect(INVOICE_SLOW_REVIEW.cashPaybackMonths).toBeNull();
+ expect(CAPABILITY_CANDIDATES.map(c => c.decision)).toEqual(['Investigate invoice extraction', 'Fix the source first', 'Try the catalogue filter first']);
+ expect(CAPABILITY_CANDIDATES[1].reason).toContain('while policy versions conflict');
+ expect(CAPABILITY_CANDIDATES[2].reason).toContain('highest task volume is not a reason');
+});
+
+test('real download preserves all assumptions, completed fields, blank record and unrun outcomes', () => {
+ const text = readFileSync('public/downloads/ai-use-case-priorities.txt', 'utf8');
+ expect(text).toBe(capabilityPriorityText());
+ expect(CAPABILITY_BRIEF_FIELDS).toHaveLength(9);
+ expect(CAPABILITY_BRIEF_TEMPLATE.split('\n')).toHaveLength(9);
+ for (const field of CAPABILITY_BRIEF_FIELDS) { expect(text).toContain(field.label + ':'); expect(text).toContain(field.value); }
+ for (const candidate of CAPABILITY_CANDIDATES) {
+  for (const value of [candidate.task, candidate.data, candidate.oversight, candidate.errorCost, candidate.decision, candidate.alternative, candidate.reason]) expect(text).toContain(value);
+ }
+ for (const value of ['COPY FOR EACH OF YOUR THREE TASKS', 'Representative period / task count', 'Unknown costs / required quotes', 'Evidence that would change the choice', 'Expected output / actual output', 'NOT RUN', 'not automatically attached', 'Independent owner/technical review pending', 'No live trial or purchase is approved', 'Error losses, revenue effects, taxes, financing, seasonality']) expect(text).toContain(value);
+});
+
+test('metadata, focusable tables, dated revision and CTA keep SMB investigation distinct from pilot delivery', () => {
+ const slug = 'featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life';
+ const entry = ARTICLE_REGISTRY[slug];
+ for (const key of ['title', 'description', 'author', 'imageAlt'] as const) expect(entry[key]).toBe(articleMeta[key]);
+ expect(entry.date).toBe('2026-04-10'); expect(entry.date).toBe(articleMeta.datePublished);
+ expect(entry.dateModified).toBe('2026-09-11'); expect(entry.dateModified).toBe(articleMeta.dateModified);
+ const conversion = BASE_ARTICLE_SEO_CONFIG['/articles/' + slug].conversion;
+ expect(conversion?.primary).toBe('studio-project'); expect(conversion?.primaryIcp).toBe('SMB');
+ expect(conversion?.version).toBe('capability-priority-v3');
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+ for (const label of ['Three business use-case priorities', 'Use-case cost assumptions']) expect(html).toContain(`role="region" aria-label="${label}" tabindex="0"`);
+ for (const id of ['uses', 'map', 'priorities', 'cost-assumptions', 'example', 'value', 'permissions', 'brief']) expect(html).toContain(`id="${id}" class="scroll-mt-28"`);
+ expect(html).toContain('This page screens possible uses');
+ expect(html).toContain('proposed acceptance cases, not passed tests');
+ expect(html).toContain('complete ROI claim');
+ expect(html).not.toContain('FAQPage');
+});
