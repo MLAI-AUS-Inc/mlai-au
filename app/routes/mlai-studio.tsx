@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   Link,
   useNavigate,
@@ -6,13 +6,14 @@ import {
   type MetaFunction,
 } from "react-router";
 import StudioWorkPreview from "~/components/studio/StudioWorkPreview";
+import StudioBuilders from "~/components/studio/StudioBuilders";
 import "~/styles/studio-landing.css";
 
 const PAGE_URL = "https://mlai.au/mlai-studio";
 const DESCRIPTION =
-  "MLAI Studio builds AI tools and software for Australian businesses, from automating admin to developing an app. Talk to Sam about your project in a free 30-minute call.";
-const EMAIL_LINK =
-  "mailto:sam@mlai.au?subject=MLAI%20Studio%20%E2%80%94%20free%2030-minute%20chat";
+  "Hand over the busywork to MLAI Studio. Our Australian builders create AI tools, automations and software for your business. Book a free 15-minute chat with Sam.";
+const BOOKING_LINK = "https://calendar.app.google/91oVdg4nRaZgEZ9h6";
+const SHOW_CLIENT_FEEDBACK = false;
 const FAQS = [
   {
     q: "Do I need to know what I want built?",
@@ -221,7 +222,6 @@ const STEPS = [
 ];
 
 export default function MlaiStudio() {
-  const contactDialog = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
   useEffect(() => {
     const routeLegacyApply = () => {
@@ -233,24 +233,16 @@ export default function MlaiStudio() {
     return () => window.removeEventListener("hashchange", routeLegacyApply);
   }, [navigate]);
   function BookingButton({
-    short = false,
     dark = false,
   }: {
-    short?: boolean;
     dark?: boolean;
   }) {
     return (
       <a
-        href={EMAIL_LINK}
+        href={BOOKING_LINK}
         className={`btn ${dark ? "btn--ink" : "btn--hot"} studio-book`}
-        onClick={(event) => {
-          if (contactDialog.current) {
-            event.preventDefault();
-            contactDialog.current.showModal();
-          }
-        }}
       >
-        {short ? "Let’s talk" : "Book a free 30-minute chat"}
+        Book a Free chat with Sam
         <Arrow />
       </a>
     );
@@ -278,84 +270,54 @@ export default function MlaiStudio() {
             <a href="#pricing">Pricing</a>
             <a href="#people">About</a>
           </nav>
-          <BookingButton short dark />
+          <BookingButton dark />
         </header>
         <main id="studio-content">
           <section
             className="studio-hero pk-hero-box band-ink"
             aria-labelledby="studio-title"
           >
-            <div className="studio-hero-top">
-              <p className="eyebrow">
-                AI and software for Australian businesses
-              </p>
-              <span className="studio-location">MLAI STUDIO</span>
-            </div>
             <div className="studio-hero-grid">
               <div className="studio-hero-copy">
                 <h1 id="studio-title" className="disp">
-                  What would
-                  <br />
-                  you rather
-                  <br />
-                  <span>
-                    be working
-                    <br />
-                    on?
-                  </span>
+                  Hand us the hard stuff.
+                  <span>We'll sort it out.</span>
                 </h1>
                 <p className="studio-hero-summary">
-                  We build software for the jobs your team is still doing by
-                  hand. That might mean connecting two systems, automating the
-                  document chase or building an app from scratch.
+                  The admin. The disconnected systems. The AI workflow. The app
+                  you've been meaning to build. Whatever's slowing your business
+                  down, our Australian AI and software builders will take it from here.
                 </p>
                 <div className="studio-actions">
                   <BookingButton />
-                  <a className="studio-text-link" href="#work">
-                    See what we build <Arrow />
-                  </a>
                 </div>
                 <p className="studio-reassurance">
-                  You don’t need to write a brief before we talk.
-                  <br />
-                  The first conversation is free.
+                  15 minutes. No brief needed. No commitment.
                 </p>
               </div>
-              <div className="studio-hero-aside">
-                <div className="studio-note">
-                  <span className="studio-note-label">FOR EXAMPLE</span>
-                  <p className="pk-quote">
-                    “Why are we
-                    <br />
-                    entering
-                    <br />
-                    this twice?”
-                  </p>
-                  <span className="studio-note-bottom">
-                    Show us the process. <Arrow diagonal />
-                  </span>
-                </div>
-                <figure className="studio-community-photo">
-                  <img
-                    src="/mlai-studio/community-working.jpg"
-                    alt="MLAI Green Battery Hack participants working together at tables with laptops"
-                    width="1179"
-                    height="664"
-                    fetchPriority="high"
-                  />
-                  <figcaption>
-                    MLAI Green Battery Hack <span>Community event</span>
-                  </figcaption>
-                </figure>
-              </div>
             </div>
-            <div className="studio-hero-footer">
-              <span>Built by people from the MLAI community.</span>
-              <a href="#help" aria-label="Explore how MLAI Studio can help">
-                ↓
-              </a>
-            </div>
+            <StudioBuilders />
           </section>
+          {SHOW_CLIENT_FEEDBACK && (
+          <section id="client-feedback" className="studio-client-proof studio-section"
+            aria-labelledby="client-feedback-title">
+            <div className="studio-client-proof-intro">
+              <p className="eyebrow">TRUSTED TO TAKE IT FROM HERE</p>
+              <h2 id="client-feedback-title" className="disp">Your to-do list.<br /><span>In good hands.</span></h2>
+              <p>A team you can hand work to, with a clear scope, a project lead and work you can review along the way.</p>
+            </div>
+            <article className="studio-client-story" aria-label="Client feedback from Mark Ghiasy">
+              <span className="studio-client-story-label">CLIENT FEEDBACK</span>
+              {/* Summary supplied by the client team; not a verbatim quotation. */}
+              <p className="studio-client-feedback">Mark Ghiasy feels confident handing projects over to MLAI Studio.</p>
+              <div className="studio-client-attribution">
+                <span className="studio-client-monogram" aria-hidden="true">MG</span>
+                <div><strong>Mark Ghiasy</strong><span>MLAI Studio client</span></div>
+                <span className="studio-client-mark" aria-hidden="true">↗</span>
+              </div>
+            </article>
+          </section>
+          )}
           <section
             id="help"
             className="studio-services studio-section"
@@ -450,7 +412,7 @@ export default function MlaiStudio() {
                 we’ve built.
               </h2>
               <p>
-                These are MLAI’s own tools. You can explore them below, starting
+                These are MLAI’s own tools. See the work below, starting
                 with how Vibe Raising helps a founder prepare an investor
                 update.
               </p>
@@ -489,19 +451,16 @@ export default function MlaiStudio() {
                     </dd>
                   </div>
                 </dl>
-                <Link className="studio-text-link" to="/vibe-raising">
-                  Explore Vibe Raising <Arrow diagonal />
-                </Link>
               </div>
               <StudioWorkPreview />
             </div>
             <div className="studio-other-work">
-              <Link to="/founder-tools/start">
+              <article>
                 <span className="studio-service-index">
                   BUILT FOR MLAI / 02
                 </span>
                 <h3 className="disp">
-                  Vibe Marketing <Arrow diagonal />
+                  Vibe Marketing
                 </h3>
                 <p>
                   Helps founders research article topics and review drafts
@@ -510,13 +469,13 @@ export default function MlaiStudio() {
                 <span className="studio-project-detail">
                   Content workflows · Founder Tools
                 </span>
-              </Link>
-              <Link to="/watt-the-hack">
+              </article>
+              <article>
                 <span className="studio-service-index">
                   BUILT FOR MLAI / 03
                 </span>
                 <h3 className="disp">
-                  Watt the Hack <Arrow diagonal />
+                  Watt the Hack
                 </h3>
                 <p>
                   Hackathon teams can find their challenge, use the energy
@@ -525,7 +484,7 @@ export default function MlaiStudio() {
                 <span className="studio-project-detail">
                   Team tools · Submissions · Energy sandbox
                 </span>
-              </Link>
+              </article>
             </div>
           </section>
           <section
@@ -612,9 +571,6 @@ export default function MlaiStudio() {
                   A project lead coordinates the work. You’ll know who to
                   contact when you have a question or need to change something.
                 </p>
-                <Link className="studio-text-link" to="/press-kit">
-                  Meet the wider MLAI community <Arrow diagonal />
-                </Link>
               </div>
               <div className="studio-person">
                 <img
@@ -634,9 +590,7 @@ export default function MlaiStudio() {
                     work. He’s also the person you’ll speak to about getting
                     started.
                   </p>
-                  <a href={EMAIL_LINK} className="studio-text-link">
-                    Say hello to Sam <Arrow diagonal />
-                  </a>
+                  <BookingButton dark />
                 </div>
               </div>
             </div>
@@ -654,9 +608,6 @@ export default function MlaiStudio() {
                 We’re an Australian not-for-profit AI community. Studio’s
                 project work is a paid service.
               </p>
-              <Link id="apply" to="/mlai-studio/build-with-us#apply">
-                Build with us <Arrow />
-              </Link>
             </div>
           </section>
           <section
@@ -677,13 +628,7 @@ export default function MlaiStudio() {
               </p>
               <div className="studio-defined-build">
                 <h3>Need a quote for one project?</h3>
-                <p>Send us the details and we’ll put together a proposal.</p>
-                <Link
-                  className="studio-text-link"
-                  to="/mlai-studio/start-project"
-                >
-                  Tell us about your project <Arrow />
-                </Link>
+                <p>Talk it through with Sam. We’ll agree the scope and put together a proposal before any paid work begins.</p>
               </div>
             </div>
             <div className="studio-price-card">
@@ -727,7 +672,7 @@ export default function MlaiStudio() {
                 <br />
                 questions.
               </h2>
-              <p>You can also email Sam if your question isn’t covered here.</p>
+              <p>Bring your questions to your free 15-minute chat with Sam.</p>
             </div>
             <div className="studio-questions">
               {FAQS.map(({ q, a }) => (
@@ -756,8 +701,8 @@ export default function MlaiStudio() {
                 <span>sorting out.</span>
               </h2>
               <p>
-                Email Sam with a couple of lines about the project. We’ll
-                arrange a free 30-minute call to talk it through.
+                Pick a time for a free 15-minute chat with Sam. Bring the task
+                you want off your plate; we’ll talk through where to start.
               </p>
               <BookingButton />
               <p className="studio-reassurance">
@@ -776,48 +721,8 @@ export default function MlaiStudio() {
         <div className="studio-signoff">
           <span>MLAI STUDIO · AUSTRALIA</span>
           <span>AI and software development</span>
-          <Link to="/mlai-studio/build-with-us">
-            Are you a builder? Build with us <Arrow />
-          </Link>
         </div>
       </div>
-      <dialog
-        ref={contactDialog}
-        className="studio-contact-dialog"
-        aria-labelledby="studio-dialog-title"
-        onClick={(event) => {
-          if (event.target === event.currentTarget)
-            contactDialog.current?.close();
-        }}
-      >
-        <div>
-          <form method="dialog">
-            <button
-              className="studio-dialog-close"
-              aria-label="Close contact dialog"
-            >
-              ×
-            </button>
-          </form>
-          <span className="eyebrow">A free 30-minute conversation</span>
-          <h2 id="studio-dialog-title" className="disp">
-            Arrange a
-            <br />
-            call with Sam.
-          </h2>
-          <p>
-            Email Sam with a sentence or two about what you need help with.
-            He’ll reply to arrange a time.
-          </p>
-          <a href={EMAIL_LINK} className="btn btn--ink">
-            Email Sam <Arrow diagonal />
-          </a>
-          <a href={EMAIL_LINK} className="studio-contact-email">
-            sam@mlai.au
-          </a>
-          <p className="studio-dialog-small">The first 30 minutes are free.</p>
-        </div>
-      </dialog>
     </div>
   );
 }
