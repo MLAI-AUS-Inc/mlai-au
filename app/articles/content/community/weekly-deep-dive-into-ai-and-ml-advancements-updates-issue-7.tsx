@@ -32,11 +32,11 @@ export default function ArticlePage() {
    <p>The <a href="https://openvla.github.io/">project page</a> describes image/language inputs and tokenised actions decoded into continuous actions. It distinguishes direct WidowX/Google robot evaluations from fine-tuned Franka demonstrations. That distinction does not support a claim that any robot can be controlled by a prompt without integration or adaptation.</p>
    <p><a href="https://arxiv.org/html/2406.09246v3#S6">Section 6</a> identifies single-image input limitations, inference-throughput constraints and task success typically below 90%. Those limitations concern this paper’s model, not every later robotics system. Sources checked 9 September 2026.</p>
    <h2 id="reading">Ask three different questions</h2>
-   <table><thead><tr><th>Question</th><th>What to look for</th><th>What would overreach</th></tr></thead><tbody>
+   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Robotics research claim boundaries" tabIndex={0}><table><thead><tr><th>Question</th><th>What to look for</th><th>What would overreach</th></tr></thead><tbody>
     <tr><td>What happened in the experiment?</td><td>Named baseline, metric, trial conditions and uncertainty</td><td>Turning a comparison into “robots can now do anything”</td></tr>
     <tr><td>What changed for another setup?</td><td>Training data, calibration, sensors, action interface and adaptation</td><td>Assuming the same model label means the same tested system</td></tr>
     <tr><td>What would a real application require?</td><td>Evidence for the intended task, failures, operating conditions, costs and safety process</td><td>Treating a research result as approval to operate around people</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <p>This is an editorial reading framework, not a deployment checklist. Do not operate physical equipment from this article. A qualified robotics team must assess the actual system and environment; an event discussion or model benchmark cannot provide that approval.</p>
    <h2 id="units">Percentage points are not relative percent</h2>
    <p><strong>Fictional arithmetic, not OpenVLA trial data:</strong> if one system succeeds on 40 of 100 attempts and another on 50 of 100, the success rates are 40% and 50%. The absolute difference is 10 percentage points; the relative increase is 10 ÷ 40 = 25%. Neither number says which failures occurred or whether a new task will behave similarly.</p>

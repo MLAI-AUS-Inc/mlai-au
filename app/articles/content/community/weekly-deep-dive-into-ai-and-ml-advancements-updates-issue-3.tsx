@@ -32,13 +32,13 @@ export default function ArticlePage() {
    <p>The abstract reports estimates above 29 Wh for some long prompts and a spread exceeding 65 times between systems. These are attributed results within its framework—not current measurements for your requests. This revision checked the abstract and version history, not a complete reanalysis of its data or assumptions.</p>
    <p>Our interpretation: a useful discussion starts by identifying how a number was obtained. Do not repeat a dramatic comparison without its workload and uncertainty. A dated estimate can be informative without becoming a universal constant.</p>
    <h2 id="boundaries">Five checks before comparing two headlines</h2>
-   <table><thead><tr><th>Check</th><th>Question to ask</th><th>Common mismatch</th></tr></thead><tbody>
+   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Environmental footprint claim boundaries" tabIndex={0}><table><thead><tr><th>Check</th><th>Question to ask</th><th>Common mismatch</th></tr></thead><tbody>
     <tr><td>Unit and denominator</td><td>Is it Wh per request, per token, per completed task or for an entire period?</td><td>Comparing a single answer with a multi-step workflow</td></tr>
     <tr><td>Workload</td><td>What input/output lengths, reasoning settings, retries and caching assumptions apply?</td><td>Comparing short drafts with long reasoning runs</td></tr>
     <tr><td>System boundary</td><td>Does it include only computation, facility overhead, training or hardware manufacture?</td><td>Treating an operational estimate as a whole-life total</td></tr>
     <tr><td>Location and date</td><td>Which infrastructure and environmental factors were used, and when?</td><td>Applying an overseas historical factor to an unknown deployment</td></tr>
     <tr><td>Method and uncertainty</td><td>Which inputs were measured, disclosed, inferred or assumed?</td><td>Presenting a modelled point estimate as exact metered consumption</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <p>For a water claim, also ask whether the quantity refers to withdrawal or consumption and whether electricity-related and on-site uses are included. For a carbon claim, ask which emissions boundary and conversion factor apply. Keep the terms used by the source; these quantities are not interchangeable labels.</p>
    <h2 id="scenario">A worked scenario—not your provider’s footprint</h2>
    <p><strong>Entirely hypothetical inputs:</strong> suppose an operational estimate is 0.5–1.5 Wh per request and a workflow makes 10,000 requests in a month. Assume the estimate already includes the overhead being discussed. No actual model or provider is represented.</p>

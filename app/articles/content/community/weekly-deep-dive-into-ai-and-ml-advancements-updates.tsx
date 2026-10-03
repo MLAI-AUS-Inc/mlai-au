@@ -31,17 +31,17 @@ export default function ArticlePage() {
    <p><a href="https://arxiv.org/abs/2510.06931v1">Stoppa and colleagues’ 2025 paper</a> studies real-versus-bogus optical transient classification across Pan-STARRS, MeerLICHT and ATLAS datasets. Its abstract reports 93% average accuracy using Gemini with 15 examples and concise instructions, alongside textual descriptions. It also describes a second model assessing output coherence.</p>
    <p>Those are the authors’ findings for that task, not an MLAI replication. The 15 examples are not the foundation model’s entire training history. A coherence check is not an independent ground-truth label. This revision checked the abstract and publication record; it does not verify every experiment or determine performance on a new dataset.</p>
    <h2 id="meaning">Separate three claims before repeating them</h2>
-   <table><thead><tr><th>Claim</th><th>Evidence needed</th><th>What not to infer</th></tr></thead><tbody>
+   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Scientific classification reading comparisons" tabIndex={0}><table><thead><tr><th>Claim</th><th>Evidence needed</th><th>What not to infer</th></tr></thead><tbody>
     <tr><td>The classification is correct.</td><td>A trustworthy reference label and the actual prediction</td><td>A convincing explanation must mean the label is correct</td></tr>
     <tr><td>The explanation describes visible evidence.</td><td>Comparison with the input and a qualified interpretation where needed</td><td>A second model agreeing establishes truth</td></tr>
     <tr><td>The approach transfers to another dataset.</td><td>An evaluation under that dataset’s conditions</td><td>The original average applies to any image task</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <h2 id="accuracy">A 95% score that misses every target</h2>
    <p><strong>Fictional arithmetic—not the paper’s data:</strong> imagine 1,000 labelled candidates: 50 genuine targets and 950 non-targets. A classifier labels every candidate a non-target.</p>
-   <table><thead><tr><th>Reference label</th><th>Predicted target</th><th>Predicted non-target</th></tr></thead><tbody>
+   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Scientific classification reading comparisons" tabIndex={0}><table><thead><tr><th>Reference label</th><th>Predicted target</th><th>Predicted non-target</th></tr></thead><tbody>
     <tr><td>50 actual targets</td><td>0</td><td>50</td></tr>
     <tr><td>950 actual non-targets</td><td>0</td><td>950</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <p>It gets 950 of 1,000 labels right: 95% accuracy. But it finds zero of the 50 targets: target recall is 0%. Precision for target predictions has a zero denominator because there are no positive predictions; do not present it as a meaningful measured percentage without stating the convention used.</p>
    <p>This does not show that the published study made this error. It shows why a headline score is insufficient by itself. Ask for class counts, the confusion matrix and the consequences of false positives and false negatives. A higher overall score need not answer the question you care about.</p>
    <h2 id="explanation">Exercise: turn an explanation into checkable observations</h2>
