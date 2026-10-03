@@ -1,0 +1,130 @@
+import { Link } from 'react-router'
+import { Home } from 'lucide-react'
+import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import ArticleConversionCTA from '../../../components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '../../seo-config'
+import AuthorBio from '../../../components/AuthorBio'
+import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import { ArticleReferences } from '../../../components/articles/ArticleReferences'
+import { getDefaultArticleAuthorDetails } from '../../authors'
+
+export const useCustomHeader = true
+export const CATEGORY = 'featured'
+export const SLUG = 'how-does-a-venture-capital-firm-work'
+export const DATE_PUBLISHED = '2025-11-27'
+export const DATE_MODIFIED = '2026-09-10'
+export const FEATURED_FOCUS = 'funding'
+const TOPIC = 'How a VC firm works: research the fund before a meeting'
+export const DESCRIPTION = 'Separate the firm, fund and decision-makers; use a dated Australian investor example and an editable research checklist to prepare a better funding conversation.'
+const AUTHOR = getDefaultArticleAuthorDetails()
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-69616611-a5ea-4b41-88f0-f07c970a38d2.jpg?alt=media&token=78aae951-a9f0-4ec5-86f7-1a86a0167850'
+const HERO_IMAGE_ALT = 'Illustration of laptop charts and cash beside a meeting room, with a small robot and Australian flag.'
+const SEC_SOURCE = 'https://www.sec.gov/resources-small-businesses/capital-raising-building-blocks/private-funds'
+const COOLEY_SOURCE = 'https://thefundlawyer.cooley.com/primer-structuring-the-general-partner-and-management-company-for-a-private-equity-or-venture-capital-fund/'
+const BLACKBIRD_SOURCE = 'https://www.blackbird.vc/get-investment'
+const ESVCLP_SOURCE = 'https://business.gov.au/grants-and-programs/early-stage-venture-capital-limited-partnerships'
+const PITCH_SOURCE = 'https://business.gov.au/finance/funding/pitch-for-venture-capital'
+
+export const articleMeta = {
+  title: TOPIC, topic: TOPIC, category: CATEGORY, slug: SLUG, description: DESCRIPTION,
+  datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED,
+  author: AUTHOR.name, image: HERO_IMAGE, imageAlt: HERO_IMAGE_ALT,
+}
+export const summaryHighlights = {
+  heading: 'Research the investor, not just the logo',
+  intro: 'For Australian founders learning how an investor works: produce a sourced meeting brief that separates what the firm states from what you still need to ask.',
+  items: [
+    { label: 'Is the firm the same as the fund?', description: 'No. A management business may work with multiple funds. Identify the actual investing entity and mandate rather than assuming the brand answers both.' },
+    { label: 'Does a partner meeting mean approval?', description: 'Not necessarily. Ask who owns the decision, what evidence is needed and what is still conditional.' },
+    { label: 'What does the checklist establish?', description: 'Only what you have sourced or confirmed. An unknown reserve, cheque size or timetable must remain unknown—not a guessed green light.' },
+  ],
+}
+export const faqItems = [
+  { id: 1, question: 'How do venture capital firms make money?', answer: 'Management fees support the management business, while carried interest links compensation to fund profits. The recipient, calculation base and distribution conditions depend on the structure and documents. This article establishes no standard Australian fee or carry percentage.' },
+  { id: 2, question: 'Is a venture fund the same as its management company?', answer: 'No. The fund holds investments; the management business provides the team and services. A general partner has a distinct role in a limited-partnership structure. Actual entities, delegated powers and agreements must be checked rather than inferred from a brand name.' },
+  { id: 3, question: 'Does every VC use an investment committee?', answer: 'Do not assume an identical process. The Blackbird example describes its published committee process; that is not evidence about every firm. Ask your contact which approvals apply and what remains outstanding.' },
+  { id: 4, question: 'Does a venture fund always last ten years?', answer: 'No universal duration is established here. As one specific Australian program example, ESVCLP guidance requires a qualifying partnership agreement with a five-to-fifteen-year existence period. That is not a promise of first-cheque availability, follow-on funding or a startup exit date.' },
+  { id: 5, question: 'Does ESVCLP registration mean my startup qualifies for funding?', answer: 'No. It is a fund registration and tax-support framework with eligibility and ongoing requirements, not approval of your company or a direct grant award. Check current official guidance and the actual fund mandate with appropriate advisers.' },
+  { id: 6, question: 'Can MLAI introduce me to the investor in this example?', answer: 'No introduction is included in this article or its event invitation. The example teaches source reading. Check the firm’s own current contact process if appropriate; an MLAI session is a separate community learning activity.' },
+]
+const references = [
+  { id: 1, href: SEC_SOURCE, title: 'Private Funds — 12 June 2024', publisher: 'US Securities and Exchange Commission', description: 'Fund/adviser distinction; US rules are not Australian requirements.', category: 'guide' },
+  { id: 2, href: COOLEY_SOURCE, title: 'Structuring the GP and management company — 17 June 2026', publisher: 'Cooley', description: 'US-context entity and economic distinctions; not a model Australian partnership agreement.', category: 'guide' },
+  { id: 3, href: BLACKBIRD_SOURCE, title: 'Get Investment', publisher: 'Blackbird', description: 'The firm’s own process and mandate description, checked 10 September 2026; not an MLAI endorsement.', category: 'guide' },
+  { id: 4, href: ESVCLP_SOURCE, title: 'Early Stage Venture Capital Limited Partnerships', publisher: 'Australian Government', description: 'Scope, registration and partnership requirements for this particular program.', category: 'government' },
+  { id: 5, href: PITCH_SOURCE, title: 'Pitch for venture capital', publisher: 'Australian Government', description: 'Researching investor specialisation and preparing company evidence.', category: 'government' },
+]
+
+export default function ArticlePage() {
+  return <>
+    <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: TOPIC, current: true }]}
+      title={TOPIC} titleHighlight="research the fund" headerBgColor="purple" summary={summaryHighlights} heroImage={HERO_IMAGE} heroImageAlt={HERO_IMAGE_ALT} />
+    <ArticleTocPlaceholder />
+    <div className="prose prose-lg prose-slate prose-headings:scroll-mt-24 max-w-none">
+      <p>A conversation with someone at a venture firm is not the same as an investment decision. This guide helps Australian founders and startup-curious readers prepare a sourced brief about one firm: who invests, what it says it backs and which questions remain open. It does not rank investors or recommend a transaction.</p>
+      <p>For the earlier choice of whether to investigate venture funding, start with the <Link to="/articles/featured/venture-capital-how-does-it-work">capital-choice primer</Link>. For share pricing and option pools, use the separate <Link to="/articles/featured/how-vcs-value-startups">valuation calculation guide</Link>. Here, the output is your research brief for a conversation.</p>
+
+      <h2>Separate the firm, fund and people</h2>
+      <p>The <a href={SEC_SOURCE}>SEC’s private-funds explainer</a> distinguishes pooled investment capital from its adviser. <a href={COOLEY_SOURCE}>Cooley’s June 2026 structure primer</a> further separates a fund, its general partner and the management company. These are US-context explanations; the table is a vocabulary aid, not a prescribed Australian legal structure.</p>
+      <div role="region" aria-label="Venture firm roles" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-purple-700">
+        <table className="min-w-[630px]"><caption>Identify the actual entity and authority; roles can be organised differently.</caption><thead><tr><th scope="col">Role</th><th scope="col">Meaning in this model</th><th scope="col">Research question</th></tr></thead><tbody>
+          <tr><th scope="row">Limited partners (LPs)</th><td>Investors in the fund, rather than direct participants in every startup discussion.</td><td>Am I confusing fund investors with the company’s proposed shareholders?</td></tr>
+          <tr><th scope="row">Fund</th><td>The investment vehicle that holds portfolio assets.</td><td>Which vehicle and investment mandate are relevant to this conversation?</td></tr>
+          <tr><th scope="row">General partner (GP)</th><td>Controls the fund under a limited-partnership arrangement.</td><td>Which entity has authority under the actual agreements?</td></tr>
+          <tr><th scope="row">Management company</th><td>The operating business supplying people and services, potentially to multiple funds.</td><td>Who provides support, and which promises are documented?</td></tr>
+          <tr><th scope="row">Individual contact or committee</th><td>A person or group involved in that firm’s decision process.</td><td>Who can recommend, approve and sign—and what is still conditional?</td></tr>
+        </tbody></table>
+      </div>
+      <h3>Fees and carry are different from startup ownership</h3>
+      <p>Cooley describes management fees as supporting the operating business and carried interest as participation in fund profits. Their recipients and conditions depend on the structure. Carry is not the percentage of your startup sold in a round. Neither a brand name nor a headline fund size discloses the actual fee terms, remaining investable capital or willingness to support your company later.</p>
+      <p>Ask about the matters relevant to your relationship: current first-investment activity, follow-on decision criteria, reporting expectations and the people who would work with you. A stated intention to support companies is not a contractual follow-on commitment.</p>
+
+      <h2 id="source-reading-example">Read one actual firm's process without guessing the rest</h2>
+      <p><a href={BLACKBIRD_SOURCE}>Blackbird’s Get Investment page</a>, checked 10 September 2026, is used because it publishes a process and investment FAQ. This is a source-reading example, not a shortlist, ranking or endorsement. The following records the firm’s statements, not independently verified service outcomes.</p>
+      <div role="region" aria-label="Blackbird source-reading example" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-purple-700">
+        <table className="min-w-[660px]"><caption>Published statements versus questions that still need confirmation.</caption><thead><tr><th scope="col">Topic</th><th scope="col">What the page states</th><th scope="col">What it does not establish</th></tr></thead><tbody>
+          <tr><th scope="row">Geographic connection</th><td>A strong founder connection to Australia or New Zealand matters, not location alone.</td><td>Whether your specific connection qualifies.</td></tr>
+          <tr><th scope="row">Stage</th><td>It considers pre-product/pre-revenue teams and also later rounds.</td><td>Approval of a particular company or a universal sector rule.</td></tr>
+          <tr><th scope="row">Contact</th><td>A direct pitch route is available without a warm introduction.</td><td>A guaranteed response date or invitation for this reader.</td></tr>
+          <tr><th scope="row">Decision</th><td>Its investment team develops the case for committee consideration before approval and terms.</td><td>That an encouraging first meeting is a completed decision.</td></tr>
+          <tr><th scope="row">Current deal</th><td>The public process is a starting point.</td><td>Your cheque size, investing vehicle, available reserves or final conditions.</td></tr>
+        </tbody></table>
+      </div>
+      <p>Keep a check date beside the source. A previous portfolio investment shows a historical investment, not today’s mandate or an obligation to consider a similar company. Reconfirm material details before acting; do not turn this snapshot into a personalised suitability score.</p>
+
+      <h2>A fund life is not your fundraising deadline</h2>
+      <p>One concrete Australian example is the <a href={ESVCLP_SOURCE}>ESVCLP program</a>. Its guidance describes registration and tax benefits for qualifying partnerships; the partnership agreement must provide for existence between five and fifteen years. That program requirement is not a market-average fund life or a startup exit timetable.</p>
+      <p>The official page also flags announced future cap changes subject to legislation. Do not treat proposed changes as current eligibility. This guide is not a tax assessment: verify the applicable rules, registration status and investment conditions with qualified advisers. A registered fund does not make every company eligible, and the scheme is not a direct grant application for your startup.</p>
+
+      <h2 id="firm-research-exercise">Turn an encouraging email into a precise next question</h2>
+      <p><strong>Fictional exercise:</strong> Leila receives an email from “Harbour Seed”, an invented firm unrelated to Blackbird: “We like the demo. Could you send pilot results before our partner discussion?” The message names no investing vehicle, amount, approval or closing date.</p>
+      <ul>
+        <li><strong>Confirmed in the fictional message:</strong> someone requested pilot results for a discussion.</li>
+        <li><strong>Not confirmed:</strong> an approved investment, a lead commitment or permission to circulate identifiable customer records.</li>
+        <li><strong>Useful reply question:</strong> “Which pilot measures would help, who will review them, and what decision would follow?”</li>
+        <li><strong>Evidence to prepare:</strong> a dated, appropriately redacted summary that distinguishes completed use, unpaid trials and collected revenue, with permission checks before sharing.</li>
+        <li><strong>Record the outcome:</strong> if the reply asks for more evidence, keep the state as “information requested”; do not promote it to “approved”.</li>
+      </ul>
+      <p>This is a reasoning exercise, not a suggested disclosure to an unverified contact. Verify identity and the agreed sharing scope before sending confidential material. The Australian Government’s <a href={PITCH_SOURCE}>pitch preparation guidance</a> supports researching the investor and preparing company evidence, but does not validate the fictional firm or its request.</p>
+
+      <h2 id="funding-discussion-record">Build the research brief you can actually use</h2>
+      <p>For each item record a source/date, a confirmed fact or explicit unknown, and the next question. Do not mark an item complete simply because you have a link. The editable file contains a filled fictional example, blank checklist and claim-by-claim sharing log.</p>
+      <pre className="whitespace-pre-wrap break-words text-sm" aria-label="Funding discussion record">{[
+        'Firm and official source/date:', 'Stated stage, geography and sector:',
+        'What is confirmed versus inferred about its mandate:', 'Decision-maker and process questions:',
+        'Information requested and permission to share it:', 'Unresolved fit question and next agreed step:',
+      ].join('\n')}</pre>
+      <p><a href="/downloads/venture-learning/firm-research-checklist.md" download>Download the firm research checklist and worked brief (.md)</a>. This is a preparation aid, not legal due diligence, investor accreditation or a deal recommendation.</p>
+      <p>If your separate task is reporting progress to existing stakeholders, <Link to="/vibe-raising">explore Vibe Raising for a factual progress update</Link>. Use verified inputs and label estimates; it does not assess an investor or verify the evidence for you.</p>
+      <p>Bring one general process question to a relevant MLAI founder session, in person or online. Check the topic and level; leave confidential deal information out of the group conversation. Attendance does not include access to Blackbird or another investor.</p>
+      <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+      <p>Sources checked 10 September 2026. Independent financial/legal review is pending. Primary-source attribution does not mean the source publisher reviewed or endorsed this article.</p>
+      <ArticleReferences references={references} heading="Sources" />
+      <ArticleFAQ items={faqItems} />
+      <AuthorBio author={{ name: AUTHOR.name, role: AUTHOR.role ?? AUTHOR.credentials, bio: AUTHOR.bio, avatarUrl: AUTHOR.avatarUrl }} />
+      <ArticleFooterNav />
+    </div>
+  </>
+}

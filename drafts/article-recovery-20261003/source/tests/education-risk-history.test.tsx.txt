@@ -1,0 +1,101 @@
+import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import * as Risks from '../app/articles/content/featured/how-technology-affects-education-negatively';
+import * as History from '../app/articles/content/featured/how-technology-has-changed-education';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+import ArticleConversionCTA from '../app/components/articles/ArticleConversionCTA';
+
+function render(module: typeof Risks | typeof History) {
+  const Article = module.default;
+  return renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+}
+
+test('education rewrites preserve public identity and explicit no-offer disposition', () => {
+  const baseline = JSON.parse(readFileSync('docs/article-audit-2026-09-09/support/registry-main.json', 'utf8'));
+  for (const module of [Risks, History]) {
+    const slug = module.CATEGORY + '/' + module.SLUG;
+    const entry = ARTICLE_REGISTRY[slug];
+    const conversion = BASE_ARTICLE_SEO_CONFIG['/articles/' + slug].conversion!;
+    expect(module.DATE_PUBLISHED).toBe(baseline[slug].date);
+    expect(entry.date).toBe(module.DATE_PUBLISHED);
+    expect(entry.dateModified).toBe(module.DATE_MODIFIED);
+    expect(entry.title).toBe(module.articleMeta.title);
+    expect(entry.description).toBe(module.DESCRIPTION);
+    expect(entry.author).toBe(module.articleMeta.author);
+    expect(entry.imageAlt).toBe(module.articleMeta.imageAlt);
+    expect(conversion.primaryIcp).toBe('OUTSIDE');
+    expect(conversion.primary).toBe('none');
+    expect(renderToStaticMarkup(<MemoryRouter><ArticleConversionCTA articleSlug={slug} config={conversion} events={[]} /></MemoryRouter>)).toBe('');
+    const html = render(module);
+    expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+    expect(html).toContain('role="region"');
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('prose-headings:scroll-mt-24');
+    expect(html).toContain('whitespace-pre-wrap break-words');
+    for (const residue of ['Download now', 'Get recommendations', 'Founders &amp; Teams', 'Brief, factual overview', 'href="#"', 'href="/contact"', 'href="/mlai-studio']) {
+      expect(html).not.toContain(residue);
+    }
+    const source = readFileSync('app/articles/content/' + slug + '.tsx', 'utf8');
+    expect(source).not.toContain('MLAITemplateResourceCTA');
+    expect(source).not.toContain('AudienceGrid');
+  }
+});
+
+test('risk guide distinguishes evidence, jurisdiction and an unapproved fictional trial', () => {
+  const html = render(Risks);
+  for (const text of [
+    'PISA 2022 Results, Volume II, chapter 3',
+    'across OECD countries', 'student reports and statistical associations',
+    'not newly collected in 2026', 'state or territory privacy laws may apply instead',
+    'https://www.oaic.gov.au/privacy/your-privacy-rights/more-privacy-rights/children-and-young-people',
+    'neither makes a tool compliant or suitable by itself',
+    'Invented staff-planning example—not a classroom trial',
+    'complete editorial review fixtures, not observed output from an AI product',
+    '2/4 + 1/4 = 3/4', 'That rule would instead produce 2/6',
+    'Compare 8/12 with 9/12', 'No quantity is supplied',
+    '36 staff-minutes', 'six minutes more, not a saving',
+    'correct final answer with an invalid explanation', 'do not proceed to student use',
+    'Classroom technology risk record', 'condition for pausing:',
+    'Responsible person and authorised decision-maker:', 'It makes no medical claim',
+    '/articles/featured/how-technology-has-changed-education',
+  ]) expect(html).toContain(text);
+  expect(10 + 8 + 18).toBe(36);
+  expect(36 - 30).toBe(6);
+  expect(1 / 2 + 1 / 4).toBe(3 / 4);
+  expect((1 + 1) / (2 + 4)).not.toBe(3 / 4);
+  expect(3 / 4).toBeGreaterThan(2 / 3);
+  for (const unsupported of ['effects are strongest', 'sleep disruption and mood', 'Require SSO', 'evidence actually says (Australia)', 'aitsl.edu.au/research/spotlights']) {
+    expect(html).not.toContain(unsupported);
+  }
+});
+
+test('history uses dated Australian sources without turning adoption into measured improvement', () => {
+  const html = render(History);
+  for (const text of [
+    'Four dated changes', 'https://www.assoa.nt.edu.au/about/',
+    '1951', 'ANAO audit, published 17 February 2011',
+    'application rounds in 2008–09', 'A programme target is not proof it was met',
+    'NSW learning-from-home snapshots, originally published 14 July 2020',
+    '2023 resource / 2025 review endorsement',
+    'The resource page was created in November 2023',
+    '2024 Framework Review in June 2025',
+    '2020 Rowena Public School account', 'not a controlled study',
+    'Entirely fictional school dashboard—not an Australian study',
+    '12 of those 18 submit', 'Of those 12 submitters, eight',
+    '18/24 = 75%', '12/24 = 50%', 'about 67% of openers',
+    'We cannot estimate improvement from these counts',
+    'Education history and evidence record',
+    '/articles/featured/how-technology-affects-education-negatively',
+  ]) expect(html).toContain(text);
+  expect(18 / 24 * 100).toBe(75);
+  expect(12 / 24 * 100).toBe(50);
+  expect(Math.round(12 / 18 * 100)).toBe(67);
+  expect(Math.round(8 / 12 * 100)).toBe(67);
+  expect(Math.round(8 / 24 * 100)).toBe(33);
+  for (const unsupported of ['digital‑by‑default', 'classrooms are hybrid‑ready', 'strongest improvements come', '2–3 week pilot', 'education.purdue.edu', 'studyonline.ecu.edu.au']) {
+    expect(html).not.toContain(unsupported);
+  }
+});

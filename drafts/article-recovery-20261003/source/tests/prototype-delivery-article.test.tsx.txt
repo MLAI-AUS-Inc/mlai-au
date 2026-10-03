@@ -1,0 +1,78 @@
+import { test, expect } from 'bun:test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import Article from '../app/articles/content/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence';
+import { articleMeta, DATE_PUBLISHED, DESCRIPTION } from '../app/articles/content/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+import { EVENT_REPLY_LAB as LAB, EVENT_REPLY_FILES } from '../app/lib/event-reply-lab';
+import { runExperiment } from '../public/downloads/event-reply-lab/lab.mjs';
+import { spawnSync } from 'node:child_process';
+test('prototype guide gives builder evidence and honest evaluation scope', async () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+ expect(html).toContain('data-article-icp="BUILDER"');
+ expect(html).toContain('Apply with your delivery evidence');
+ expect(html).toContain('not a statistically representative benchmark');
+ expect(html).toContain('Training a new model is an option');
+ expect(html).toContain('dividing-datasets');
+ expect(html).not.toContain('30% rule');
+ const resource = await Bun.file('public/downloads/ai-prototype-delivery-contract.txt').text();
+ expect(resource).toContain('Actual output (UNRUN until executed)');
+ expect(resource).toContain('Rules match 4/8 expected intents');
+ expect(resource).toContain('No independent human approval: PENDING');
+});
+
+test('prototype numbers, trace and failures agree with every actual executable result', async () => {
+ const fixture = await Bun.file('public/downloads/event-reply-lab/synthetic-fixture.json').json();
+ const recorded = await Bun.file('public/downloads/event-reply-lab/recorded-result.json').json();
+ expect(await runExperiment(fixture)).toEqual(recorded);
+ expect(recorded.version).toBe(LAB.version);
+ expect(recorded.trainingExamples).toBe(LAB.trainingExamples);
+ expect(recorded.routing).toEqual({ total: LAB.evaluationCases, baselineCorrect: LAB.baselineCorrect, candidateCorrect: LAB.candidateCorrect });
+ expect(recorded.cases[2].question).toBe(LAB.exampleQuestion);
+ expect(recorded.cases[2].candidateReply.draft).toBe(LAB.exampleDraft);
+ expect(recorded.cases[7].question).toBe(LAB.failureQuestion);
+ expect(recorded.cases[7].candidateIntent).toBe('time');
+ expect(recorded.cases[7].expectedIntent).toBe('other');
+ expect(recorded.cases[5].candidateIntent).toBe('location');
+ expect(recorded.cases[5].candidateReply.status).toBe('refused');
+});
+
+test('prototype supplies all runnable files, a real failure and keyboard-accessible evidence tables', async () => {
+ const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>).replace(/<!--.*?-->/g, '');
+ expect(EVENT_REPLY_FILES).toHaveLength(6);
+ for (const file of EVENT_REPLY_FILES) {
+  expect(await Bun.file(`public${file.href}`).exists()).toBe(true);
+  expect(html).toContain(`href="${file.href}" download=""`);
+ }
+ for (const label of ['Event prototype acceptance contract', 'Recorded event prototype results', 'Prototype failure checks']) {
+  expect(html).toContain(`role="region" aria-label="${label}" tabindex="0"`);
+ }
+ for (const text of ['4 / 8', '6 / 8', LAB.failureQuestion, 'Reject this draft', 'not an LLM',
+  'No independent human reviewer has approved', 'no such tool', 'not sandboxed', '/events']) expect(html).toContain(text);
+ const readme = await Bun.file('public/downloads/event-reply-lab/README.md').text();
+ for (const text of ['NOT an independent blind', 'An AI coding assistant drafted', 'Client permission', 'PENDING', 'not sandboxed', 'node --test lab.test.mjs']) expect(readme).toContain(text);
+});
+
+test('prototype metadata and current conversion agree with the canonical registry', () => {
+ const entry = ARTICLE_REGISTRY['featured/a-practical-guide-on-how-to-create-an-artificial-intelligence'];
+ expect(entry.title).toBe(articleMeta.title);
+ expect(entry.date).toBe(DATE_PUBLISHED);
+ expect(entry.dateModified).toBe(articleMeta.dateModified);
+ expect(entry.description).toBe(DESCRIPTION);
+ expect(entry.image).toBe(articleMeta.image);
+ expect(entry.imageAlt).toBe(articleMeta.imageAlt);
+ expect(articleMeta.dateModified).toBe(LAB.checked);
+ const config = BASE_ARTICLE_SEO_CONFIG['/articles/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence'].conversion!;
+ expect(config.primary).toBe('studio-builder'); expect(config.primaryIcp).toBe('BUILDER');
+ expect(config.version).toBe('prototype-delivery-v3');
+ expect(config.copy?.body).toContain('beyond this teaching lab');
+});
+
+test('the exact downloadable calculation and failure suite executes before publication', () => {
+ const result = spawnSync('node', ['--test', 'public/downloads/event-reply-lab/lab.test.mjs'], { encoding: 'utf8', timeout: 20_000 });
+ expect(result.status).toBe(0);
+ expect(result.error).toBeUndefined();
+ expect(result.stdout).toContain(`tests ${LAB.tests}`);
+ expect(result.stdout).toContain('fail 0');
+});

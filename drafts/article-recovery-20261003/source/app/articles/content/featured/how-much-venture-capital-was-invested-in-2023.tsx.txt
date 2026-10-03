@@ -1,0 +1,80 @@
+import { Home } from 'lucide-react'
+import { Link } from 'react-router'
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
+
+export const useCustomHeader = true
+export const CATEGORY = 'featured'
+export const SLUG = 'how-much-venture-capital-was-invested-in-2023'
+export const DATE_PUBLISHED = '2025-12-17'
+export const DATE_MODIFIED = '2026-09-09'
+export const DESCRIPTION = 'Compare the reported 2023 global venture funding totals, keep source definitions attached, and practise distinguishing total, mean and median deal size.'
+export const FEATURED_FOCUS = 'funding'
+const TITLE = 'How much venture capital was invested in 2023?'
+const CRUNCHBASE = 'https://news.crunchbase.com/venture/global-funding-data-analysis-ai-eoy-2023/'
+const CBINSIGHTS = 'https://www.cbinsights.com/research/report/venture-trends-2023/'
+export const faqItems = [
+ { id: 1, question: 'Is the difference between the reports an uncertainty interval?', answer: 'No. Two provider totals are not the endpoints of a statistical confidence interval. Attribute each figure to its report; this article has not reconciled the underlying transactions.' },
+ { id: 2, question: 'Should I replace a funding total with a median?', answer: 'No. The total answers how much was recorded across the included deals. The median describes the middle deal size. Both can be useful, but they answer different questions.' },
+ { id: 3, question: 'Does a global funding total show what an Australian startup can raise?', answer: 'No. It does not establish the terms available to a particular company, local hiring demand or present-day investor appetite. Those require different, current evidence.' },
+]
+export default function ArticleContent() {
+ return <div className="bg-white">
+  <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: TITLE, current: true }]}
+   title={TITLE} titleHighlight="in 2023?" headerBgColor="cyan"
+   summary={{ heading: 'Read the number with its source', intro: 'A historical statistics guide for startup-curious readers, not a forecast of available funding.', items: [
+    { label: 'Reported totals', description: 'The answer depends on the named dataset; see the dated source comparison below.' },
+    { label: 'Different questions', description: 'Total dollars, number of deals and typical deal size are not interchangeable.' },
+    { label: 'Practical output', description: 'Create a citation record that keeps the scope and unknowns attached.' },
+   ] }}
+  />
+  <article className="prose prose-lg max-w-3xl mx-auto px-4 py-10">
+   <p><strong>For global venture funding in calendar 2023, Crunchbase reported US$285 billion and CB Insights reported US$248.4 billion.</strong> These are separately reported totals, not a combined estimate or confidence interval. Use the named source rather than an unattributed range. <a href={CRUNCHBASE}>Crunchbase report</a>; <a href={CBINSIGHTS}>CB Insights report summary</a>.</p>
+   <p>This guide is for Australian startup-community readers who want to interpret a funding headline or cite it accurately. It does not estimate what your company can raise or recommend an investment.</p>
+   <h2 id="sources">What the two reports actually say</h2>
+   <table><thead><tr><th>Report published 4 January 2024</th><th>2023 global total</th><th>Comparison within that report</th></tr></thead><tbody>
+    <tr><td><a href={CRUNCHBASE}>Crunchbase News, Gené Teare</a></td><td>US$285 billion</td><td>Down 38% from its reported US$462 billion for 2022</td></tr>
+    <tr><td><a href={CBINSIGHTS}>CB Insights, State of Venture 2023</a></td><td>US$248.4 billion</td><td>Down 42% year on year</td></tr>
+   </tbody></table>
+   <p>Crunchbase dates its data to 3 January 2024 and notes reporting lags, particularly at seed stage. CB Insights provides a public summary; its full customer report and underlying deal data were not inspected here. These figures describe those historical publications, not a fresh export from either database.</p>
+   <p><strong>Correction, 9 September 2026:</strong> the earlier version described second-half stabilisation. Crunchbase instead calls Q4 the lowest funding quarter of 2023, while CB Insights reports Q4 equity funding at its lowest quarterly level since Q1 2017. The previous broad stability claim was not supported by these sources.</p>
+   <h2 id="comparison">Do not invent an explanation for the difference</h2>
+   <p>The two headline totals differ by US$36.6 billion. That subtraction does not tell us which transactions account for the gap. We have not reconciled the datasets, so we cannot allocate it to debt, stage definitions, geography or reporting delays.</p>
+   <p>Before comparing another number, check its reporting period, currency, geographic assignment, eligible transaction types, company-stage rules and data cutoff. Record exclusions only when the provider documents them. If a methodology is unavailable, mark the comparison unresolved rather than guessing that both reports count the same things.</p>
+   <p>For a year-on-year chart, use the same provider and compatible definitions for both years. Do not join one provider’s 2023 value to another provider’s 2024 value and label the result market growth without checking comparability.</p>
+   <h2 id="example">A large total does not describe the typical deal</h2>
+   <p><strong>Fictional teaching example, amounts in millions of US dollars—not actual 2023 deals:</strong> suppose a dataset contains five rounds of 1, 1, 2, 3 and 93.</p>
+   <table><thead><tr><th>Measure</th><th>Calculation</th><th>Question it answers</th></tr></thead><tbody>
+    <tr><td>Total funding</td><td>1 + 1 + 2 + 3 + 93 = 100 million</td><td>How much is recorded across these rounds?</td></tr>
+    <tr><td>Deal count</td><td>5</td><td>How many rounds are included?</td></tr>
+    <tr><td>Mean deal size</td><td>100 ÷ 5 = 20 million</td><td>What is the arithmetic average?</td></tr>
+    <tr><td>Median deal size</td><td>2 million, the middle sorted value</td><td>Where is the midpoint of the deal-size distribution?</td></tr>
+   </tbody></table>
+   <p>Four of the five rounds are smaller than the mean. If the 93-million round is excluded, total funding becomes 7 million and mean size 1.75 million; the median is then 1.5 million. That is a different dataset, not a correction you can silently make. Report why an exclusion is relevant and retain the original result for comparison.</p>
+   <p>The old guide advised preferring medians without explaining this distinction. A median cannot answer the title’s total-funding question. Nor does a mean or median represent an offer available to a particular founder.</p>
+   <h2 id="record">Copy a funding-statistic citation record</h2>
+   <pre className="whitespace-pre-wrap" aria-label="Funding statistic citation record">{[
+    'Question this statistic is intended to answer:',
+    'Publisher, report title and direct source URL:',
+    'Publication date and data cutoff, if stated:',
+    'Reporting period, currency and geography:',
+    'Metric: total, count, mean, median or another measure:',
+    'Included transactions and documented exclusions:',
+    'Reported value and unit:',
+    'Comparison value from a compatible source/version:',
+    'Missing methodology or unresolved differences:',
+    'What this statistic does not establish:',
+   ].join('\n')}</pre>
+   <p>A defensible sentence names the provider, period, geography, metric and unit. Add a caveat when a comparison or cutoff is unresolved. Avoid turning “funding was recorded” into “funding is available to us”.</p>
+   <h2 id="australia">What an Australian reader should do next</h2>
+   <p>For an Australian market question, find a dated Australian dataset and inspect how it assigns companies and rounds to the country. A global total cannot supply that answer. For a current hiring question, check actual vacancies and company information; the historical aggregate does not establish a hiring forecast.</p>
+   <p>If you need the underlying concepts first, read <Link to="/articles/featured/venture-capital-how-does-it-work">how venture capital works</Link>. To explore startup research with other people, bring one clearly sourced statistic and one unresolved question to a relevant event. Community discussion is a learning opportunity, not investment advice or a funding introduction.</p>
+   <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+   <h2 id="scope">Source and exercise scope</h2>
+   <p>The linked historical reports were checked on 9 September 2026. The worked deal-size example and citation record are original editorial teaching material. They are not transaction research, an investment recommendation, or evidence of current Australian fundraising conditions.</p>
+   <ArticleFAQ items={faqItems} />
+  </article>
+ </div>
+}

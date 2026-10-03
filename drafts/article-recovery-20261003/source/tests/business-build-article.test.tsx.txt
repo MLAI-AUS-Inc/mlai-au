@@ -1,0 +1,95 @@
+import { expect, test } from "bun:test";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import Article, { articleMeta, PROJECT_BRIEF_TEMPLATE } from "../app/articles/content/featured/how-to-build-ai-for-real-business-problems";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+import {
+  COMMISSIONING_BRIEF_FIELDS, COMMISSIONING_BRIEF_VERSION, COMMISSIONING_COST_ITEMS,
+  COMMISSIONING_DOWNLOAD_PATH, COMMISSIONING_EXAMPLE_INPUTS, COMMISSIONING_EXAMPLE_RESULT,
+  COMMISSIONING_HANDOVER_STEPS, commissioningAud, commissioningBriefText,
+} from "../app/lib/business-ai-commissioning";
+
+test("business commissioning guide contains a usable brief, acceptance matrix and owner offer", () => {
+  const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+  expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+  for (const text of ["Required output and human approval:", "Critical stop conditions and manual fallback:", "Deliverables, access ownership and support boundary:"]) expect(PROJECT_BRIEF_TEMPLATE).toContain(text);
+  for (const text of ["Timeout or repeated processing", "Access revoked", "Missing or contradictory policy", "Discuss a scoped AI build", 'data-article-icp="SMB"', "/mlai-studio/start-project"]) expect(html).toContain(text);
+  for (const text of ["For build ai responsibly", "Authoritative reference supporting", "build ai?", "FAQPage", "Download the checklist"]) expect(html).not.toContain(text);
+  expect(html).toContain("not a reported client engagement");
+  expect(html).toContain("Do not assume a briefing call");
+});
+
+test("business commissioning metadata and conversion match the canonical registry", () => {
+  const entry = ARTICLE_REGISTRY["featured/how-to-build-ai-for-real-business-problems"];
+  expect(entry.title).toBe(articleMeta.title);
+  expect(entry.date).toBe(articleMeta.datePublished);
+  expect(entry.dateModified).toBe(articleMeta.dateModified);
+  expect(entry.description).toBe(articleMeta.description);
+  const config = BASE_ARTICLE_SEO_CONFIG["/articles/featured/how-to-build-ai-for-real-business-problems"];
+  expect(config.conversion?.primaryIcp).toBe("SMB");
+  expect(config.conversion?.primary).toBe("studio-project");
+  expect(config.conversion?.version).toBe("smb-commissioning-v3");
+  expect(articleMeta.dateModified).toBe(COMMISSIONING_BRIEF_VERSION);
+});
+
+test("all thirteen brief fields have usable examples, including version and decision authority", () => {
+  expect(COMMISSIONING_BRIEF_FIELDS).toHaveLength(13);
+  expect(new Set(COMMISSIONING_BRIEF_FIELDS.map(field => field.label)).size).toBe(13);
+  expect(PROJECT_BRIEF_TEMPLATE.split("\n")).toHaveLength(14);
+  const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+  const download = commissioningBriefText();
+  for (const field of COMMISSIONING_BRIEF_FIELDS) {
+    expect(field.example.length).toBeGreaterThan(100);
+    expect(PROJECT_BRIEF_TEMPLATE).toContain(`${field.label}:`);
+    expect(html).toContain(renderToStaticMarkup(<dt className="font-bold">{COMMISSIONING_BRIEF_FIELDS.indexOf(field) + 1}. {field.label}</dt>));
+    expect(html).toContain(renderToStaticMarkup(<dd className="ml-0 mt-1">{field.example}</dd>));
+    expect(download).toContain(field.example);
+  }
+  expect(download).toContain("Version, change approval and review record:");
+  expect(download).toContain("NOT RUN");
+  expect(download).toContain("Decision: NOT APPROVED");
+});
+
+test("commissioning costs use whole-task effort without turning salaried capacity into cash", () => {
+  expect(COMMISSIONING_COST_ITEMS.map(item => item.cash)).toEqual([600, 2400, 600]);
+  expect(COMMISSIONING_EXAMPLE_INPUTS.setupCashCost).toBe(3600);
+  const r = COMMISSIONING_EXAMPLE_RESULT;
+  expect(COMMISSIONING_EXAMPLE_INPUTS.monthlyTasks * COMMISSIONING_EXAMPLE_INPUTS.baselineMinutes / 60).toBe(20);
+  expect(COMMISSIONING_EXAMPLE_INPUTS.monthlyTasks * COMMISSIONING_EXAMPLE_INPUTS.pilotMinutes / 60).toBe(12);
+  expect(r.releasedHours).toBe(8);
+  expect(r.netHours).toBe(6);
+  expect(r.capacityValue).toBe(270);
+  expect(r.netCapacityValue).toBe(170);
+  expect(r.avoidableLabourSpend).toBe(0);
+  expect(r.monthlyCashChange).toBe(-100);
+  expect(r.setupEconomicCost).toBe(4050);
+  expect(r.cashPaybackMonths).toBeNull();
+  expect(commissioningAud(3600)).toBe("A$3,600");
+  expect(commissioningAud(-100)).toBe("−A$100");
+});
+
+test("rendered worked costs and handover distinguish proposed evidence from observed results", () => {
+  const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+  for (const text of ["A$3,600", "A$4,050 total economic setup", "6 net hours/month", "A$170/month", "−A$100", "no positive cash payback", "tests NOT RUN; handover not performed; release NOT APPROVED", "not a promise of unlimited support"]) expect(html).toContain(text);
+  for (const step of COMMISSIONING_HANDOVER_STEPS) {
+    expect(html).toContain(renderToStaticMarkup(<strong>{step.owner}:</strong>));
+    expect(commissioningBriefText()).toContain(step.check);
+  }
+  expect(html).toContain('role="region" aria-label="Illustrative commissioning costs" tabindex="0"');
+  expect(html).toContain('id="worked-brief"');
+  expect(html).toContain('id="worked-costs"');
+  expect(html).toContain('id="worked-handover"');
+  expect(html).toContain("[&amp;_h3]:scroll-mt-20");
+  expect(html).toContain("not automatically attached to the Studio form");
+  expect(html).toContain(`href="${COMMISSIONING_DOWNLOAD_PATH}" download=""`);
+});
+
+test("the downloadable brief exactly matches the versioned example and includes a real acceptance record", async () => {
+  const file = Bun.file(`public${COMMISSIONING_DOWNLOAD_PATH}`);
+  expect(await file.exists()).toBe(true);
+  const text = await file.text();
+  expect(text).toBe(commissioningBriefText());
+  for (const required of ["BLANK BRIEF", "COMPLETED FICTIONAL BRIEF", "ILLUSTRATIVE COST RECORD", "PROPOSED HANDOVER — NOT YET PERFORMED", "ACCEPTANCE RECORD TO COMPLETE AFTER ACTUAL TESTING", "actual result and evidence reference:", "no client results, MLAI price or supplier quote", "SOURCE ROLES — checked 10 September 2026"]) expect(text).toContain(required);
+  expect(text.endsWith("\n")).toBe(true);
+});

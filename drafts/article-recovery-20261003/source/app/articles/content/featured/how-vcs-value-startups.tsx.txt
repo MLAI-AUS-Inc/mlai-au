@@ -1,0 +1,294 @@
+/**
+ * ARTICLE TEMPLATE - React Router v7
+ *
+ * THIS FILE IS PLACED AT: app/articles/content/{category}/{slug}.tsx
+ * All relative imports below are calculated from that location.
+ */
+import type { ReactNode } from 'react'
+import { Link } from 'react-router'
+import { Home } from 'lucide-react'
+
+import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import ArticleConversionCTA from '../../../components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '../../seo-config'
+import AuthorBio from '../../../components/AuthorBio'
+import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import OptionPoolComparison from '../../../components/articles/OptionPoolComparison'
+import { ArticleCallout } from '../../../components/articles/ArticleCallout'
+import { ArticleReferences } from '../../../components/articles/ArticleReferences'
+import { getDefaultArticleAuthorDetails } from '../../authors'
+
+/** ========== INPUTS (replace all placeholders) ========== */
+export const useCustomHeader = true
+
+const TOPIC = 'How VCs value startups: check price, dilution and option pools'
+const CATEGORY = 'featured'
+const SLUG = 'how-vcs-value-startups'
+const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
+const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
+const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? AUTHOR_PROFILE.credentials ?? 'Founder'
+const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
+const AUTHOR_AVATAR =
+  AUTHOR_PROFILE.avatarUrl ??
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
+const DATE_PUBLISHED = '2026-01-22'
+const DATE_MODIFIED = '2026-09-10'
+const DESCRIPTION = 'Prepare a startup valuation discussion: compare evidence, work through share dilution and test how option-pool timing changes an illustrative funding round.'
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aab7aebb-f326-4ee4-b06c-48702edb6ddf.jpg?alt=media&token=fc7e98eb-7918-4997-a2e0-26a4964b64e6"
+const HERO_IMAGE_ALT = 'Laptop displaying charts beside a calculator, printed graphs and a white robotic head.'
+const FEATURED_FOCUS = 'funding'
+
+/** ===== FAQ ===== */
+interface FAQ {
+  id: number
+  question: string
+  answer: ReactNode
+}
+
+export const faqItems: FAQ[] = [
+  {
+    id: 1,
+    question: 'What multiples do VCs use to value startups?',
+    answer:
+      'This guide does not establish a current market multiple. A comparison needs a date, currency, business model, revenue definition and financing terms; a fundraising headline alone is insufficient.'
+  },
+  {
+    id: 2,
+    question: 'How are pre‑revenue startups valued?',
+    answer: (
+      <>
+        Without revenue, do not invent a revenue multiple. Separate observed product and customer evidence from assumptions about adoption, costs and exits. A qualitative checklist can organise the discussion but does not establish a transaction price.
+      </>
+    )
+  },
+  {
+    id: 3,
+    question: 'Does this calculator tell me what my startup is worth?',
+    answer:
+      'No. It takes an assumed pre-money value and new investment as inputs, then compares three simplified allocations. It provides no current market multiple, recommended pool size, minimum acceptable price or investment opinion.'
+  },
+  {
+    id: 4,
+    question: 'Pre‑money vs post‑money: what is the difference?',
+    answer:
+      'In the simplified primary-share example, post-money equals pre-money plus new investment. The option-pool comparison adds one explicit reserve assumption; existing options, convertibles, secondary sales and different rights still require a transaction-specific cap table.'
+  },
+  {
+    id: 5,
+    question: 'Do SAFEs or convertible notes set valuation?',
+    answer:
+      'A SAFE cap is a contractual conversion input, not an independent valuation. YC offers cap-only, discount-only and uncapped MFN forms. Its SAFE has no interest or maturity date; a convertible note is debt with its own terms. Check the actual document and conversion triggers with a qualified adviser.'
+  },
+  {
+    id: 6,
+    question: 'How do VCs treat AI‑specific factors (models, data, compute)?',
+    answer:
+      'Prepare evidence of data permissions, customer use, delivery costs and technical dependencies. Measure any claimed cost reduction under the actual workload, including review and failures. This guide establishes no valuation premium for AI.'
+  },
+  {
+    id: 7,
+    question: 'Are Australian valuation norms different from the US?',
+    answer:
+      'This guide has no matched transaction dataset establishing an Australian discount or premium. Check stage, date, currency, business model and financing terms before using an overseas comparison.'
+  }
+]
+
+export const summaryHighlights = {
+  heading: 'Price, evidence and dilution',
+  intro:
+    "For founders preparing a valuation discussion: separate the evidence for a business from the assumptions used to price a funding round.",
+  items: [
+    {
+      label: 'How do VCs value pre‑revenue startups?',
+      description: 'Separate observed customer and product evidence from assumptions; a checklist is not a market price.'
+    },
+    {
+      label: 'Can I use another startup’s announced valuation?',
+      description: 'Document the comparison’s date, currency, business model, revenue definition and terms; this guide supplies no market multiple.'
+    },
+    {
+      label: 'Do term‑sheet terms change valuation?',
+      description: 'The worked pool comparison changes the allocation despite identical headline funding amounts. Ownership percentages also differ from voting rights and exit proceeds.'
+    }
+  ]
+}
+
+export const articleMeta = {
+  title: TOPIC, topic: TOPIC, category: CATEGORY, slug: SLUG,
+  description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED,
+  author: AUTHOR, image: HERO_IMAGE, imageAlt: HERO_IMAGE_ALT,
+}
+
+export default function ArticlePage() {
+  const breadcrumbs = [
+    { label: 'Home', href: '/', icon: Home },
+    { label: 'Articles', href: '/articles' },
+    { label: TOPIC, current: true }
+  ]
+
+  const authorDetails = {
+    name: AUTHOR,
+    role: AUTHOR_ROLE,
+    bio: AUTHOR_BIO,
+    avatarUrl: AUTHOR_AVATAR
+  }
+
+  return (
+    <div className='bg-white'>
+      <ArticleHeroHeader
+        breadcrumbs={breadcrumbs}
+        title={TOPIC}
+        titleHighlight={TOPIC}
+        headerBgColor='purple'
+        summary={summaryHighlights}
+        heroImage={HERO_IMAGE}
+        heroImageAlt={HERO_IMAGE_ALT}
+      />
+
+      <div className='relative'>
+        <div className='lg:absolute lg:right-0 lg:top-0 lg:w-72'>
+          <ArticleTocPlaceholder />
+        </div>
+
+        <div className='prose prose-lg prose-indigo prose-headings:scroll-mt-24 max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
+          <p>
+            For Australian founders preparing an educational funding discussion, separate a negotiated price from evidence about the business. Use the share-count example and discussion record below to identify assumptions and questions for an adviser. This is not a current valuation benchmark, legal advice or a recommendation to raise capital.
+          </p>
+
+          <p>This guide focuses on translating price into share allocation. For the earlier question of whether venture funding fits a business, use the <Link to="/articles/featured/venture-capital-how-does-it-work">venture-capital introduction</Link>; for how a fund is organised, use the <Link to="/articles/featured/how-does-a-venture-capital-firm-work">VC firm guide</Link>.</p>
+
+          <h2>Start with the price-to-share calculation</h2>
+          <p>
+            For a simple primary-share issue, the negotiated price determines how many new shares an investment buys. The example below states the assumptions needed for pre/post-money arithmetic. A real transaction can include other instruments and rights; review fully diluted ownership and distribution scenarios separately.
+          </p>
+
+
+          <ArticleCallout
+            title='Definitions for the simplified example'
+            variant='brand'
+            icon={<span className='text-xl'>💡</span>}
+          >
+            <ul className='m-0 pl-5 list-disc'>
+              <li>Pre‑money: company value <em>before</em> new cash.</li>
+              <li>Post‑money: pre‑money plus new cash (basis for ownership).</li>
+              <li>Option pool: check who bears dilution when an increase is included in pre-money capitalisation; existing holders can include more than founders.</li>
+              <li>Liquidation preference: contractual priority can affect distributions, but it does not guarantee repayment; available proceeds and the actual terms matter.</li>
+            </ul>
+          </ArticleCallout>
+
+          <h2>Valuation lenses and their assumptions</h2>
+
+          <p>
+            A proposed price needs an explanation you can inspect. Start by separating comparable transaction evidence from untested assumptions about the business. This guide does not establish which method a particular investor uses or the price your company should accept.
+          </p>
+
+          <h3>Comparable rounds and revenue multiples</h3>
+          <p>
+            When comparing revenue-stage companies, record differences in revenue definition, growth, retention, costs and business model. A comparison needs a date, currency, stage and business-model match; a public headline may omit terms that affect the economics.
+          </p>
+
+          <h3>Which headline would you use? A fictional comparison exercise</h3>
+          <p>Suppose your company sells annual software subscriptions in AUD and also charges implementation fees. None of these fictional announcements establishes its value:</p>
+          <div role="region" aria-label="Fictional financing headline comparison" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-700">
+          <table className="min-w-[580px]"><caption>Three fictional announcements and the evidence each lacks.</caption><thead><tr><th scope="col">Announcement</th><th scope="col">Missing or mismatched input</th><th scope="col">Next question</th></tr></thead><tbody>
+            <tr><td>A US software company raised $5 million.</td><td>Amount raised is not valuation; currency and ownership sold are unspecified.</td><td>Is there a disclosed pre/post-money equity value and an identifiable currency?</td></tr>
+            <tr><td>An Australian consultancy sold at a revenue multiple.</td><td>Services revenue may not match subscription economics; the revenue period is missing.</td><td>What revenue is included, over which period, and what work produces it?</td></tr>
+            <tr><td>A similar subscription company announced a valuation.</td><td>The date, option pool, convertible instruments and share rights may differ.</td><td>Which transaction terms are disclosed and which remain unknown?</td></tr>
+          </tbody></table></div>
+          <p>Record “insufficient information” where appropriate. The useful output is a comparison with stated limits, not an average of incompatible headlines.</p>
+
+          <h3>Qualitative evidence before revenue</h3>
+          <p>
+            List what has been built, what customers actually did, what was paid and what remains untested. Distinguish a waitlist from repeated use or a paid contract. Do not turn a self-assigned score into a purported market valuation.
+          </p>
+
+          <h2>Evidence to examine before comparing valuations</h2>
+
+          <p>
+            Before comparing a metric, document its numerator, denominator, period, currency and exclusions. These are preparation questions, not investor acceptance thresholds:
+          </p>
+          <ul>
+            <li>Growth: state the period and distinguish recurring changes from one-off payments.</li>
+            <li>Retention: identify the starting customer cohort and treatment of expansion, contraction and cancellations.</li>
+            <li>Delivery costs: identify what cloud, inference, support and human-review costs are included in a margin claim.</li>
+            <li>Sales measures: separate completed sales, pipeline assumptions, acquisition costs and the period being compared.</li>
+            <li>Burn multiple: document the burn definition, measurement period and change in ARR; a lower or negative number is not automatically an improvement.</li>
+            <li>Revenue mix: separate recurring subscriptions, services and one-off payments before comparing businesses.</li>
+          </ul>
+
+          <h3>A denominator check before sharing an efficiency ratio</h3>
+          <p><a href="https://www.scalevp.com/blog/benchmarking-saas-growth-and-burn">Scale Venture Partners’ July 2022 methodology</a> uses operating income as a proxy for cash burn and groups software companies by size. This is historical methodology, not a current Australian benchmark. Matching a metric label does not make two datasets comparable.</p>
+          <p><strong>Fictional example, AUD:</strong> for one quarter, define net cash burn as operating cash outflows minus operating cash inflows, excluding financing flows. If that is $120,000 and ARR rises from $400,000 to $460,000 over the same quarter, the increase is $60,000 and the cash-based ratio is 2.0. ARR is annualised here, not the quarter’s collected revenue. This is not Scale’s operating-income proxy and establishes neither a good/bad threshold nor a valuation.</p>
+          <p>If ARR is unchanged, the denominator is zero and the ratio is undefined. If ARR falls, a negative ratio must not be described as improved efficiency. If recurring revenue is not meaningful for the business, do not force this measure onto it.</p>
+          <h2>A SAFE cap is not a priced-round valuation</h2>
+          <p>In YC’s post-money SAFE terminology, “post-money” is after SAFE money, not after the new priced-round investment. Later financing can dilute ownership. Its published non-US forms cover Canada, the Cayman Islands and Singapore, not Australia. Use the <a href="https://www.ycombinator.com/safe">creator’s forms and explanation</a> to frame questions; ask an Australian-qualified lawyer about your actual document, conversion triggers and outcomes if no financing occurs. Do not reuse the priced-round example below as a SAFE calculation.</p>
+
+          <h2>A share-count example you can check</h2>
+          <p><strong>Fictional priced-round example, all figures in AUD:</strong> assume 1,000,000 existing shares, an agreed $8,000,000 pre-money equity valuation and $2,000,000 of new primary investment. Assume no options, warrants, convertible instruments, secondary sales, fees or different economic rights. This is arithmetic, not a proposed valuation.</p>
+          <div role="region" aria-label="Fictional priced-round share calculations" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-700">
+          <table className="min-w-[440px]"><caption>A$8m pre-money plus A$2m new cash, with no other instruments.</caption><thead><tr><th scope="col">Calculation</th><th scope="col">Result</th></tr></thead><tbody>
+            <tr><td>Price per share: $8,000,000 ÷ 1,000,000</td><td>$8</td></tr>
+            <tr><td>New shares: $2,000,000 ÷ $8</td><td>250,000</td></tr>
+            <tr><td>Total shares after the issue</td><td>1,250,000</td></tr>
+            <tr><td>New investor ownership: 250,000 ÷ 1,250,000</td><td>20%</td></tr>
+            <tr><td>Existing holders' combined ownership</td><td>80%</td></tr>
+            <tr><td>Post-money: $8,000,000 + $2,000,000</td><td>$10,000,000</td></tr>
+          </tbody></table></div>
+          <p>The existing holders still have 1,000,000 shares; the denominator increased. Their 80% is not $8,000,000 they can withdraw, and the new cash belongs to the company in this example. A headline valuation is not cash proceeds or a guaranteed exit value.</p>
+          <p><a href="https://www.cooleygo.com/glossary/pre-money-valuation/">Cooley GO's pre-money definition</a> and <a href="https://www.cooleygo.com/glossary/post-money-valuation/">post-money definition</a> explain the vocabulary. Its materials include US legal concepts; use them for terminology, not as Australian transaction documents.</p>
+          <h2 id="option-pool-meaning">What does a 10% option pool mean?</h2>
+          <p>Ask two different questions: 10% of which total, and who bears the dilution? <a href="https://www.cooleygo.com/negotiating-option-pool/">Cooley's option-pool explanation</a>, reviewed by its publisher in March 2023, illustrates a final available reserve included in the pre-money pricing denominator. It is US-context guidance, not evidence of a standard Australian pool size.</p>
+          <p><a href="https://www.cooleygo.com/glossary/fully-diluted-shares/">Cooley's fully diluted definition</a> also explains that treatment of unallocated reserves depends on context. An ungranted pool is not already owned by employees. Check whether a proposal means unused reserve or the entire plan, and whether existing grants or other instruments are included.</p>
+          <OptionPoolComparison />
+          <h3>Check the default result without trusting the calculator</h3>
+          <ol>
+            <li>With A$8m pre-money and A$2m new cash, the no-pool investor fraction is 2 ÷ (8 + 2) = 20%; existing holders retain 80%.</li>
+            <li>If the final 10% reserve is included in pre-money pricing, keep the new investor at 20% and allocate 10% to the reserve: existing holders have 70%.</li>
+            <li>If the reserve is instead created afterward and dilutes everyone proportionally, multiply both original fractions by 90%: existing holders have 72%, the new investor 18%, and the reserve 10%.</li>
+          </ol>
+          <p>The 72% versus 70% difference is two <em>percentage points</em>, not a two-percent relative increase. These are alternative assumed terms, not choices an investor has offered. The downloadable calculation shows the underlying share-equivalent algebra, including why fractional results are not instructions to issue shares.</p>
+          <p><a href="/downloads/valuation-learning/option-pool-worked-example.md" download>Download the worked calculations and discussion record (.md)</a>. This editable text file contains all three examples, formulas, assumptions, source links and questions; it is not an automated spreadsheet or a legal cap table.</p>
+          <h2>What the ownership table does not tell you</h2>
+          <p>Do not read the percentages as voting power, a promised distribution or a price recommendation. Ask a qualified adviser to model your actual documents, including any existing grants, convertibles, capitalisation definitions and rounding. For possible distributions, ask what proceeds exist and what priority or participation rules apply. The calculation above does not model those rights or approve the transaction.</p>
+
+          <h2>Prepare evidence without promising a closing outcome</h2>
+          <p>
+            Record the evidence and uncertainty behind each proposed range. Clear documentation does not guarantee an agreement, a faster negotiation or funding. Describe actual customer behaviour, what new cash would fund and which assumption you would test next. Do not describe a planned experiment as a risk already resolved.
+          </p>
+
+          <section id="funding-discussion-record" className="prose prose-lg prose-slate max-w-none">
+          <h2>Separate valuation evidence from negotiation assumptions</h2>
+          <p>For an educational conversation, bring an anonymised question rather than a number you want someone to endorse. Record where an input came from and what it actually measures. A public financing announcement is not automatically a comparable transaction for your company.</p>
+          <pre className="whitespace-pre-wrap break-words text-sm" aria-label="Funding discussion record">{["Claim or valuation input being discussed:","Source, date, currency and measurement period:","Verified fact, assumption or unknown:","Why the comparison is relevant and where it differs:","Terms or missing information that may change interpretation:","Question for a qualified adviser before any decision:"].join('\n')}</pre>
+          <p>Do not label a hypothetical valuation as market evidence or turn peer feedback into professional advice. If your separate task is communicating progress to existing stakeholders, you can explore Vibe Raising below; it prepares updates, not a valuation opinion or an investor endorsement.</p>
+          <p><a href="/vibe-raising">Explore investor progress updates with Vibe Raising</a>. Use actual metrics and clearly label estimates; the tool does not verify those claims for you.</p>
+          <p>If you want to explore the concepts with other founders, choose an MLAI event with a relevant topic and experience level. Bring a general or fictional question rather than confidential deal terms; check whether discussion fits the session.</p>
+        </section>
+        <ArticleConversionCTA articleSlug={'featured/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/featured/' + SLUG].conversion!} events={[]} placement="article-inline" />
+        </div>
+      </div>
+
+      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
+        <ArticleReferences
+          heading='Sources'
+          description='Sources checked 10 September 2026; historical and jurisdictional limits apply. The worked examples are MLAI teaching aids, not independently reviewed transactions.'
+          headingId='references'
+          references={[
+            { id: 1, href: 'https://www.scalevp.com/blog/benchmarking-saas-growth-and-burn', title: 'Benchmarking startup growth and burn (11 July 2022)', publisher: 'Scale Venture Partners', category: 'analysis', description: 'Historical software-company methodology, not current Australian pricing evidence.' },
+            { id: 2, href: 'https://www.ycombinator.com/safe', title: 'SAFE forms and explanation', publisher: 'Y Combinator', category: 'guide', description: 'Instrument variants and post-money terminology; not Australian legal advice.' },
+            { id: 3, href: 'https://www.cooleygo.com/glossary/', title: 'Startup financing glossary', publisher: 'Cooley GO', category: 'guide', description: 'Financing terminology with US legal context.' },
+            { id: 4, href: 'https://www.cooleygo.com/negotiating-option-pool/', title: 'Negotiating the option pool', publisher: 'Cooley GO', category: 'guide', description: 'Why pool treatment matters; inspect actual transaction documents.' }
+          ]}
+        />
+
+        <ArticleFAQ items={faqItems} />
+
+        <AuthorBio author={authorDetails} />
+
+        <ArticleFooterNav backHref='/articles' topHref='#' />
+      </div>
+    </div>
+  )
+}

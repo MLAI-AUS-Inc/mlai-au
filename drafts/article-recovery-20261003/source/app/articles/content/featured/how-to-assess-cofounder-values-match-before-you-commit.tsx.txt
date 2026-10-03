@@ -1,0 +1,119 @@
+import { Home } from 'lucide-react'
+import { Link } from 'react-router'
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
+import { DEFAULT_AUTHOR_KEY, getAuthorProfile } from '~/articles/authors'
+import AuthorBio from '~/components/AuthorBio'
+import ArticleTocPlaceholder from '~/components/articles/ArticleTocPlaceholder'
+import { ArticleEventPreference } from '~/components/articles/ArticleEventPreference'
+import { CofounderWorkedRecord } from '~/components/articles/CofounderWorkedRecord'
+import { COFOUNDER_ASSESS_DOWNLOAD, COFOUNDER_ASSESS_PATH, COFOUNDER_CONVERSATIONS, COFOUNDER_PROVENANCE, COFOUNDER_VALUES_BLANK, COFOUNDER_VALUES_COMPLETED, COFOUNDER_VALUES_FIELDS } from '~/lib/cofounder-working-decisions'
+
+export const useCustomHeader = true
+export const CATEGORY = 'featured'
+export const SLUG = 'how-to-assess-cofounder-values-match-before-you-commit'
+export const DATE_PUBLISHED = '2026-03-30'
+export const DATE_MODIFIED = '2026-09-11'
+export const DESCRIPTION = 'Prepare four cofounder conversations, distinguish values from practical constraints, and record disagreements before deciding whether to try working together.'
+export const FEATURED_FOCUS = 'startups'
+const TITLE = 'Assess cofounder values: four conversations before a working trial'
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-61741a72-5e72-4a5d-aa77-2b18a2d80edd.jpg?alt=media&token=9365304c-09a2-4986-914d-af4699a65f17'
+const HERO_ALT = 'Two people talking at a table, one gesturing and the other listening (illustrative image)'
+export const articleMeta = { title: TITLE, topic: TITLE, category: CATEGORY, slug: SLUG, date: DATE_PUBLISHED, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, description: DESCRIPTION, author: getAuthorProfile(DEFAULT_AUTHOR_KEY).name, image: HERO_IMAGE, imageAlt: HERO_ALT }
+
+function ConversationExample({ index }: { index: number }) {
+ const row = COFOUNDER_CONVERSATIONS[index]
+ return <aside data-conversation-example={row.id} aria-label={`Fictional ${row.label.toLowerCase()} conversation`} className="my-6 rounded-xl border border-slate-300 bg-slate-50 p-5">
+  <p className="mt-0"><strong>Fictional example — {row.label}:</strong> {row.question}</p>
+  <p><strong>Alex:</strong> “{row.alex}”</p>
+  <p><strong>Morgan:</strong> “{row.morgan}”</p>
+  <p><strong>Follow-up:</strong> {row.followup}</p>
+  <p className="mb-0"><strong>Decision and remaining question:</strong> {row.decision}</p>
+ </aside>
+}
+
+export const faqItems = [
+ { id: 1, question: 'Does a values match mean agreeing about everything?', answer: 'No. Identify which operating boundaries you both need, which preferences can differ and which practical constraints need a plan. Different opinions are not a failed test; a consequential unresolved difference needs an explicit decision.' },
+ { id: 2, question: 'Can this worksheet confirm cofounder compatibility?', answer: 'No. It records stated expectations and open questions. It is not a validated compatibility score, background check or prediction of startup success. Observe actual collaboration before drawing broader conclusions.' },
+ { id: 3, question: 'Must I disclose private finances or family details?', answer: 'You can discuss the availability, pay requirements and commitments relevant to working together without supplying bank statements or private family information for this exercise. Agree what each person is comfortable recording and who can access it.' },
+ { id: 4, question: 'What should we do when an important answer is unknown?', answer: 'Name the unknown, why it matters and what would help resolve it. Pause commitments that depend on the answer. Do not turn silence or a polite agreement into consent.' },
+]
+
+export default function ArticleContent() {
+ return <div className="bg-white">
+  <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: TITLE, current: true }]}
+   title={TITLE} titleHighlight="four conversations" headerBgColor="cyan"
+   heroImage={HERO_IMAGE} heroImageAlt={HERO_ALT}
+   summary={{ heading: 'Compare expectations before commitments', intro: 'For Australians exploring a startup with another person—not a contractor application or cofounder-matching service.', items: [
+    { label: 'Prepare separately', description: 'Write what you mean by your priorities before reading the other person’s answers.' },
+    { label: 'Use a concrete decision', description: 'Compare actions and boundaries, not just shared words such as trust or ambition.' },
+    { label: 'Leave with a record', description: 'Keep agreements, differences and unknowns visible. A conversation is not proof of compatibility.' },
+   ] }}
+  />
+  <article data-cf-article-body className="prose prose-lg max-w-3xl mx-auto px-4 py-10">
+   <p>To assess a potential cofounder’s values, choose decisions you might actually face, write your own response, then compare the reasons and boundaries behind each answer. The immediate outcome is a clearer decision about whether to explore working together—not a verdict about someone’s character.</p>
+   <p>This guide is for the conversation stage. If you already have enough agreement to try a small project, use the separate <Link to="/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit">cofounder working-trial guide</Link>. Keep introductions, a working trial and formal company commitments as different decisions.</p>
+   <ArticleTocPlaceholder />
+   <h2 id="basis">What the source supports—and what this guide adds</h2>
+   <p><a href="https://www.ycombinator.com/blog/10-questions-to-discuss-with-a-potential-co-founder">Y Combinator’s questionnaire, published 27 April 2023</a>, recommends answering independently before comparing responses. It covers goals, roles, location, commitment, finances and disagreement, and cautions that a questionnaire cannot replace time working together. This is practitioner guidance, not a validated predictor of compatibility.</p>
+   <p>The four conversations, examples and record below are MLAI editorial exercises. They are not YC’s questionnaire reproduced or a research-backed ranking of people. Use them to make a particular working decision clearer.</p>
+   <h2 id="distinctions">Separate a value, a preference and a constraint</h2>
+   <div role="region" aria-label="Values, preferences and constraints" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">
+   <table className="w-full min-w-[42rem] table-fixed"><thead><tr><th scope="col">Type</th><th scope="col">Illustrative statement</th><th scope="col">Question to resolve</th></tr></thead><tbody>
+    <tr><td>Operating boundary</td><td>“We do not present invented customer results as real.”</td><td>What will we do if a pitch needs evidence we do not have?</td></tr>
+    <tr><td>Working preference</td><td>“I prefer written feedback before a call.”</td><td>Can we agree a feedback format both people can use?</td></tr>
+    <tr><td>Practical constraint</td><td>“I can offer six hours a week until my current commitment ends.”</td><td>Does the proposed scope fit that capacity?</td></tr>
+   </tbody></table>
+   </div>
+   <p>Do not treat a caring responsibility, a need for paid work or a different communication style as evidence of weak values. An arrangement may be impractical without either person being untrustworthy. Ask whether a difference can be accommodated, needs more information or prevents this particular partnership.</p>
+   <p>{COFOUNDER_PROVENANCE} Their four conversations below lead to one limited learning exercise, not a decision to form a company.</p>
+   <h2 id="mission">1. Ambition and the first commitment</h2>
+   <p>Discuss what you each want from this project and the smallest commitment you are considering now. A weekend experiment, a part-time business and a venture seeking rapid growth are not interchangeable. Neither a shared product idea nor a shared label such as “startup founder” settles the question.</p>
+   <ul>
+    <li>What useful outcome would make the next experiment worth doing, even if we do not start a company?</li>
+    <li>Which kinds of customer problem do we want to work on, and which would we decline?</li>
+    <li>What evidence would make either of us change direction or stop?</li>
+   </ul>
+   <p>Write down the differences. If one person wants a learning project and the other expects immediate full-time commitment, resolve that before assigning work.</p>
+   <ConversationExample index={0} />
+   <h2 id="capacity">2. Capacity, cost and expectations</h2>
+   <p>Exchange the constraints that affect the proposed work: available hours, response windows, spending limits and whether paid work is required. Each person chooses how much personal context to share. Do not use this worksheet to demand financial records, private family details or evidence of willingness to sacrifice wellbeing.</p>
+   <p>A useful output is specific: “We can each spend up to six hours on the next exercise; neither can promise daytime availability.” That is an example, not a recommended workload. If the task needs more capacity, reduce its scope, find another arrangement or pause. Do not silently assume the other person will absorb the gap.</p>
+   <ConversationExample index={1} />
+   <h2 id="boundaries">3. Evidence, customer data and AI boundaries</h2>
+   <p>For an AI startup, discuss how you will handle a confident but unsupported output, a request to upload private data, or pressure to describe a prototype as production-ready. Ask what each person would do, who may authorise an action and what evidence would be needed first.</p>
+   <ConversationExample index={2} />
+   <p>This records a specific decision, not proof of either person’s overall values or the legality of a future data use. Whether the agreed boundary is followed in practice remains an observation to make, not an assumption to score as passed.</p>
+   <h2 id="disagreement">4. Disagreement, feedback and stopping</h2>
+   <p>Use a low-stakes scenario: the demo has a known error and the deadline is close. Would you reduce scope, delay or show the limitation clearly? Compare the reasons, the people affected and who would decide. Do not manufacture a crisis, conceal information or provoke someone to “reveal their true self.”</p>
+   <p>Agree how someone can raise a concern, request a pause and correct the written record. Ask for a past example only if they can share it without exposing another person’s private information. A single anecdote is context, not verification. Any later reference conversations should be transparent and consent-based.</p>
+   <ConversationExample index={3} />
+   <h2 id="record">Values discussion record</h2>
+   <p>Complete your answers separately, then let each person check how their position is recorded. Use one record per important decision; there is no aggregate compatibility score.</p>
+   <CofounderWorkedRecord id="completed-values-record" title="Read Alex and Morgan’s completed fictional record" label="Completed values discussion record" fields={COFOUNDER_VALUES_FIELDS} values={COFOUNDER_VALUES_COMPLETED} />
+   <p><a href={COFOUNDER_ASSESS_DOWNLOAD} download="mlai-values-discussion-record.txt">Download the editable values discussion record (.txt)</a>. Includes all four examples, the completed record and blank fields; nothing is submitted to MLAI.</p>
+   <details className="rounded-xl border border-slate-300 p-5"><summary className="cursor-pointer font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">Copy a blank discussion record</summary>
+    <pre className="whitespace-pre-wrap break-words" aria-label="Values discussion record">{COFOUNDER_VALUES_BLANK}</pre>
+   </details>
+   <p>Keep the record private to the agreed participants. Do not upload identifiable notes to an AI tool without appropriate permission. The record is a conversation aid, not a legal agreement, psychological assessment or confirmation that a partnership will work.</p>
+   <h2 id="decision">Choose the next step without forcing a yes</h2>
+   <ul>
+    <li><strong>Explore a bounded trial:</strong> both people understand its purpose and agree to its boundaries. That authorises only the agreed exercise.</li>
+    <li><strong>Pause:</strong> a consequential question is unresolved, or the proposed commitment does not fit someone’s capacity.</li>
+    <li><strong>Stop:</strong> either person does not want to continue. Document the practical loose ends without pressuring them to justify private circumstances.</li>
+   </ul>
+   <p>Equity, pay, ownership and company responsibilities need their own appropriate advice and agreements. Do not infer them from a positive conversation or from completing this worksheet.</p>
+   <h2 id="community">Take one process question to a relevant event</h2>
+   <p>You might ask a peer, “How did you record a disagreement about demo quality before starting a project?” Ask about their process, not for a verdict on a named potential cofounder. Check the event’s topic and online or in-person format, and keep the other person’s circumstances confidential.</p>
+   <p>MLAI publishes this guide and runs events; this is an affiliated invitation, not an assessment or matching service.</p>
+   <ArticleEventPreference articlePath={COFOUNDER_ASSESS_PATH} idPrefix="cofounder-values" description="Carry only your preferred event format to the calendar. Check the listed topic and participation format; no private discussion notes travel with this choice and it does not reserve a place." />
+   <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+   <h2 id="scope">Scope and update</h2>
+   <p>YC source rechecked 11 September 2026. This revision completes the four conversations with supplied answers, follow-up questions and a filled record. The retained byline is not evidence that the fictional conversation occurred or that an independent professional reviewed this worksheet. No MLAI matching service, independent assessment or successful partnership is implied.</p>
+   <ArticleFAQ items={faqItems} />
+   <AuthorBio author={getAuthorProfile(DEFAULT_AUTHOR_KEY)} />
+  </article>
+ </div>
+}

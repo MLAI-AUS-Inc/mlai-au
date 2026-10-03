@@ -1,0 +1,99 @@
+import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import * as Evidence from '../app/articles/content/featured/how-modern-technology-affects-education-today-and-in-the-fut';
+import * as Assessment from '../app/articles/content/featured/how-technology-is-shaping-learning-in-higher-education';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+import ArticleConversionCTA from '../app/components/articles/ArticleConversionCTA';
+
+function render(module: typeof Evidence | typeof Assessment) {
+  const Article = module.default;
+  return renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+}
+
+test('education evidence and assessment rewrites preserve identity, accessible records and no-offer disposition', () => {
+  const baseline = JSON.parse(readFileSync('docs/article-audit-2026-09-09/support/registry-main.json', 'utf8'));
+  for (const module of [Evidence, Assessment]) {
+    const slug = module.CATEGORY + '/' + module.SLUG;
+    const entry = ARTICLE_REGISTRY[slug];
+    const conversion = BASE_ARTICLE_SEO_CONFIG['/articles/' + slug].conversion!;
+    expect(module.DATE_PUBLISHED).toBe(baseline[slug].date);
+    expect(entry.date).toBe(module.DATE_PUBLISHED);
+    expect(entry.dateModified).toBe(module.DATE_MODIFIED);
+    expect(entry.title).toBe(module.articleMeta.title);
+    expect(entry.description).toBe(module.DESCRIPTION);
+    expect(entry.author).toBe(module.articleMeta.author);
+    expect(entry.imageAlt).toBe(module.articleMeta.imageAlt);
+    expect(conversion.primaryIcp).toBe('OUTSIDE');
+    expect(conversion.primary).toBe('none');
+    expect(renderToStaticMarkup(<MemoryRouter><ArticleConversionCTA articleSlug={slug} config={conversion} events={[]} /></MemoryRouter>)).toBe('');
+    const html = render(module);
+    expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+    expect(html).toContain('role="region"');
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('prose-headings:scroll-mt-24');
+    expect(html).toContain('whitespace-pre-wrap break-words');
+    for (const residue of ['Download now', 'Get recommendations', 'Brief, factual overview', '&lt;HERO_IMAGE_ALT&gt;', 'href="#"', 'href="/contact"', 'href="/mlai-studio']) {
+      expect(html).not.toContain(residue);
+    }
+    const source = readFileSync('app/articles/content/' + slug + '.tsx', 'utf8');
+    expect(source).not.toContain('MLAITemplateResourceCTA');
+    expect(source).not.toContain('AudienceGrid');
+  }
+});
+
+test('education overview separates measured preparation time from forecasts and untested caption fixtures', () => {
+  const html = render(Evidence);
+  for (const text of [
+    'School-randomised comparison in England', '259 teachers in 68 English secondary schools',
+    '56.2 minutes per week', '25.3 minutes less, approximately 31%',
+    'not the entire working week', 'weekly diaries', 'weeks 6–10 after five initial weeks',
+    '18.5%', 'not proof of identical quality or improved student attainment',
+    'https://www.asqa.gov.au/for-providers/guidance-and-resources-providers/artificial-intelligence-ai-use-in-vocational-education-training-vet/responsible-use',
+    'Invented editorial fixture—not a recording, product test or learner study',
+    'Do not submit it for a grade', 'Removing the negation reverses the instruction',
+    'twenty degrees Fahrenheit', 'The unit is wrong',
+    'does not test timing, speaker identification', 'Keep the approved text route',
+    'Education technology proposal worksheet', 'serious-error stop condition',
+    'Comparison, outcome definition and missing-data handling',
+    'not a prediction that they will arrive in three to five years',
+    'state or territory privacy laws', 'ANU and private universities',
+    '/articles/featured/how-technology-is-shaping-learning-in-higher-education',
+  ]) expect(html).toContain(text);
+  expect(81.5 - 56.2).toBeCloseTo(25.3, 10);
+  expect(Math.round((81.5 - 56.2) / 81.5 * 100)).toBe(31);
+  for (const unsupported of ['Benefits you can bank on', 'Most Australian classrooms now', 'What’s working now', 'Ban or nothing', 'Australian AI Landscape']) {
+    expect(html).not.toContain(unsupported);
+  }
+});
+
+test('higher education uses exact task conditions and conditional credit rather than sector-wide promises', () => {
+  const html = render(Assessment);
+  for (const text of [
+    'two universities’ public assessment guidance', 'not policies about conducting academic research',
+    'https://www.sydney.edu.au/units/INFS1000/2026-S1C-ND-CC',
+    'Semester 1 2026', 'completed semester',
+    'final and mid-semester exams as AI prohibited',
+    'weekly homework, the early-feedback quiz and group project are AI allowed',
+    'Full instructions are on Canvas; they were not inspected',
+    'recordings capture lecture parts, not group activities',
+    'Entirely fictional assessment instructions—not a Monash or Sydney task',
+    'Do not use it to write or edit the submitted analysis',
+    'cannot retrospectively authorise prohibited use',
+    'Higher education learning and AI-use log',
+    'Publication permissions and material that must stay private',
+    'https://www.education.gov.au/higher-education-publications/resources/national-microcredentials-framework',
+    'page 9 and section 5.5 on page 18',
+    'not an automatic entitlement to degree credit',
+    'https://policies.rmit.edu.au/document/view.php?id=37', 'clause 18',
+    'https://www.rmit.edu.au/students/my-course/enrolment/apply-for-credit',
+    'continue attending the relevant classes while awaiting a decision',
+    'not withdrawing from the subject or buying a second badge',
+    '/articles/featured/how-modern-technology-affects-education-today-and-in-the-fut',
+  ]) expect(html).toContain(text);
+  for (const unsupported of ['Most Australian courses now', 'effectively hybrid‑first', 'provide focused, credit‑bearing units', 'Treat every assignment as a portfolio piece', 'universitiesaustralia.edu.au/policy-submissions/research-innovations']) {
+    expect(html).not.toContain(unsupported);
+  }
+});

@@ -1,0 +1,31 @@
+import { expect, test } from "bun:test";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+import ArticleConversionCTA from "../app/components/articles/ArticleConversionCTA";
+import SimpleAI from "../app/articles/content/featured/what-is-artificial-intelligence-in-simple-words";
+import AGI from "../app/articles/content/featured/what-is-general-artificial-intelligence-and-why-it-matters";
+import Entrepreneur from "../app/articles/content/featured/what-an-entrepreneur-does-and-how-to-start-well";
+import Unicorn from "../app/articles/content/featured/what-is-a-unicorn-startup-and-why-it-matters";
+
+const pages = [
+  ["what-is-artificial-intelligence-in-simple-words", SimpleAI, "learning rather than commissioning"],
+  ["what-is-general-artificial-intelligence-and-why-it-matters", AGI, "not every session covers AGI"],
+  ["what-an-entrepreneur-does-and-how-to-start-well", Entrepreneur, "Founder Tools overview"],
+  ["what-is-a-unicorn-startup-and-why-it-matters", Unicorn, "not a requirement for readers"],
+] as const;
+
+for (const [name, Article, bridge] of pages) {
+  test(name + " has an explicit learning audience and conditional commercial next steps", () => {
+    const slug = "featured/" + name;
+    const conversion = BASE_ARTICLE_SEO_CONFIG["/articles/" + slug].conversion!;
+    expect(conversion.primaryIcp).toBe("COMMUNITY");
+    expect(conversion.primary).toBe("events");
+    expect(conversion.secondary).toBeUndefined();
+    const html = renderToStaticMarkup(<MemoryRouter><Article /><ArticleConversionCTA articleSlug={slug} config={conversion} events={[]} placement="article-bottom" /></MemoryRouter>);
+    expect(html).toContain(bridge);
+    expect(html).toContain(conversion.copy!.button);
+    expect(html).toContain('data-article-icp="COMMUNITY"');
+    expect(html).toContain('href="/events"');
+  });
+}

@@ -1,0 +1,116 @@
+import { Home } from 'lucide-react'
+import { Link } from 'react-router'
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
+import { DEFAULT_AUTHOR_KEY, getAuthorProfile } from '~/articles/authors'
+import AuthorBio from '~/components/AuthorBio'
+import ArticleTocPlaceholder from '~/components/articles/ArticleTocPlaceholder'
+import { ArticleEventPreference } from '~/components/articles/ArticleEventPreference'
+import { CofounderWorkedRecord } from '~/components/articles/CofounderWorkedRecord'
+import { COFOUNDER_EVENT_CARD, COFOUNDER_HANDOVER, COFOUNDER_PROVENANCE, COFOUNDER_REPLY_CHECKS, COFOUNDER_TIME_EXAMPLE, COFOUNDER_TRIAL_BLANK, COFOUNDER_TRIAL_BRIEF, COFOUNDER_TRIAL_COMPLETED, COFOUNDER_TRIAL_DOWNLOAD, COFOUNDER_TRIAL_FIELDS, COFOUNDER_TRIAL_PATH } from '~/lib/cofounder-working-decisions'
+
+export const useCustomHeader = true
+export const CATEGORY = 'featured'
+export const SLUG = 'how-to-test-for-a-cofounder-values-match-before-you-commit'
+export const DATE_PUBLISHED = '2026-03-14'
+export const DATE_MODIFIED = '2026-09-11'
+export const DESCRIPTION = 'Plan a low-risk cofounder working trial with a bounded brief, synthetic-data example and observation record. Separate observed behaviour from assumptions about compatibility.'
+export const FEATURED_FOCUS = 'startups'
+const TITLE = 'A cofounder working trial: brief, observe and debrief'
+export const articleMeta = { title: TITLE, topic: TITLE, category: CATEGORY, slug: SLUG, date: DATE_PUBLISHED, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, description: DESCRIPTION, author: getAuthorProfile(DEFAULT_AUTHOR_KEY).name, image: '', imageAlt: '' }
+
+export const faqItems = [
+ { id: 1, question: 'How long should a cofounder working trial last?', answer: 'There is no validated duration in this guide. Choose a small task and time limit both people can genuinely accept. A short exercise provides limited observations; it cannot confirm a durable partnership.' },
+ { id: 2, question: 'Should a trial be high-stakes to reveal someone’s values?', answer: 'No. Use real but bounded decisions without manufacturing pressure, withholding information or putting customers at risk. Do not use the exercise to obtain unpaid production work.' },
+ { id: 3, question: 'Does a good demo mean the partnership is a good fit?', answer: 'No. Review the work and the collaboration separately: responsibilities, permissions, communication, error handling and unresolved differences. AI-generated code or a polished demo does not show who understood, tested or maintained it.' },
+ { id: 4, question: 'What happens after the debrief?', answer: 'Choose whether to stop, pause or agree another bounded step. A trial does not settle employment, pay, equity or IP. Resolve applicable terms and obtain appropriate advice before a commitment that depends on them.' },
+]
+
+export default function ArticleContent() {
+ return <div className="bg-white">
+  <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: TITLE, current: true }]}
+   title={TITLE} titleHighlight="brief, observe and debrief" headerBgColor="cyan"
+   summary={{ heading: 'Observe a small piece of work—not a whole person', intro: 'For prospective founders who have discussed expectations and want to decide whether to explore collaborating further.', items: [
+    { label: 'Bound the task', description: 'Agree scope, capacity, permissions and stopping rules before starting.' },
+    { label: 'Keep an observation log', description: 'Record what happened, the explanation and what remains unknown.' },
+    { label: 'Debrief separately, then together', description: 'Review delivery and collaboration without turning a demo into a compatibility score.' },
+   ] }}
+  />
+  <article data-cf-article-body className="prose prose-lg max-w-3xl mx-auto px-4 py-10">
+   <p>A cofounder working trial should answer a limited question: can we plan, do and review this particular task together under agreed conditions? Choose a small, reversible exercise, record the work and discuss what you learned. A successful trial is not proof that the relationship will survive a company’s future demands.</p>
+   <p>If you have not discussed commitment, operating boundaries and disagreement, start with the <Link to="/articles/featured/how-to-assess-cofounder-values-match-before-you-commit">four cofounder conversations</Link>. This page is the next step: an example brief and debrief, not another list of personality questions.</p>
+   <p><strong>Correction, 9 September 2026:</strong> the previous article called for a high-stakes trial and implied that two to four weeks was enough to establish fit. This guide does not establish an optimal duration or a reliable compatibility test. It also removes repeated passages and an unsupported startup-failure attribution.</p>
+   <ArticleTocPlaceholder />
+   <h2 id="source">Why try working together?</h2>
+   <p><a href="https://www.blackbird.vc/blog/the-cofounder-question">Blackbird’s “The cofounder question”, published 5 July 2022</a>, recommends working together before committing and discussing the experience candidly. That is investor/practitioner advice, not evidence that a particular timeframe predicts success. The synthetic exercise below is MLAI editorial material, not a Blackbird programme or a study of founders.</p>
+   <h2 id="boundaries">Agree boundaries before assigning tasks</h2>
+   <p>Participation must be voluntary, with a clear way to stop. Do not use a “cofounder trial” label to obtain unpaid production work or bypass obligations. If work will benefit an operating business or a customer, resolve its terms, payment, permissions and appropriate advice before it starts.</p>
+   <p>If this is really a hiring assessment, consult the <a href="https://www.fairwork.gov.au/starting-employment/unpaid-work/unpaid-trials">Fair Work Ombudsman’s unpaid-trial guidance</a>. That page addresses demonstrations for a vacant job, with limits on when unpaid trials are lawful; it does not approve a cofounder arrangement. The example below is not a way to classify real work as unpaid.</p>
+   <ul>
+    <li><strong>Scope:</strong> one learning question and one deliverable, with explicit exclusions.</li>
+    <li><strong>Capacity:</strong> each person’s agreed maximum time and available communication windows.</li>
+    <li><strong>Access:</strong> no customer data, production credentials, employer assets or purchases without the required permission.</li>
+    <li><strong>Terms:</strong> clarify costs, ownership and use of outputs, confidentiality and any payment questions. This article does not determine the legal arrangement.</li>
+    <li><strong>Stopping:</strong> either person can pause the exercise; agree how to handle files, access and outstanding commitments.</li>
+   </ul>
+   <p>Use normal agreed constraints, not invented emergencies. Unexpected events are a reason to communicate and revisit the scope, not an excuse to pressure someone to work beyond their limit.</p>
+   <h2 id="brief">Worked example: a synthetic event-information demo</h2>
+   <p><strong>Fictional teaching brief:</strong> Alex and Morgan have agreed to explore one learning exercise, not form a company. They choose a text-only mock-up to practise negotiating scope and reviewing unsupported answers. You can inspect its entire deliverable below without writing code.</p>
+   <p>{COFOUNDER_PROVENANCE}</p>
+   <blockquote aria-label="Invented event card">{COFOUNDER_EVENT_CARD}</blockquote>
+   <p>This card is test data, not an MLAI listing. There are no real attendees, live organisers, ticket sales, external sending or deployed service.</p>
+   <dl aria-label="Completed fictional trial brief" className="rounded-xl border border-slate-300 bg-slate-50 p-5">{COFOUNDER_TRIAL_BRIEF.map(([field, value]) => <div key={field} className="my-5"><dt className="font-semibold">{field}</dt><dd className="ml-0 mt-1">{value}</dd></div>)}</dl>
+   <p>AI coding tools are optional. If used, keep prompts free of private information, record which parts were generated and have the other person review the change. Do not judge contribution by lines of code or prompt count; ask each person to explain the behaviour and the checks they performed.</p>
+   <h3 id="capacity">Capacity includes review and the debrief</h3>
+   <p><strong>Illustrative time budget, not an estimate of required effort:</strong> each person agrees to a maximum of six hours. They each allocate three hours to their task, one to reviewing the other person’s work, one to checks and handover, and one to the debrief. That is 6 + 6 = 12 person-hours in total, not twelve hours of feature building. Record actual time separately; simplify or stop when capacity runs out.</p>
+   <p>One person drafts the interface and answer behaviour; the other prepares the test cases and handover outline. Both review the other’s work. This division is an example, not evidence that each contribution has equal commercial value or implies any equity split.</p>
+   <h3 id="checks">Inspect the complete mock-up and unchanged-input review</h3>
+   <p>Read each original input and authored reply, then open its review. T3 contains a deliberate unsupported price. The revised cards match the four stated expected texts, but this is a comparison of fixed teaching text—not a model run, an independent security test or a measure of cofounder compatibility.</p>
+   {COFOUNDER_REPLY_CHECKS.map(row => <section key={row.id} data-trial-check={row.id} aria-label={`Trial check ${row.id}`} className="my-6 rounded-xl border border-slate-300 bg-slate-50 p-5">
+    <h4 className="mt-0">{row.id}: {row.input}</h4>
+    <p><strong>Initial authored reply:</strong> {row.before}</p>
+    <details className="rounded-lg border border-slate-300 bg-white p-4"><summary className="cursor-pointer font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">Inspect the review for {row.id}</summary>
+     <p><strong>Expected:</strong> {row.expected}</p><p><strong>Revised authored reply:</strong> {row.after}</p><p>{row.note}</p>
+    </details>
+   </section>)}
+   <p>Keep failed outputs alongside corrected ones. These four synthetic checks are not a security evaluation, a benchmark or evidence of real-user demand. If a model is introduced later, the evaluation and permission questions change; do not assume this fixed-answer exercise validates it.</p>
+   <h2 id="observations">Separate observation from interpretation</h2>
+   <div role="region" aria-label="Observation and interpretation comparison" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">
+   <table className="w-full min-w-[42rem] table-fixed"><thead><tr><th scope="col">Fictional observation</th><th scope="col">Unwarranted conclusion</th><th scope="col">Useful debrief question</th></tr></thead><tbody>
+    <tr><td>A task slipped; its owner notified the other person before the agreed check-in and proposed a smaller deliverable</td><td>“They are unreliable” or “they always communicate well”</td><td>Was the revised scope acceptable, and what caused the original estimate to miss?</td></tr>
+    <tr><td>The demo answered three checks correctly but invented a ticket price; the reviewer retained the failure and the pair corrected it</td><td>“Three out of four proves we can ship”</td><td>Why did the unsupported answer appear, and what was retested after the correction?</td></tr>
+    <tr><td>Someone proposed adding a real attendee file; the pair stopped because permission was not established</td><td>“The request proves bad character” or “a pause proves all privacy risks are solved”</td><td>Was the access boundary understood, and what remains outside the exercise?</td></tr>
+   </tbody></table>
+   </div>
+   <p>An explanation may change your interpretation without changing the observation. Let both people correct the log. Do not manufacture these situations to secretly evaluate someone, and do not publish their mistakes as a portfolio case study without permission.</p>
+   <h2 id="review">Trial-project review</h2>
+   <p>Write your own debrief before meeting. Compare evidence and unresolved questions, not numerical ratings of each other.</p>
+   <p><strong>Invented time log, not measured productivity:</strong> Alex uses six hours and Morgan uses five hours 45 minutes. More checking displaces optional styling. These totals do not establish equal contribution value or a recommended trial length.</p>
+   <div role="region" aria-label="Invented trial time log" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">
+    <table className="w-full min-w-[30rem] table-fixed"><thead><tr><th scope="col">Activity</th><th scope="col">Alex (hours)</th><th scope="col">Morgan (hours)</th></tr></thead><tbody>{COFOUNDER_TIME_EXAMPLE.map(row => <tr key={row.activity}><th scope="row">{row.activity}</th><td>{row.alex}</td><td>{row.morgan}</td></tr>)}</tbody></table>
+   </div>
+   <CofounderWorkedRecord id="completed-trial-record" title="Read the completed fictional debrief" label="Completed fictional trial debrief" fields={COFOUNDER_TRIAL_FIELDS} values={COFOUNDER_TRIAL_COMPLETED} />
+   <h3 id="handover">The completed handover</h3>
+   <p>{COFOUNDER_HANDOVER}</p>
+   <p><a href={COFOUNDER_TRIAL_DOWNLOAD} download="mlai-cofounder-trial-brief-and-debrief.txt">Download the editable trial brief and debrief (.txt)</a>. Includes the brief, full mock-up, original failure, invented time log, filled debrief, handover and blank copies. Nothing is submitted to MLAI.</p>
+   <details className="rounded-xl border border-slate-300 p-5"><summary className="cursor-pointer font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">Copy a blank trial review</summary>
+    <pre className="whitespace-pre-wrap break-words" aria-label="Trial-project review">{COFOUNDER_TRIAL_BLANK}</pre>
+   </details>
+   <p>Add actual time, the unchanged test inputs, failed outputs and any agreed corrections. Agree where the record is kept and who can access it. Keep personal circumstances out of any shared version unless the person explicitly agrees.</p>
+   <h2 id="next">Decide only what the evidence supports</h2>
+   <p>You can agree another bounded exercise, pause for a missing answer or stop. Do not turn a good demo into an automatic decision to incorporate, share equity or leave employment. Those are separate commitments with separate consequences and advice needs.</p>
+   <p>If you continue, name what the next step is meant to reveal. If you stop, settle the agreed handling of work, access and outstanding terms. Neither outcome means the exercise was wasted: discovering a mismatch in availability or expectations can be a useful result.</p>
+   <h2 id="community">Discuss the method without exposing the other person</h2>
+   <p>Bring a question such as “How did you separate delivery feedback from assumptions about motivation?” to an MLAI session about startup collaboration. Share a synthetic or permission-cleared example. Check the actual topic and format before registering; attending an event is not a cofounder assessment or matching process.</p>
+   <p>MLAI publishes this guide and runs events; this is an affiliated invitation. You can discuss a process question without naming a potential cofounder or sharing their private record.</p>
+   <ArticleEventPreference articlePath={COFOUNDER_TRIAL_PATH} idPrefix="cofounder-trial" description="Carry only your preferred event format to the calendar. Check the actual topic, date and participation format; no private trial notes are sent and no place or suitable cofounder is promised." />
+   <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
+   <h2 id="scope">Source and scope</h2>
+   <p>Blackbird and Fair Work sources were rechecked on 11 September 2026. Blackbird supports the practitioner recommendation to work together and debrief, not a validated duration; this guide does not adopt its equity advice, programme availability or historical statistics. Fair Work addresses hiring trials, not the legal status of this hypothetical pair. The brief, reply cards, time log and debrief are invented teaching material, not observed founder work, a delivered MLAI project or independent professional review.</p>
+   <ArticleFAQ items={faqItems} />
+   <AuthorBio author={getAuthorProfile(DEFAULT_AUTHOR_KEY)} />
+  </article>
+ </div>
+}

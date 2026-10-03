@@ -1,0 +1,118 @@
+import { Home } from 'lucide-react'
+import { Link } from 'react-router'
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import { DEFAULT_AUTHOR_KEY, getAuthorProfile } from '~/articles/authors'
+import AuthorBio from '~/components/AuthorBio'
+
+export const useCustomHeader = true
+export const CATEGORY = 'featured'
+export const SLUG = 'how-technology-is-shaping-learning-in-higher-education'
+export const DATE_PUBLISHED = '2025-12-09'
+export const DATE_MODIFIED = '2026-09-09'
+export const DESCRIPTION = 'Check AI assessment rules, online participation and microcredential credit using dated Australian university examples. Includes a practical learning log and questions for your course team.'
+export const FEATURED_FOCUS = 'ai'
+const TITLE = 'Technology in higher education: AI assessment rules and microcredential credit'
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6d1a2d84-8b4e-4540-969a-efedb4ed79d0.jpg?alt=media&token=40754573-bde6-4fe3-991d-f9b37be9cb08'
+
+export const summaryHighlights = {
+ heading: 'Three checks before relying on a tool, recording or credential',
+ intro: 'For students planning Australian higher-education study: use the rules for your actual subject, assessment and intended qualification.',
+ items: [
+  { label: 'Permission is task-specific', description: 'An AI-friendly institution can still prohibit AI in a particular assessment. Check the current instructions.' },
+  { label: 'A recording is not the whole class', description: 'Check participation, practical work and supervised assessment requirements separately from online material.' },
+  { label: 'Credit is not automatic', description: 'A short credential’s value for a degree depends on the receiving institution’s recognition and your circumstances.' },
+ ],
+}
+
+export const faqItems = [
+ { id: 1, question: 'Can I use AI in every university assignment?', answer: 'No. The examples here show different conditions by institution and assessment. Find the current task instructions and ask the coordinator before using a tool if permission or scope is unclear.' },
+ { id: 2, question: 'Does acknowledging AI make any use acceptable?', answer: 'No. Permission and disclosure are separate. A declaration cannot turn prohibited drafting, coding or proofreading into authorised use.' },
+ { id: 3, question: 'Do microcredentials automatically count towards a degree?', answer: 'No. Ask the institution awarding the degree which specific credit, if any, it will recognise and what conditions you must satisfy. A completion badge alone does not settle that decision.' },
+ { id: 4, question: 'Can I replace attendance with lecture recordings?', answer: 'Do not assume so. Your course may require participation, practical work or supervised assessment that a recording does not replace. Check your current outline and discuss access arrangements with the appropriate team.' },
+ { id: 5, question: 'Can I put all my assignments in a public portfolio?', answer: 'Not automatically. Check assessment rules and rights in course materials, group work, partner information and datasets before sharing. A separate project using material you are permitted to publish may be more suitable.' },
+]
+
+export const articleMeta = {
+ title: TITLE, topic: TITLE, category: CATEGORY, slug: SLUG, description: DESCRIPTION,
+ datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED,
+ author: getAuthorProfile(DEFAULT_AUTHOR_KEY).name, image: HERO_IMAGE,
+ imageAlt: 'Illustration of people collaborating around digital work',
+}
+
+export default function ArticleContent() {
+ return <div className="bg-transparent">
+  <ArticleHeroHeader
+   breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: 'Technology in higher education', current: true }]}
+   title={TITLE} titleHighlight="higher education" headerBgColor="cyan"
+   summary={summaryHighlights} heroImage={HERO_IMAGE} heroImageAlt={articleMeta.imageAlt}
+  />
+  <div className="prose prose-lg prose-headings:scroll-mt-24 max-w-3xl mx-auto px-4 py-10">
+   <p>Technology changes the practical choices students face: where to find learning materials, when AI assistance is allowed, how to demonstrate understanding and whether a short credential contributes to a degree. There is no single Australian rule that resolves all four.</p>
+   <p>This guide is for a student checking those choices, not a claim that most universities or courses are “hybrid-first”. It uses two universities’ public assessment guidance, one named 2026 subject outline and a separate provider’s credit procedure. The examples are selected to expose different decisions, not to estimate national practice or recommend a course.</p>
+
+   <h2 id="policy-sample">A dated sample: what Sydney and Monash ask students to check</h2>
+   <p>Sources checked 9 September 2026. These are teaching-and-assessment sources, not policies about conducting academic research. Your current unit site and task instructions may contain further conditions; this article does not override them.</p>
+   <p className="text-sm">The comparison table scrolls horizontally on small screens. Focus it to use the arrow keys.</p>
+   <div id="higher-education-policy-table" role="region" aria-label="University AI assessment guidance comparison" tabIndex={0} className="overflow-x-auto scroll-mt-24">
+    <table className="min-w-[39rem]"><caption>Two institutional examples, not a sector-wide rule</caption><thead><tr><th>Source and date</th><th>Published approach</th><th>What the student must resolve</th></tr></thead><tbody>
+     <tr><td><a href="https://www.sydney.edu.au/students/responsible-ai-use.html">University of Sydney: responsible AI use</a>; updated 2 June 2026</td><td>AI is allowed in open assessments. Secure assessments generally prohibit it unless the unit coordinator expressly permits it in the outline. The outline has an AI-use column.</td><td>Read the entry for each task, the permitted scope and acknowledgement requirements. Do not transfer one assessment’s permission to another.</td></tr>
+     <tr><td><a href="https://www.monash.edu/student-academic-success/ai-hub/ai-and-assessments">Monash: AI and assessments</a>; checked 9 September 2026</td><td>Assessment instructions can allow broad use, limit use to specified activities or prohibit it. Rules can differ within a unit.</td><td>Check the statement in Moodle, record permitted use and follow the task’s declaration instructions. A tool being available does not establish permission.</td></tr>
+    </tbody></table>
+   </div>
+   <p>Sydney also distinguishes <a href="https://www.sydney.edu.au/students/assessments.html">secure and open assessment arrangements</a>, including a stated transition for online courses during 2026 and in-person supervised assessment from 2027. This is a published institutional plan, not evidence that all Australian online degrees have the same attendance rules. Check the arrangements that apply to your enrolment.</p>
+
+   <h2 id="subject-example">Read the assessment row, not just the university headline</h2>
+   <p>The public <a href="https://www.sydney.edu.au/units/INFS1000/2026-S1C-ND-CC">INFS1000 Digital Business Innovation, Semester 1 2026 outline</a> provides a concrete example from that completed semester. Its assessment table marks the final and mid-semester exams as AI prohibited, while weekly homework, the early-feedback quiz and group project are AI allowed. Full instructions are on Canvas; they were not inspected for this guide.</p>
+   <p>The same outline says recordings capture lecture parts, not group activities, and that participation in those activities cannot be substituted. A recording link therefore does not establish that a student can complete that subject remotely. Do not treat this Semester 1 example as the rules for a different offering.</p>
+   <p><strong>Practical reading method:</strong> identify the exact subject code, year and teaching period; find the assessment row; then check its detailed instructions. If a general web page and your task instructions appear inconsistent, ask the coordinator to resolve the conflict before acting. Do not choose whichever version gives broader permission.</p>
+
+   <h2 id="permission-exercise">A worked permission decision</h2>
+   <p><strong>Entirely fictional assessment instructions—not a Monash or Sydney task:</strong> “You may use an approved AI tool to brainstorm possible project topics. Do not use it to write or edit the submitted analysis. Declare any brainstorming assistance.”</p>
+   <ul>
+    <li><strong>Within the stated boundary:</strong> request topic ideas without uploading restricted material, then independently select and investigate a topic. Follow the approval and declaration conditions.</li>
+    <li><strong>Outside it:</strong> ask the tool to rewrite the analysis for clarity. “I only used it for editing” does not make editing permitted.</li>
+    <li><strong>Still unresolved:</strong> whether a particular embedded writing feature counts as the prohibited assistance. Ask before enabling it; do not assume a familiar app is exempt.</li>
+   </ul>
+   <p>The exercise concerns the supplied instructions only. It is not an acknowledgement template approved by a university. A record helps you explain what happened; it cannot retrospectively authorise prohibited use or guarantee an academic-integrity outcome.</p>
+
+   <h2 id="learning-log">Keep a learning log that records your decisions</h2>
+   <p>Copy this into an institution-approved private location and follow its retention and submission rules. Do not put classmates’ work, assignment materials, personal information or confidential partner data into public prompts or repositories. Sydney’s <a href="https://www.sydney.edu.au/students/responsible-ai-use.html">responsible-use guidance</a> specifically addresses prohibited inputs as well as declarations.</p>
+   <pre className="whitespace-pre-wrap break-words" aria-label="Higher education learning and AI-use log">{[
+    'Subject / teaching period / assessment and version:',
+    'Instruction location and date checked:',
+    'Allowed activities / prohibited activities / tool approval:',
+    'Unresolved question and coordinator response:',
+    'Date / tool, version, publisher and URL (if used):',
+    'What I asked and how I used or rejected the output:',
+    'Private location of records required by the institution:',
+    'Facts, references or code I checked independently:',
+    'My reasoning, changes and remaining uncertainty:',
+    'Required declaration / source citations / submission evidence:',
+    'What I can explain or demonstrate without the assistance:',
+    'Publication permissions and material that must stay private:',
+   ].join('\n')}</pre>
+   <p>For the fictional task above, a useful entry would record: topic brainstorming only; no analysis text sent; one suggestion rejected as too broad; sources located and checked independently; the final analysis written without AI assistance. These are example entries, not a record of work anyone has actually completed.</p>
+
+   <h2 id="microcredential-credit">Microcredentials: distinguish learning, a badge and degree credit</h2>
+   <p>The <a href="https://www.education.gov.au/higher-education-publications/resources/national-microcredentials-framework">National Microcredentials Framework</a>, published in March 2022, defines assessed short-form learning. Its document, page 9 and section 5.5 on page 18, leaves academic-credit decisions with institutions and calls for any recognition and stacking conditions to be stated. Framework alignment is not an automatic entitlement to degree credit.</p>
+   <p>A concrete provider condition appears in <a href="https://policies.rmit.edu.au/document/view.php?id=37">RMIT’s current Credit Procedure</a>, clause 18: approved combinations awarded by RMIT may receive credit where the stated learning outcomes and equivalent AQF level align; microcredentials may also be considered in an RPL application. That is conditional recognition, not a promise about every badge or another university’s degree.</p>
+   <p>RMIT’s <a href="https://www.rmit.edu.au/students/my-course/enrolment/apply-for-credit">credit application guidance</a> asks for evidence relating prior learning to the intended program. It also tells enrolled students to continue attending the relevant classes while awaiting a decision. Follow your own provider’s current process and deadlines rather than assuming an application has already reduced your study load.</p>
+   <h3>Before enrolling mainly to reduce a degree’s workload</h3>
+   <ol>
+    <li>Name the receiving institution, qualification, intake and subject you hope to replace. “University credit” is too vague.</li>
+    <li>Ask which exact credential or combination is recognised, whether approval is automatic under a current agreement or requires individual assessment, and what evidence is needed.</li>
+    <li>Confirm the type and amount of credit, completion conditions, any expiry or curriculum-version limits, and remaining study requirements.</li>
+    <li>Get the answer from the receiving course or credit team. If credit is uncertain, decide whether the learning is still worthwhile without that benefit.</li>
+   </ol>
+   <p><strong>Fictional purchasing decision:</strong> a learner wants to replace a specific degree subject. A short-course page promises a completion badge but names no receiving qualification or credit arrangement. The learner cannot infer an exemption. Their next step is a credit enquiry with the intended institution—not withdrawing from the subject or buying a second badge to create an assumed “stack”. This example is not an evaluation of an actual provider.</p>
+
+   <h2 id="next-step">Choose the next step that matches the unanswered question</h2>
+   <p>For assessment permission, ask your unit coordinator. For access or participation barriers, use the institution’s accessibility and course-support processes. For degree recognition, ask the receiving credit team. Record the decision, the relevant version and any condition you must still meet.</p>
+   <p>If your next question is whether an education technology proposal has evidence behind it, use the <Link to="/articles/featured/how-modern-technology-affects-education-today-and-in-the-fut">education technology evidence guide</Link>. Do not publish assessed work as a portfolio simply because it demonstrates a useful skill: resolve rights and assessment restrictions first, or develop a separate permission-cleared project.</p>
+   <p>This is an educational decision guide, not a university-approved procedure, admissions service or offer of paid builder work. The worked decisions and log are MLAI editorial examples, not research findings or independent academic review. Institutional sources can change; recheck the rules for your actual enrolment.</p>
+   <ArticleFAQ items={faqItems} />
+   <AuthorBio author={getAuthorProfile(DEFAULT_AUTHOR_KEY)} />
+  </div>
+ </div>
+}

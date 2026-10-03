@@ -1,0 +1,177 @@
+import { expect, test } from 'bun:test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import * as Assess from '../app/articles/content/featured/how-to-assess-cofounder-values-match-before-you-commit';
+import * as Trial from '../app/articles/content/featured/how-to-test-for-a-cofounder-values-match-before-you-commit';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { readFileSync } from 'node:fs';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+import { CofounderWorkedRecord } from '../app/components/articles/CofounderWorkedRecord';
+import * as Records from '../app/lib/cofounder-working-decisions';
+
+function render(module: typeof Assess | typeof Trial, query = '') {
+ const Article = module.default;
+ return renderToStaticMarkup(<MemoryRouter initialEntries={['/articles/' + module.CATEGORY + '/' + module.SLUG + query]}><Article /></MemoryRouter>);
+}
+
+test('cofounder guides retain their canonical dates and deliberate community path', () => {
+ for (const module of [Assess, Trial]) {
+  const html = render(module);
+  const entry = ARTICLE_REGISTRY[module.CATEGORY + '/' + module.SLUG];
+  expect(entry.date).toBe(module.DATE_PUBLISHED);
+  expect(entry.dateModified).toBe(module.DATE_MODIFIED);
+  expect(entry.description).toBe(module.DESCRIPTION);
+  expect(html).toContain('data-article-icp="COMMUNITY"');
+  expect(html).toContain('href="/events"');
+  expect(html).toContain('Dr Sam Donegan');
+  expect(html).not.toContain('human-edited');
+  expect(html).not.toContain('studio-builder');
+  expect(html).not.toContain('sources consistently');
+  expect(html).not.toContain('grounded sections');
+  expect(html).not.toContain('findskill.ai');
+ }
+});
+
+test('cofounder metadata and stable body anchors match both distinct reader tasks', () => {
+ for (const module of [Assess, Trial]) {
+  const entry = ARTICLE_REGISTRY[module.CATEGORY + '/' + module.SLUG];
+  for (const key of ['title', 'image', 'imageAlt', 'author'] as const) expect(module.articleMeta[key]).toBe(entry[key]);
+  expect(module.DATE_MODIFIED).toBe('2026-09-11');
+  expect(render(module)).toContain('data-cf-article-body');
+  expect(render(module)).toContain('data-article-toc-placeholder');
+  expect((render(module).match(/<h1\b/g) ?? []).length).toBe(1);
+  expect(render(module)).not.toContain('FAQPage');
+  expect(render(module)).toContain('independent');
+ }
+ expect(Assess.DATE_PUBLISHED).toBe('2026-03-30');
+ expect(Trial.DATE_PUBLISHED).toBe('2026-03-14');
+ expect(Trial.articleMeta.image).toBe('');
+ expect(render(Trial)).not.toContain('data-cf-component-id="hero-image"');
+ expect(render(Assess)).toContain('id="mission"');
+ expect(render(Trial)).toContain('id="brief"');
+});
+
+test('four supplied conversations have both positions, an actual follow-up and a limited decision', () => {
+ const { COFOUNDER_CONVERSATIONS: rows } = Records;
+ expect(rows.map(row => row.id)).toEqual(['mission', 'capacity', 'boundaries', 'disagreement']);
+ for (const row of rows) {
+  for (const text of [row.question, row.alex, row.morgan, row.followup, row.decision]) expect(text.length).toBeGreaterThan(25);
+  expect(render(Assess)).toContain(`data-conversation-example="${row.id}"`);
+ }
+ expect(rows[0].decision).toContain('remains unresolved');
+ expect(rows[2].decision).toContain('Exclude the employer file entirely');
+ expect(Records.COFOUNDER_VALUES_COMPLETED[5]).toContain('does not show that the boundary will be followed');
+ expect(Records.COFOUNDER_VALUES_COMPLETED[7]).toContain('no actual trial or participant consent');
+});
+
+test('both downloadable files supply every promised field and preserve their provenance', () => {
+ for (const [download, text, fields, values] of [
+  [Records.COFOUNDER_ASSESS_DOWNLOAD, Records.COFOUNDER_VALUES_FILE, Records.COFOUNDER_VALUES_FIELDS, Records.COFOUNDER_VALUES_COMPLETED],
+  [Records.COFOUNDER_TRIAL_DOWNLOAD, Records.COFOUNDER_TRIAL_FILE, Records.COFOUNDER_TRIAL_FIELDS, Records.COFOUNDER_TRIAL_COMPLETED],
+ ] as const) {
+  expect(readFileSync('public' + download, 'utf8')).toBe(text);
+  expect(fields).toHaveLength(9);
+  expect(values).toHaveLength(fields.length);
+  for (const item of [...fields, ...values]) expect(text).toContain(item);
+  expect(text).toContain(Records.COFOUNDER_PROVENANCE);
+  expect(text).toContain('No notes are submitted to MLAI');
+ }
+ for (const row of Records.COFOUNDER_CONVERSATIONS) for (const value of [row.question, row.alex, row.morgan, row.followup, row.decision]) expect(Records.COFOUNDER_VALUES_FILE).toContain(value);
+ for (const [field, value] of Records.COFOUNDER_TRIAL_BRIEF) {
+  expect(Records.COFOUNDER_TRIAL_FILE).toContain(field + ':');
+  expect(Records.COFOUNDER_TRIAL_FILE).toContain(value);
+ }
+ expect(Records.COFOUNDER_TRIAL_FILE).toContain(Records.COFOUNDER_HANDOVER);
+ expect(render(Assess)).toContain('download="mlai-values-discussion-record.txt"');
+ expect(render(Trial)).toContain('download="mlai-cofounder-trial-brief-and-debrief.txt"');
+});
+
+test('the complete fixed mock-up retains its failed reply and does not become an AI evaluation', () => {
+ const rows = Records.COFOUNDER_REPLY_CHECKS;
+ expect(rows.map(row => row.id)).toEqual(['T1', 'T2', 'T3', 'T4']);
+ expect(new Set(rows.map(row => row.input)).size).toBe(4);
+ expect(rows.filter(row => row.before === row.expected)).toHaveLength(3);
+ expect(rows.filter(row => row.after === row.expected)).toHaveLength(4);
+ expect(rows.filter(row => row.before !== row.after).map(row => row.id)).toEqual(['T3']);
+ expect(rows[2].before).toBe('Admission is free.');
+ expect(rows[2].after).toBe('Ticket price is not provided.');
+ expect(Records.COFOUNDER_EVENT_CARD).not.toContain('free');
+ for (const row of rows) {
+  for (const value of [row.input, row.expected, row.before, row.after, row.note]) expect(Records.COFOUNDER_TRIAL_FILE).toContain(value);
+  expect(render(Trial)).toContain(`data-trial-check="${row.id}"`);
+ }
+ expect(Records.COFOUNDER_HANDOVER).toContain('no code or AI model');
+ expect(render(Trial)).toContain('not a model run');
+ expect(render(Trial)).toContain('not a security evaluation');
+});
+
+test('invented time is reconciled but cannot authorise the next commitment', () => {
+ const sum = (rows: readonly { alex: number; morgan: number }[], key: 'alex' | 'morgan') => rows.reduce((n, row) => n + row[key], 0);
+ expect(sum(Records.COFOUNDER_TIME_PLAN, 'alex')).toBe(6);
+ expect(sum(Records.COFOUNDER_TIME_PLAN, 'morgan')).toBe(6);
+ expect(sum(Records.COFOUNDER_TIME_EXAMPLE, 'alex')).toBe(6);
+ expect(sum(Records.COFOUNDER_TIME_EXAMPLE, 'morgan')).toBe(5.75);
+ expect(Records.COFOUNDER_TIME_EXAMPLE[0].alex).toBeLessThan(Records.COFOUNDER_TIME_PLAN[0].alex);
+ expect(Records.COFOUNDER_TIME_EXAMPLE[2].alex).toBeGreaterThan(Records.COFOUNDER_TIME_PLAN[2].alex);
+ expect(Records.COFOUNDER_TRIAL_COMPLETED[8]).toContain('Morgan has not agreed future availability');
+ expect(Records.COFOUNDER_TRIAL_COMPLETED[8]).toContain('No next trial, equity, employment, data access or public release is authorised');
+ expect(render(Trial)).toContain('Fair Work Ombudsman');
+ expect(render(Trial)).toContain('does not approve a cofounder arrangement');
+});
+
+test('an incomplete record cannot silently render as a completed worksheet', () => {
+ expect(() => renderToStaticMarkup(<CofounderWorkedRecord id="test" title="Test" label="Test" fields={['First:', 'Second:']} values={['Only one']} />)).toThrow('value for every field');
+});
+
+test('both guides carry an explicit COMMUNITY format choice without private notes or contractor offers', () => {
+ for (const module of [Assess, Trial]) {
+  const path = '/articles/' + module.CATEGORY + '/' + module.SLUG;
+  const conversion = BASE_ARTICLE_SEO_CONFIG[path].conversion!;
+  expect(conversion.primary).toBe('events');
+  expect(conversion.primaryIcp).toBe('COMMUNITY');
+  expect(conversion.eventCalendarOnly).toBe(true);
+  expect(conversion.version).toBe(module === Assess ? 'cofounder-discussion-v3' : 'cofounder-trial-v3');
+  for (const format of ['online', 'sydney', 'melbourne']) {
+   const html = render(module, `?event_format=${format}&notes=private-cofounder-notes`);
+   expect(html).toContain(`value="${format}" selected=""`);
+   expect(html).toContain(`href="/events?event_format=${format}"`);
+   expect(html).not.toContain('private-cofounder-notes');
+   expect(html).toContain(`action="${path}" method="get"`);
+   expect(html).not.toContain('data-article-icp="FOUNDER_BUILDER"');
+  }
+  for (const query of ['', '?event_format=invalid', '?event_format=sydney&event_format=online']) {
+   expect(render(module, query)).toContain('value="all" selected=""');
+   expect(render(module, query)).toContain('href="/events"');
+  }
+ }
+});
+
+test('conversation guide delivers all four discussions and does not diagnose compatibility', () => {
+ const html = render(Assess);
+ for (const id of ['mission', 'capacity', 'boundaries', 'disagreement']) {
+  expect(html).toContain('id="' + id + '"');
+ }
+ for (const text of ['Values discussion record', 'Their preference in their own words:',
+  'Operating boundary', 'Practical constraint', 'Fictional example',
+  'no aggregate compatibility score', '27 April 2023',
+  'https://www.ycombinator.com/blog/10-questions-to-discuss-with-a-potential-co-founder',
+  'href="/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit"']) {
+  expect(html).toContain(text);
+ }
+ expect(html).not.toContain('Consistent action is the proof');
+});
+
+test('trial provides bounded synthetic work, observable checks and a debrief instead of a stress test', () => {
+ const html = render(Trial);
+ for (const text of ['Trial-project review', 'What each person actually did:',
+  'Fictional teaching brief', 'Example workshop', 'Australia/Sydney',
+  '6 + 6 = 12 person-hours', 'not evidence', 'What does a ticket cost?',
+  'failed outputs', 'unpaid production work', 'not a security evaluation',
+  'https://www.blackbird.vc/blog/the-cofounder-question',
+  'href="/articles/featured/how-to-assess-cofounder-values-match-before-you-commit"']) {
+  expect(html).toContain(text);
+ }
+ expect(html).not.toContain('The best trial projects usually run for two to four weeks');
+ expect(html).not.toContain('Execute a High-Stakes Trial Project');
+ expect((3 + 1 + 1 + 1) * 2).toBe(12);
+});

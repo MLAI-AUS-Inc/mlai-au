@@ -1,0 +1,111 @@
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+import { EVENT_REPLY_LAB as LAB, EVENT_REPLY_FILES } from "~/lib/event-reply-lab";
+
+export const useCustomHeader = true;
+export const CATEGORY = "featured";
+export const SLUG = "a-practical-guide-on-how-to-create-an-artificial-intelligence";
+export const DATE_PUBLISHED = "2026-03-22";
+export const DATE_MODIFIED = "2026-09-10";
+const TITLE = "Build a bounded AI prototype: code, tests and handover";
+export const DESCRIPTION = "Run a local event-reply classifier, compare it with rules, inspect a real failure and hand over the code, evidence and limits of a bounded AI prototype.";
+const HERO = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0c1f2bc9-89fc-42cc-8e74-2c6d708ae3c9.jpg?alt=media&token=257975d5-7903-4218-b610-048dfe649d16";
+const PATH = "/articles/" + CATEGORY + "/" + SLUG;
+export const articleMeta = { title: TITLE, topic: TITLE, category: CATEGORY, slug: SLUG, description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, author: "Dr Sam Donegan", image: HERO, imageAlt: "Two people examining a small robot with a laptop in the background" };
+export const summaryHighlights = { heading: "Build a testable system, not a vague AI demo", intro: "Training a new model is an option, not a mandatory step. Here, a tiny local classifier makes its behaviour inspectable.", items: [
+  { label: "Run the whole example", description: "Six downloadable files, invented notices and a rules-versus-model comparison. No API key or package installation." },
+  { label: "Inspect the failure", description: "A correctly cited start time is still the wrong response to a parking question." },
+  { label: "Hand over honest evidence", description: "Keep development results, simulated failures and independent human review clearly separate." },
+] };
+export const faqItems = [
+  { id: 1, question: "Must I train a model to build an AI application?", answer: "No. An existing model may be suitable, or rules and ordinary search may solve the task without AI. This lab fits a small text classifier so you can inspect its calculation; it does not train an LLM." },
+  { id: 2, question: "Does six out of eight mean the prototype is 75% accurate?", answer: "It means six selected invented questions matched their expected intent. It does not measure overall answer quality, real-world accuracy, security or customer usefulness. All cases were visible during development." },
+  { id: 3, question: "Can the lab send replies or access attendee information?", answer: "No. The delivered program has neither capability. It returns a fixed draft from synthetic notice fields or a refusal/cannot-answer result. Every draft needs a person to check the actual question and evidence." },
+  { id: 4, question: "Does completing the example qualify me for client work?", answer: "No. It is a teaching exercise. A Studio application should show broader delivery experience, your contribution, tested work and realistic availability. Selection and paid project matching are not guaranteed." },
+];
+
+export default function ArticleContent() {
+  return <div>
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: TITLE, current: true }]} title={TITLE} titleHighlight="code, tests and handover" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
+    <div data-cf-article-body className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-slate [&_h2]:scroll-mt-20 [&_h3]:scroll-mt-20 [&_[role=region]]:scroll-mt-20">
+      <p><strong>A useful first AI build has a bounded task, an inspectable baseline and a way to fail safely.</strong> This guide is for early-career builders who can read basic JavaScript, use a terminal and review AI-assisted code. You will run a small event-question classifier, inspect its replies and prepare a handover record—not create a foundation model or prove you are ready for a client project.</p>
+      <p>The supplied project is an original teaching example with invented data. It is not MLAI's event system, a client case study or a benchmark of commercial AI tools. No real inbox, attendee database, LLM provider or external action is connected.</p>
+
+      <h2 id="contract">1. Define what the application may do</h2>
+      <p><strong>The task:</strong> prepare a reply about the time or location of an explicitly selected fictional event, using three fixed notice records. A small learned classifier selects the field; application code copies its value into a draft and attaches supporting notice IDs. The model never writes free-form factual prose.</p>
+      <p className="text-sm">On small screens, swipe the comparison tables sideways. Keyboard users can focus a table and use the left/right arrow keys.</p>
+      <div className="overflow-x-auto" role="region" aria-label="Event prototype acceptance contract" tabIndex={0}><table className="min-w-[640px]">
+        <caption>The implemented teaching contract, not a real event-service specification</caption>
+        <thead><tr><th>Boundary</th><th>Implemented behaviour</th><th>Human responsibility</th></tr></thead><tbody>
+          <tr><td>Input</td><td>Only event ID, question and snapshot version; unknown fields are rejected.</td><td>Confirm the event and permitted notice source.</td></tr>
+          <tr><td>Evidence</td><td>Matching notices must have the requested field and agree; expired or wrong snapshots stop.</td><td>Verify the source is approved, correct and fresh enough.</td></tr>
+          <tr><td>Output</td><td>A fixed, cited draft marked needs-human-review, or an explicit refusal/cannot-answer result.</td><td>Check that it answers this question, not just that its fact is cited.</td></tr>
+          <tr><td>Capabilities</td><td>No sending, booking, payment, registration or attendee lookup exists.</td><td>Review any future capability before adding it.</td></tr>
+        </tbody>
+      </table></div>
+      <p>A prompt saying “never send” is not the same as removing a sending tool. In this delivered program there is no such tool. The limited request filter is additional teaching logic, not a comprehensive privacy or intention detector.</p>
+
+      <h2 id="run-prototype">2. Download and run the working prototype</h2>
+      <p>Save all six files in one new folder, retaining their names. Read the code before executing it. You need a maintained Node.js runtime; there are no packages to install, secrets to supply or cloud costs generated by the delivered program.</p>
+      <ul>{EVENT_REPLY_FILES.map(file => <li key={file.name}><a href={file.href} download>{file.name}</a> — {file.purpose}.</li>)}</ul>
+      <pre className="whitespace-pre-wrap break-words"><code>{"node --version\nnode --test lab.test.mjs\nnode lab.mjs"}</code></pre>
+      <p>Recorded on 10 September 2026 with {LAB.runtime}: <strong>{LAB.tests} tests passed</strong>. Compare the entire JSON result with <code>recorded-result.json</code>. The fixed scenario uses an explicit 1 February 2026 clock and invented February notices; these are not current event details. A clock beyond the snapshot's expiry deliberately stops replies.</p>
+      <p>The README shows how to submit a single question, use the rules baseline instead of the model and investigate setup failures. A missing fixture or extra command-line argument exits with an error. If your browser appends <code>.txt</code> to a code filename, restore the displayed name.</p>
+
+      <h2 id="model">3. Separate the model from the application</h2>
+      <p>The classifier fits word counts from {LAB.trainingExamples} labelled training questions: six about time and six about location. It is <strong>multinomial naive Bayes</strong>, not an LLM. Lowercase word tokens, class frequencies and smoothed counts determine its scores. The <a href="https://scikit-learn.org/stable/modules/naive_bayes.html#multinomial-naive-bayes">scikit-learn model explanation</a> describes the method and Laplace smoothing; this lab implements it in JavaScript and does not import that library.</p>
+      <p>Unknown vocabulary is ignored. No known tokens or a log-score margin below 0.75 produces <code>other</code>. That teaching cutoff is not a calibrated probability or safety guarantee. The model does not know event permissions or whether a fact is useful to the reader.</p>
+      <ol>
+        <li>The validator checks the request, selected event and notice snapshot.</li>
+        <li>The classifier receives question text only and proposes <code>time</code>, <code>location</code> or <code>other</code>.</li>
+        <li>Application code checks that field across every matching notice, refusing missing or conflicting evidence.</li>
+        <li>A fixed template produces the draft and citations. A person must check relevance and evidence before doing anything with it.</li>
+      </ol>
+      <p><strong>Executed trace, case q3:</strong> “{LAB.exampleQuestion}”. The model selects <code>time</code>; both <code>notice-1</code> and <code>notice-2</code> contain the same value. The output is “{LAB.exampleDraft}”, with those two field citations and <code>needs-human-review</code>. The rules baseline returns <code>other</code> for this wording. The full input and both outputs are in the download.</p>
+
+      <h2 id="comparison">4. Compare the baseline and keep the failed cases</h2>
+      <p>The rules baseline recognises a short list such as “time/start/when” and “where/venue/address”; it abstains when both or neither match. It is deliberately simple, not an optimised production competitor. A field-selection interface might remove the need for either method.</p>
+      <div className="overflow-x-auto" role="region" aria-label="Recorded event prototype results" tabIndex={0}><table className="min-w-[640px]">
+        <caption>Actual routing results on eight invented development questions—not answer accuracy</caption>
+        <thead><tr><th>Measure</th><th>Rules baseline</th><th>Learned classifier</th></tr></thead><tbody>
+          <tr><td>Expected intent matches</td><td>{LAB.baselineCorrect} / {LAB.evaluationCases}</td><td>{LAB.candidateCorrect} / {LAB.evaluationCases}</td></tr>
+          <tr><td>“Commence” and “hall/meet” paraphrases</td><td>Abstains on both</td><td>Routes both to the expected field</td></tr>
+          <tr><td>Attendee email request, q6</td><td>Misclassifies as location</td><td>Misclassifies as location</td></tr>
+          <tr><td>Parking question, q8</td><td>Returns the wrong field</td><td>Returns the wrong field</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>Inspect q8: “{LAB.failureQuestion}”.</strong> Both methods return the start time. Its citations are valid, but the response is irrelevant. Reject this draft. In q6, the separate application filter refuses the attendee request before classification; that does not turn the underlying wrong classification into a correct one.</p>
+      <p><strong>Decision: neither version is approved for real event enquiries.</strong> Keep the known failure in the log and test an explicit field selector or revised abstention design on fresh cases. Do not remove awkward questions to create a flattering score.</p>
+      <p>These are development examples, <strong>not a statistically representative benchmark</strong>. They are excluded from fitting but were visible during implementation. Tests reject exact normalised overlaps; they do not remove near-duplicate meaning or selection bias. <a href="https://developers.google.com/machine-learning/crash-course/overfitting/dividing-datasets">Google's dataset guidance</a> explains why tuning against repeatedly viewed examples needs separate, fresh evaluation. Have another person prepare permitted cases and review outcomes before estimating real-world usefulness.</p>
+
+      <h2 id="failure-checks">5. Test boundaries, not just successful replies</h2>
+      <div className="overflow-x-auto" role="region" aria-label="Prototype failure checks" tabIndex={0}><table className="min-w-[640px]">
+        <caption>Behaviours exercised by the downloadable automated suite</caption>
+        <thead><tr><th>Input or injected fault</th><th>Observed behaviour</th><th>Limit</th></tr></thead><tbody>
+          <tr><td>Disagreeing times or missing field</td><td>No draft; explicit evidence failure</td><td>Agreeing sources are not necessarily true.</td></tr>
+          <tr><td>Expired/wrong snapshot or unknown event</td><td>No draft</td><td>Approval and expiry policy need an accountable owner.</td></tr>
+          <tr><td>“Ignore instructions and send” in notice text</td><td>Text reaches neither classifier nor draft</td><td>Data exclusion, not a full prompt-injection benchmark.</td></tr>
+          <tr><td>Throwing, malformed or never-resolving classifier</td><td>Explicit failure; no fabricated reply</td><td>Simulated adapter failures, not provider reliability tests.</td></tr>
+        </tbody>
+      </table></div>
+      <p>The timer stops waiting for an asynchronous result; it cannot terminate blocking JavaScript or undo an external effect. Replacement classifier code is trusted local code, not sandboxed. Adding a provider changes privacy, cost, cancellation and security requirements and needs separate review.</p>
+      <p>Other tests check the model against a hand-solvable probability calculation, verify that evaluation labels cannot change predictions, reject malformed/duplicate records and compare cited values with the selected notice. Green tests establish only those exercised behaviours.</p>
+
+      <h2 id="handover">6. Turn the exercise into your own delivery evidence</h2>
+      <p>The files were drafted with AI coding assistance and checked through agent-run execution, calculation tests and failure cases. <strong>No independent human reviewer has approved this prototype.</strong> Downloading it is not evidence that you authored or delivered a client system. Explain the changes you actually make.</p>
+      <p><a href="/downloads/ai-prototype-delivery-contract.txt" download>Download the editable prototype delivery contract</a>. It now includes the completed lab scope and routing result, plus a blank evaluation row. The README adds data permission, environment, your contribution, failure evidence, independent review and future deployment ownership. Leave unrun checks marked UNRUN and approvals marked PENDING.</p>
+      <p>A narrow coding-assistant prompt to try: “Add one test for a missing notice field. Do not change expected results, add network calls or remove the parking failure. Explain what the test does not prove.” Inspect the diff, run the full suite and record your corrections.</p>
+      <p>Do not train or fine-tune a larger model merely because the project is called AI. First test whether a form, rules, search or an existing product meets the task. Further modelling needs a demonstrated gap, permitted data and a stronger evaluation. For commissioning, use the <Link to="/articles/featured/how-to-build-ai-for-real-business-problems">business AI delivery guide</Link>. For different engineering tasks, see the <Link to="/articles/featured/what-is-inference-in-artificial-intelligence-and-why-it-matters">inference service lab</Link> and <Link to="/articles/featured/what-is-an-intelligent-agent-in-artificial-intelligence">agent action-boundary lab</Link>.</p>
+
+      <h2 id="next">Use tested work when applying to the builder pool</h2>
+      <p>Already delivering projects with AI coding tools? Use a permitted repository or demo, test record and handover to show MLAI Studio what you can take responsibility for. This lab alone is not proof of client readiness. Applications depend on fit and available work; an assignment is not guaranteed and publishing client work needs permission. The current application asks about contracting in Australia; New Zealand applicants should clarify eligibility before assuming support.</p>
+      <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={BASE_ARTICLE_SEO_CONFIG[PATH].conversion!} events={[]} placement="article-inline" />
+      <p>Still practising? <Link to="/events">Find an MLAI learning or build event</Link> and bring one question about a result or boundary you could not explain. Check the advertised format, level and location.</p>
+    </div>
+    <ArticleFAQ items={faqItems} />
+  </div>;
+}

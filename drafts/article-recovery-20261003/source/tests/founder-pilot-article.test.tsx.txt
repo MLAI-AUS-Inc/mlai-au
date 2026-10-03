@@ -1,0 +1,39 @@
+import { expect, test } from "bun:test";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import Article, { articleMeta, PILOT_BRIEF, CAPACITY_WORKSHEET } from "../app/articles/content/featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+import { FOUNDER_PILOT_DOWNLOAD, FOUNDER_PILOT_FIELDS, FOUNDER_PILOT_CASES } from "../app/lib/founder-pilot-brief";
+
+test("founder pilot gives usable scope and capacity aids before a conditional contractor offer", () => {
+  const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+  expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+  for (const text of ["Acceptance cases", "payment timing to agree:", "support boundary", "permitted reuse"]) expect(PILOT_BRIEF).toContain(text);
+  for (const text of ["immovable startup milestones", "Contingency allowance", "accept, reduce scope, defer or decline"]) expect(CAPACITY_WORKSHEET).toContain(text);
+  for (const text of ["Fictional pilot", "Fictional capacity check", "four-hour shortfall", "AI coding tools", "confirm eligibility with MLAI", 'data-article-icp="FOUNDER_BUILDER"', "/mlai-studio#apply", "/events"]) expect(html).toContain(text);
+  expect(html.indexOf("four-hour shortfall")).toBeLessThan(html.indexOf("Apply for scoped contract work"));
+  expect(html).toContain("Matching is not guaranteed");
+  expect(html).toContain("not automatically available for your public portfolio");
+  for (const text of ["data-cf-article-body", "NOT READY TO COMMIT", "no baseline has been measured", "A$450", "A$700", "Eight starting cases", "not a tested summary application", FOUNDER_PILOT_DOWNLOAD]) expect(html).toContain(text);
+  expect(html.match(/<td>UNRUN<\/td>/g)).toHaveLength(8);
+  expect(html.indexOf("founder-capacity-worksheet")).toBeLessThan(html.indexOf("Apply for scoped contract work"));
+  for (const field of FOUNDER_PILOT_FIELDS) expect(html).toContain(field.label);
+  for (const item of FOUNDER_PILOT_CASES) expect(html).toContain(item.id);
+  for (const text of ["Download now", "section stays specific", "Students &amp; Switchers", "FAQPage", "human-edited and reviewed"]) expect(html).not.toContain(text);
+});
+
+test("founder pilot metadata and offer use the canonical record and founder-builder intent", () => {
+  const slug = "featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers";
+  const entry = ARTICLE_REGISTRY[slug];
+  expect(entry.title).toBe(articleMeta.title);
+  expect(entry.date).toBe(articleMeta.datePublished);
+  expect(entry.dateModified).toBe(articleMeta.dateModified);
+  expect(entry.description).toBe(articleMeta.description);
+  expect(entry.imageAlt).toBe(articleMeta.imageAlt);
+  expect(BASE_ARTICLE_SEO_CONFIG["/articles/" + slug].conversion?.primaryIcp).toBe("FOUNDER_BUILDER");
+  expect(BASE_ARTICLE_SEO_CONFIG["/articles/" + slug].conversion?.primary).toBe("studio-builder");
+  expect(BASE_ARTICLE_SEO_CONFIG["/articles/" + slug].conversion?.version).toBe("founder-capacity-v3");
+  expect(articleMeta.datePublished).toBe("2026-04-06");
+  expect(articleMeta.dateModified).toBe("2026-09-10");
+});

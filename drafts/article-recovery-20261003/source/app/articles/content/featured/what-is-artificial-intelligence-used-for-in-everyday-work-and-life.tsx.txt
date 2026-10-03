@@ -1,0 +1,91 @@
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+import ArticleTocPlaceholder from "~/components/articles/ArticleTocPlaceholder";
+import { CAPABILITY_CANDIDATES, CAPABILITY_COST_RESULTS, CAPABILITY_PRIORITY_DOWNLOAD, CAPABILITY_BRIEF_FIELDS, CAPABILITY_BRIEF_TEMPLATE, INVOICE_SLOW_REVIEW, priorityAud, priorityMinutes } from "~/lib/ai-capability-priorities";
+export const useCustomHeader = true;
+export const CATEGORY = "featured";
+export const SLUG = "what-is-artificial-intelligence-used-for-in-everyday-work-and-life";
+export const DATE_PUBLISHED = "2026-04-10";
+export const DATE_MODIFIED = "2026-09-11";
+const TITLE = "What is AI used for? Translate the capability into a business task";
+export const DESCRIPTION = "Map AI drafting, extraction, recommendations and anomaly detection to business inputs, review needs and failure costs before commissioning a build.";
+const HERO = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ba426870-f23d-4a68-ba38-cd4ab3eb8d23.jpg?alt=media&token=b24f96bc-d8ff-4b6c-970e-e4f749a14259";
+export const articleMeta = {title:TITLE,topic:TITLE,category:CATEGORY,slug:SLUG,description:DESCRIPTION,datePublished:DATE_PUBLISHED,dateModified:DATE_MODIFIED,author:"Dr Sam Donegan",image:HERO,imageAlt:"Illustration of colleagues discussing a business workflow"};
+export const summaryHighlights = {heading:"A capability is not a business outcome",intro:"AI can generate content, extract information, recommend options and flag patterns. The business value depends on the task, data, errors and work required to use the output.",items:[
+ {label:"Specify the output",description:"A draft, a suggested field or an alert is not the same as a sent message, an accounting entry or a final decision."},
+ {label:"Check the evidence",description:"Examples of possible uses do not prove accuracy, savings or suitability for your business."},
+ {label:"Keep a simpler baseline",description:"Compare against search, templates or rules before adding a model or autonomous actions."},
+]};
+export const faqItems = [
+ {id:1,question:"Is every automated task AI?",answer:"No. A fixed rule, template or scheduled action can be ordinary automation. Ask what the system actually does, not only whether a vendor labels it AI."},
+ {id:2,question:"Does a convincing draft mean it is correct?",answer:"No. Review factual claims against permitted sources. Clear wording, a citation or a confidence label does not establish truth."},
+ {id:3,question:"Does an AI feature guarantee better margins?",answer:"No. Measure usable outputs, review and correction effort, setup and operating costs. Released capacity is not automatically reduced spending or new revenue."},
+];
+export default function ArticleContent() {
+ return <div data-cf-article-body>
+  <ArticleHeroHeader breadcrumbs={[{label:"Home",href:"/",icon:Home},{label:"Articles",href:"/articles"},{label:TITLE,current:true}]} title={TITLE} titleHighlight="a business task" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
+  <div className="prose prose-lg prose-slate max-w-none">
+   <p>If you own a small or medium business, “we need AI” is not yet an implementation brief. Start by identifying which capability matches a real task. This guide explains the choices in plain language; it does not require you to code or pick a model vendor.</p>
+   <p><strong>11 September update:</strong> the completed three-task comparison and downloadable worksheet now show workload, review effort, costs and reasons to pause. The example is fictional; no client experiment or AI system was evaluated.</p>
+   <ArticleTocPlaceholder />
+   <h2 id="uses" className="scroll-mt-28">What can AI be used for?</h2>
+   <p>The <a href="https://business.gov.au/online-and-digital/artificial-intelligence">Australian Government's business AI overview</a> describes content generation, language processing, image analysis and pattern-based predictions, recommendations or alerts. It lists examples including meeting summaries, product recommendations and routine business tasks. Those are categories of possible use, not verified results for your company.</p>
+   <p>The same broad capabilities can appear in personal and workplace software: a suggested product is a recommendation; a transcript converts speech into text; a proposed reply is generated content. None of these outputs automatically authorises a purchase, confirms what a speaker meant or permits sending a message.</p>
+   <h2 id="map" className="scroll-mt-28">Translate a capability into inputs, outputs and checks</h2>
+   <p>The following is an illustrative scoping map. It is not a list of tested MLAI deployments. The checking burden belongs in the brief, not in a footnote after purchase.</p>
+   <div role="region" aria-label="AI capability scoping map" tabIndex={0} className="max-w-full overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-800"><table className="min-w-[42rem]"><thead><tr><th>Use</th><th>Input and output</th><th>Review and failure boundary</th></tr></thead><tbody>
+    <tr><td>Draft a customer reply</td><td>Approved facts and a question → proposed text</td><td>Check every promise, price and factual claim. Drafting is not sending.</td></tr>
+    <tr><td>Extract invoice fields</td><td>A permitted document → proposed supplier, date and total</td><td>Compare against the original, including tax, credits and line totals. Extraction is not payment approval.</td></tr>
+    <tr><td>Summarise a meeting</td><td>A recording/transcript used with appropriate permission → notes</td><td>Check speaker attribution, disagreements and action owners. A generated action item is not proof someone accepted it.</td></tr>
+    <tr><td>Recommend a product</td><td>Permitted preferences and catalogue facts → ranked options</td><td>Check availability, compatibility and unsuitable recommendations; a ranking is not an eligibility decision.</td></tr>
+    <tr><td>Flag unusual activity</td><td>Relevant historical and current records → alerts</td><td>Investigate false alarms and missed cases. An alert alone is not proof of fraud.</td></tr>
+   </tbody></table></div>
+   <p>Some tasks can be handled with rules or existing search. If your approved catalogue already has exact compatibility fields, a filter may be easier to verify than a generated recommendation. A model should earn its place through a useful comparison, not a fashionable label.</p>
+   <h2 id="priorities" className="scroll-mt-28">Three tasks for one fictional retailer</h2>
+   <p>Compare the same month's work before commissioning anything. These are invented planning inputs, not measured timings or recommended budgets. Baseline minutes include existing checks and rework; the rework case counts are subsets of that workload. The decision depends on data, oversight and a useful alternative—not just the largest task count.</p>
+   <p>Scroll tables sideways on narrow screens; keyboard users can focus each labelled region and use the arrow keys.</p>
+   <div role="region" aria-label="Three business use-case priorities" tabIndex={0} className="max-w-full overflow-x-auto"><table className="min-w-[48rem]"><caption>Monthly workload and rework; decisions are for investigation only</caption><thead><tr><th>Task</th><th>Workload</th><th>Data and oversight</th><th>Error consequence</th><th>Decision</th></tr></thead><tbody>
+    {CAPABILITY_CANDIDATES.map(candidate => <tr key={candidate.id}><th scope="row">{candidate.task}</th><td>{candidate.inputs.monthlyTasks} × {candidate.inputs.baselineMinutes} = {candidate.inputs.monthlyTasks * candidate.inputs.baselineMinutes} active minutes; {candidate.reworkCases} cases need correction within that total.</td><td>{candidate.data}<p>{candidate.oversight}</p></td><td>{candidate.errorCost}</td><td><strong>{candidate.decision}</strong><p>{candidate.reason}</p><p>{candidate.alternative}</p></td></tr>)}
+   </tbody></table></div>
+   <h3 id="cost-assumptions" className="scroll-mt-28">Setup and operating cost assumptions</h3>
+   <p>Use a consistent cost/tax basis in real quotes. Here A$60/hour values internal capacity, not an extra invoice or avoidable payroll expense. Planned case minutes include review, correction and fallback; extra monthly oversight is separate. No additional revenue is evidenced. These allowances are not supplier prices.</p>
+   <div role="region" aria-label="Use-case cost assumptions" tabIndex={0} className="max-w-full overflow-x-auto"><table className="min-w-[46rem]"><caption>Monthly planning arithmetic, not an ROI forecast</caption><thead><tr><th>Task</th><th>Planned work and capacity</th><th>One-off setup</th><th>Incremental monthly cash</th></tr></thead><tbody>
+    {CAPABILITY_CANDIDATES.map((candidate, index) => { const i = candidate.inputs, r = CAPABILITY_COST_RESULTS[index]; return <tr key={candidate.id}><th scope="row">{candidate.task}</th><td>{i.monthlyTasks} × {i.pilotMinutes} = {i.monthlyTasks * i.pilotMinutes} case minutes + {priorityMinutes(i.maintenanceHours)} oversight minutes. Potential release: {priorityMinutes(r.netHours)} minutes/month.</td><td>{priorityAud(i.setupCashCost)} external cash + {i.setupHours} internal hours ({priorityAud(i.setupHours * i.hourlyCost)}). Combined economic setup: {priorityAud(r.setupEconomicCost)}.</td><td>{priorityAud(i.monthlyCashCost)}: subscription {priorityAud(candidate.cashBreakdown.subscription)}, usage {priorityAud(candidate.cashBreakdown.usage)}, external support {priorityAud(candidate.cashBreakdown.externalSupport)}; extra labour cash {priorityAud(candidate.cashBreakdown.extraLabourCash)}. Cash change: {priorityAud(r.monthlyCashChange)}.</td></tr>; })}
+   </tbody></table></div>
+   <p><strong>No positive cash payback</strong> is established for any candidate: existing payroll is unchanged, so the illustrative cash position worsens by the additional monthly charges. Released capacity may be useful, but it is not profit. Unmeasured error losses, supplier terms, taxes, financing and revenue effects prevent a complete ROI claim.</p>
+   <p><strong>Recorded choice: investigate invoice extraction</strong> with invented documents and the accounts lead. Repair the conflicting reply policy before testing drafts; try the catalogue filter before adding generated recommendations. The chosen task is a candidate for a bounded demonstration, not a passed pilot or an authorised purchase.</p>
+   <p><strong>What changes the choice?</strong> If invoice review takes seven minutes rather than four, 40 × (8 − 7) − 60 = {priorityMinutes(INVOICE_SLOW_REVIEW.netHours)} net minutes/month: it uses 20 more minutes. If CSV export already meets the need, prefer that. Missing permission, absent review capacity or a consequential error can stop the work regardless of attractive arithmetic.</p>
+   <h2 id="example" className="scroll-mt-28">A document extractor still needs an exception process</h2>
+   <p><strong>Fictional example:</strong> a retailer wants invoice fields copied into a review sheet. The proposed system reads a permitted sample document and suggests fields beside the source. It does not write to accounts, change bank details or pay suppliers.</p>
+   <p>Before commissioning, ask the implementer to demonstrate these cases:</p>
+   <ul>
+    <li>A clear document: fields match the original and the reviewer can inspect the source.</li>
+    <li>An unreadable total: mark it unresolved instead of guessing a plausible number.</li>
+    <li>A credit note: preserve its meaning rather than treating it as a new payable invoice.</li>
+    <li>A duplicate: flag it for review rather than silently adding another entry.</li>
+    <li>Instructions embedded in a document: they must not grant access or override the workflow's rules.</li>
+   </ul>
+   <p>These are proposed acceptance cases, not passed tests. This article supplies no evaluated extractor. A claim such as “works on invoices” is insufficient without the document types, sample, failure rate and handling process. Start with synthetic documents if permission to use actual records is unresolved.</p>
+   <h2 id="value" className="scroll-mt-28">Ask what work remains after the output</h2>
+   <p>Count the time needed to inspect outputs, correct mistakes, handle exceptions and maintain the source data. Report the number of usable outputs as well as the number generated. Fast extraction can still create more work if staff must reconstruct where each field came from.</p>
+   <p>Do not treat a claimed accuracy percentage as self-explanatory. Ask what counted as correct, whether it measured whole documents or individual fields, how examples were selected and whether the results include difficult cases. A field-level percentage does not tell you how many complete documents need no correction.</p>
+   <h2 id="permissions" className="scroll-mt-28">Data permission is part of the use case</h2>
+   <p>The <a href="https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/guidance-on-privacy-and-the-use-of-commercially-available-ai-products">OAIC's commercial-AI guidance</a> calls for due diligence on intended use and privacy risks, and recommends avoiding personal information in publicly available generative AI tools as best practice. Inputs and generated outputs can both contain personal information. This is not a determination of your business's compliance.</p>
+   <p>Check access, retention, vendor use of data and applicable obligations before connecting business records. A demonstration on invented data cannot establish that a live integration is secure or appropriate. Do not begin with consequential automated decisions just because an ordinary drafting example looks easy.</p>
+   <h2 id="brief" className="scroll-mt-28">Write one capability-to-task request</h2>
+   <p><a href={CAPABILITY_PRIORITY_DOWNLOAD} download="ai-use-case-priorities.txt">Download the completed comparison and prioritisation worksheet</a>. It includes all three tasks and cost assumptions, a completed invoice request, a blank three-task record and an actual-test log to fill after testing. No signup is required.</p>
+   <details><summary>Completed invoice-extraction request — investigate only</summary><dl>{CAPABILITY_BRIEF_FIELDS.map(field => <div key={field.label}><dt className="font-semibold">{field.label}</dt><dd>{field.value}</dd></div>)}</dl></details>
+   <details><summary>Copy a blank capability-to-task request</summary><pre className="whitespace-pre-wrap break-words" aria-label="AI use-case translation record"><code>{CAPABILITY_BRIEF_TEMPLATE}</code></pre></details>
+   <p>Use the <Link to="/articles/featured/how-to-get-started-with-ai-2026">first-workflow selection guide</Link> to plan a representative baseline and data boundary. The <Link to="/articles/featured/how-small-business-owners-can-get-started-with-ai-2026">pilot economics worksheet</Link> lets you replace planning figures with your own inputs before deciding on a test. This page screens possible uses; neither a shortlist nor a worksheet is implementation approval. If the task needs several controlled steps, the <Link to="/articles/featured/what-is-an-agent-in-artificial-intelligence">agent decision guide</Link> explains why an agent is not always necessary.</p>
+   <p>When you need implementation help, bring the task and its review requirements to MLAI Studio. You do not need to arrive with the architecture decided.</p>
+   <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={BASE_ARTICLE_SEO_CONFIG["/articles/" + CATEGORY + "/" + SLUG].conversion!} events={[]} placement="article-inline" />
+   <p>The downloaded record is not automatically attached to an enquiry. Share only a permitted, non-confidential summary. Acceptance, availability and savings are not guaranteed; confirm international delivery eligibility with MLAI before planning work.</p>
+   <p><small>Sources checked 11 September 2026. Codex assisted the fictional comparison, worksheet, arithmetic and local checks. No model, vendor product or client workflow was evaluated. Independent owner, technical and appropriate privacy review remain outstanding.</small></p>
+  </div>
+  <ArticleFAQ items={faqItems} />
+ </div>;
+}

@@ -1,0 +1,28 @@
+import { expect, test } from "bun:test";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import Article, { articleMeta, SLUG, ACCELERATOR_DECISION_SHEET } from "../app/articles/content/featured/what-is-an-accelerator-and-is-it-right-for-your-ai-startup";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+
+test("restored published accelerator URL has aligned metadata and distinct community intent", () => {
+  const entry = ARTICLE_REGISTRY[SLUG];
+  expect(entry.title).toBe(articleMeta.title);
+  expect(entry.date).toBe(articleMeta.datePublished);
+  expect(entry.date).toBe("2026-07-26");
+  expect(entry.description).toBe(articleMeta.description);
+  expect(entry.dateModified).toBe(articleMeta.dateModified);
+  expect(entry.image).toBe(articleMeta.image);
+  const config = BASE_ARTICLE_SEO_CONFIG["/articles/" + SLUG];
+  expect(config.conversion?.primaryIcp).toBe("COMMUNITY");
+  expect(config.conversion?.primary).toBe("events");
+  expect(config.internalLinks).toContain("/articles/featured/startup-accelerator-australia");
+});
+
+test("accelerator guide provides programme-specific evidence, alternatives and an honest decision sheet", () => {
+  const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
+  expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+  for (const text of ["idea-stage, pre-MVP", "https://www.startmate.com/accelerator/program", "https://startup.google.com/programs/accelerator/", "Fictional example", "144 founder-hours", "not legal or financial advice", "Find a founder or AI event", 'data-article-icp="COMMUNITY"']) expect(html).toContain(text);
+  for (const text of ["aws.amazon.com", "jedox.com", "risingstardeveloper.com.au", "Authoritative reference supporting", "Download the PDF", "FAQPage"]) expect(html).not.toContain(text);
+  for (const text of ["cohort", "checked on", "ineligible or unknown", "Founder hours", "adviser questions", "Alternative", "decline"]) expect(ACCELERATOR_DECISION_SHEET).toContain(text);
+});

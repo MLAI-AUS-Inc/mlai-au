@@ -1,0 +1,227 @@
+import type { ReactNode } from 'react'
+import { Link } from 'react-router'
+import { Home } from 'lucide-react'
+
+import AuthorBio from '~/components/AuthorBio'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
+import { ArticleFooterNav } from '~/components/articles/ArticleFooterNav'
+import { ArticleTocPlaceholder } from '~/components/articles/ArticleTocPlaceholder'
+import { ArticleCallout } from '~/components/articles/ArticleCallout'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
+import { getDefaultArticleAuthorDetails } from '../../authors'
+
+export const useCustomHeader = true
+const TOPIC = 'Learn AI in Melbourne: compare courses and choose a first step'
+export const CATEGORY = 'featured'
+export const SLUG = 'learn-ai-melbourne'
+// Preserve the established public registry date, not the conflicting old module date.
+export const DATE_PUBLISHED = '2026-01-28'
+export const DATE_MODIFIED = '2026-09-10'
+export const DESCRIPTION = 'Compare three dated Melbourne AI study options by entry requirements, delivery, time and fees, then use a worked example and worksheet to choose your next learning step.'
+export const FEATURED_FOCUS = 'ai'
+const AUTHOR = getDefaultArticleAuthorDetails()
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-f3e7ca80-f08c-4d98-9bc9-773ec059c33f.jpg?alt=media&token=cbbb31dd-a11e-49d5-a062-13256412f7e4'
+const HERO_IMAGE_ALT = 'Open laptop and small robotic arm on a desk, with people working in the background.'
+
+export const learningSources = {
+  vu: 'https://www.vu.edu.au/courses/graduate-certificate-in-artificial-intelligence-ntai',
+  holmesglen: 'https://www.holmesglen.edu.au/explore-courses/computing-and-it/artificial-intelligence/vocational-education/diploma-of-information-technology-cloud-engineering',
+  rmit: 'https://shortcourses.rmit.edu.au/products/fs-generative-ai-air116u',
+} as const
+
+export const summaryHighlights = {
+  heading: 'Choose a learning step you can actually take',
+  intro: 'For Melbourne learners exploring AI, not a ranking of providers or a promise of employment.',
+  items: [
+    { label: 'What do you want to do next?', description: 'Separate exploring an idea, practising a technical skill and pursuing a qualification. They call for different kinds of learning.' },
+    { label: 'Can you meet the prerequisites and workload?', description: 'Check the specific course, not its category. A short course can require more existing technical knowledge than a longer pathway.' },
+    { label: 'What should you confirm before committing?', description: 'Get the timetable, your eligibility, total fees, assessment and support arrangements from the provider. Keep unresolved details visible.' },
+  ],
+}
+
+export const faqItems: { id: number; question: string; answer: ReactNode }[] = [
+  { id: 1, question: 'Where can I start learning AI in Melbourne without coding experience?', answer: 'First choose whether you want to understand AI or learn to build with it. Look for a session or foundation pathway that explicitly accepts beginners, and ask what prior skills it assumes. The three providers compared in this guide have different entry expectations; none should be assumed suitable merely because it includes AI in its description.' },
+  { id: 2, question: 'Is an online short course the same as a university qualification?', answer: 'Do not treat them as equivalent. Ask what award or credential is issued, how work is assessed and whether any credit is formally available. A shorter or online format does not establish beginner suitability, academic credit or employer recognition.' },
+  { id: 3, question: 'How should I compare course fees?', answer: 'Record the fee period, your student/eligibility category and any excluded charges. Add required equipment, software, travel and time commitments separately. A subsidised figure is not an offer of funding to you, and the listed price is not a personalised total.' },
+  { id: 4, question: 'Will a course or MLAI event get me a job or paid project?', answer: 'Neither enrolment nor attendance guarantees employment, a contract or an introduction. Use learning to produce evidence you can explain and test. Delivery-ready readers can then consider the separate builder pathway; people still exploring can choose an appropriate event without applying for client work.' },
+]
+
+export const articleMeta = {
+  title: TOPIC, topic: TOPIC, category: CATEGORY, slug: SLUG,
+  description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED,
+  author: AUTHOR.name, image: HERO_IMAGE, imageAlt: HERO_IMAGE_ALT,
+}
+
+export const learningDecisionFields = [
+  'One thing I want to understand or do:',
+  'Why I need it, and whether I need a formal qualification:',
+  'Evidence of my current skills, including gaps:',
+  'Course/session name and official URL:',
+  'Student category and entry requirements confirmed by:',
+  'Weekly study, scheduled attendance and travel I can sustain:',
+  'Duration, start date, deadline and date checked:',
+  'Tuition amount, currency, fee period and eligibility basis:',
+  'Extra equipment/software/service/travel costs:',
+  'Assessment, feedback, accessibility and catch-up arrangements:',
+  'Permitted small project or learning record I will produce:',
+  'How I will test/explain it and what it will not demonstrate:',
+  'Unanswered question and who can answer it:',
+  'Decision: proceed, ask for clarification, choose a foundation step or defer:',
+] as const
+
+export default function ArticleContent() {
+  return (
+    <>
+      <ArticleHeroHeader
+        breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: 'Learning AI in Melbourne', current: true }]}
+        title={TOPIC} headerBgColor="cyan" summary={summaryHighlights}
+        heroImage={HERO_IMAGE} heroImageAlt={HERO_IMAGE_ALT}
+      />
+      <ArticleTocPlaceholder />
+      <div className="prose prose-lg prose-slate max-w-none prose-headings:scroll-mt-24">
+        <p>
+          If you are curious about AI but unsure what to study, start with the next thing you want to understand or do—not a course title.
+          You might want to question an AI demonstration, write your first small program, or earn a qualification for a specific purpose.
+          This guide helps you shortlist a Melbourne or online learning option and identify what to ask before spending time or money.
+        </p>
+        <p>
+          It is for learners making that decision, not a list of employers or a route to guaranteed work.
+          If you already know you want to build and test software, the <Link to="/articles/featured/best-way-to-learn-about-ai-2026">AI builder learning guide</Link> covers a practical delivery exercise.
+          This page instead focuses on comparing provider requirements with your starting point.
+        </p>
+
+        <h2 id="choose-a-learning-task">Choose the task before the course</h2>
+        <ul>
+          <li><strong>Understand AI in everyday work:</strong> look for an introductory explanation or demonstration with time for questions. Check whether coding is expected.</li>
+          <li><strong>Practise a technical skill:</strong> look for an assessed activity you can describe, such as testing a small text classifier. Ask what code and data skills you need before day one.</li>
+          <li><strong>Pursue a qualification:</strong> check the exact award, admission pathway, units and assessment. Confirm any credit arrangements directly; do not infer them from a course badge.</li>
+          <li><strong>Find learning peers:</strong> choose a suitably described event or study group. That supports participation; it does not replace a course's curriculum or assessment.</li>
+        </ul>
+
+        <h2 id="provider-comparison">Three provider examples, checked 10 September 2026</h2>
+        <p>
+          These examples illustrate three different formats: a Melbourne postgraduate course, a vocational cloud/AI pathway and an online technical short course from a Melbourne university.
+          They were included because their official pages exposed comparison details—not because MLAI has ranked, attended or validated the courses.
+          This is not an exhaustive directory. Provider descriptions establish what was advertised, not teaching quality or employment outcomes.
+        </p>
+        <ArticleCallout title="A dated snapshot, not live availability" variant="info">
+          The listed intakes and prices were observed on 10 September 2026. They are not an Open or Upcoming status.
+          Follow the official course link and reconfirm your own eligibility, timetable and written fee quote before applying. Do not assume that places remain available.
+        </ArticleCallout>
+        <div role="region" aria-label="Dated Melbourne AI course comparison" tabIndex={0} className="overflow-x-auto rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-700">
+          <table className="min-w-[1000px]">
+            <caption className="text-left text-sm">Official Australian/local-student page observations; courses are not interchangeable.</caption>
+            <thead><tr><th scope="col">Course and source</th><th scope="col">Entry check</th><th scope="col">Mode and duration</th><th scope="col">Published fee information</th><th scope="col">Intake shown in the snapshot</th></tr></thead>
+            <tbody>
+              <tr>
+                <th scope="row"><a href={learningSources.vu}>Victoria University: Graduate Certificate in Artificial Intelligence (NTAI)</a></th>
+                <td>Relevant bachelor-level qualification, or consideration of at least three years of approved work experience. Minimum eligibility does not guarantee admission.</td>
+                <td>City Campus; in person; half a year full-time.</td>
+                <td>2026 indicative CSP contribution: A$4,769 per semester for eligible students. Materials and student-services charges excluded; non-CSP fees differ.</td>
+                <td>28 September 2026 start; 20 September application deadline. Dates can change or close early.</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href={learningSources.holmesglen}>Holmesglen: Diploma of Information Technology (Cloud Engineering), ICT50220</a></th>
+                <td>Provider minimum age 17, basic computer skills and pre-training/literacy/numeracy assessment. Check equipment and remote-study requirements.</td>
+                <td>Chadstone/remote options; mixed or on-campus delivery; one year full-time or two part-time.</td>
+                <td>Listed tuition: $15,198 full fee or $8,466 government-subsidised, subject to eligibility. Extra service/equipment charges; request the applicable fee period and total.</td>
+                <td>February and July displayed; exact start date, year and application deadline require confirmation.</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href={learningSources.rmit}>RMIT Short Courses: Generative AI (with Udacity)</a></th>
+                <td>Intermediate Python, basic ML/LLM knowledge and practical prompting experience—not a no-coding introduction.</td>
+                <td>Online; eight weeks; six to eight study hours per week.</td>
+                <td>A$1,000 including GST displayed for the selected intake. Confirm any required software/API costs and support conditions.</td>
+                <td>12 October 2026 selected in the course page. No closing date established in this check.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The Holmesglen example is a broader cloud-engineering qualification with AI content, not simply a short AI introduction.
+          The RMIT example assumes technical experience despite its shorter duration. For VU, use the admission and study-load details rather than assuming that any graduate certificate fits around full-time work.
+          These are fit questions, not a recommendation to enrol in one provider over another.
+        </p>
+
+        <h2 id="check-the-total-commitment">Check the total commitment, not just the headline price</h2>
+        <p>
+          Put tuition, compulsory charges, equipment, paid software/API access, travel and scheduled attendance on separate lines.
+          Ask whether the quote covers a semester, unit, whole course or particular intake. Record which student category and subsidy assumptions it uses.
+          Do not compare an eligible-student contribution with another provider's full fee as if both were your final price.
+        </p>
+        <p>
+          Ask when live sessions and assessments occur, what feedback you receive, how long learning materials remain accessible, and what happens if you miss a session.
+          If you need captions, accessible materials, assistive-technology compatibility or a different assessment arrangement, ask about the specific provision before committing.
+          A label such as online does not answer those questions.
+        </p>
+        <blockquote>
+          I want to learn [task]. I can currently [skills/evidence] and have [hours] available each week.
+          Could you confirm the prerequisite gap, required attendance, assessment/feedback, total cost for my circumstances and the next applicable intake?
+        </blockquote>
+
+        <h2 id="worked-learning-decision">Worked example: a course can fit the topic but not the learner yet</h2>
+        <p>
+          <strong>Fictional planning example, not a learner testimonial:</strong> Rina wants to understand how document-answering systems are tested.
+          She can edit a simple script, has not studied ML, and has four study hours per week. She does not currently need a formal qualification.
+        </p>
+        <ol>
+          <li><strong>Task:</strong> explain one incorrect answer and how to check it, before attempting a larger system.</li>
+          <li><strong>Prerequisite gap:</strong> basic script editing does not establish the intermediate Python and ML knowledge in the RMIT example. Rina asks the provider what preparation it expects.</li>
+          <li><strong>Capacity gap:</strong> four hours across eight weeks gives 32 hours. The listed six-to-eight-hour range implies 48–64 hours: a 16–32-hour gap, before any extra catch-up or setup.</li>
+          <li><strong>Qualification decision:</strong> she does not choose a longer qualification just because it mentions AI. If that goal changes, she will ask about admission and the actual part-time timetable.</li>
+          <li><strong>Next step:</strong> choose a clearly beginner-suitable session if one is available, keep a small learning record and reassess after clarifying prerequisites. Deferring enrolment is a valid outcome.</li>
+        </ol>
+        <p>
+          This comparison does not predict completion time or recommend a particular course for Rina. It shows why a relevant topic and affordable listed fee are insufficient without a workload and starting-skill check.
+        </p>
+
+        <h2 id="learning-evidence">Make the learning visible without inventing portfolio claims</h2>
+        <p>
+          Choose one permitted example small enough to inspect. For a non-coding start, take a public AI claim, record its source and write down what evidence would be needed to test it.
+          For a technical activity, use synthetic or appropriately licensed data and record the behaviour you expected, the result and a failure case.
+          Do not publish private class materials, client data or other people's work without permission.
+        </p>
+        <ul>
+          <li><strong>Scope:</strong> name one task, its input/output and what is deliberately excluded.</li>
+          <li><strong>Provenance:</strong> identify sources and data permissions; label fictional examples and generated material.</li>
+          <li><strong>Your decisions:</strong> if you use AI coding tools, record what they proposed, what you accepted or rejected and why.</li>
+          <li><strong>Checks:</strong> include the expected result, an observed result and a failure or uncertainty. Generated tests are not evidence until you run and inspect them.</li>
+          <li><strong>Safety boundary:</strong> identify sensitive information and actions the prototype must not take. A learning demo need not connect to real accounts.</li>
+          <li><strong>Handover:</strong> explain how another person can inspect or reproduce the work, its dependencies and unresolved limits.</li>
+        </ul>
+        <p>
+          This is MLAI's editorial learning-record checklist, not a researched employer preference, accredited assessment or delivery approval.
+          Do not turn a hypothetical improvement into a measured achievement. If you are already using AI coding tools to ship tested, explainable software,
+          use the <Link to="/articles/featured/best-way-to-learn-about-ai-2026">builder guide and its conditional Studio application pathway</Link> to assess your next step.
+          A course completion alone does not establish readiness for client work.
+        </p>
+
+        <h2 id="learning-decision-record">Copyable course and learning decision record</h2>
+        <p>Copy this into your own notes for each option. All fourteen fields are available here; no download or sign-up is required.</p>
+        <pre className="whitespace-pre-wrap break-words text-sm" aria-label="Course and learning decision record">{learningDecisionFields.map((field) => field + '\n').join('\n')}</pre>
+        <p>
+          Mark unknowns as unknown rather than filling them with an estimate. Compare options only after essential constraints are confirmed.
+          Keep the provider link and date with each answer so you can distinguish the provider's current terms from an earlier snapshot.
+        </p>
+
+        <h2 id="bring-a-learning-question">Bring one learning question to an appropriate event</h2>
+        <p>
+          A useful first question might be: “What prerequisite did you wish you had before trying this?” or “Can you show an example that failed and how you checked it?”
+          Ask only where conversation fits the session; speakers and attendees have not agreed to provide course advice or review your project.
+          Read the listing for topic, level, format, accessibility and location or online access before registering.
+        </p>
+        <p>
+          An event is not a substitute for a qualification or a promise of a job. MLAI runs community activities, not the provider courses compared above.
+          For local discovery, use the <Link to="/articles/featured/where-to-find-ai-events-in-melbourne">Melbourne AI event guide</Link>.
+          If no suitable session is listed, do not register for an unrelated one just to complete this plan.
+        </p>
+        <ArticleConversionCTA articleSlug="featured/learn-ai-melbourne" config={BASE_ARTICLE_SEO_CONFIG['/articles/featured/learn-ai-melbourne'].conversion!} events={[]} placement="article-inline" />
+      </div>
+      <ArticleFAQ items={faqItems} />
+      <AuthorBio author={{ name: AUTHOR.name, role: AUTHOR.role ?? AUTHOR.credentials, bio: AUTHOR.bio, avatarUrl: AUTHOR.avatarUrl }} />
+      <ArticleFooterNav />
+    </>
+  )
+}

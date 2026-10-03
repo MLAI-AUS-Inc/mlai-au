@@ -1,0 +1,1105 @@
+{
+  "protocol": "inference-serving-measure-v2",
+  "startedAt": "2026-09-09T22:20:31.224Z",
+  "completedAt": "2026-09-09T22:20:31.261Z",
+  "model": {
+    "version": "synthetic-linear-v1",
+    "weight": 2,
+    "bias": 1
+  },
+  "fixture": {
+    "inputs": [
+      3,
+      -1,
+      0.5,
+      4
+    ],
+    "expected": [
+      7,
+      -1,
+      2,
+      9
+    ]
+  },
+  "method": {
+    "order": "Ten pairs, alternating sequential-first and grouped-first; balanced, not randomised",
+    "warmup": "One single-input then one grouped request, excluded from comparison quality; startup precedes both",
+    "concurrency": 1,
+    "timeoutMs": 5000,
+    "retries": 0,
+    "timingBoundary": "Client start through response-body parsing and contract validation; mode total also includes loop/bookkeeping overhead",
+    "byteBoundary": "UTF-8 JSON body bytes only; not HTTP headers, transport overhead or wire traffic",
+    "failures": "Retained in request records and full quality denominators; failed outputs count as non-matches"
+  },
+  "warmup": [
+    {
+      "inputs": [
+        3
+      ],
+      "elapsedMs": 12.049374999999998,
+      "status": 200,
+      "outputs": [
+        7
+      ],
+      "error": null,
+      "requestBodyBytes": 14,
+      "responseBodyBytes": 52
+    },
+    {
+      "inputs": [
+        3,
+        -1,
+        0.5,
+        4
+      ],
+      "elapsedMs": 1.4714580000000126,
+      "status": 200,
+      "outputs": [
+        7,
+        -1,
+        2,
+        9
+      ],
+      "error": null,
+      "requestBodyBytes": 23,
+      "responseBodyBytes": 59
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "order": [
+        "sequential",
+        "grouped"
+      ],
+      "modes": [
+        {
+          "mode": "sequential",
+          "elapsedMs": 3.523291999999998,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 1.018250000000009,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.798917000000003,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.9257499999999936,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.7202080000000137,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        },
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.6731670000000065,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.6586659999999966,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "order": [
+        "grouped",
+        "sequential"
+      ],
+      "modes": [
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.6377089999999868,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.6233749999999958,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        },
+        {
+          "mode": "sequential",
+          "elapsedMs": 2.755708999999996,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.6891669999999976,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.9122500000000002,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.5959159999999883,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.5010419999999982,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "order": [
+        "sequential",
+        "grouped"
+      ],
+      "modes": [
+        {
+          "mode": "sequential",
+          "elapsedMs": 1.7347910000000013,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.43687500000000057,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.4416660000000121,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.3949580000000026,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.4231659999999948,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        },
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.4151250000000033,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.4056670000000082,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "order": [
+        "grouped",
+        "sequential"
+      ],
+      "modes": [
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.6914160000000038,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.6837089999999932,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        },
+        {
+          "mode": "sequential",
+          "elapsedMs": 1.6301670000000001,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.415292000000008,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.40741700000000947,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.39883300000001043,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.3772919999999971,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 5,
+      "order": [
+        "sequential",
+        "grouped"
+      ],
+      "modes": [
+        {
+          "mode": "sequential",
+          "elapsedMs": 1.4760419999999925,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.3450419999999923,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.3341659999999962,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.3894169999999946,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.37700000000000955,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        },
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.37529100000000426,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.3674170000000032,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 6,
+      "order": [
+        "grouped",
+        "sequential"
+      ],
+      "modes": [
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.34754199999999,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.34083400000000097,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        },
+        {
+          "mode": "sequential",
+          "elapsedMs": 1.4897079999999931,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.3646669999999972,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.3372499999999974,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.39741700000000435,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.36370900000000006,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 7,
+      "order": [
+        "sequential",
+        "grouped"
+      ],
+      "modes": [
+        {
+          "mode": "sequential",
+          "elapsedMs": 1.646333999999996,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.3632089999999977,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.34858299999999076,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.5944999999999965,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.31587499999999125,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        },
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.34891700000000014,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.3418750000000017,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 8,
+      "order": [
+        "grouped",
+        "sequential"
+      ],
+      "modes": [
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.3844999999999885,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.3774999999999977,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        },
+        {
+          "mode": "sequential",
+          "elapsedMs": 1.3260000000000076,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.3328329999999937,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.316874999999996,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.3264170000000064,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.3257080000000059,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 9,
+      "order": [
+        "sequential",
+        "grouped"
+      ],
+      "modes": [
+        {
+          "mode": "sequential",
+          "elapsedMs": 1.3765830000000108,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.36054199999999526,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.30750000000000455,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.34191699999999514,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.3427080000000018,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        },
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.3450420000000065,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.3383749999999992,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 10,
+      "order": [
+        "grouped",
+        "sequential"
+      ],
+      "modes": [
+        {
+          "mode": "grouped",
+          "elapsedMs": 0.33245900000000006,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3,
+                -1,
+                0.5,
+                4
+              ],
+              "elapsedMs": 0.3251249999999999,
+              "status": 200,
+              "outputs": [
+                7,
+                -1,
+                2,
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 23,
+              "responseBodyBytes": 59
+            }
+          ]
+        },
+        {
+          "mode": "sequential",
+          "elapsedMs": 1.3627079999999978,
+          "exactMatches": 4,
+          "expectedCount": 4,
+          "failedRequests": 0,
+          "requests": [
+            {
+              "inputs": [
+                3
+              ],
+              "elapsedMs": 0.34208300000000236,
+              "status": 200,
+              "outputs": [
+                7
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                -1
+              ],
+              "elapsedMs": 0.3490419999999972,
+              "status": 200,
+              "outputs": [
+                -1
+              ],
+              "error": null,
+              "requestBodyBytes": 15,
+              "responseBodyBytes": 53
+            },
+            {
+              "inputs": [
+                0.5
+              ],
+              "elapsedMs": 0.2998330000000067,
+              "status": 200,
+              "outputs": [
+                2
+              ],
+              "error": null,
+              "requestBodyBytes": 16,
+              "responseBodyBytes": 52
+            },
+            {
+              "inputs": [
+                4
+              ],
+              "elapsedMs": 0.3472500000000025,
+              "status": 200,
+              "outputs": [
+                9
+              ],
+              "error": null,
+              "requestBodyBytes": 14,
+              "responseBodyBytes": 52
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "quality": {
+      "sequential": {
+        "exactMatches": 40,
+        "expectedCount": 40,
+        "failedRequests": 0
+      },
+      "grouped": {
+        "exactMatches": 40,
+        "expectedCount": 40,
+        "failedRequests": 0
+      }
+    },
+    "attemptedRequests": 52,
+    "attemptedInputs": 85,
+    "failedRequests": 0,
+    "requestBodyBytes": 857,
+    "completedResponseBodyBytes": 2791,
+    "incompleteResponseBodies": 0
+  },
+  "environment": {
+    "node": "v25.2.1",
+    "platform": "darwin",
+    "osRelease": "25.6.0",
+    "architecture": "arm64",
+    "cpuModel": "Apple M3 Pro",
+    "logicalCpus": 12,
+    "memoryBytes": 38654705664,
+    "boundary": "Client and server in one process on one machine; host load uncontrolled"
+  },
+  "sourceSha256": {
+    "model.mjs": "eda2c2129c01c44217731203fb496aa3177fc2c0b881916a952c0f04b54806d8",
+    "server.mjs": "37c3a22a3c95c215140e14f80e571f84477d676154cfaa52e25a835bdeafa903",
+    "server.test.mjs": "ec03e11e35604793d66f2521b49738d7e3bd6b72e28ddaaef9f414908fe33dc8",
+    "measure.mjs": "ec9ae9a3c11d2d2cee7b3faa7b1079b512ce956bc1cce378d2936e29b11e9eb4",
+    "measure.test.mjs": "7dcef3be8db591b0c70531efad4e2723532b6322c08099e9a2899ade89a5f884"
+  },
+  "usageAndCost": {
+    "providerRequests": 0,
+    "providerApiSpend": 0,
+    "providerCurrency": null,
+    "tokenUsage": "not-applicable: scalar linear model, not an LLM",
+    "totalOperatingCost": null,
+    "hardwareCost": null,
+    "energyKwh": null,
+    "energyCost": null,
+    "labourHours": null,
+    "labourCost": null,
+    "status": "not-measured: zero provider spending is not zero total cost"
+  },
+  "review": {
+    "independentReproduction": "pending",
+    "productionReadiness": "not-established",
+    "assistance": "AI-assisted code; automated tests and same-agent browser/download checks are not independent review"
+  }
+}

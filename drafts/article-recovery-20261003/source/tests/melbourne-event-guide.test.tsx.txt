@@ -1,0 +1,137 @@
+import { expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import Article, { articleMeta, DATE_PUBLISHED, DATE_MODIFIED, SHORTLIST_RECORD } from "../app/articles/content/featured/where-to-find-ai-events-in-melbourne";
+import { ArticleReadTime } from "../app/components/articles/ArticleReadTime";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+import { MELBOURNE_AI_EVENTS as events, melbourneEventStatus, filterMelbourneEvents } from "../app/lib/melbourne-ai-events";
+
+const slug = "featured/where-to-find-ai-events-in-melbourne";
+const now = Date.parse("2026-09-10T04:40:00Z");
+const event = events[0];
+const htmlAt = (time: string | null) => renderToStaticMarkup(<MemoryRouter><ArticleReadTime.Provider value={time}><Article /></ArticleReadTime.Provider></MemoryRouter>);
+
+test("every current record matches the actually captured organiser schedule", () => {
+  const sources = JSON.parse(readFileSync("docs/article-audit-2026-09-10/support/melbourne-sources-x31__ug2/verification.json", "utf8"));
+  expect(sources.records).toHaveLength(4);
+  for (const record of sources.records) {
+    expect(record.error).toBeUndefined();
+    expect(record.status).toBe(200);
+    const source = record.schema.map((s: string) => JSON.parse(s)).find((s: any) => s["@type"] === "Event");
+    const entry = events.find(e => e.id === record.key)!;
+    expect(entry.sourceUrl).toBe(record.url);
+    expect(Date.parse(entry.startAt)).toBe(Date.parse(source.startDate));
+    expect(Date.parse(entry.endAt)).toBe(Date.parse(source.endDate));
+  }
+  expect(events).toHaveLength(6);
+  expect(new Set(events.map(e => e.id)).size).toBe(6);
+  expect(events.every(e => e.sourceUrl.startsWith("https://"))).toBe(true);
+});
+
+test("calendar timing never turns host approval or a waitlist into admission", () => {
+  expect(melbourneEventStatus(event, now)).toBe("listed-future");
+  expect(event.admission).toContain("Host approval required");
+  const engineer = events.find(e => e.id === "engineer-night")!;
+  expect(melbourneEventStatus(engineer, now)).toBe("listed-future");
+  expect(engineer.admission).toContain("Event Full / Join Waitlist");
+  expect(engineer.location).toContain("requires registration");
+  expect(engineer.location).not.toContain("121 King");
+  expect(engineer.price).not.toContain("Free entry");
+});
+
+test("end times, not start dates, expire a listed session", () => {
+  const start = Date.parse(event.startAt), end = Date.parse(event.endAt);
+  expect(melbourneEventStatus(event, start - 1)).toBe("listed-future");
+  expect(melbourneEventStatus(event, start)).toBe("listed-window");
+  expect(melbourneEventStatus(event, end - 1)).toBe("listed-window");
+  expect(melbourneEventStatus(event, end)).toBe("past");
+  expect(melbourneEventStatus(event, end + 1)).toBe("past");
+});
+
+test("day-only historical listings use exclusive end-of-listed-day windows", () => {
+  const past = events.filter(e => e.precision === "date-window");
+  expect(past).toHaveLength(2);
+  expect(past.every(e => melbourneEventStatus(e, now) === "past")).toBe(true);
+  expect(events.find(e => e.id === "ai-summit")!.endAt).toBe("2026-09-10T00:00:00+10:00");
+});
+
+test("stale future sources stop receiving fresh-future labels while passed dates remain passed", () => {
+  const future = events.find(e => e.id === "productathon")!;
+  const due = Date.parse(future.reviewAfter);
+  expect(melbourneEventStatus(future, due - 1)).toBe("listed-future");
+  expect(melbourneEventStatus(future, due)).toBe("needs-review");
+  expect(melbourneEventStatus(future, Date.parse(future.endAt))).toBe("past");
+  expect(melbourneEventStatus(event, due)).toBe("past");
+});
+
+test("unknown clocks and malformed chronology never manufacture current availability", () => {
+  expect(melbourneEventStatus(event, null)).toBe("snapshot");
+  expect(melbourneEventStatus(events[5], null)).toBe("past");
+  for (const clock of [NaN, Infinity, Date.parse(event.checkedAt) - 1]) expect(melbourneEventStatus(event, clock)).toBe("unknown");
+  for (const field of ["startAt", "endAt", "checkedAt", "reviewAfter"] as const) {
+    for (const bad of ["garbage", "2026-09-10T17:30:00", "2026-02-30T17:30:00Z", "2026-09-10T24:00:00Z"]) {
+      expect(melbourneEventStatus({ ...event, [field]: bad }, now)).toBe("unknown");
+    }
+  }
+  expect(melbourneEventStatus({ ...event, endAt: event.startAt }, now)).toBe("unknown");
+  expect(melbourneEventStatus({ ...event, reviewAfter: event.checkedAt }, now)).toBe("unknown");
+});
+
+test("offset-based expiry survives daylight-saving and does not use machine timezone", () => {
+  const sample = { ...event, checkedAt: "2026-10-01T00:00:00Z", reviewAfter: "2026-10-06T00:00:00+11:00", startAt: "2026-10-04T01:30:00+10:00", endAt: "2026-10-04T03:30:00+11:00" };
+  expect(Date.parse(sample.endAt) - Date.parse(sample.startAt)).toBe(3600000);
+  expect(melbourneEventStatus(sample, Date.parse("2026-10-03T16:29:59Z"))).toBe("listed-window");
+  expect(melbourneEventStatus(sample, Date.parse("2026-10-03T16:30:00Z"))).toBe("past");
+});
+
+test("format filters include an explicitly offered online ticket, not generic offline schema alone", () => {
+  expect(filterMelbourneEvents("all", false, now)).toHaveLength(4);
+  expect(filterMelbourneEvents("all", true, now)).toHaveLength(6);
+  expect(filterMelbourneEvents("online", false, now).map(e => e.id)).toEqual(["office-hours", "hype-to-practice"]);
+  expect(filterMelbourneEvents("in-person", false, now).map(e => e.id)).toEqual(["hype-to-practice", "engineer-night", "productathon"]);
+  expect(filterMelbourneEvents("all", false, Date.parse("2026-10-01T00:00:00Z"))).toEqual([]);
+});
+
+test("server-rendered table already expires dates using the serialized page clock", () => {
+  const html = htmlAt("2026-10-01T00:00:00Z");
+  expect(html).toContain("No retained listing meets this selection");
+  expect(html).not.toContain('data-event-id="office-hours"');
+  const unknown = htmlAt(null);
+  expect(unknown).toContain("Dated source snapshot");
+  expect(unknown).not.toContain("Future date listed");
+  const future = htmlAt("2026-09-10T04:40:00Z");
+  expect(future).toContain("Future date listed — admission is separate");
+  expect(future).not.toContain('data-event-id="ai-summit"');
+  expect(future).toContain("Both sets of dates had passed");
+  expect(future).toContain('role="region"');
+  expect(future).toContain('tabindex="0"');
+  expect(future).toContain('<label for="melbourne-event-format">Format to shortlist</label>');
+  expect(future).toContain('<select id="melbourne-event-format"');
+});
+
+test("the article completes a community decision without fabricated outcomes or a wrong offer", () => {
+  const html = htmlAt("2026-09-10T04:40:00Z");
+  for (const text of ["Fictional decision, not an attendee account", "not submitted", "not observed", "no upcoming events", "events link carries your Melbourne-in-person or online preference", "Event and official listing:", "Source checking is not an independent event review"]) expect(html).toContain(text);
+  for (const text of ["amirbrooks.com.au", "Start a shortlist</a>", "Download the PDF", "Dr Sam Donegan", 'href="/mlai-studio#apply"', 'href="/contact"']) expect(html).not.toContain(text);
+  expect(html).toContain('data-article-icp="COMMUNITY"');
+  expect(html).toContain('data-cf-article-body="true"');
+  expect(html).toContain('[&amp;_h2]:scroll-mt-28');
+  expect(html).toContain('[&amp;_section]:scroll-mt-28');
+  expect(html).toContain('href="/events"');
+  expect(html).toContain('href="/downloads/melbourne-event-shortlist.txt"');
+  expect(SHORTLIST_RECORD).toContain("start and end / timezone");
+  const asset = readFileSync("public/downloads/melbourne-event-shortlist.txt", "utf8");
+  for (const text of ["BLANK RECORD", "FICTIONAL WORKED DECISION", "NOT SUBMITTED", "NOT OBSERVED", "Join Online", "12.50", "24.60", "waitlisted", "Scheduled start AND end"]) expect(asset).toContain(text);
+});
+
+test("registry, module and offer versions match without inventing a new publication date", () => {
+  const entry = ARTICLE_REGISTRY[slug];
+  expect(DATE_PUBLISHED).toBe("2026-06-21");
+  expect(DATE_MODIFIED).toBe("2026-09-10");
+  expect(entry.date).toBe(DATE_PUBLISHED);
+  expect(entry.dateModified).toBe(DATE_MODIFIED);
+  for (const key of ["title", "description", "author", "image", "imageAlt"] as const) expect(articleMeta[key]).toBe(entry[key]);
+  expect(BASE_ARTICLE_SEO_CONFIG["/articles/" + slug].conversion?.version).toBe("melbourne-format-journey-v4");
+});

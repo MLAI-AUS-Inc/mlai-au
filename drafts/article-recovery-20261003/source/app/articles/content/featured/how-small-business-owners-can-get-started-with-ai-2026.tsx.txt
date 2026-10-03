@@ -1,0 +1,136 @@
+import { Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
+import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import AiPilotWorksheet from "~/components/articles/AiPilotWorksheet";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
+
+export const useCustomHeader = true;
+export const CATEGORY = "featured";
+export const SLUG = "how-small-business-owners-can-get-started-with-ai-2026";
+export const DATE_PUBLISHED = "2026-01-22";
+export const DATE_MODIFIED = "2026-09-10";
+export const DESCRIPTION = "Choose one business workflow, compare full pilot costs with genuinely avoidable spending, and use a downloadable worksheet and test plan before commissioning AI implementation.";
+const TITLE = "How small business owners can get started with AI: a measured pilot";
+const ARTICLE_PATH = "/articles/featured/how-small-business-owners-can-get-started-with-ai-2026";
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e8d91d69-4aa4-49a0-b1e4-a8b32d3f54ab.jpg?alt=media&token=3d3573bf-5a7d-416f-a7be-61be2dd87a04";
+const ACSC = "https://www.cyber.gov.au/business-government/secure-design/artificial-intelligence/artificial-intelligence-for-small-business";
+const OAIC = "https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/guidance-on-privacy-and-the-use-of-commercially-available-ai-products";
+
+export const articleMeta = { title: TITLE, category: CATEGORY, slug: SLUG, description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, author: "Dr Sam Donegan", image: HERO_IMAGE, imageAlt: "Illustration of a team planning work together" };
+export const summaryHighlights = {
+  heading: "Start with a business decision, not a tool subscription",
+  intro: "For an Australian owner or manager who needs implementation help and wants to know whether one workflow is worth testing.",
+  items: [
+    { label: "What should I try first?", description: "One repeatable task with inspectable inputs, a human approver and a manual fallback. First check whether a template or fixed automation already solves it." },
+    { label: "How do I judge the value?", description: "Measure total human effort, including checking and rework. Subtract running costs and distinguish released capacity from spending you can actually avoid." },
+    { label: "When should I stop?", description: "Pause on a critical error, unsafe data access or failed acceptance criteria. A positive time estimate is not permission to release an unsafe workflow." },
+  ],
+};
+export const faqItems = [
+  { question: "Do I need to learn to code before starting an AI pilot?", answer: "No. Explain the current task, inputs, constraints and what a correct result looks like. An existing product may support it; if integration or custom implementation is necessary, those requirements form a delivery brief." },
+  { question: "Is time saved the same as better profit margins?", answer: "No. Salaried time released can create capacity without reducing payroll. Count cash savings only where spending is genuinely avoided, then subtract subscriptions, usage, support and implementation costs. Track additional contribution from extra sales separately; this worksheet does not assume it." },
+  { question: "How many examples should I test?", answer: "A handful can find obvious problems, but cannot establish reliability. Include normal tasks, exceptions and consequential failures; choose evidence and acceptance criteria appropriate to the risk. Keep cases out of prompt development so you also test unseen inputs." },
+  { question: "Does a business subscription make customer data safe to upload?", answer: "No. Review the specific product, configuration, data handling and contractual terms. Start with synthetic examples, establish access and retention rules, and obtain appropriate advice on your obligations before introducing personal or confidential information." },
+];
+
+export default function ArticleContent() {
+  const conversion = BASE_ARTICLE_SEO_CONFIG[ARTICLE_PATH].conversion!;
+  return <>
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "Small-business AI pilot", current: true }]} title={TITLE} titleHighlight="a measured pilot" headerBgColor="cyan" summary={summaryHighlights} heroImage={HERO_IMAGE} heroImageAlt={articleMeta.imageAlt} />
+    <div className="prose prose-lg prose-slate max-w-none" data-primary-icp="SMB">
+      <p><strong>Choose one workflow, measure its current cost, and test whether assistance improves the whole task—not just the first draft.</strong> You do not need to code or buy an agent first. You need a process someone owns, examples of correct work, a safe test environment and a reason the improvement would matter.</p>
+      <p>This guide is for owners and managers of established small businesses. It helps you decide whether to configure an existing tool or commission a bounded pilot. It is not a coding tutorial, product ranking or promise that AI will improve your margins.</p>
+      <h2 id="choose-task">1. Choose a task with a clear way to check the answer</h2>
+      <p>Describe an input, an output and an approver: “From approved product facts, draft a description for a staff member to check.” Avoid “automate marketing”; it hides too many decisions. First try a better template, clearer handover or fixed rule. If that solves the problem, you may not need AI.</p>
+      <div className="overflow-x-auto"><table>
+        <caption>Illustrative pilot options—not measured client results</caption>
+        <thead><tr><th>Task</th><th>Bounded experiment</th><th>Keep outside the pilot</th><th>Measure</th></tr></thead>
+        <tbody>
+          <tr><td>Product descriptions</td><td>Draft from approved facts; staff approve publication.</td><td>Invented specifications, safety claims or discounts.</td><td>Total minutes to approval; unsupported facts.</td></tr>
+          <tr><td>Routine enquiry replies</td><td>Suggest a reply from approved policy text in a test inbox.</td><td>Autonomous sending, refunds or unusual commitments.</td><td>Review/fallback time, policy errors and escalation accuracy.</td></tr>
+          <tr><td>Internal handover notes</td><td>Turn synthetic notes into a checklist a worker verifies.</td><td>Customer records, payroll changes or external messages.</td><td>Missed actions, incorrect owners and correction time.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Reject a first experiment if you cannot inspect its output, lack permission to use the inputs or cannot safely undo an action. A familiar task is not automatically low-risk: an incorrect price, recipient or health claim can still have consequences.</p>
+
+      <h2 id="baseline">2. Record the baseline before choosing a solution</h2>
+      <p>Observe a representative operating period. Record volume, case type, human handling time, corrections, waiting time and final outcome. Keep waiting time separate from paid effort: cutting a queue by a day is useful, but not a day of wage savings.</p>
+      <ul>
+        <li><strong>Use one consistent unit:</strong> an approved description or correctly resolved enquiry, not one model response.</li>
+        <li><strong>Include difficult cases:</strong> missing inputs, unusual requests and existing escalations.</li>
+        <li><strong>Name an owner:</strong> who judges correctness, manages access and can stop the test?</li>
+        <li><strong>State the business reason:</strong> avoid overtime, reduce contractor spending, prevent errors or release capacity. These are different outcomes.</li>
+      </ul>
+
+      <h2 id="buy-or-build">3. Decide whether to improve, configure or commission</h2>
+      <div className="overflow-x-auto"><table>
+        <thead><tr><th>Path</th><th>When to investigate it</th><th>Before spending</th></tr></thead>
+        <tbody>
+          <tr><td>Improve without AI</td><td>A template, clear owner or fixed rule covers the cases.</td><td>Test that simpler change against the same baseline.</td></tr>
+          <tr><td>Configure an existing product</td><td>Your current system can assist while preserving review and permissions.</td><td>Check the actual plan, connector access, usage limits, data terms and fallback.</td></tr>
+          <tr><td>Commission a scoped build</td><td>The workflow crosses systems or requires controls the existing product cannot provide.</td><td>Agree inputs, permitted actions, acceptance tests, ongoing owner and support boundaries.</td></tr>
+        </tbody>
+      </table></div>
+      <p>There is no universal under-$500 budget or cheapest subscription that fits every pilot. Obtain prices for the actual seats, usage, integration and support. A custom build is not automatically better; an existing tool is not automatically safe. For commissioning decisions, see <Link to="/articles/featured/how-to-build-ai-for-real-business-problems">building AI for a real business problem</Link>.</p>
+
+      <h2 id="cost-example">4. Separate useful capacity from cash savings</h2>
+      <p><strong>Worked illustration, not an MLAI client result:</strong> suppose a business produces 60 descriptions a month. Each currently takes 20 human minutes. A proposed assisted process takes eight human minutes, including review, corrections and the average effort of manual fallbacks. These timings are assumptions to replace with measurements.</p>
+      <ol>
+        <li>Effort released: 60 × (20 − 8) ÷ 60 = <strong>12 hours/month</strong>.</li>
+        <li>Allow another two internal maintenance hours: <strong>10 net hours/month</strong>.</li>
+        <li>At an illustrative loaded cost of A$45/hour, capacity is worth A$450. Subtract A$100 of additional running cash costs: <strong>A$350/month net capacity value</strong>.</li>
+        <li>If payroll and other spending stay unchanged, avoidable labour spend is zero. The <strong>cash change is minus A$100/month</strong>, not a A$350 profit increase.</li>
+        <li>If you can substantiate that half the net labour value replaces avoidable spending, the estimated cash change becomes A$225 − A$100 = <strong>A$125/month</strong>. An illustrative A$600 setup invoice takes 4.8 months to repay from that cash change, if sustained.</li>
+      </ol>
+      <p>Six internal setup hours add A$270 of effort, taking total economic setup cost to A$870. That internal effort is not included in the cash-invoice payback. Do not count the same labour in both the invoice and internal hours. The example excludes additional revenue, tax effects, financing and seasonality.</p>
+      <p>If released capacity lets you sell more work, measure the <em>additional contribution after delivery costs</em> separately. Do not assume every released hour can be sold or value it at an unadjusted billing rate.</p>
+      <p>Complete the worksheet below, then choose <strong>Use my worksheet in a Studio brief</strong> to carry your estimates and non-confidential notes into the enquiry for review. That does not submit them or treat the example's figures as agreed requirements. You can also start a blank brief with the separate CTA.</p>
+    </div>
+
+    <AiPilotWorksheet />
+    <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={conversion} events={[]} placement="article-inline" />
+
+    <div className="prose prose-lg prose-slate mt-10 max-w-none">
+      <h2 id="test-plan">5. Test the whole workflow, including failures</h2>
+      <p>The worksheet download includes a blank evaluation sheet: assign the owner, separate development and held-out cases, then record expected and actual outcomes, error severity, total human effort and the continue/stop decision. Its fictional missing-warranty example is explicitly <strong>not run</strong>. Fill the log with observed evidence; the calculator cannot evaluate the workflow for you.</p>
+      <p>A few selected successes are a smoke test, not reliability evidence. Separate development examples from evaluation cases. Record the product/model version, settings, date, inputs, result, human corrections and total handling time. Never drop cases that failed or needed manual completion.</p>
+      <div className="overflow-x-auto"><table>
+        <caption>Evaluation plan for the illustrative product-description pilot</caption>
+        <thead><tr><th>Case</th><th>Expected behaviour</th><th>Failure to log</th></tr></thead>
+        <tbody>
+          <tr><td>Complete approved facts</td><td>Draft supported facts for staff approval.</td><td>Invented material, price or capability.</td></tr>
+          <tr><td>Missing dimensions or warranty</td><td>Leave unresolved or ask a person; do not guess.</td><td>Confident unsupported details.</td></tr>
+          <tr><td>Instructions embedded in supplier text</td><td>Treat text as untrusted input, not authority to change policy or send data.</td><td>Following conflicting instructions or exposing information.</td></tr>
+          <tr><td>Tool failure or unacceptable draft</td><td>Use the manual process and count its effort.</td><td>Work lost, sent unapproved or omitted from timing.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Agree quality requirements, time/cost ceilings and escalation rules before evaluation. For this draft-only example, an unsupported consequential claim or unapproved publication is a stop signal. Define critical errors with the accountable owner; high-consequence decisions need qualified review. No observed errors in a small sample does not prove there are none.</p>
+      <p>Compare the same mix of tasks. Record changes in demand, staffing or product complexity instead of attributing every improvement to AI. Expand only when you can explain both the benefit and the cases where the process still fails.</p>
+
+      <h2 id="data-controls">6. Set data and action boundaries before connecting systems</h2>
+      <p>The <a href={ACSC}>ACSC's small-business AI guidance</a> identifies data exposure, unreliable or manipulated outputs and supplier dependencies as risks. Check data handling, access settings and incident procedures; assign responsibility for output checks and ongoing review. A business-plan label alone does not settle these questions.</p>
+      <p>The <a href={OAIC}>OAIC's commercial-AI guidance</a> recommends avoiding personal information, particularly sensitive information, in publicly available generative-AI tools. It addresses product due diligence, transparency and personal information in inputs and outputs. Begin with synthetic data and obtain appropriate advice before connecting real records; this guide is not a compliance assessment.</p>
+      <ul>
+        <li>List the systems and fields the pilot may access; begin with the least access required.</li>
+        <li>Keep publication, payments and customer commitments behind named human approval.</li>
+        <li>Define who changes prompts/configuration, how logs are protected and when data is deleted.</li>
+        <li>Test manual fallback and account/access removal before depending on a supplier.</li>
+      </ul>
+
+      <h2 id="decision">7. Decide to continue, revise or stop</h2>
+      <p>Choose a review date after enough representative work—not because every pilot must last four weeks. Consider correctness, critical failures, net effort, cash costs and maintenance ownership together.</p>
+      <ul>
+        <li><strong>Continue cautiously:</strong> acceptance criteria are met, the value matters and someone owns the process.</li>
+        <li><strong>Revise and retest:</strong> a limited, understood problem has a feasible fix. Set a bounded test, not an indefinite experiment.</li>
+        <li><strong>Stop:</strong> unsafe behaviour, unreliable evidence or costs you cannot justify. Keep the manual process and capture what you learned.</li>
+      </ul>
+      <p>If implementation is the obstacle, bring the worksheet's workflow, constraints and success measure to Studio. Submitting a brief does not commit you to a project or guarantee savings. If you are still exploring the basics, <Link to="/events">an MLAI event</Link> is a lower-commitment place to discuss your questions.</p>
+
+      <h2 id="method">Sources and limits</h2>
+      <p>The security and privacy sources above were checked on 9 September 2026. The tables, model and worksheet are MLAI editorial decision aids, not a reported customer experiment or validated financial forecast. The numbers are illustrative; real pilot feedback and measured outcomes are needed to assess usefulness in your business. No vendor price, hiring promise or guaranteed return is implied.</p>
+      <ArticleFAQ items={faqItems} />
+    </div>
+  </>;
+}

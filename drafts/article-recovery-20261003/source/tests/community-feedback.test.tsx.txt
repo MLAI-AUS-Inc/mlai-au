@@ -1,0 +1,117 @@
+import { expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import Article, { articleMeta, DATE_PUBLISHED, DATE_MODIFIED, DESCRIPTION } from "../app/articles/content/featured/how-to-foster-community-engagement";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+import { COMPLETED_ENGAGEMENT_RECORD, ENGAGEMENT_BLANK, ENGAGEMENT_DOWNLOAD, ENGAGEMENT_PATH, ENGAGEMENT_PROVENANCE, ENGAGEMENT_RECORD_FIELDS, ENGAGEMENT_RECORD_FILE, FICTIONAL_FEEDBACK_COUNTS, FICTIONAL_FEEDBACK_DECISIONS, FICTIONAL_FEEDBACK_NOTES, FICTIONAL_INVITATION, FICTIONAL_INVITEES, summariseFeedback } from "../app/lib/community-feedback";
+
+const render = (query = "") => renderToStaticMarkup(<MemoryRouter initialEntries={[ENGAGEMENT_PATH + query]}><Article /></MemoryRouter>);
+
+test("community feedback preserves article identity and scopes the original contribution", () => {
+  const entry = ARTICLE_REGISTRY[ENGAGEMENT_PATH.replace("/articles/", "")];
+  expect(DATE_PUBLISHED).toBe("2026-01-14");
+  expect(DATE_MODIFIED).toBe("2026-09-10");
+  expect(entry.date).toBe(DATE_PUBLISHED);
+  expect(entry.dateModified).toBe(DATE_MODIFIED);
+  expect(entry.description).toBe(DESCRIPTION);
+  for (const key of ["title", "image", "imageAlt", "author"] as const) expect(entry[key]).toBe(articleMeta[key]);
+  expect(articleMeta.imageAlt).toBe("Person writing on paper beside coloured notes at a table (illustrative image)");
+  const html = render();
+  expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+  expect(html).toContain("data-cf-article-body");
+  expect(html).toContain("data-article-toc-placeholder");
+  expect(html).not.toContain("FAQPage");
+  expect(html).toContain("not a public-policy consultation procedure");
+  expect(html).toContain("IAP2 International clarification page");
+  expect(html).toContain("not an assertion that the process cannot change");
+  expect(html).toContain("permission-cleared MLAI example still needed");
+  expect(html).not.toContain("Download now");
+});
+
+test("counts come from the complete fixed fictional note record, not route totals or votes", () => {
+  expect(FICTIONAL_FEEDBACK_COUNTS).toEqual({ invited: 12, discussion: 6, written: 4, both: 2, contributors: 8, contributionPercent: 67, notes: 14, withDecision: 12, needsClarification: 2 });
+  expect(FICTIONAL_FEEDBACK_NOTES.map(n => n.id)).toEqual(Array.from({ length: 14 }, (_, i) => `N${i + 1}`));
+  expect(FICTIONAL_FEEDBACK_NOTES.filter(n => n.decision === null).map(n => n.id)).toEqual(["N13", "N14"]);
+  expect(FICTIONAL_FEEDBACK_DECISIONS.map(d => FICTIONAL_FEEDBACK_NOTES.filter(n => n.decision === d.id).length)).toEqual([4, 4, 2, 2]);
+  const extraNote = { ...FICTIONAL_FEEDBACK_NOTES[0], id: "N15" };
+  const more = summariseFeedback(FICTIONAL_INVITEES, [...FICTIONAL_FEEDBACK_NOTES, extraNote]);
+  expect(more.notes).toBe(15);
+  expect(more.contributors).toBe(8);
+  expect(more.contributionPercent).toBe(67);
+  expect(summariseFeedback([], []).contributionPercent).toBeNull();
+  expect(summariseFeedback(["P1"], []).contributionPercent).toBe(0);
+});
+
+test("malformed teaching records cannot manufacture participation or decision counts", () => {
+  expect(() => summariseFeedback(["P1", "P1"], [])).toThrow("unique");
+  expect(() => summariseFeedback([" "], [])).toThrow("nonempty");
+  expect(() => summariseFeedback(FICTIONAL_INVITEES, [...FICTIONAL_FEEDBACK_NOTES, FICTIONAL_FEEDBACK_NOTES[0]])).toThrow("unique");
+  for (const patch of [{ id: " " }, { contributor: "P99" }, { route: "unknown" }]) {
+    expect(() => summariseFeedback(FICTIONAL_INVITEES, [{ ...FICTIONAL_FEEDBACK_NOTES[0], ...patch } as typeof FICTIONAL_FEEDBACK_NOTES[number]])).toThrow("known contributor and route");
+  }
+  expect(() => summariseFeedback(FICTIONAL_INVITEES, [{ ...FICTIONAL_FEEDBACK_NOTES[0], decision: "D99" }])).toThrow("Unknown decision");
+});
+
+test("responses, delivered artefacts, unresolved barriers and post-session feedback stay separate", () => {
+  const html = render();
+  expect(FICTIONAL_FEEDBACK_DECISIONS[2].response).toContain("does not remove the barrier");
+  expect(FICTIONAL_FEEDBACK_DECISIONS[2].delivery).toContain("The access barrier remains");
+  expect(FICTIONAL_FEEDBACK_DECISIONS[2].delivery).toContain("21 August");
+  expect(FICTIONAL_FEEDBACK_DECISIONS[3].decision).toContain("no permission to use client records");
+  expect(COMPLETED_ENGAGEMENT_RECORD.delivery).toContain("does not mean 12 resolved issues");
+  expect(COMPLETED_ENGAGEMENT_RECORD.outcome).toContain("No post-session participant feedback");
+  expect(COMPLETED_ENGAGEMENT_RECORD.permission).toContain("not de-identified MLAI research");
+  expect(html).toContain("not anonymised real participant data");
+  expect(html).toContain("affiliated invitation");
+  expect((html.match(/data-feedback-note=/g) ?? []).length).toBe(14);
+  expect((html.match(/data-feedback-decision=/g) ?? []).length).toBe(4);
+  expect(html).toContain('id="feedback-notes"');
+  expect(html).toContain('role="region" aria-label="Fictional engagement feedback table" tabindex="0"');
+});
+
+test("the real editable file contains the original ask, every note and decision and separate sharing templates", () => {
+  expect(readFileSync("public" + ENGAGEMENT_DOWNLOAD, "utf8")).toBe(ENGAGEMENT_RECORD_FILE);
+  expect(ENGAGEMENT_RECORD_FILE).toContain(ENGAGEMENT_PROVENANCE);
+  expect(ENGAGEMENT_RECORD_FILE).toContain(FICTIONAL_INVITATION);
+  expect(FICTIONAL_INVITATION).toContain("14 August 2026, 6–7pm AEST");
+  expect(FICTIONAL_INVITATION).toContain("optional and unpaid");
+  expect(ENGAGEMENT_RECORD_FILE).toContain(ENGAGEMENT_BLANK);
+  expect(Object.keys(COMPLETED_ENGAGEMENT_RECORD).length).toBe(12);
+  for (const [key, label] of ENGAGEMENT_RECORD_FIELDS) {
+    expect(ENGAGEMENT_RECORD_FILE).toContain(`${label}:`);
+    expect(ENGAGEMENT_RECORD_FILE).toContain(COMPLETED_ENGAGEMENT_RECORD[key]);
+  }
+  for (const n of FICTIONAL_FEEDBACK_NOTES) expect(ENGAGEMENT_RECORD_FILE).toContain(`${n.id} | ${n.contributor} | ${n.route} | ${n.input}`);
+  for (const d of FICTIONAL_FEEDBACK_DECISIONS) {
+    expect(ENGAGEMENT_RECORD_FILE).toContain(d.response);
+    expect(ENGAGEMENT_RECORD_FILE).toContain(d.delivery);
+  }
+  expect(ENGAGEMENT_RECORD_FILE).toContain("PRIVATE INPUT LOG TEMPLATE");
+  expect(ENGAGEMENT_RECORD_FILE).toContain("PUBLIC UPDATE TEMPLATE");
+  expect(ENGAGEMENT_RECORD_FILE).toContain("no participant permission is granted");
+  expect(render()).toContain(`href="${ENGAGEMENT_DOWNLOAD}" download="mlai-community-feedback-record.txt"`);
+});
+
+test("organisers remain COMMUNITY and only a selected event preference travels to the calendar", () => {
+  const conversion = BASE_ARTICLE_SEO_CONFIG[ENGAGEMENT_PATH].conversion!;
+  expect(conversion.primaryIcp).toBe("COMMUNITY");
+  expect(conversion.primary).toBe("events");
+  expect(conversion.version).toBe("decision-feedback-v4");
+  expect(conversion.eventCalendarOnly).toBe(true);
+  for (const selected of ["sydney", "melbourne", "online"]) {
+    const html = render(`?event_format=${selected}`);
+    expect(html).toContain(`value="${selected}" selected=""`);
+    expect(html).toContain(`href="/events?event_format=${selected}"`);
+    expect(html).toContain(`action="${ENGAGEMENT_PATH}" method="get"`);
+  }
+  for (const query of ["", "?event_format=other", "?event_format=online&event_format=sydney"]) {
+    expect(render(query)).toContain('value="all" selected=""');
+    expect(render(query)).toContain('href="/events"');
+  }
+  expect(render()).toContain("does not send feedback notes");
+  expect(render()).toContain("does not grant research access");
+  expect(render()).not.toContain('data-article-conversion="studio-builder"');
+  expect(render()).not.toContain("Get recommendations");
+});

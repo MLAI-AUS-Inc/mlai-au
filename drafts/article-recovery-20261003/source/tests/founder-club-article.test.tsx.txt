@@ -1,0 +1,121 @@
+import { expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import Article, { articleMeta, DATE_MODIFIED, DATE_PUBLISHED, DESCRIPTION } from "../app/articles/content/featured/why-founders-clubs-work-for-early-stage-growth";
+import { ArticleReadTime } from "../app/components/articles/ArticleReadTime";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+import { CLUB_FORMATS, CLUB_RECORD_DOWNLOAD, CLUB_RECORD_FIELDS, CLUB_RECORD_FILE, CLUB_REVIEW_BLANK, CLUB_SOURCES_CHECKED_AT, CLUB_SOURCES_REVIEW_AFTER, FICTIONAL_CLUB_REVIEW, FOUNDER_CLUB_PATH, clubSourceState } from "../app/lib/founder-club-participation";
+
+const render = (query = "", time: string | null = "2026-09-10T12:00:00Z") => renderToStaticMarkup(<MemoryRouter initialEntries={[FOUNDER_CLUB_PATH + query]}><ArticleReadTime.Provider value={time}><Article /></ArticleReadTime.Provider></MemoryRouter>);
+
+test("club metadata preserves publication provenance and describes the actual participation task", () => {
+  const entry = ARTICLE_REGISTRY[FOUNDER_CLUB_PATH.replace("/articles/", "")];
+  expect(DATE_PUBLISHED).toBe("2026-04-08");
+  expect(entry.date).toBe(DATE_PUBLISHED);
+  expect(entry.dateModified).toBe(DATE_MODIFIED);
+  expect(entry.description).toBe(DESCRIPTION);
+  for (const key of ["title", "image", "imageAlt", "author"] as const) expect(entry[key]).toBe(articleMeta[key]);
+  const html = render();
+  expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+  expect(html).toContain("data-cf-article-body");
+  expect(html).toContain("data-article-toc-placeholder");
+  expect(html).not.toContain("FAQPage");
+  expect(html).not.toContain("This section works best");
+});
+
+test("four products preserve actual price-control observations and source limits", () => {
+  const evidence = JSON.parse(readFileSync("docs/article-audit-2026-09-10/support/founder-clubs-Kt75xw/source-checks.json", "utf8"));
+  expect(CLUB_FORMATS).toHaveLength(4);
+  expect(new Set(CLUB_FORMATS.map(row => row.id)).size).toBe(4);
+  for (const row of CLUB_FORMATS) {
+    for (const key of ["audience", "participation", "location", "cost", "check"] as const) expect(row[key].length).toBeGreaterThan(15);
+    expect(render()).toContain(`data-club-format="${row.id}"`);
+    expect(render()).toContain(row.source);
+  }
+  expect(evidence.cohort.founders_club.price).toBeNull();
+  expect(CLUB_FORMATS[0].cost).toContain("different product");
+  expect(CLUB_FORMATS[1].participation).toContain("not the Founders Club's monthly peer format");
+  expect(evidence.startup_network.initial_displayed_price).toBe("$300.00");
+  expect(evidence.startup_network.subsequent_displayed_price).toBe("$100.00");
+  expect(CLUB_FORMATS[2].cost).toContain("$300 every year");
+  expect(CLUB_FORMATS[2].cost).toContain("$100 every 3 months");
+  expect(CLUB_FORMATS[3].cost).toContain("when billed annually");
+  expect(CLUB_FORMATS[3].cost).toContain("not a monthly payment option");
+  expect(evidence.fishburners.observed_final_url).toContain("domain_not_supported");
+  expect(CLUB_FORMATS[3].check).toContain("domain-configuration error");
+  expect(CLUB_FORMATS[3].location).toContain("Remote participation in a specific session is unverified");
+});
+
+test("provider checks expire without turning missing information or a failed signup into availability", () => {
+  for (const time of [null, NaN, Infinity, -Infinity, Date.parse(CLUB_SOURCES_CHECKED_AT) - 1]) expect(clubSourceState(time)).toBe("unknown");
+  expect(clubSourceState(Date.parse(CLUB_SOURCES_CHECKED_AT))).toBe("checked");
+  expect(clubSourceState(Date.parse(CLUB_SOURCES_REVIEW_AFTER) - 1)).toBe("checked");
+  expect(clubSourceState(Date.parse(CLUB_SOURCES_REVIEW_AFTER))).toBe("overdue");
+  expect(render("", null)).toContain('data-club-source-review="unknown"');
+  expect(render()).toContain('data-club-source-review="checked"');
+  const stale = render("", CLUB_SOURCES_REVIEW_AFTER);
+  expect(stale).toContain("Source review is overdue");
+  expect(stale).toContain("domain-configuration error");
+  expect(stale).toContain("not evidence that the organisation has stopped operating");
+  expect(stale).toContain("not verified current intakes");
+});
+
+test("the completed record is explicitly fictional and retains the limits of one experience", () => {
+  expect(Object.keys(FICTIONAL_CLUB_REVIEW).sort()).toEqual(CLUB_RECORD_FIELDS.map(([key]) => key).sort());
+  expect(CLUB_RECORD_FIELDS).toHaveLength(11);
+  expect(FICTIONAL_CLUB_REVIEW.provider).toContain("not Cohort, The Startup Network, Fishburners or MLAI");
+  expect(FICTIONAL_CLUB_REVIEW.commitment).toContain(`${60 + 20 + 15} minutes`);
+  expect(FICTIONAL_CLUB_REVIEW.evidence).toContain("No change in sales, retention, funding or margin");
+  expect(FICTIONAL_CLUB_REVIEW.decision).toContain("do not buy recurring membership");
+  expect(FICTIONAL_CLUB_REVIEW.decision).toContain("zero ticket fee does not establish the full A$30 cash limit");
+  expect(FICTIONAL_CLUB_REVIEW.unknowns).toContain("Additional access costs were not quantified");
+  expect(FICTIONAL_CLUB_REVIEW.followup).toContain("not permission for an ongoing marketing sequence");
+  const html = render();
+  expect(html).toContain(`$${80 + 2 * 25}`);
+  expect(html).toContain(`${2 * (90 + 60 + 20)} minutes: 5 hours 40 minutes`);
+  expect(html).toContain("No member interviews or firsthand attendance evidence were collected");
+  expect(html).toContain("why someone left");
+  expect(html).toContain("Complete experience fields only after an actual visit");
+});
+
+test("the real downloadable record matches the visible completed example and blank fields", () => {
+  expect(readFileSync("public" + CLUB_RECORD_DOWNLOAD, "utf8")).toBe(CLUB_RECORD_FILE);
+  expect(CLUB_RECORD_FILE).toContain(CLUB_REVIEW_BLANK);
+  for (const [key, label] of CLUB_RECORD_FIELDS) {
+    expect(CLUB_RECORD_FILE).toContain(FICTIONAL_CLUB_REVIEW[key]);
+    expect(CLUB_RECORD_FILE).toContain(label + ":");
+  }
+  expect(render()).toContain(`href="${CLUB_RECORD_DOWNLOAD}" download="mlai-founder-participation-record.txt"`);
+  expect(CLUB_RECORD_FILE).toContain("no real provider or member experience");
+});
+
+test("COMMUNITY format preference survives SSR without implying contracting or membership", () => {
+  const conversion = BASE_ARTICLE_SEO_CONFIG[FOUNDER_CLUB_PATH].conversion!;
+  expect(conversion.primaryIcp).toBe("COMMUNITY");
+  expect(conversion.primary).toBe("events");
+  expect(conversion.eventCalendarOnly).toBe(true);
+  expect(conversion.version).toBe("club-participation-v4");
+  for (const format of ["melbourne", "sydney", "online"]) {
+    const html = render(`?event_format=${format}`);
+    expect(html).toContain(`action="${FOUNDER_CLUB_PATH}" method="get"`);
+    expect(html).toContain(`value="${format}" selected=""`);
+    expect(html).toContain(`href="/events?event_format=${format}"`);
+  }
+  for (const query of ["", "?event_format=invalid", "?event_format=online&event_format=sydney", "?event_format=online&event_format=online"]) {
+    expect(render(query)).toContain('href="/events"');
+    expect(render(query)).toContain("Applied to the event CTA: All formats.");
+  }
+  expect(render("?private_note=PRIVATE_TEST")).not.toContain("PRIVATE_TEST");
+  expect(render()).toContain("does not filter the providers above, join a club or reserve a place");
+  expect(render().indexOf('id="trial-record"')).toBeLessThan(render().indexOf('data-article-conversion="events"'));
+});
+
+test("comparisons are focusable and contained, and the mobile selector is full width", () => {
+  const html = render();
+  expect((html.match(/class="overflow-x-auto/g) ?? []).length).toBe(3);
+  expect(html).toContain('aria-label="Dated founder-community format comparison" tabindex="0"');
+  expect(html).toContain("flex-col gap-3 sm:flex-row sm:items-end");
+  expect(html).toContain("w-full min-w-0 sm:flex-1");
+});

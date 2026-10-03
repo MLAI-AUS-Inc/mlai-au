@@ -1,0 +1,116 @@
+export const MELBOURNE_EVENT_REVIEW_DATE = "2026-09-10";
+export const MELBOURNE_EVENT_REVIEW_OWNER = "MLAI editorial";
+// A conservative editorial review deadline, not a promise of live availability.
+export const MELBOURNE_EVENT_REVIEW_AFTER = "2026-09-17T00:00:00+10:00";
+export type MelbourneEventFormat = "in-person" | "online";
+export type MelbourneEventListing = {
+  id: string;
+  name: string;
+  organiser: string;
+  formats: MelbourneEventFormat[];
+  inPersonCity?: "Melbourne" | "Sydney";
+  /** Explicit organiser evidence, not inferred from an article mention. */
+  mlaiCoHosted?: boolean;
+  startAt: string;
+  endAt: string;
+  precision: "minute" | "date-window";
+  schedule: string;
+  location: string;
+  readerFit: string;
+  price: string;
+  admission: string;
+  sourceUrl: string;
+  priceSourceUrl?: string;
+  checkedAt: string;
+  reviewAfter: string;
+};
+
+const review = { checkedAt: "2026-09-10T04:33:00Z", reviewAfter: MELBOURNE_EVENT_REVIEW_AFTER };
+
+// Organiser statements, not attendance, independent quality ratings or ticket inventory.
+export const MELBOURNE_AI_EVENTS: MelbourneEventListing[] = [
+  {
+    id: "office-hours", name: "AI Builder Online Office hours", organiser: "MLAI",
+    formats: ["online"], startAt: "2026-09-10T17:30:00+10:00", endAt: "2026-09-10T18:30:00+10:00", precision: "minute",
+    schedule: "10 September 2026, 5:30–6:30 pm AEST", location: "Google Meet; follow the organiser's joining instructions.",
+    readerFit: "Bring a specific AI project or startup question, or listen. No fixed curriculum; not every question can be covered.",
+    price: "Free, according to the event description.", admission: "Host approval required at the source check; requesting a place is not acceptance.",
+    sourceUrl: "https://luma.com/x05a1zzc", ...review,
+  },
+  {
+    id: "hype-to-practice", name: "AI Hype to Practice", organiser: "MLAI", inPersonCity: "Melbourne",
+    formats: ["in-person", "online"], startAt: "2026-09-15T17:30:00+10:00", endAt: "2026-09-15T20:30:00+10:00", precision: "minute",
+    schedule: "15 September 2026, 5:30–8:30 pm AEST", location: "Stone & Chalk Melbourne Startup Hub, 121 King Street; a separate Join Online ticket was listed.",
+    readerFit: "AI-curious attendees interested in healthcare examples and a panel/Q&A. Not a code-along or individual clinical advice.",
+    price: "Displayed AUD prices: Standard $24.60; Join Online $12.50. The $14.60 early-bird option was sold out.",
+    admission: "Choose the correct ticket format and check checkout terms. We did not purchase a ticket or verify the stream, final charges or remaining capacity.",
+    sourceUrl: "https://luma.com/mlai-nu4n", ...review,
+  },
+  {
+    id: "engineer-night", name: "AI Engineer Night Melbourne #1", organiser: "MLAI", inPersonCity: "Melbourne",
+    formats: ["in-person"], startAt: "2026-09-16T18:00:00+10:00", endAt: "2026-09-16T21:00:00+10:00", precision: "minute",
+    schedule: "16 September 2026, 6–9 pm AEST", location: "Melbourne. The registration page requires registration to see the exact address; do not rely on a different directory's address.",
+    readerFit: "Technical talks on AI-system delivery; useful if you want engineering discussion, not a beginner workshop or a paid-project allocation.",
+    price: "No purchasable ticket price was displayed in the reviewed waitlist screen; do not infer a guaranteed free place.",
+    admission: "Event Full / Join Waitlist at the source check. A waitlist entry is not admission. Read the stated registration-data sharing terms.",
+    sourceUrl: "https://luma.com/mlai-m1d6", ...review,
+  },
+  {
+    id: "productathon", name: "Capricorn AI Productathon 2026 — Final Demo Day", organiser: "Capricorn Events", inPersonCity: "Melbourne",
+    formats: ["in-person"], startAt: "2026-09-27T14:00:00+10:00", endAt: "2026-09-27T18:00:00+10:00", precision: "minute",
+    schedule: "27 September 2026, 2–6 pm AEST", location: "Arts West North Wing, Forum Theatre (Room 153), University of Melbourne, Parkville.",
+    readerFit: "Watch Physical AI × Sports prototype demonstrations. The audience ticket is not entry to the competition or a hands-on build session.",
+    price: "AUD $50 audience ticket listed; check final charges and terms before paying.",
+    admission: "An audience ticket was offered at the source check. No purchase, availability guarantee or independent event-quality assessment was made.",
+    sourceUrl: "https://luma.com/baz94tl4", ...review,
+  },
+  {
+    id: "enterprise-ai", name: "Enterprise AI Melbourne 2026", organiser: "Corinium", inPersonCity: "Melbourne",
+    formats: ["in-person"], startAt: "2026-09-02T00:00:00+10:00", endAt: "2026-09-03T00:00:00+10:00", precision: "date-window",
+    schedule: "2 September 2026; exact session times were not rechecked.", location: "Melbourne; venue not rechecked for this historical comparison.",
+    readerFit: "An enterprise-leadership agenda on adoption, production and governance. An example of a different commitment from a casual community event.",
+    price: "Historical published packages: AUD $1,499 + GST end-user; $3,599 + GST vendor/consultancy. Not current offers.",
+    admission: "Listed date has passed. Do not treat a surviving Register Now button as evidence of a new Melbourne event.",
+    sourceUrl: "https://enterpriseai-mel.coriniumintelligence.com/",
+    priceSourceUrl: "https://enterpriseai-mel.coriniumintelligence.com/registration-packages", ...review,
+  },
+  {
+    id: "ai-summit", name: "The AI Summit Australia 2026", organiser: "Informa", inPersonCity: "Melbourne",
+    formats: ["in-person"], startAt: "2026-09-07T00:00:00+10:00", endAt: "2026-09-10T00:00:00+10:00", precision: "date-window",
+    schedule: "7–9 September 2026; exact session times were not rechecked.", location: "Melbourne Convention and Exhibition Centre (MCEC).",
+    readerFit: "A commercial/enterprise AI conference, retained to explain why old search results need a date check.",
+    price: "Not verified in the reviewed homepage; do not infer free entry.",
+    admission: "Listed dates have passed. No later Melbourne edition was verified in this review.",
+    sourceUrl: "https://australia.theaisummit.com/", ...review,
+  },
+];
+
+export type MelbourneEventStatus = "unknown" | "snapshot" | "past" | "needs-review" | "listed-future" | "listed-window";
+function instant(value: string): number {
+  // Require a stated offset, rather than the browser/server's local timezone.
+  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$/.exec(value);
+  if (!match || +match[2] > 23 || +match[3] > 59 || +match[4] > 59) return NaN;
+  const day = Date.parse(match[1] + "T00:00:00Z");
+  if (!Number.isFinite(day) || new Date(day).toISOString().slice(0, 10) !== match[1]) return NaN;
+  return Date.parse(value);
+}
+export function melbourneEventStatus(event: MelbourneEventListing, now: number | null): MelbourneEventStatus {
+  const start = instant(event.startAt), end = instant(event.endAt), checked = instant(event.checkedAt), due = instant(event.reviewAfter);
+  if (![start, end, checked, due].every(Number.isFinite) || end <= start || due <= checked) return "unknown";
+  if (now === null) return end <= checked ? "past" : "snapshot";
+  if (!Number.isFinite(now) || now < checked) return "unknown";
+  if (now >= end) return "past";
+  if (now >= due) return "needs-review";
+  return now < start ? "listed-future" : "listed-window";
+}
+export const MELBOURNE_STATUS_LABELS: Record<MelbourneEventStatus, string> = {
+  unknown: "Date status unavailable — check organiser",
+  snapshot: "Dated source snapshot — check organiser",
+  past: "Listed dates have passed",
+  "needs-review": "Source recheck overdue — do not assume availability",
+  "listed-future": "Future date listed — admission is separate",
+  "listed-window": "Within the listed time window — check organiser",
+};
+export function filterMelbourneEvents(format: "all" | MelbourneEventFormat, includePast: boolean, now: number | null, events = MELBOURNE_AI_EVENTS) {
+  return events.filter(event => (format === "all" || event.formats.includes(format)) && (includePast || melbourneEventStatus(event, now) !== "past"));
+}

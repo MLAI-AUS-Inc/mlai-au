@@ -1,0 +1,112 @@
+MLAI STARTUP MODEL EVIDENCE RECORD
+Revision: 11 September 2026
+Read with: https://mlai.au/articles/featured/what-constitutes-a-startup-in-practice
+This editable text file is longer than one printed page. Use the separate one-page PDF for handwriting.
+Do not upload customer information here or infer eligibility from this worksheet. Keep permission-cleared notes private. No information is sent by this file.
+
+BLANK EIGHT-FIELD RECORD
+1. Whose problem does the venture address?
+Answer:
+
+2. What is the offering today, not the future vision?
+Answer:
+
+3. What repeats between customers?
+Answer:
+
+4. What still requires custom work or founder time?
+Answer:
+
+5. What shows demand: conversations, trials, payments or repeat use?
+Answer:
+
+6. What evidence contradicts the current assumption?
+Answer:
+
+7. What growth is intended, and what constrains it?
+Answer:
+
+8. What remains unknown and what test comes next?
+Answer:
+
+COMPLETED FICTIONAL RECORD (F2)
+All four cases, the proposed hours and the contradictory request are fictional teaching material. No customer interviews, delivery timings, trials or payments were collected.
+
+1. Whose problem does the venture address?
+F2: owners of small field-service businesses preparing draft quotes. This is an imagined audience, not a researched customer segment.
+
+2. What is the offering today, not the future vision?
+Bespoke workflow setup is the current fictional offer. A shared quote-drafting product is proposed, not built, sold or deployed.
+
+3. What repeats between customers?
+The proposed draft structure repeats. The 40 common setup hours and 4 hours per client are planning inputs, not time logs or evidence that the same integration will work.
+
+4. What still requires custom work or founder time?
+Each accounting system, quote approval rule and data permission may differ. Maintenance, support, security, acquisition and infrastructure are unestimated, not zero.
+
+5. What shows demand: conversations, trials, payments or repeat use?
+None collected. Five clients in the calculation means five assumed setups, not a pipeline, five customers or five payments.
+
+6. What evidence contradicts the current assumption?
+Supplied fictional request: “Our accounting app is different and two people must approve every quote.” That would add unscoped integration and approval work. It challenges the shared-setup estimate; it is not an actual interview quotation.
+
+7. What growth is intended, and what constrains it?
+The imagined contractor hopes to serve more firms with one product. Current custom delivery is the constraint. Keep describing this as a service offer exploring a product hypothesis, not a proven scalable business.
+
+8. What remains unknown and what test comes next?
+Pause the product claim. Next, compare two synthetic quote examples with different approval rules, logging common and separate work. Do not use client records or connect accounts. Then seek permission for discovery conversations. Neither test has run; no build, outreach or purchase is authorised by this worksheet.
+
+FOUR FICTIONAL CASES
+F1: A new local repair shop
+Scenario: The owner wants one dependable neighbourhood location. More repairs require more technician hours and bench space.
+Interpretation: A new local business under the stated plan, not a rapid-growth startup merely because it just opened.
+Next question or action: Decide whether one location meets the owner’s goals. A later expansion plan would need separate evidence.
+
+F2: An AI contractor proposing a shared quote-drafting product
+Scenario: The current offer is bespoke workflow setup. A common template is proposed, but no shared product or customer trial exists.
+Interpretation: A service business exploring a startup hypothesis. AI tooling and a reuse estimate do not prove repeatable delivery or demand.
+Next question or action: Compare the actual setup differences before promising a product. The completed record below keeps that uncertainty visible.
+
+F3: A software team testing one product for several businesses
+Scenario: The team intends to serve many similar businesses. In this story two businesses agree to try a demonstration; neither has paid or returned for another use.
+Interpretation: Startup intent and a possible repeatable offering, not demonstrated retention or a validated business model.
+Next question or action: Record what the trial actually involves and whether the same offering solves a recurring need. Two agreements are not two retained customers.
+
+F4: An established company trying an internal product
+Scenario: A separate team is testing a new offer while the parent keeps running its established business.
+Interpretation: The experiment may use startup-style discovery. That does not reclassify the whole parent as a newly founded company.
+Next question or action: Name the unit being discussed. Check the actual applicant entity if considering a programme.
+
+SETUP-HOUR COMPARISONS (PLANNING INPUTS, NOT MEASUREMENTS)
+Same proposed task: set up a quote-drafting workflow; neither option automatically sends quotes.
+Five assumed setups
+Clients: 5; bespoke hours per client: 20; common hours: 40; shared hours per client: 4.
+Bespoke: 5 x 20 = 100 hours.
+Shared: 40 + 5 x 4 = 60 hours.
+Difference (bespoke minus shared): 40 hours. Positive means fewer proposed shared hours.
+
+Only one setup
+Clients: 1; bespoke hours per client: 20; common hours: 40; shared hours per client: 4.
+Bespoke: 1 x 20 = 20 hours.
+Shared: 40 + 1 x 4 = 44 hours.
+Difference (bespoke minus shared): -24 hours. Positive means fewer proposed shared hours.
+
+More custom work
+Clients: 5; bespoke hours per client: 20; common hours: 80; shared hours per client: 8.
+Bespoke: 5 x 20 = 100 hours.
+Shared: 80 + 5 x 8 = 120 hours.
+Difference (bespoke minus shared): -20 hours. Positive means fewer proposed shared hours.
+
+At the original rates, 40 + 4n < 20n only when n > 2.5; three whole setups. That arithmetic threshold does not establish that customers exist or the product is profitable.
+Sales, support, maintenance, security and infrastructure are unestimated, not zero. Different integrations or approval rules may make tasks incomparable. No margin forecast, cash savings or validated business model is established.
+
+DEFINITION AND PROGRAMME BOUNDARIES
+Paul Graham, Startup = Growth (September 2012): https://paulgraham.com/growth.html
+Steve Blank, What's A Startup? First Principles. (25 January 2010): https://steveblank.com/2010/01/25/whats-a-startup-first-principles/
+Industry Growth Program: https://business.gov.au/grants-and-programs/industry-growth-program
+Sources checked 11 September 2026. Practitioner definitions are not legal classifications. On the check date the programme page said paused to new applications. Check current official rules/status; this is not a full eligibility checklist. Advisory Service, grant eligibility and merit assessment are separate decisions.
+
+NEXT CONVERSATION
+Ask: What is still custom for each customer? Ask permission before sharing an anonymised example.
+Choose a relevant event at https://mlai.au/events. Check topic, format and participation rules. Attendance does not guarantee advice, customers or funding. This file does not register you or transfer your record.
+Independent founder/source review remains outstanding. The synthetic comparison and proposed follow-up tests are not real customer evidence; the tests have not run.

@@ -1,0 +1,107 @@
+import { expect, test } from 'bun:test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import FounderExperimentLedger from '../app/components/articles/FounderExperimentLedger';
+import { createEmptyFounderExperiment, founderExperimentLedgerToCsv, parseStoredFounderExperiments, readFounderLedger, saveFounderLedger, FOUNDER_LEDGER_STORAGE_KEY, FOUNDER_LEDGER_EXAMPLE, FOUNDER_LEDGER_FIELDS, EXPERIMENT_EVIDENCE_STATUSES } from '../app/lib/founder-experiment-ledger';
+import { readFileSync } from 'node:fs';
+import { MemoryRouter } from 'react-router';
+import Article, { DATE_PUBLISHED, DATE_MODIFIED, DESCRIPTION } from '../app/articles/content/featured/what-an-entrepreneur-does-and-how-to-start-well';
+import { ARTICLE_REGISTRY } from '../app/articles/registry';
+import { BASE_ARTICLE_SEO_CONFIG } from '../app/articles/seo-config';
+const slug='featured/what-an-entrepreneur-does-and-how-to-start-well';
+const render=(query='')=>renderToStaticMarkup(<MemoryRouter initialEntries={['/articles/'+slug+query]}><Article /></MemoryRouter>);
+
+test('formula-like CSV cells are visible text, not merely quoted executable formulas', () => {
+ for(const value of ['=1+1','+1+1','-1+1','@SUM(1,1)','\t=1+1','\r=1+1','\n=1+1','   =1+1','＝1+1','＋1+1','－1+1','＠SUM(1,1)','\u0000=1+1']) {
+  const row={...createEmptyFounderExperiment('one'),assumption:value};
+  expect(founderExperimentLedgerToCsv([row])).toContain('"Text: ');
+  expect(row.assumption).toBe(value);
+ }
+});
+
+test('a malformed, partial or ambiguous saved ledger is not silently reduced to valid rows', () => {
+ const row=createEmptyFounderExperiment('one');
+ for(const data of [[row,{bad:true}],[row,row],[{...row,id:''}],[{...row,id:' '}],[{...row,decision:'Approved'}],[{...row,assumption:null}],[{...row,newerSchemaEvidence:'do not lose me'}],[{...row,evidenceStatus:'verified by AI'}]]) expect(parseStoredFounderExperiments(JSON.stringify(data))).toBeNull();
+});
+
+test('legacy entries are restored intact without inventing observed provenance', () => {
+ const old=createEmptyFounderExperiment('legacy');
+ expect(parseStoredFounderExperiments(JSON.stringify([old]))).toEqual([old]);
+ expect(founderExperimentLedgerToCsv([old])).toContain('"Not recorded"');
+ for(const status of EXPERIMENT_EVIDENCE_STATUSES) expect(parseStoredFounderExperiments(JSON.stringify([{...old,evidenceStatus:status}]))?.[0].evidenceStatus).toBe(status);
+});
+
+function memoryStore(initial:string|null=null) {
+ let value=initial;const writes:string[]=[];
+ return {writes,get value(){return value;},set value(next:string|null){value=next;},getItem(key:string){expect(key).toBe(FOUNDER_LEDGER_STORAGE_KEY);return value;},setItem(key:string,next:string){expect(key).toBe(FOUNDER_LEDGER_STORAGE_KEY);writes.push(next);value=next;}};
+}
+
+test('loading never writes and unreadable data remains available for recovery', () => {
+ for(const value of [null,'invalid JSON','[]',JSON.stringify([createEmptyFounderExperiment('old')])]) {
+  const store=memoryStore(value);const read=readFounderLedger(store);
+  expect(read.kind).toBe(value===null||value.startsWith('[{"id"')?'ready':'invalid');
+  expect(store.value).toBe(value);expect(store.writes).toHaveLength(0);
+ }
+ const denied={getItem(){throw Error('SecurityError')},setItem(){throw Error('must not write')}};
+ expect(readFounderLedger(denied).kind).toBe('unavailable');
+});
+
+test('saving compares the loaded snapshot and does not overwrite a changed or malformed ledger', () => {
+ const row=createEmptyFounderExperiment('one'),store=memoryStore();
+ const first=saveFounderLedger(store,[row],null);expect(first.kind).toBe('saved');
+ if(first.kind!=='saved')throw Error('not saved');
+ const second=saveFounderLedger(store,[{...row,evidence:'different'}],first.raw);expect(second.kind).toBe('saved');
+ store.value='ANOTHER_TAB';expect(saveFounderLedger(store,[row],first.raw).kind).toBe('conflict');expect(store.value).toBe('ANOTHER_TAB');expect(store.writes).toHaveLength(2);
+ const invalid=memoryStore();expect(saveFounderLedger(invalid,[row,row],null).kind).toBe('invalid');expect(invalid.writes).toHaveLength(0);
+});
+
+test('read and quota failures do not report a save or replace prior bytes', () => {
+ const row=createEmptyFounderExperiment('one');
+ const denied={getItem(){throw Error('SecurityError')},setItem(){throw Error('unexpected')}};
+ expect(saveFounderLedger(denied,[row],null).kind).toBe('unavailable');
+ const quota={getItem(){return 'prior'},setItem(){throw Error('QuotaExceededError')}};
+ expect(saveFounderLedger(quota,[row],'prior').kind).toBe('unavailable');
+ expect(quota.getItem()).toBe('prior');
+});
+
+test('all eight completed fields survive the actual text download without pretending to be fieldwork', () => {
+ const html=render(),text=readFileSync('public/downloads/founder-experiment-example.txt','utf8');
+ const escaped=(s:string)=>s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ expect(FOUNDER_LEDGER_FIELDS).toHaveLength(8);
+ for(const [label,key] of FOUNDER_LEDGER_FIELDS) {
+  expect(text.split(label+':')).toHaveLength(3);
+  expect(text).toContain(FOUNDER_LEDGER_EXAMPLE[key]!);expect(html).toContain(escaped(FOUNDER_LEDGER_EXAMPLE[key]!));
+ }
+ for(const value of ['unfinished founder diary/interview study','One of three','P3 is unknown','No outreach or retest has run','No real demand or retention rate']) expect(html).toContain(value);
+ expect(html.match(/data-founder-example-field=/g)).toHaveLength(8);
+});
+
+test('article metadata, local storage copy, accessible anchors and community destination match the reader task', () => {
+ const entry=ARTICLE_REGISTRY[slug],config=BASE_ARTICLE_SEO_CONFIG['/articles/'+slug].conversion!;
+ expect(DATE_PUBLISHED).toBe('2026-04-20');expect(DATE_MODIFIED).toBe('2026-09-11');expect(entry.date).toBe(DATE_PUBLISHED);expect(entry.dateModified).toBe(DATE_MODIFIED);expect(entry.description).toBe(DESCRIPTION);
+ expect(config.primaryIcp).toBe('COMMUNITY');expect(config.version).toBe('entrepreneur-learning-v3');expect(config.eventCalendarOnly).toBe(true);
+ const html=render();for(const text of ['data-cf-article-body','data-article-toc-placeholder','not encrypted by this tool','This tool has no submit action','Founder Tools overview','not an automatic import','/articles/featured/what-constitutes-a-startup-in-practice'])expect(html).toContain(text);
+ for(const id of ['constraints','investigate','commitment','completed-example','delivery','decision','setup','monthly-record','next-step'])expect(html).toContain(`id="${id}" class="scroll-mt-28"`);
+ expect(html).toContain('role="region" aria-label="Proposed founder experiment designs" tabindex="0"');
+ expect(html).not.toContain('scores it 80+');expect(html).not.toContain('data-article-icp="FOUNDER_BUILDER"');
+ for(const preference of ['online','melbourne']) {const page=render('?event_format='+preference+'&notes=PRIVATE_SENTINEL');expect(page).toContain(`href="/events?event_format=${preference}"`);expect(page).not.toContain('PRIVATE_SENTINEL');}
+ expect(render('?event_format=all')).toContain('href="/events"');
+});
+
+test('controls are disabled until hydration and no-script users receive a real fallback', () => {
+ const html=renderToStaticMarkup(<FounderExperimentLedger />);
+ expect(html).toContain('<noscript>');
+ expect(html).toContain('disabled=""');
+ expect(html).toContain('/downloads/founder-experiment-example.txt');
+});
+
+test('curated next-up and article-owned follow-on navigation serve the two distinct founder tasks', () => {
+ const links=BASE_ARTICLE_SEO_CONFIG['/articles/'+slug].internalLinks;
+ expect(links).toEqual([
+  '/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026',
+  '/articles/featured/what-constitutes-a-startup-in-practice',
+ ]);
+ const html=render();
+ expect(html).toContain('aria-label="Founder follow-on guides"');
+ expect(html).toContain('first-customer discovery guide');
+ expect(html).toContain('startup-definition examples and decision record');
+});

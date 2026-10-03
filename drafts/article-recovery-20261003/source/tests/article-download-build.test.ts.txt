@@ -1,0 +1,23 @@
+import { expect, test } from "bun:test";
+import { assertDownloadBytes, checkArticleDownloads, downloadPaths } from "../scripts/check-article-downloads";
+
+test("download discovery resolves encoded filenames and removes only query/fragment", () => {
+  expect(downloadPaths('<a href="/downloads/a%20b.txt?download=1#top">x</a><a href="/downloads/a%20b.txt">x</a>')).toEqual(["/downloads/a b.txt"]);
+  expect(downloadPaths('<a href="/events">x</a><a href="https://example.com/a.pdf">x</a>')).toEqual([]);
+});
+test("download discovery rejects path traversal and malformed encoding", () => {
+  for (const href of ["/downloads/../x", "/downloads/%2e%2e/x", "/downloads/a%5cb", "/downloads/%00", "/downloads/%ZZ"]) {
+    expect(() => downloadPaths(`<a href="${href}">x</a>`)).toThrow();
+  }
+});
+test("empty or changed production bytes fail verification", () => {
+  const bytes = new Uint8Array([1, 2]);
+  expect(() => assertDownloadBytes(bytes, new Uint8Array([1, 2]))).not.toThrow();
+  expect(() => assertDownloadBytes(new Uint8Array())).toThrow("empty");
+  expect(() => assertDownloadBytes(bytes, new Uint8Array())).toThrow("differs");
+  expect(() => assertDownloadBytes(bytes, new Uint8Array([1, 3]))).toThrow("differs");
+});
+test("all rendered published-body download links have nonempty source assets", async () => {
+  const assets = await checkArticleDownloads();
+  for (const required of ["/downloads/peas-agent-lab/agent.mjs", "/downloads/gtm-channel-test.txt", "/downloads/first-customer-conversation.txt", "/downloads/agent-workflow-decision.txt"]) expect(assets.has(required)).toBe(true);
+});

@@ -1,0 +1,113 @@
+import { expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
+import Article, { articleMeta, DATE_MODIFIED, DATE_PUBLISHED, DESCRIPTION } from "../app/articles/content/featured/how-to-find-networking-events";
+import { ArticleReadTime } from "../app/components/articles/ArticleReadTime";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
+import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
+import { FICTIONAL_SEARCH_RECORD, NETWORKING_BLANK, NETWORKING_CHECKED_AT, NETWORKING_DOWNLOAD, NETWORKING_PATH, NETWORKING_RECORD_FIELDS, NETWORKING_RECORD_FILE, NETWORKING_REVIEW_AFTER, NETWORKING_SEARCH_ROUTES, networkingSourceState } from "../app/lib/networking-event-search";
+
+const render = (query = "", time: string | null = "2026-09-10T13:00:00Z") => renderToStaticMarkup(<MemoryRouter initialEntries={[NETWORKING_PATH + query]}><ArticleReadTime.Provider value={time}><Article /></ArticleReadTime.Provider></MemoryRouter>);
+
+test("networking guide owns a complete body, preserves identity and supplies honest metadata", () => {
+  const entry = ARTICLE_REGISTRY[NETWORKING_PATH.replace("/articles/", "")];
+  expect(DATE_PUBLISHED).toBe("2026-01-03");
+  expect(DATE_MODIFIED).toBe("2026-09-10");
+  expect(entry.date).toBe(DATE_PUBLISHED);
+  expect(entry.dateModified).toBe(DATE_MODIFIED);
+  expect(entry.description).toBe(DESCRIPTION);
+  for (const key of ["title", "image", "imageAlt", "author"] as const) expect(entry[key]).toBe(articleMeta[key]);
+  expect(articleMeta.imageAlt).toBe("Vintage laptop, camera and cassette tapes on a table (illustrative image)");
+  const html = render();
+  expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+  expect(html).toContain("data-cf-article-body");
+  expect(html).toContain("data-article-toc-placeholder");
+  expect(html).not.toContain("FAQPage");
+  for (const residue of ["Brief, factual overview", "This section works best", "Download now", "10–20 organisers"]) expect(html).not.toContain(residue);
+});
+
+test("four actual searches retain session, interface and availability limits", () => {
+  const proof = JSON.parse(readFileSync("docs/article-audit-2026-09-10/support/networking-search-source-checks.json", "utf8"));
+  expect(NETWORKING_SEARCH_ROUTES.map(r => r.id)).toEqual(["meetup", "eventbrite", "humanitix", "linkedin"]);
+  const html = render();
+  for (const route of NETWORKING_SEARCH_ROUTES) {
+    expect(html).toContain(`data-networking-route="${route.id}"`);
+    expect(route.query).toContain("10 September");
+    expect(route.observed.length).toBeGreaterThan(60);
+    expect(route.limits.length).toBeGreaterThan(60);
+  }
+  expect(NETWORKING_SEARCH_ROUTES[0].limits).toContain("not zero events or proof that login caused the difference");
+  expect(proof.eventbrite.online.url).toBe("https://www.eventbrite.com.au/d/online/ai/?page=1");
+  expect(proof.eventbrite.online.elements.some((e: { name: string }) => e.name === "Online ai events")).toBe(true);
+  expect(NETWORKING_SEARCH_ROUTES[1].limits).toContain("failed 9 September attempt is historical");
+  expect(NETWORKING_SEARCH_ROUTES[1].limits).toContain("RM pricing");
+  expect(proof.humanitix.listing.url).toBe("https://events.humanitix.com/intro-ai");
+  expect(proof.humanitix.listing.elements.some((e: { name: string }) => e.name.includes("class is currently full"))).toBe(true);
+  expect(proof.linkedin.results.elements.some((e: { name: string }) => e.name === "4 results")).toBe(true);
+  expect(NETWORKING_SEARCH_ROUTES[3].limits).toContain("keyword, not a verified city filter");
+  expect(NETWORKING_SEARCH_ROUTES[3].observed).toContain("did not automatically exclude those past entries");
+  expect(html).toContain('role="region" aria-label="Dated event-search comparison" tabindex="0"');
+});
+
+test("source freshness expires while unknown costs, session differences and non-booking limits remain", () => {
+  for (const now of [null, NaN, Infinity, -Infinity, Date.parse(NETWORKING_CHECKED_AT) - 1]) expect(networkingSourceState(now)).toBe("unknown");
+  expect(networkingSourceState(Date.parse(NETWORKING_CHECKED_AT))).toBe("checked");
+  expect(networkingSourceState(Date.parse(NETWORKING_REVIEW_AFTER) - 1)).toBe("checked");
+  expect(networkingSourceState(Date.parse(NETWORKING_REVIEW_AFTER))).toBe("overdue");
+  expect(render("", null)).toContain('data-networking-source-review="unknown"');
+  expect(render()).toContain('data-networking-source-review="checked"');
+  const stale = render("", NETWORKING_REVIEW_AFTER);
+  expect(stale).toContain("Source review is overdue");
+  expect(stale).toContain("not an available place");
+  expect(stale).toContain("final currency/fees were not checked");
+});
+
+test("completed fictional search decision covers all twelve fields and permits a useful rejection", () => {
+  expect(NETWORKING_RECORD_FIELDS).toHaveLength(12);
+  expect(Object.keys(FICTIONAL_SEARCH_RECORD).sort()).toEqual(NETWORKING_RECORD_FIELDS.map(([key]) => key).sort());
+  expect(FICTIONAL_SEARCH_RECORD.commitment).toContain(`${5 * 90} minutes`);
+  expect(5 * 90).toBeGreaterThan(120);
+  expect(FICTIONAL_SEARCH_RECORD.commitment).toContain("before travel, preparation or follow-up");
+  expect(FICTIONAL_SEARCH_RECORD.decision).toContain("independently of any price comparison");
+  expect(FICTIONAL_SEARCH_RECORD.decision).toContain("Keep looking");
+  expect(FICTIONAL_SEARCH_RECORD.confirmation).toContain("Not registered");
+  expect(FICTIONAL_SEARCH_RECORD.outcome).toContain("Not attended");
+  expect(FICTIONAL_SEARCH_RECORD.unknowns).toContain("Draft, not sent");
+  expect(FICTIONAL_SEARCH_RECORD.followup).toContain("not consent to a marketing sequence");
+  expect(render()).toContain("not a member interview, attendance report or measured event outcome");
+  expect(render()).toContain("affiliated invitation rather than an independent ranking");
+});
+
+test("the real editable download contains the complete example, blank record and honest state", () => {
+  expect(readFileSync("public" + NETWORKING_DOWNLOAD, "utf8")).toBe(NETWORKING_RECORD_FILE);
+  expect(NETWORKING_RECORD_FILE).toContain(NETWORKING_BLANK);
+  for (const [key, label] of NETWORKING_RECORD_FIELDS) {
+    expect(NETWORKING_RECORD_FILE).toContain(`${label}:`);
+    expect(NETWORKING_RECORD_FILE).toContain(FICTIONAL_SEARCH_RECORD[key]);
+  }
+  expect(render()).toContain(`href="${NETWORKING_DOWNLOAD}" download="mlai-event-search-record.txt"`);
+  expect(NETWORKING_RECORD_FILE).toContain("real dated listing, invented reader");
+});
+
+test("COMMUNITY preference uses a native GET and cannot become external filtering or registration", () => {
+  const conversion = BASE_ARTICLE_SEO_CONFIG[NETWORKING_PATH].conversion!;
+  expect(conversion.primary).toBe("events");
+  expect(conversion.primaryIcp).toBe("COMMUNITY");
+  expect(conversion.eventCalendarOnly).toBe(true);
+  expect(conversion.version).toBe("search-to-shortlist-v4");
+  for (const choice of ["online", "melbourne", "sydney"]) {
+    const html = render(`?event_format=${choice}`);
+    expect(html).toContain(`action="${NETWORKING_PATH}" method="get"`);
+    expect(html).toContain(`value="${choice}" selected=""`);
+    expect(html).toContain(`href="/events?event_format=${choice}"`);
+  }
+  for (const query of ["", "?event_format=invalid", "?event_format=online&event_format=sydney"]) {
+    const html = render(query);
+    expect(html).toContain('value="all" selected=""');
+    expect(html).toContain('href="/events"');
+  }
+  expect(render()).toContain("does not filter the external searches above");
+  expect(render()).toContain("not saved as a private shortlist");
+  expect(render()).not.toContain('data-article-conversion="studio-builder"');
+});
