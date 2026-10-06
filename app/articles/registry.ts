@@ -10,6 +10,8 @@ export type ArticleWithSlug = {
   date: string; // YYYY-MM-DD
   description: string;
   author: string;
+  /** Public profile for the author credited on this article. */
+  authorUrl?: string;
   /** Optional array of author keys from authors.ts for multi-author articles */
   authors?: string[];
   slug: string;
@@ -257,9 +259,10 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/what-is-artificial-intelligence-in-simple-words': {
     "title": "What Is Artificial Intelligence in Simple Words?",
     "date": "2026-04-18",
-    "dateModified": "2026-09-15",
-    "description": "A plain-English guide to AI, machine learning and generative AI, with an interactive AI-or-not exercise and a practical human-check workflow.",
+    "dateModified": "2026-10-06",
+    "description": "Understand AI with everyday examples, a short quiz and a step-by-step look at how it works, where it goes wrong, and what to check before using it.",
     "author": "Dr Sam Donegan",
+    "authorUrl": "https://www.linkedin.com/in/samueldonegan",
     "slug": "featured/what-is-artificial-intelligence-in-simple-words",
     "analyticsArticleId": "81b3ca24-a36d-40c4-b2f0-e998f1fa5a36",
     "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aabcc5ca-e159-4024-b1c7-baf0b68dc947.jpg?alt=media&token=a5c618e2-f10a-4f7a-8bc3-5a0702cf9959",

@@ -37,6 +37,8 @@ export type ArticleConversionConfig = {
 }
 
 export type ArticleSeoConfig = {
+    /** An explicit next read for this article instead of publication-date order. */
+    nextArticleSlug?: string
     toc?: boolean
     howTo?: boolean
     mediaObject?: boolean
@@ -177,19 +179,30 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         conversion: { primary: "founder-tools", secondary: "events", version: "urgent-v1" },
     },
     '/articles/featured/what-is-artificial-intelligence-in-simple-words': {
-    "toc": true,
+    "toc": false,
     "howTo": false,
     "mediaObject": false,
     "citations": false,
-    "internalLinks": [],
+    "internalLinks": [
+        "/articles/featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life",
+        "/articles/featured/what-is-an-agent-in-artificial-intelligence"
+    ],
+    "nextArticleSlug": "featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life",
     "conversion": {
         "primary": "events",
-        "version": "article-pilot-2026-09"
+        "primaryIcp": "COMMUNITY",
+        "version": "simple-ai-2026-10-06",
+        "eventCalendarOnly": true,
+        "copy": {
+            "title": "Want to learn with other people?",
+            "body": "Explore MLAI talks, workshops and community catch-ups. New to AI? Check the event description for who it's for, what you need to know, the cost and whether it's online or in person.",
+            "button": "Find an AI event"
+        }
     },
     "structuredData": {
         "article": true,
         "faq": {
-            "enabled": true
+            "enabled": false
         }
     }
     },

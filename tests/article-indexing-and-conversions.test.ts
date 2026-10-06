@@ -122,7 +122,7 @@ describe("urgent article conversion mapping", () => {
     for (const pathName of urgentPaths) {
       expect(BASE_ARTICLE_SEO_CONFIG[pathName]?.conversion?.primary).toBeTruthy();
       expect(BASE_ARTICLE_SEO_CONFIG[pathName]?.conversion?.version).toMatch(
-        /^(urgent-v1|unicorn-evidence-v1|sydney-event-finder-v1|article-pilot-2026-09)$/,
+        /^(urgent-v1|unicorn-evidence-v1|sydney-event-finder-v1|article-pilot-2026-09|simple-ai-2026-10-06)$/,
       );
     }
   });
@@ -145,7 +145,7 @@ describe("beginner AI canonical rebuild", () => {
   test("retains one indexable canonical and retires the query duplicate", () => {
     expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG]).toBeDefined();
     expect(isArticleIndexable(ARTICLE_REGISTRY[BEGINNER_AI_SLUG])).toBeTrue();
-    expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG].dateModified).toBe("2026-09-15");
+    expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG].dateModified).toBe("2026-10-06");
     expect(ARTICLE_REGISTRY[BEGINNER_AI_DUPLICATE_SLUG]).toBeUndefined();
 
     const routesSource = readFileSync(
@@ -178,8 +178,8 @@ describe("beginner AI canonical rebuild", () => {
     );
 
     expect(articleSource).toContain("<AiOrNotQuiz />");
-    expect(articleSource).toContain("How AI works: one transparent example");
-    expect(articleSource).toContain("Method, limitations and disclosure");
+    expect(articleSource).toContain("How AI works, with one example");
+    expect(articleSource).toContain("About this guide");
     expect(articleSource).not.toContain('"@type": "FAQPage"');
     expect(articleSource).not.toContain("faqStructuredData");
   });
