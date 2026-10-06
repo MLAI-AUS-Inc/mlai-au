@@ -15,56 +15,56 @@ const SCENARIOS: QuizScenario[] = [
     scenario: "A calculator adds the exact numbers you type.",
     answer: "not-ai",
     explanation:
-      "Ordinary arithmetic follows fixed operations. It does not infer how to produce the answer from examples or other input.",
+      "The calculator follows set maths rules. It doesn't need to learn patterns or work out what you mean.",
   },
   {
     id: "spam-filter",
-    scenario: "An email service ranks new messages using patterns learned from earlier spam.",
+    scenario: "An email service spots spam by learning from earlier messages.",
     answer: "ai",
     explanation:
-      "The system uses a learned model to infer whether a new message resembles spam. A separate rule may still decide what happens next.",
+      "It uses patterns from earlier messages to judge a new one. An ordinary rule can then move suspected spam to a separate folder.",
   },
   {
     id: "scheduled-light",
     scenario: "A light switches on at 7 pm because a timer was set for 7 pm.",
     answer: "not-ai",
     explanation:
-      "The timer executes a rule chosen in advance. Automation can be useful without being AI.",
+      "You set the time, and the light follows that instruction. That's automation; it doesn't need AI.",
   },
   {
     id: "recommendations",
-    scenario: "A streaming service predicts which program you may prefer from viewing patterns.",
+    scenario: "A streaming service suggests a show based on what you've watched.",
     answer: "ai",
     explanation:
-      "A recommendation model infers a ranking from input such as viewing behaviour. The exact implementation can vary by service.",
+      "In this example, a model uses viewing patterns to predict what you might enjoy. Different services may make recommendations in different ways.",
   },
   {
     id: "contact-form",
     scenario: "A contact form sends the same confirmation email after every submission.",
     answer: "not-ai",
     explanation:
-      "This is a fixed workflow: when the form is submitted, send a stored message. No model is needed.",
+      "Someone wrote the email in advance. The form sends that same message each time, so there's no AI involved in this step.",
   },
   {
     id: "speech",
-    scenario: "A phone turns speech into text using a model trained on audio and transcripts.",
+    scenario: "A phone turns speech into text using examples of recordings and their written words.",
     answer: "ai",
     explanation:
-      "The model infers likely text from a new audio signal. It can still make errors, especially with noise, accents or unfamiliar names.",
+      "The model works out which words match the sounds. Background noise, accents and unfamiliar names can still trip it up.",
   },
   {
     id: "overtime-rule",
-    scenario: "Payroll adds overtime whenever recorded hours exceed a fixed threshold.",
+    scenario: "Payroll adds overtime pay whenever hours worked go above a set limit.",
     answer: "not-ai",
     explanation:
-      "A human-defined condition determines the result. This is conventional software unless another part of the system uses AI.",
+      "This step follows a set rule about hours and pay. Other parts of the software might use AI, but this calculation doesn't need it.",
   },
   {
     id: "drafting",
-    scenario: "A writing tool generates a new product description from a prompt.",
+    scenario: "A writing tool creates a new product description from your instructions.",
     answer: "ai",
     explanation:
-      "Generative AI infers a new output from the prompt. Fluent wording is not proof that the output is accurate.",
+      "The tool uses generative AI to write a description. Check the details: it might add a feature the product doesn't have.",
   },
 ];
 
@@ -89,15 +89,15 @@ export default function AiOrNotQuiz() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#4b1bd1]">
-            MLAI learning exercise
+            Try it yourself
           </p>
           <h2 id="ai-or-not-heading" className="mt-2 text-3xl font-black tracking-tight text-gray-950">
             AI or ordinary software?
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-700">
-            Choose an answer, or open the answer guide below. These examples use the OECD’s
-            “infers from input” test; real products can combine AI, fixed rules
-            and human decisions.
+            Choose AI or Not AI, then see why. You can also open all the
+            answers below. Some apps mix AI with ordinary rules; focus on
+            what each example describes.
           </p>
         </div>
         <div
@@ -170,8 +170,8 @@ export default function AiOrNotQuiz() {
         <div className="mt-6 flex flex-col gap-3 rounded-2xl bg-gray-950 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
           <p className="m-0 text-sm leading-6">
             <strong>Your score: {score}/{SCENARIOS.length}.</strong>{" "}
-            The useful question is not “does it feel clever?” but “what produces
-            the output: a fixed instruction, model inference, or both?”
+            Look for what the software is doing: following a fixed instruction,
+            working out an answer with a model, or a bit of both.
           </p>
           <button
             type="button"
@@ -193,9 +193,8 @@ export default function AiOrNotQuiz() {
         </ol>
       </details>
       <p className="mt-5 text-xs leading-5 text-gray-600">
-        Method note: MLAI constructed these scenarios for explanation. This is
-        not a validated assessment and it does not inspect the implementation of
-        any named product.
+        These made-up examples are for practice. Your score isn't a qualification
+        or a test of any particular app.
       </p>
     </section>
   );

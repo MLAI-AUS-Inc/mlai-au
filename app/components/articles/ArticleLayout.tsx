@@ -183,7 +183,7 @@ function buildArticleStructuredData({
     articleNode.author = {
       '@type': isEditorialTeam ? 'Organization' : 'Person',
       name: article.author,
-      ...(isEditorialTeam ? { url: DEFAULT_SITE_URL } : {}),
+      ...(article.authorUrl ? { url: article.authorUrl } : isEditorialTeam ? { url: DEFAULT_SITE_URL } : {}),
     }
   }
 
@@ -509,7 +509,15 @@ export function ArticleLayout({
   const professionalsTitle = featuredProfessionalsTitle ?? "Professionals ready to help with your NDIS goals"
   const hasProfessionals = professionals.length > 0
 
-  const nextArticleSlug = getNextArticleSlug(routeSlug)
+  const preferredNextArticle = seoConfig.nextArticleSlug
+    ? getArticleBySlug(seoConfig.nextArticleSlug)
+    : undefined
+  const nextArticleSlug = preferredNextArticle &&
+    preferredNextArticle.slug !== routeSlug &&
+    preferredNextArticle.publicationStatus !== 'under-review' &&
+    isArticleIndexable(preferredNextArticle)
+      ? preferredNextArticle.slug
+      : getNextArticleSlug(routeSlug)
   const hasMultipleArticles = ORDERED_ARTICLE_ROUTE_SLUGS.length > 1
   const shouldShowNextArticle = Boolean(
     !isUnderEditorialReview &&
