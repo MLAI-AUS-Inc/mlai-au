@@ -17,6 +17,9 @@ import Sidebar from "./components/sidebar";
 import { getArticleBySlug } from "~/articles/registry";
 import { useSessionKeepalive } from "~/lib/session-keepalive";
 
+// Stable reviewed integration identity; CI binds it to the exact tested commit.
+const MLAI_ARTICLES_ARTIFACT_DIGEST = "92f0f9158c4777eecafc06d068bf5764dbcaa8df5852ed78f9054a8e083f7ef9";
+
 const GA_MEASUREMENT_ID = "G-1645KKLT8B";
 const CLARITY_TAG_ID = "wwfzm7293o";
 
@@ -134,6 +137,9 @@ export default function Layout() {
         {/* Basic meta tags */}
         <meta name="application-name" content="MLAI-website" />
         <meta name="referrer" content="origin-when-cross-origin" />
+        {/^\/articles(?:\/|$)/.test(location.pathname) ? (
+          <meta name="mlai-artifact-digest" content={MLAI_ARTICLES_ARTIFACT_DIGEST} />
+        ) : null}
 
         {!routeOwnsFullMetadata ? (
           <>
