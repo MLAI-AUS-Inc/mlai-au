@@ -1,0 +1,60 @@
+{
+  "artifact_digest": "92f0f9158c4777eecafc06d068bf5764dbcaa8df5852ed78f9054a8e083f7ef9",
+  "baseline_sha": "99afefd0c0a6087153636ea916d02eadbec5fd18",
+  "contract": {
+    "adapter_id": "custom_contract_v1",
+    "adapter_version": 1,
+    "app_root": ".",
+    "artifact_digest": null,
+    "build_command": [
+      "bun",
+      "run",
+      "build"
+    ],
+    "content_path_pattern": "app/articles/content/featured/{slug}.tsx",
+    "dependency_policy": {},
+    "environment_names": [],
+    "install_command": [
+      "bun",
+      "install",
+      "--frozen-lockfile"
+    ],
+    "listing_route": "/articles",
+    "lockfiles": [
+      "bun.lock"
+    ],
+    "package_manager": "bun@1.3.5",
+    "preview_command": [
+      "bunx",
+      "--no-install",
+      "vite",
+      "preview",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "4316"
+    ],
+    "reviewed": true,
+    "route_template": "/articles/featured/{slug}",
+    "runtime_family": "node",
+    "runtime_version": "24.15.0",
+    "schema_version": 1
+  },
+  "expected_h1": "Build an AI Personal Assistant for One Small Business Task",
+  "identity": {
+    "adapter_id": "react_component",
+    "adapter_version": 1,
+    "connection_generation": 1,
+    "contract_digest": "a1f600e0a1551c8c155173ae942918fbd987de662cc45fc8abcb1b61ad18003c",
+    "deletion_epoch": 0,
+    "github_repo": "MLAI-AUS-Inc/mlai-au",
+    "operation_attempt": 1,
+    "operation_id": "6b01eb97-4a7c-4393-8995-dd5126ddaad8",
+    "repository_id": 747450323,
+    "target_id": "react_article_system_app_articles_content_featured_{slug}_tsx__tsx",
+    "website_connection_id": "4d199668-81b2-404e-8714-786da762c0eb"
+  },
+  "port": 4316,
+  "schema_version": 1,
+  "seed_slug": "build-an-ai-personal-assistant-for-one-small-business-task"
+}
