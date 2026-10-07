@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-use-ai-assist-without-giving-up-your-judgment': {
+        title: "How to Use AI Assist Without Giving Up Your Judgment",
+        date: "2026-10-07",
+        dateModified: "2026-10-07",
+        description: "Plan a low-risk AI assist pilot for your small business: choose safe inputs, keep human approval and measure total time, quality and cost before expanding.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-use-ai-assist-without-giving-up-your-judgment",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-4cab4e38-5d75-408a-b1fc-3aff73bc9ec6.jpg?alt=media&token=7286ea61-b77f-45f2-a22d-ff965dba3195",
+        imageAlt: "Two people look at a laptop, one holding a pen and the other gesturing with a hand.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
