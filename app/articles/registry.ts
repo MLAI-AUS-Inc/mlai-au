@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/build-a-small-test-set-before-your-first-ai-pilot': {
+        title: "Build a small test set before your first AI pilot",
+        date: "2026-10-08",
+        dateModified: "2026-10-08",
+        description: "Build AI pilot test cases for your small business using synthetic FAQs, a human scoring rubric and a repeatable time, quality and cost comparison.",
+        author: "Dr Sam Donegan",
+        slug: "featured/build-a-small-test-set-before-your-first-ai-pilot",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e85be007-8e86-4f54-b0b1-44af54d204d8.jpg?alt=media&token=7e4eece6-5eef-4287-b4ef-2fa91a0b0fc8",
+        imageAlt: "Two people look at a laptop beside an open notebook and white mug. One holds a pen; the other rests a hand on their chin.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
