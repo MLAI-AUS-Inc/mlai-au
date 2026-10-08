@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-choose-practical-ai-and-startup-workshops-in-sydney': {
+        title: "How to Choose Practical AI and Startup Workshops in Sydney",
+        date: "2026-10-08",
+        dateModified: "2026-10-08",
+        description: "Choose a Sydney AI or startup workshop around one business task. Use an event checklist and pilot template to assess fit, cost, data safety and results.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-choose-practical-ai-and-startup-workshops-in-sydney",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-23d67bb9-0ceb-477f-bbca-f0c2c29cdb86.jpg?alt=media&token=ea3d6d4c-8641-4480-9ac3-c89f7c78f33f",
+        imageAlt: "Two people look at a laptop at a wooden table. One points toward it with a pen; the other holds a hand near their chin.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
