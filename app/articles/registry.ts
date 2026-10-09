@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/when-australian-startups-need-ai-consulting': {
+        title: "When Australian Startups Need AI Consulting",
+        date: "2026-10-09",
+        dateModified: "2026-10-09",
+        description: "Decide whether to pilot AI with existing tools or get implementation help. Prepare a startup brief with a budget, human review and clear success measures.",
+        author: "Dr Sam Donegan",
+        slug: "featured/when-australian-startups-need-ai-consulting",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-56f46072-185d-4802-92fc-e204f3697839.jpg?alt=media&token=a995d95a-6f33-49d4-a973-a505eb568c93",
+        imageAlt: "Two people sit beside an open laptop; one gestures with an open hand while the other, wearing glasses, holds a hand near their mouth.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",

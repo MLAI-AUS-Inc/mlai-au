@@ -49,6 +49,13 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/when-australian-startups-need-ai-consulting': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         toc: true,
         howTo: false,
