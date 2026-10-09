@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/an-ai-automation-handoff-checklist-for-australian-founders': {
+        title: "An AI automation handoff checklist for Australian founders",
+        date: "2026-10-09",
+        dateModified: "2026-10-09",
+        description: "Plan a small AI automation pilot with a fill-in handoff checklist covering human review, data boundaries, costs, teammate ownership and stop conditions.",
+        author: "Dr Sam Donegan",
+        slug: "featured/an-ai-automation-handoff-checklist-for-australian-founders",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-74e266de-8ccd-4df3-93dd-bc58f2335e1e.jpg?alt=media&token=29e8bba7-c290-4c7c-a637-a1a119ebd3db",
+        imageAlt: "Two people sit at a table with an open laptop; one holds a pen above a spiral notebook, with a mug nearby.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
