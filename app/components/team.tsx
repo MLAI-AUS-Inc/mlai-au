@@ -1,143 +1,35 @@
 import { useState } from "react";
+import {
+  teamRoster as people,
+  DEFAULT_FIGHTER_ID,
+  resolveTeamMember,
+  adjacentFighterId,
+  type FighterId,
+} from "~/data/team-roster";
+import { DIRECTORY_PLACEHOLDER_ART } from "~/lib/arcade/contracts";
 
-// Team member data
-const people = [
-  {
-    name: "Sam Donegan",
-    role: "President",
-    imageUrl: "/press-kit/team-sam-donegan.png",
-    pixelImageUrl: "", // Will use default pixel character until individual art is added
-    linkedIn: "https://www.linkedin.com/in/samueldonegan/",
-    twitter: "",
-  },
-  {
-    name: "Sonia Kaurah",
-    role: "Vice President",
-    imageUrl: "/press-kit/team-sonia-kaurah.webp",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/soniakaurah/",
-    twitter: "",
-  },
-  {
-    name: "Ryan Mouritz",
-    role: "Vice President",
-    imageUrl: "/press-kit/team-ryan-mouritz.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/ryanmouritz/",
-    twitter: "",
-  },
-  {
-    name: "Pegah Khaleghi",
-    role: "Treasurer",
-    imageUrl: "/press-kit/team-pegah-khaleghi.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/pegah-khaleghi/",
-    twitter: "",
-  },
-  {
-    name: "Yana Lin",
-    role: "Head of Marketing",
-    imageUrl: "/press-kit/team-yana-lin.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/yanalinofficial/",
-    twitter: "",
-  },
-  {
-    name: "Anjali Singh",
-    role: "Marketing Lead",
-    imageUrl: "/press-kit/team-anjali-singh.jpeg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/anjali-singh-gaharwar/",
-    twitter: "",
-  },
-  {
-    name: "Dr Anu Ganugapati",
-    role: "Social Media Lead",
-    imageUrl: "/press-kit/team-anu-gaunapati.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/dr-anu-g-%F0%9F%A9%BA-3b330a248/https://www.linkedin.com/in/anuganugapati/",
-    twitter: "",
-  },
-  {
-    name: "Daniel Malkinson",
-    role: "Partnerships Lead",
-    imageUrl: "/press-kit/team-daniel-malkinson.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/daniel-malkinson/",
-    twitter: "",
-  },
-  {
-    name: "Jun Kai Chang",
-    role: "Partnerships Lead",
-    imageUrl: "/press-kit/team-jun-kai-chang.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/jkchangjobs/",
-    twitter: "",
-  },
-  {
-    name: "Alisa Belova",
-    role: "Community Manager",
-    imageUrl: "/press-kit/team-alisa-belova.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/alisa-belova/",
-    twitter: "",
-  },
-  {
-    name: "Shan Yang",
-    role: "Community Manager",
-    imageUrl: "/press-kit/team-shan-yang.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/shan-yang/",
-    twitter: "",
-  },
-  {
-    name: "Kang Tan",
-    role: "Community Manager",
-    imageUrl: "/press-kit/team-kang-tan.jpg",
-    pixelImageUrl: "",
-    linkedIn: "http://linkedin.com/in/kaey-lib-tan-4b4429258/",
-    twitter: "",
-  },
-  {
-    name: "Juan Bernal",
-    role: "Tech Lead",
-    imageUrl: "/press-kit/team-juan-bernal.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/juan-david-bernal-146305bb/",
-    twitter: "",
-  },
-  {
-    name: "Alan Philip",
-    role: "Tech Lead",
-    imageUrl: "/press-kit/team-alan-philip.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/alan-philip-58a456193/",
-    twitter: "",
-  },
-  {
-    name: "Callum Holt",
-    role: "Tech Lead",
-    imageUrl: "/press-kit/team-callum-holt.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/callumholt/",
-    twitter: "",
-  },
-];
+interface TeamProps {
+  initialFighterId?: string;
+  onFighterSelect?: (id: FighterId) => void;
+}
 
-export default function Team() {
-  const [selectedIndex, setSelectedIndex] = useState(14); // Start with Callum (matching reference)
-  const selectedPerson = people[selectedIndex];
+export default function Team({
+  initialFighterId = DEFAULT_FIGHTER_ID,
+  onFighterSelect,
+}: TeamProps = {}) {
+  const [selectedFighterId, setSelectedFighterId] = useState(
+    () => resolveTeamMember(initialFighterId).id as FighterId,
+  );
+  const selectedPerson = resolveTeamMember(selectedFighterId);
+  const defaultPixelCharacter = DIRECTORY_PLACEHOLDER_ART;
 
-  // Default pixel character (Callum's pixel art as placeholder for all)
-  const defaultPixelCharacter = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitleddesign-ezgif.com-resize.gif?alt=media&token=d0444d83-e55f-4d56-ae80-0d0680fecd4f";
-
-  const handlePrev = () => {
-    setSelectedIndex((prev) => (prev === 0 ? people.length - 1 : prev - 1));
+  const selectFighter = (id: string) => {
+    const validId = resolveTeamMember(id).id as FighterId;
+    setSelectedFighterId(validId);
+    onFighterSelect?.(validId);
   };
-
-  const handleNext = () => {
-    setSelectedIndex((prev) => (prev === people.length - 1 ? 0 : prev + 1));
-  };
+  const handlePrev = () => selectFighter(adjacentFighterId(selectedFighterId, -1));
+  const handleNext = () => selectFighter(adjacentFighterId(selectedFighterId, 1));
 
   return (
     <section className="fighter-select-wrapper">
@@ -186,12 +78,13 @@ export default function Team() {
               </button>
 
               <div className="fighter-mobile-grid">
-                {people.map((person, index) => (
+                {people.map((person) => (
                   <button
-                    key={person.name}
-                    className={`fighter-mobile-select-box ${index === selectedIndex ? "fighter-mobile-select-box-active" : ""}`}
-                    onClick={() => setSelectedIndex(index)}
+                    key={person.id}
+                    className={`fighter-mobile-select-box ${person.id === selectedFighterId ? "fighter-mobile-select-box-active" : ""}`}
+                    onClick={() => selectFighter(person.id)}
                     aria-label={`Select ${person.name}`}
+                    aria-pressed={person.id === selectedFighterId}
                   >
                     <img
                       src={person.imageUrl}
@@ -237,13 +130,14 @@ export default function Team() {
 
               {/* 3x3+ Grid */}
               <div className="fighter-selection-grid">
-                {people.map((person, index) => (
+                {people.map((person) => (
                   <button
-                    key={person.name}
-                    className={`fighter-select-box ${index === selectedIndex ? "fighter-select-box-active" : ""
+                    key={person.id}
+                    className={`fighter-select-box ${person.id === selectedFighterId ? "fighter-select-box-active" : ""
                       }`}
-                    onClick={() => setSelectedIndex(index)}
+                    onClick={() => selectFighter(person.id)}
                     aria-label={`Select ${person.name}`}
+                    aria-pressed={person.id === selectedFighterId}
                   >
                     <img
                       src={person.imageUrl}
