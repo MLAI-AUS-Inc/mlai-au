@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useFirebaseArtwork } from "~/hooks/useFirebaseArtwork";
+import artwork from "~/data/arcade-artwork.json";
 import {
   teamRoster as people,
   DEFAULT_FIGHTER_ID,
@@ -20,7 +22,8 @@ export default function Team({
     () => resolveTeamMember(initialFighterId).id as FighterId,
   );
   const selectedPerson = resolveTeamMember(selectedFighterId);
-  const previewImage = selectedPerson.pixelImageUrl || selectedPerson.imageUrl;
+  const preview = useFirebaseArtwork(artwork.previewStoragePath);
+  const background = useFirebaseArtwork(artwork.backgroundStoragePath);
 
   const selectFighter = (id: string) => {
     const validId = resolveTeamMember(id).id as FighterId;
@@ -33,8 +36,8 @@ export default function Team({
   return (
     <section className="fighter-select-wrapper">
       <div className="fighter-select-container">
-        {/* Local CSS background; no remote artwork required. */}
-        <div className="fighter-select-bg" />
+        <div className="fighter-select-bg" style={background.url ? { backgroundImage: `url("${background.url}")` } : undefined} />
+        {background.status === "error" && <p role="alert">Background artwork could not be loaded.</p>}
 
         {/* Main Content */}
         <div className="fighter-select-content">
@@ -47,16 +50,18 @@ export default function Team({
             {/* Character Preview */}
             <div className="fighter-mobile-preview">
               <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
-                <img
-                  src={previewImage}
-                  alt={`${selectedPerson.name} preview — click to enter the hackathon`}
-                  className="fighter-mobile-preview-image"
-                  onError={(e) => {
-                    const image = e.currentTarget;
-                    image.onerror = null;
-                    image.src = selectedPerson.imageUrl;
-                  }}
-                />
+                {preview.url ? (
+                  <img
+                    src={preview.url}
+                    alt={`Shared placeholder character for ${selectedPerson.name} — click to enter the hackathon`}
+                    className="fighter-mobile-preview-image"
+                    onError={preview.fail}
+                  />
+                ) : (
+                  <span role={preview.status === "error" ? "alert" : "status"}>
+                    {preview.status === "error" ? "Character artwork could not be loaded." : "Loading character artwork…"}
+                  </span>
+                )}
                 <span className="fighter-medhack-badge">ENTER HACKATHON</span>
               </a>
             </div>
@@ -153,16 +158,18 @@ export default function Team({
             {/* Center: Full Body Character Preview */}
             <div className="fighter-preview-center">
               <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
-                <img
-                  src={previewImage}
-                  alt={`${selectedPerson.name} preview — click to enter the hackathon`}
-                  className="fighter-preview-image"
-                  onError={(e) => {
-                    const image = e.currentTarget;
-                    image.onerror = null;
-                    image.src = selectedPerson.imageUrl;
-                  }}
-                />
+                {preview.url ? (
+                  <img
+                    src={preview.url}
+                    alt={`Shared placeholder character for ${selectedPerson.name} — click to enter the hackathon`}
+                    className="fighter-preview-image"
+                    onError={preview.fail}
+                  />
+                ) : (
+                  <span role={preview.status === "error" ? "alert" : "status"}>
+                    {preview.status === "error" ? "Character artwork could not be loaded." : "Loading character artwork…"}
+                  </span>
+                )}
                 <span className="fighter-medhack-badge">ENTER HACKATHON</span>
               </a>
             </div>
@@ -261,7 +268,7 @@ export default function Team({
         .fighter-select-bg {
           position: absolute;
           inset: 0;
-          background: radial-gradient(ellipse at center, #484bea 0%, #3537dc 70%);
+
           background-size: cover;
           background-position: center;
           opacity: 0.9;
@@ -360,6 +367,7 @@ export default function Team({
         .fighter-mobile-preview-image {
           height: 100%;
           width: auto;
+          image-rendering: pixelated;
           object-fit: contain;
           max-width: 100%;
           filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.3));
@@ -608,6 +616,7 @@ export default function Team({
         .fighter-preview-image {
           height: 300px;
           width: auto;
+          image-rendering: pixelated;
           object-fit: contain;
           max-width: 100%;
           filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.3));
