@@ -1,149 +1,43 @@
 import { useState } from "react";
+import { useFirebaseArtwork } from "~/hooks/useFirebaseArtwork";
+import artwork from "~/data/arcade-artwork.json";
+import {
+  teamRoster as people,
+  DEFAULT_FIGHTER_ID,
+  resolveTeamMember,
+  adjacentFighterId,
+  type FighterId,
+} from "~/data/team-roster";
 
-// Team member data
-const people = [
-  {
-    name: "Sam Donegan",
-    role: "President",
-    imageUrl: "/press-kit/team-sam-donegan.png",
-    pixelImageUrl: "", // Will use default pixel character until individual art is added
-    linkedIn: "https://www.linkedin.com/in/samueldonegan/",
-    twitter: "",
-  },
-  {
-    name: "Sonia Kaurah",
-    role: "Vice President",
-    imageUrl: "/press-kit/team-sonia-kaurah.webp",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/soniakaurah/",
-    twitter: "",
-  },
-  {
-    name: "Ryan Mouritz",
-    role: "Vice President",
-    imageUrl: "/press-kit/team-ryan-mouritz.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/ryanmouritz/",
-    twitter: "",
-  },
-  {
-    name: "Pegah Khaleghi",
-    role: "Treasurer",
-    imageUrl: "/press-kit/team-pegah-khaleghi.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/pegah-khaleghi/",
-    twitter: "",
-  },
-  {
-    name: "Yana Lin",
-    role: "Head of Marketing",
-    imageUrl: "/press-kit/team-yana-lin.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/yanalinofficial/",
-    twitter: "",
-  },
-  {
-    name: "Anjali Singh",
-    role: "Marketing Lead",
-    imageUrl: "/press-kit/team-anjali-singh.jpeg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/anjali-singh-gaharwar/",
-    twitter: "",
-  },
-  {
-    name: "Dr Anu Ganugapati",
-    role: "Social Media Lead",
-    imageUrl: "/press-kit/team-anu-gaunapati.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/dr-anu-g-%F0%9F%A9%BA-3b330a248/https://www.linkedin.com/in/anuganugapati/",
-    twitter: "",
-  },
-  {
-    name: "Daniel Malkinson",
-    role: "Partnerships Lead",
-    imageUrl: "/press-kit/team-daniel-malkinson.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/daniel-malkinson/",
-    twitter: "",
-  },
-  {
-    name: "Jun Kai Chang",
-    role: "Partnerships Lead",
-    imageUrl: "/press-kit/team-jun-kai-chang.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/jkchangjobs/",
-    twitter: "",
-  },
-  {
-    name: "Alisa Belova",
-    role: "Community Manager",
-    imageUrl: "/press-kit/team-alisa-belova.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/alisa-belova/",
-    twitter: "",
-  },
-  {
-    name: "Shan Yang",
-    role: "Community Manager",
-    imageUrl: "/press-kit/team-shan-yang.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/shan-yang/",
-    twitter: "",
-  },
-  {
-    name: "Kang Tan",
-    role: "Community Manager",
-    imageUrl: "/press-kit/team-kang-tan.jpg",
-    pixelImageUrl: "",
-    linkedIn: "http://linkedin.com/in/kaey-lib-tan-4b4429258/",
-    twitter: "",
-  },
-  {
-    name: "Juan Bernal",
-    role: "Tech Lead",
-    imageUrl: "/press-kit/team-juan-bernal.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/juan-david-bernal-146305bb/",
-    twitter: "",
-  },
-  {
-    name: "Alan Philip",
-    role: "Tech Lead",
-    imageUrl: "/press-kit/team-alan-philip.png",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/alan-philip-58a456193/",
-    twitter: "",
-  },
-  {
-    name: "Callum Holt",
-    role: "Tech Lead",
-    imageUrl: "/press-kit/team-callum-holt.jpg",
-    pixelImageUrl: "",
-    linkedIn: "https://www.linkedin.com/in/callumholt/",
-    twitter: "",
-  },
-];
+interface TeamProps {
+  initialFighterId?: string;
+  onFighterSelect?: (id: FighterId) => void;
+}
 
-export default function Team() {
-  const [selectedIndex, setSelectedIndex] = useState(14); // Start with Callum (matching reference)
-  const selectedPerson = people[selectedIndex];
+export default function Team({
+  initialFighterId = DEFAULT_FIGHTER_ID,
+  onFighterSelect,
+}: TeamProps = {}) {
+  const [selectedFighterId, setSelectedFighterId] = useState(
+    () => resolveTeamMember(initialFighterId).id as FighterId,
+  );
+  const selectedPerson = resolveTeamMember(selectedFighterId);
+  const preview = useFirebaseArtwork(artwork.previewStoragePath);
+  const background = useFirebaseArtwork(artwork.backgroundStoragePath);
 
-  // Default pixel character (Callum's pixel art as placeholder for all)
-  const defaultPixelCharacter = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitleddesign-ezgif.com-resize.gif?alt=media&token=d0444d83-e55f-4d56-ae80-0d0680fecd4f";
-
-  const handlePrev = () => {
-    setSelectedIndex((prev) => (prev === 0 ? people.length - 1 : prev - 1));
+  const selectFighter = (id: string) => {
+    const validId = resolveTeamMember(id).id as FighterId;
+    setSelectedFighterId(validId);
+    onFighterSelect?.(validId);
   };
-
-  const handleNext = () => {
-    setSelectedIndex((prev) => (prev === people.length - 1 ? 0 : prev + 1));
-  };
+  const handlePrev = () => selectFighter(adjacentFighterId(selectedFighterId, -1));
+  const handleNext = () => selectFighter(adjacentFighterId(selectedFighterId, 1));
 
   return (
     <section className="fighter-select-wrapper">
       <div className="fighter-select-container">
-        {/* Pixel World Map Background */}
-        <div className="fighter-select-bg" />
+        <div className="fighter-select-bg" style={background.url ? { backgroundImage: `url("${background.url}")` } : undefined} />
+        {background.status === "error" && <p role="alert">Background artwork could not be loaded.</p>}
 
         {/* Main Content */}
         <div className="fighter-select-content">
@@ -156,14 +50,18 @@ export default function Team() {
             {/* Character Preview */}
             <div className="fighter-mobile-preview">
               <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
-                <img
-                  src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
-                  alt={`${selectedPerson.name} pixel art — click to enter the hackathon`}
-                  className="fighter-mobile-preview-image"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultPixelCharacter;
-                  }}
-                />
+                {preview.url ? (
+                  <img
+                    src={preview.url}
+                    alt={`Shared placeholder character for ${selectedPerson.name} — click to enter the hackathon`}
+                    className="fighter-mobile-preview-image"
+                    onError={preview.fail}
+                  />
+                ) : (
+                  <span role={preview.status === "error" ? "alert" : "status"}>
+                    {preview.status === "error" ? "Character artwork could not be loaded." : "Loading character artwork…"}
+                  </span>
+                )}
                 <span className="fighter-medhack-badge">ENTER HACKATHON</span>
               </a>
             </div>
@@ -186,12 +84,13 @@ export default function Team() {
               </button>
 
               <div className="fighter-mobile-grid">
-                {people.map((person, index) => (
+                {people.map((person) => (
                   <button
-                    key={person.name}
-                    className={`fighter-mobile-select-box ${index === selectedIndex ? "fighter-mobile-select-box-active" : ""}`}
-                    onClick={() => setSelectedIndex(index)}
+                    key={person.id}
+                    className={`fighter-mobile-select-box ${person.id === selectedFighterId ? "fighter-mobile-select-box-active" : ""}`}
+                    onClick={() => selectFighter(person.id)}
                     aria-label={`Select ${person.name}`}
+                    aria-pressed={person.id === selectedFighterId}
                   >
                     <img
                       src={person.imageUrl}
@@ -237,13 +136,14 @@ export default function Team() {
 
               {/* 3x3+ Grid */}
               <div className="fighter-selection-grid">
-                {people.map((person, index) => (
+                {people.map((person) => (
                   <button
-                    key={person.name}
-                    className={`fighter-select-box ${index === selectedIndex ? "fighter-select-box-active" : ""
+                    key={person.id}
+                    className={`fighter-select-box ${person.id === selectedFighterId ? "fighter-select-box-active" : ""
                       }`}
-                    onClick={() => setSelectedIndex(index)}
+                    onClick={() => selectFighter(person.id)}
                     aria-label={`Select ${person.name}`}
+                    aria-pressed={person.id === selectedFighterId}
                   >
                     <img
                       src={person.imageUrl}
@@ -258,14 +158,18 @@ export default function Team() {
             {/* Center: Full Body Character Preview */}
             <div className="fighter-preview-center">
               <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
-                <img
-                  src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
-                  alt={`${selectedPerson.name} pixel art — click to enter the hackathon`}
-                  className="fighter-preview-image"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultPixelCharacter;
-                  }}
-                />
+                {preview.url ? (
+                  <img
+                    src={preview.url}
+                    alt={`Shared placeholder character for ${selectedPerson.name} — click to enter the hackathon`}
+                    className="fighter-preview-image"
+                    onError={preview.fail}
+                  />
+                ) : (
+                  <span role={preview.status === "error" ? "alert" : "status"}>
+                    {preview.status === "error" ? "Character artwork could not be loaded." : "Loading character artwork…"}
+                  </span>
+                )}
                 <span className="fighter-medhack-badge">ENTER HACKATHON</span>
               </a>
             </div>
@@ -364,7 +268,7 @@ export default function Team() {
         .fighter-select-bg {
           position: absolute;
           inset: 0;
-          background-image: url('https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1000.jpg?alt=media&token=e0cb1706-b9c1-474d-8be1-b63e01b1f139');
+
           background-size: cover;
           background-position: center;
           opacity: 0.9;
@@ -456,10 +360,16 @@ export default function Team() {
           }
         }
 
+        .fighter-mobile-preview .fighter-medhack-link {
+          height: 100%;
+        }
+
         .fighter-mobile-preview-image {
           height: 100%;
           width: auto;
           image-rendering: pixelated;
+          object-fit: contain;
+          max-width: 100%;
           filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.3));
         }
 
@@ -707,6 +617,8 @@ export default function Team() {
           height: 300px;
           width: auto;
           image-rendering: pixelated;
+          object-fit: contain;
+          max-width: 100%;
           filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.3));
         }
 
@@ -870,7 +782,7 @@ export default function Team() {
           50% { opacity: 0.7; }
         }
 
-        /* Medhack clickable GIF link */
+        /* Clickable preview link */
         .fighter-medhack-link {
           display: flex;
           flex-direction: column;
