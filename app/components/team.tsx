@@ -6,7 +6,6 @@ import {
   adjacentFighterId,
   type FighterId,
 } from "~/data/team-roster";
-import { DIRECTORY_PLACEHOLDER_ART } from "~/lib/arcade/contracts";
 
 interface TeamProps {
   initialFighterId?: string;
@@ -21,7 +20,7 @@ export default function Team({
     () => resolveTeamMember(initialFighterId).id as FighterId,
   );
   const selectedPerson = resolveTeamMember(selectedFighterId);
-  const defaultPixelCharacter = DIRECTORY_PLACEHOLDER_ART;
+  const previewImage = selectedPerson.pixelImageUrl || selectedPerson.imageUrl;
 
   const selectFighter = (id: string) => {
     const validId = resolveTeamMember(id).id as FighterId;
@@ -34,7 +33,7 @@ export default function Team({
   return (
     <section className="fighter-select-wrapper">
       <div className="fighter-select-container">
-        {/* Pixel World Map Background */}
+        {/* Local CSS background; no remote artwork required. */}
         <div className="fighter-select-bg" />
 
         {/* Main Content */}
@@ -49,11 +48,13 @@ export default function Team({
             <div className="fighter-mobile-preview">
               <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
                 <img
-                  src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
-                  alt={`${selectedPerson.name} pixel art — click to enter the hackathon`}
+                  src={previewImage}
+                  alt={`${selectedPerson.name} preview — click to enter the hackathon`}
                   className="fighter-mobile-preview-image"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultPixelCharacter;
+                    const image = e.currentTarget;
+                    image.onerror = null;
+                    image.src = selectedPerson.imageUrl;
                   }}
                 />
                 <span className="fighter-medhack-badge">ENTER HACKATHON</span>
@@ -153,11 +154,13 @@ export default function Team({
             <div className="fighter-preview-center">
               <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
                 <img
-                  src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
-                  alt={`${selectedPerson.name} pixel art — click to enter the hackathon`}
+                  src={previewImage}
+                  alt={`${selectedPerson.name} preview — click to enter the hackathon`}
                   className="fighter-preview-image"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultPixelCharacter;
+                    const image = e.currentTarget;
+                    image.onerror = null;
+                    image.src = selectedPerson.imageUrl;
                   }}
                 />
                 <span className="fighter-medhack-badge">ENTER HACKATHON</span>
@@ -258,7 +261,7 @@ export default function Team({
         .fighter-select-bg {
           position: absolute;
           inset: 0;
-          background-image: url('/arcade/world-map.jpg');
+          background: radial-gradient(ellipse at center, #484bea 0%, #3537dc 70%);
           background-size: cover;
           background-position: center;
           opacity: 0.9;
@@ -350,10 +353,15 @@ export default function Team({
           }
         }
 
+        .fighter-mobile-preview .fighter-medhack-link {
+          height: 100%;
+        }
+
         .fighter-mobile-preview-image {
           height: 100%;
           width: auto;
-          image-rendering: pixelated;
+          object-fit: contain;
+          max-width: 100%;
           filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.3));
         }
 
@@ -600,7 +608,8 @@ export default function Team({
         .fighter-preview-image {
           height: 300px;
           width: auto;
-          image-rendering: pixelated;
+          object-fit: contain;
+          max-width: 100%;
           filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.3));
         }
 
@@ -764,7 +773,7 @@ export default function Team({
           50% { opacity: 0.7; }
         }
 
-        /* Medhack clickable GIF link */
+        /* Clickable preview link */
         .fighter-medhack-link {
           display: flex;
           flex-direction: column;

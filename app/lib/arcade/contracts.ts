@@ -1,7 +1,5 @@
 import { teamRoster, type FighterId } from "../../data/team-roster";
 
-// Existing directory artwork only; no combat sprite or approval is implied.
-export const DIRECTORY_PLACEHOLDER_ART = "/arcade/fighter-placeholder.gif";
 export type InputAction = "moveLeft" | "moveRight" | "jump" | "attack" | "block" | "pause";
 export const KEYBOARD_ACTIONS = {
   ArrowLeft: "moveLeft", KeyA: "moveLeft", ArrowRight: "moveRight", KeyD: "moveRight",
@@ -27,7 +25,7 @@ export interface FighterConfig {
 // Illustrative prototype defaults, not final balance or approved artwork.
 export const fighterConfigs: readonly FighterConfig[] = teamRoster.map(member => ({
   fighterId: member.id,
-  assets: { status: "placeholder", previewUrl: DIRECTORY_PLACEHOLDER_ART, animations: {} },
+  assets: { status: "placeholder", previewUrl: member.pixelImageUrl || member.imageUrl, animations: {} },
   combat: { maxHealth: 100, moveSpeed: 180, attackDamage: 10, attackCooldownMs: 500 },
 }));
 export const pilotStrategy = {
