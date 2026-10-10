@@ -258,7 +258,7 @@ export default function Team({
         .fighter-select-bg {
           position: absolute;
           inset: 0;
-          background-image: url('https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1000.jpg?alt=media&token=e0cb1706-b9c1-474d-8be1-b63e01b1f139');
+          background-image: url('/arcade/world-map.jpg');
           background-size: cover;
           background-position: center;
           opacity: 0.9;

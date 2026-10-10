@@ -8,7 +8,7 @@ The homepage team selector is a directory styled like an arcade character select
 
 ## Pilot and artwork
 
-Start with two pilot fighters before expanding unique artwork to the full roster. The pair remains undecided pending team agreement. All 15 current mappings explicitly have placeholder status. The existing directory GIF is a shared preview, not a combat sprite sheet. Animation mappings are empty; consumers must not assume animation assets exist. Generic combat fallback approval remains pending. Artwork volunteers should supply approved animation mappings keyed by permanent fighter ID. Health, movement and attack numbers are illustrative prototype defaults and require gameplay review.
+Start with two pilot fighters before expanding unique artwork to the full roster. The pair remains undecided pending team agreement. All 15 current mappings explicitly have placeholder status. The existing directory GIF is bundled at `/arcade/fighter-placeholder.gif`; the original background is bundled at `/arcade/world-map.jpg`. These assets use local paths so the selector does not expose Firebase download tokens. Previously published tokens still require revocation by a Firebase owner; removing the URLs does not invalidate historical copies. The GIF is a shared preview, not a combat sprite sheet. Animation mappings are empty; consumers must not assume animation assets exist. Generic combat fallback approval remains pending. Artwork volunteers should supply approved animation mappings keyed by permanent fighter ID. Health, movement and attack numbers are illustrative prototype defaults and require gameplay review.
 
 ## Verification
 

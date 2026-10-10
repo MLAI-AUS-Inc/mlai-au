@@ -1,7 +1,7 @@
 import { teamRoster, type FighterId } from "../../data/team-roster";
 
 // Existing directory artwork only; no combat sprite or approval is implied.
-export const DIRECTORY_PLACEHOLDER_ART = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitleddesign-ezgif.com-resize.gif?alt=media&token=d0444d83-e55f-4d56-ae80-0d0680fecd4f";
+export const DIRECTORY_PLACEHOLDER_ART = "/arcade/fighter-placeholder.gif";
 export type InputAction = "moveLeft" | "moveRight" | "jump" | "attack" | "block" | "pause";
 export const KEYBOARD_ACTIONS = {
   ArrowLeft: "moveLeft", KeyA: "moveLeft", ArrowRight: "moveRight", KeyD: "moveRight",
