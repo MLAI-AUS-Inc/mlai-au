@@ -1,5 +1,4 @@
 import { teamRoster, type FighterId } from "../../data/team-roster";
-import artwork from "../../data/arcade-artwork.json";
 
 export type InputAction = "moveLeft" | "moveRight" | "jump" | "attack" | "block" | "pause";
 export const KEYBOARD_ACTIONS = {
@@ -9,7 +8,7 @@ export const KEYBOARD_ACTIONS = {
 export type AnimationAction = "idle" | "walk" | "jump" | "attack" | "block" | "hurt" | "defeat";
 export interface FighterAssets {
   status: "placeholder" | "approved";
-  previewStoragePath: string;
+  previewUrl: string;
   animations: Partial<Record<AnimationAction, string>>;
 }
 export interface CombatConfig {
@@ -26,7 +25,7 @@ export interface FighterConfig {
 // Illustrative prototype defaults, not final balance or approved artwork.
 export const fighterConfigs: readonly FighterConfig[] = teamRoster.map(member => ({
   fighterId: member.id,
-  assets: { status: "placeholder", previewStoragePath: artwork.previewStoragePath, animations: {} },
+  assets: { status: "placeholder", previewUrl: member.pixelImageUrl || member.imageUrl, animations: {} },
   combat: { maxHealth: 100, moveSpeed: 180, attackDamage: 10, attackCooldownMs: 500 },
 }));
 export const pilotStrategy = {
