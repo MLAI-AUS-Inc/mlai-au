@@ -1,0 +1,137 @@
+[
+  {
+    "id": "sam-donegan",
+    "name": "Sam Donegan",
+    "role": "President",
+    "imageUrl": "/press-kit/team-sam-donegan.png",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/samueldonegan/",
+    "twitter": ""
+  },
+  {
+    "id": "sonia-kaurah",
+    "name": "Sonia Kaurah",
+    "role": "Vice President",
+    "imageUrl": "/press-kit/team-sonia-kaurah.webp",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/soniakaurah/",
+    "twitter": ""
+  },
+  {
+    "id": "ryan-mouritz",
+    "name": "Ryan Mouritz",
+    "role": "Vice President",
+    "imageUrl": "/press-kit/team-ryan-mouritz.jpg",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/ryanmouritz/",
+    "twitter": ""
+  },
+  {
+    "id": "pegah-khaleghi",
+    "name": "Pegah Khaleghi",
+    "role": "Treasurer",
+    "imageUrl": "/press-kit/team-pegah-khaleghi.png",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/pegah-khaleghi/",
+    "twitter": ""
+  },
+  {
+    "id": "yana-lin",
+    "name": "Yana Lin",
+    "role": "Head of Marketing",
+    "imageUrl": "/press-kit/team-yana-lin.jpg",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/yanalinofficial/",
+    "twitter": ""
+  },
+  {
+    "id": "anjali-singh",
+    "name": "Anjali Singh",
+    "role": "Marketing Lead",
+    "imageUrl": "/press-kit/team-anjali-singh.jpeg",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/anjali-singh-gaharwar/",
+    "twitter": ""
+  },
+  {
+    "id": "anu-ganugapati",
+    "name": "Dr Anu Ganugapati",
+    "role": "Social Media Lead",
+    "imageUrl": "/press-kit/team-anu-gaunapati.jpg",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/dr-anu-g-%F0%9F%A9%BA-3b330a248/https://www.linkedin.com/in/anuganugapati/",
+    "twitter": ""
+  },
+  {
+    "id": "daniel-malkinson",
+    "name": "Daniel Malkinson",
+    "role": "Partnerships Lead",
+    "imageUrl": "/press-kit/team-daniel-malkinson.jpg",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/daniel-malkinson/",
+    "twitter": ""
+  },
+  {
+    "id": "jun-kai-chang",
+    "name": "Jun Kai Chang",
+    "role": "Partnerships Lead",
+    "imageUrl": "/press-kit/team-jun-kai-chang.jpg",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/jkchangjobs/",
+    "twitter": ""
+  },
+  {
+    "id": "alisa-belova",
+    "name": "Alisa Belova",
+    "role": "Community Manager",
+    "imageUrl": "/press-kit/team-alisa-belova.png",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/alisa-belova/",
+    "twitter": ""
+  },
+  {
+    "id": "shan-yang",
+    "name": "Shan Yang",
+    "role": "Community Manager",
+    "imageUrl": "/press-kit/team-shan-yang.png",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/shan-yang/",
+    "twitter": ""
+  },
+  {
+    "id": "kang-tan",
+    "name": "Kang Tan",
+    "role": "Community Manager",
+    "imageUrl": "/press-kit/team-kang-tan.jpg",
+    "pixelImageUrl": "",
+    "linkedIn": "http://linkedin.com/in/kaey-lib-tan-4b4429258/",
+    "twitter": ""
+  },
+  {
+    "id": "juan-bernal",
+    "name": "Juan Bernal",
+    "role": "Tech Lead",
+    "imageUrl": "/press-kit/team-juan-bernal.png",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/juan-david-bernal-146305bb/",
+    "twitter": ""
+  },
+  {
+    "id": "alan-philip",
+    "name": "Alan Philip",
+    "role": "Tech Lead",
+    "imageUrl": "/press-kit/team-alan-philip.png",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/alan-philip-58a456193/",
+    "twitter": ""
+  },
+  {
+    "id": "callum-holt",
+    "name": "Callum Holt",
+    "role": "Tech Lead",
+    "imageUrl": "/press-kit/team-callum-holt.jpg",
+    "pixelImageUrl": "",
+    "linkedIn": "https://www.linkedin.com/in/callumholt/",
+    "twitter": ""
+  }
+]
