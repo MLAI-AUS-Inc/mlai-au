@@ -1,0 +1,4 @@
+# This legacy worksheet remains usable; the owning public article is indexed.
+# Static assets may bypass the Worker, so give this exact file its own policy.
+/downloads/accelerator-fit-worksheet.md
+  X-Robots-Tag: noindex

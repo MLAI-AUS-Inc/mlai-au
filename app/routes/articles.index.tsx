@@ -12,6 +12,7 @@ import HeroSection from "~/components/ui/HeroSection";
 import CardGrid from "~/components/ui/CardGrid";
 import EmptyState from "~/components/ui/EmptyState";
 import type { Route } from "./+types/articles.index";
+import { ARTICLE_PAGE_SIZE, getArticlePagination } from "~/lib/article-pagination";
 
 const PAGE_TITLE = 'Writing on AI, Machine Learning and Community.';
 const PAGE_DESCRIPTION =
@@ -25,13 +26,17 @@ const PERSON_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-webs
 // Color rotation for featured cards (first one is special with person image)
 const FEATURED_COLORS: FeaturedCardColor[] = ['coral-with-person', 'purple', 'black', 'blue'];
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = ARTICLE_PAGE_SIZE;
 
 function getFeaturedColor(index: number): FeaturedCardColor {
     return FEATURED_COLORS[index % FEATURED_COLORS.length];
 }
 
-export function meta({ data }: Route.MetaArgs) {
+export function meta({ data, error }: Route.MetaArgs) {
+    if (error || !data) return [
+        { title: "Article page not found | MLAI" },
+        { name: "robots", content: "noindex, follow" },
+    ];
     const pageNumber = data?.page ?? 1;
     const baseTitle = 'MLAI Articles Library';
     const title =
@@ -42,36 +47,14 @@ export function meta({ data }: Route.MetaArgs) {
     return [
         { title: title },
         { name: "description", content: PAGE_DESCRIPTION },
-        { tagName: "link", rel: "canonical", href: pageNumber <= 1 ? "https://mlai.au/articles" : `https://mlai.au/articles?page=${pageNumber}` },
+        { tagName: "link", rel: "canonical", href: `https://mlai.au${data.canonicalPath}` },
     ];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-    const url = new URL(request.url);
-    const pageParams = url.searchParams.getAll("page");
-    const pageParam = pageParams[0];
-    const pageNumber = pageParam === undefined ? 1 : Number(pageParam);
-    const totalPages = Math.max(1, Math.ceil(getArticlesSortedNewestFirst().length / PAGE_SIZE));
-
-    // Invalid pages must not return a copy of the last page with a new canonical URL.
-    if (
-        pageParams.length > 1 ||
-        (pageParam !== undefined && !/^\d+$/.test(pageParam)) ||
-        !Number.isSafeInteger(pageNumber) ||
-        pageNumber < 1 ||
-        pageNumber > totalPages
-    ) {
-        throw new Response("Article page not found", { status: 404 });
-    }
-
-    if (url.pathname !== "/articles" || (pageParam !== undefined && (pageNumber === 1 || pageParam !== String(pageNumber)))) {
-        url.pathname = "/articles";
-        if (pageNumber === 1) url.searchParams.delete("page");
-        else url.searchParams.set("page", String(pageNumber));
-        return redirect(`${url.pathname}${url.search}`, 301);
-    }
-
-    return { page: pageNumber };
+    const pagination = getArticlePagination(request.url, getArticlesSortedNewestFirst().length);
+    if (pagination.redirectPath) throw redirect(pagination.redirectPath, 301);
+    return { page: pagination.page, totalPages: pagination.totalPages, canonicalPath: pagination.canonicalPath };
 }
 
 export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {

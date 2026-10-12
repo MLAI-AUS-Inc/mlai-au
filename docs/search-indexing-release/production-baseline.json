@@ -1,0 +1,54 @@
+{
+  "observed_date": "2026-10-12",
+  "worker_name": "mlai-au",
+  "account_name": "MLAI",
+  "account_id": "53019d98ec6f1d1d93112558076ee677",
+  "deployment": {
+    "id": "99d17341-3baf-4d99-894c-e2d8463f2ec6",
+    "source": "wrangler",
+    "strategy": "percentage",
+    "versions": [
+      {
+        "version_id": "03f5b0a2-3ec9-48c1-b739-c500338f19fe",
+        "percentage": 100
+      }
+    ],
+    "created_on": "2026-10-06T13:12:12.468859Z"
+  },
+  "version": {
+    "id": "03f5b0a2-3ec9-48c1-b739-c500338f19fe",
+    "number": 2438,
+    "created_on": "2026-10-06T13:12:09.773922Z",
+    "annotations": {
+      "workers/triggered_by": "version_upload"
+    },
+    "script_etag": "3b613529de368d7748d708b18fd5172416288c3515bd7475a947f5b36d622586",
+    "runtime": {
+      "assets": {
+        "serve_directly": true,
+        "raw_run_worker_first": false,
+        "base_path": "/"
+      },
+      "compatibility_date": "2025-04-04",
+      "compatibility_flags": [
+        "nodejs_compat"
+      ],
+      "usage_model": "standard"
+    }
+  },
+  "source_base": "fbc6de99b00c6a2a8294a74a6070f8aa426c9e05",
+  "source_mapping": "An anonymous normal Chrome user-agent GET to https://mlai.au/ returned 200 with X-MLAI-Revision matching fbc6de99b00c6a2a8294a74a6070f8aa426c9e05; paired with the current deployment/version inventory, this maps the active production representation to the candidate base.",
+  "configured_custom_domains": [
+    "mlai.au",
+    "www.mlai.au"
+  ],
+  "configured_bindings_match_active_plain_text_names": true,
+  "live_headers": {
+    "status": 200,
+    "X-MLAI-Revision": "fbc6de99b00c6a2a8294a74a6070f8aa426c9e05",
+    "X-MLAI-Document-Render": "streaming",
+    "X-MLAI-Homepage-Cache": "MISS",
+    "request_audience": "anonymous normal Chrome user agent",
+    "observed_by": "root agent during release preparation"
+  }
+}

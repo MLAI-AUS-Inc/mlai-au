@@ -1,11 +1,14 @@
 import { createRequestHandler } from "react-router";
 import { applySecurityHeaders } from "./security-headers";
-import { isWattTheHackEndpointPath } from "~/lib/watt-the-hack-access";
+import { createWebsiteWorker } from "./request-handler";
+import { applyResponseIndexingPolicy } from "~/lib/response-indexing-policy";
 import {
   rejectedRooAccountLinkCapabilityResponse,
   rooAccountLinkCapabilityDisposition,
 } from "~/lib/roo-account-link-url";
 import { withSessionRefresh } from "./session-refresh";
+
+declare const __MLAI_BUILD_REVISION__: string;
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -21,38 +24,8 @@ const requestHandler = createRequestHandler(
   import.meta.env.MODE
 );
 
-/** Query parameters that are tracking-only and should be stripped for SEO */
-const TRACKING_PARAMS = ["trk", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
-const HOMEPAGE_CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=3600";
-
-/** Legacy paths that should 301-redirect to a new location */
-const LEGACY_REDIRECTS: Record<string, string> = {
-  "/codeofconduct": "/terms",
-  "/support": "/contact",
-  "/Support": "/contact",
-  // Search Console reports this URL with punctuation copied from an old link.
-  "/hackathons):": "/hackathons",
-  // Consolidate duplicate Vibe Raising landing URLs onto the canonical /vibe-raising.
-  // Handled at the worker (before React Router) to avoid the trailing-slash route
-  // colliding with — and shadowing — the real /vibe-raising landing route.
-  "/vibe-raising/": "/vibe-raising",
-  "/vibe-raising-landing": "/vibe-raising",
-};
-
 function defaultCache(): Cache {
   return (caches as unknown as { default: Cache }).default;
-}
-
-function isAnonymousHomepageRequest(request: Request, url: URL): boolean {
-  if (request.method !== "GET" && request.method !== "HEAD") return false;
-  if (url.pathname !== "/" || url.search) return false;
-  if (request.headers.has("Cookie") || request.headers.has("Authorization")) return false;
-  return true;
-}
-
-function isCacheableHomepageResponse(response: Response): boolean {
-  const contentType = response.headers.get("Content-Type") || "";
-  return response.status === 200 && contentType.toLowerCase().includes("text/html");
 }
 
 async function renderWithReactRouter(request: Request, env: Env, ctx: ExecutionContext) {
@@ -67,6 +40,11 @@ async function renderWithReactRouter(request: Request, env: Env, ctx: ExecutionC
   );
 }
 
+const websiteWorker = createWebsiteWorker(
+  renderWithReactRouter, defaultCache,
+  typeof __MLAI_BUILD_REVISION__ === "string" ? __MLAI_BUILD_REVISION__ : undefined,
+);
+
 async function handleRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
 
@@ -77,86 +55,10 @@ async function handleRequest(request: Request, env: Env, ctx: ExecutionContext):
     return rejectedRooAccountLinkCapabilityResponse();
   }
   if (rooLinkDisposition === "route") {
-    return renderWithReactRouter(request, env, ctx);
+    return applyResponseIndexingPolicy(request, await renderWithReactRouter(request, env, ctx));
   }
 
-  // 1. Redirect www → non-www (301)
-  if (url.hostname === "www.mlai.au") {
-    url.hostname = "mlai.au";
-    return Response.redirect(url.toString(), 301);
-  }
-
-  // 2. Block disabled Watt The Hack API paths on the website domain.
-  if (isWattTheHackEndpointPath(url.pathname)) {
-    return new Response("Not Found", {
-      status: 404,
-      headers: {
-        "X-Robots-Tag": "noindex, nofollow",
-      },
-    });
-  }
-
-  // 3. Redirect legacy paths (301)
-  const legacyTarget = LEGACY_REDIRECTS[url.pathname];
-  if (legacyTarget) {
-    url.pathname = legacyTarget;
-    url.search = "";
-    return Response.redirect(url.toString(), 301);
-  }
-
-  // 4. Strip tracking query parameters (301)
-  let hasTrackingParams = false;
-  for (const param of TRACKING_PARAMS) {
-    if (url.searchParams.has(param)) {
-      url.searchParams.delete(param);
-      hasTrackingParams = true;
-    }
-  }
-  if (hasTrackingParams) {
-    return Response.redirect(url.toString(), 301);
-  }
-
-  // 5. Let React Router handle /__manifest (needed for client-side navigation)
-  //    but add noindex header to keep it out of search engines
-  if (url.pathname === "/__manifest") {
-    const response = await renderWithReactRouter(request, env, ctx);
-    response.headers.set("X-Robots-Tag", "noindex, nofollow");
-    return response;
-  }
-
-  if (isAnonymousHomepageRequest(request, url)) {
-    const cache = defaultCache();
-    const cacheKey = new Request(`${url.origin}/`, { method: "GET" });
-    const cached = await cache.match(cacheKey);
-
-    if (cached) {
-      const headers = new Headers(cached.headers);
-      headers.set("X-MLAI-Homepage-Cache", "HIT");
-      return new Response(request.method === "HEAD" ? null : cached.body, {
-        headers,
-        status: cached.status,
-        statusText: cached.statusText,
-      });
-    }
-
-    const response = await renderWithReactRouter(request, env, ctx);
-    if (request.method === "GET" && isCacheableHomepageResponse(response)) {
-      const headers = new Headers(response.headers);
-      headers.set("Cache-Control", HOMEPAGE_CACHE_CONTROL);
-      headers.set("X-MLAI-Homepage-Cache", "MISS");
-      const cacheableResponse = new Response(response.body, {
-        headers,
-        status: response.status,
-        statusText: response.statusText,
-      });
-      ctx.waitUntil(cache.put(cacheKey, cacheableResponse.clone()));
-      return cacheableResponse;
-    }
-
-    return response;
-  }
-
-  return renderWithReactRouter(request, env, ctx);
+  return websiteWorker.fetch(request, env, ctx);
 }
 
 export default {

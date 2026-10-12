@@ -37,6 +37,9 @@ export type ArticleConversionConfig = {
 }
 
 export type ArticleSeoConfig = {
+    /** Recovered content modules already own these visible sections. */
+    contentOwnsConversion?: boolean
+    contentOwnsDisclaimer?: boolean
     /** An explicit next read for this article instead of publication-date order. */
     nextArticleSlug?: string
     toc?: boolean
@@ -50,6 +53,8 @@ export type ArticleSeoConfig = {
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
     '/articles/featured/build-an-ai-personal-assistant-for-one-small-business-task': {
+        contentOwnsConversion: true,
+        contentOwnsDisclaimer: true,
         toc: true,
         howTo: false,
         mediaObject: false,
@@ -57,6 +62,8 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         internalLinks: [],
     },
     '/articles/featured/startups-in-melbourne-for-ai-builders-and-new-founders': {
+        contentOwnsConversion: true,
+        contentOwnsDisclaimer: true,
         toc: true,
         howTo: false,
         mediaObject: false,

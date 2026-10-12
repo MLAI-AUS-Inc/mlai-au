@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useMemo } from "react";
 import { redirect } from "react-router";
 import {
     getArticleBySlug,
+    isArticleIndexable,
     normalizeSlug,
     resolveArticleRouteSlug,
     type ArticleWithSlug,
@@ -33,9 +34,9 @@ export function meta({ data }: Route.MetaArgs) {
     const suffix = " | MLAI";
     const fullTitle = `${data.article.title}${suffix}`;
     const title = fullTitle.length > 70 ? data.article.title : fullTitle;
-    const robots = data.article.indexing === "noindex"
-        ? "noindex, follow"
-        : "index, follow, max-image-preview:large";
+    const robots = isArticleIndexable(data.article)
+        ? "index, follow, max-image-preview:large"
+        : "noindex, follow";
 
     return [
         { title },
@@ -90,7 +91,7 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
         requestedSlug !== article.slug ||
         new URL(request.url).pathname !== canonicalPath
     ) {
-        throw redirect(canonicalPath, 301);
+        throw redirect(canonicalPath + new URL(request.url).search, 301);
     }
 
     // Load metadata from the content module if it exists
@@ -98,6 +99,11 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
     // is available before render to avoid side-effects during hydration.
     const globKey = `../articles/content/${article.slug}.tsx`;
     const importer = articleModules[globKey];
+    if (isArticleIndexable(article) && !importer) {
+        throw new Response("Article temporarily unavailable", {
+            status: 503, headers: { "X-Robots-Tag": "noindex" },
+        });
+    }
     let faqItems = undefined;
     let useCustomHeader = false;
 

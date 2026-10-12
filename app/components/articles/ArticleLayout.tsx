@@ -1,4 +1,5 @@
 import React from 'react'
+import { ArticleReadingLinks } from './ArticleReadingLinks'
 
 import { Container } from "~/components/Container"
 import { Prose } from '../Prose'
@@ -635,7 +636,8 @@ export function ArticleLayout({
                 </div>
               ) : null}
               <div data-article-content className="[overflow-wrap:anywhere] [&_table]:[overflow-wrap:normal]">{children}</div>
-              {showDisclaimer && !isUnderEditorialReview ? <ArticleDisclaimer /> : null}
+              <ArticleReadingLinks articlePath={articlePath} />
+              {showDisclaimer && !isUnderEditorialReview && !seoConfig.contentOwnsDisclaimer ? <ArticleDisclaimer /> : null}
               <div className="not-prose my-12">
                 {/* <FindProfessionalsCTA
                   id="find-professionals"
@@ -712,7 +714,7 @@ export function ArticleLayout({
               </div>
             </div> */}
 
-            {seoConfig.conversion ? (
+            {seoConfig.contentOwnsConversion ? null : seoConfig.conversion ? (
               <ArticleConversionCTA
                 articleSlug={article.slug}
                 config={seoConfig.conversion}

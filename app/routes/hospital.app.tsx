@@ -11,16 +11,21 @@ interface UserData {
     is_superuser: boolean;
 }
 
+export const meta: Route.MetaFunction = () => [
+    { title: "HealthHack Workspace | MLAI" },
+    { name: "robots", content: "noindex, nofollow" },
+];
+
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
 
     if (!user) {
-        return redirect("/platform/login?app=hospital&next=/hospital/app/dashboard");
+        return redirect("/platform/login?app=hospital&next=/hospital/app");
     }
 
     if (!user.is_superuser) {
-        return redirect("/platform/login?app=hospital&next=/hospital/app/dashboard&error=healthhack_closed");
+        return redirect("/platform/login?app=hospital&next=/hospital/app&error=healthhack_closed");
     }
 
     return { user: user as UserData };
