@@ -55,7 +55,9 @@ export async function fetchSubstackPosts(
     `substack-posts:${count}`,
     SUBSTACK_POSTS_CACHE_TTL_MS,
     async () => {
-      const content = await fetch("https://mlaiaus.substack.com/feed");
+      const content = await fetch("https://mlaiaus.substack.com/feed", {
+        signal: AbortSignal.timeout(8000),
+      });
       if (!content.ok) {
         throw new Error(`Substack feed request failed: ${content.status} ${content.statusText}`);
       }

@@ -12,6 +12,11 @@ import { type Announcement } from "~/components/Announcements";
 import HealthHackLogo from "~/components/healthhack/HealthHackLogo";
 import { HEALTHHACK_BRAND } from "~/lib/healthhack-brand";
 
+export const meta: Route.MetaFunction = () => [
+    { title: "HealthHack Dashboard | MLAI" },
+    { name: "robots", content: "noindex, nofollow" },
+];
+
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);

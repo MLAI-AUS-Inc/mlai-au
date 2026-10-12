@@ -85,7 +85,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
-        dateModified: "2026-09-23",
+        dateModified: "2026-09-25",
         description: "Start with one low-risk admin task, test an AI assistant on fictional data, and use a two-week pilot to measure time saved, corrections and cost.",
         author: "Dr Sam Donegan",
         slug: "featured/build-an-ai-personal-assistant-for-one-small-business-task",
@@ -918,7 +918,7 @@ export function getClusterCardsForPillar(pillarSlug: string): ArticleWithSlug[] 
 }
 
 export function isArticleIndexable(article: ArticleWithSlug): boolean {
-  return article.indexing !== "noindex";
+  return article.indexing !== "noindex" && article.publicationStatus !== "under-review";
 }
 
 export function resolveArticleRouteSlug(registrySlug: string): string {

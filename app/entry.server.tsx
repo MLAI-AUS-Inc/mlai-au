@@ -5,6 +5,10 @@ import { renderToReadableStream } from "react-dom/server";
 
 declare const __MLAI_BUILD_REVISION__: string;
 
+// Optional reader feeds abort after 8 seconds. Give their resolved fallback time
+// to enter RR's hydration payload before deferred serialization is terminated.
+export const streamTimeout = 12_000;
+
 export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -15,7 +19,7 @@ export default async function handleRequest(
   let shellRendered = false;
   const userAgent = request.headers.get("user-agent");
   const pathname = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
-  const readerDocument = pathname === "/articles" || pathname.startsWith("/articles/") || pathname === "/events";
+  const readerDocument = pathname === "/" || pathname === "/articles" || pathname.startsWith("/articles/") || pathname === "/events";
   const completeDocument = readerDocument || Boolean(userAgent && isbot(userAgent)) || routerContext.isSpaMode;
 
   const body = await renderToReadableStream(

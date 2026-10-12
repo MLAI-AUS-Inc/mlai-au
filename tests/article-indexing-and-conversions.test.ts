@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { loader as loadArticleAlias } from "../app/routes/article-link-cleanups";
+import { getSitemapEntries } from "../scripts/lib/sitemap";
 
 import {
   ARTICLE_REGISTRY,
@@ -152,16 +154,12 @@ describe("beginner AI canonical rebuild", () => {
       path.join(process.cwd(), "app", "routes.ts"),
       "utf8",
     );
-    const redirectsSource = readFileSync(
-      path.join(process.cwd(), "app", "routes", "article-link-cleanups.tsx"),
-      "utf8",
-    );
     expect(routesSource).toContain(
       'route("/articles/featured/what-is-artificial-intelligence-with-example-for-everyday-readers"',
     );
-    expect(redirectsSource).toContain(
-      '"/articles/featured/what-is-artificial-intelligence-with-example-for-everyday-readers": "/articles/featured/what-is-artificial-intelligence-in-simple-words"',
-    );
+    const response = loadArticleAlias({ request: new Request("https://mlai.au/articles/featured/what-is-artificial-intelligence-with-example-for-everyday-readers?event_format=online") } as Parameters<typeof loadArticleAlias>[0]);
+    expect(response.status).toBe(301);
+    expect(response.headers.get("Location")).toBe("/articles/featured/what-is-artificial-intelligence-in-simple-words?event_format=online");
   });
 
   test("ships an original interactive asset and one shared FAQ schema source", () => {
@@ -199,16 +197,12 @@ describe("first-founder canonical rebuild", () => {
       path.join(process.cwd(), "app", "routes.ts"),
       "utf8",
     );
-    const redirectsSource = readFileSync(
-      path.join(process.cwd(), "app", "routes", "article-link-cleanups.tsx"),
-      "utf8",
-    );
     expect(routesSource).toContain(
       'route("/articles/featured/how-to-startup-a-practical-guide-for-first-time-founders"',
     );
-    expect(redirectsSource).toContain(
-      '"/articles/featured/how-to-startup-a-practical-guide-for-first-time-founders": "/articles/featured/what-an-entrepreneur-does-and-how-to-start-well"',
-    );
+    const response = loadArticleAlias({ request: new Request("https://mlai.au/articles/featured/how-to-startup-a-practical-guide-for-first-time-founders?event_format=online") } as Parameters<typeof loadArticleAlias>[0]);
+    expect(response.status).toBe(301);
+    expect(response.headers.get("Location")).toBe("/articles/featured/what-an-entrepreneur-does-and-how-to-start-well?event_format=online");
   });
 
   test("ships the experiment ledger without a second FAQ schema", () => {
@@ -274,16 +268,12 @@ describe("AGI canonical rebuild", () => {
       path.join(process.cwd(), "app", "routes.ts"),
       "utf8",
     );
-    const redirectsSource = readFileSync(
-      path.join(process.cwd(), "app", "routes", "article-link-cleanups.tsx"),
-      "utf8",
-    );
     expect(routesSource).toContain(
       'route("/articles/featured/what-is-agi-in-artificial-intelligence-and-why-it-matters"',
     );
-    expect(redirectsSource).toContain(
-      '"/articles/featured/what-is-agi-in-artificial-intelligence-and-why-it-matters": "/articles/featured/what-is-general-artificial-intelligence-and-why-it-matters"',
-    );
+    const response = loadArticleAlias({ request: new Request("https://mlai.au/articles/featured/what-is-agi-in-artificial-intelligence-and-why-it-matters?event_format=online") } as Parameters<typeof loadArticleAlias>[0]);
+    expect(response.status).toBe(301);
+    expect(response.headers.get("Location")).toBe("/articles/featured/what-is-general-artificial-intelligence-and-why-it-matters?event_format=online");
   });
 
   test("ships the original claim evaluator without a second FAQ schema", () => {
@@ -600,13 +590,14 @@ describe("coding-assistant benchmark containment and preregistration", () => {
 
 describe("sitemap implementation", () => {
   test("the generator filters noindex articles and includes new public conversion routes", () => {
-    const source = readFileSync(
-      path.join(process.cwd(), "scripts", "generate-sitemap.ts"),
-      "utf8",
-    );
-    expect(source).toContain(".filter(isArticleIndexable)");
-    expect(source).toContain('path: "/mlai-studio/start-project"');
-    expect(source).toContain('path: "/founder-tools/start"');
+    const entries = getSitemapEntries();
+    const paths = entries.map(entry => entry.path);
+    expect(paths).toContain("/mlai-studio/start-project");
+    expect(paths).toContain("/founder-tools/start");
+    expect(new Set(paths).size).toBe(paths.length);
+    for (const article of Object.values(ARTICLE_REGISTRY)) {
+      expect(paths.includes("/articles/" + article.slug), article.slug).toBe(isArticleIndexable(article));
+    }
   });
 });
 

@@ -58,7 +58,7 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
         {/* Events List */}
         <div className="space-y-3 sm:space-y-4 lg:space-y-6">
           {events.length === 0 ? (
-            <p className="text-center text-white/80 py-8 sm:py-12 text-base sm:text-lg">No upcoming events at this time</p>
+            <p className="text-center text-white/80 py-8 sm:py-12 text-base sm:text-lg">No upcoming events are currently available. The feed may be empty or unavailable.</p>
           ) : (
             currentEvents.map((event) => {
               const dateParts = formatDateParts(event.startDate);

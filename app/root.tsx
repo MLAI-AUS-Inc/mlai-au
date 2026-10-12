@@ -1,20 +1,19 @@
 import {
   isRouteErrorResponse,
   Links,
-  Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
   useLocation,
 } from "react-router";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import Footer from "~/components/footer";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
-import { getArticleBySlug } from "~/articles/registry";
+import { DocumentMeta } from "~/lib/document-metadata";
 import { useSessionKeepalive } from "~/lib/session-keepalive";
 
 // Stable reviewed integration identity; CI binds it to the exact tested commit.
@@ -67,24 +66,10 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export default function Layout() {
+export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const shouldLoadThirdPartyAnalytics = import.meta.env.PROD;
   const pagePath = `${location.pathname}${location.search}`;
-  const articleRouteMatch = location.pathname.match(/^\/articles\/(.+?)\/?$/);
-  const routeArticle = articleRouteMatch
-    ? getArticleBySlug(decodeURIComponent(articleRouteMatch[1]))
-    : undefined;
-  const routeOwnsFullMetadata =
-    Boolean(routeArticle) ||
-    location.pathname.replace(/\/+$/, "") === "/mlai-studio" ||
-    location.pathname.replace(/\/+$/, "") === "/mlai-studio/build-with-us" ||
-    location.pathname === "/mlai-studio/start-project" ||
-    location.pathname === "/founder-tools/start";
-  const canonicalPath = location.pathname.replace(/\/$/, "") || "/";
-  const routeOwnsCanonical =
-    routeOwnsFullMetadata ||
-    ["/articles", "/roo", "/vibe-raising"].includes(canonicalPath);
 
   useEffect(() => {
     if (!shouldLoadThirdPartyAnalytics) return;
@@ -141,36 +126,7 @@ export default function Layout() {
           <meta name="mlai-artifact-digest" content={MLAI_ARTICLES_ARTIFACT_DIGEST} />
         ) : null}
 
-        {!routeOwnsFullMetadata ? (
-          <>
-            {/* Site defaults. Article routes provide exact values through route meta. */}
-            <meta name="author" content="MLAI Aus Inc." />
-            <meta property="og:title" content="MLAI" />
-            <meta
-              property="og:description"
-              content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
-            />
-            <meta property="og:url" content={`https://mlai.au${location.pathname}`} />
-            <meta property="og:type" content="website" />
-            <meta
-              property="og:image"
-              content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"
-            />
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
-            <meta
-              property="og:image:alt"
-              content="MLAI Logo, a Kangaroo wearing sunglasses"
-            />
-          </>
-        ) : null}
-
-        {/* Routes with their own canonical must be the sole source, including pagination. */}
-        {!routeOwnsCanonical ? (
-          <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
-        ) : null}
-
-        <Meta />
+        <DocumentMeta />
         <Links />
 
         {shouldLoadThirdPartyAnalytics ? (
@@ -197,7 +153,7 @@ export default function Layout() {
         {!isAppRoute && <Sidebar />}
         {!isAppRoute && <SectionMarkers />}
         <div className={isAppRoute ? "" : "lg:pl-[220px] bg-[var(--brutalist-beige)]"}>
-          <Outlet />
+          {children}
         </div>
         {!isAppRoute && <Footer />}
         <ScrollRestoration />
@@ -264,6 +220,10 @@ export default function Layout() {
       </body>
     </html>
   );
+}
+
+export default function App() {
+  return <Outlet />;
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

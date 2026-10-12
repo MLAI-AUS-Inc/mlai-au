@@ -4,6 +4,13 @@ Disallow: /__manifest
 Allow: /platform/login
 Disallow: /platform/
 Disallow: /hospital/
+# Let crawlers observe the indexed application's auth redirect and noindex login.
+# These anchored rules cover the entry URL, optional slash and query variants;
+# Hospital child paths remain blocked, with authentication authoritative.
+Allow: /hospital/app$
+Allow: /hospital/app?*
+Allow: /hospital/app/$
+Allow: /hospital/app/?*
 Disallow: /esafety/
 Disallow: /verify-email
 

@@ -1,0 +1,235 @@
+{
+  "observed_date": "2026-10-12",
+  "source": "Search Console domain-property example inventory; complete dates/details retained in the primary read-only audit",
+  "groups": [
+    {
+      "reason": "Page with redirect",
+      "rows": [
+        {
+          "url": "https://mlai.au/?trk=organization_guest_main-feed-card-text"
+        },
+        {
+          "url": "https://mlai.au/?utm_source=chatgpt.com"
+        },
+        {
+          "url": "http://mlai.au/"
+        },
+        {
+          "url": "http://www.mlai.au/"
+        },
+        {
+          "url": "https://www.mlai.au/"
+        },
+        {
+          "url": "https://mlai.au/medhack"
+        },
+        {
+          "url": "https://mlai.au/how-to-pitch-your-idea"
+        },
+        {
+          "url": "https://mlai.au/vibe-raising/"
+        },
+        {
+          "url": "https://mlai.au/hackathon"
+        },
+        {
+          "url": "https://mlai.au/ai-founder-community-pitching-ideas"
+        },
+        {
+          "url": "https://mlai.au/practical-ai-learning-beginners-builders"
+        },
+        {
+          "url": "https://mlai.au/resources"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-to-startup-a-practical-guide-for-first-time-founders"
+        },
+        {
+          "url": "http://www.mlai.au/?trk=organization_guest_main-feed-card-text"
+        },
+        {
+          "url": "https://www.mlai.au/?trk=organization_guest_main-feed-card-text"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/what-is-agi-in-artificial-intelligence-and-why-it-matters"
+        },
+        {
+          "url": "https://www.mlai.au/?utm_source=chatgpt.com"
+        },
+        {
+          "url": "https://www.mlai.au/hackathon"
+        }
+      ]
+    },
+    {
+      "reason": "Excluded by noindex tag",
+      "rows": [
+        {
+          "url": "https://plane.mlai.au/"
+        },
+        {
+          "url": "https://mlai.au/platform/login?app=founder-tools&next=/founder-tools/marketing"
+        },
+        {
+          "url": "http://mlai.au/platform/login"
+        },
+        {
+          "url": "https://mlai.au/platform/login"
+        },
+        {
+          "url": "https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-much-do-data-scientists-make"
+        },
+        {
+          "url": "https://mlai.au/founder-tools"
+        },
+        {
+          "url": "https://mlai.au/platform/login?app=founder-tools&next=/founder-tools"
+        },
+        {
+          "url": "https://mlai.au/founder-tools/marketing"
+        },
+        {
+          "url": "https://mlai.au/platform/login?app=founder-tools&next=/founder-tools/marketing"
+        },
+        {
+          "url": "https://mlai.au/platform/login?app=founder-tools&next=/founder-tools"
+        },
+        {
+          "url": "https://mlai.au/platform/login?app=esafety&next=/esafety/dashboard"
+        }
+      ]
+    },
+    {
+      "reason": "Not found (404)",
+      "rows": [
+        {
+          "url": "https://mlai.au/articles?page=7"
+        },
+        {
+          "url": "https://mlai.au/watt-the-hack"
+        },
+        {
+          "url": "https://mlai.au/members"
+        },
+        {
+          "url": "http://www.mlai.au/members"
+        },
+        {
+          "url": "https://analytics.mlai.au/"
+        },
+        {
+          "url": "https://mlai.au/platform/login?app=watt-the-hack&next=/watt-the-hack/dashboard"
+        },
+        {
+          "url": "https://mlai.au/community"
+        },
+        {
+          "url": "https://mlai.au/hackathons):"
+        },
+        {
+          "url": "https://mlai.au/$"
+        },
+        {
+          "url": "https://mlai.au/articles/*"
+        },
+        {
+          "url": "http://mlai.au/articles/featured/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2"
+        }
+      ]
+    },
+    {
+      "reason": "Blocked by robots.txt",
+      "rows": [
+        {
+          "url": "https://mlai.au/__manifest"
+        },
+        {
+          "url": "https://mlai.au/founder-tools/"
+        }
+      ]
+    },
+    {
+      "reason": "Crawled - currently not indexed",
+      "rows": [
+        {
+          "url": "https://mlai.au/articles/featured/what-an-entrepreneur-does-and-how-to-start-well"
+        },
+        {
+          "url": "https://mlai.au/downloads/accelerator-fit-worksheet.md"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/what-is-inference-in-artificial-intelligence-and-why-it-matters"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/venture-capital-how-does-it-work"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-to-foster-community-engagement"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-to-choose-the-best-ai-for-coding-in-2025"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-to-find-networking-events"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/best-way-to-learn-about-ai-2026"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/the-best-startup-pitch-deck-ever"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/what-are-collaboration-tools"
+        }
+      ]
+    },
+    {
+      "reason": "Discovered - currently not indexed",
+      "rows": [
+        {
+          "url": "https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/go-to-market-for-startups"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-technology-is-shaping-learning-in-higher-education"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-to-assess-cofounder-values-match-before-you-commit"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/how-to-build-ai-for-real-business-problems"
+        },
+        {
+          "url": "https://mlai.au/articles/featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers"
+        }
+      ]
+    },
+    {
+      "reason": "Page indexed without content",
+      "rows": [
+        {
+          "url": "https://n8n.mlai.au/"
+        }
+      ]
+    },
+    {
+      "reason": "Indexed, though blocked by robots.txt",
+      "rows": [
+        {
+          "url": "https://mlai.au/hospital/app"
+        }
+      ]
+    }
+  ]
+}
