@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { getArticlesSortedNewestFirst } from "../app/articles/registry";
-import { loader } from "../app/routes/articles.index";
+import { loader, meta } from "../app/routes/articles.index";
 
 const load = (path: string) => loader({
   request: new Request(`https://mlai.au${path}`),
@@ -35,4 +35,17 @@ test.each([
   if (!(response instanceof Response)) throw new Error("Expected a redirect");
   expect(response.status).toBe(301);
   expect(response.headers.get("location")).toBe(destination);
+});
+
+test("validated library pages expose one canonical matching their loader contract", async () => {
+  const lastPage = Math.ceil(getArticlesSortedNewestFirst().length / 10);
+  for (let page = 1; page <= lastPage; page++) {
+    const path = page === 1 ? "/articles" : `/articles?page=${page}`;
+    const data = await load(path);
+    if (data instanceof Response) throw new Error("A valid page unexpectedly redirected");
+    const metadata = meta({ data } as Parameters<typeof meta>[0]);
+    const canonicals = metadata.filter(row => "rel" in row && row.rel === "canonical");
+    expect(canonicals).toHaveLength(1);
+    expect(canonicals[0]).toEqual({ tagName: "link", rel: "canonical", href: `https://mlai.au${path}` });
+  }
 });

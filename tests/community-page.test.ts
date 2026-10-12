@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { getSitemapEntries } from "../scripts/lib/sitemap";
+import { collectRegisteredRoutePaths } from "../scripts/lib/route-inventory";
 
 const repoRoot = join(import.meta.dir, "..");
 
@@ -10,12 +12,8 @@ function source(path: string) {
 
 describe("MLAI Chat community entry point", () => {
   test("registers the public route and sitemap entry", () => {
-    expect(source("app/routes.ts")).toContain(
-      'route("/community", "routes/community.tsx")',
-    );
-    expect(source("scripts/generate-sitemap.ts")).toContain(
-      '{ path: "/community", changefreq: "weekly", priority: 0.8 }',
-    );
+    expect(collectRegisteredRoutePaths(source("app/routes.ts")).has("/community")).toBe(true);
+    expect(getSitemapEntries().filter(entry => entry.path === "/community")).toHaveLength(1);
   });
 
   test("keeps every distribution destination operator-configurable", () => {

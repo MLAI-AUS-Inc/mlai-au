@@ -47,14 +47,14 @@ export function meta({ data, error }: Route.MetaArgs) {
     return [
         { title: title },
         { name: "description", content: PAGE_DESCRIPTION },
-        { tagName: "link", rel: "canonical", href: `https://mlai.au${data.canonicalPath}` },
+        { tagName: "link", rel: "canonical", href: pageNumber <= 1 ? "https://mlai.au/articles" : `https://mlai.au/articles?page=${pageNumber}` },
     ];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
     const pagination = getArticlePagination(request.url, getArticlesSortedNewestFirst().length);
-    if (pagination.redirectPath) throw redirect(pagination.redirectPath, 301);
-    return { page: pagination.page, totalPages: pagination.totalPages, canonicalPath: pagination.canonicalPath };
+    if (pagination.redirectPath) return redirect(pagination.redirectPath, 301);
+    return { page: pagination.page };
 }
 
 export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
