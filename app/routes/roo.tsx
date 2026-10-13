@@ -1031,7 +1031,7 @@ export default function RooPage({}: Route.ComponentProps) {
                       >
                         <span className="font-semibold">{pack.label}</span>
                         <span className="text-sm font-semibold text-black/62">
-                          {pack.price}
+                          {pack.price} including GST
                         </span>
                       </div>
                     ))}

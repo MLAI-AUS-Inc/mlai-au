@@ -188,6 +188,7 @@ export default function FounderToolsUpgrade() {
                 <p className="mt-4 text-2xl font-black text-gray-950">
                   {formatPrice(pack.amount_cents, pack.currency)}
                 </p>
+                <p className="mt-2 text-sm font-semibold text-gray-500">Includes 10% GST</p>
                 <input type="hidden" name="pack_id" value={pack.pack_id} />
                 <button
                   type="submit"

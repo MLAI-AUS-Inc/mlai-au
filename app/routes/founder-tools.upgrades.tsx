@@ -373,6 +373,7 @@ function TopupPackCard({
         </div>
         <div className="mx-auto mt-4 h-px w-full bg-slate-200" />
         <p className="mt-4 text-2xl font-black leading-none text-gray-950">{pack.price}</p>
+        <p className="mt-2 text-sm font-medium text-slate-500">Includes 10% GST</p>
         <button
           type="submit"
           disabled={disabled}
