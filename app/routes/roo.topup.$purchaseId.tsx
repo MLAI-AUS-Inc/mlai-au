@@ -5,6 +5,7 @@ import { Form, Link, redirect, useActionData, useLoaderData, useNavigation } fro
 import type { Route } from "./+types/roo.topup.$purchaseId";
 import { createApiClient } from "~/lib/api";
 import { getEnv } from "~/lib/env.server";
+import { RooPurchasePrice, type RooPurchaseTax } from "~/components/RooPurchasePrice";
 
 type PointsPurchase = {
   id: string;
@@ -13,6 +14,7 @@ type PointsPurchase = {
   points_amount: number;
   amount_cents: number;
   currency: string;
+  tax?: RooPurchaseTax | null;
   expires_at: string;
   paid_at: string | null;
   created_at: string;
@@ -155,10 +157,7 @@ export default function RooTopupPage() {
           </div>
 
           <div className="mt-8 border-t border-black/10 pt-6">
-            <div className="flex items-center justify-between text-base">
-              <span className="text-black/58">Price</span>
-              <span className="text-2xl font-black">{formatMoney(purchase.amount_cents, purchase.currency)}</span>
-            </div>
+            <RooPurchasePrice amountCents={purchase.amount_cents} currency={purchase.currency} tax={purchase.tax} />
             <div className="mt-4 flex items-center justify-between text-sm">
               <span className="text-black/58">Expires</span>
               <span className="font-semibold">{formatDateTime(expiresAt)}</span>
@@ -242,13 +241,6 @@ function Message({ tone, text }: { tone: "info" | "success" | "error"; text: str
       <p className="text-sm font-semibold leading-6">{text}</p>
     </div>
   );
-}
-
-function formatMoney(amountCents: number, currency: string) {
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: currency.toUpperCase(),
-  }).format(amountCents / 100);
 }
 
 function formatDateTime(value: Date) {
