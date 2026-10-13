@@ -51,6 +51,11 @@ export default function PlatformDashboard() {
                     </h2>
                 </div>
                 <div className="mt-4 flex md:ml-4 md:mt-0">
+                    {import.meta.env.VITE_AGENT_RUNTIME_ENABLED === "true" && (
+                        <a href="/platform/agents" className="inline-flex items-center rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500">
+                            Connected agents
+                        </a>
+                    )}
                     <a
                         href="/platform/logout"
                         className="ml-3 inline-flex items-center rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20"
