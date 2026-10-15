@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type QuizAnswer = "ai" | "not-ai";
 
@@ -70,6 +70,10 @@ const SCENARIOS: QuizScenario[] = [
 
 export default function AiOrNotQuiz() {
   const [answers, setAnswers] = useState<Record<string, QuizAnswer>>({});
+  const [ready, setReady] = useState(false);
+
+  // The answer guide works without scripts; choices need their click handlers.
+  useEffect(() => setReady(true), []);
 
   const completed = Object.keys(answers).length;
   const score = useMemo(
@@ -131,6 +135,7 @@ export default function AiOrNotQuiz() {
                   <button
                     key={value}
                     type="button"
+                    disabled={!ready}
                     aria-pressed={selected === value}
                     onClick={() =>
                       setAnswers((current) => ({

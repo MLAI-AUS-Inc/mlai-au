@@ -10,11 +10,40 @@ test('beginner exercise has a keyboard answer guide with and without scripts',as
   await answers.focus();await page.keyboard.press('Enter');
   await expect(answers.locator('..')).toHaveAttribute('open','');
   await expect(answers.locator('..').locator('li')).toHaveCount(8);
-  if(info.project.name!=='without-javascript'){
-    const button=page.locator('fieldset').first().getByRole('button',{name:'Not AI',exact:true});
+  const button=page.locator('fieldset').first().getByRole('button',{name:'Not AI',exact:true});
+  if(info.project.name==='without-javascript'){
+    await expect(button).toBeDisabled();
+  }else{
+    await expect(button).toBeEnabled();
     await button.focus();await page.keyboard.press('Space');
     await expect(button).toHaveAttribute('aria-pressed','true');
     await expect(page.locator('fieldset').first().getByRole('status')).toContainText('Correct.');
+  }
+});
+
+test('beginner quiz waits for its scripts before accepting keyboard answers',async({page},info)=>{
+  test.skip(info.project.name==='without-javascript','The answer guide is covered separately without scripts.');
+  let release!:()=>void;
+  const gate=new Promise<void>(resolve=>{release=resolve;});
+  await page.route('**/assets/what-is-artificial-intelligence-in-simple-words-*.js',async route=>{
+    await gate;
+    await route.continue();
+  });
+  try{
+    await page.goto('/articles/featured/what-is-artificial-intelligence-in-simple-words',{waitUntil:'domcontentloaded'});
+    const button=page.locator('fieldset').first().getByRole('button',{name:'Not AI',exact:true});
+    await expect(button).toBeDisabled();
+    const answers=page.getByText('Read all answers and explanations',{exact:true});
+    await answers.focus();await page.keyboard.press('Enter');
+    await expect(answers.locator('..')).toHaveAttribute('open','');
+    release();
+    await expect(button).toBeEnabled();
+    await button.focus();await page.keyboard.press('Space');
+    await expect(button).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('fieldset').first().getByRole('status')).toContainText('Correct.');
+    await expect(answers.locator('..')).toHaveAttribute('open','');
+  }finally{
+    release();
   }
 });
 test('accelerator worksheet preserves mismatches and saves exactly the copyable record',async({page},info)=>{
