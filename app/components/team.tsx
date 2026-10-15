@@ -6,7 +6,7 @@ const people = [
     name: "Sam Donegan",
     role: "President",
     imageUrl: "/press-kit/team-sam-donegan.png",
-    pixelImageUrl: "", // Will use default pixel character until individual art is added
+    pixelImageUrl: "/press-kit/pixel-art/team-sam-donegan-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/samueldonegan/",
     twitter: "",
   },
@@ -14,7 +14,7 @@ const people = [
     name: "Sonia Kaurah",
     role: "Vice President",
     imageUrl: "/press-kit/team-sonia-kaurah.webp",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-sonia-kaurah-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/soniakaurah/",
     twitter: "",
   },
@@ -22,7 +22,7 @@ const people = [
     name: "Ryan Mouritz",
     role: "Vice President",
     imageUrl: "/press-kit/team-ryan-mouritz.jpg",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-ryan-mouritz-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/ryanmouritz/",
     twitter: "",
   },
@@ -30,7 +30,7 @@ const people = [
     name: "Pegah Khaleghi",
     role: "Treasurer",
     imageUrl: "/press-kit/team-pegah-khaleghi.png",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-pegah-khaleghi-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/pegah-khaleghi/",
     twitter: "",
   },
@@ -38,7 +38,7 @@ const people = [
     name: "Yana Lin",
     role: "Head of Marketing",
     imageUrl: "/press-kit/team-yana-lin.jpg",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-yana-lin-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/yanalinofficial/",
     twitter: "",
   },
@@ -46,7 +46,7 @@ const people = [
     name: "Anjali Singh",
     role: "Marketing Lead",
     imageUrl: "/press-kit/team-anjali-singh.jpeg",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-anjali-singh-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/anjali-singh-gaharwar/",
     twitter: "",
   },
@@ -54,7 +54,7 @@ const people = [
     name: "Dr Anu Ganugapati",
     role: "Social Media Lead",
     imageUrl: "/press-kit/team-anu-gaunapati.jpg",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-anu-gaunapati-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/dr-anu-g-%F0%9F%A9%BA-3b330a248/https://www.linkedin.com/in/anuganugapati/",
     twitter: "",
   },
@@ -62,7 +62,7 @@ const people = [
     name: "Daniel Malkinson",
     role: "Partnerships Lead",
     imageUrl: "/press-kit/team-daniel-malkinson.jpg",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-daniel-malkinson-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/daniel-malkinson/",
     twitter: "",
   },
@@ -70,7 +70,7 @@ const people = [
     name: "Jun Kai Chang",
     role: "Partnerships Lead",
     imageUrl: "/press-kit/team-jun-kai-chang.jpg",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-jun-kai-chang-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/jkchangjobs/",
     twitter: "",
   },
@@ -78,7 +78,7 @@ const people = [
     name: "Alisa Belova",
     role: "Community Manager",
     imageUrl: "/press-kit/team-alisa-belova.png",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-alisa-belova-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/alisa-belova/",
     twitter: "",
   },
@@ -86,7 +86,7 @@ const people = [
     name: "Shan Yang",
     role: "Community Manager",
     imageUrl: "/press-kit/team-shan-yang.png",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-shan-yang-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/shan-yang/",
     twitter: "",
   },
@@ -94,7 +94,7 @@ const people = [
     name: "Kang Tan",
     role: "Community Manager",
     imageUrl: "/press-kit/team-kang-tan.jpg",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-kang-tan-pixel.gif",
     linkedIn: "http://linkedin.com/in/kaey-lib-tan-4b4429258/",
     twitter: "",
   },
@@ -102,7 +102,7 @@ const people = [
     name: "Juan Bernal",
     role: "Tech Lead",
     imageUrl: "/press-kit/team-juan-bernal.png",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-juan-bernal-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/juan-david-bernal-146305bb/",
     twitter: "",
   },
@@ -110,7 +110,7 @@ const people = [
     name: "Alan Philip",
     role: "Tech Lead",
     imageUrl: "/press-kit/team-alan-philip.png",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-alan-philip-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/alan-philip-58a456193/",
     twitter: "",
   },
@@ -118,7 +118,7 @@ const people = [
     name: "Callum Holt",
     role: "Tech Lead",
     imageUrl: "/press-kit/team-callum-holt.jpg",
-    pixelImageUrl: "",
+    pixelImageUrl: "/press-kit/pixel-art/team-callum-holt-pixel.gif",
     linkedIn: "https://www.linkedin.com/in/callumholt/",
     twitter: "",
   },
@@ -128,8 +128,8 @@ export default function Team() {
   const [selectedIndex, setSelectedIndex] = useState(14); // Start with Callum (matching reference)
   const selectedPerson = people[selectedIndex];
 
-  // Default pixel character (Callum's pixel art as placeholder for all)
-  const defaultPixelCharacter = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitleddesign-ezgif.com-resize.gif?alt=media&token=d0444d83-e55f-4d56-ae80-0d0680fecd4f";
+  // Local pixel character fallback
+  const defaultPixelCharacter = "/press-kit/pixel-art/team-callum-holt-pixel.gif";
 
   const handlePrev = () => {
     setSelectedIndex((prev) => (prev === 0 ? people.length - 1 : prev - 1));
@@ -157,6 +157,7 @@ export default function Team() {
             <div className="fighter-mobile-preview">
               <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
                 <img
+                  key={selectedPerson.name}
                   src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
                   alt={`${selectedPerson.name} pixel art — click to enter the hackathon`}
                   className="fighter-mobile-preview-image"
@@ -259,6 +260,7 @@ export default function Team() {
             <div className="fighter-preview-center">
               <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
                 <img
+                  key={selectedPerson.name}
                   src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
                   alt={`${selectedPerson.name} pixel art — click to enter the hackathon`}
                   className="fighter-preview-image"
@@ -456,9 +458,17 @@ export default function Team() {
           }
         }
 
-        .fighter-mobile-preview-image {
+        .fighter-mobile-preview .fighter-medhack-link {
           height: 100%;
+          max-width: 100%;
+        }
+
+        .fighter-mobile-preview-image {
+          height: calc(100% - 32px);
           width: auto;
+          max-width: 100%;
+          min-height: 0;
+          object-fit: contain;
           image-rendering: pixelated;
           filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.3));
         }
