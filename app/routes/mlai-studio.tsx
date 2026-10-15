@@ -580,7 +580,7 @@ export default function MlaiStudio() {
                 </p>
                 <ul className="studio-price-features">
                   <li>Design and AI engineering</li>
-                  <li>Project management with Dr Sam</li>
+                  <li>Project management</li>
                   <li>Work to review as we build</li>
                 </ul>
                 <BookingButton dark label="Discuss the Standard plan" />
