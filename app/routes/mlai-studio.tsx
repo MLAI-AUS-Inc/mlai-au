@@ -555,6 +555,21 @@ export default function MlaiStudio() {
               </p>
             </div>
             <div className="studio-pricing-grid">
+              <article className="studio-price-card studio-price-card--free" aria-labelledby="studio-free-title">
+                <h3 id="studio-free-title" className="studio-price-plan">Let’s talk</h3>
+                <div className="studio-price">Free</div>
+                <p className="studio-price-tax">No cost. No commitment.</p>
+                <h4 className="studio-price-hours">15 minutes with Dr Sam</h4>
+                <p className="studio-price-summary">
+                  Bring your idea, questions or a project that needs a clearer plan.
+                </p>
+                <ul className="studio-price-features">
+                  <li>Talk through your project</li>
+                  <li>Find the right team and scope</li>
+                  <li>Agree on the next steps</li>
+                </ul>
+                <BookingButton dark label="Talk to Dr Sam" />
+              </article>
               <article className="studio-price-card studio-price-card--standard" aria-labelledby="studio-standard-title">
                 <h3 id="studio-standard-title" className="studio-price-plan">Standard</h3>
                 <div className="studio-price"><span>A$</span>7,640</div>
@@ -572,33 +587,18 @@ export default function MlaiStudio() {
               </article>
               <article className="studio-price-card studio-price-card--plus" aria-labelledby="studio-plus-title">
                 <h3 id="studio-plus-title" className="studio-price-plan">Larger projects</h3>
-                <div className="studio-price"><span>A$</span>14,780</div>
+                <div className="studio-price"><span>A$</span>30,780</div>
                 <p className="studio-price-tax">per month + GST</p>
-                <h4 className="studio-price-hours">80 builder hours per month</h4>
+                <h4 className="studio-price-hours">200+ builder hours per month</h4>
                 <p className="studio-price-summary">
                   For more demanding projects that need more building time.
                 </p>
                 <ul className="studio-price-features">
-                  <li>Twice the builder hours</li>
+                  <li>Capacity for larger projects</li>
                   <li>Design and AI engineering</li>
                   <li>Project management with Dr Sam</li>
                 </ul>
                 <BookingButton dark label="Discuss a larger project" />
-              </article>
-              <article className="studio-price-card studio-price-card--free" aria-labelledby="studio-free-title">
-                <h3 id="studio-free-title" className="studio-price-plan">Let’s talk</h3>
-                <div className="studio-price">Free</div>
-                <p className="studio-price-tax">No cost. No commitment.</p>
-                <h4 className="studio-price-hours">15 minutes with Dr Sam</h4>
-                <p className="studio-price-summary">
-                  Bring your idea, questions or a project that needs a clearer plan.
-                </p>
-                <ul className="studio-price-features">
-                  <li>Talk through your project</li>
-                  <li>Find the right team and scope</li>
-                  <li>Agree on the next steps</li>
-                </ul>
-                <BookingButton dark label="Talk to Dr Sam" />
               </article>
             </div>
             <div className="studio-price-notes">
