@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-hand-over-autonomous-ai-agents-with-clear-limits': {
+        title: "How to Hand Over Autonomous AI Agents With Clear Limits",
+        date: "2026-10-15",
+        dateModified: "2026-10-15",
+        description: "Draft an AI agent handover sheet with permissions, human approvals, operating limits and a stop procedure before your small-business pilot begins.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-hand-over-autonomous-ai-agents-with-clear-limits",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-99d8cfc2-ede5-4f5a-8979-03cf50c8200a.jpg?alt=media&token=0a12fb75-b95d-46d5-af48-abf0fb5d8578",
+        imageAlt: "Two people look at a sheet of paper at a wooden table, one holding it and the other pointing with a pen, beside an open laptop.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
