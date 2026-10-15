@@ -9,18 +9,51 @@ const websitePhoto = (name: string) => {
 // Reuse named website records, plus the MLAI Slack profile photos for Luiz
 // Flavio and Eva Ng. Initials remain as a network-error fallback.
 const BUILDERS = [
-  { name: "Dr Sam", image: websitePhoto("Sam Donegan") },
-  { name: "Callum", image: websitePhoto("Callum Holt") },
-  { name: "Shan", image: websitePhoto("Shan Yang") },
-  { name: "Alan", image: websitePhoto("Alan Philip") },
-  { name: "Juan", image: websitePhoto("Juan Bernal") },
-  { name: "Luiz", image: "https://avatars.slack-edge.com/2026-07-13/11572558188962_c3777151f3d0105815e2_original.png" },
   {
-    name: "Tom",
-    image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Ftom.png?alt=media&token=b2e5357e-ca52-40d7-953c-b505b178225f",
+    name: "Dr Sam Donegan", role: "Project manager",
+    image: websitePhoto("Sam Donegan"),
+    linkedIn: "https://www.linkedin.com/in/samueldonegan/",
   },
-  { name: "Eva", image: "https://avatars.slack-edge.com/2026-05-13/11117538094402_6e81229e6b74e30c6989_original.jpg" },
-  { name: "Daniel", image: websitePhoto("Daniel Malkinson") },
+  {
+    name: "Callum Holt", role: "Senior full stack engineer",
+    image: websitePhoto("Callum Holt"),
+    linkedIn: "https://www.linkedin.com/in/callumholt/",
+  },
+  {
+    name: "Shan Yang", role: "UX designer",
+    image: websitePhoto("Shan Yang"),
+    linkedIn: "https://www.linkedin.com/in/shan-yang/",
+  },
+  {
+    name: "Alan Philip", role: "AI & full stack engineer",
+    image: websitePhoto("Alan Philip"),
+    linkedIn: "https://www.linkedin.com/in/alan-philip-58a456193/",
+  },
+  {
+    name: "Juan David Bernal", role: "AI voice engineer",
+    image: websitePhoto("Juan Bernal"),
+    linkedIn: "https://www.linkedin.com/in/juan-david-bernal-146305bb/",
+  },
+  {
+    name: "Luiz Flavio", role: "AI product designer & engineer",
+    image: "https://avatars.slack-edge.com/2026-07-13/11572558188962_c3777151f3d0105815e2_original.png",
+    linkedIn: "https://www.linkedin.com/in/luiz-flavio/",
+  },
+  {
+    name: "Tom McKenzie", role: "Engineering lead",
+    image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Ftom.png?alt=media&token=b2e5357e-ca52-40d7-953c-b505b178225f",
+    linkedIn: "https://www.linkedin.com/in/tom-mckenzie-dev/",
+  },
+  {
+    name: "Eva Ng", role: "AI automation specialist",
+    image: "https://avatars.slack-edge.com/2026-05-13/11117538094402_6e81229e6b74e30c6989_original.jpg",
+    linkedIn: "https://www.linkedin.com/in/evang2/",
+  },
+  {
+    name: "Daniel Malkinson", role: "Project manager",
+    image: websitePhoto("Daniel Malkinson"),
+    linkedIn: "https://www.linkedin.com/in/daniel-malkinson/",
+  },
 ];
 
 function BuilderPortrait({ name, image }: (typeof BUILDERS)[number]) {
@@ -33,6 +66,21 @@ function BuilderPortrait({ name, image }: (typeof BUILDERS)[number]) {
         <span className="studio-builder-initial" aria-hidden="true">{name[0]}</span>
       )}
     </span>
+  );
+}
+
+function BuilderProfile({ builder, duplicate = false }: {
+  builder: (typeof BUILDERS)[number];
+  duplicate?: boolean;
+}) {
+  return (
+    <a className="studio-builder-profile" href={builder.linkedIn}
+      target="_blank" rel="noopener noreferrer" tabIndex={duplicate ? -1 : undefined}
+      aria-label={`${builder.name}, ${builder.role}. View LinkedIn profile (opens in a new tab).`}>
+      <BuilderPortrait {...builder} />
+      <span className="studio-builder-name">{builder.name}</span>
+      <span className="studio-builder-role">{builder.role}</span>
+    </a>
   );
 }
 
@@ -82,10 +130,10 @@ export default function StudioBuilders() {
         role="region" aria-label="MLAI builders. Scroll horizontally to meet the team.">
         <div className="studio-builders-track">
           <ul ref={group} className="studio-builders-group">
-            {BUILDERS.map((builder) => <li key={builder.name}><BuilderPortrait {...builder} /></li>)}
+            {BUILDERS.map((builder) => <li key={builder.name}><BuilderProfile builder={builder} /></li>)}
           </ul>
           {!reducedMotion && [1, 2].map((copy) => <ul key={copy} className="studio-builders-group" aria-hidden="true">
-            {BUILDERS.map((builder) => <li key={builder.name}><BuilderPortrait {...builder} /></li>)}
+            {BUILDERS.map((builder) => <li key={builder.name}><BuilderProfile builder={builder} duplicate /></li>)}
           </ul>)}
         </div>
       </div>
