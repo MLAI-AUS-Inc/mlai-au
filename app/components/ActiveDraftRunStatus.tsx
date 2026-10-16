@@ -4,8 +4,7 @@ import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { getVibeRaisingStartupUpdateActiveRun } from "~/lib/vibe-raising";
 import type { VibeRaisingStartupUpdateStatusResponse } from "~/types/vibe-raising";
 import { VIBE_RAISING_MONTH_OPTIONS } from "~/components/VibeRaisingDateTabs";
-
-const ACTIVE_RUN_POLL_INTERVAL_MS = 25_000;
+import { startActiveDraftRunPolling } from "~/lib/active-draft-run-polling";
 
 type ActiveDraftRunContextValue = {
     activeRun: VibeRaisingStartupUpdateStatusResponse | null;
@@ -42,38 +41,35 @@ function runProgressParts(run: VibeRaisingStartupUpdateStatusResponse) {
 
 export function ActiveDraftRunProvider({
     backendBaseUrl,
+    companyId,
     children,
 }: {
     backendBaseUrl: string;
+    companyId: string | null;
     children: ReactNode;
 }) {
-    const [activeRun, setActiveRun] = useState<VibeRaisingStartupUpdateStatusResponse | null>(null);
-    const inFlightRef = useRef(false);
-
+    const scope = JSON.stringify([backendBaseUrl, companyId]);
+    const [observed, setObserved] = useState<{ scope: string; run: VibeRaisingStartupUpdateStatusResponse | null }>({ scope, run: null });
+    const pollerRef = useRef<{ scope: string; poller: ReturnType<typeof startActiveDraftRunPolling> } | null>(null);
+    const activeRun = observed.scope === scope ? observed.run : null;
     const refreshActiveRun = useCallback(() => {
-        if (inFlightRef.current) return;
-        inFlightRef.current = true;
-        getVibeRaisingStartupUpdateActiveRun(backendBaseUrl)
-            .then((run) => {
-                setActiveRun(isGeneratingRun(run) ? run : null);
-            })
-            .catch(() => {
-                // Transient failures keep the last known state; the next poll corrects it.
-            })
-            .finally(() => {
-                inFlightRef.current = false;
-            });
-    }, [backendBaseUrl]);
+        if (pollerRef.current?.scope === scope) pollerRef.current.poller.refresh();
+    }, [scope]);
 
     useEffect(() => {
-        refreshActiveRun();
-        const intervalId = window.setInterval(refreshActiveRun, ACTIVE_RUN_POLL_INTERVAL_MS);
-        window.addEventListener("focus", refreshActiveRun);
+        const poller = startActiveDraftRunPolling({
+            companyId,
+            load: (id) => getVibeRaisingStartupUpdateActiveRun(backendBaseUrl, id),
+            onRun: (run) => setObserved({ scope, run: isGeneratingRun(run) ? run : null }),
+        });
+        pollerRef.current = { scope, poller };
+        window.addEventListener("focus", poller.focus);
         return () => {
-            window.clearInterval(intervalId);
-            window.removeEventListener("focus", refreshActiveRun);
+            poller.stop();
+            window.removeEventListener("focus", poller.focus);
+            if (pollerRef.current?.poller === poller) pollerRef.current = null;
         };
-    }, [refreshActiveRun]);
+    }, [backendBaseUrl, companyId, scope]);
 
     return (
         <ActiveDraftRunContext.Provider value={{ activeRun, refreshActiveRun }}>
