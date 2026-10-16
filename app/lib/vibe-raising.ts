@@ -1565,6 +1565,8 @@ export async function requestBrowserJson<T>(
     error.data = data;
     error.requestId = response.headers.get("X-Request-ID") || requestId;
     error.requestPath = path;
+    const retryAfter = response.headers.get("Retry-After");
+    if (retryAfter && /^\d+$/.test(retryAfter)) error.retryAfterSeconds = Number(retryAfter);
     throw error;
   }
 
@@ -4230,10 +4232,11 @@ export async function getVibeRaisingStartupUpdateStatus(
 
 export async function getVibeRaisingStartupUpdateActiveRun(
   backendBaseUrl: string,
+  companyId?: string,
 ): Promise<VibeRaisingStartupUpdateStatusResponse | null> {
   const response = await requestBrowserJson<unknown>(
     backendBaseUrl,
-    EMAIL_DRAFT_ACTIVE_RUN_PATH,
+    companyId ? `${EMAIL_DRAFT_ACTIVE_RUN_PATH}?company_id=${encodeURIComponent(companyId)}` : EMAIL_DRAFT_ACTIVE_RUN_PATH,
     { method: "GET" },
   );
   if (!response) return null;

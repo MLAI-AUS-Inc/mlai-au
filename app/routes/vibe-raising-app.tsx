@@ -212,7 +212,7 @@ export default function VibeRaisingApp() {
             Loading marketing…
           </div>
         ) : null}
-        <ActiveDraftRunProvider backendBaseUrl={backendBaseUrl}>
+        <ActiveDraftRunProvider backendBaseUrl={backendBaseUrl} companyId={scopedCompanyId}>
           <ActiveDraftRunBanner />
           <Outlet context={{ triggerAnnouncement }} />
         </ActiveDraftRunProvider>
