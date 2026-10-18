@@ -155,18 +155,15 @@ export default function Team() {
           <div className="fighter-mobile-layout">
             {/* Character Preview */}
             <div className="fighter-mobile-preview">
-              <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
-                <img
-                  key={selectedPerson.name}
-                  src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
-                  alt={`${selectedPerson.name} pixel art — click to enter the hackathon`}
-                  className="fighter-mobile-preview-image"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultPixelCharacter;
-                  }}
-                />
-                <span className="fighter-medhack-badge">ENTER HACKATHON</span>
-              </a>
+              <img
+                key={selectedPerson.name}
+                src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
+                alt={`${selectedPerson.name} pixel art`}
+                className="fighter-mobile-preview-image"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultPixelCharacter;
+                }}
+              />
             </div>
 
             {/* Player Info */}
@@ -258,18 +255,15 @@ export default function Team() {
 
             {/* Center: Full Body Character Preview */}
             <div className="fighter-preview-center">
-              <a href="/platform/login?app=esafety&next=/esafety/dashboard" className="fighter-medhack-link">
-                <img
-                  key={selectedPerson.name}
-                  src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
-                  alt={`${selectedPerson.name} pixel art — click to enter the hackathon`}
-                  className="fighter-preview-image"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultPixelCharacter;
-                  }}
-                />
-                <span className="fighter-medhack-badge">ENTER HACKATHON</span>
-              </a>
+              <img
+                key={selectedPerson.name}
+                src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
+                alt={`${selectedPerson.name} pixel art`}
+                className="fighter-preview-image"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultPixelCharacter;
+                }}
+              />
             </div>
 
             {/* Right: Player Info Panel */}
@@ -458,13 +452,8 @@ export default function Team() {
           }
         }
 
-        .fighter-mobile-preview .fighter-medhack-link {
-          height: 100%;
-          max-width: 100%;
-        }
-
         .fighter-mobile-preview-image {
-          height: calc(100% - 32px);
+          height: 100%;
           width: auto;
           max-width: 100%;
           min-height: 0;
@@ -878,39 +867,6 @@ export default function Team() {
         @keyframes blink-text {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }
-        }
-
-        /* Medhack clickable GIF link */
-        .fighter-medhack-link {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-decoration: none;
-          cursor: pointer;
-          transition: transform 0.2s ease;
-        }
-
-        .fighter-medhack-link:hover {
-          transform: scale(1.05);
-        }
-
-        .fighter-medhack-badge {
-          font-family: 'Press Start 2P', cursive;
-          font-size: 8px;
-          color: #1a1a1a;
-          background: #00e5ff;
-          padding: 6px 14px;
-          border-radius: 4px;
-          margin-top: 8px;
-          animation: blink-text 1.5s step-end infinite;
-          white-space: nowrap;
-        }
-
-        @media (min-width: 1024px) {
-          .fighter-medhack-badge {
-            font-size: 10px;
-            padding: 8px 18px;
-          }
         }
       `}</style>
     </section>
