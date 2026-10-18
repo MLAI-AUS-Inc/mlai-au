@@ -86,7 +86,13 @@ test("homepage defers the engine and fight assets; independent selection support
   if (testInfo.project.name === "desktop") {
     const canvas = await page.locator(".arcade-stage canvas").elementHandle();
     await page.setViewportSize({ width: 390, height: 844 });
-    expect(await canvas?.evaluate(node => node.isConnected && node === document.querySelector(".arcade-stage canvas"))).toBe(true);
+    expect(
+      await canvas?.evaluate(
+        (node) =>
+          node.isConnected &&
+          node === document.querySelector(".arcade-stage canvas"),
+      ),
+    ).toBe(true);
     await expect(page.locator(".arcade-stage canvas")).toHaveCount(1);
   }
   expect(requests.filter((url) => url.endsWith("/sonia.webp"))).toHaveLength(1);
@@ -278,6 +284,14 @@ test("touch supports simultaneous movement/attack and releases cancelled pointer
     type: "touchCancel",
     touchPoints: [],
   });
+  await page.waitForTimeout(100);
+  const stoppedX = Number(
+    await page.locator(".arcade-cabinet").getAttribute("data-player-x"),
+  );
+  await page.waitForTimeout(150);
+  expect(
+    Number(await page.locator(".arcade-cabinet").getAttribute("data-player-x")),
+  ).toBe(stoppedX);
   expect(
     Number(await page.locator(".arcade-cabinet").getAttribute("data-player-x")),
   ).toBeGreaterThan(before);
@@ -288,4 +302,25 @@ test("touch supports simultaneous movement/attack and releases cancelled pointer
       .locator("dialog")
       .evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
   ).toBe(true);
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect
+    .poll(async () => {
+      const box = await page
+        .getByRole("button", { name: "Jump", exact: true })
+        .boundingBox();
+      const punchBox = await page
+        .getByRole("button", { name: "Punch", exact: true })
+        .boundingBox();
+      return (
+        !!box &&
+        !!punchBox &&
+        box.y >= 0 &&
+        box.y + box.height <= 390 &&
+        punchBox.y >= 0 &&
+        punchBox.y + punchBox.height <= 390
+      );
+    })
+    .toBe(true);
+  await expect(page.locator(".arcade-stage canvas")).toHaveCount(1);
+  await page.screenshot({ path: testInfo.outputPath("landscape.png") });
 });

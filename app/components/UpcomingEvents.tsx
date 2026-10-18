@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getEventUrl, type Event } from "~/lib/events";
+import { formatEventStart } from "~/lib/event-display";
 
 export default function UpcomingEvents({ events: rawEvents }: { events: Event[] }) {
   const [currentPage, setCurrentPage] = useState(0);
@@ -32,20 +33,6 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
     (currentPage + 1) * eventsPerPage
   );
 
-  // Format date parts for the date box
-  const formatDateParts = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return {
-      day: date.getDate().toString(),
-      month: date.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-      time: date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }),
-    };
-  };
-
   return (
     <section id="upcoming-events" className="w-full bg-[var(--brutalist-beige)] p-2 lg:p-3">
       {/* Full width container with rounded corners - Purple Background */}
@@ -61,7 +48,7 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
             <p className="text-center text-white/80 py-8 sm:py-12 text-base sm:text-lg">No upcoming events are currently available. The feed may be empty or unavailable.</p>
           ) : (
             currentEvents.map((event) => {
-              const dateParts = formatDateParts(event.startDate);
+              const dateParts = formatEventStart(event.startDate, event.timezone);
               return (
                 <div
                   key={event._id}

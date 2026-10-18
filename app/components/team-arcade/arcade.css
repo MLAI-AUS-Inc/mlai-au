@@ -13,8 +13,7 @@
   font-family: Inter, Arial, sans-serif;
 }
 .team-arcade-dialog::backdrop {
-  background: #050a1be8;
-  backdrop-filter: blur(8px);
+  background: #050a1bf5;
 }
 .team-arcade-dialog * {
   box-sizing: border-box;
@@ -36,6 +35,7 @@
   outline-offset: 4px;
 }
 .arcade-cabinet {
+  position: relative;
   padding: 24px;
 }
 .arcade-header {
@@ -363,11 +363,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow-y: auto;
   text-align: center;
   background: #0b122be8;
   padding: 22px;
   gap: 13px;
+}
+.arcade-overlay > * {
+  flex-shrink: 0;
+}
+.arcade-overlay > :first-child {
+  margin-top: auto;
+}
+.arcade-overlay > :last-child {
+  margin-bottom: auto;
 }
 .arcade-overlay h3 {
   font:
@@ -702,14 +712,49 @@
   }
   .arcade-header h2 {
     font-size: 12px;
+    margin: 0;
+  }
+  .arcade-header .arcade-eyebrow {
+    display: none;
+  }
+  .arcade-header .arcade-icon-button {
+    width: 32px;
+    height: 32px;
+  }
+  .arcade-hud {
+    margin-bottom: 8px;
+  }
+  .arcade-health progress {
+    height: 12px;
   }
   .arcade-stage-wrap {
-    max-width: 70vh;
+    max-width: calc((100dvh - 190px) * 1.77778);
     margin: auto;
   }
   .arcade-touch-controls {
-    position: relative;
-    margin-top: 5px;
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 58%;
+    transform: translateY(-50%);
+    margin: 0;
+    pointer-events: none;
+  }
+  .arcade-touch-controls > div {
+    pointer-events: auto;
+  }
+  .arcade-touch {
+    width: 44px;
+    height: 44px;
+  }
+  .arcade-dpad {
+    grid-template-columns: repeat(3, 44px);
+    grid-template-rows: repeat(2, 44px);
+  }
+  .arcade-action-pad {
+    display: grid;
+    grid-template-columns: repeat(2, 44px);
+    gap: 4px;
   }
   .arcade-help {
     display: none;
@@ -719,6 +764,29 @@
   }
   .arcade-selection-intro {
     display: none;
+  }
+}
+@media (max-width: 650px), (max-height: 560px) and (orientation: landscape) {
+  .arcade-overlay {
+    padding: 8px;
+    gap: 6px;
+  }
+  .arcade-overlay h3 {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .arcade-overlay p {
+    font-size: 11px;
+  }
+  .arcade-overlay .arcade-primary {
+    min-height: 36px;
+    padding: 8px 16px;
+    font-size: 11px !important;
+  }
+  .arcade-overlay .arcade-secondary {
+    min-height: 30px;
+    padding: 5px 10px;
+    font-size: 10px !important;
   }
 }
 @media (prefers-reduced-motion: reduce) {

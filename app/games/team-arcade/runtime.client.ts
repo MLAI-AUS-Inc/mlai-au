@@ -228,6 +228,11 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
           color: "#7c98bc",
         })
         .setOrigin(1, 0.5);
+      // Cache the static skyline once rather than tessellating hundreds of
+      // windows and roof tiles on every combat frame, especially on phones.
+      g.generateTexture("mlai-rooftop", 960, 540);
+      g.destroy();
+      this.add.image(0, 0, "mlai-rooftop").setOrigin(0).setDepth(-1);
     }
     update(_time: number, delta: number) {
       if (destroyed || !ready) return;
