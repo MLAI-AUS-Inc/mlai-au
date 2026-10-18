@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type ComponentType, type MouseEvent } from "react";
+import type { ArcadeShellProps } from "./team-arcade/ArcadeShell";
 
 // Team member data
 const people = [
@@ -127,6 +128,42 @@ const people = [
 export default function Team() {
   const [selectedIndex, setSelectedIndex] = useState(14); // Start with Callum (matching reference)
   const selectedPerson = people[selectedIndex];
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(media.matches);
+    update(); media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  const preview = reducedMotion ? selectedPerson.pixelImageUrl.replace(".gif", "-still.webp") : selectedPerson.pixelImageUrl;
+  const thumbnail = (url: string) => url.replace("/press-kit/", "/press-kit/thumbnails/").replace(/\.[^.]+$/, ".webp");
+  const [arcadeOpen, setArcadeOpen] = useState(false);
+  const [Arcade, setArcade] = useState<ComponentType<ArcadeShellProps> | null>(null);
+  const [arcadeError, setArcadeError] = useState(false);
+  const request = useRef(0);
+  const section = useRef<HTMLElement>(null);
+  const startButton = useRef<HTMLButtonElement | null>(null);
+  const arcadeEnabled = import.meta.env.VITE_TEAM_ARCADE_ENABLED !== "false";
+  const closeArcade = () => {
+    request.current++; setArcadeOpen(false);
+    // Safari does not focus buttons on a mouse click. Restore the actual
+    // launcher explicitly, including when a responsive breakpoint changed.
+    requestAnimationFrame(() => {
+      const visible = (button: HTMLButtonElement) => button.getClientRects().length > 0;
+      const target = startButton.current && visible(startButton.current) ? startButton.current :
+        [...(section.current?.querySelectorAll<HTMLButtonElement>(".fighter-press-start, .fighter-mobile-press-start") ?? [])].find(visible);
+      target?.focus({ preventScroll: true });
+    });
+  };
+  const openArcade = (event: MouseEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.matches(".fighter-press-start, .fighter-mobile-press-start")) startButton.current = event.currentTarget;
+    setArcadeOpen(true); setArcadeError(false);
+    if (Arcade) return;
+    const current = ++request.current;
+    import("./team-arcade/ArcadeShell").then(module => {
+      if (request.current === current) setArcade(() => module.default);
+    }).catch(() => { if (request.current === current) setArcadeError(true); });
+  };
 
   // Local pixel character fallback
   const defaultPixelCharacter = "/press-kit/pixel-art/team-callum-holt-pixel.gif";
@@ -140,7 +177,7 @@ export default function Team() {
   };
 
   return (
-    <section className="fighter-select-wrapper">
+    <section ref={section} className="fighter-select-wrapper">
       <div className="fighter-select-container">
         {/* Pixel World Map Background */}
         <div className="fighter-select-bg" />
@@ -157,7 +194,7 @@ export default function Team() {
             <div className="fighter-mobile-preview">
               <img
                 key={selectedPerson.name}
-                src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
+                src={preview || defaultPixelCharacter}
                 alt={`${selectedPerson.name} pixel art`}
                 className="fighter-mobile-preview-image"
                 onError={(e) => {
@@ -192,7 +229,11 @@ export default function Team() {
                     aria-label={`Select ${person.name}`}
                   >
                     <img
-                      src={person.imageUrl}
+                      src={thumbnail(person.imageUrl)}
+                      loading="lazy"
+                      decoding="async"
+                      width="192"
+                      height="192"
                       alt={person.name}
                       className="fighter-mobile-select-photo"
                     />
@@ -210,14 +251,14 @@ export default function Team() {
             </div>
 
             {/* Press Start Button */}
-            <a
-              href={selectedPerson.linkedIn}
-              target="_blank"
-              rel="noopener noreferrer"
+            {arcadeEnabled && <button
+              type="button"
+              onClick={openArcade}
               className="fighter-mobile-press-start"
             >
-              VIEW PROFILE
-            </a>
+              PRESS START
+            </button>}
+            <a href={selectedPerson.linkedIn} target="_blank" rel="noopener noreferrer" className="fighter-mobile-profile">View profile ↗</a>
           </div>
 
           {/* === DESKTOP LAYOUT === */}
@@ -244,7 +285,11 @@ export default function Team() {
                     aria-label={`Select ${person.name}`}
                   >
                     <img
-                      src={person.imageUrl}
+                      src={thumbnail(person.imageUrl)}
+                      loading="lazy"
+                      decoding="async"
+                      width="192"
+                      height="192"
                       alt={person.name}
                       className="fighter-select-photo"
                     />
@@ -257,7 +302,7 @@ export default function Team() {
             <div className="fighter-preview-center">
               <img
                 key={selectedPerson.name}
-                src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
+                src={preview || defaultPixelCharacter}
                 alt={`${selectedPerson.name} pixel art`}
                 className="fighter-preview-image"
                 onError={(e) => {
@@ -303,22 +348,37 @@ export default function Team() {
               </div>
 
               {/* Press Start Button */}
-              <a
-                href={selectedPerson.linkedIn}
-                target="_blank"
-                rel="noopener noreferrer"
+              {arcadeEnabled && <button
+                type="button"
+                onClick={openArcade}
                 className="fighter-press-start"
               >
                 PRESS START
-              </a>
+              </button>}
             </div>
           </div>
         </div>
       </div>
 
+      {/* One client-only host shared by both responsive Start buttons. */}
+      {arcadeOpen && Arcade && <Arcade initialPlayer={selectedPerson.name === "Sonia Kaurah" ? "sonia" : "sam"} onClose={closeArcade} />}
+      {arcadeOpen && !Arcade && <div className="fighter-arcade-loading" role={arcadeError ? "alert" : "status"}>
+        <p>{arcadeError ? "The arcade could not download. Check your connection and try again." : "LOADING MLAI ARCADE…"}</p>
+        {arcadeError && <button onClick={openArcade}>Retry</button>}
+        <button onClick={closeArcade}>Back to team</button>
+      </div>}
       {/* Scoped Styles */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        .fighter-press-start { background: transparent; border: 0; text-align: right; }
+        .fighter-mobile-profile { color: #e7ebff; font: 12px monospace; text-decoration: underline; }
+        .fighter-arcade-loading { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #fff; background: #10162cf5; padding: 24px; text-align: center; }
+        .fighter-arcade-loading button { background: #ffea48; color: #13192d; border: 0; border-radius: 5px; padding: 12px 22px; cursor: pointer; }
+        @media (prefers-reduced-motion: reduce) {
+          .fighter-select-box-active, .fighter-press-start { animation: none !important; }
+          .fighter-select-box, .fighter-nav-arrow { transition: none !important; }
+        }
 
         .fighter-select-wrapper {
           width: 100%;

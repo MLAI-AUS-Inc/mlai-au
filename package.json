@@ -8,6 +8,8 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "test:arcade": "bun test tests/team-arcade-combat.test.ts",
+    "test:arcade:browser": "playwright test --config playwright.arcade.config.ts",
     "check:article-internal-links": "bunx --yes tsx scripts/check-article-internal-links.ts",
     "generate:sitemap": "bunx --yes tsx scripts/generate-sitemap.ts",
     "prebuild": "bun run check:indexing && bun run check:article-integrity && bun test --timeout 30000 tests/article-integrity.test.ts tests/article-resource-integrity.test.tsx tests/article-review-disclosure.test.tsx tests/article-schema-ownership.test.tsx tests/reader-document-ssr.test.ts tests/article-pilot-evidence.test.tsx && bun run check:article-downloads && bun run generate:sitemap && bun run check:editorial",
@@ -60,6 +62,7 @@
     "logrocket": "^10.1.1",
     "lucide-react": "^0.535.0",
     "motion": "^12.40.0",
+    "phaser": "4.2.1",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-dropzone": "^14.3.8",
