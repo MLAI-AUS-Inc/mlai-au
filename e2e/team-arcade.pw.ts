@@ -260,12 +260,14 @@ test("touch supports simultaneous movement/attack and releases cancelled pointer
     "data-phase",
     "fight",
   );
-  const right = page.getByRole("button", { name: "Right", exact: true }),
+  // Retreat into open space so a CPU hit/push cannot be mistaken for held input.
+  // Keep the exact position assertion after cancellation; no timing tolerance.
+  const left = page.getByRole("button", { name: "Left", exact: true }),
     punch = page.getByRole("button", { name: "Punch", exact: true });
   const before = Number(
     await page.locator(".arcade-cabinet").getAttribute("data-player-x"),
   );
-  const r = await right.boundingBox(),
+  const r = await left.boundingBox(),
     p = await punch.boundingBox();
   if (!r || !p) throw new Error("Touch controls must be visible");
   const cdp = await page.context().newCDPSession(page);
@@ -294,7 +296,7 @@ test("touch supports simultaneous movement/attack and releases cancelled pointer
   ).toBe(stoppedX);
   expect(
     Number(await page.locator(".arcade-cabinet").getAttribute("data-player-x")),
-  ).toBeGreaterThan(before);
+  ).toBeLessThan(before);
   await page.getByRole("button", { name: "Ⅱ Pause", exact: true }).click();
   await page.screenshot({ path: testInfo.outputPath("mobile.png") });
   expect(
