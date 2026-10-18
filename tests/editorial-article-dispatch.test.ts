@@ -131,6 +131,14 @@ function errorResult(result: unknown) {
 }
 
 for (const route of routes) describe(`actual ${route.name} article dispatch`, () => {
+  for (const price of [6, 12]) {
+    test(`submits the confirmed ${price}-point article quote`, async () => {
+      const form = briefForm();
+      form.set("expectedCostPoints", String(price));
+      expect(await submit(route, form)).toBeInstanceOf(Response);
+      expect(generations()[0].body.expectedCostPoints).toBe(price);
+    });
+  }
   for (const audience of ["SMB", "BUILDER", "FOUNDER_BUILDER", "COMMUNITY", "OUTSIDE"]) {
     test(`carries the exact ${audience} brief once, with scoped company and original request headers`, async () => {
       const form = briefForm(audience);

@@ -1,4 +1,4 @@
-export const VIBE_MARKETING_ARTICLE_JOB_COST_POINTS = 6;
+export const VIBE_MARKETING_ARTICLE_JOB_COST_POINTS = 12;
 export const VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS = 1;
 
 function isFreeContentFactoryDomain(domain: string | null | undefined) {
@@ -8,12 +8,22 @@ function isFreeContentFactoryDomain(domain: string | null | undefined) {
   return hostname === "mlai.au";
 }
 
-export function vibeMarketingArticleCostPoints(domain: string | null | undefined) {
-  return isFreeContentFactoryDomain(domain) ? 0 : VIBE_MARKETING_ARTICLE_JOB_COST_POINTS;
+export function vibeMarketingArticleCostPoints(_domain: string | null | undefined) {
+  return VIBE_MARKETING_ARTICLE_JOB_COST_POINTS;
 }
 
 export function vibeMarketingContentIslandTopicCostPoints(domain: string | null | undefined) {
   return isFreeContentFactoryDomain(domain) ? 0 : VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS;
+}
+
+/** Display the founder's authoritative article quote from bootstrap. */
+export function getVibeMarketingArticleCostPoints(bootstrap: {
+  articleCapabilities?: { prices: { article: number | null } } | null;
+}) {
+  const price = bootstrap.articleCapabilities?.prices?.article;
+  return price === 6 || price === VIBE_MARKETING_ARTICLE_JOB_COST_POINTS
+    ? price
+    : VIBE_MARKETING_ARTICLE_JOB_COST_POINTS;
 }
 
 function randomIdPart() {

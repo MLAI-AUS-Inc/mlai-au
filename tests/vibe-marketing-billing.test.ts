@@ -6,23 +6,31 @@ import {
   clearContentIslandResearchRequestId,
   contentIslandResearchRequestId,
   createVibeMarketingClientRequestId,
+  getVibeMarketingArticleCostPoints,
   vibeMarketingArticleCostPoints,
   vibeMarketingContentIslandTopicCostPoints,
 } from "../app/lib/vibe-marketing-billing";
 
 describe("vibe marketing billing", () => {
+  test("uses the founder's current server quote", () => {
+    expect(getVibeMarketingArticleCostPoints({})).toBe(12);
+    for (const price of [6, 12]) {
+      expect(getVibeMarketingArticleCostPoints({ articleCapabilities: { prices: { article: price } } })).toBe(price);
+    }
+    expect(getVibeMarketingArticleCostPoints({ articleCapabilities: { prices: { article: 0 } } })).toBe(12);
+  });
   test("exposes current Roo point costs", () => {
-    expect(VIBE_MARKETING_ARTICLE_JOB_COST_POINTS).toBe(6);
+    expect(VIBE_MARKETING_ARTICLE_JOB_COST_POINTS).toBe(12);
     expect(VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS).toBe(1);
   });
 
-  test("displays the backend's free mlai.au pricing only for the mlai.au domain", () => {
+  test("charges every article domain while retaining research pricing", () => {
     for (const domain of ["mlai.au", "https://www.mlai.au/articles", "MLAI.AU."]) {
-      expect(vibeMarketingArticleCostPoints(domain)).toBe(0);
+      expect(vibeMarketingArticleCostPoints(domain)).toBe(12);
       expect(vibeMarketingContentIslandTopicCostPoints(domain)).toBe(0);
     }
     for (const domain of ["another.au", "sub.mlai.au", "fake-mlai.au", ""]) {
-      expect(vibeMarketingArticleCostPoints(domain)).toBe(6);
+      expect(vibeMarketingArticleCostPoints(domain)).toBe(12);
       expect(vibeMarketingContentIslandTopicCostPoints(domain)).toBe(1);
     }
   });

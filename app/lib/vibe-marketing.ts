@@ -566,6 +566,9 @@ export function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       payload.checks && typeof payload.checks === "object"
         ? (payload.checks as VibeMarketingBootstrap["checks"])
         : {},
+    articleCapabilities: payload.articleCapabilities && typeof payload.articleCapabilities === "object"
+      ? payload.articleCapabilities as VibeMarketingBootstrap["articleCapabilities"]
+      : null,
     articleSetupState,
     article_setup_state: articleSetupState,
     latestRuns,

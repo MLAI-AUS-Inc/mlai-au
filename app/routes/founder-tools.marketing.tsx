@@ -75,7 +75,7 @@ import {
   clearContentIslandResearchRequestId,
   contentIslandResearchRequestId,
   createVibeMarketingClientRequestId,
-  vibeMarketingArticleCostPoints,
+  getVibeMarketingArticleCostPoints,
   vibeMarketingContentIslandTopicCostPoints,
 } from "~/lib/vibe-marketing-billing";
 import {
@@ -720,6 +720,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const editorialBrief = await articleBriefFromRequest(env, request, formData, activeCompanyId);
       const result = await startVibeMarketingArticle(env, request, {
+        expectedCostPoints: formData.has("expectedCostPoints") ? Number(formData.get("expectedCostPoints")) : undefined,
         editorialBrief,
         companyId: activeCompanyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
@@ -3527,7 +3528,7 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const billingDomain = bootstrap.organization.domain || bootstrap.company.domain;
-  const articleCostPoints = vibeMarketingArticleCostPoints(billingDomain);
+  const articleCostPoints = getVibeMarketingArticleCostPoints(bootstrap);
   const contentIslandCostPoints = vibeMarketingContentIslandTopicCostPoints(billingDomain);
   const tags = startupTags(bootstrap);
   const githubConnected = isDashboardGithubConnected(bootstrap);
@@ -4251,6 +4252,7 @@ function ReturningTopicPickerPage({
             {activeTab === "choose" ? (
               <input type="hidden" name="intent" value="start-article" />
             ) : null}
+            <input type="hidden" name="expectedCostPoints" value={articleCostPoints} />
             <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
             <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
             <input type="hidden" name="deliveryModeExplicit" value="false" />
