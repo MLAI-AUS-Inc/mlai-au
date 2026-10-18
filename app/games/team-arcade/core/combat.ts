@@ -4,12 +4,14 @@ import {
   type FighterId,
   type MatchConfig,
 } from "../roster";
+import { SPECIAL_MOVES, type SpecialKind } from "../specials";
 
 export const TICK_RATE = 60;
 export const STEP_MS = 1000 / TICK_RATE;
 export const ARENA_WIDTH = 960;
 export const FLOOR_Y = 440;
 export const ROUND_TICKS = 60 * TICK_RATE;
+export const PULSE_RADIUS = 137;
 export type Side = 0 | 1;
 export type MoveId = "light" | "heavy" | "low" | "air" | "special";
 export type FighterState =
@@ -144,6 +146,9 @@ export interface Fighter {
   wins: number;
   buffer: { move: MoveId; until: number } | null;
   previous: InputFrame;
+  specialOriginX: number;
+  specialTargetX: number;
+  specialPulse: number;
 }
 export interface Projectile {
   id: number;
@@ -152,10 +157,19 @@ export interface Projectile {
   y: number;
   facing: 1 | -1;
   age: number;
+  fighter: FighterId;
+  kind: SpecialKind;
+  vx: number;
+  vy: number;
+  width: number;
+  height: number;
+  delay: number;
+  duration: number;
 }
 export interface CombatEvent {
   type: "hit" | "block" | "special" | "round" | "fight";
   side?: Side;
+  fighter?: FighterId;
   x?: number;
   y?: number;
 }
@@ -176,8 +190,12 @@ export const overlaps = (a: Box, b: Box) =>
   a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 const clamp = (n: number, min: number, max: number) =>
   Math.min(max, Math.max(min, n));
-export const moveLength = (id: MoveId) =>
-  MOVES[id].startup + MOVES[id].active + MOVES[id].recovery;
+export const moveTiming = (f: Fighter) =>
+  f.move === "special" ? SPECIAL_MOVES[f.id] : MOVES[f.move ?? "light"];
+export const moveLength = (id: MoveId, fighter?: FighterId) => {
+  const move = id === "special" && fighter ? SPECIAL_MOVES[fighter] : MOVES[id];
+  return move.startup + move.active + move.recovery;
+};
 export function hurtbox(f: Fighter): Box {
   const height =
     f.state === "crouch" || (f.guarding && f.lowGuard) || f.move === "low"
@@ -186,7 +204,8 @@ export function hurtbox(f: Fighter): Box {
   return { x: f.x - 25, y: FLOOR_Y - f.y - height, w: 50, h: height };
 }
 export function hitbox(f: Fighter): Box | null {
-  if (!f.move || f.move === "special" || f.hit) return null;
+  if (!f.move || f.hit) return null;
+  if (f.move === "special") return specialHitbox(f);
   const m = MOVES[f.move];
   if (f.moveTick < m.startup || f.moveTick >= m.startup + m.active) return null;
   const reach = m.reach * FIGHTERS[f.id].reach;
@@ -196,6 +215,79 @@ export function hitbox(f: Fighter): Box | null {
     w: reach - 15,
     h: m.top - m.bottom,
   };
+}
+export function specialHitbox(f: Fighter): Box | null {
+  const special = SPECIAL_MOVES[f.id];
+  const t = f.moveTick - special.startup;
+  if (f.move !== "special" || f.hit || t < 0 || t >= special.active)
+    return null;
+  let reach = 0,
+    top = 125,
+    bottom = 25;
+  switch (special.kind) {
+    case "uppercut":
+      reach = 104;
+      top = 156;
+      bottom = 10;
+      break;
+    case "rush":
+      if (t % 9 > 2) return null;
+      reach = 107;
+      break;
+    case "pulse":
+      return {
+        x: f.x - PULSE_RADIUS,
+        y: FLOOR_Y - f.y - 75 - PULSE_RADIUS,
+        w: PULSE_RADIUS * 2,
+        h: PULSE_RADIUS * 2,
+      };
+    case "sky-kick":
+      reach = 116;
+      top = 94;
+      bottom = 10;
+      break;
+    case "blink":
+      reach = 112;
+      break;
+    case "dash":
+      reach = 98;
+      top = 110;
+      bottom = 18;
+      break;
+    default:
+      return null;
+  }
+  return {
+    x: f.facing === 1 ? f.x + 12 : f.x - reach,
+    y: FLOOR_Y - f.y - top,
+    w: reach - 12,
+    h: top - bottom,
+  };
+}
+export const ringRadius = (age: number) => Math.min(185, 25 + age * 5);
+export function circleOverlapsBox(
+  x: number,
+  y: number,
+  radius: number,
+  box: Box,
+) {
+  const dx = x - clamp(x, box.x, box.x + box.w),
+    dy = y - clamp(y, box.y, box.y + box.h);
+  return dx * dx + dy * dy <= radius * radius;
+}
+/** For stationary effects, guard and knockback follow the actual impact side. */
+function radialDirection(
+  sourceX: number,
+  targetX: number,
+  fallback: 1 | -1,
+): 1 | -1 {
+  return targetX === sourceX ? fallback : targetX > sourceX ? 1 : -1;
+}
+export function projectileBox(p: Projectile): Box {
+  const radius = p.kind === "ring" ? ringRadius(p.age) : 0;
+  return radius
+    ? { x: p.x - radius, y: p.y - radius, w: radius * 2, h: radius * 2 }
+    : { x: p.x - p.width / 2, y: p.y - p.height / 2, w: p.width, h: p.height };
 }
 function createFighter(id: FighterId, side: Side, wins = 0): Fighter {
   return {
@@ -219,6 +311,9 @@ function createFighter(id: FighterId, side: Side, wins = 0): Fighter {
     wins,
     buffer: null,
     previous: emptyInput(),
+    specialOriginX: 0,
+    specialTargetX: 0,
+    specialPulse: -1,
   };
 }
 interface Observation {
@@ -272,7 +367,7 @@ export class CpuController {
       opponentAttacking: !!op.move,
       opponentRecovery:
         !!op.move &&
-        op.moveTick >= MOVES[op.move].startup + MOVES[op.move].active,
+        op.moveTick >= moveTiming(op).startup + moveTiming(op).active,
       projectile: match.projectiles.some(
         (p) => p.owner === 0 && Math.abs(p.x - self.x) < 230,
       ),
@@ -298,7 +393,19 @@ export class CpuController {
     const distance = Math.abs(observed.selfX - observed.opponentX);
     const toward = observed.opponentX > observed.selfX ? "right" : "left";
     const away = toward === "right" ? "left" : "right";
+    const special = SPECIAL_MOVES[self.id];
+    const specialInRange =
+      observed.meter >= 50 &&
+      distance >= special.cpuRange[0] &&
+      distance <= special.cpuRange[1];
     if (
+      special.kind === "counter" &&
+      specialInRange &&
+      observed.opponentAttacking &&
+      this.random() < 0.45
+    ) {
+      input.special = true;
+    } else if (
       ((observed.opponentAttacking && distance < 165) || observed.projectile) &&
       this.random() < settings.block
     ) {
@@ -306,7 +413,7 @@ export class CpuController {
       input.crouch = this.random() < 0.22;
     } else if (distance > 115) {
       input[toward] = true;
-      if (observed.meter >= 50 && distance > 190 && this.random() < 0.42)
+      if (specialInRange && special.kind !== "counter" && this.random() < 0.42)
         input.special = true;
       if (this.random() < 0.06) input.jump = true;
     } else if (this.random() < settings.attack || observed.opponentRecovery) {
@@ -315,7 +422,7 @@ export class CpuController {
         input.crouch = true;
         input.light = true;
       } else input.light = true;
-      if (observed.meter >= 50 && this.random() < 0.2) {
+      if (specialInRange && special.kind !== "counter" && this.random() < 0.2) {
         input.special = true;
         input.light = false;
         input.heavy = false;
@@ -344,6 +451,8 @@ export class CombatMatch {
   readonly cpu: CpuController;
   private projectileId = 0;
   private accumulator = 0;
+  private pendingHealing: [number, number] = [0, 0];
+  private pendingPulls: [number | null, number | null] = [null, null];
   constructor(readonly config: MatchConfig) {
     this.fighters = [
       createFighter(config.player, 0),
@@ -430,6 +539,8 @@ export class CombatMatch {
       return;
     }
     this.remaining--;
+    this.pendingHealing = [0, 0];
+    this.pendingPulls = [null, null];
     this.fighters.forEach((f, i) =>
       this.updateFighter(
         f,
@@ -438,32 +549,97 @@ export class CombatMatch {
       ),
     );
     this.separateBodies();
+    const contactOrigins = this.fighters.map((f) => f.x);
     // Determine both contacts before applying either hit (fair simultaneous trades).
     const contacts = this.fighters
       .map((f, i) => {
-        const box = hitbox(f);
-        return box && overlaps(box, hurtbox(this.fighters[i === 0 ? 1 : 0]))
-          ? { attacker: f.side, move: f.move!, facing: f.facing }
-          : null;
+        const box = hitbox(f),
+          target = this.fighters[i === 0 ? 1 : 0];
+        if (!box || !overlaps(box, hurtbox(target))) return null;
+        const radial =
+          f.move === "special" && SPECIAL_MOVES[f.id].kind === "pulse";
+        if (
+          radial &&
+          !circleOverlapsBox(
+            f.x,
+            FLOOR_Y - f.y - 75,
+            PULSE_RADIUS,
+            hurtbox(target),
+          )
+        )
+          return null;
+        return {
+          attacker: f.side,
+          move: f.move!,
+          facing: radial ? radialDirection(f.x, target.x, f.facing) : f.facing,
+        };
       })
       .filter((v) => v !== null);
     for (const c of contacts) {
       this.fighters[c.attacker].hit = true;
-      this.resolveHit(c.attacker, c.move, c.facing);
+      this.resolveHit(c.attacker, c.move, c.facing, contactOrigins[c.attacker]);
     }
+    // Projectile contacts are collected first as well: mirror volleys trade fairly.
+    const projectileContacts: { projectile: Projectile; direction: 1 | -1 }[] =
+      [];
     this.projectiles = this.projectiles.filter((p) => {
-      p.x += p.facing * 8;
       p.age++;
-      if (p.x < -50 || p.x > ARENA_WIDTH + 50 || p.age > 150) return false;
+      if (p.age <= p.delay) return true;
       const target = this.fighters[p.owner === 0 ? 1 : 0];
+      if (p.kind === "tracking-orb") {
+        p.vx = clamp(p.vx + Math.sign(target.x - p.x) * 0.12, -3.6, 3.6);
+        p.vy = clamp((FLOOR_Y - target.y - 75 - p.y) * 0.035, -2.8, 2.8);
+      } else if (p.kind === "lob") p.vy += 0.3;
+      p.x += p.vx;
+      p.y += p.vy;
       if (
-        overlaps({ x: p.x - 18, y: p.y - 18, w: 36, h: 36 }, hurtbox(target))
-      ) {
-        this.resolveHit(p.owner, "special", p.facing);
+        p.x < -80 ||
+        p.x > ARENA_WIDTH + 80 ||
+        p.y > FLOOR_Y + 80 ||
+        p.age > p.duration
+      )
+        return false;
+      const targetBox = hurtbox(target);
+      const contact =
+        p.kind === "ring"
+          ? circleOverlapsBox(p.x, p.y, ringRadius(p.age), targetBox)
+          : overlaps(projectileBox(p), targetBox);
+      if (contact) {
+        const fallback = radialDirection(
+          contactOrigins[p.owner],
+          target.x,
+          p.facing,
+        );
+        const direction: 1 | -1 =
+          Math.abs(p.vx) > 0.001
+            ? p.vx > 0
+              ? 1
+              : -1
+            : radialDirection(p.x, target.x, fallback);
+        projectileContacts.push({ projectile: p, direction });
         return false;
       }
       return true;
     });
+    for (const { projectile: p, direction } of projectileContacts)
+      this.resolveHit(p.owner, "special", direction, contactOrigins[p.owner]);
+    // Apply restorative/displacement effects after both contacts. A simultaneous
+    // Vital Pulse trade must not favour the side whose capped heal runs last.
+    this.fighters.forEach((f, i) => {
+      if (f.health > 0)
+        f.health = Math.min(100, f.health + this.pendingHealing[i]);
+      if (this.pendingPulls[i] !== null)
+        f.x = clamp(this.pendingPulls[i]!, 45, ARENA_WIDTH - 45);
+    });
+    if (this.pendingPulls.some((x) => x !== null)) {
+      const [a, b] = this.fighters,
+        order = contactOrigins[1] >= contactOrigins[0] ? 1 : -1;
+      if ((b.x - a.x) * order < 54) {
+        const midpoint = clamp((a.x + b.x) / 2, 72, ARENA_WIDTH - 72);
+        a.x = midpoint - order * 27;
+        b.x = midpoint + order * 27;
+      }
+    }
     if (this.fighters.some((f) => f.health <= 0) || this.remaining <= 0)
       this.finishRound();
   }
@@ -476,13 +652,16 @@ export class CombatMatch {
     if (move) f.buffer = { move, until: this.tick + 6 };
     f.previous = { ...input };
   }
-  private startMove(f: Fighter, id: MoveId) {
+  private startMove(f: Fighter, id: MoveId, opponent: Fighter) {
     if (id === "special" && (f.meter < 50 || f.y > 0)) return false;
     if (id === "special") f.meter -= 50;
     f.move = id;
     f.moveTick = 0;
     f.hit = false;
     f.connected = false;
+    f.specialOriginX = f.x;
+    f.specialTargetX = opponent.x;
+    f.specialPulse = -1;
     f.state = "attack";
     f.stateTick = 0;
     f.guarding = false;
@@ -510,17 +689,7 @@ export class CombatMatch {
     if (f.buffer && f.buffer.until < this.tick) f.buffer = null;
     if (f.move) {
       f.moveTick++;
-      if (f.move === "special" && f.moveTick === MOVES.special.startup) {
-        this.projectiles.push({
-          id: ++this.projectileId,
-          owner: f.side,
-          x: f.x + f.facing * 45,
-          y: FLOOR_Y - f.y - 78,
-          facing: f.facing,
-          age: 0,
-        });
-        this.events.push({ type: "special", side: f.side });
-      }
+      if (f.move === "special") this.updateSpecial(f, opponent);
       if (
         f.move === "light" &&
         f.connected &&
@@ -528,8 +697,8 @@ export class CombatMatch {
         f.moveTick < 17 &&
         f.buffer?.move === "heavy"
       )
-        this.startMove(f, "heavy");
-      if (f.moveTick < moveLength(f.move)) return;
+        this.startMove(f, "heavy", opponent);
+      if (f.moveTick < moveLength(f.move, f.id)) return;
       f.move = null;
     }
     f.facing = opponent.x >= f.x ? 1 : -1;
@@ -539,7 +708,7 @@ export class CombatMatch {
     if (
       f.buffer &&
       (!f.guarding || !input.guard) &&
-      this.startMove(f, f.buffer.move)
+      this.startMove(f, f.buffer.move, opponent)
     )
       return;
     if (input.jump && f.y === 0 && !input.guard) {
@@ -562,6 +731,130 @@ export class CombatMatch {
               ? "walk"
               : "idle";
   }
+  private spawnProjectile(f: Fighter, patch: Partial<Projectile> = {}) {
+    const special = SPECIAL_MOVES[f.id];
+    this.projectiles.push({
+      id: ++this.projectileId,
+      owner: f.side,
+      fighter: f.id,
+      kind: special.kind,
+      x: f.x + f.facing * 45,
+      y: FLOOR_Y - 78,
+      facing: f.facing,
+      age: 0,
+      vx: f.facing * 8,
+      vy: 0,
+      width: 36,
+      height: 36,
+      delay: 0,
+      duration: 150,
+      ...patch,
+    });
+  }
+  private updateSpecial(f: Fighter, opponent: Fighter) {
+    const special = SPECIAL_MOVES[f.id],
+      t = f.moveTick - special.startup;
+    if (t === 0) {
+      this.events.push({ type: "special", side: f.side, fighter: f.id });
+      switch (special.kind) {
+        case "wave":
+          this.spawnProjectile(f, { width: 56, height: 62 });
+          break;
+        case "double-burst":
+          this.spawnProjectile(f, { vx: f.facing * 10, width: 27, height: 27 });
+          break;
+        case "trap":
+          this.spawnProjectile(f, {
+            x: clamp(f.x + f.facing * 155, 45, 915),
+            y: FLOOR_Y - 22,
+            vx: 0,
+            width: 74,
+            height: 44,
+            delay: 18,
+            duration: 110,
+          });
+          break;
+        case "lob":
+          this.spawnProjectile(f, {
+            y: FLOOR_Y - 115,
+            vx: f.facing * 5.1,
+            vy: -8,
+            width: 44,
+            height: 44,
+            duration: 100,
+          });
+          break;
+        case "tether":
+          this.spawnProjectile(f, {
+            vx: f.facing * 11,
+            width: 54,
+            height: 18,
+            duration: 65,
+          });
+          break;
+        case "ring":
+          this.spawnProjectile(f, {
+            x: f.x,
+            y: FLOOR_Y - 65,
+            vx: 0,
+            width: 40,
+            height: 40,
+            duration: 33,
+          });
+          break;
+        case "tracking-orb":
+          this.spawnProjectile(f, {
+            vx: f.facing * 2.2,
+            width: 48,
+            height: 48,
+            duration: 145,
+          });
+          break;
+        case "cascade":
+          for (let n = 0; n < 3; n++)
+            this.spawnProjectile(f, {
+              x: clamp(f.specialTargetX + (n - 1) * 68, 45, 915),
+              y: 140,
+              vx: 0,
+              vy: 13,
+              width: 38,
+              height: 68,
+              delay: 18 + n * 8,
+              duration: 65 + n * 8,
+            });
+          break;
+        case "uppercut":
+          f.vy = 10;
+          f.y = 1;
+          break;
+        case "sky-kick":
+          f.vy = 8.5;
+          f.y = 1;
+          break;
+        case "blink":
+          // Never cross through the defender: the locked marker can be escaped,
+          // and the defender's held guard remains a valid response.
+          f.x = clamp(f.specialTargetX - f.facing * 78, 45, 915);
+          if ((opponent.x - f.x) * f.facing < 54)
+            f.x = clamp(opponent.x - f.facing * 78, 45, 915);
+          break;
+      }
+    }
+    if (special.kind === "double-burst" && t === 12)
+      this.spawnProjectile(f, { vx: f.facing * 10, width: 27, height: 27 });
+    if (t < 0 || t >= special.active) return;
+    if (special.kind === "rush") {
+      const pulse = Math.floor(t / 9);
+      if (pulse !== f.specialPulse) {
+        f.hit = false;
+        f.specialPulse = pulse;
+      }
+      f.x += f.facing * 3.2;
+    } else if (special.kind === "uppercut") f.x += f.facing * 1.2;
+    else if (special.kind === "sky-kick") f.x += f.facing * 5.5;
+    else if (special.kind === "dash") f.x += f.facing * 11;
+    f.x = clamp(f.x, 45, 915);
+  }
   private separateBodies() {
     const [a, b] = this.fighters;
     if (Math.abs(a.y - b.y) > 115) return;
@@ -576,11 +869,46 @@ export class CombatMatch {
       else a.x = b.x - direction * 54;
     }
   }
-  private resolveHit(side: Side, id: MoveId, direction: 1 | -1) {
+  private resolveHit(
+    side: Side,
+    id: MoveId,
+    direction: 1 | -1,
+    sourceX = this.fighters[side].x,
+  ) {
     const attacker = this.fighters[side],
       target = this.fighters[side === 0 ? 1 : 0],
-      move = MOVES[id];
+      move = id === "special" ? SPECIAL_MOVES[attacker.id] : MOVES[id];
     if (target.health <= 0) return;
+    // A counter has a readable startup and finite active window; it offers no
+    // immunity before/after that window, and can only reverse one contact.
+    const counter = SPECIAL_MOVES[target.id];
+    if (
+      target.move === "special" &&
+      counter.kind === "counter" &&
+      !target.hit &&
+      target.moveTick >= counter.startup &&
+      target.moveTick < counter.startup + counter.active
+    ) {
+      target.hit = true;
+      target.connected = true;
+      target.moveTick = counter.startup + counter.active;
+      this.events.push({
+        type: "special",
+        side: target.side,
+        fighter: target.id,
+      });
+      // A projectile can be countered, but the retaliation has close range.
+      if (Math.abs(target.x - attacker.x) <= 160)
+        this.resolveHit(target.side, "special", target.facing);
+      else
+        this.events.push({
+          type: "block",
+          side: target.side,
+          x: target.x,
+          y: FLOOR_Y - target.y - 95,
+        });
+      return;
+    }
     const correctHeight =
       move.guard === "mid" ||
       (move.guard === "low" ? target.lowGuard : !target.lowGuard);
@@ -608,6 +936,16 @@ export class CombatMatch {
       target.stateTick = 0;
       target.x = clamp(target.x + direction * move.push, 45, ARENA_WIDTH - 45);
       attacker.connected = true;
+      if (id === "special") {
+        const kind = SPECIAL_MOVES[attacker.id].kind;
+        if (kind === "pulse") this.pendingHealing[side] += 6;
+        if (kind === "tether")
+          this.pendingPulls[target.side] = sourceX + direction * 95;
+        if (kind === "uppercut") {
+          target.y = Math.max(1, target.y);
+          target.vy = 9;
+        }
+      }
     }
     this.hitStop = Math.max(
       this.hitStop,

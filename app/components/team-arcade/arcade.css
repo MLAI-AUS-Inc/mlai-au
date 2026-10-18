@@ -80,7 +80,7 @@
 }
 .arcade-selection-intro {
   text-align: center;
-  margin: 12px 0 25px;
+  margin: 8px 0 18px;
 }
 .arcade-tag {
   display: inline-block;
@@ -92,15 +92,15 @@
   border-radius: 4px;
 }
 .arcade-selection-intro p {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 650;
-  margin: 14px 0;
+  margin: 12px 0;
 }
 .arcade-versus-select {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
 }
 .arcade-fighter-select {
   border: 0;
@@ -112,32 +112,117 @@
   font: 700 12px monospace;
   letter-spacing: 1px;
   color: #00e5ff;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 .arcade-fighter-select.opponent legend {
   color: #ff80aa;
 }
+.arcade-selected {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  column-gap: 13px;
+  row-gap: 12px;
+  border: 1px solid #27788d;
+  border-radius: 7px;
+  padding: 12px;
+  background: #14283d;
+  min-height: 152px;
+}
+.opponent .arcade-selected {
+  border-color: #8b4165;
+  background: #2b2039;
+}
+.arcade-selected > img {
+  width: 72px;
+  height: 72px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+.arcade-selected-identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+.arcade-selected-identity > strong {
+  font-size: 15px;
+  color: #f1f5ff;
+}
+.arcade-selected-identity > span {
+  color: #aebcdb;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.arcade-selected-identity > p {
+  color: #81dae7;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 5px 0 0;
+}
+.opponent .arcade-selected-identity > p {
+  color: #ffadca;
+}
+.arcade-selected-special {
+  grid-column: 1 / -1;
+}
+.arcade-selected .arcade-special-name {
+  font: 700 11px/1.6 monospace;
+  color: #ffe878;
+}
+.arcade-selected-special > p {
+  margin: 3px 0 0;
+  color: #b6c4de;
+  font-size: 11px;
+  line-height: 1.55;
+}
+.arcade-roster-search {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  color: #aebcdb;
+  font-size: 11px;
+}
+.arcade-roster-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  background: #111b33;
+  border: 1px solid #435270;
+  border-radius: 5px;
+  padding: 10px 12px;
+  color: #f1f5ff;
+  font-size: 13px;
+}
+.arcade-roster-search input::placeholder {
+  color: #8f9ebc;
+}
+.arcade-roster-count {
+  font: 10px monospace;
+  color: #95a7cb;
+  margin: 9px 0;
+}
 .arcade-choice-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
 }
 .arcade-choice {
   display: flex;
   flex-direction: column;
-  text-align: left;
+  text-align: center;
+  align-items: stretch;
+  min-width: 44px;
+  min-height: 96px;
   overflow: hidden;
   border: 2px solid #35405d;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #18213b;
   color: #e5eaff;
-  padding: 0 0 12px;
-  transition:
-    border-color 0.15s,
-    transform 0.15s;
+  padding: 0 0 6px;
+  transition: border-color 0.15s, transform 0.15s;
 }
 .arcade-choice:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: #9aacd1;
 }
 .arcade-choice.selected {
@@ -150,47 +235,49 @@
 }
 .arcade-choice img {
   width: 100%;
-  height: auto;
-  aspect-ratio: 1;
+  height: 64px;
   object-fit: cover;
+  object-position: center 35%;
   background: #29335a;
-  filter: saturate(0.8);
 }
 .arcade-choice strong {
-  font: 700 17px monospace;
-  letter-spacing: 2px;
-  margin: 13px 12px 4px;
-}
-.arcade-choice > span {
-  font-size: 11px;
-  margin: 0 12px;
-  color: #b0bbd5;
+  font: 700 10px/1.4 monospace;
+  letter-spacing: 0.2px;
+  margin: 6px 2px 3px;
+  white-space: nowrap;
 }
 .arcade-choice .arcade-selection-marker {
-  margin-top: 14px;
-  font: 700 9px monospace;
-  letter-spacing: 1px;
+  font: 700 8px/1.3 monospace;
+  color: #8facce;
+}
+.arcade-choice.selected .arcade-selection-marker {
   color: #00e5ff;
 }
-.opponent .arcade-choice .arcade-selection-marker {
-  color: #ff80aa;
+.opponent .arcade-choice.selected .arcade-selection-marker {
+  color: #ff9dc0;
 }
-.arcade-fighter-select > p {
-  font-size: 12px;
+.arcade-empty-search {
+  padding: 18px 10px;
   color: #c5cce0;
-  margin: 14px 0 4px;
-}
-.arcade-fighter-select .arcade-special-name {
-  font: 10px monospace;
-  color: #8b9dc2;
+  font-size: 12px;
   line-height: 1.6;
+}
+.arcade-empty-search button {
+  display: block;
+  margin-top: 12px;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: #00e5ff;
+  background: transparent;
+  border: 1px solid #435270;
+  border-radius: 5px;
 }
 .arcade-vs {
   position: absolute;
   left: 50%;
-  top: 40%;
+  top: 76px;
   transform: translate(-50%, -50%) rotate(-8deg);
-  font: italic 900 31px monospace;
+  font: italic 900 24px monospace;
   color: #ffea48;
 }
 .arcade-selection-bottom {
@@ -525,6 +612,30 @@
     display: none;
   }
 }
+@media (min-width: 651px) and (max-width: 900px) {
+  .arcade-versus-select {
+    gap: 25px;
+  }
+  .arcade-choice-grid {
+    gap: 5px;
+  }
+  .arcade-choice img {
+    height: 56px;
+  }
+  .arcade-choice strong {
+    font-size: 9px;
+  }
+  .arcade-selected {
+    padding: 9px;
+    column-gap: 9px;
+  }
+  .arcade-selected-identity > strong {
+    font-size: 13px;
+  }
+  .arcade-vs {
+    font-size: 18px;
+  }
+}
 @media (max-width: 650px) {
   .team-arcade-dialog {
     width: 98vw;
@@ -559,39 +670,48 @@
     letter-spacing: 1px;
   }
   .arcade-versus-select {
+    grid-template-columns: minmax(0, 1fr);
     gap: 25px;
   }
   .arcade-fighter-select legend {
-    font-size: 9px;
-    letter-spacing: 0;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .arcade-selected {
+    min-height: 0;
+    padding: 10px;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .arcade-selected > img {
+    width: 64px;
+    height: 64px;
+  }
+  .arcade-selected-identity > strong {
+    font-size: 14px;
   }
   .arcade-choice-grid {
-    gap: 6px;
+    gap: 5px;
+  }
+  .arcade-choice {
+    min-height: 88px;
+  }
+  .arcade-choice img {
+    height: 57px;
   }
   .arcade-choice strong {
-    font-size: 12px;
-    margin: 8px 6px 3px;
-  }
-  .arcade-choice > span {
-    font-size: 8px;
-    margin: 0 6px;
+    font-size: 9px;
+    letter-spacing: 0;
+    margin: 5px 1px 3px;
   }
   .arcade-choice .arcade-selection-marker {
     font-size: 7px;
-    letter-spacing: 0;
-    margin-top: 8px;
-  }
-  .arcade-choice {
-    padding-bottom: 8px;
   }
   .arcade-vs {
-    font-size: 18px;
+    display: none;
   }
-  .arcade-fighter-select > p {
-    font-size: 9px;
-  }
-  .arcade-fighter-select .arcade-special-name {
-    font-size: 8px;
+  .arcade-roster-search input {
+    font-size: 16px;
   }
   .arcade-selection-bottom {
     flex-direction: column;

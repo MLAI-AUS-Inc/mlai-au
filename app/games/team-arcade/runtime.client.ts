@@ -4,14 +4,17 @@ import { ArcadeAudio } from "./audio";
 import { InputController } from "./core/input";
 import {
   CombatMatch,
-  MOVES,
+  moveTiming,
   FLOOR_Y,
+  PULSE_RADIUS,
+  ringRadius,
   type InputFrame,
   type MatchSnapshot,
   type Fighter,
   hurtbox,
   hitbox,
 } from "./core/combat";
+import { SPECIAL_MOVES } from "./specials";
 
 export interface ArcadeRuntime {
   start(): Promise<void>;
@@ -58,7 +61,7 @@ const KEYFRAMES = {
 export function spriteFrame(f: Fighter, clock: number) {
   if (f.move) {
     const frames = KEYFRAMES[f.move];
-    const move = MOVES[f.move];
+    const move = moveTiming(f);
     return frames[
       f.moveTick >= move.startup && f.moveTick < move.startup + move.active
         ? 1
@@ -89,7 +92,7 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
     private fighters: Phaser.GameObjects.Sprite[] = [];
     private effects!: Phaser.GameObjects.Graphics;
     private sparks: Spark[] = [];
-    private projectileSprites = new Map<number, Phaser.GameObjects.Container>();
+
     private labels: Phaser.GameObjects.Text[] = [];
     constructor() {
       super("mlai-arena");
@@ -257,25 +260,174 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
         this.effects.fillEllipse(f.x, FLOOR_Y + 5, 90, 12);
         this.labels[i].setX(f.x);
       });
-      for (const p of match.projectiles) {
-        let projectile = this.projectileSprites.get(p.id);
-        if (!projectile) {
-          const color = p.owner === 0 ? 0x00e5ff : 0xff5a94;
-          const outer = this.add.circle(0, 0, 25, color, 0.25),
-            inner = this.add.circle(0, 0, 14, color),
-            core = this.add.circle(-4, -2, 7, 0xffffff);
-          projectile = this.add
-            .container(p.x, p.y, [outer, inner, core])
-            .setDepth(20);
-          this.projectileSprites.set(p.id, projectile);
+      const g = this.effects;
+      // Shapes encode the move as well as its fighter colour, so every tell is
+      // readable in mirror matches and when motion effects are disabled.
+      for (const f of match.fighters) {
+        if (f.move !== "special") continue;
+        const special = SPECIAL_MOVES[f.id],
+          t = f.moveTick - special.startup;
+        const color = special.color,
+          ground = FLOOR_Y - f.y;
+        g.lineStyle(3, color, t < 0 ? 0.55 : 0.95);
+        if (t < 0) {
+          g.strokeCircle(f.x, ground - 75, 33);
+          g.lineBetween(f.x - 18, ground - 75, f.x + 18, ground - 75);
+          if (special.kind === "blink") {
+            const x = Phaser.Math.Clamp(
+              f.specialTargetX - f.facing * 78,
+              45,
+              915,
+            );
+            g.strokeRect(x - 23, FLOOR_Y - 145, 46, 145);
+          } else if (special.kind === "cascade") {
+            for (let n = -1; n <= 1; n++) {
+              const x = Phaser.Math.Clamp(f.specialTargetX + n * 68, 45, 915);
+              g.lineBetween(x - 19, FLOOR_Y - 3, x + 19, FLOOR_Y - 3);
+              g.lineBetween(x, FLOOR_Y - 18, x, FLOOR_Y + 4);
+            }
+          } else if (special.kind === "trap") {
+            const x = Phaser.Math.Clamp(f.x + f.facing * 155, 45, 915);
+            g.strokeEllipse(x, FLOOR_Y - 3, 72, 16);
+          }
+          continue;
         }
-        projectile.setPosition(p.x, p.y).setScale(1 + Math.sin(p.age) * 0.08);
+        if (t >= special.active) continue;
+        switch (special.kind) {
+          case "uppercut":
+            g.beginPath();
+            g.arc(f.x, ground - 85, 75, Math.PI * 0.95, Math.PI * 1.95);
+            g.strokePath();
+            g.lineBetween(
+              f.x + f.facing * 45,
+              ground - 85,
+              f.x + f.facing * 45,
+              ground - 175,
+            );
+            break;
+          case "rush":
+            for (let n = 0; n < 3; n++)
+              g.lineBetween(
+                f.x - f.facing * (30 + n * 12),
+                ground - 70 - n * 16,
+                f.x - f.facing * (65 + n * 12),
+                ground - 70 - n * 16,
+              );
+            g.strokeCircle(f.x + f.facing * 70, ground - 87, 28);
+            break;
+          case "pulse":
+            g.strokeCircle(f.x, ground - 75, PULSE_RADIUS);
+            g.lineBetween(f.x - 14, ground - 75, f.x + 14, ground - 75);
+            g.lineBetween(f.x, ground - 89, f.x, ground - 61);
+            break;
+          case "sky-kick":
+            g.lineBetween(
+              f.x - f.facing * 70,
+              ground - 15,
+              f.x + f.facing * 75,
+              ground - 94,
+            );
+            g.lineBetween(
+              f.x - f.facing * 70,
+              ground - 5,
+              f.x + f.facing * 75,
+              ground - 84,
+            );
+            break;
+          case "blink":
+            g.strokeRect(f.x - 31, ground - 145, 62, 145);
+            if (!reduced)
+              g.strokeRect(f.specialOriginX - 25, FLOOR_Y - 140, 50, 140);
+            break;
+          case "counter":
+            if (!f.hit) {
+              g.strokeRoundedRect(f.x - 43, ground - 156, 86, 155, 20);
+              g.lineBetween(f.x, ground - 140, f.x, ground - 30);
+            }
+            break;
+          case "dash":
+            for (let n = 0; n < (reduced ? 1 : 4); n++) {
+              const x = f.x - f.facing * (35 + n * 28);
+              g.lineBetween(x, ground - 90, x - f.facing * 20, ground - 65);
+              g.lineBetween(x - f.facing * 20, ground - 65, x, ground - 40);
+            }
+            break;
+        }
       }
-      for (const [id, sprite] of this.projectileSprites)
-        if (!match.projectiles.some((p) => p.id === id)) {
-          sprite.destroy();
-          this.projectileSprites.delete(id);
+      for (const p of match.projectiles) {
+        const color = SPECIAL_MOVES[p.fighter].color;
+        g.lineStyle(3, color, 1);
+        g.fillStyle(color, 0.25);
+        if (p.age <= p.delay) {
+          g.strokeEllipse(p.x, FLOOR_Y - 5, p.kind === "trap" ? 74 : 42, 14);
+          if (p.kind === "cascade") g.lineBetween(p.x, 130, p.x, 175);
+          continue;
         }
+        switch (p.kind) {
+          case "wave":
+            g.fillEllipse(p.x, p.y, 60, 66);
+            g.strokeEllipse(p.x, p.y, 44, 61);
+            g.lineBetween(p.x, p.y - 28, p.x + p.facing * 18, p.y);
+            g.lineBetween(p.x + p.facing * 18, p.y, p.x, p.y + 28);
+            break;
+          case "double-burst":
+            g.fillTriangle(p.x, p.y - 20, p.x + 18, p.y, p.x, p.y + 20);
+            g.fillTriangle(p.x, p.y - 20, p.x - 18, p.y, p.x, p.y + 20);
+            g.strokeCircle(p.x, p.y, 10);
+            break;
+          case "trap":
+            g.fillRect(p.x - 35, FLOOR_Y - 44, 70, 44);
+            for (let n = -1; n <= 1; n++) {
+              const x = p.x + n * 24;
+              g.lineBetween(x - 8, FLOOR_Y - 2, x, FLOOR_Y - 43);
+              g.lineBetween(x, FLOOR_Y - 43, x + 8, FLOOR_Y - 2);
+            }
+            break;
+          case "lob":
+            g.fillCircle(p.x, p.y, 21);
+            g.strokeCircle(p.x, p.y, 22);
+            g.lineBetween(p.x - 12, p.y, p.x, p.y - 12);
+            g.lineBetween(p.x, p.y - 12, p.x + 12, p.y);
+            break;
+          case "tether": {
+            const owner = match.fighters[p.owner];
+            g.lineBetween(
+              owner.x + owner.facing * 24,
+              FLOOR_Y - owner.y - 85,
+              p.x,
+              p.y,
+            );
+            g.strokeCircle(p.x, p.y, 14);
+            g.lineBetween(p.x, p.y - 14, p.x + p.facing * 18, p.y);
+            g.lineBetween(p.x + p.facing * 18, p.y, p.x, p.y + 14);
+            break;
+          }
+          case "ring": {
+            const radius = ringRadius(p.age);
+            g.strokeCircle(p.x, p.y, radius);
+            g.strokeCircle(p.x, p.y, radius - 8);
+            break;
+          }
+          case "cascade":
+            for (let n = 0; n < 3; n++) {
+              const y = p.y + n * 14 - 28;
+              g.lineBetween(p.x - 13, y - 5, p.x - 20, y);
+              g.lineBetween(p.x - 20, y, p.x - 13, y + 5);
+              g.lineBetween(p.x + 13, y - 5, p.x + 20, y);
+              g.lineBetween(p.x + 20, y, p.x + 13, y + 5);
+            }
+            g.fillRect(p.x - 5, p.y - 28, 10, 56);
+            break;
+          case "tracking-orb":
+            g.fillCircle(p.x, p.y, 23);
+            g.strokeCircle(p.x, p.y, 26);
+            g.strokeEllipse(p.x, p.y, 64, 21);
+            g.strokeEllipse(p.x, p.y, 21, 64);
+            g.fillStyle(0xffffff, 0.9);
+            g.fillCircle(p.x, p.y, 6);
+            break;
+        }
+      }
       for (const event of match.events.splice(0)) {
         audio.cue(event);
         if (event.x !== undefined && event.y !== undefined)

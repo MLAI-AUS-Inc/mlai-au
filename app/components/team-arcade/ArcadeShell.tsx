@@ -6,6 +6,7 @@ import {
   type FighterId,
   type MatchConfig,
 } from "~/games/team-arcade/roster";
+import { SPECIAL_MOVES } from "~/games/team-arcade/specials";
 import type {
   InputFrame,
   MatchSnapshot,
@@ -50,6 +51,106 @@ const keyActions: Record<string, keyof InputFrame> = {
 };
 const CONTROLS =
   "A/D or ←/→ move · W/↑/Space jump · S/↓ crouch · J punch · K kick · L special · Shift guard · Esc pause";
+
+type FighterSlot = "player" | "opponent";
+
+function FighterSelection({
+  slot,
+  selected,
+  onSelect,
+}: {
+  slot: FighterSlot;
+  selected: FighterId;
+  onSelect: (id: FighterId) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const fighter = FIGHTERS[selected];
+  const special = SPECIAL_MOVES[selected];
+  const query = search.trim().toLocaleLowerCase();
+  const matches = FIGHTER_IDS.filter((id) => {
+    const entry = FIGHTERS[id];
+    return `${entry.name} ${entry.role} ${entry.special}`
+      .toLocaleLowerCase()
+      .includes(query);
+  });
+  const label = slot === "player" ? "your fighter" : "CPU opponent";
+
+  return (
+    <fieldset className={`arcade-fighter-select ${slot}`}>
+      <legend>
+        {slot === "player" ? "01 / YOUR FIGHTER" : "02 / CPU OPPONENT"}
+      </legend>
+      <div
+        className="arcade-selected"
+        data-testid={`${slot}-selected-fighter`}
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <img src={fighter.portrait} alt="" width="80" height="80" />
+        <div className="arcade-selected-identity">
+          <strong>{fighter.name}</strong>
+          <span>{fighter.role}</span>
+          <p>{fighter.style}</p>
+        </div>
+        <div className="arcade-selected-special">
+          <span className="arcade-special-name">SPECIAL / {special.name}</span>
+          <p>{special.description}</p>
+        </div>
+      </div>
+      <label className="arcade-roster-search">
+        <span>Find {label}</span>
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Name, role or special…"
+          autoComplete="off"
+          spellCheck={false}
+          aria-controls={`arcade-${slot}-roster`}
+        />
+      </label>
+      <div className="arcade-roster-count" aria-live="polite">
+        {matches.length} of {FIGHTER_IDS.length} fighters
+      </div>
+      <div className="arcade-choice-grid" id={`arcade-${slot}-roster`}>
+        {matches.map((id) => {
+          const entry = FIGHTERS[id];
+          const chosen = selected === id;
+          return (
+            <button
+              type="button"
+              key={id}
+              aria-pressed={chosen}
+              aria-label={`${slot === "player" ? "Play as" : "Fight against"} ${entry.name}`}
+              className={`arcade-choice ${chosen ? "selected" : ""}`}
+              onClick={() => onSelect(id)}
+            >
+              <img
+                src={entry.portrait}
+                alt=""
+                width="80"
+                height="80"
+                decoding="async"
+              />
+              <strong>{entry.shortName}</strong>
+              <span className="arcade-selection-marker" aria-hidden="true">
+                {chosen ? (slot === "player" ? "P1 ✓" : "CPU ✓") : "SELECT"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {matches.length === 0 && (
+        <p className="arcade-empty-search">
+          No fighters match “{search}”.{" "}
+          <button type="button" onClick={() => setSearch("")}>
+            Show all fighters
+          </button>
+        </p>
+      )}
+    </fieldset>
+  );
+}
 
 export default function ArcadeShell({
   initialPlayer = "sam",
@@ -327,7 +428,7 @@ export default function ArcadeShell({
           <div>
             <span className="arcade-eyebrow">MLAI / PLAYER VS CPU</span>
             <h2 id="arcade-title">
-              COMMUNITY CLASH<span>01</span>
+              COMMUNITY CLASH<span>15</span>
             </h2>
           </div>
           <button
@@ -341,61 +442,12 @@ export default function ArcadeShell({
         {mode === "select" ? (
           <div className="arcade-selection">
             <div className="arcade-selection-intro">
-              <span className="arcade-tag">TWO FIGHTERS. ONE COMMUNITY.</span>
+              <span className="arcade-tag">FIFTEEN FIGHTERS. ONE COMMUNITY.</span>
               <p>Pick your side. Meet your match.</p>
             </div>
             <div className="arcade-versus-select">
-              {(["player", "opponent"] as const).map((slot) => (
-                <fieldset
-                  key={slot}
-                  className={`arcade-fighter-select ${slot}`}
-                >
-                  <legend>
-                    {slot === "player"
-                      ? "01 / YOUR FIGHTER"
-                      : "02 / CPU OPPONENT"}
-                  </legend>
-                  <div className="arcade-choice-grid">
-                    {FIGHTER_IDS.map((id) => {
-                      const fighter = FIGHTERS[id],
-                        selected =
-                          (slot === "player" ? player : opponent) === id;
-                      return (
-                        <button
-                          key={id}
-                          aria-pressed={selected}
-                          aria-label={`${slot === "player" ? "Play as" : "Fight against"} ${fighter.name}`}
-                          className={`arcade-choice ${selected ? "selected" : ""}`}
-                          onClick={() =>
-                            slot === "player" ? setPlayer(id) : setOpponent(id)
-                          }
-                        >
-                          <img
-                            src={`/games/team-arcade/v1/${id}-portrait.webp`}
-                            alt=""
-                            width="160"
-                            height="160"
-                          />
-                          <strong>{fighter.shortName}</strong>
-                          <span>{fighter.role}</span>
-                          <span className="arcade-selection-marker">
-                            {selected
-                              ? slot === "player"
-                                ? "P1 SELECTED"
-                                : "CPU SELECTED"
-                              : "SELECT"}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p>{FIGHTERS[slot === "player" ? player : opponent].style}</p>
-                  <p className="arcade-special-name">
-                    SPECIAL /{" "}
-                    {FIGHTERS[slot === "player" ? player : opponent].special}
-                  </p>
-                </fieldset>
-              ))}
+              <FighterSelection slot="player" selected={player} onSelect={setPlayer} />
+              <FighterSelection slot="opponent" selected={opponent} onSelect={setOpponent} />
               <span className="arcade-vs" aria-hidden="true">
                 VS
               </span>
@@ -530,6 +582,9 @@ export default function ArcadeShell({
                   <p>
                     A/D or ←/→ move · W/↑ jump · J punch · K kick · L special ·
                     Shift guard
+                  </p>
+                  <p className="arcade-match-special">
+                    {SPECIAL_MOVES[player].name}: {SPECIAL_MOVES[player].description}
                   </p>
                   <button
                     className="arcade-primary"
@@ -685,6 +740,8 @@ export default function ArcadeShell({
                   attack hits overhead. A special costs half a meter; hits build
                   it.
                 </p>
+                <p><strong>{FIGHTERS[player].shortName} / {SPECIAL_MOVES[player].name}:</strong> {SPECIAL_MOVES[player].description}</p>
+                <p><strong>{FIGHTERS[opponent].shortName} / {SPECIAL_MOVES[opponent].name}:</strong> {SPECIAL_MOVES[opponent].description}</p>
               </div>
             )}
             <p className="arcade-help">

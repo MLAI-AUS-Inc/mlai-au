@@ -1,4 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
+import { FIGHTERS, FIGHTER_IDS } from "../app/games/team-arcade/roster";
+import { SPECIAL_MOVES } from "../app/games/team-arcade/specials";
+
+const sheetPaths = new Set<string>(FIGHTER_IDS.map((id) => FIGHTERS[id].sheet));
+const sheetRequests = (requests: string[]) =>
+  requests.map((url) => new URL(url).pathname).filter((path) => sheetPaths.has(path));
 
 async function home(page: Page) {
   // Local Worker caches use a constant 'local' revision. A query forces the
@@ -52,7 +58,7 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("homepage defers the engine and fight assets; independent selection supports mirrors", async ({
+test("homepage defers fight assets; all fifteen fighters select independently and support mirrors", async ({
   page,
 }, testInfo) => {
   const requests: string[] = [];
@@ -67,19 +73,42 @@ test("homepage defers the engine and fight assets; independent selection support
   ).toEqual([]);
   await open(page);
   expect(
-    requests.filter((url) =>
-      /runtime\.client|phaser|\/(sam|sonia)\.webp/.test(url),
-    ),
+    requests.filter((url) => /runtime\.client|phaser/.test(url)),
   ).toEqual([]);
-  await page.getByRole("button", { name: "Play as Sonia Kaurah" }).click();
+  expect(sheetRequests(requests)).toEqual([]);
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("button", { name: /^Play as / })).toHaveCount(15);
+  await expect(dialog.getByRole("button", { name: /^Fight against / })).toHaveCount(15);
+  for (const [index, id] of FIGHTER_IDS.entries()) {
+    const fighter = FIGHTERS[id], special = SPECIAL_MOVES[id];
+    for (const [label, slot] of [["Play as", "player"], ["Fight against", "opponent"]] as const) {
+      const choice = dialog.getByRole("button", { name: `${label} ${fighter.name}`, exact: true });
+      await choice.click();
+      await expect(choice).toHaveAttribute("aria-pressed", "true");
+      const selected = page.getByTestId(`${slot}-selected-fighter`);
+      await expect(selected).toContainText(fighter.name);
+      await expect(selected).toContainText(special.name);
+      await expect(selected).toContainText(special.description);
+      await expect(dialog.locator(`.${slot}.arcade-fighter-select button[aria-pressed="true"]`)).toHaveCount(1);
+      const otherName = slot === "player"
+        ? FIGHTERS[index ? FIGHTER_IDS[index - 1] : "sonia"].name
+        : fighter.name;
+      await expect(dialog.getByRole("button", {
+        name: `${slot === "player" ? "Fight against" : "Play as"} ${otherName}`,
+        exact: true,
+      })).toHaveAttribute("aria-pressed", "true");
+    }
+  }
+  // Both slots end on a newly added character; one sheet serves the mirror.
+  await page.getByRole("button", { name: "Play as Callum Holt", exact: true }).click();
   await page
-    .getByRole("button", { name: "Fight against Sonia Kaurah" })
+    .getByRole("button", { name: "Fight against Callum Holt", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Play as Sonia Kaurah" }),
+    page.getByRole("button", { name: "Play as Callum Holt", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
-    page.getByRole("button", { name: "Fight against Sonia Kaurah" }),
+    page.getByRole("button", { name: "Fight against Callum Holt", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.screenshot({ path: testInfo.outputPath("selection.png") });
   await enter(page);
@@ -95,14 +124,13 @@ test("homepage defers the engine and fight assets; independent selection support
     ).toBe(true);
     await expect(page.locator(".arcade-stage canvas")).toHaveCount(1);
   }
-  expect(requests.filter((url) => url.endsWith("/sonia.webp"))).toHaveLength(1);
-  expect(requests.filter((url) => url.endsWith("/sam.webp"))).toHaveLength(0);
+  expect(sheetRequests(requests)).toEqual([FIGHTERS.callum.sheet]);
   await page.getByRole("button", { name: "Close arcade" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
-test("human attacks and local CPU damage work, pause is stable and exit restores focus", async ({
+test("new fighters attack a local CPU using only their selected art; pause and focus remain stable", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -110,11 +138,16 @@ test("human attacks and local CPU damage work, pause is stable and exit restores
     "Keyboard journey runs on desktop engines; mobile has a multi-pointer journey.",
   );
   const errors: string[] = [];
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
   page.on("pageerror", (error) => errors.push(error.message));
   await home(page);
   await open(page);
+  await page.getByRole("button", { name: "Play as Ryan Mouritz", exact: true }).click();
+  await page.getByRole("button", { name: "Fight against Pegah Khaleghi", exact: true }).click();
   await page.getByLabel("CPU difficulty").selectOption("easy");
   await start(page);
+  expect(sheetRequests(requests).sort()).toEqual([FIGHTERS.pegah.sheet, FIGHTERS.ryan.sheet].sort());
   // Play with real keyboard events, steering from the rendered fighter positions.
   for (let i = 0; i < 28 && (await hp(page, "cpu")) === 100; i++) {
     const cabinet = page.locator(".arcade-cabinet");
@@ -211,7 +244,7 @@ test("missing required art reports a durable error and retries successfully", as
   await expect(page.getByRole("button", { name: "FIGHT!" })).toBeVisible();
 });
 
-test("cancelled loading cannot resurrect a game; repeated start/exit owns one canvas", async ({
+test("cancelled loading cannot resurrect a game; all fighter atlases survive repeated start and exit", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -219,6 +252,8 @@ test("cancelled loading cannot resurrect a game; repeated start/exit owns one ca
     "Repeated WebGL lifecycle coverage runs once.",
   );
   const errors: string[] = [];
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
   page.on("pageerror", (error) => errors.push(error.message));
   await home(page);
   await open(page);
@@ -237,11 +272,18 @@ test("cancelled loading cannot resurrect a game; repeated start/exit owns one ca
   await page.waitForTimeout(300);
   await expect(page.locator(".arcade-stage canvas")).toHaveCount(0);
   for (let i = 0; i < 20; i++) {
+    // Each of the fifteen real atlases is decoded by Phaser as P1 and CPU.
+    // The remaining cycles also exercise replacement after every sheet is cached.
+    const player = FIGHTERS[FIGHTER_IDS[i % FIGHTER_IDS.length]];
+    const opponent = FIGHTERS[FIGHTER_IDS[(i + 1) % FIGHTER_IDS.length]];
+    await page.getByRole("button", { name: `Play as ${player.name}`, exact: true }).click();
+    await page.getByRole("button", { name: `Fight against ${opponent.name}`, exact: true }).click();
     await enter(page);
     await page.getByRole("button", { name: "Close arcade" }).click();
     await expect(page.locator(".arcade-stage canvas")).toHaveCount(0);
     await open(page);
   }
+  expect([...new Set(sheetRequests(requests))].sort()).toEqual(FIGHTER_IDS.map((id) => FIGHTERS[id].sheet).sort());
   expect(errors).toEqual([]);
 });
 

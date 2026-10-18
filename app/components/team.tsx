@@ -4,6 +4,7 @@ import type { ArcadeShellProps } from "./team-arcade/ArcadeShell";
 // Team member data
 const people = [
   {
+    fighterId: "sam" as const,
     name: "Sam Donegan",
     role: "President",
     imageUrl: "/press-kit/team-sam-donegan.png",
@@ -12,6 +13,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "sonia" as const,
     name: "Sonia Kaurah",
     role: "Vice President",
     imageUrl: "/press-kit/team-sonia-kaurah.webp",
@@ -20,6 +22,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "ryan" as const,
     name: "Ryan Mouritz",
     role: "Vice President",
     imageUrl: "/press-kit/team-ryan-mouritz.jpg",
@@ -28,6 +31,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "pegah" as const,
     name: "Pegah Khaleghi",
     role: "Treasurer",
     imageUrl: "/press-kit/team-pegah-khaleghi.png",
@@ -36,6 +40,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "yana" as const,
     name: "Yana Lin",
     role: "Head of Marketing",
     imageUrl: "/press-kit/team-yana-lin.jpg",
@@ -44,6 +49,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "anjali" as const,
     name: "Anjali Singh",
     role: "Marketing Lead",
     imageUrl: "/press-kit/team-anjali-singh.jpeg",
@@ -52,6 +58,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "anu" as const,
     name: "Dr Anu Ganugapati",
     role: "Social Media Lead",
     imageUrl: "/press-kit/team-anu-gaunapati.jpg",
@@ -60,6 +67,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "daniel" as const,
     name: "Daniel Malkinson",
     role: "Partnerships Lead",
     imageUrl: "/press-kit/team-daniel-malkinson.jpg",
@@ -68,6 +76,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "jun" as const,
     name: "Jun Kai Chang",
     role: "Partnerships Lead",
     imageUrl: "/press-kit/team-jun-kai-chang.jpg",
@@ -76,6 +85,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "alisa" as const,
     name: "Alisa Belova",
     role: "Community Manager",
     imageUrl: "/press-kit/team-alisa-belova.png",
@@ -84,6 +94,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "shan" as const,
     name: "Shan Yang",
     role: "Community Manager",
     imageUrl: "/press-kit/team-shan-yang.png",
@@ -92,6 +103,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "kang" as const,
     name: "Kang Tan",
     role: "Community Manager",
     imageUrl: "/press-kit/team-kang-tan.jpg",
@@ -100,6 +112,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "juan" as const,
     name: "Juan Bernal",
     role: "Tech Lead",
     imageUrl: "/press-kit/team-juan-bernal.png",
@@ -108,6 +121,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "alan" as const,
     name: "Alan Philip",
     role: "Tech Lead",
     imageUrl: "/press-kit/team-alan-philip.png",
@@ -116,6 +130,7 @@ const people = [
     twitter: "",
   },
   {
+    fighterId: "callum" as const,
     name: "Callum Holt",
     role: "Tech Lead",
     imageUrl: "/press-kit/team-callum-holt.jpg",
@@ -361,7 +376,7 @@ export default function Team() {
       </div>
 
       {/* One client-only host shared by both responsive Start buttons. */}
-      {arcadeOpen && Arcade && <Arcade initialPlayer={selectedPerson.name === "Sonia Kaurah" ? "sonia" : "sam"} onClose={closeArcade} />}
+      {arcadeOpen && Arcade && <Arcade initialPlayer={selectedPerson.fighterId} onClose={closeArcade} />}
       {arcadeOpen && !Arcade && <div className="fighter-arcade-loading" role={arcadeError ? "alert" : "status"}>
         <p>{arcadeError ? "The arcade could not download. Check your connection and try again." : "LOADING MLAI ARCADE…"}</p>
         {arcadeError && <button onClick={openArcade}>Retry</button>}

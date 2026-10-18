@@ -1,4 +1,5 @@
 import type { CombatEvent } from "./core/combat";
+import { SPECIAL_MOVES } from "./specials";
 
 /** Small synthesised arcade cues: no audio download or third-party request. */
 export class ArcadeAudio {
@@ -25,14 +26,26 @@ export class ArcadeAudio {
     const oscillator = context.createOscillator(),
       envelope = context.createGain();
     const time = context.currentTime;
-    const frequency = {
+    const baseFrequency = {
       hit: 150,
       block: 600,
       special: 320,
       round: 440,
       fight: 880,
     }[event.type];
-    oscillator.type = event.type === "block" ? "triangle" : "square";
+    const special =
+      event.type === "special" && event.fighter
+        ? SPECIAL_MOVES[event.fighter]
+        : null;
+    const frequency = special
+      ? 220 + special.startup * 11 + special.active * 2
+      : baseFrequency;
+    oscillator.type =
+      event.type === "block" || special?.kind === "tracking-orb"
+        ? "triangle"
+        : special?.kind === "lob" || special?.kind === "pulse"
+          ? "sine"
+          : "square";
     oscillator.frequency.setValueAtTime(frequency, time);
     oscillator.frequency.exponentialRampToValueAtTime(
       event.type === "special" ? 1000 : frequency * 0.35,
