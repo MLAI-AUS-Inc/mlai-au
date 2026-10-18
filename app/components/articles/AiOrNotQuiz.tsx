@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 
 type QuizAnswer = "ai" | "not-ai";
 
@@ -68,7 +68,11 @@ const SCENARIOS: QuizScenario[] = [
   },
 ];
 
+const subscribe = () => () => {};
 export default function AiOrNotQuiz() {
+  // Server HTML renders before React attaches onClick; keep the buttons
+  // disabled until hydration so an early press is not silently dropped.
+  const interactive = useSyncExternalStore(subscribe, () => true, () => false);
   const [answers, setAnswers] = useState<Record<string, QuizAnswer>>({});
 
   const completed = Object.keys(answers).length;
@@ -132,6 +136,7 @@ export default function AiOrNotQuiz() {
                     key={value}
                     type="button"
                     aria-pressed={selected === value}
+                    disabled={!interactive}
                     onClick={() =>
                       setAnswers((current) => ({
                         ...current,
@@ -142,7 +147,7 @@ export default function AiOrNotQuiz() {
                       selected === value
                         ? "border-gray-950 bg-gray-950 text-white"
                         : "border-gray-400 bg-white text-gray-900 hover:border-gray-950"
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {label}
                   </button>
