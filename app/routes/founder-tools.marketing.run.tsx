@@ -788,8 +788,8 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const editorialBrief = await articleBriefFromRequest(env, request, formData, companyId);
       const result = await startVibeMarketingArticle(env, request, {
-        expectedCostPoints: formData.has("expectedCostPoints") ? Number(formData.get("expectedCostPoints")) : undefined,
         editorialBrief,
+        expectedCostPoints: formData.has("expectedCostPoints") ? Number(formData.get("expectedCostPoints")) : undefined,
         companyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
