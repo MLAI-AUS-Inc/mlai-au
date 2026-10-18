@@ -26,6 +26,6 @@ bun run build
 bun run test:arcade:browser
 ```
 
-The browser suite runs the production Worker preview and covers Chromium desktop, a Chromium phone viewport with actual multi-touch protocol events, and WebKit. It checks lazy network requests, both selection slots, mirrors, human and CPU damage, a real complete match, pause/resume, results/rematch, asset retry, cancelled loading and 20 start/exit cycles. Install the matching Playwright Chromium and WebKit browsers before first use. Browser captures remain in `.local/`. Emulated phone and WebKit tests do not replace testing on physical phones.
+The dedicated browser suite runs the production Worker preview and covers Chromium desktop, a Chromium phone viewport with actual multi-touch protocol events, and WebKit. It checks lazy network requests, both selection slots, mirrors, human and CPU damage, a real complete match, pause/resume, results/rematch, asset retry, cancelled loading and 20 start/exit cycles. The article suite excludes these JavaScript-dependent journeys; CI installs both browsers and runs each suite with its own configuration. Install the matching Playwright Chromium and WebKit browsers before first use. Browser captures remain in `.local/`. Emulated phone and WebKit tests do not replace testing on physical phones.
 
 Local Worker homepage caching uses the `local` build revision. For repeated preview rebuilds, use a query such as `/?arcade-check=browser` to fetch a fresh SSR document. Deployment builds receive their source revision through the existing Workers CI configuration.
