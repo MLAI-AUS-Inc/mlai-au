@@ -21,7 +21,9 @@ export function getVibeMarketingArticleCostPoints(bootstrap: {
   articleCapabilities?: { prices: { article: number | null } } | null;
 }) {
   const price = bootstrap.articleCapabilities?.prices?.article;
-  return price === 6 || price === VIBE_MARKETING_ARTICLE_JOB_COST_POINTS
+  // Honor an explicit legacy server quote during the coordinated rollout.
+  // A domain or missing quote must never imply a free article.
+  return price === 0 || price === 6 || price === VIBE_MARKETING_ARTICLE_JOB_COST_POINTS
     ? price
     : VIBE_MARKETING_ARTICLE_JOB_COST_POINTS;
 }

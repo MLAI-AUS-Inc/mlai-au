@@ -14,10 +14,20 @@ import {
 describe("vibe marketing billing", () => {
   test("uses the founder's current server quote", () => {
     expect(getVibeMarketingArticleCostPoints({})).toBe(12);
-    for (const price of [6, 12]) {
+    for (const price of [0, 6, 12]) {
       expect(getVibeMarketingArticleCostPoints({ articleCapabilities: { prices: { article: price } } })).toBe(price);
     }
-    expect(getVibeMarketingArticleCostPoints({ articleCapabilities: { prices: { article: 0 } } })).toBe(12);
+    for (const price of [null, -1, 1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(getVibeMarketingArticleCostPoints({ articleCapabilities: { prices: { article: price } } })).toBe(12);
+    }
+    expect(getVibeMarketingArticleCostPoints({ articleCapabilities: null })).toBe(12);
+  });
+  test("follows server quotes across the coordinated pricing rollout", () => {
+    const bootstrap = { articleCapabilities: { prices: { article: 0 } } };
+    for (const price of [0, 12, 6, 12]) {
+      bootstrap.articleCapabilities.prices.article = price;
+      expect(getVibeMarketingArticleCostPoints(bootstrap)).toBe(price);
+    }
   });
   test("exposes current Roo point costs", () => {
     expect(VIBE_MARKETING_ARTICLE_JOB_COST_POINTS).toBe(12);
