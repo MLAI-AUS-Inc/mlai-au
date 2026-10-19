@@ -44,6 +44,8 @@ async function confirm(page: Page) {
 }
 async function enter(page: Page) {
   await confirm(page);
+  if (await page.getByRole("dialog").getAttribute("data-layout-blocked") === "portrait")
+    await page.setViewportSize({ width: 844, height: 390 });
   await expect(page.locator(".arcade-versus")).toBeVisible({
     timeout: 30000,
   });
@@ -367,6 +369,8 @@ test("versus countdown waits while the arena is scrolled away and resumes when v
   await expect(dialog).toHaveAttribute("data-mode", "ready");
   await expect(cabinet).toHaveAttribute("data-tick", "0");
   await page.locator(".arcade-stage").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Close controls", exact: true }).click();
+  await page.locator(".arcade-stage").scrollIntoViewIfNeeded();
   await expect(cabinet).toHaveAttribute("data-phase", "fight", { timeout: 15000 });
   await page.getByRole("button", { name: "Close arcade" }).click();
   await expect(page.locator(".arcade-stage canvas")).toHaveCount(0);
@@ -547,6 +551,16 @@ test("touch supports simultaneous movement/attack and releases cancelled pointer
   expect(
     Number(await page.locator(".arcade-cabinet").getAttribute("data-player-x")),
   ).toBeLessThan(before);
+  // A captured thumb can slide to another button, then leave the pad. Each
+  // transition releases the old action rather than leaving movement stuck.
+  const jump = (await page.getByRole("button", { name: "Jump", exact: true }).boundingBox())!;
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [movement] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ ...movement, x: jump.x + jump.width / 2, y: jump.y + jump.height / 2 }] });
+  await expect(page.locator('.arcade-touch[data-action="jump"]')).toHaveAttribute("data-held", "true");
+  await expect(left).toHaveAttribute("data-held", "false");
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ ...movement, x: 200, y: 55 }] });
+  await expect(page.locator('.arcade-touch[data-held="true"]')).toHaveCount(0);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
   await page.getByRole("button", { name: "Ⅱ Pause", exact: true }).click();
   await page.screenshot({ path: testInfo.outputPath("mobile.png") });
   expect(

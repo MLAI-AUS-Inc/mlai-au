@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import {
   FIGHTERS,
   type FighterId,
@@ -17,6 +17,7 @@ import {
   releaseArcade,
 } from "~/lib/arcade-focus";
 import FighterSelect from "./FighterSelect";
+import { mobileLayout } from "./mobile-layout";
 import "./arcade.css";
 
 export interface ArcadeShellProps {
@@ -25,6 +26,7 @@ export interface ArcadeShellProps {
 }
 type Mode =
   | "select"
+  | "waiting"
   | "loading"
   | "ready"
   | "playing"
@@ -71,6 +73,11 @@ export default function ArcadeShell({
   const [volume, setVolume] = useState(0.3),
     [reduced, setReduced] = useState(false);
   const [controls, setControls] = useState(false);
+  const [layout, setLayout] = useState(() => mobileLayout(false, 0, 0));
+  const layoutRef = useRef(layout);
+  const [pendingMatch, setPendingMatch] = useState<MatchConfig | null>(null);
+  const [heldActions, setHeldActions] = useState<string[]>([]);
+  const resuming = useRef(false);
   const [arenaVisible, setArenaVisible] = useState(false);
   const arenaInView = useRef(false);
   const settings = useRef({ volume, reduced });
@@ -83,19 +90,65 @@ export default function ArcadeShell({
     keys.current.clear();
     pointers.current.clear();
     runtime.current?.clearInput();
+    setHeldActions([]);
   }
   function pause() {
     if (modeRef.current !== "playing") return;
     runtime.current?.pause();
     clearInput();
+    modeRef.current = "paused";
     setMode("paused");
   }
   async function resume() {
-    await runtime.current?.resume();
-    if (!runtime.current) return;
-    setMode("playing");
-    viewport.current?.focus({ preventScroll: true });
+    if (resuming.current || modeRef.current !== "paused" || layoutRef.current.blocked || document.hidden) return;
+    resuming.current = true;
+    try {
+      const active = runtime.current;
+      await active?.resume();
+      if (!active || runtime.current !== active) return;
+      if (layoutRef.current.blocked || document.hidden || !document.hasFocus() || modeRef.current !== "paused") {
+        active.pause();
+        return;
+      }
+      setControls(false);
+      modeRef.current = "playing";
+      setMode("playing");
+      viewport.current?.focus({ preventScroll: true });
+    } finally {
+      resuming.current = false;
+    }
   }
+
+  useEffect(() => {
+    const coarse = window.matchMedia("(any-pointer: coarse)");
+    const resize = () => {
+      const next = mobileLayout(coarse.matches,
+        window.visualViewport?.width ?? window.innerWidth,
+        window.visualViewport?.height ?? window.innerHeight);
+      layoutRef.current = next;
+      setLayout(next);
+      if (next.blocked) {
+        pause();
+        clearInput();
+      }
+    };
+    resize();
+    coarse.addEventListener("change", resize);
+    window.addEventListener("resize", resize);
+    window.visualViewport?.addEventListener("resize", resize);
+    return () => {
+      coarse.removeEventListener("change", resize);
+      window.removeEventListener("resize", resize);
+      window.visualViewport?.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pendingMatch || layout.blocked) return;
+    setConfig(pendingMatch);
+    setPendingMatch(null);
+    setMode("loading");
+  }, [pendingMatch, layout.blocked]);
 
   useEffect(() => {
     const previouslyFocused =
@@ -182,20 +235,25 @@ export default function ArcadeShell({
   }, [config, attempt]);
 
   useEffect(() => {
-    if (mode !== "ready") return;
+    if (mode !== "ready" || controls) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const cancel = () => clearTimeout(timer);
     const begin = async () => {
       const active = runtime.current;
-      if (!active || modeRef.current !== "ready" || document.hidden || !arenaInView.current) return;
+      if (!active || modeRef.current !== "ready" || document.hidden || !arenaInView.current || layoutRef.current.blocked) return;
       await active.start();
       if (runtime.current !== active || modeRef.current !== "ready") return;
+      if (layoutRef.current.blocked || document.hidden || !document.hasFocus() || !arenaInView.current) {
+        active.pause();
+        setMode("paused");
+        return;
+      }
       setMode("playing");
       viewport.current?.focus({ preventScroll: true });
     };
     const schedule = () => {
       cancel();
-      if (!document.hidden && document.hasFocus() && arenaInView.current)
+      if (!document.hidden && document.hasFocus() && arenaInView.current && !layoutRef.current.blocked)
         timer = setTimeout(() => void begin(), reduced ? 900 : 1400);
     };
     schedule();
@@ -208,7 +266,7 @@ export default function ArcadeShell({
       window.removeEventListener("focus", schedule);
       document.removeEventListener("visibilitychange", schedule);
     };
-  }, [mode, reduced, arenaVisible]);
+  }, [mode, reduced, arenaVisible, layout.blocked, controls]);
   useEffect(() => {
     runtime.current?.volume(volume);
   }, [volume]);
@@ -239,7 +297,7 @@ export default function ArcadeShell({
         return;
       }
       if (
-        modeRef.current !== "playing" ||
+        modeRef.current !== "playing" || layoutRef.current.blocked ||
         !viewport.current?.contains(document.activeElement) ||
         !keyActions[event.code]
       )
@@ -285,6 +343,14 @@ export default function ArcadeShell({
     };
   }, [config]);
 
+  function applyTouch() {
+    const actions = [...pointers.current.values()];
+    setHeldActions(actions);
+    for (const action of new Set(Object.values(keyActions))) {
+      runtime.current?.input(action, actions.includes(action) ||
+        [...keys.current].some((key) => keyActions[key] === action));
+    }
+  }
   function touch(
     event: PointerEvent<HTMLButtonElement>,
     action: keyof InputFrame,
@@ -292,20 +358,13 @@ export default function ArcadeShell({
   ) {
     event.preventDefault();
     if (held) {
-      if (mode !== "playing") return;
+      if (modeRef.current !== "playing" || layoutRef.current.blocked) return;
       event.currentTarget.setPointerCapture(event.pointerId);
       pointers.current.set(event.pointerId, action);
-      runtime.current?.input(action, true);
     } else {
       pointers.current.delete(event.pointerId);
-      const keyboardHeld = [...keys.current].some(
-        (key) => keyActions[key] === action,
-      );
-      runtime.current?.input(
-        action,
-        keyboardHeld || [...pointers.current.values()].includes(action),
-      );
     }
+    applyTouch();
   }
   const touchButton = (
     action: keyof InputFrame,
@@ -317,8 +376,22 @@ export default function ArcadeShell({
       key={action}
       className={`arcade-touch ${extra}`}
       aria-label={label}
-      disabled={mode !== "playing"}
+      data-action={action}
+      data-held={heldActions.includes(action)}
+      disabled={mode !== "playing" || !!layout.blocked || controls}
+      onContextMenu={(event) => event.preventDefault()}
       onPointerDown={(event) => touch(event, action, true)}
+      onPointerMove={(event) => {
+        if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+        const target = document.elementFromPoint(event.clientX, event.clientY)
+          ?.closest<HTMLButtonElement>(".arcade-touch");
+        const next = target?.disabled ? undefined : target?.dataset.action as keyof InputFrame | undefined;
+        if (pointers.current.get(event.pointerId) === next) return;
+        pointers.current.delete(event.pointerId);
+        if (next && modeRef.current === "playing" && !layoutRef.current.blocked)
+          pointers.current.set(event.pointerId, next);
+        applyTouch();
+      }}
       onPointerUp={(event) => touch(event, action, false)}
       onPointerCancel={(event) => touch(event, action, false)}
       onLostPointerCapture={(event) => touch(event, action, false)}
@@ -328,9 +401,11 @@ export default function ArcadeShell({
     </button>
   );
   function selectAgain() {
+    setPendingMatch(null);
     setConfig(null);
     setSnapshot(null);
     setMode("select");
+    setControls(false);
   }
   const resultWinner = snapshot?.winner;
 
@@ -340,6 +415,13 @@ export default function ArcadeShell({
       className="team-arcade-dialog"
       data-mode={mode}
       data-reduced-motion={reduced}
+      data-touch={layout.touch}
+      data-phone={layout.phone}
+      data-layout-blocked={layout.blocked ?? "none"}
+      style={layout.touch ? {
+        "--arcade-view-width": `${layout.width}px`,
+        "--arcade-view-height": `${layout.height}px`,
+      } as CSSProperties : undefined}
       aria-labelledby="arcade-title"
       onCancel={(event) => {
         event.preventDefault();
@@ -382,8 +464,8 @@ export default function ArcadeShell({
               setPlayer(chosenPlayer);
               setOpponent(chosenOpponent);
               setControls(false);
-              setMode("loading");
-              setConfig({
+              setMode(layoutRef.current.blocked ? "waiting" : "loading");
+              setPendingMatch({
                 player: chosenPlayer,
                 opponent: chosenOpponent,
                 difficulty: "normal",
@@ -392,7 +474,8 @@ export default function ArcadeShell({
             }}
           />
         ) : (
-          <>
+          <div className="arcade-match" inert={layout.blocked ? true : undefined}>
+            <div className="arcade-arena">
             <div className="arcade-hud" aria-label="Match status">
               {[0, 1].map((side) => {
                 const f = snapshot?.fighters[side],
@@ -581,6 +664,7 @@ export default function ArcadeShell({
                 </div>
               )}
             </div>
+            </div>
             <div
               className="arcade-touch-controls"
               aria-label="Touch fight controls"
@@ -592,16 +676,16 @@ export default function ArcadeShell({
                 {touchButton("right", "Right", "→", "right")}
               </div>
               <div className="arcade-action-pad">
-                {touchButton("light", "Punch", "J")}
+                {touchButton("light", "Punch", layout.touch ? "P" : "J")}
                 {touchButton("heavy", "Kick", "K")}
-                {touchButton("special", "Special", "L", "special")}
+                {touchButton("special", "Special", layout.touch ? "★" : "L", "special")}
                 {touchButton("guard", "Guard", "◇")}
               </div>
             </div>
             <div className="arcade-toolbar">
               <button
                 className="arcade-secondary"
-                disabled={mode !== "playing"}
+                disabled={mode !== "playing" || !!layout.blocked}
                 onClick={pause}
               >
                 Ⅱ Pause
@@ -609,6 +693,7 @@ export default function ArcadeShell({
               <button
                 className="arcade-secondary"
                 aria-expanded={controls}
+                disabled={!!layout.blocked}
                 onClick={() => {
                   if (mode === "playing") pause();
                   setControls(!controls);
@@ -627,10 +712,11 @@ export default function ArcadeShell({
             </div>
             {controls && (
               <div className="arcade-controls-help arcade-menu-enter">
-                <p>{CONTROLS}</p>
-                <p>Up near your opponent hops over them. Add ←/→ to steer.</p>
+                <button className="arcade-secondary arcade-help-close" onClick={() => setControls(false)}>Close controls</button>
+                <p>{layout.touch ? "Left thumb: move, jump and crouch. Right thumb: punch, kick, special and guard. Hold a direction while tapping an attack." : CONTROLS}</p>
+                <p>{layout.touch ? "Tap Jump near your opponent to hop over them." : "Up near your opponent hops over them. Add ←/→ to steer."}</p>
                 <p>
-                  Hold away or Shift to guard. Crouch + J hits low. Jump +
+                  {layout.touch ? "Hold Guard to block. Crouch + Punch hits low. Jump +" : "Hold away or Shift to guard. Crouch + J hits low. Jump +"}
                   attack hits overhead. A special costs half a meter; hits build
                   it.
                 </p>
@@ -646,7 +732,18 @@ export default function ArcadeShell({
               </div>
             )}
 
-          </>
+          </div>
+        )}
+        {mode !== "select" && layout.blocked && (
+          <div className="arcade-orientation" role="status" aria-live="polite">
+            <span className="arcade-rotate-icon" aria-hidden="true">↻</span>
+            <h3>{layout.blocked === "portrait" ? "ROTATE TO PLAY" : "A LITTLE MORE ROOM"}</h3>
+            <p>{layout.blocked === "portrait"
+              ? "Turn your phone sideways for the arena and touch controls."
+              : "Expand your browser view or play on a larger screen."}</p>
+            <p>{mode === "paused" ? "Your match is paused. Resume when you’re ready." : "Your fighters are picked. The fight waits until there’s room."}</p>
+            <button className="arcade-secondary" onClick={selectAgain}>Change fighters</button>
+          </div>
         )}
       </div>
     </dialog>
