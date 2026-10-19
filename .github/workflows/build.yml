@@ -70,8 +70,11 @@ jobs:
       - name: Build project
         run: bun run build
 
-      - name: Install browser for article delivery checks
-        run: bunx playwright install --with-deps chromium
+      - name: Install browsers for article and arcade checks
+        run: bunx playwright install --with-deps chromium webkit
 
       - name: Check article delivery and keyboard controls
         run: bun run test:articles:browser
+
+      - name: Check arcade combat and lifecycle
+        run: bun run test:arcade:browser

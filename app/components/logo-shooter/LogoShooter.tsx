@@ -25,6 +25,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { useArcadeOwner } from '~/lib/arcade-focus';
 import { useGameState } from './useGameState';
 import { useScore } from './useScore';
 import { useIntersectionPause } from './useIntersectionPause';
@@ -42,6 +43,7 @@ interface LogoShooterProps {
 }
 
 export function LogoShooter({ imageCache }: LogoShooterProps) {
+  const arcadeOwner = useArcadeOwner();
   const { score, highScore, incrementScore } = useScore();
 
   const {
@@ -59,7 +61,7 @@ export function LogoShooter({ imageCache }: LogoShooterProps) {
   // Mouse parallax for space background effect
   const { containerRef: parallaxContainerRef, offset: parallaxOffset, handlers: parallaxHandlers } = useMouseParallax({
     smoothing: 0.08,
-    enabled: isVisible,
+    enabled: isVisible && !arcadeOwner,
   });
 
   // ============================================
@@ -75,14 +77,14 @@ export function LogoShooter({ imageCache }: LogoShooterProps) {
 
   // Track visibility
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && !arcadeOwner) {
       hasBeenVisible.current = true;
     }
   }, [isVisible]);
 
   // Handle visibility changes: pause when off-screen, resume when back on-screen
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && !arcadeOwner) {
       // Resume if paused (user scrolled back to this section)
       if (gameState.mode === 'paused') {
         startGame(); // This will switch from 'paused' to 'playing'
@@ -91,13 +93,13 @@ export function LogoShooter({ imageCache }: LogoShooterProps) {
       else if (gameState.mode === 'idle') {
         startGame();
       }
-    } else if (!isVisible && hasBeenVisible.current && gameState.mode === 'playing') {
+    } else if ((!isVisible || arcadeOwner) && hasBeenVisible.current && gameState.mode === 'playing') {
       // Pause when scrolled away
       pauseGame();
     }
-  }, [isVisible, gameState.mode, startGame, pauseGame]);
+  }, [isVisible, arcadeOwner, gameState.mode, startGame, pauseGame]);
 
-  const isPlaying = gameState.mode === 'playing' && isVisible;
+  const isPlaying = gameState.mode === 'playing' && isVisible && !arcadeOwner;
 
   // Combine refs for intersection observer and parallax container
   const setRefs = (el: HTMLDivElement | null) => {

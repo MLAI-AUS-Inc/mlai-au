@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { editableTarget, getArcadeOwner, useArcadeOwner } from "~/lib/arcade-focus";
 import TetrisTestimonials from "../TetrisTestimonials";
 import { NextBlockPanel } from "./NextBlockPanel";
 import { TESTIMONIALS, TETRIS_COLORS } from "./testimonialData";
@@ -24,11 +25,11 @@ import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 
 export function TestimonialTetris() {
   const prefersReducedMotion = usePrefersReducedMotion();
+  return prefersReducedMotion ? <TetrisTestimonials /> : <InteractiveTestimonialTetris />;
+}
 
-  // If user prefers reduced motion, render static fallback
-  if (prefersReducedMotion) {
-    return <TetrisTestimonials />;
-  }
+function InteractiveTestimonialTetris() {
+  const arcadeOwner = useArcadeOwner();
 
   const {
     gameState,
@@ -46,6 +47,12 @@ export function TestimonialTetris() {
   const [selectedTestimonial, setSelectedTestimonial] =
     useState<Testimonial | null>(null);
   const hasBeenVisible = useRef(false);
+  const interruptedByArcade = useRef(false);
+
+  useEffect(() => {
+    if (arcadeOwner) { interruptedByArcade.current = true; if (gameState.mode === "playing") pauseGame(); }
+    if (!isVisible) interruptedByArcade.current = false;
+  }, [arcadeOwner, isVisible, gameState.mode, pauseGame]);
 
   // Track visibility for auto-pause
   useEffect(() => {
@@ -56,10 +63,10 @@ export function TestimonialTetris() {
 
   // Auto-start when visible
   useEffect(() => {
-    if (isVisible && gameState.mode === "idle") {
+    if (isVisible && !arcadeOwner && gameState.mode === "idle") {
       startGame();
     }
-  }, [isVisible, gameState.mode, startGame]);
+  }, [isVisible, arcadeOwner, gameState.mode, startGame]);
 
   // Auto-pause when not visible
   useEffect(() => {
@@ -70,16 +77,17 @@ export function TestimonialTetris() {
 
   // Resume when visible again (don't reset game state)
   useEffect(() => {
-    if (isVisible && gameState.mode === "paused") {
+    if (isVisible && !arcadeOwner && !interruptedByArcade.current && gameState.mode === "paused") {
       resumeGame();
     }
-  }, [isVisible, gameState.mode, resumeGame]);
+  }, [isVisible, arcadeOwner, gameState.mode, resumeGame]);
 
   // Keyboard controls (desktop: arrow keys + rotate)
   useEffect(() => {
     if (gameState.mode !== "playing") return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (getArcadeOwner() || editableTarget(e.target)) return;
       switch (e.key) {
         case "ArrowLeft":
           e.preventDefault();
