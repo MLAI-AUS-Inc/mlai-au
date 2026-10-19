@@ -44,7 +44,7 @@ import { requireVibeRaisingFounderForLoader } from "~/lib/vibe-raising-loader-co
 import { summarizeRunError } from "~/lib/vibe-marketing-run-failures";
 import {
   createVibeMarketingClientRequestId,
-  vibeMarketingArticleCostPoints,
+  getVibeMarketingArticleCostPoints,
 } from "~/lib/vibe-marketing-billing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import { runStatusPollDelayMs } from "~/lib/vibe-marketing-run-polling";
@@ -789,6 +789,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const editorialBrief = await articleBriefFromRequest(env, request, formData, companyId);
       const result = await startVibeMarketingArticle(env, request, {
         editorialBrief,
+        expectedCostPoints: formData.has("expectedCostPoints") ? Number(formData.get("expectedCostPoints")) : undefined,
         companyId,
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
@@ -5877,6 +5878,7 @@ export default function FounderToolsMarketingRun() {
               {discoveryCandidates.length > 0 && selectedDiscoveryCandidate ? (
                 <Form method="POST" className="mt-4 space-y-4">
                   <input type="hidden" name="intent" value="start-article" />
+                  <input type="hidden" name="expectedCostPoints" value={getVibeMarketingArticleCostPoints(bootstrap)} />
                   <EditorialBriefFields topic={selectedDiscoveryCandidate?.title} state={editorialState} companyId={bootstrap.company.id} onRefresh={() => revalidator.revalidate()} refreshing={revalidator.state !== "idle"} onAvailabilityChange={setEditorialAvailable} />
                   <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
                   <input type="hidden" name="candidateTitle" value={selectedDiscoveryCandidate.title} />
@@ -5908,9 +5910,7 @@ export default function FounderToolsMarketingRun() {
                           <>
                             <span>Generate draft article</span>
                             <span aria-hidden="true">(</span>
-                            {vibeMarketingArticleCostPoints(bootstrap.organization.domain || bootstrap.company.domain) === 0
-                              ? <span>Free</span>
-                              : <RooPointCost points={-vibeMarketingArticleCostPoints(bootstrap.organization.domain || bootstrap.company.domain)} />}
+                            <RooPointCost points={-getVibeMarketingArticleCostPoints(bootstrap)} />
                             <span aria-hidden="true">)</span>
                           </>
                         )}

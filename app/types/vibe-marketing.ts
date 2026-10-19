@@ -918,6 +918,7 @@ export interface VibeMarketingGithubReposResponse {
 }
 
 export interface VibeMarketingBootstrap {
+  articleCapabilities?: { prices: { article: number | null } } | null;
   company: VibeMarketingCompany;
   organization: VibeMarketingOrganization;
   settings: VibeMarketingSettings;

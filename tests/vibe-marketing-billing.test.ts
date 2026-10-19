@@ -6,23 +6,41 @@ import {
   clearContentIslandResearchRequestId,
   contentIslandResearchRequestId,
   createVibeMarketingClientRequestId,
+  getVibeMarketingArticleCostPoints,
   vibeMarketingArticleCostPoints,
   vibeMarketingContentIslandTopicCostPoints,
 } from "../app/lib/vibe-marketing-billing";
 
 describe("vibe marketing billing", () => {
+  test("uses the founder's current server quote", () => {
+    expect(getVibeMarketingArticleCostPoints({})).toBe(12);
+    for (const price of [0, 6, 12]) {
+      expect(getVibeMarketingArticleCostPoints({ articleCapabilities: { prices: { article: price } } })).toBe(price);
+    }
+    for (const price of [null, -1, 1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(getVibeMarketingArticleCostPoints({ articleCapabilities: { prices: { article: price } } })).toBe(12);
+    }
+    expect(getVibeMarketingArticleCostPoints({ articleCapabilities: null })).toBe(12);
+  });
+  test("follows server quotes across the coordinated pricing rollout", () => {
+    const bootstrap = { articleCapabilities: { prices: { article: 0 } } };
+    for (const price of [0, 12, 6, 12]) {
+      bootstrap.articleCapabilities.prices.article = price;
+      expect(getVibeMarketingArticleCostPoints(bootstrap)).toBe(price);
+    }
+  });
   test("exposes current Roo point costs", () => {
-    expect(VIBE_MARKETING_ARTICLE_JOB_COST_POINTS).toBe(6);
+    expect(VIBE_MARKETING_ARTICLE_JOB_COST_POINTS).toBe(12);
     expect(VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS).toBe(1);
   });
 
-  test("displays the backend's free mlai.au pricing only for the mlai.au domain", () => {
+  test("charges every article domain while retaining research pricing", () => {
     for (const domain of ["mlai.au", "https://www.mlai.au/articles", "MLAI.AU."]) {
-      expect(vibeMarketingArticleCostPoints(domain)).toBe(0);
+      expect(vibeMarketingArticleCostPoints(domain)).toBe(12);
       expect(vibeMarketingContentIslandTopicCostPoints(domain)).toBe(0);
     }
     for (const domain of ["another.au", "sub.mlai.au", "fake-mlai.au", ""]) {
-      expect(vibeMarketingArticleCostPoints(domain)).toBe(6);
+      expect(vibeMarketingArticleCostPoints(domain)).toBe(12);
       expect(vibeMarketingContentIslandTopicCostPoints(domain)).toBe(1);
     }
   });
