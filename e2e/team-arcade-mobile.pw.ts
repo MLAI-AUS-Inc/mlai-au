@@ -30,6 +30,34 @@ test.beforeEach(async ({ page }, info) => {
   await page.route(url => !/^(127\.0\.0\.1|localhost)$/.test(url.hostname), route => route.abort());
 });
 
+test("repeated fight-button taps and focus transfers keep the match running", async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await open(page);
+  await pick(page);
+  await page.getByRole("button", { name: "START MATCH", exact: true }).tap();
+  const cabinet = page.locator(".arcade-cabinet");
+  await expect(cabinet).toHaveAttribute("data-phase", "fight", { timeout: 30000 });
+  const tick = Number(await cabinet.getAttribute("data-tick"));
+  for (const name of ["Punch", "Kick", "Special", "Guard", "Jump", "Left", "Right", "Crouch"]) {
+    const button = page.getByRole("button", { name, exact: true });
+    // Native browsers/assistive navigation can focus a button after a pointer
+    // gesture. Exercise that real focus transition rather than relying on one
+    // engine's preventDefault compatibility-mouse behavior.
+    await button.focus();
+    await expect(cabinet).toHaveAttribute("data-mode", "playing");
+    for (let tap = 0; tap < 6; tap++) {
+      await button.tap();
+      await expect(cabinet).toHaveAttribute("data-mode", "playing");
+    }
+  }
+  await expect(page.locator('.arcade-touch[data-held="true"]')).toHaveCount(0);
+  await expect.poll(async () => Number(await cabinet.getAttribute("data-tick"))).toBeGreaterThan(tick);
+  await page.getByRole("button", { name: "Mute sound", exact: true }).tap();
+  await expect(cabinet).toHaveAttribute("data-mode", "playing");
+  await page.getByRole("button", { name: "Ⅱ Pause", exact: true }).tap();
+  await expect(cabinet).toHaveAttribute("data-mode", "paused");
+});
+
 test("portrait defers combat; rotation pauses and preserves a fight until explicit resume", async ({ page }, info) => {
   const requests: string[] = [], errors: string[] = [];
   page.on("request", r => { if (combatAsset(r.url())) requests.push(r.url()); });
