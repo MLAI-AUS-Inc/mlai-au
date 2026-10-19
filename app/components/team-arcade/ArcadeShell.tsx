@@ -59,6 +59,7 @@ export default function ArcadeShell({
 }: ArcadeShellProps) {
   const dialog = useRef<HTMLDialogElement>(null),
     viewport = useRef<HTMLDivElement>(null),
+    fightControls = useRef<HTMLDivElement>(null),
     runtime = useRef<ArcadeRuntime | null>(null);
   const [player, setPlayer] = useState<FighterId>(initialPlayer),
     [opponent, setOpponent] = useState<FighterId>(
@@ -86,6 +87,10 @@ export default function ArcadeShell({
   modeRef.current = mode;
   const keys = useRef(new Set<string>()),
     pointers = useRef(new Map<number, keyof InputFrame>());
+  function ownsFightFocus(target: EventTarget | null) {
+    return target instanceof Node &&
+      (viewport.current?.contains(target) || fightControls.current?.contains(target));
+  }
   function clearInput() {
     keys.current.clear();
     pointers.current.clear();
@@ -298,7 +303,7 @@ export default function ArcadeShell({
       }
       if (
         modeRef.current !== "playing" || layoutRef.current.blocked ||
-        !viewport.current?.contains(document.activeElement) ||
+        !ownsFightFocus(document.activeElement) ||
         !keyActions[event.code]
       )
         return;
@@ -359,6 +364,7 @@ export default function ArcadeShell({
     event.preventDefault();
     if (held) {
       if (modeRef.current !== "playing" || layoutRef.current.blocked) return;
+      viewport.current?.focus({ preventScroll: true });
       event.currentTarget.setPointerCapture(event.pointerId);
       pointers.current.set(event.pointerId, action);
     } else {
@@ -474,7 +480,18 @@ export default function ArcadeShell({
             }}
           />
         ) : (
-          <div className="arcade-match" inert={layout.blocked ? true : undefined}>
+          <div
+            className="arcade-match"
+            inert={layout.blocked ? true : undefined}
+            onBlur={(event) => {
+              // The canvas and fight buttons share input ownership. Native
+              // touch/click focus changes inside the dialog must not pause.
+              // Clear holds when visiting a menu; real window/document loss,
+              // offscreen play and rotation still pause through their handlers.
+              if (ownsFightFocus(event.target) && !ownsFightFocus(event.relatedTarget))
+                clearInput();
+            }}
+          >
             <div className="arcade-arena">
             <div className="arcade-hud" aria-label="Match status">
               {[0, 1].map((side) => {
@@ -534,15 +551,6 @@ export default function ArcadeShell({
                 tabIndex={0}
                 className="arcade-stage"
                 aria-label="Fight controls. Focus here to use the keyboard."
-                onBlur={(event) => {
-                  if (
-                    !event.currentTarget.contains(
-                      event.relatedTarget as Node,
-                    ) &&
-                    mode === "playing"
-                  )
-                    pause();
-                }}
               />
               {mode === "loading" && (
                 <div className="arcade-overlay arcade-menu-enter" role="status">
@@ -666,6 +674,7 @@ export default function ArcadeShell({
             </div>
             </div>
             <div
+              ref={fightControls}
               className="arcade-touch-controls"
               aria-label="Touch fight controls"
             >

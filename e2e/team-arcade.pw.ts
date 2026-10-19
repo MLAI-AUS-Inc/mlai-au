@@ -504,6 +504,36 @@ test("cancelled loading cannot resurrect a game; all fighter atlases survive rep
   expect(errors).toEqual([]);
 });
 
+test("fight controls retain keyboard input through repeated clicks and menu focus", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "Phone taps are covered in both touch engines.");
+  await page.setViewportSize({ width: 800, height: 1000 });
+  await home(page);
+  await open(page);
+  await start(page);
+  const cabinet = page.locator(".arcade-cabinet");
+  for (const name of ["Punch", "Kick", "Special", "Guard", "Jump", "Left", "Right", "Crouch"]) {
+    const button = page.getByRole("button", { name, exact: true });
+    await button.focus();
+    await expect(cabinet).toHaveAttribute("data-mode", "playing");
+    await button.click({ clickCount: 3, delay: 25 });
+    await expect(cabinet).toHaveAttribute("data-mode", "playing");
+  }
+  // Button focus must keep the normal game keys working; menu focus releases
+  // held keys so switching to Sound cannot leave the fighter walking forever.
+  const guard = page.getByRole("button", { name: "Guard", exact: true });
+  await guard.focus();
+  const x = Number(await cabinet.getAttribute("data-player-x"));
+  const cpuX = Number(await cabinet.getAttribute("data-cpu-x"));
+  const direction = x < cpuX ? "a" : "d";
+  await page.keyboard.down(direction);
+  await expect.poll(async () => Number(await cabinet.getAttribute("data-player-x"))).not.toBe(x);
+  await page.getByRole("button", { name: "Mute sound", exact: true }).focus();
+  await page.keyboard.up(direction);
+  await expect(cabinet).toHaveAttribute("data-mode", "playing");
+  await page.getByRole("button", { name: "Controls", exact: true }).click();
+  await expect(cabinet).toHaveAttribute("data-mode", "paused");
+});
+
 test("touch supports simultaneous movement/attack and releases cancelled pointers", async ({
   page,
 }, testInfo) => {
