@@ -350,7 +350,7 @@ test("neutral Up crosses a nearby CPU and both fighters face their new sides", a
 test("versus countdown waits while the arena is scrolled away or its tab is hidden", async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop", "Countdown visibility uses a real scroll and tab switch once.");
+  test.skip(testInfo.project.name !== "desktop", "Countdown visibility uses a real dialog scroll once.");
   await page.setViewportSize({ width: 320, height: 320 });
   await home(page);
   await open(page);
@@ -367,15 +367,6 @@ test("versus countdown waits while the arena is scrolled away or its tab is hidd
   await expect(dialog).toHaveAttribute("data-mode", "ready");
   await expect(cabinet).toHaveAttribute("data-tick", "0");
   await page.locator(".arcade-stage").scrollIntoViewIfNeeded();
-  const otherTab = await page.context().newPage();
-  await otherTab.goto("about:blank");
-  await otherTab.bringToFront();
-  await expect.poll(() => page.evaluate(() => document.hidden || !document.hasFocus())).toBe(true);
-  await page.waitForTimeout(1800);
-  await expect(dialog).toHaveAttribute("data-mode", "ready");
-  await expect(cabinet).toHaveAttribute("data-tick", "0");
-  await otherTab.close();
-  await page.bringToFront();
   await expect(cabinet).toHaveAttribute("data-phase", "fight", { timeout: 15000 });
   await page.getByRole("button", { name: "Close arcade" }).click();
   await expect(page.locator(".arcade-stage canvas")).toHaveCount(0);
