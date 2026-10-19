@@ -5,7 +5,7 @@ export default defineConfig({
   // Keep browser journeys out of Bun's unit-test discovery.
   testMatch: '**/*.pw.ts',
   // The interactive arcade has its own WebGL, touch and WebKit projects.
-  testIgnore: '**/team-arcade.pw.ts',
+  testIgnore: '**/team-arcade*.pw.ts',
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4,
   retries: 0,
