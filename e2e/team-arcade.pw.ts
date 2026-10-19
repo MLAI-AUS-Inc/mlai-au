@@ -347,7 +347,7 @@ test("neutral Up crosses a nearby CPU and both fighters face their new sides", a
   expect((landed.cpu - landed.player) * side).toBeLessThanOrEqual(-54);
 });
 
-test("versus countdown waits while the arena is scrolled away or its tab is hidden", async ({
+test("versus countdown waits while the arena is scrolled away and resumes when visible", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Countdown visibility uses a real dialog scroll once.");
