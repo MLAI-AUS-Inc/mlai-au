@@ -12,6 +12,9 @@ export const ARENA_WIDTH = 960;
 export const FLOOR_Y = 440;
 export const ROUND_TICKS = 60 * TICK_RATE;
 export const PULSE_RADIUS = 137;
+const AIRBORNE_BODY_CLEARANCE = 72;
+const NEUTRAL_HOP_RANGE = 135;
+const NEUTRAL_HOP_SPEED = 5.2;
 export type Side = 0 | 1;
 export type MoveId = "light" | "heavy" | "low" | "air" | "special";
 export type FighterState =
@@ -131,6 +134,7 @@ export interface Fighter {
   x: number;
   y: number;
   vy: number;
+  jumpCarry: number;
   facing: 1 | -1;
   health: number;
   meter: number;
@@ -296,6 +300,7 @@ function createFighter(id: FighterId, side: Side, wins = 0): Fighter {
     x: side === 0 ? 310 : 650,
     y: 0,
     vy: 0,
+    jumpCarry: 0,
     facing: side === 0 ? 1 : -1,
     health: 100,
     meter: 0,
@@ -451,6 +456,7 @@ export class CombatMatch {
   readonly cpu: CpuController;
   private projectileId = 0;
   private accumulator = 0;
+  private bodyOrder: 1 | -1 = 1;
   private pendingHealing: [number, number] = [0, 0];
   private pendingPulls: [number | null, number | null] = [null, null];
   constructor(readonly config: MatchConfig) {
@@ -541,6 +547,9 @@ export class CombatMatch {
     this.remaining--;
     this.pendingHealing = [0, 0];
     this.pendingPulls = [null, null];
+    const initialOrder = Math.sign(this.fighters[1].x - this.fighters[0].x);
+    if (initialOrder) this.bodyOrder = initialOrder > 0 ? 1 : -1;
+    const previousOrder = this.bodyOrder;
     this.fighters.forEach((f, i) =>
       this.updateFighter(
         f,
@@ -548,7 +557,10 @@ export class CombatMatch {
         this.fighters[i === 0 ? 1 : 0],
       ),
     );
-    this.separateBodies();
+    this.separateBodies(previousOrder);
+    const currentOrder = Math.sign(this.fighters[1].x - this.fighters[0].x);
+    if (currentOrder) this.bodyOrder = currentOrder > 0 ? 1 : -1;
+    this.refreshFacing(input, cpu);
     const contactOrigins = this.fighters.map((f) => f.x);
     // Determine both contacts before applying either hit (fair simultaneous trades).
     const contacts = this.fighters
@@ -676,6 +688,7 @@ export class CombatMatch {
       if (f.y <= 0) {
         f.y = 0;
         f.vy = 0;
+        f.jumpCarry = 0;
       }
     }
     if (f.health <= 0) {
@@ -686,6 +699,12 @@ export class CombatMatch {
       f.stun--;
       return;
     }
+    const direction = Number(input.right) - Number(input.left);
+    // Neutral close-range hops keep their launch direction after crossing.
+    // Explicit horizontal input takes over, using the existing air steering.
+    if (direction) f.jumpCarry = 0;
+    if (f.y > 0 && f.jumpCarry && !input.guard && !input.crouch)
+      f.x = clamp(f.x + f.jumpCarry, 45, ARENA_WIDTH - 45);
     if (f.buffer && f.buffer.until < this.tick) f.buffer = null;
     if (f.move) {
       f.moveTick++;
@@ -715,8 +734,16 @@ export class CombatMatch {
       f.vy = 12;
       f.y = 1;
       f.guarding = false;
+      // Up alone becomes a useful forward hop when someone is within reach;
+      // further away it remains a vertical jump. Left/right always wins.
+      f.jumpCarry =
+        !direction &&
+        opponent.y === 0 &&
+        Math.abs(opponent.x - f.x) <= NEUTRAL_HOP_RANGE
+          ? f.facing * NEUTRAL_HOP_SPEED
+          : 0;
+      f.x += f.jumpCarry;
     }
-    const direction = Number(input.right) - Number(input.left);
     if (direction && !input.guard && !input.crouch)
       f.x += direction * FIGHTERS[f.id].speed * (f.y > 0 ? 0.8 : 1);
     f.x = clamp(f.x, 45, ARENA_WIDTH - 45);
@@ -855,12 +882,35 @@ export class CombatMatch {
     else if (special.kind === "dash") f.x += f.facing * 11;
     f.x = clamp(f.x, 45, 915);
   }
-  private separateBodies() {
+  private refreshFacing(input: InputFrame, opponentInput: InputFrame) {
+    this.fighters.forEach((f, i) => {
+      // Attacks keep the direction chosen at startup; free fighters turn as
+      // soon as a jump changes sides, including the grounded defender.
+      if (f.move || f.health <= 0) return;
+      const opponent = this.fighters[i === 0 ? 1 : 0];
+      if (opponent.x !== f.x) f.facing = opponent.x > f.x ? 1 : -1;
+      if (f.stun > 0) return;
+      const keys = i === 0 ? input : opponentInput;
+      const away = f.facing === 1 ? keys.left : keys.right;
+      f.guarding = f.y === 0 && (keys.guard || away);
+      if (f.y === 0)
+        f.state = f.guarding
+          ? "guard"
+          : keys.crouch
+            ? "crouch"
+            : keys.left !== keys.right
+              ? "walk"
+              : "idle";
+    });
+  }
+  private separateBodies(previousOrder: number) {
     const [a, b] = this.fighters;
-    if (Math.abs(a.y - b.y) > 115) return;
+    // Lower-body pushboxes stop grounded/same-height crossings, while a
+    // jumping fighter has enough clearance to pass above the other body.
+    if (Math.abs(a.y - b.y) >= AIRBORNE_BODY_CLEARANCE) return;
     const distance = b.x - a.x;
     if (Math.abs(distance) >= 54) return;
-    const direction = distance >= 0 ? 1 : -1;
+    const direction = distance === 0 ? previousOrder : distance > 0 ? 1 : -1;
     const correction = (54 - Math.abs(distance)) / 2;
     a.x = clamp(a.x - correction * direction, 45, ARENA_WIDTH - 45);
     b.x = clamp(b.x + correction * direction, 45, ARENA_WIDTH - 45);
@@ -929,6 +979,7 @@ export class CombatMatch {
       target.meter = clamp(target.meter + 5, 0, 100);
       if (id !== "special") attacker.meter = clamp(attacker.meter + 10, 0, 100);
       target.move = null;
+      target.jumpCarry = 0;
       target.buffer = null;
       target.guarding = false;
       target.stun = move.stun;
@@ -967,6 +1018,7 @@ export class CombatMatch {
     this.fighters.forEach((f) => {
       f.buffer = null;
       f.move = null;
+      f.jumpCarry = 0;
       f.guarding = false;
       f.state =
         f.health === 0

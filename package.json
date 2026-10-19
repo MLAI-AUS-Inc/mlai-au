@@ -8,7 +8,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "test:arcade": "bun test tests/team-arcade-combat.test.ts tests/team-arcade-specials.test.ts tests/team-arcade-roster.test.ts",
+    "test:arcade": "bun test tests/team-arcade-combat.test.ts tests/team-arcade-specials.test.ts tests/team-arcade-roster.test.ts tests/team-arcade-jump.test.ts",
     "test:arcade:browser": "playwright test --config playwright.arcade.config.ts",
     "check:article-internal-links": "bunx --yes tsx scripts/check-article-internal-links.ts",
     "generate:sitemap": "bunx --yes tsx scripts/generate-sitemap.ts",

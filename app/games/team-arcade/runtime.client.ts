@@ -136,8 +136,8 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
       this.labels = match.fighters.map((f, i) =>
         this.add
           .text(f.x, FLOOR_Y + 22, i === 0 ? "P1" : "CPU", {
-            fontFamily: "monospace",
-            fontSize: "14px",
+            fontFamily: '"Arcade Pixel", monospace',
+            fontSize: "10px",
             color: i === 0 ? "#00e5ff" : "#ff7caa",
             fontStyle: "bold",
           })
@@ -168,8 +168,8 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
         .setDepth(-1);
       this.add
         .text(942, 524, "MLAI HQ / MELBOURNE", {
-          fontFamily: "monospace",
-          fontSize: "11px",
+          fontFamily: '"Arcade Pixel", monospace',
+          fontSize: "7px",
           color: "#e4f1ff",
           stroke: "#11182e",
           strokeThickness: 3,
@@ -422,12 +422,9 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
   const runtime: ArcadeRuntime = {
     async start() {
       if (destroyed || !ready) return;
-      try {
-        await audio.unlock();
-      } catch {
-        /* Gameplay remains available when audio is blocked. */
-      }
-      if (destroyed) return;
+      // An automatic versus intro must not wait on browser audio permission.
+      // The first real control gesture can unlock sound if autoplay was blocked.
+      void audio.unlock().catch(() => {});
       started = true;
       match.setPaused(false);
       game?.loop.wake();
@@ -448,6 +445,7 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
       game?.loop.wake();
     },
     input(action, value) {
+      if (value && started && !destroyed) void audio.unlock().catch(() => {});
       controls.set(action, value);
     },
     clearInput,

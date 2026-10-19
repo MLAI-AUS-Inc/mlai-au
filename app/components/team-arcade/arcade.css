@@ -1,1211 +1,266 @@
+@font-face {
+  font-family: "Arcade Pixel";
+  src: url("/games/team-arcade/v3/press-start-2p-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
 .team-arcade-dialog {
+  --arcade-font: "Arcade Pixel", "Press Start 2P", monospace;
   margin: auto;
   padding: 0;
-  border: 1px solid #536da9;
-  border-radius: 18px;
-  width: min(1120px, 96vw);
-  max-width: 1120px;
+  width: min(1040px, 96vw);
+  max-width: 1040px;
   max-height: 96dvh;
-  background: #10162c;
-  color: #f3f5ff;
-  box-shadow: 0 30px 120px #000b;
+  border: 4px solid #7475de;
+  border-radius: 0;
+  background: #151438;
+  color: #fff;
+  box-shadow: 8px 8px 0 #090d32;
   overflow: auto;
-  font-family: Inter, Arial, sans-serif;
+  font: 10px/1.8 var(--arcade-font);
+  scrollbar-color: #a4b9ff #232078;
 }
-.team-arcade-dialog::backdrop {
-  background: #050a1bf5;
-}
-.team-arcade-dialog * {
-  box-sizing: border-box;
-}
-.team-arcade-dialog button,
-.team-arcade-dialog select,
-.team-arcade-dialog input {
-  font: inherit;
-}
-.team-arcade-dialog button {
-  cursor: pointer;
-}
-.team-arcade-dialog button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.team-arcade-dialog :focus-visible {
-  outline: 3px solid #ffe84a;
-  outline-offset: 4px;
-}
-.arcade-cabinet {
-  position: relative;
-  padding: 24px;
-}
-.arcade-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #35405d;
-  padding-bottom: 18px;
-  margin-bottom: 22px;
-}
-.arcade-eyebrow {
-  font: 700 11px/1.5 monospace;
-  letter-spacing: 2px;
-  color: #a4b4d5;
-}
-.arcade-header h2 {
-  font-family: "Press Start 2P", monospace;
-  font-size: clamp(16px, 2.4vw, 25px);
-  line-height: 1.7;
-  letter-spacing: -1px;
-  margin: 8px 0 0;
-  color: #ffea48;
-}
-.arcade-header h2 span {
-  display: inline-block;
-  background: #ffea48;
-  color: #11172c;
-  font: 700 14px monospace;
-  vertical-align: middle;
-  margin-left: 14px;
-  padding: 5px 7px;
-  border-radius: 3px;
-}
-.arcade-icon-button {
-  border: 1px solid #354566;
-  background: #1c2742;
-  color: #cbd6ee;
-  border-radius: 50%;
-  width: 42px;
-  height: 42px;
-  flex: none;
-}
-.arcade-selection-intro {
-  text-align: center;
-  margin: 8px 0 18px;
-}
-.arcade-tag {
-  display: inline-block;
-  font: 700 10px monospace;
-  letter-spacing: 2px;
-  color: #7de9ed;
-  background: #12313d;
-  padding: 7px 12px;
-  border-radius: 4px;
-}
-.arcade-selection-intro p {
-  font-size: 20px;
-  font-weight: 650;
-  margin: 12px 0;
-}
-.arcade-versus-select {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 40px;
-}
-.arcade-fighter-select {
-  border: 0;
-  padding: 0;
-  margin: 0;
-  min-width: 0;
-}
-.arcade-fighter-select legend {
-  font: 700 12px monospace;
-  letter-spacing: 1px;
-  color: #00e5ff;
-  margin-bottom: 12px;
-}
-.arcade-fighter-select.opponent legend {
-  color: #ff80aa;
-}
-.arcade-selected {
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  column-gap: 13px;
-  row-gap: 12px;
-  border: 1px solid #27788d;
-  border-radius: 7px;
-  padding: 12px;
-  background: #14283d;
-  min-height: 152px;
-}
-.opponent .arcade-selected {
-  border-color: #8b4165;
-  background: #2b2039;
-}
-.arcade-selected > img {
-  width: 72px;
-  height: 72px;
-  border-radius: 5px;
-  object-fit: cover;
-}
-.arcade-selected-identity {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-}
-.arcade-selected-identity > strong {
-  font-size: 15px;
-  color: #f1f5ff;
-}
-.arcade-selected-identity > span {
-  color: #aebcdb;
-  font-size: 11px;
-  line-height: 1.6;
-}
-.arcade-selected-identity > p {
-  color: #81dae7;
-  font-size: 11px;
-  line-height: 1.4;
-  margin: 5px 0 0;
-}
-.opponent .arcade-selected-identity > p {
-  color: #ffadca;
-}
-.arcade-selected-special {
-  grid-column: 1 / -1;
-}
-.arcade-selected .arcade-special-name {
-  font: 700 11px/1.6 monospace;
-  color: #ffe878;
-}
-.arcade-selected-special > p {
-  margin: 3px 0 0;
-  color: #b6c4de;
-  font-size: 11px;
-  line-height: 1.55;
-}
-.arcade-roster-search {
-  display: grid;
-  gap: 6px;
-  margin-top: 14px;
-  color: #aebcdb;
-  font-size: 11px;
-}
-.arcade-roster-search input {
-  width: 100%;
-  min-width: 0;
-  min-height: 44px;
-  background: #111b33;
-  border: 1px solid #435270;
-  border-radius: 5px;
-  padding: 10px 12px;
-  color: #f1f5ff;
-  font-size: 13px;
-}
-.arcade-roster-search input::placeholder {
-  color: #8f9ebc;
-}
-.arcade-roster-count {
-  font: 10px monospace;
-  color: #95a7cb;
-  margin: 9px 0;
-}
-.arcade-choice-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 7px;
-}
-.arcade-choice {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  align-items: stretch;
-  min-width: 44px;
-  min-height: 96px;
-  overflow: hidden;
-  border: 2px solid #35405d;
-  border-radius: 6px;
-  background: #18213b;
-  color: #e5eaff;
-  padding: 0 0 6px;
-  transition: border-color 0.15s, transform 0.15s;
-}
-.arcade-choice:hover {
-  transform: translateY(-2px);
-  border-color: #9aacd1;
-}
-.arcade-choice.selected {
-  border-color: #00e5ff;
-  background: #142f42;
-}
-.opponent .arcade-choice.selected {
-  border-color: #ff5a94;
-  background: #342137;
-}
-.arcade-choice img {
-  width: 100%;
-  height: 64px;
-  object-fit: cover;
-  object-position: center 35%;
-  background: #29335a;
-}
-.arcade-choice strong {
-  font: 700 10px/1.4 monospace;
-  letter-spacing: 0.2px;
-  margin: 6px 2px 3px;
-  white-space: nowrap;
-}
-.arcade-choice .arcade-selection-marker {
-  font: 700 8px/1.3 monospace;
-  color: #8facce;
-}
-.arcade-choice.selected .arcade-selection-marker {
-  color: #00e5ff;
-}
-.opponent .arcade-choice.selected .arcade-selection-marker {
-  color: #ff9dc0;
-}
-.arcade-empty-search {
-  padding: 18px 10px;
-  color: #c5cce0;
-  font-size: 12px;
-  line-height: 1.6;
-}
-.arcade-empty-search button {
-  display: block;
-  margin-top: 12px;
-  min-height: 44px;
-  padding: 8px 12px;
-  color: #00e5ff;
-  background: transparent;
-  border: 1px solid #435270;
-  border-radius: 5px;
-}
-.arcade-vs {
-  position: absolute;
-  left: 50%;
-  top: 76px;
-  transform: translate(-50%, -50%) rotate(-8deg);
-  font: italic 900 24px monospace;
-  color: #ffea48;
-}
-.arcade-selection-bottom {
-  display: flex;
-  gap: 20px;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin: 28px 0 18px;
-  border-top: 1px solid #35405d;
-  padding-top: 20px;
-}
-.arcade-selection-bottom label {
-  font: 10px monospace;
-  letter-spacing: 1px;
-  color: #9cabcc;
-  display: grid;
-  gap: 8px;
-  min-width: 260px;
-}
-.arcade-selection-bottom select {
-  padding: 12px;
-  background: #1a2541;
-  color: #e1e7f5;
-  border: 1px solid #445271;
-  border-radius: 5px;
-  font:
-    12px Inter,
-    Arial,
-    sans-serif;
-  letter-spacing: 0;
-  min-height: 44px;
-}
-.arcade-primary {
-  background: #ffea48;
-  border: 2px solid #ffea48;
-  color: #13192d;
-  padding: 14px 22px;
-  border-radius: 5px;
-  font: 800 12px/1.5 monospace !important;
-  letter-spacing: 1px;
-  min-height: 48px;
-}
-.arcade-primary:hover {
-  background: #fff28a;
-  box-shadow: 0 0 25px #ffea4820;
-}
-.arcade-primary span {
-  margin-left: 30px;
-}
-.arcade-secondary {
-  background: transparent;
-  color: #c6d3ee;
-  border: 1px solid #435270;
-  border-radius: 5px;
-  padding: 8px 13px;
-  min-height: 40px;
-  font-size: 12px !important;
-}
-.arcade-secondary:hover {
-  background: #243553;
-}
-.arcade-help {
-  font-size: 11px;
-  color: #95a7cb;
-  text-align: center;
-  line-height: 1.6;
-  margin: 14px 0 0;
-}
-/* Keep the character menu in the homepage's royal-blue world-map setting.
-   Combat switches back to the dark cabinet for clear health bars and effects. */
+.team-arcade-dialog::backdrop { background: #0b0c2eea; }
+.team-arcade-dialog *, .team-arcade-dialog *::before, .team-arcade-dialog *::after { box-sizing: border-box; }
+.team-arcade-dialog button, .team-arcade-dialog select, .team-arcade-dialog input { font: inherit; }
+.team-arcade-dialog button { cursor: pointer; border-radius: 0; touch-action: manipulation; }
+.team-arcade-dialog button:disabled { opacity: .42; cursor: default; }
+.team-arcade-dialog :focus-visible { outline: 3px solid #ffeb3b; outline-offset: 4px; }
+.arcade-cabinet { position: relative; padding: 20px; }
+.arcade-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 3px solid #494797; }
+.arcade-header h2 { margin: 0; color: #ffeb3b; font: 400 clamp(14px, 2vw, 23px)/1.8 var(--arcade-font); text-shadow: 3px 3px #11104f; }
+.arcade-eyebrow { color: #c5d7ff; font-size: 8px; line-height: 1.8; }
+.arcade-icon-button { width: 44px; height: 44px; padding: 0; flex: none; border: 2px solid #9cb9ff; color: #fff; background: #232078; box-shadow: 3px 3px #0c0d35; font-size: 18px !important; }
+.arcade-icon-button:active { transform: translate(2px, 2px); box-shadow: 1px 1px #0c0d35; }
+
+/* The one roster progresses through player, CPU and match confirmation. */
 .team-arcade-dialog[data-mode="select"] {
   background-color: #3537dc;
-  background-image:
-    linear-gradient(180deg, #3537dc18, #3537dc45),
-    url("/games/team-arcade/v3/selection-world-map.jpg");
-  background-size: 100% 100%, max(1120px, 100%) auto;
-  background-position: center, center 115px;
+  background-image: linear-gradient(#3537dc0d, #3537dc33), url("/games/team-arcade/v3/selection-world-map.jpg");
+  background-size: 100% 100%, max(1040px, 100%) auto;
+  background-position: center, center 85px;
   background-repeat: no-repeat;
-  border-color: #9dbeff;
-  border-radius: 28px;
-  box-shadow: 0 24px 100px #171a9099;
-}
-.team-arcade-dialog[data-mode="select"]::backdrop {
-  background: #3537dca8;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-header {
-  position: relative;
-  justify-content: center;
-  text-align: center;
-  border-bottom-color: #a8cfff70;
-  padding: 8px 48px 18px;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-header .arcade-eyebrow {
-  color: #cdfaff;
-  text-shadow: 2px 2px #1a1a8e;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-header h2 {
-  color: #ffeb3b;
-  font-size: clamp(16px, 2.5vw, 29px);
-  text-shadow: 3px 3px #1a1a8e, -1px -1px #1a1a8e;
-  letter-spacing: 1px;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-header h2 span {
-  background: #ffeb3b;
-  color: #232078;
-  text-shadow: none;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-icon-button {
-  position: absolute;
-  right: 0;
-  top: 7px;
-  width: 44px;
-  height: 44px;
-  color: #ddfcff;
-  background: #202078;
-  border-color: #7cc9ff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-tag {
-  color: #c9fcff;
-  background: #24217dd9;
-  border: 1px solid #8ddfff6b;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selection-intro p {
-  color: #fff;
-  text-shadow: 1px 2px #232078;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-fighter-select legend {
-  color: #51f3ff;
-  text-shadow: 2px 2px #1a1a8e;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-fighter-select.opponent legend {
-  color: #ffb9e0;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selected {
-  grid-template-columns: 106px minmax(0, 1fr);
-  column-gap: 12px;
-  row-gap: 7px;
-  min-height: 172px;
-  padding: 12px;
-  border: 2px solid #00e5ff;
-  border-radius: 9px;
-  background: #232078ed;
-  box-shadow: 0 0 18px #00e5ff1a;
-}
-.team-arcade-dialog[data-mode="select"] .opponent .arcade-selected {
-  border-color: #ff8ac7;
-  background: #292075ed;
-  box-shadow: 0 0 18px #ff8ac71a;
-}
-.arcade-selected-preview {
-  grid-column: 1;
-  grid-row: 1 / 3;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  min-width: 0;
-  border-radius: 5px;
-  background: linear-gradient(180deg, #3537dc00 60%, #4445e957);
-}
-.arcade-selected-preview img {
-  display: block;
-  width: 106px;
-  height: 144px;
-  object-fit: cover;
-  object-position: center;
-  image-rendering: pixelated;
-  filter: drop-shadow(3px 4px #14145d88);
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selected-identity > strong {
-  font-family: "Press Start 2P", monospace;
-  font-size: 12px;
-  line-height: 1.7;
-  color: #fff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selected-identity > span {
-  color: #c1beff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selected-identity > p {
-  color: #84f3ff;
-}
-.team-arcade-dialog[data-mode="select"] .opponent .arcade-selected-identity > p {
-  color: #ffc2e1;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selected-special {
-  grid-column: 2;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selected .arcade-special-name {
-  color: #fff17b;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selected-special > p {
-  color: #dfddff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-roster-search,
-.team-arcade-dialog[data-mode="select"] .arcade-roster-count {
-  color: #e0e9ff;
-  text-shadow: 1px 1px #1a1a8e;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-roster-search input {
-  color: #fff;
-  background: #25217de8;
-  border-color: #a0b0ff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-roster-search input::placeholder {
-  color: #c2c6f5;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-choice {
-  background: #26217eea;
-  border-color: #15155e;
-  border-radius: 5px;
-  box-shadow: 0 2px #1a1a8e;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-choice:hover {
-  border-color: #a4f7ff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-choice.selected {
-  border-color: #00e5ff;
-  background: #1d3c9a;
-  box-shadow: 0 0 14px #00e5ff65;
-}
-.team-arcade-dialog[data-mode="select"] .opponent .arcade-choice.selected {
-  border-color: #ff8ac7;
-  background: #4b2b8d;
-  box-shadow: 0 0 14px #ff8ac74d;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-choice strong {
-  color: #fff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-choice .arcade-selection-marker {
-  color: #c1c5ff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-choice.selected .arcade-selection-marker {
-  color: #5bf4ff;
-}
-.team-arcade-dialog[data-mode="select"] .opponent .arcade-choice.selected .arcade-selection-marker {
-  color: #ffc2e1;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-vs {
-  color: #ffeb3b;
-  text-shadow: 3px 3px #1a1a8e;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selection-bottom {
-  border: 1px solid #a0c6ff91;
-  border-radius: 8px;
-  background: #232078e8;
-  padding: 14px;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selection-bottom label {
-  color: #e0ddff;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-selection-bottom select {
-  color: #fff;
-  border-color: #a0b0ff;
-  background: #2e2b88;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-primary {
-  color: #232078;
-  background: #ffeb3b;
-  border-color: #fff17b;
-  box-shadow: 3px 3px #15155e;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-primary:hover {
-  background: #fff585;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-help {
-  color: #e1e9ff;
-  text-shadow: 1px 1px #1a1a8e;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-empty-search {
-  color: #fff;
-  background: #232078eb;
-  border-radius: 5px;
-}
-.team-arcade-dialog[data-mode="select"] .arcade-empty-search button {
-  color: #a5fcff;
-  border-color: #91d4ff;
-}
-.arcade-hud {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 100px;
-  margin: 0 4px 14px;
-}
-.arcade-health > div:first-child {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font: 11px monospace;
-  color: #cbd5ee;
-  margin-bottom: 7px;
-}
-.arcade-health > div:first-child > span {
-  color: #ffea48;
-  letter-spacing: 4px;
-}
-.arcade-health progress {
-  width: 100%;
-  height: 18px;
-  appearance: none;
-  border: 1px solid #6f8b90;
-  background: #243249;
-  border-radius: 2px;
-  overflow: hidden;
-}
-.arcade-health progress::-webkit-progress-bar {
-  background: #243249;
-}
-.arcade-health progress::-webkit-progress-value {
-  background: linear-gradient(90deg, #05c5bd, #8effba);
-  transition: width 0.08s;
-}
-.arcade-health progress::-moz-progress-bar {
-  background: #8effba;
-}
-.arcade-health.side-1 progress::-webkit-progress-value {
-  background: linear-gradient(90deg, #ff5a94, #ffba9a);
-}
-.arcade-health.side-1 progress::-moz-progress-bar {
-  background: #ff819c;
-}
-.arcade-meter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #869dc3;
-  font: 8px monospace;
-  margin-top: 6px;
-  min-height: 15px;
-}
-.arcade-meter meter {
-  width: 60px;
-  height: 9px;
-}
-.arcade-meter output {
-  margin-left: auto;
-  white-space: nowrap;
-  color: #c1cbe0;
-}
-.arcade-clock {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.arcade-clock span {
-  font: 8px monospace;
-  color: #9aabca;
-  letter-spacing: 1px;
-}
-.arcade-clock strong {
-  font: 900 37px/1.2 monospace;
-  color: #ffea48;
-}
-.arcade-stage-wrap {
-  position: relative;
-  border: 1px solid #4a5886;
-  border-radius: 7px;
-  overflow: hidden;
-  background: #10182e;
-}
-.arcade-stage {
-  width: 100%;
-  aspect-ratio: 16/9;
-  position: relative;
-  overflow: hidden;
-  outline-offset: -4px !important;
-}
-.arcade-stage canvas {
-  display: block;
-  image-rendering: pixelated;
-}
-.arcade-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  overflow-y: auto;
-  text-align: center;
-  background: #0b122be8;
-  padding: 22px;
-  gap: 13px;
-}
-.arcade-overlay > * {
-  flex-shrink: 0;
-}
-.arcade-overlay > :first-child {
-  margin-top: auto;
-}
-.arcade-overlay > :last-child {
-  margin-bottom: auto;
-}
-.arcade-overlay h3 {
-  font:
-    700 clamp(15px, 2.7vw, 28px) / 1.7 "Press Start 2P",
-    monospace;
-  color: #ffea48;
-  margin: 0;
-}
-.arcade-overlay p {
-  font-size: 13px;
-  color: #b3c3df;
-  max-width: 460px;
-  line-height: 1.6;
-  margin: 0;
-}
-.arcade-overlay progress {
-  width: min(320px, 70%);
-  height: 6px;
-  accent-color: #00e5ff;
-}
-.arcade-announcement {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  font:
-    700 clamp(23px, 5vw, 48px) / 1.5 "Press Start 2P",
-    monospace;
-  color: #fff15c;
-  text-shadow: 4px 4px #10172c;
-}
-.arcade-announcement small {
-  font: 700 12px/1.5 monospace;
-  letter-spacing: 2px;
-  background: #111a32d9;
-  color: #e6edff;
-  padding: 8px 14px;
-  margin-top: 15px;
-}
-.arcade-toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin-top: 13px;
-}
-.arcade-volume {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  font-size: 11px;
-  color: #a6b7d5;
-}
-.arcade-volume input {
-  width: 70px;
-  accent-color: #ffea48;
-}
-.arcade-motion {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  font-size: 11px;
-  color: #a6b7d5;
-}
-.arcade-controls-help {
-  font-size: 12px;
-  line-height: 1.6;
-  padding: 10px 14px;
-  background: #18233f;
-  margin-top: 12px;
-  border-radius: 5px;
-  color: #c0cdeb;
-}
-.arcade-touch-controls {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  margin-top: 12px;
-}
-.arcade-touch {
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  width: 50px;
-  height: 48px;
-  background: #243553;
-  color: #edf3ff;
-  border: 1px solid #596a8b;
-  border-radius: 7px;
-  font: 700 18px monospace !important;
-}
-.arcade-touch:active {
-  background: #00a6b4;
-  color: white;
-}
-.arcade-touch span {
-  font:
-    7px Inter,
-    Arial,
-    sans-serif;
-  color: #c1d4f5;
-}
-.arcade-dpad {
-  display: grid;
-  grid-template-columns: repeat(3, 50px);
-  grid-template-rows: repeat(2, 48px);
-  gap: 4px;
-}
-.arcade-dpad .up {
-  grid-column: 2;
-}
-.arcade-dpad .left {
-  grid-column: 1;
-  grid-row: 2;
-}
-.arcade-dpad .down {
-  grid-column: 2;
-  grid-row: 2;
-}
-.arcade-dpad .right {
-  grid-column: 3;
-  grid-row: 2;
-}
-.arcade-action-pad {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.arcade-action-pad .special {
-  background: #3a294b;
-  color: #ffb6d0;
-  border-color: #a25b82;
-}
-@media (pointer: fine) and (min-width: 850px) {
-  .arcade-touch-controls {
-    display: none;
-  }
-}
-@media (min-width: 651px) and (max-width: 900px) {
-  .arcade-versus-select {
-    gap: 25px;
-  }
-  .arcade-choice-grid {
-    gap: 5px;
-  }
-  .arcade-choice img {
-    height: 56px;
-  }
-  .arcade-choice strong {
-    font-size: 9px;
-  }
-  .arcade-selected {
-    padding: 9px;
-    column-gap: 9px;
-  }
-  .arcade-selected-identity > strong {
-    font-size: 13px;
-  }
-  .arcade-vs {
-    font-size: 18px;
-  }
-}
-@media (max-width: 650px) {
-  .team-arcade-dialog {
-    width: 98vw;
-    max-height: 98dvh;
-    border-radius: 10px;
-  }
-  .arcade-cabinet {
-    padding: 14px;
-  }
-  .arcade-header {
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-  }
-  .arcade-header h2 {
-    font-size: 13px;
-    letter-spacing: -0.6px;
-  }
-  .arcade-header h2 span {
-    display: none;
-  }
-  .arcade-eyebrow {
-    font-size: 8px;
-  }
-  .arcade-selection-intro {
-    margin-bottom: 18px;
-  }
-  .arcade-selection-intro p {
-    font-size: 18px;
-  }
-  .arcade-tag {
-    font-size: 8px;
-    letter-spacing: 1px;
-  }
-  .arcade-versus-select {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 25px;
-  }
-  .arcade-fighter-select legend {
-    font-size: 11px;
-    letter-spacing: 0.5px;
-  }
-  .arcade-selected {
-    min-height: 0;
-    padding: 10px;
-    grid-template-columns: 64px minmax(0, 1fr);
-    gap: 10px;
-  }
-  .arcade-selected > img {
-    width: 64px;
-    height: 64px;
-  }
-  .arcade-selected-identity > strong {
-    font-size: 14px;
-  }
-  .arcade-choice-grid {
-    gap: 5px;
-  }
-  .arcade-choice {
-    min-height: 88px;
-  }
-  .arcade-choice img {
-    height: 57px;
-  }
-  .arcade-choice strong {
-    font-size: 9px;
-    letter-spacing: 0;
-    margin: 5px 1px 3px;
-  }
-  .arcade-choice .arcade-selection-marker {
-    font-size: 7px;
-  }
-  .arcade-vs {
-    display: none;
-  }
-  .arcade-roster-search input {
-    font-size: 16px;
-  }
-  .arcade-selection-bottom {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    margin: 18px 0 12px;
-    padding-top: 14px;
-  }
-  .arcade-selection-bottom label {
-    min-width: 0;
-  }
-  .arcade-hud {
-    gap: 58px;
-    margin: 0 0 10px;
-  }
-  .arcade-health > div:first-child {
-    font-size: 8px;
-  }
-  .arcade-health > div:first-child > span {
-    letter-spacing: 0;
-  }
-  .arcade-health progress {
-    height: 12px;
-  }
-  .arcade-meter {
-    font-size: 6px;
-    gap: 4px;
-  }
-  .arcade-meter meter {
-    width: 25px;
-  }
-  .arcade-meter output {
-    font-size: 7px;
-  }
-  .arcade-clock strong {
-    font-size: 28px;
-  }
-  .arcade-clock span {
-    font-size: 7px;
-  }
-  .arcade-overlay {
-    padding: 12px;
-    gap: 7px;
-  }
-  .arcade-overlay h3 {
-    font-size: 12px;
-  }
-  .arcade-overlay p {
-    font-size: 9px;
-  }
-  .arcade-overlay .arcade-primary {
-    min-height: 36px;
-    padding: 8px 15px;
-    font-size: 10px !important;
-  }
-  .arcade-overlay .arcade-secondary {
-    min-height: 30px;
-    padding: 4px 9px;
-    font-size: 9px !important;
-  }
-  .arcade-overlay .arcade-eyebrow {
-    font-size: 7px;
-    letter-spacing: 1px;
-  }
-  .arcade-result {
-    gap: 5px;
-  }
-  .arcade-toolbar {
-    gap: 6px;
-  }
-  .arcade-toolbar .arcade-secondary {
-    font-size: 10px !important;
-    padding: 6px 8px;
-    min-height: 36px;
-  }
-  .arcade-volume {
-    margin-left: 0;
-    font-size: 10px;
-  }
-  .arcade-motion {
-    font-size: 10px;
-  }
-  .arcade-touch {
-    width: 42px;
-    min-width: 44px;
-    height: 44px;
-  }
-  .arcade-dpad {
-    grid-template-columns: repeat(3, 44px);
-    grid-template-rows: repeat(2, 44px);
-  }
-  .arcade-action-pad {
-    display: grid;
-    grid-template-columns: repeat(2, 44px);
-    gap: 4px;
-  }
-  .arcade-help {
-    font-size: 9px;
-  }
-  .arcade-announcement {
-    font-size: 20px;
-  }
-  .arcade-announcement small {
-    font-size: 8px;
-    padding: 5px;
-  }
-}
-@media (max-height: 560px) and (orientation: landscape) {
-  .team-arcade-dialog {
-    max-height: 100dvh;
-  }
-  .arcade-cabinet {
-    padding: 10px;
-  }
-  .arcade-header {
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-  }
-  .arcade-header h2 {
-    font-size: 12px;
-    margin: 0;
-  }
-  .arcade-header .arcade-eyebrow {
-    display: none;
-  }
-  .arcade-header .arcade-icon-button {
-    width: 32px;
-    height: 32px;
-  }
-  .arcade-hud {
-    margin-bottom: 8px;
-  }
-  .arcade-health progress {
-    height: 12px;
-  }
-  .arcade-stage-wrap {
-    max-width: calc((100dvh - 190px) * 1.77778);
-    margin: auto;
-  }
-  .arcade-touch-controls {
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    top: 58%;
-    transform: translateY(-50%);
-    margin: 0;
-    pointer-events: none;
-  }
-  .arcade-touch-controls > div {
-    pointer-events: auto;
-  }
-  .arcade-touch {
-    width: 44px;
-    height: 44px;
-  }
-  .arcade-dpad {
-    grid-template-columns: repeat(3, 44px);
-    grid-template-rows: repeat(2, 44px);
-  }
-  .arcade-action-pad {
-    display: grid;
-    grid-template-columns: repeat(2, 44px);
-    gap: 4px;
-  }
-  .arcade-help {
-    display: none;
-  }
-  .arcade-toolbar {
-    margin-top: 6px;
-  }
-  .arcade-selection-intro {
-    display: none;
-  }
-}
-@media (max-width: 650px), (max-height: 560px) and (orientation: landscape) {
-  .arcade-overlay {
-    padding: 8px;
-    gap: 6px;
-  }
-  .arcade-overlay h3 {
-    font-size: 14px;
-    line-height: 1.5;
-  }
-  .arcade-overlay p {
-    font-size: 11px;
-  }
-  .arcade-overlay .arcade-primary {
-    min-height: 36px;
-    padding: 8px 16px;
-    font-size: 11px !important;
-  }
-  .arcade-overlay .arcade-secondary {
-    min-height: 30px;
-    padding: 5px 10px;
-    font-size: 10px !important;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .arcade-choice {
-    transition: none;
-  }
-  .arcade-choice:hover {
-    transform: none;
-  }
-}
+  border-color: #9fbaff;
+}
+.team-arcade-dialog[data-mode="select"]::backdrop { background: #3537dcd4; }
+.team-arcade-dialog[data-mode="select"] .arcade-header { border-bottom-color: #a4caff80; }
+.arcade-pick-top { text-align: center; margin: 0 0 8px; }
+.arcade-pick-progress { display: flex; justify-content: center; gap: 13px; margin: 0 0 9px; color: #c5d1ff; font-size: 7px; }
+.arcade-pick-progress [data-current="true"] { color: #ffeb3b; text-shadow: 2px 2px #171565; }
+.arcade-pick-heading { margin: 0; color: #ffeb3b; font: 400 13px/2 var(--arcade-font); text-shadow: 3px 3px #171565; animation: arcade-title-enter 180ms steps(4, end) both; outline-offset: 2px !important; }
+.arcade-pick-heading:focus:not(:focus-visible) { outline: none; }
+.arcade-pick-pair { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 58px; max-width: 660px; margin: 0 auto 16px; }
+.arcade-pick-slot { min-width: 0; text-align: center; padding: 6px 6px 10px; border-bottom: 3px solid #a2b6ff70; }
+.arcade-pick-label { display: block; color: #70f5ff; font-size: 8px; text-shadow: 2px 2px #171565; }
+.arcade-pick-slot[data-side="opponent"] .arcade-pick-label { color: #ffacd7; }
+.arcade-pick-slot[data-active="true"] { border-bottom-color: #00e5ff; }
+.arcade-pick-slot[data-active="true"][data-side="opponent"] { border-bottom-color: #ff8ac7; }
+.arcade-selected-preview { display: flex; justify-content: center; height: 150px; }
+.arcade-selected-preview img { display: block; width: 150px; height: 150px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(4px 4px #1512619c); animation: arcade-fighter-pick 180ms steps(4, end) both; }
+.arcade-pick-slot > strong { display: block; color: #fff; font-size: 9px; line-height: 1.9; font-weight: 400; text-shadow: 2px 2px #171565; }
+.arcade-pick-special { display: block; margin-top: 4px; font-size: 7px; color: #d9e7ff; text-shadow: 1px 1px #171565; }
+.arcade-pick-vs { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%); color: #ffeb3b; font-size: 25px; text-shadow: 4px 4px #171565; }
+.arcade-choice-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 640px; margin: auto; }
+.arcade-choice { position: relative; display: flex; flex-direction: column; align-items: stretch; min-width: 44px; min-height: 88px; overflow: hidden; padding: 0; border: 3px solid #18155f; color: #fff; background: #252078; box-shadow: 3px 3px #16135b; }
+.arcade-choice-portrait { position: relative; width: 100%; height: 70px; overflow: hidden; background: #3c39b1; }
+.arcade-choice-portrait img { position: absolute; left: 50%; top: -10%; display: block; width: 170%; height: auto; max-width: none; transform: translateX(-50%); image-rendering: pixelated; }
+.arcade-choice strong { padding: 7px 2px; font-size: 8px; line-height: 1.5; font-weight: 400; white-space: nowrap; }
+.arcade-choice:hover { border-color: #fff17b; transform: translateY(-3px); }
+.arcade-choice.selected { border-color: #00e5ff; box-shadow: 0 0 0 2px #00e5ff, 4px 4px #16135b; }
+.arcade-choice-grid[data-slot="opponent"] .arcade-choice.selected { border-color: #ff8ac7; box-shadow: 0 0 0 2px #ff8ac7, 4px 4px #16135b; }
+.arcade-roster-player-marker, .arcade-roster-cpu-marker { position: absolute; top: 3px; padding: 3px; background: #14105ddd; color: #6cf6ff; font-size: 6px; line-height: 1.5; }
+.arcade-roster-player-marker { left: 2px; }
+.arcade-roster-cpu-marker { right: 2px; color: #ffc0e0; }
+.arcade-pick-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; margin-top: 22px; }
+.arcade-primary, .arcade-secondary { min-height: 44px; padding: 12px 17px; border: 3px solid #b8d2ff; color: #e1eaff; background: #252078; box-shadow: 4px 4px #0f1043; font: 400 9px/1.8 var(--arcade-font) !important; }
+.arcade-primary { color: #20186d; background: #ffeb3b; border-color: #fff69b; }
+.arcade-primary:hover:not(:disabled) { background: #fff794; }
+.arcade-secondary:hover:not(:disabled) { color: #fff; border-color: #fff17b; }
+.arcade-primary:active:not(:disabled), .arcade-secondary:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px #0f1043; }
+.arcade-start-match > span { display: inline-block; margin-right: 5px; }
+.arcade-selection[data-selection-step="ready"] .arcade-start-match > span { animation: arcade-ready-blink 900ms steps(2, end) infinite; }
+.arcade-help { margin: 12px 0 0; color: #b2c2ee; text-align: center; font-size: 7px; line-height: 1.9; }
 
-@media (min-width: 651px) and (max-width: 900px) {
-  .team-arcade-dialog[data-mode="select"] .arcade-selected {
-    grid-template-columns: 82px minmax(0, 1fr);
-    padding: 9px;
-    column-gap: 8px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected-preview img {
-    width: 82px;
-    height: 130px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected-identity > strong {
-    font-size: 10px;
-  }
-}
+/* Match UI stays in the same pixel cabinet, with dark panels for contrast. */
+.arcade-hud { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 110px; margin: 0 3px 13px; }
+.arcade-health > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 7px; margin-bottom: 7px; font-size: 8px; color: #e4e7ff; }
+.arcade-health > div:first-child > span { color: #ffeb3b; white-space: nowrap; }
+.arcade-health progress { display: block; width: 100%; height: 17px; appearance: none; border: 2px solid #9ab7d5; border-radius: 0; background: #232249; overflow: hidden; }
+.arcade-health progress::-webkit-progress-bar { background: #232249; }
+.arcade-health progress::-webkit-progress-value { background: #75f5c3; }
+.arcade-health progress::-moz-progress-bar { background: #75f5c3; }
+.arcade-health.side-1 progress::-webkit-progress-value { background: #ff85b9; }
+.arcade-health.side-1 progress::-moz-progress-bar { background: #ff85b9; }
+.arcade-meter { display: flex; align-items: center; gap: 7px; min-height: 16px; margin-top: 5px; color: #c0c8f3; font-size: 6px; }
+.arcade-meter meter { width: 55px; height: 9px; appearance: none; border: 1px solid #9ab7d5; border-radius: 0; background: #232249; }
+.arcade-meter meter::-webkit-meter-bar { border: 0; border-radius: 0; background: #232249; }
+.arcade-meter meter::-webkit-meter-optimum-value { border-radius: 0; background: #ffeb3b; }
+.arcade-meter meter::-moz-meter-bar { background: #ffeb3b; }
+.arcade-meter output { margin-left: auto; color: #e4e7ff; white-space: nowrap; }
+.arcade-clock { position: absolute; left: 50%; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+.arcade-clock span { color: #c5caff; font-size: 6px; white-space: nowrap; }
+.arcade-clock strong { color: #ffeb3b; font-size: 30px; line-height: 1.5; font-weight: 400; }
+.arcade-stage-wrap { position: relative; overflow: hidden; border: 3px solid #9697e4; border-radius: 0; background: #101334; }
+.arcade-stage { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; outline-offset: -5px !important; }
+.arcade-stage canvas { display: block; image-rendering: pixelated; }
+.arcade-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 14px; padding: 22px; overflow-y: auto; background: #151242ed; text-align: center; }
+.arcade-overlay > * { flex-shrink: 0; }
+.arcade-overlay > :first-child { margin-top: auto; }
+.arcade-overlay > :last-child { margin-bottom: auto; }
+.arcade-overlay h3 { margin: 0; color: #ffeb3b; font: 400 clamp(14px, 2.4vw, 25px)/1.9 var(--arcade-font); text-shadow: 3px 3px #090b31; }
+.arcade-overlay p { max-width: 600px; margin: 0; color: #d1dbff; font-size: 8px; line-height: 2; }
+.arcade-overlay progress { width: min(320px, 80%); height: 12px; accent-color: #00e5ff; border-radius: 0; }
+.arcade-menu-enter { animation: arcade-menu-enter 220ms steps(5, end) both; }
+.arcade-versus-pair { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 70px; width: min(650px, 100%); }
+.arcade-versus-fighter { min-width: 0; color: #70f5ff; font-size: 12px; text-shadow: 3px 3px #090b31; animation: arcade-versus-player 650ms steps(8, end) both; }
+.arcade-versus-fighter[data-side="opponent"] { color: #ffacd7; animation-name: arcade-versus-cpu; }
+.arcade-versus-fighter img { display: block; width: 160px; height: 160px; max-width: 100%; margin: 0 auto 8px; object-fit: contain; image-rendering: pixelated; }
+.arcade-versus-fighter > span { display: block; margin-bottom: 5px; font-size: 7px; }
+.arcade-versus-fighter strong { display: block; font: inherit; }
+.arcade-vs-mark { position: absolute; left: 50%; top: 50%; color: #ffeb3b; font-size: 35px; transform: translate(-50%, -50%); text-shadow: 4px 4px #090b31; animation: arcade-vs-stamp 850ms steps(7, end) both; }
+.arcade-announcement { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; color: #ffeb3b; font-size: clamp(22px, 5vw, 48px); line-height: 1.8; text-align: center; text-shadow: 4px 4px #17104c; }
+.arcade-announcement small { margin-top: 10px; padding: 7px 10px; background: #171047ed; color: #fff; font-size: 8px; line-height: 1.8; }
+.arcade-round-splash { animation: arcade-round-call 420ms steps(6, end) both; }
+.arcade-fight-call { animation: arcade-fight-call 300ms steps(5, end) both; }
+.arcade-round-result { animation: arcade-result-stamp 320ms steps(4, end) both; }
+.arcade-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+.arcade-toolbar .arcade-secondary { padding: 9px 12px; font-size: 8px !important; }
+.arcade-motion { display: inline-flex; align-items: center; gap: 8px; color: #c5d4ff; font-size: 7px; }
+.arcade-motion input { width: 18px; height: 18px; accent-color: #ffeb3b; }
+.arcade-controls-help { padding: 13px; margin-top: 13px; border: 2px solid #7475de; background: #211c56; color: #d4e0ff; font-size: 8px; line-height: 2.1; }
+.arcade-controls-help p { margin: 0 0 12px; }
+.arcade-controls-help p:last-child { margin-bottom: 0; }
+.arcade-touch-controls { display: flex; justify-content: space-between; gap: 15px; margin-top: 13px; }
+.arcade-touch { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 52px; min-width: 44px; height: 50px; padding: 3px; border: 2px solid #a1a6ee; color: #fff; background: #29215f; box-shadow: 3px 3px #0c0e30; font: 400 15px/1.4 var(--arcade-font) !important; touch-action: none !important; user-select: none; -webkit-user-select: none; }
+.arcade-touch:active { background: #136b9d; color: #fff17b; transform: translate(2px, 2px); box-shadow: 1px 1px #0c0e30; }
+.arcade-touch span { color: #e0e4ff; font: 400 6px/1.5 var(--arcade-font); }
+.arcade-dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 50px); gap: 5px; }
+.arcade-dpad .up { grid-column: 2; }
+.arcade-dpad .left { grid-column: 1; grid-row: 2; }
+.arcade-dpad .down { grid-column: 2; grid-row: 2; }
+.arcade-dpad .right { grid-column: 3; grid-row: 2; }
+.arcade-action-pad { display: flex; align-items: center; gap: 7px; }
+.arcade-action-pad .special { color: #ffd1e8; border-color: #f2a1d0; background: #4a235d; }
+
+@keyframes arcade-menu-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes arcade-title-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes arcade-fighter-pick { 0% { opacity: 0; transform: translateX(-8px); } 100% { opacity: 1; transform: translateX(0); } }
+@keyframes arcade-ready-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .2; } }
+@keyframes arcade-versus-player { from { opacity: 0; transform: translateX(-36px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes arcade-versus-cpu { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes arcade-vs-stamp { 0% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); } 60% { opacity: 1; transform: translate(-50%, -50%) scale(.9); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes arcade-round-call { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes arcade-fight-call { 0% { opacity: 0; transform: scale(1.25); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes arcade-result-stamp { from { opacity: 0; transform: scale(1.2); } to { opacity: 1; transform: scale(1); } }
+
+@media (pointer: fine) and (min-width: 850px) { .arcade-touch-controls { display: none; } }
 @media (max-width: 650px) {
-  .team-arcade-dialog[data-mode="select"] {
-    border-radius: 16px;
-    background-position: center, 57% 120px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-header {
-    padding: 4px 32px 15px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-header h2 {
-    font-size: 13px;
-    letter-spacing: 0;
-    line-height: 1.9;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-header .arcade-eyebrow {
-    font-size: 7px;
-    letter-spacing: 1px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-icon-button {
-    right: -5px;
-    top: 0;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected {
-    grid-template-columns: 92px minmax(0, 1fr);
-    min-height: 160px;
-    column-gap: 10px;
-    padding: 10px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected-preview img {
-    width: 92px;
-    height: 138px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected-identity > strong {
-    font-size: 10px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected-special > p {
-    font-size: 10px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected .arcade-special-name {
-    font-size: 10px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selection-bottom {
-    padding: 12px;
-  }
+  .team-arcade-dialog { width: 98vw; max-height: 98dvh; border-width: 3px; }
+  .arcade-cabinet { padding: 12px; }
+  .arcade-header { gap: 8px; padding-bottom: 11px; margin-bottom: 12px; }
+  .arcade-header h2 { font-size: 12px; line-height: 1.9; }
+  .arcade-eyebrow { font-size: 6px; }
+  .arcade-pick-top { margin-bottom: 5px; }
+  .arcade-pick-heading { font-size: 10px; line-height: 2; }
+  .arcade-pick-progress { margin-bottom: 7px; font-size: 6px; gap: 10px; }
+  .arcade-pick-pair { gap: 32px; margin-bottom: 12px; }
+  .arcade-pick-slot { padding: 4px 0 7px; }
+  .arcade-pick-label { font-size: 7px; }
+  .arcade-selected-preview { height: 112px; }
+  .arcade-selected-preview img { width: 112px; height: 112px; }
+  .arcade-pick-slot > strong { font-size: 7px; min-height: 27px; }
+  .arcade-pick-special { font-size: 6px; margin-top: 1px; min-height: 22px; }
+  .arcade-pick-vs { font-size: 17px; }
+  .arcade-choice-grid { gap: 6px; }
+  .arcade-choice { min-height: 74px; border-width: 2px; box-shadow: 2px 2px #16135b; }
+  .arcade-choice-portrait { height: 51px; }
+  .arcade-choice strong { font-size: 6px; padding: 6px 1px; }
+  .arcade-roster-player-marker, .arcade-roster-cpu-marker { top: 2px; font-size: 5px; padding: 2px; }
+  .arcade-pick-actions { gap: 11px; margin-top: 17px; }
+  .arcade-primary, .arcade-secondary { font-size: 7px !important; padding: 10px 12px; }
+  .arcade-hud { gap: 60px; margin: 0 0 9px; }
+  .arcade-health > div:first-child { font-size: 6px; gap: 3px; }
+  .arcade-health progress { height: 13px; }
+  .arcade-meter { gap: 5px; font-size: 6px; }
+  .arcade-meter > span { display: none; }
+  .arcade-meter meter { width: 40px; height: 9px; }
+  .arcade-clock span { font-size: 5px; }
+  .arcade-clock strong { font-size: 22px; }
+  .arcade-stage-wrap { border-width: 2px; }
+  .arcade-overlay { padding: 9px; gap: 9px; }
+  .arcade-overlay h3 { font-size: 11px; line-height: 1.9; }
+  .arcade-overlay p { font-size: 6px; line-height: 1.9; }
+  .arcade-overlay .arcade-primary, .arcade-overlay .arcade-secondary { font-size: 7px !important; min-height: 44px; padding: 7px 12px; }
+  .arcade-overlay .arcade-eyebrow { font-size: 5px; }
+  .arcade-announcement { font-size: 20px; }
+  .arcade-announcement small { font-size: 6px; padding: 6px; }
+  .arcade-versus > .arcade-eyebrow { display: none; }
+  .arcade-versus-pair { gap: 35px; }
+  .arcade-versus-fighter { font-size: 7px; }
+  .arcade-versus-fighter img { width: 95px; height: 95px; margin-bottom: 4px; }
+  .arcade-vs-mark { font-size: 20px; }
+  .arcade-toolbar { gap: 8px; margin-top: 11px; }
+  .arcade-toolbar .arcade-secondary { min-height: 44px; font-size: 6px !important; padding: 8px 9px; }
+  .arcade-motion { font-size: 6px; }
+  .arcade-controls-help { font-size: 6px; padding: 10px; }
+  .arcade-touch { width: 44px; height: 44px; font-size: 12px !important; }
+  .arcade-dpad { grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 4px; }
+  .arcade-action-pad { display: grid; grid-template-columns: repeat(2, 44px); gap: 4px; }
+  .arcade-touch span { font-size: 5px; }
+  .arcade-help { font-size: 5px; }
 }
 @media (max-width: 350px) {
-  .team-arcade-dialog[data-mode="select"] .arcade-header h2 {
-    font-size: 11px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected {
-    grid-template-columns: 76px minmax(0, 1fr);
-    column-gap: 8px;
-    padding: 8px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-selected-preview img {
-    width: 76px;
-    height: 135px;
-  }
+  .arcade-header h2 { font-size: 10px; }
+  .arcade-pick-pair { gap: 26px; }
+  .arcade-choice-grid { gap: 5px; }
+  .arcade-choice-portrait { height: 45px; }
+  .arcade-choice { min-height: 69px; }
+  .arcade-pick-slot > strong { font-size: 6px; }
+  .arcade-primary, .arcade-secondary { padding: 10px 9px; font-size: 6px !important; }
+  .arcade-versus-fighter img { width: 70px; height: 70px; }
 }
 @media (max-height: 560px) and (orientation: landscape) {
-  .team-arcade-dialog[data-mode="select"] .arcade-header {
-    padding: 0 48px 10px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-header h2 {
-    font-size: 17px;
-  }
-  .team-arcade-dialog[data-mode="select"] .arcade-icon-button {
-    top: 0;
-  }
+  .team-arcade-dialog { max-height: 100dvh; }
+  .arcade-cabinet { padding: 10px; }
+  .arcade-header { margin-bottom: 8px; padding-bottom: 8px; }
+  .arcade-header h2 { font-size: 12px; }
+  .arcade-header .arcade-eyebrow { display: none; }
+  .arcade-pick-top { margin-bottom: 4px; }
+  .arcade-pick-heading { font-size: 10px; }
+  .arcade-pick-pair { max-width: 480px; gap: 45px; margin-bottom: 10px; }
+  .arcade-selected-preview, .arcade-selected-preview img { height: 90px; }
+  .arcade-selected-preview img { width: 90px; }
+  .arcade-pick-slot > strong { font-size: 7px; }
+  .arcade-choice-grid { max-width: 540px; }
+  .arcade-choice-portrait { height: 45px; }
+  .arcade-choice strong { font-size: 7px; padding: 5px 1px; }
+  .arcade-choice { min-height: 67px; }
+  .arcade-pick-actions { margin-top: 14px; }
+  .arcade-hud { margin-bottom: 8px; }
+  .arcade-health progress { height: 12px; }
+  .arcade-stage-wrap { max-width: calc((100dvh - 195px) * 1.77778); margin: auto; }
+  .arcade-touch-controls { position: absolute; left: 10px; right: 10px; top: 58%; transform: translateY(-50%); margin: 0; pointer-events: none; }
+  .arcade-touch-controls > div { pointer-events: auto; }
+  .arcade-touch { width: 44px; height: 44px; }
+  .arcade-dpad { grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 4px; }
+  .arcade-action-pad { display: grid; grid-template-columns: repeat(2, 44px); gap: 4px; }
+  .arcade-toolbar { margin-top: 7px; }
+  .arcade-help { display: none; }
+  .arcade-overlay { padding: 8px; gap: 7px; }
+  .arcade-overlay h3 { font-size: 10px; }
+  .arcade-overlay p { font-size: 6px; }
+  .arcade-overlay .arcade-primary, .arcade-overlay .arcade-secondary { min-height: 44px; padding: 6px 10px; font-size: 7px !important; }
+  .arcade-versus-fighter img { width: 72px; height: 72px; }
+  .arcade-versus-fighter { font-size: 7px; }
+  .arcade-vs-mark { font-size: 20px; }
+}
+/* Both the OS preference and the in-game option disable decorative motion. */
+.team-arcade-dialog[data-reduced-motion="true"] *,
+.team-arcade-dialog[data-reduced-motion="true"] *::before,
+.team-arcade-dialog[data-reduced-motion="true"] *::after { animation: none !important; transition: none !important; }
+.team-arcade-dialog[data-reduced-motion="true"] .arcade-choice:hover { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .team-arcade-dialog *, .team-arcade-dialog *::before, .team-arcade-dialog *::after { animation: none !important; transition: none !important; }
+  .arcade-choice:hover { transform: none; }
 }

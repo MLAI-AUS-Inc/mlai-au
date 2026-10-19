@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import {
   FIGHTERS,
-  FIGHTER_IDS,
-  type Difficulty,
   type FighterId,
   type MatchConfig,
 } from "~/games/team-arcade/roster";
@@ -18,6 +16,7 @@ import {
   getArcadeOwner,
   releaseArcade,
 } from "~/lib/arcade-focus";
+import FighterSelect from "./FighterSelect";
 import "./arcade.css";
 
 export interface ArcadeShellProps {
@@ -52,115 +51,6 @@ const keyActions: Record<string, keyof InputFrame> = {
 const CONTROLS =
   "A/D or ←/→ move · W/↑/Space jump · S/↓ crouch · J punch · K kick · L special · Shift guard · Esc pause";
 
-type FighterSlot = "player" | "opponent";
-
-function FighterSelection({
-  slot,
-  selected,
-  onSelect,
-}: {
-  slot: FighterSlot;
-  selected: FighterId;
-  onSelect: (id: FighterId) => void;
-}) {
-  const [search, setSearch] = useState("");
-  const fighter = FIGHTERS[selected];
-  const special = SPECIAL_MOVES[selected];
-  const query = search.trim().toLocaleLowerCase();
-  const matches = FIGHTER_IDS.filter((id) => {
-    const entry = FIGHTERS[id];
-    return `${entry.name} ${entry.role} ${entry.special}`
-      .toLocaleLowerCase()
-      .includes(query);
-  });
-  const label = slot === "player" ? "your fighter" : "CPU opponent";
-
-  return (
-    <fieldset className={`arcade-fighter-select ${slot}`}>
-      <legend>
-        {slot === "player" ? "01 / YOUR FIGHTER" : "02 / CPU OPPONENT"}
-      </legend>
-      <div
-        className="arcade-selected"
-        data-testid={`${slot}-selected-fighter`}
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        <div className="arcade-selected-preview" aria-hidden="true">
-          <img
-            src={fighter.portrait
-              .replace("/thumbnails/", "/pixel-art/")
-              .replace(".webp", "-pixel-still.webp")}
-            alt=""
-            width="160"
-            height="160"
-          />
-        </div>
-        <div className="arcade-selected-identity">
-          <strong>{fighter.name}</strong>
-          <span>{fighter.role}</span>
-          <p>{fighter.style}</p>
-        </div>
-        <div className="arcade-selected-special">
-          <span className="arcade-special-name">SPECIAL / {special.name}</span>
-          <p>{special.description}</p>
-        </div>
-      </div>
-      <label className="arcade-roster-search">
-        <span>Find {label}</span>
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Name, role or special…"
-          autoComplete="off"
-          spellCheck={false}
-          aria-controls={`arcade-${slot}-roster`}
-        />
-      </label>
-      <div className="arcade-roster-count" aria-live="polite">
-        {matches.length} of {FIGHTER_IDS.length} fighters
-      </div>
-      <div className="arcade-choice-grid" id={`arcade-${slot}-roster`}>
-        {matches.map((id) => {
-          const entry = FIGHTERS[id];
-          const chosen = selected === id;
-          return (
-            <button
-              type="button"
-              key={id}
-              aria-pressed={chosen}
-              aria-label={`${slot === "player" ? "Play as" : "Fight against"} ${entry.name}`}
-              className={`arcade-choice ${chosen ? "selected" : ""}`}
-              onClick={() => onSelect(id)}
-            >
-              <img
-                src={entry.portrait}
-                alt=""
-                width="80"
-                height="80"
-                decoding="async"
-              />
-              <strong>{entry.shortName}</strong>
-              <span className="arcade-selection-marker" aria-hidden="true">
-                {chosen ? (slot === "player" ? "P1 ✓" : "CPU ✓") : "SELECT"}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      {matches.length === 0 && (
-        <p className="arcade-empty-search">
-          No fighters match “{search}”.{" "}
-          <button type="button" onClick={() => setSearch("")}>
-            Show all fighters
-          </button>
-        </p>
-      )}
-    </fieldset>
-  );
-}
-
 export default function ArcadeShell({
   initialPlayer = "sam",
   onClose,
@@ -171,8 +61,7 @@ export default function ArcadeShell({
   const [player, setPlayer] = useState<FighterId>(initialPlayer),
     [opponent, setOpponent] = useState<FighterId>(
       initialPlayer === "sam" ? "sonia" : "sam",
-    ),
-    [difficulty, setDifficulty] = useState<Difficulty>("normal");
+    );
   const [mode, setMode] = useState<Mode>("select"),
     [config, setConfig] = useState<MatchConfig | null>(null),
     [attempt, setAttempt] = useState(0);
@@ -182,6 +71,8 @@ export default function ArcadeShell({
   const [volume, setVolume] = useState(0.3),
     [reduced, setReduced] = useState(false);
   const [controls, setControls] = useState(false);
+  const [arenaVisible, setArenaVisible] = useState(false);
+  const arenaInView = useRef(false);
   const settings = useRef({ volume, reduced });
   settings.current = { volume, reduced };
   const modeRef = useRef<Mode>(mode);
@@ -201,12 +92,6 @@ export default function ArcadeShell({
   }
   async function resume() {
     await runtime.current?.resume();
-    if (!runtime.current) return;
-    setMode("playing");
-    viewport.current?.focus({ preventScroll: true });
-  }
-  async function fight() {
-    await runtime.current?.start();
     if (!runtime.current) return;
     setMode("playing");
     viewport.current?.focus({ preventScroll: true });
@@ -295,6 +180,35 @@ export default function ArcadeShell({
     // A new attempt owns a new runtime. Settings below update it without restarting a match.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, attempt]);
+
+  useEffect(() => {
+    if (mode !== "ready") return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cancel = () => clearTimeout(timer);
+    const begin = async () => {
+      const active = runtime.current;
+      if (!active || modeRef.current !== "ready" || document.hidden || !arenaInView.current) return;
+      await active.start();
+      if (runtime.current !== active || modeRef.current !== "ready") return;
+      setMode("playing");
+      viewport.current?.focus({ preventScroll: true });
+    };
+    const schedule = () => {
+      cancel();
+      if (!document.hidden && document.hasFocus() && arenaInView.current)
+        timer = setTimeout(() => void begin(), reduced ? 900 : 1400);
+    };
+    schedule();
+    window.addEventListener("blur", cancel);
+    window.addEventListener("focus", schedule);
+    document.addEventListener("visibilitychange", schedule);
+    return () => {
+      cancel();
+      window.removeEventListener("blur", cancel);
+      window.removeEventListener("focus", schedule);
+      document.removeEventListener("visibilitychange", schedule);
+    };
+  }, [mode, reduced, arenaVisible]);
   useEffect(() => {
     runtime.current?.volume(volume);
   }, [volume]);
@@ -303,6 +217,8 @@ export default function ArcadeShell({
   }, [reduced]);
 
   useEffect(() => {
+    arenaInView.current = false;
+    setArenaVisible(false);
     const applyKeyboard = () => {
       const actions = new Set([...keys.current].map((key) => keyActions[key]));
       for (const action of Object.values(keyActions))
@@ -349,7 +265,12 @@ export default function ArcadeShell({
     document.addEventListener("visibilitychange", hidden);
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0] && !entries[0].isIntersecting) pause();
+        const entry = entries[0];
+        if (!entry) return;
+        const visible = entry.isIntersecting && entry.intersectionRatio >= 0.1;
+        arenaInView.current = visible;
+        setArenaVisible(visible);
+        if (!visible) pause();
       },
       { threshold: 0.1 },
     );
@@ -418,6 +339,7 @@ export default function ArcadeShell({
       ref={dialog}
       className="team-arcade-dialog"
       data-mode={mode}
+      data-reduced-motion={reduced}
       aria-labelledby="arcade-title"
       onCancel={(event) => {
         event.preventDefault();
@@ -433,12 +355,15 @@ export default function ArcadeShell({
         data-tick={snapshot?.tick}
         data-player-x={snapshot?.fighters[0].x}
         data-cpu-x={snapshot?.fighters[1].x}
+        data-player-y={snapshot?.fighters[0].y}
+        data-cpu-y={snapshot?.fighters[1].y}
+        data-player-facing={snapshot?.fighters[0].facing}
+        data-cpu-facing={snapshot?.fighters[1].facing}
       >
         <header className="arcade-header">
           <div>
-            <span className="arcade-eyebrow">MLAI / PLAYER VS CPU</span>
             <h2 id="arcade-title">
-              COMMUNITY CLASH<span>15</span>
+              COMMUNITY CLASH
             </h2>
           </div>
           <button
@@ -446,56 +371,26 @@ export default function ArcadeShell({
             onClick={onClose}
             aria-label="Close arcade"
           >
-            ✕
+            X
           </button>
         </header>
         {mode === "select" ? (
-          <div className="arcade-selection">
-            <div className="arcade-selection-intro">
-              <span className="arcade-tag">FIFTEEN FIGHTERS. ONE COMMUNITY.</span>
-              <p>Pick your side. Meet your match.</p>
-            </div>
-            <div className="arcade-versus-select">
-              <FighterSelection slot="player" selected={player} onSelect={setPlayer} />
-              <FighterSelection slot="opponent" selected={opponent} onSelect={setOpponent} />
-              <span className="arcade-vs" aria-hidden="true">
-                VS
-              </span>
-            </div>
-            <div className="arcade-selection-bottom">
-              <label>
-                CPU DIFFICULTY
-                <select
-                  aria-label="CPU difficulty"
-                  value={difficulty}
-                  onChange={(event) =>
-                    setDifficulty(event.target.value as Difficulty)
-                  }
-                >
-                  <option value="easy">Easy — finding your feet</option>
-                  <option value="normal">Normal — ready to rumble</option>
-                  <option value="hard">Hard — bring your A-game</option>
-                </select>
-              </label>
-              <button
-                className="arcade-primary"
-                onClick={() => {
-                  setMode("loading");
-                  setConfig({
-                    player,
-                    opponent,
-                    difficulty,
-                    seed: Math.floor(Math.random() * 1e9),
-                  });
-                }}
-              >
-                ENTER THE ARENA <span>→</span>
-              </button>
-            </div>
-            <p className="arcade-help">
-              First to two rounds. Keyboard or touch. Mirror matches welcome.
-            </p>
-          </div>
+          <FighterSelect
+            initialPlayer={player}
+            initialOpponent={opponent}
+            onStart={(chosenPlayer, chosenOpponent) => {
+              setPlayer(chosenPlayer);
+              setOpponent(chosenOpponent);
+              setControls(false);
+              setMode("loading");
+              setConfig({
+                player: chosenPlayer,
+                opponent: chosenOpponent,
+                difficulty: "normal",
+                seed: Math.floor(Math.random() * 1e9),
+              });
+            }}
+          />
         ) : (
           <>
             <div className="arcade-hud" aria-label="Match status">
@@ -567,48 +462,45 @@ export default function ArcadeShell({
                 }}
               />
               {mode === "loading" && (
-                <div className="arcade-overlay" role="status">
-                  <span className="arcade-eyebrow">PREPARING YOUR MATCH</span>
-                  <h3>
-                    {progress === 0 ? "LOADING ARCADE…" : "LOADING FIGHTERS…"}
-                  </h3>
+                <div className="arcade-overlay arcade-menu-enter" role="status">
+                  <h3>LOADING…</h3>
                   <progress max="1" value={progress || undefined} />
-                  <p>
-                    {FIGHTERS[player].shortName} versus{" "}
-                    {FIGHTERS[opponent].shortName}. Welcome to the MLAI office.
-                  </p>
+                  <p>{FIGHTERS[player].shortName} VS {FIGHTERS[opponent].shortName}</p>
                   <button className="arcade-secondary" onClick={selectAgain}>
                     Back to selection
                   </button>
                 </div>
               )}
               {mode === "ready" && (
-                <div className="arcade-overlay">
-                  <span className="arcade-eyebrow">
-                    {FIGHTERS[player].shortName} VS{" "}
-                    {FIGHTERS[opponent].shortName}
-                  </span>
-                  <h3>READY TO PLAY?</h3>
-                  <p>
-                    A/D or ←/→ move · W/↑ jump · J punch · K kick · L special ·
-                    Shift guard
-                  </p>
-                  <p className="arcade-match-special">
-                    {SPECIAL_MOVES[player].name}: {SPECIAL_MOVES[player].description}
-                  </p>
-                  <button
-                    className="arcade-primary"
-                    onClick={() => void fight()}
-                  >
-                    FIGHT! →
-                  </button>
+                <div className="arcade-overlay arcade-versus arcade-menu-enter">
+                  <span className="arcade-eyebrow">MLAI OFFICE</span>
+                  <div className="arcade-versus-pair">
+                    {[player, opponent].map((id, side) => (
+                      <div
+                        className="arcade-versus-fighter"
+                        data-side={side === 0 ? "player" : "opponent"}
+                        key={side}
+                      >
+                        <img
+                          src={FIGHTERS[id].portrait
+                            .replace("/thumbnails/", "/pixel-art/")
+                            .replace(".webp", "-pixel-still.webp")}
+                          width="160"
+                          height="160"
+                          alt=""
+                        />
+                        <span>{side === 0 ? "P1" : "CPU"}</span>
+                        <strong>{FIGHTERS[id].shortName}</strong>
+                      </div>
+                    ))}
+                    <span className="arcade-vs-mark" aria-hidden="true">VS</span>
+                  </div>
+                  <h3>READY TO FIGHT</h3>
                 </div>
               )}
               {mode === "paused" && (
-                <div className="arcade-overlay">
-                  <span className="arcade-eyebrow">TAKE A BREATHER</span>
+                <div className="arcade-overlay arcade-menu-enter">
                   <h3>GAME PAUSED</h3>
-                  <p>Your match waits for you.</p>
                   <button
                     className="arcade-primary"
                     onClick={() => void resume()}
@@ -621,7 +513,7 @@ export default function ArcadeShell({
                 </div>
               )}
               {mode === "error" && (
-                <div className="arcade-overlay" role="alert">
+                <div className="arcade-overlay arcade-menu-enter" role="alert">
                   <h3>COULDN’T LOAD</h3>
                   <p>{error}</p>
                   <button
@@ -636,7 +528,17 @@ export default function ArcadeShell({
                 </div>
               )}
               {mode === "playing" && snapshot?.announcement && (
-                <div className="arcade-announcement" aria-live="polite">
+                <div
+                  key={`${snapshot.round}:${snapshot.announcement}`}
+                  className={`arcade-announcement ${
+                    snapshot.phase === "intro"
+                      ? snapshot.announcement === "FIGHT!"
+                        ? "arcade-fight-call"
+                        : "arcade-round-splash"
+                      : "arcade-round-result"
+                  }`}
+                  aria-live="polite"
+                >
                   {snapshot.announcement}
                   {snapshot.phase === "round-end" && (
                     <small>
@@ -649,7 +551,7 @@ export default function ArcadeShell({
               )}
               {mode === "result" && (
                 <div
-                  className="arcade-overlay arcade-result"
+                  className="arcade-overlay arcade-result arcade-menu-enter"
                   aria-live="polite"
                 >
                   <span className="arcade-eyebrow">
@@ -714,37 +616,19 @@ export default function ArcadeShell({
               >
                 Controls
               </button>
-              <label className="arcade-volume">
-                <span>Sound</span>
-                <input
-                  aria-label="Sound volume"
-                  type="range"
-                  min="0"
-                  max="0.6"
-                  step="0.05"
-                  value={volume}
-                  onChange={(event) => setVolume(Number(event.target.value))}
-                />
-              </label>
               <button
                 className="arcade-secondary"
-                aria-pressed={volume === 0}
+                aria-label={volume === 0 ? "Unmute sound" : "Mute sound"}
+                aria-pressed={volume > 0}
                 onClick={() => setVolume(volume === 0 ? 0.3 : 0)}
               >
-                {volume === 0 ? "Unmute" : "Mute"}
+                SOUND {volume === 0 ? "OFF" : "ON"}
               </button>
-              <label className="arcade-motion">
-                <input
-                  type="checkbox"
-                  checked={reduced}
-                  onChange={(event) => setReduced(event.target.checked)}
-                />{" "}
-                Less motion
-              </label>
             </div>
             {controls && (
-              <div className="arcade-controls-help">
+              <div className="arcade-controls-help arcade-menu-enter">
                 <p>{CONTROLS}</p>
+                <p>Up near your opponent hops over them. Add ←/→ to steer.</p>
                 <p>
                   Hold away or Shift to guard. Crouch + J hits low. Jump +
                   attack hits overhead. A special costs half a meter; hits build
@@ -752,13 +636,16 @@ export default function ArcadeShell({
                 </p>
                 <p><strong>{FIGHTERS[player].shortName} / {SPECIAL_MOVES[player].name}:</strong> {SPECIAL_MOVES[player].description}</p>
                 <p><strong>{FIGHTERS[opponent].shortName} / {SPECIAL_MOVES[opponent].name}:</strong> {SPECIAL_MOVES[opponent].description}</p>
+                <label className="arcade-motion">
+                  <input
+                    type="checkbox"
+                    checked={reduced}
+                    onChange={(event) => setReduced(event.target.checked)}
+                  /> Less motion
+                </label>
               </div>
             )}
-            <p className="arcade-help">
-              {mode === "playing"
-                ? "Click the arena to focus keyboard controls. Esc pauses. Your progress pauses if you leave."
-                : "Original MLAI fighters / Local CPU / No account needed"}
-            </p>
+
           </>
         )}
       </div>
