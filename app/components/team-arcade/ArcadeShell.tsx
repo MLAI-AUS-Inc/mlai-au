@@ -86,7 +86,16 @@ function FighterSelection({
         aria-live="polite"
         aria-atomic="true"
       >
-        <img src={fighter.portrait} alt="" width="80" height="80" />
+        <div className="arcade-selected-preview" aria-hidden="true">
+          <img
+            src={fighter.portrait
+              .replace("/thumbnails/", "/pixel-art/")
+              .replace(".webp", "-pixel-still.webp")}
+            alt=""
+            width="160"
+            height="160"
+          />
+        </div>
         <div className="arcade-selected-identity">
           <strong>{fighter.name}</strong>
           <span>{fighter.role}</span>
@@ -408,6 +417,7 @@ export default function ArcadeShell({
     <dialog
       ref={dialog}
       className="team-arcade-dialog"
+      data-mode={mode}
       aria-labelledby="arcade-title"
       onCancel={(event) => {
         event.preventDefault();
@@ -565,7 +575,7 @@ export default function ArcadeShell({
                   <progress max="1" value={progress || undefined} />
                   <p>
                     {FIGHTERS[player].shortName} versus{" "}
-                    {FIGHTERS[opponent].shortName}. Melbourne after dark.
+                    {FIGHTERS[opponent].shortName}. Welcome to the MLAI office.
                   </p>
                   <button className="arcade-secondary" onClick={selectAgain}>
                     Back to selection

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { CombatMatch, emptyInput } from "../app/games/team-arcade/core/combat";
 import { FIGHTERS, FIGHTER_IDS, type FighterId } from "../app/games/team-arcade/roster";
 import { SPECIAL_MOVES } from "../app/games/team-arcade/specials";
+import { ARENA_ASSET } from "../app/games/team-arcade/arena";
 
 const root = new URL("../", import.meta.url);
 const expectedRoster = [
@@ -57,7 +58,7 @@ describe("complete team arcade roster", () => {
     }
   });
 
-  test("every fighter has a distinct 1024px atlas and a small selection portrait", () => {
+  test("fighter atlases, small portraits and the office arena have valid local image dimensions", () => {
     const sheetHashes = new Set<string>(), portraitHashes = new Set<string>();
     for (const id of FIGHTER_IDS) {
       const sheet = asset(FIGHTERS[id].sheet), portrait = asset(FIGHTERS[id].portrait);
@@ -76,6 +77,11 @@ describe("complete team arcade roster", () => {
     // Adding the rest of the team must not relabel or duplicate an existing fighter sheet.
     expect(sheetHashes.size).toBe(15);
     expect(portraitHashes.size).toBe(15);
+    const office = asset(ARENA_ASSET.url);
+    expect(webpDimensions(office)).toEqual([ARENA_ASSET.width, ARENA_ASSET.height]);
+    expect([ARENA_ASSET.width, ARENA_ASSET.height]).toEqual([960, 540]);
+    expect(office.length).toBeGreaterThan(10_000);
+    expect(office.length).toBeLessThan(2_000_000);
   });
 
   test("all fifteen specials describe distinct playable mechanics and counterplay", () => {

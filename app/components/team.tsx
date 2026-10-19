@@ -388,8 +388,8 @@ export default function Team() {
 
         .fighter-press-start { background: transparent; border: 0; text-align: right; }
         .fighter-mobile-profile { color: #e7ebff; font: 12px monospace; text-decoration: underline; }
-        .fighter-arcade-loading { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #fff; background: #10162cf5; padding: 24px; text-align: center; }
-        .fighter-arcade-loading button { background: #ffea48; color: #13192d; border: 0; border-radius: 5px; padding: 12px 22px; cursor: pointer; }
+        .fighter-arcade-loading { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #fff; background: #3537dcf5; padding: 24px; text-align: center; }
+        .fighter-arcade-loading button { background: #ffeb3b; color: #232078; border: 0; border-radius: 5px; padding: 12px 22px; cursor: pointer; }
         @media (prefers-reduced-motion: reduce) {
           .fighter-select-box-active, .fighter-press-start { animation: none !important; }
           .fighter-select-box, .fighter-nav-arrow { transition: none !important; }

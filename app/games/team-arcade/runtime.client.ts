@@ -15,6 +15,7 @@ import {
   hitbox,
 } from "./core/combat";
 import { SPECIAL_MOVES } from "./specials";
+import { ARENA_ASSET } from "./arena";
 
 export interface ArcadeRuntime {
   start(): Promise<void>;
@@ -102,16 +103,19 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
         options.config.player,
         options.config.opponent,
       ]);
-      this.load.on("progress", (progress: number) =>
-        options.onProgress(progress),
-      );
+      this.load.on("progress", (progress: number) => {
+        if (!destroyed && !failed) options.onProgress(progress);
+      });
       this.load.on("loaderror", (file: { key: string }) => {
         failed = true;
         if (!destroyed)
           options.onError(
-            `Could not load ${FIGHTERS[file.key as FighterId]?.shortName ?? "fighter"} artwork. Check your connection and retry.`,
+            file.key === ARENA_ASSET.key
+              ? ARENA_ASSET.loadError
+              : `Could not load ${FIGHTERS[file.key as FighterId]?.shortName ?? "fighter"} artwork. Check your connection and retry.`,
           );
       });
+      this.load.image(ARENA_ASSET.key, ARENA_ASSET.url);
       for (const id of unique)
         this.load.spritesheet(id, FIGHTERS[id].sheet, {
           frameWidth: 256,
@@ -152,90 +156,25 @@ export function createArcade(options: RuntimeOptions): ArcadeRuntime {
       });
     }
     private drawStage() {
-      const g = this.add.graphics();
-      for (let y = 0; y < 450; y += 6) {
-        const t = y / 450;
-        g.fillStyle(
-          Phaser.Display.Color.GetColor(12 + 15 * t, 17 + 13 * t, 47 + 57 * t),
-        );
-        g.fillRect(0, y, 960, 6);
-      }
-      g.fillStyle(0xffe7ad, 0.8);
-      g.fillCircle(772, 95, 30);
-      g.fillStyle(0x152047);
-      g.fillCircle(759, 86, 28);
-      for (let i = 0; i < 38; i++) {
-        g.fillStyle(i % 3 === 0 ? 0x55d9ff : 0xced7ff, 0.5);
-        g.fillRect((i * 137 + 37) % 960, 25 + ((i * 53) % 170), 2, 2);
-      }
-      for (let layer = 0; layer < 2; layer++)
-        for (let i = 0; i < 18; i++) {
-          const x = i * 65 - layer * 27,
-            h = 65 + ((i * 61 + layer * 39) % 170),
-            base = layer === 0 ? 365 : 405;
-          g.fillStyle(layer === 0 ? 0x172950 : 0x111c3d);
-          g.fillRect(x, base - h, 57, h);
-          for (let wy = base - h + 12; wy < base - 10; wy += 16)
-            for (let wx = x + 8; wx < x + 48; wx += 12) {
-              if ((wx + wy + i) % 5 !== 0) {
-                g.fillStyle((wx + wy) % 3 ? 0x42668b : 0xffcb86, 0.65);
-                g.fillRect(wx, wy, 4, 6);
-              }
-            }
-        }
-      // Melbourne spire and an MLAI rooftop, drawn on the same fixed arena coordinates.
-      g.fillStyle(0x334673);
-      g.fillRect(478, 146, 24, 215);
-      g.fillTriangle(478, 146, 490, 88, 502, 146);
-      g.fillStyle(0x00cde3);
-      g.fillRect(486, 151, 3, 165);
-      g.fillStyle(0x090e27);
-      g.fillRect(0, 383, 960, 26);
-      g.fillStyle(0x365683);
-      g.fillRect(0, 405, 960, 7);
-      for (let x = 0; x < 960; x += 42) {
-        g.fillStyle(0x35466b);
-        g.fillRect(x, 384, 5, 52);
-      }
-      g.fillStyle(0x203056);
-      g.fillRect(0, 436, 960, 104);
-      g.fillStyle(0x61d7f1);
-      g.fillRect(0, 436, 960, 3);
-      g.lineStyle(1, 0x395578, 0.65);
-      for (let x = -500; x < 1500; x += 96)
-        g.lineBetween(480 + (x - 480) * 0.7, 440, x, 540);
-      for (let y = 456; y < 540; y += 22) g.lineBetween(0, y, 960, y);
-      g.fillStyle(0x122044);
-      g.fillRoundedRect(48, 270, 220, 65, 5);
-      g.lineStyle(2, 0x00e5ff);
-      g.strokeRoundedRect(48, 270, 220, 65, 5);
+      // One cached image keeps the office static and inexpensive on phones.
+      // The floor and combat coordinates remain the same for every fighter.
+      this.textures
+        .get(ARENA_ASSET.key)
+        .setFilter(Phaser.Textures.FilterMode.NEAREST);
       this.add
-        .text(158, 290, "MLAI ARCADE", {
-          fontFamily: "monospace",
-          fontSize: "24px",
-          fontStyle: "bold",
-          color: "#00e5ff",
-        })
-        .setOrigin(0.5);
+        .image(0, 0, ARENA_ASSET.key)
+        .setOrigin(0)
+        .setDisplaySize(ARENA_ASSET.width, ARENA_ASSET.height)
+        .setDepth(-1);
       this.add
-        .text(158, 316, "MELBOURNE • ROOFTOP", {
+        .text(942, 524, "MLAI HQ / MELBOURNE", {
           fontFamily: "monospace",
           fontSize: "11px",
-          color: "#c9d5ff",
+          color: "#e4f1ff",
+          stroke: "#11182e",
+          strokeThickness: 3,
         })
-        .setOrigin(0.5);
-      this.add
-        .text(930, 510, "ROUND ZERO / AUSTRALIA", {
-          fontFamily: "monospace",
-          fontSize: "11px",
-          color: "#7c98bc",
-        })
-        .setOrigin(1, 0.5);
-      // Cache the static skyline once rather than tessellating hundreds of
-      // windows and roof tiles on every combat frame, especially on phones.
-      g.generateTexture("mlai-rooftop", 960, 540);
-      g.destroy();
-      this.add.image(0, 0, "mlai-rooftop").setOrigin(0).setDepth(-1);
+        .setOrigin(1);
     }
     update(_time: number, delta: number) {
       if (destroyed || !ready) return;

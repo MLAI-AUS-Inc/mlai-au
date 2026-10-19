@@ -1,10 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 import { FIGHTERS, FIGHTER_IDS } from "../app/games/team-arcade/roster";
 import { SPECIAL_MOVES } from "../app/games/team-arcade/specials";
+import { ARENA_ASSET } from "../app/games/team-arcade/arena";
 
 const sheetPaths = new Set<string>(FIGHTER_IDS.map((id) => FIGHTERS[id].sheet));
 const sheetRequests = (requests: string[]) =>
   requests.map((url) => new URL(url).pathname).filter((path) => sheetPaths.has(path));
+const arenaRequests = (requests: string[]) =>
+  requests.filter((url) => new URL(url).pathname === ARENA_ASSET.url);
+const SELECTION_MAP = "/games/team-arcade/v3/selection-world-map.jpg";
 
 async function home(page: Page) {
   // Local Worker caches use a constant 'local' revision. A query forces the
@@ -71,12 +75,29 @@ test("homepage defers fight assets; all fifteen fighters select independently an
       /runtime\.client|phaser|\/games\/team-arcade\//.test(url),
     ),
   ).toEqual([]);
+  const mapResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === SELECTION_MAP,
+  );
   await open(page);
   expect(
     requests.filter((url) => /runtime\.client|phaser/.test(url)),
   ).toEqual([]);
   expect(sheetRequests(requests)).toEqual([]);
+  expect(arenaRequests(requests)).toEqual([]);
   const dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveAttribute("data-mode", "select");
+  const selectionStyle = await dialog.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { color: style.backgroundColor, image: style.backgroundImage };
+  });
+  const [red, green, blue] = selectionStyle.color.match(/[\d.]+/g)!.map(Number);
+  expect(blue).toBeGreaterThan(150);
+  expect(red).toBeLessThan(blue * 0.65);
+  expect(green).toBeLessThan(blue * 0.65);
+  expect(selectionStyle.image).toContain(SELECTION_MAP);
+  const map = await mapResponse;
+  expect(map.ok()).toBe(true);
+  expect((await map.body()).subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
   await expect(dialog.getByRole("button", { name: /^Play as / })).toHaveCount(15);
   await expect(dialog.getByRole("button", { name: /^Fight against / })).toHaveCount(15);
   for (const [index, id] of FIGHTER_IDS.entries()) {
@@ -89,6 +110,9 @@ test("homepage defers fight assets; all fifteen fighters select independently an
       await expect(selected).toContainText(fighter.name);
       await expect(selected).toContainText(special.name);
       await expect(selected).toContainText(special.description);
+      await expect(selected.locator(".arcade-selected-preview img")).toHaveAttribute(
+        "src", /\/press-kit\/pixel-art\/team-.+-pixel-still\.webp$/,
+      );
       await expect(dialog.locator(`.${slot}.arcade-fighter-select button[aria-pressed="true"]`)).toHaveCount(1);
       const otherName = slot === "player"
         ? FIGHTERS[index ? FIGHTER_IDS[index - 1] : "sonia"].name
@@ -111,7 +135,9 @@ test("homepage defers fight assets; all fifteen fighters select independently an
     page.getByRole("button", { name: "Fight against Callum Holt", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.screenshot({ path: testInfo.outputPath("selection.png") });
+  expect(arenaRequests(requests)).toEqual([]);
   await enter(page);
+  expect(arenaRequests(requests)).toHaveLength(1);
   if (testInfo.project.name === "desktop") {
     const canvas = await page.locator(".arcade-stage canvas").elementHandle();
     await page.setViewportSize({ width: 390, height: 844 });
@@ -242,6 +268,38 @@ test("missing required art reports a durable error and retries successfully", as
   await page.unroute("**/games/team-arcade/v1/sonia.webp");
   await page.getByRole("button", { name: "RETRY →", exact: true }).click();
   await expect(page.getByRole("button", { name: "FIGHT!" })).toBeVisible();
+});
+
+test("missing office arena remains a clear error until retry restores the match", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop",
+    "Required-stage failure recovery is engine independent.",
+  );
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  await home(page);
+  await open(page);
+  expect(arenaRequests(requests)).toEqual([]);
+  const arenaRoute = `**${ARENA_ASSET.url}`;
+  await page.route(arenaRoute, (route) => route.abort());
+  await page.getByRole("button", { name: "ENTER THE ARENA" }).click();
+  await expect(page.getByRole("alert").locator("p")).toHaveText(ARENA_ASSET.loadError);
+  await page.waitForTimeout(500);
+  await expect(page.getByRole("alert").locator("p")).toHaveText(ARENA_ASSET.loadError);
+  await expect(page.getByRole("button", { name: "FIGHT!" })).toHaveCount(0);
+  const failedAttempts = arenaRequests(requests).length;
+  expect(failedAttempts).toBeGreaterThan(0);
+  await page.unroute(arenaRoute);
+  await page.getByRole("button", { name: "RETRY →", exact: true }).click();
+  await expect(page.getByRole("button", { name: "FIGHT!" })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.locator(".arcade-stage canvas")).toHaveCount(1);
+  expect(arenaRequests(requests)).toHaveLength(failedAttempts + 1);
+  await page.getByRole("button", { name: "FIGHT!" }).click();
+  await expect(page.locator(".arcade-cabinet")).toHaveAttribute("data-phase", "fight");
+  await page.screenshot({ path: testInfo.outputPath("office-retry.png") });
 });
 
 test("cancelled loading cannot resurrect a game; all fighter atlases survive repeated start and exit", async ({

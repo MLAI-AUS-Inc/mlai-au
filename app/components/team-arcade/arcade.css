@@ -346,6 +346,214 @@
   line-height: 1.6;
   margin: 14px 0 0;
 }
+/* Keep the character menu in the homepage's royal-blue world-map setting.
+   Combat switches back to the dark cabinet for clear health bars and effects. */
+.team-arcade-dialog[data-mode="select"] {
+  background-color: #3537dc;
+  background-image:
+    linear-gradient(180deg, #3537dc18, #3537dc45),
+    url("/games/team-arcade/v3/selection-world-map.jpg");
+  background-size: 100% 100%, max(1120px, 100%) auto;
+  background-position: center, center 115px;
+  background-repeat: no-repeat;
+  border-color: #9dbeff;
+  border-radius: 28px;
+  box-shadow: 0 24px 100px #171a9099;
+}
+.team-arcade-dialog[data-mode="select"]::backdrop {
+  background: #3537dca8;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-header {
+  position: relative;
+  justify-content: center;
+  text-align: center;
+  border-bottom-color: #a8cfff70;
+  padding: 8px 48px 18px;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-header .arcade-eyebrow {
+  color: #cdfaff;
+  text-shadow: 2px 2px #1a1a8e;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-header h2 {
+  color: #ffeb3b;
+  font-size: clamp(16px, 2.5vw, 29px);
+  text-shadow: 3px 3px #1a1a8e, -1px -1px #1a1a8e;
+  letter-spacing: 1px;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-header h2 span {
+  background: #ffeb3b;
+  color: #232078;
+  text-shadow: none;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-icon-button {
+  position: absolute;
+  right: 0;
+  top: 7px;
+  width: 44px;
+  height: 44px;
+  color: #ddfcff;
+  background: #202078;
+  border-color: #7cc9ff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-tag {
+  color: #c9fcff;
+  background: #24217dd9;
+  border: 1px solid #8ddfff6b;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selection-intro p {
+  color: #fff;
+  text-shadow: 1px 2px #232078;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-fighter-select legend {
+  color: #51f3ff;
+  text-shadow: 2px 2px #1a1a8e;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-fighter-select.opponent legend {
+  color: #ffb9e0;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selected {
+  grid-template-columns: 106px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 7px;
+  min-height: 172px;
+  padding: 12px;
+  border: 2px solid #00e5ff;
+  border-radius: 9px;
+  background: #232078ed;
+  box-shadow: 0 0 18px #00e5ff1a;
+}
+.team-arcade-dialog[data-mode="select"] .opponent .arcade-selected {
+  border-color: #ff8ac7;
+  background: #292075ed;
+  box-shadow: 0 0 18px #ff8ac71a;
+}
+.arcade-selected-preview {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #3537dc00 60%, #4445e957);
+}
+.arcade-selected-preview img {
+  display: block;
+  width: 106px;
+  height: 144px;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: pixelated;
+  filter: drop-shadow(3px 4px #14145d88);
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selected-identity > strong {
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #fff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selected-identity > span {
+  color: #c1beff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selected-identity > p {
+  color: #84f3ff;
+}
+.team-arcade-dialog[data-mode="select"] .opponent .arcade-selected-identity > p {
+  color: #ffc2e1;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selected-special {
+  grid-column: 2;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selected .arcade-special-name {
+  color: #fff17b;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selected-special > p {
+  color: #dfddff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-roster-search,
+.team-arcade-dialog[data-mode="select"] .arcade-roster-count {
+  color: #e0e9ff;
+  text-shadow: 1px 1px #1a1a8e;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-roster-search input {
+  color: #fff;
+  background: #25217de8;
+  border-color: #a0b0ff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-roster-search input::placeholder {
+  color: #c2c6f5;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-choice {
+  background: #26217eea;
+  border-color: #15155e;
+  border-radius: 5px;
+  box-shadow: 0 2px #1a1a8e;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-choice:hover {
+  border-color: #a4f7ff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-choice.selected {
+  border-color: #00e5ff;
+  background: #1d3c9a;
+  box-shadow: 0 0 14px #00e5ff65;
+}
+.team-arcade-dialog[data-mode="select"] .opponent .arcade-choice.selected {
+  border-color: #ff8ac7;
+  background: #4b2b8d;
+  box-shadow: 0 0 14px #ff8ac74d;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-choice strong {
+  color: #fff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-choice .arcade-selection-marker {
+  color: #c1c5ff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-choice.selected .arcade-selection-marker {
+  color: #5bf4ff;
+}
+.team-arcade-dialog[data-mode="select"] .opponent .arcade-choice.selected .arcade-selection-marker {
+  color: #ffc2e1;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-vs {
+  color: #ffeb3b;
+  text-shadow: 3px 3px #1a1a8e;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selection-bottom {
+  border: 1px solid #a0c6ff91;
+  border-radius: 8px;
+  background: #232078e8;
+  padding: 14px;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selection-bottom label {
+  color: #e0ddff;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-selection-bottom select {
+  color: #fff;
+  border-color: #a0b0ff;
+  background: #2e2b88;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-primary {
+  color: #232078;
+  background: #ffeb3b;
+  border-color: #fff17b;
+  box-shadow: 3px 3px #15155e;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-primary:hover {
+  background: #fff585;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-help {
+  color: #e1e9ff;
+  text-shadow: 1px 1px #1a1a8e;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-empty-search {
+  color: #fff;
+  background: #232078eb;
+  border-radius: 5px;
+}
+.team-arcade-dialog[data-mode="select"] .arcade-empty-search button {
+  color: #a5fcff;
+  border-color: #91d4ff;
+}
 .arcade-hud {
   position: relative;
   display: grid;
@@ -915,5 +1123,89 @@
   }
   .arcade-choice:hover {
     transform: none;
+  }
+}
+
+@media (min-width: 651px) and (max-width: 900px) {
+  .team-arcade-dialog[data-mode="select"] .arcade-selected {
+    grid-template-columns: 82px minmax(0, 1fr);
+    padding: 9px;
+    column-gap: 8px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected-preview img {
+    width: 82px;
+    height: 130px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected-identity > strong {
+    font-size: 10px;
+  }
+}
+@media (max-width: 650px) {
+  .team-arcade-dialog[data-mode="select"] {
+    border-radius: 16px;
+    background-position: center, 57% 120px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-header {
+    padding: 4px 32px 15px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-header h2 {
+    font-size: 13px;
+    letter-spacing: 0;
+    line-height: 1.9;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-header .arcade-eyebrow {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-icon-button {
+    right: -5px;
+    top: 0;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected {
+    grid-template-columns: 92px minmax(0, 1fr);
+    min-height: 160px;
+    column-gap: 10px;
+    padding: 10px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected-preview img {
+    width: 92px;
+    height: 138px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected-identity > strong {
+    font-size: 10px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected-special > p {
+    font-size: 10px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected .arcade-special-name {
+    font-size: 10px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selection-bottom {
+    padding: 12px;
+  }
+}
+@media (max-width: 350px) {
+  .team-arcade-dialog[data-mode="select"] .arcade-header h2 {
+    font-size: 11px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected {
+    grid-template-columns: 76px minmax(0, 1fr);
+    column-gap: 8px;
+    padding: 8px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-selected-preview img {
+    width: 76px;
+    height: 135px;
+  }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .team-arcade-dialog[data-mode="select"] .arcade-header {
+    padding: 0 48px 10px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-header h2 {
+    font-size: 17px;
+  }
+  .team-arcade-dialog[data-mode="select"] .arcade-icon-button {
+    top: 0;
   }
 }
