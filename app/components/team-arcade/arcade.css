@@ -255,6 +255,89 @@
   .arcade-versus-fighter { font-size: 7px; }
   .arcade-vs-mark { font-size: 20px; }
 }
+/* Touch screens get a viewport-sized cabinet; page scroll never separates a
+   fight from its controls. Browser chrome and notch insets remain usable. */
+.arcade-orientation { position: absolute; inset: 72px 0 0; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 24px; overflow-y: auto; background: #222074; text-align: center; }
+.arcade-orientation > * { flex-shrink: 0; }
+.arcade-orientation > :first-child { margin-top: auto; }
+.arcade-orientation > :last-child { margin-bottom: auto; }
+.arcade-orientation h3 { margin: 0; color: #ffeb3b; font-size: 14px; line-height: 2; }
+.arcade-orientation p { max-width: 360px; margin: 0; font-size: 9px; line-height: 2; }
+.arcade-rotate-icon { color: #70f5ff; font-size: 48px; line-height: 1; }
+.team-arcade-dialog[data-layout-blocked]:not([data-layout-blocked="none"]) .arcade-match { visibility: hidden; }
+.arcade-help-close { display: block; margin: 0 0 16px auto; }
+.arcade-touch[data-held="true"] { background: #136b9d; color: #fff17b; border-color: #ffeb3b; box-shadow: 1px 1px #0c0e30; }
+.team-arcade-dialog[data-touch="true"] {
+  width: var(--arcade-view-width, 100dvw); height: var(--arcade-view-height, 100dvh);
+  max-width: 100vw; max-height: 100dvh; margin: 0; border: 0; box-shadow: none; overflow: hidden;
+  overscroll-behavior: contain;
+}
+.team-arcade-dialog[data-touch="true"] .arcade-cabinet {
+  height: 100%; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 44px minmax(0, 1fr); gap: 8px;
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+}
+.team-arcade-dialog[data-touch="true"] .arcade-header { margin: 0; padding: 0; border: 0; gap: 8px; }
+.team-arcade-dialog[data-touch="true"] .arcade-header h2 { font-size: 10px; }
+.team-arcade-dialog[data-touch="true"] .arcade-selection { min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 8px; }
+.team-arcade-dialog[data-touch="true"] .arcade-pick-pair { width: 100%; margin-bottom: 0; }
+.team-arcade-dialog[data-touch="true"] .arcade-choice-grid { min-height: 0; max-height: 100%; align-content: start; overflow: auto; padding: 4px; overscroll-behavior: contain; }
+.team-arcade-dialog[data-touch="true"] .arcade-choice:hover { transform: none; }
+.team-arcade-dialog[data-touch="true"] .arcade-pick-actions { margin: 0; padding: 4px 0; gap: 8px; }
+.team-arcade-dialog[data-touch="true"] .arcade-match { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.team-arcade-dialog[data-touch="true"] .arcade-arena { width: min(100%, calc((var(--arcade-view-height) - 256px) * 1.77778)); margin: 0 auto; }
+.team-arcade-dialog[data-touch="true"] .arcade-stage-wrap { width: 100%; max-width: none; border-width: 2px; }
+.team-arcade-dialog[data-touch="true"] .arcade-toolbar { position: absolute; top: -52px; right: 56px; margin: 0; gap: 6px; flex-wrap: nowrap; }
+.team-arcade-dialog[data-touch="true"] .arcade-toolbar .arcade-secondary { font-size: 7px !important; padding: 8px; min-height: 44px; }
+.team-arcade-dialog[data-touch="true"]:not([data-mode="select"]) .arcade-header h2 { max-width: 120px; font-size: 8px; }
+.team-arcade-dialog[data-touch="true"] .arcade-touch-controls { position: static; transform: none; margin: 0; pointer-events: auto; }
+.team-arcade-dialog[data-touch="true"] .arcade-touch { width: 48px; height: 52px; min-width: 48px; font-size: 16px !important; -webkit-touch-callout: none; }
+.team-arcade-dialog[data-touch="true"] .arcade-touch span { font-size: 6px; }
+.team-arcade-dialog[data-touch="true"] .arcade-dpad,
+.team-arcade-dialog[data-touch="true"] .arcade-action-pad { display: grid; grid-template-columns: repeat(2, 48px); grid-template-rows: repeat(2, 52px); gap: 8px; }
+.team-arcade-dialog[data-touch="true"] .arcade-dpad .up { grid-column: 1; grid-row: 1; }
+.team-arcade-dialog[data-touch="true"] .arcade-dpad .down { grid-column: 2; grid-row: 1; }
+.team-arcade-dialog[data-touch="true"] .arcade-dpad .left { grid-column: 1; grid-row: 2; }
+.team-arcade-dialog[data-touch="true"] .arcade-dpad .right { grid-column: 2; grid-row: 2; }
+.team-arcade-dialog[data-touch="true"] .arcade-controls-help { position: absolute; inset: 0; z-index: 4; margin: 0; overflow: auto; padding: 16px; font-size: 9px; overscroll-behavior: contain; }
+.team-arcade-dialog[data-touch="true"] .arcade-motion { min-height: 44px; font-size: 8px; }
+.team-arcade-dialog[data-touch="true"] .arcade-motion input { width: 24px; height: 24px; }
+.team-arcade-dialog[data-touch="true"] .arcade-hud { gap: 64px; margin: 0 0 6px; }
+.team-arcade-dialog[data-touch="true"] .arcade-health > div:first-child { margin-bottom: 4px; font-size: 7px; gap: 3px; }
+.team-arcade-dialog[data-touch="true"] .arcade-health progress { height: 12px; }
+.team-arcade-dialog[data-touch="true"] .arcade-meter { margin-top: 3px; min-height: 10px; font-size: 6px; }
+.team-arcade-dialog[data-touch="true"] .arcade-meter > span { display: none; }
+.team-arcade-dialog[data-touch="true"] .arcade-clock span { font-size: 5px; }
+.team-arcade-dialog[data-touch="true"] .arcade-clock strong { font-size: 22px; }
+@media (orientation: landscape) {
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-selection { grid-template-columns: 150px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; column-gap: 14px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-pick-top { grid-column: 1 / -1; margin: 0; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-pick-progress { display: none; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-pick-pair { grid-column: 1; grid-row: 2 / 4; gap: 16px; align-self: center; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-pick-slot { padding: 4px 0; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-selected-preview,
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-selected-preview img { height: 72px; width: 66px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-pick-slot > strong { font-size: 6px; line-height: 2; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-pick-special { display: none; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-pick-vs { top: 30%; font-size: 12px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-choice-grid { grid-column: 2; grid-row: 2; max-width: 600px; gap: 6px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-choice { min-height: 52px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-choice-portrait { height: 34px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-choice strong { font-size: 6px; padding: 4px 0; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-pick-actions { grid-column: 2; grid-row: 3; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-arena { width: min(calc(100% - 232px), calc((var(--arcade-view-height) - 124px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 1.77778)); }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-touch-controls { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-touch-controls > div { pointer-events: auto; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-overlay { gap: 8px; padding: 10px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-overlay h3 { font-size: 11px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-versus-fighter img { width: 72px; height: 72px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-orientation { gap: 10px; }
+  .team-arcade-dialog[data-touch="true"][data-phone="true"] .arcade-rotate-icon { display: none; }
+}
+@media (max-width: 480px) {
+  .team-arcade-dialog[data-touch="true"]:not([data-mode="select"]) .arcade-header h2 { visibility: hidden; }
+  .team-arcade-dialog[data-touch="true"] .arcade-selected-preview,
+  .team-arcade-dialog[data-touch="true"] .arcade-selected-preview img { height: 96px; }
+}
 /* Both the OS preference and the in-game option disable decorative motion. */
 .team-arcade-dialog[data-reduced-motion="true"] *,
 .team-arcade-dialog[data-reduced-motion="true"] *::before,
