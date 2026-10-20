@@ -52,6 +52,13 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/use-an-artificial-intelligence-design-assistant-to-prototype': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         contentOwnsConversion: true,
         contentOwnsDisclaimer: true,
