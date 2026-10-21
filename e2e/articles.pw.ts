@@ -73,6 +73,12 @@ for (const article of Object.values(ARTICLE_REGISTRY)) {
       }
     }
     await page.waitForLoadState('load');
+    // The contents list is never an empty bordered box, never doubled, and every link lands.
+    await expect(page.locator('[data-article-toc-placeholder]:empty')).toBeHidden();
+    const contents = page.locator('[data-article-content] nav[aria-label="Table of contents"]');
+    expect(await contents.count(), 'one contents list at most').toBeLessThanOrEqual(1);
+    const targets = await contents.locator('a[href^="#"]').evaluateAll(links => links.map(link => decodeURIComponent(link.getAttribute('href')!.slice(1))));
+    for (const id of targets) expect(await page.evaluate(target => document.getElementById(target) !== null, id), `#${id}`).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'document must fit the viewport').toBe(true);
     expect(failures, `${testInfo.project.name}: browser errors`).toEqual([]);
   });
