@@ -328,7 +328,10 @@ export default function ArcadeShell({
     document.addEventListener("visibilitychange", hidden);
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
+        // A busy main thread can batch several crossings of the stage into one
+        // callback, oldest first. Only the newest says whether it is on screen;
+        // reading a stale "hidden" entry would strand the versus countdown.
+        const entry = entries[entries.length - 1];
         if (!entry) return;
         const visible = entry.isIntersecting && entry.intersectionRatio >= 0.1;
         arenaInView.current = visible;
