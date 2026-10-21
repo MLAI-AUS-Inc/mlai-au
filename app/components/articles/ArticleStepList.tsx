@@ -7,16 +7,20 @@ type ArticleStepListProps = {
     className?: string
 }
 
+// The teal and brand chips used to read the --brand and --accent variables
+// through square-bracket shorthand. Tailwind 4 compiles that shorthand to an
+// invalid declaration and the site never defines --brand, so the numbers had
+// no chip. They now use MLAI's mint (the app's teal-400) and QuoteBlock's purple.
 const ACCENT_CLASSNAMES = {
     teal: {
         container: 'bg-transparent border-gray-400',
-        bulletBg: 'bg-[--brand]',
-        bulletText: 'text-[--accent]',
+        bulletBg: 'bg-teal-400',
+        bulletText: 'text-black',
     },
     brand: {
         container: 'bg-transparent border-gray-400',
-        bulletBg: 'bg-[--brand]',
-        bulletText: 'text-[--accent]',
+        bulletBg: 'bg-[#4b1bd1]',
+        bulletText: 'text-white',
     },
     indigo: {
         container: 'bg-transparent border-gray-400',
@@ -31,7 +35,9 @@ export function ArticleStepList({
     accent = 'teal',
     className = '',
 }: ArticleStepListProps) {
-    const styles = ACCENT_CLASSNAMES[accent]
+    // Article content is cast past these prop types, so an unknown
+    // accent can reach us at runtime and must not crash SSR.
+    const styles = ACCENT_CLASSNAMES[accent] ?? ACCENT_CLASSNAMES.indigo
 
     return (
         <div className={`mt-8 mb-8 rounded-3xl p-6 border ${styles.container} ${className}`}>
