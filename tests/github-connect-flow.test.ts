@@ -1,10 +1,12 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
 const connectGithub = mock(async () => ({
   auth_url: "https://github.com/apps/mlai-tools/installations/new",
 }));
-const requireFounder = mock(async () => ({ appUser: { id: 123 } }));
+const requireFounder = mock(async () => ({
+  appUser: { id: 123, companies: [{ id: "151", name: "MLAI" }], activeCompanyId: "151" },
+}));
 
 mock.module("../app/lib/env.server", () => ({
   getEnv: () => ({ BACKEND_BASE_URL: "https://api.mlai.au" }),
@@ -14,10 +16,18 @@ mock.module("../app/lib/vibe-marketing", () => ({
   connectVibeMarketingGithub: connectGithub,
 }));
 
+// bun's mock.module swaps the module for every later test file in the same
+// `bun test` process, and mock.restore() does not undo it. Stub only the auth
+// gate, keep the real company resolver, and put the real module back after
+// this file so other files never render with this founder's company.
+const realVibeRaising = { ...(await import("../app/lib/vibe-raising")) };
 mock.module("../app/lib/vibe-raising", () => ({
+  ...realVibeRaising,
   requireVibeRaisingFounder: requireFounder,
-  resolveActiveCompanyId: () => 151,
 }));
+afterAll(() => {
+  mock.module("../app/lib/vibe-raising", () => realVibeRaising);
+});
 
 const { action, loader } = await import(
   "../app/routes/founder-tools.marketing.github-connect"
@@ -85,8 +95,8 @@ describe("GitHub connect route", () => {
     expect(forwardedRequest).toBe(request);
     expect(forwardedRequest.headers.get("Origin")).toBe("https://mlai.au");
     expect(body).toMatchObject({
-      companyId: 151,
-      company_id: 151,
+      companyId: "151",
+      company_id: "151",
       returnUrl: "https://mlai.au/founder-tools/marketing/create?step=articleSystem",
       return_url: "https://mlai.au/founder-tools/marketing/create?step=articleSystem",
       forceReconnect: true,
