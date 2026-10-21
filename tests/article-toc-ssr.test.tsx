@@ -29,6 +29,8 @@ describe("server-rendered article table of contents", () => {
       '<a href="#choose-a-workflow" class="text-sm leading-5 font-medium text-indigo-700 underline underline-offset-4 hover:text-indigo-800 transition-colors">Choose a workflow</a>',
     );
     expect(html).toContain('<a href="#write-the-prompt"');
+    // Entries keep the link's line height inside the article's taller prose line height.
+    expect(count(html, '<li class="list-none text-sm leading-5">')).toBe(2);
 
     // The list is exactly what ArticleEnhancer portals today, so both paths look the same.
     const list = renderToStaticMarkup(
