@@ -80,7 +80,8 @@ export function TableOfContents({
       ) : null}
       <ol className="space-y-2" role="list" data-article-toc-collapsible="true">
         {displayGroups.map(({ heading }) => (
-          <li key={heading.href} className="list-none">
+          // The article's prose line height would otherwise space a wrapped entry far apart.
+          <li key={heading.href} className="list-none text-sm leading-5">
             <a
               href={heading.href}
               className="text-sm leading-5 font-medium text-indigo-700 underline underline-offset-4 hover:text-indigo-800 transition-colors"

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 
 import { TableOfContents } from './TableOfContents'
 import { useArticleHydrated } from './ArticleHydration'
+import { SERVER_RENDERED_TOC_ATTRIBUTE } from './ArticleTocPlaceholder'
 
 type TocItem = {
   id: string
@@ -39,6 +40,23 @@ function slugify(text: string, fallback: string, seen: Set<string>) {
 
 const DEFAULT_MAX_STEPS = 6
 
+// Headings inside a contents list (its "In this guide:" title) are not article sections.
+const TOC_CONTAINER_SELECTOR = '[data-article-toc-placeholder], [data-article-toc-component]'
+
+/**
+ * Where the client-built contents list should be portaled, if anywhere.
+ *
+ * An article that already has a server-rendered list (an ArticleTocPlaceholder
+ * given `items`) needs no second one, so no slot is returned. Otherwise the first
+ * empty placeholder is used, as before.
+ */
+export function articleTocPortalSlot(contentRoot: Pick<Element, 'querySelector'>): HTMLElement | null {
+  if (contentRoot.querySelector(`[${SERVER_RENDERED_TOC_ATTRIBUTE}]`)) {
+    return null
+  }
+  return contentRoot.querySelector<HTMLElement>('[data-article-toc-placeholder]')
+}
+
 export function ArticleEnhancer({
   articleTitle,
   articleDescription,
@@ -73,6 +91,9 @@ export function ArticleEnhancer({
       const items: TocItem[] = []
 
       headingNodes.forEach((heading, index) => {
+        if (heading.closest(TOC_CONTAINER_SELECTOR)) {
+          return
+        }
         if (!heading.id) {
           heading.id = slugify(heading.textContent ?? `section-${index + 1}`, `section-${index + 1}`, seenIds)
         } else if (seenIds.has(heading.id)) {
@@ -109,16 +130,7 @@ export function ArticleEnhancer({
     const updateState = (currentItems: TocItem[]) => {
       if (enableToc) {
         setTocItems(currentItems)
-
-        const explicitSlot = contentRoot.querySelector<HTMLElement>(
-          '[data-article-toc-placeholder]',
-        )
-
-        if (explicitSlot) {
-          setTocTarget(explicitSlot)
-        } else {
-          setTocTarget(null)
-        }
+        setTocTarget(articleTocPortalSlot(contentRoot))
       }
 
       const origin = window.location.origin
