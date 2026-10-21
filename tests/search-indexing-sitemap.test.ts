@@ -2,23 +2,31 @@ import { expect, test } from "bun:test";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ARTICLE_REGISTRY, isArticleIndexable } from "../app/articles/registry";
+import { ARTICLE_REGISTRY, isArticleIndexable, resolveArticleRouteSlug } from "../app/articles/registry";
 import { PUBLIC_INDEXABLE_PAGES } from "../app/lib/public-pages";
 import { getSitemapEntries, normalizeLastmod, renderSitemap, resolveSitemapOrigin, validatePublishedModules } from "../scripts/lib/sitemap";
 import { collectRegisteredRoutePaths } from "../scripts/lib/route-inventory";
 
 test("recovered canonical inventory preserves all 76 production URLs without redirects or notices", () => {
   const baseline = JSON.parse(readFileSync("tests/fixtures/search-indexing/live-http-sitemap.json", "utf8"));
-  const expected = baseline.responses.filter((r: any) => r.in_current_production_sitemap).map((r: any) => r.requested_url).sort();
-  expect(expected).toHaveLength(76);
+  const recovered: string[] = baseline.responses.filter((r: any) => r.in_current_production_sitemap).map((r: any) => r.requested_url).sort();
+  expect(recovered).toHaveLength(76);
   const entries = getSitemapEntries();
-  expect(entries.map(entry => "https://mlai.au" + entry.path).sort()).toEqual(expected);
-  expect(new Set(entries.map(entry => entry.path)).size).toBe(76);
+  const urls = entries.map(entry => "https://mlai.au" + entry.path);
+  expect(new Set(urls).size).toBe(urls.length);
+  // Every URL recovered from production must stay; newly published articles may join it.
+  for (const url of recovered) expect(urls.includes(url), url).toBe(true);
+  const indexableArticlePaths = new Set(
+    Object.values(ARTICLE_REGISTRY).filter(isArticleIndexable).map(article => "/articles/" + resolveArticleRouteSlug(article.slug)),
+  );
+  for (const entry of entries.filter(entry => !recovered.includes("https://mlai.au" + entry.path))) {
+    expect(indexableArticlePaths.has(entry.path), entry.path).toBe(true);
+  }
   expect(entries.some(entry => entry.path === "/medhack")).toBe(false);
   for (const article of Object.values(ARTICLE_REGISTRY).filter(a => !isArticleIndexable(a))) {
     expect(entries.some(entry => entry.path === "/articles/" + article.slug), article.slug).toBe(false);
   }
-  expect(entries.filter(entry => entry.path.startsWith("/articles/"))).toHaveLength(58);
+  expect(entries.filter(entry => entry.path.startsWith("/articles/")).length).toBeGreaterThanOrEqual(58);
 });
 
 test("canonical sitemap host and actual dates cannot drift to preview/www/query origins", () => {
