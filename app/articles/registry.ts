@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/prototype-with-an-artificial-intelligence-design-assistant': {
+        title: "Prototype With an Artificial Intelligence Design Assistant",
+        date: "2026-10-21",
+        dateModified: "2026-10-21",
+        description: "Use an AI design assistant to prototype a fictional booking flow, review the screens and plan a small pilot before paying for development.",
+        author: "Dr Sam Donegan",
+        slug: "featured/prototype-with-an-artificial-intelligence-design-assistant",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-cec891b8-11f5-472c-92a2-617b5b93e8fc.jpg?alt=media&token=52073d7c-3207-4370-a662-41d9ba04cbe8",
+        imageAlt: "Two people look at a laptop; one points toward the screen while the other, wearing glasses, rests a hand on their chin.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
