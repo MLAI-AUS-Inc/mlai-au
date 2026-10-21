@@ -376,6 +376,43 @@ test("versus countdown waits while the arena is scrolled away and resumes when v
   await expect(page.locator(".arcade-stage canvas")).toHaveCount(0);
 });
 
+test("versus countdown follows the newest arena visibility when crossings arrive batched", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Observer delivery is engine-independent; one project covers it.");
+  // A busy main thread (slow CI, a fast scroll away and back) can queue several
+  // crossings of the stage into one callback, oldest first. Replay that batch.
+  await page.addInitScript(() => {
+    const Native = window.IntersectionObserver;
+    window.IntersectionObserver = class extends Native {
+      constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+        super(callback, options);
+        const observe = this.observe.bind(this);
+        this.observe = (target) => {
+          if (target.classList.contains("arcade-stage"))
+            (window as unknown as { deliverStage: (...visible: boolean[]) => void }).deliverStage = (...visible) =>
+              callback(visible.map((isIntersecting) => ({
+                target, isIntersecting, intersectionRatio: isIntersecting ? 1 : 0,
+              })) as unknown as IntersectionObserverEntry[], this);
+          observe(target);
+        };
+      }
+    };
+  });
+  const deliver = (...visible: boolean[]) => page.evaluate((visible) =>
+    (window as unknown as { deliverStage: (...visible: boolean[]) => void }).deliverStage(...visible), visible);
+  await home(page);
+  await open(page);
+  await enter(page);
+  const cabinet = page.locator(".arcade-cabinet");
+  await deliver(true, false);
+  await page.waitForTimeout(1800);
+  await expect(page.getByRole("dialog")).toHaveAttribute("data-mode", "ready");
+  await expect(cabinet).toHaveAttribute("data-tick", "0");
+  await deliver(false, true);
+  await expect(cabinet).toHaveAttribute("data-phase", "fight", { timeout: 15000 });
+});
+
 test("a real CPU match reaches results, supports rematch and returns to selection", async ({
   page,
 }, testInfo) => {
