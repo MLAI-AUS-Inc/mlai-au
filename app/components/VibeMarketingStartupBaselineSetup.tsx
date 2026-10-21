@@ -2809,7 +2809,7 @@ export default function VibeMarketingStartupBaselineSetup({
                 {companySetupWorkflow ? (
                   <FormField
                     label="ABN"
-                    help="Optional. Search your ABN or business name to find your registered company and auto-fill your details — it unlocks perks like the coworking discount. You can continue without it."
+                    help="Optional. Search your ABN or business name to find your registered company and auto-fill your details. Eligible founders unlock the coworking discount by approving an update shared publicly or with the MLAI community. Private approvals earn 5 Roo points and do not unlock discounts. You can continue without registration."
                   >
                     <AbnAutocomplete
                       value={startupValues.abn}

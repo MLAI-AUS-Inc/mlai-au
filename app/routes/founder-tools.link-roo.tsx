@@ -378,7 +378,9 @@ export default function FounderToolsRooLinkPage() {
               <p className="mt-3 max-w-xl text-base leading-7 text-black/65">
                 Confirm that these accounts belong to you. Future eligible
                 coworking bookings will use your Founder Tools monthly update
-                when Roo calculates the price.
+                when Roo calculates the price. New discounts require an approved
+                update shared publicly or with the MLAI community. Existing
+                discounts keep their original expiry.
               </p>
 
               <dl className="mt-8 divide-y divide-black/10 border-y border-black/10">
@@ -452,7 +454,7 @@ const STATUS_COPY: Record<
   linked: {
     title: "Accounts connected",
     message:
-      "Roo will automatically use this Founder Tools account when checking future coworking discount eligibility.",
+      "Roo will automatically use this Founder Tools account when checking future coworking discount eligibility. New discounts require an approved update shared publicly or with the MLAI community. Existing discounts keep their original expiry.",
     success: true,
   },
   "already-linked": {
