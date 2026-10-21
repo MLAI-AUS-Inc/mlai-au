@@ -1,5 +1,3 @@
-import { ChevronRightIcon } from "@heroicons/react/20/solid";
-
 type ReferenceCategory =
   | "government"
   | "guide"
@@ -13,6 +11,7 @@ type ReferenceItem = {
   title: string;
   publisher: string;
   description?: string;
+  /** Kept for existing article data. The list does not show it. */
   category?: ReferenceCategory | string;
 };
 
@@ -24,45 +23,34 @@ type ArticleReferencesProps = {
   previewCount?: number;
 };
 
-const categoryStyles: Record<string, { indicator: string; badge: string; label: string }> = {
-  government: {
-    indicator: "bg-green-100 text-green-500",
-    badge: "bg-green-50 text-green-700 ring-green-600/15",
-    label: "Government",
-  },
-  guide: {
-    indicator: "bg-indigo-100 text-indigo-500",
-    badge: "bg-indigo-50 text-indigo-700 ring-indigo-600/15",
-    label: "Guide",
-  },
-  analysis: {
-    indicator: "bg-sky-100 text-sky-500",
-    badge: "bg-sky-50 text-sky-700 ring-sky-600/15",
-    label: "Analysis",
-  },
-  industry: {
-    indicator: "bg-amber-100 text-amber-500",
-    badge: "bg-amber-50 text-amber-700 ring-amber-600/15",
-    label: "Industry",
-  },
-  watchlist: {
-    indicator: "bg-rose-100 text-rose-500",
-    badge: "bg-rose-50 text-rose-700 ring-rose-600/15",
-    label: "Watchlist",
-  },
-};
-
-const defaultIndicator = "bg-gray-100 text-gray-400";
-const defaultBadge = "bg-gray-50 text-gray-600 ring-gray-500/10";
-
 const sanitizeHostname = (href: string) => {
   try {
     return new URL(href).hostname.replace(/^www\./, "");
-  } catch (error) {
-    return href;
+  } catch {
+    return "";
   }
 };
 
+const sameLabel = (left: string, right: string) =>
+  left.replace(/^www\./i, "").toLowerCase() ===
+  right.replace(/^www\./i, "").toLowerCase();
+
+// Publisher, then the link's domain when it says something the publisher
+// does not. Generated references often use the domain as the publisher, and
+// showing it twice ("business.gov.au · business.gov.au") read as a glitch.
+const referenceMetaLine = (reference: Pick<ReferenceItem, "href" | "publisher">) => {
+  const publisher = reference.publisher?.trim() ?? "";
+  const hostname = sanitizeHostname(reference.href);
+  const parts = [publisher];
+  if (hostname && !sameLabel(publisher, hostname)) {
+    parts.push(hostname);
+  }
+  return parts.filter(Boolean).join(" · ");
+};
+
+// The list sits in the same outlined box as the table of contents: 32px
+// radius, gray-300 border, transparent background, an uppercase label and
+// indigo underlined links, with stock rem text sizes.
 export function ArticleReferences({
   references,
   heading = "References",
@@ -79,62 +67,31 @@ export function ArticleReferences({
   const hasMore = remainingReferences.length > 0;
 
   const renderReferenceItem = (reference: ReferenceItem) => {
-    const variant = reference.category
-      ? categoryStyles[reference.category]
-      : undefined;
-    const badgeLabel = variant?.label ?? sanitizeHostname(reference.href);
-    const metaParts = [
-      reference.publisher,
-      reference.description || sanitizeHostname(reference.href),
-    ].filter(Boolean) as string[];
-    const metaLine = metaParts.join(" • ");
+    const metaLine = referenceMetaLine(reference);
 
     return (
-      <li
-        key={reference.id}
-        className="relative flex items-center gap-1.5 px-2 py-0 my-0 sm:gap-2 sm:px-2.5"
-      >
-        <div className="min-w-0 flex-auto my-1">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <div
-              className={`flex-none rounded-full p-0.5 ${variant?.indicator ?? defaultIndicator
-                }`}
-            >
-              <span className="block size-[5px] rounded-full bg-current" />
-            </div>
-            <div className="min-w-0 flex-auto">
-              <h3 className="min-w-0 my-2">
-                <a
-                  href={reference.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex min-w-0 items-center gap-1 text-[12px] font-semibold leading-tight text-slate-900"
-                >
-                  <span className="flex-none font-mono text-[9px] text-slate-500">
-                    [{reference.id}]
-                  </span>
-                  <span className="truncate">{reference.title}</span>
-                  <span className="absolute inset-0" />
-                </a>
-              </h3>
-              {metaLine ? (
-                <p className="text-[10px] leading-tight text-slate-500">{metaLine}</p>
-              ) : null}
-            </div>
-          </div>
+      // Inline citations can link to #<headingId>-<id>.
+      <li key={reference.id} id={`${headingId}-${reference.id}`} className="flex gap-3">
+        <span className="w-8 flex-none text-sm leading-6 font-semibold tabular-nums text-gray-500">
+          [{reference.id}]
+        </span>
+        <div className="min-w-0 flex-1">
+          <a
+            href={reference.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm leading-6 font-medium text-indigo-700 underline underline-offset-4 break-words hover:text-indigo-800 transition-colors"
+          >
+            {reference.title}
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+          {metaLine ? (
+            <p className="m-0 text-xs leading-5 text-gray-600">{metaLine}</p>
+          ) : null}
+          {reference.description ? (
+            <p className="m-0 mt-1 text-sm leading-6 text-gray-700">{reference.description}</p>
+          ) : null}
         </div>
-
-        <div
-          className={`flex-none self-center rounded-full px-2 py-1 text-[9px] font-medium ring-1 ring-inset ${variant?.badge ?? defaultBadge
-            }`}
-        >
-          {badgeLabel}
-        </div>
-
-        <ChevronRightIcon
-          aria-hidden="true"
-          className="hidden size-3 flex-none text-gray-300 sm:block"
-        />
       </li>
     );
   };
@@ -145,42 +102,35 @@ export function ArticleReferences({
       data-cf-component-id="references"
       data-cf-component-type="references"
       data-cf-component-label="References"
-      className="mt-2"
+      className="not-prose my-12 rounded-[32px] border border-gray-300 bg-transparent px-6 py-6 sm:px-8 sm:py-7 text-gray-900"
     >
-      <div className="flex items-center justify-between gap-3 px-1 pb-0.5">
-        <div className="flex flex-col">
-          <h2 id={headingId} className="text-sm font-semibold text-slate-900">
-            {heading}
-          </h2>
-          {description ? (
-            <p className="text-[11px] text-slate-600">{description}</p>
-          ) : null}
-        </div>
-      </div>
+      <h2
+        id={headingId}
+        className="m-0 text-xs font-semibold uppercase tracking-wide text-gray-700"
+      >
+        {heading}
+      </h2>
+      {description ? (
+        <p className="m-0 mt-2 text-sm leading-6 text-gray-700">{description}</p>
+      ) : null}
 
-      <div className="rounded-md border border-gray-100 bg-white">
-        <ul role="list" className="divide-y divide-gray-200">
-          {previewReferences.map(renderReferenceItem)}
-        </ul>
+      <ol role="list" className="m-0 mt-4 list-none space-y-4 p-0">
+        {previewReferences.map(renderReferenceItem)}
+      </ol>
 
-        {hasMore && (
-          <details className="group border-t border-gray-100">
-            <summary className="flex cursor-pointer items-center justify-center gap-1.5 px-2 py-0.5 text-[10px] font-medium text-slate-700 transition marker:content-[''] hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60">
-              <span className="group-open:hidden">
-                Show all {references.length} references ({remainingReferences.length} more)
-              </span>
-              <span className="hidden group-open:inline">Show less</span>
-              <ChevronRightIcon
-                aria-hidden="true"
-                className="size-3 transition-transform group-open:-rotate-90"
-              />
-            </summary>
-            <ul role="list" className="divide-y divide-gray-200 border-t border-gray-200">
-              {remainingReferences.map(renderReferenceItem)}
-            </ul>
-          </details>
-        )}
-      </div>
+      {hasMore && (
+        <details className="group mt-4">
+          <summary className="inline-flex cursor-pointer list-none items-center text-sm leading-6 font-medium text-indigo-700 underline underline-offset-4 transition-colors marker:content-[''] hover:text-indigo-800 focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-indigo-500/60 [&::-webkit-details-marker]:hidden">
+            <span className="group-open:hidden">
+              Show all {references.length} references ({remainingReferences.length} more)
+            </span>
+            <span className="hidden group-open:inline">Show fewer references</span>
+          </summary>
+          <ol role="list" className="m-0 mt-4 list-none space-y-4 p-0">
+            {remainingReferences.map(renderReferenceItem)}
+          </ol>
+        </details>
+      )}
     </section>
   );
 }
