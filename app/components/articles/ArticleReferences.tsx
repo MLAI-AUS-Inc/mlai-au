@@ -70,8 +70,9 @@ export function ArticleReferences({
     const metaLine = referenceMetaLine(reference);
 
     return (
-      // Inline citations can link to #<headingId>-<id>.
-      <li key={reference.id} id={`${headingId}-${reference.id}`} className="flex gap-3">
+      // Inline citations can link to #<headingId>-<id>. The item sets its own
+      // type size so wrapped titles do not take the article's prose-lg leading.
+      <li key={reference.id} id={`${headingId}-${reference.id}`} className="flex gap-3 text-sm leading-6">
         <span className="w-8 flex-none text-sm leading-6 font-semibold tabular-nums text-gray-500">
           [{reference.id}]
         </span>
@@ -119,7 +120,7 @@ export function ArticleReferences({
       </ol>
 
       {hasMore && (
-        <details className="group mt-4">
+        <details className="group mt-4 text-sm leading-6">
           <summary className="inline-flex cursor-pointer list-none items-center text-sm leading-6 font-medium text-indigo-700 underline underline-offset-4 transition-colors marker:content-[''] hover:text-indigo-800 focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-indigo-500/60 [&::-webkit-details-marker]:hidden">
             <span className="group-open:hidden">
               Show all {references.length} references ({remainingReferences.length} more)
