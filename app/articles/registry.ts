@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-australian-startups-can-test-ai-for-customer-service': {
+        title: "How Australian Startups Can Test AI for Customer Service",
+        date: "2026-10-22",
+        dateModified: "2026-10-22",
+        description: "Choose a customer-service AI use case and draft a small pilot with data limits, human review, clear measures and a stop rule before buying tools.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-australian-startups-can-test-ai-for-customer-service",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-558630ed-22eb-4360-88be-6f4da76ee87e.jpg?alt=media&token=cbaf1473-25d5-4ad9-958e-7a5b160f1be1",
+        imageAlt: "Two people look at an open laptop, one gesturing with a hand and the other wearing glasses. A leafy plant is behind them.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
