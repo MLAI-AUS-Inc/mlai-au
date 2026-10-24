@@ -52,6 +52,13 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/how-to-use-ai-in-customer-service-and-keep-people-in-control': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         contentOwnsConversion: true,
         contentOwnsDisclaimer: true,

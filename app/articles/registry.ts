@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-use-ai-in-customer-service-and-keep-people-in-control': {
+        title: "How to use AI in customer service and keep people in control",
+        date: "2026-10-24",
+        dateModified: "2026-10-24",
+        description: "Choose one customer-service task to trial with AI, set clear human handovers and draft a small pilot with quality, privacy and cost controls.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-use-ai-in-customer-service-and-keep-people-in-control",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a5f79a4d-002f-4d3c-b0f9-e1cf3ec9caff.jpg?alt=media&token=803dfae5-0bdb-45f6-8370-3a935b186203",
+        imageAlt: "Two people look at a laptop, one gesturing and the other resting a hand on their chin. A leafy plant stands beside a window behind them.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
