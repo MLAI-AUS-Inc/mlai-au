@@ -52,6 +52,7 @@ export function recoverUpdateWorkingCopy(
     audienceVisibility: local.audienceVisibility,
     metrics: local.metrics,
     chartSelections: local.chartSelections,
+    financialHistorySelection: local.financialHistorySelection,
   });
   return local.lastSavedContent === currentContent ? null : local;
 }

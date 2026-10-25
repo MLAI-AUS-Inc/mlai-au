@@ -108,3 +108,24 @@ test("invalid chart choices preserve the draft with a validation error", async (
   expect((await submit("save-draft", { chartSelections: "not-json" }))?.step).toBe("validation-error");
   expect(save).not.toHaveBeenCalled();
 });
+
+test("financial sharing is explicit and browser history values are never accepted", async () => {
+  expect((await submit("save-draft"))?.step).toBe("draft-saved");
+  expect(save.mock.calls[0][2].financialHistorySelection).toBeUndefined();
+  save.mockClear();
+  expect((await submit("save-draft", { financialHistorySelection: '{"enabled":true,"shareAmounts":false}', financialHistory: '{"revenue":999}' }))?.step).toBe("draft-saved");
+  expect(save.mock.calls[0][2].financialHistorySelection).toEqual({ enabled: true, shareAmounts: false });
+  expect(save.mock.calls[0][2].financialHistory).toBeUndefined();
+});
+
+test("actual amount opt-in and deliberate refresh reach only the server builder", async () => {
+  expect((await submit("save-draft", { financialHistorySelection: '{"enabled":true,"shareAmounts":true,"refresh":true}' }))?.step).toBe("draft-saved");
+  expect(save.mock.calls[0][2].financialHistorySelection).toEqual({ enabled: true, shareAmounts: true, refresh: true });
+});
+
+test("malformed financial sharing keeps the draft mounted and does not save", async () => {
+  for (const value of ['{"enabled":true,"shareAmounts":"yes"}', 'not-json', '{"enabled":false,"shareAmounts":true}']) {
+    expect((await submit("save-draft", { financialHistorySelection: value }))?.step).toBe("validation-error");
+  }
+  expect(save).not.toHaveBeenCalled();
+});

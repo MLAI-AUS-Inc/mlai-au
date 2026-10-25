@@ -1,0 +1,24 @@
+.pulse-financial-history, .pulse-financial-history-picker { min-width: 0; margin: 1.5rem 0; padding: 1.25rem; border: 1px solid #e1e6dc; border-radius: 1rem; background: #fcfbf6; color: #233b3a; }
+.pulse-financial-history header { display: flex; gap: .75rem; justify-content: space-between; flex-wrap: wrap; align-items: flex-start; }
+.pulse-financial-history h2, .pulse-financial-history-picker h2 { font-size: 1.25rem; margin: 0 0 .25rem; font-weight: 700; }
+.pulse-financial-history header p, .pulse-financial-history-picker > p { margin: 0 0 1rem; color: #596c66; line-height: 1.6; }
+.pulse-financial-history-period { font-size: .75rem; background: #e4eee4; color: #356252; border-radius: 1rem; padding: .4rem .65rem; font-weight: 600; }
+.pulse-financial-history-legend { display: flex; flex-wrap: wrap; gap: .6rem 1.25rem; font-size: .875rem; align-items: center; }
+.pulse-financial-history-legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.pulse-financial-history-legend i { width: 1.2rem; border-top: 3px solid #07887e; }
+.pulse-financial-history-legend .pulse-financial-costs { border-color: #cb882b; border-top-style: dashed; }
+.pulse-financial-history-plot { margin-top: .5rem; min-width: 0; width: 100%; }
+.pulse-financial-history-note { font-size: .8125rem; color: #596c66; line-height: 1.6; margin: .75rem 0; }
+.pulse-financial-history-selected-row { background: #edf3e9; }
+.pulse-financial-history .progress-data { font-size: .8125rem; padding: 0; }
+.pulse-financial-history .progress-data summary { cursor: pointer; }
+.pulse-financial-history table { width: 100%; min-width: 28rem; border-collapse: collapse; text-align: left; }
+.pulse-financial-history th, .pulse-financial-history td { padding: .65rem; border-bottom: 1px solid #e1e6dc; }
+.pulse-financial-history caption { text-align: left; padding: .75rem 0; color: #596c66; }
+.pulse-financial-history-single { display: flex; flex-wrap: wrap; gap: 1.25rem; margin: 1.25rem 0; }
+.pulse-financial-history-single dd { font-size: 1.5rem; font-weight: 700; margin: .25rem 0 0; }
+.pulse-financial-history-picker h2 span { font-size: .75rem; color: #596c66; font-weight: 400; margin-left: .5rem; }
+.pulse-financial-history-choice { display: flex; align-items: flex-start; gap: .65rem; margin: .9rem 0; font-size: .9375rem; line-height: 1.5; cursor: pointer; }
+.pulse-financial-history-choice input { width: 1rem; height: 1rem; margin-top: .25rem; flex-shrink: 0; accent-color: #07887e; }
+.pulse-financial-history-picker .pulse-financial-history { background: #fffef9; }
+@media (max-width: 480px) { .pulse-financial-history, .pulse-financial-history-picker { padding: 1rem .75rem; } .pulse-financial-history-legend { font-size: .8125rem; } }
