@@ -111,6 +111,18 @@ describe("historical Pulse financial view", () => {
     expect(article()).toContain("AUD 43210.00");
     expect(article()).not.toContain("six-month snapshot");
   });
+  test("startup context precedes the summary, saved history and detailed story together", () => {
+    const introduction = "We help local shops plan their delivery stops.";
+    const html = renderToStaticMarkup(<MemoryRouter><UpdateArticle update={{ ...base,
+      startupOverview: introduction, financialHistory: snapshot(),
+    }} companyName="Example" /></MemoryRouter>);
+    const readingOrder = [introduction, base.summary, "Revenue &amp; costs", base.highlights];
+    for (const text of readingOrder) expect(html).toContain(text);
+    for (let index = 1; index < readingOrder.length; index++) {
+      expect(html.indexOf(readingOrder[index - 1])).toBeLessThan(html.indexOf(readingOrder[index]));
+    }
+    expect(html).not.toContain("43210");
+  });
   test("sharing starts off, monetary mode is a separate opt-in and stale preview is withheld", () => {
     const picker = (selection?: any, history?: FinancialHistory, reportingMonth = "2026-08") => renderToStaticMarkup(<PulseFinancialHistoryPicker selection={selection} history={history} reportingMonth={reportingMonth} onChange={() => {}} />);
     expect(picker()).not.toContain("checked=");

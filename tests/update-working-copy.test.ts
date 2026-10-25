@@ -112,6 +112,19 @@ describe("working copy recovery", () => {
     const local = { ...clean, financialHistorySelection: { enabled: true, shareAmounts: true } };
     expect(recoverUpdateWorkingCopy(local, { revisionId: 12 })).toBe(local);
   });
+  test("introduction and financial sharing edits recover together without replacing the frozen chart", () => {
+    const saved = { startupOverview: "We help local shops plan deliveries.",
+      financialHistorySelection: { enabled: true, shareAmounts: false } };
+    const frozenFinancialHistory = { reportingMonth: "2026-08-01", capturedAt: "2026-10-21T12:00:00Z" };
+    const local = { ...saved, startupOverview: "We help local shops plan delivery stops.",
+      financialHistorySelection: { enabled: true, shareAmounts: true }, frozenFinancialHistory,
+      expectedRevision: 11, lastSavedContent: JSON.stringify(saved) };
+    const recovered = recoverUpdateWorkingCopy(local, { revisionId: 12 });
+    expect(recovered).toBe(local);
+    expect(recovered?.startupOverview).toBe(local.startupOverview);
+    expect(recovered?.financialHistorySelection).toEqual(local.financialHistorySelection);
+    expect(recovered?.frozenFinancialHistory).toBe(frozenFinancialHistory);
+  });
   test("known financial fields and custom imported finance fields remain locked", () => {
     expect(isFinancialMetric("revenue")).toBe(true);
     expect(
