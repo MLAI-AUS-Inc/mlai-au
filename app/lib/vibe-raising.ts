@@ -1,3 +1,4 @@
+import { normalizeStartupOverview } from "~/lib/startup-overview";
 import { normalizeUpdateCover } from "~/lib/update-cover";
 import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
 import { redirect } from "react-router";
@@ -382,6 +383,7 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     founderProfiles,
     founderNames,
     stage,
+    shortDescription: asNullableString(payload.shortDescription ?? payload.short_description ?? startupProfile?.shortDescription ?? startupProfile?.short_description ?? startupProfileSnake?.shortDescription ?? startupProfileSnake?.short_description),
     organizationKind,
     hasRevenue,
     audienceVisibility,
@@ -594,6 +596,7 @@ function normalizeManualDocuments(raw: unknown): VibeRaisingManualDocument[] {
 function normalizePastMonthSummary(raw: unknown) {
   const payload = unwrapPayload(raw) as Record<string, unknown>;
   return {
+    startupOverview: normalizeStartupOverview(payload),
     month: asNullableString(payload.month) ?? "Unknown",
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
@@ -740,7 +743,7 @@ export function normalizeConciseAnalysis(raw: unknown): VibeRaisingConciseAnalys
   return headline || bullets.length ? { headline, bullets } : null;
 }
 
-function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null {
+export function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null {
   if (!raw || typeof raw !== "object") return null;
 
   const payload = unwrapPayload(raw) as Record<string, unknown>;
@@ -762,6 +765,7 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   }
 
   return {
+    startupOverview: normalizeStartupOverview(payload),
     updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
     creationKey: asNullableString(payload.creationKey),
     updateDate: asNullableString(payload.updateDate),
@@ -912,6 +916,7 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
         : undefined;
 
   return {
+    startupOverview: normalizeStartupOverview(payload),
     updateId: asNullableIdentifier(payload.updateId ?? payload.draftId ?? payload.draft_id),
     creationKey: asNullableString(payload.creationKey),
     updateDate: asNullableString(payload.updateDate),
@@ -1100,6 +1105,7 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
     monthLabel;
 
   return {
+    startupOverview: normalizeStartupOverview(payload),
     progressCharts: Array.isArray(payload.progressCharts) ? payload.progressCharts as VibeRaisingMonthlyUpdate["progressCharts"] : null,
     updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
     creationKey: asNullableString(payload.creationKey),
@@ -2098,6 +2104,7 @@ export function buildVibeRaisingAppUser(
       activeCompany?.founderProfiles?.map((entry) => entry.name) ??
       [],
     stage: activeCompany?.stage ?? null,
+    shortDescription: activeCompany?.shortDescription ?? null,
     organizationKind: activeCompany?.organizationKind ?? null,
     hasRevenue: activeCompany?.hasRevenue ?? null,
     audienceVisibility: activeCompany?.audienceVisibility ?? null,
@@ -2555,6 +2562,7 @@ function compactLocalUpdate(update: VibeRaisingMonthlyUpdate): VibeRaisingMonthl
     visibility: update.visibility,
     publishedAt: update.publishedAt,
     summary: trimText(update.summary),
+    startupOverview: update.startupOverview,
     sourceUrl: update.sourceUrl,
     metrics: update.metrics,
     displayConfig: update.displayConfig,
@@ -2671,6 +2679,7 @@ export async function saveVibeRaisingMonthlyUpdate(
     audienceVisibility?: VibeRaisingAudienceVisibilitySelection | null;
     coverImage?: VibeRaisingUpdateCover | null;
     summary?: string | null;
+    startupOverview?: string | null;
     sourceUrl?: string | null;
     pitchDeckUrl?: string | null;
     pitchDeckStoragePath?: string | null;
@@ -4175,9 +4184,11 @@ export async function runVibeRaisingStartupUpdate(
     targetMonth?: string | null;
     manualDocumentIds?: string[];
     manualSummary?: string | null;
+    startupOverview?: string;
   },
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const body: Record<string, unknown> = {};
+  if (typeof options?.startupOverview === "string") body.startupOverview = options.startupOverview.trim();
   for (const key of ["companyId", "updateId", "creationKey", "updateDate", "expectedRevision", "narrativeStart", "narrativeEnd"] as const) {
     if (options?.[key] != null) body[key] = options[key];
   }

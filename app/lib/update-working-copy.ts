@@ -42,6 +42,7 @@ export function recoverUpdateWorkingCopy(
     updateDate: local.updateDate,
     narrativeStart: local.narrativeStart,
     narrativeEnd: local.narrativeEnd,
+    startupOverview: local.startupOverview,
     summary: local.summary,
     highlights: local.highlights,
     challenges: local.challenges,

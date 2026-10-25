@@ -1,3 +1,4 @@
+import { StartupOverview } from "./StartupOverview";
 import { Link } from "react-router";
 import { DEFAULT_UPDATE_COVER_URL } from "~/lib/update-cover";
 import { PencilSquareIcon, LockClosedIcon } from "@heroicons/react/24/outline";
@@ -142,6 +143,7 @@ export default function UpdateArticle({
         />
       )}
       <div className="update-article-body">
+        <StartupOverview value={update.startupOverview} />
         {update.summary && (
           <div className="update-article-intro">
             <UpdateEvidenceText text={update.summary} />
