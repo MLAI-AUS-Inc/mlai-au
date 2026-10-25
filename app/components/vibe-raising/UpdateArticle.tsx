@@ -1,8 +1,10 @@
+import { StartupOverview } from "./StartupOverview";
 import { Link } from "react-router";
 import { DEFAULT_UPDATE_COVER_URL } from "~/lib/update-cover";
 import { PencilSquareIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import UpdateEvidenceText from "./UpdateEvidenceText";
 import ProgressChart from "./ProgressChart";
+import PulseFinancialHistory from "./PulseFinancialHistory";
 import "~/styles/startup-progress.css";
 import UpdatesIncomeChart from "./UpdatesIncomeChart";
 import { getUpdatesFinancialSeries, getUpdatePeriod } from "~/lib/startup-updates-presentation";
@@ -89,6 +91,10 @@ export default function UpdateArticle({
       (!Array.isArray(update.displayConfig?.fullMetricKeys) ||
         update.displayConfig.fullMetricKeys.includes(option.key)),
   );
+  const progressCharts = update.progressCharts?.filter(chart =>
+    !update.financialHistory || !chart.series.some(item =>
+      /^[A-Z]{3}$/.test(item.unit) || ["xero", "stripe", "financial", "bank_feed"].includes(item.provider)
+      || ["revenue", "monthlyCosts", "monthly_costs", "netProfitLoss"].includes(item.metricKey)));
   const sections = [
     ["Highlights", update.highlights],
     ["Challenges", update.challenges],
@@ -142,11 +148,13 @@ export default function UpdateArticle({
         />
       )}
       <div className="update-article-body">
+        <StartupOverview value={update.startupOverview} />
         {update.summary && (
           <div className="update-article-intro">
             <UpdateEvidenceText text={update.summary} />
           </div>
         )}
+        {update.financialHistory && <PulseFinancialHistory history={update.financialHistory} />}
         {sections.map(([label, text]) => {
           const points = updateArticlePoints(text);
           return points.length ? (
@@ -162,12 +170,12 @@ export default function UpdateArticle({
             </section>
           ) : null;
         })}
-        {Array.isArray(update.progressCharts) && update.progressCharts.length > 0 && (
+        {Array.isArray(progressCharts) && progressCharts.length > 0 && (
           <section className="update-article-section"><h2>This period in numbers</h2>
-            <div className="progress-article-charts">{update.progressCharts.map(chart => <ProgressChart key={chart.spec.id} spec={chart.spec} series={chart.series} cutoff={chart.cutoff} />)}</div>
+            <div className="progress-article-charts">{progressCharts.map(chart => <ProgressChart key={chart.spec.id} spec={chart.spec} series={chart.series} cutoff={chart.cutoff} />)}</div>
           </section>
         )}
-        {!Array.isArray(update.progressCharts) && (metrics.length > 0 || series) && (
+        {!update.financialHistory && !Array.isArray(update.progressCharts) && (metrics.length > 0 || series) && (
           <section className="update-article-section">
             <h2>This period in numbers</h2>
             {period?.is_partial && (

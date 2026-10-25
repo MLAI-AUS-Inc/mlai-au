@@ -10,6 +10,7 @@ export interface VibeRaisingFounderProfile {
 }
 
 export interface VibeRaisingCompany {
+  shortDescription?: string | null;
   id: string;
   name: string;
   domain?: string | null;
@@ -38,6 +39,7 @@ export interface VibeRaisingProfile {
 }
 
 export interface VibeRaisingAppUser {
+  shortDescription?: string | null;
   authUser: User;
   profile: VibeRaisingProfile;
   fullName: string;
@@ -60,6 +62,7 @@ export interface VibeRaisingAppUser {
 }
 
 export interface VibeRaisingPastMonthSummary {
+  startupOverview?: string;
   month: string;
   highlights: string;
   challenges: string;
@@ -163,6 +166,7 @@ export interface VibeRaisingUpdateCover {
 }
 
 export interface VibeRaisingDraftedContent {
+  startupOverview?: string;
   updateId?: string | number | null;
   creationKey?: string | null;
   updateDate?: string | null;
@@ -207,6 +211,9 @@ export interface VibeRaisingDraftedContent {
 }
 
 export interface VibeRaisingMonthlyUpdate {
+  startupOverview?: string | null;
+  financialHistory?: import("~/lib/pulse-financial-history").FinancialHistory | null;
+  financialHistorySelection?: import("~/lib/pulse-financial-history").FinancialHistorySelection | null;
   progressCharts?: import("~/lib/startup-progress").ProgressChartSnapshot[] | null;
   updateId?: string | number | null;
   creationKey?: string | null;
@@ -756,6 +763,7 @@ export interface VibeRaisingStartupUpdateRunProgress {
   targetMonth?: string | null;
 }
 export interface VibeRaisingEmailDraftMonth extends Pick<VibeRaisingMonthlyUpdate, "updateId" | "creationKey" | "updateDate" | "datePrecision" | "firstPublishedAt" | "narrativePeriod"> {
+  startupOverview?: string;
   coverImage?: VibeRaisingUpdateCover | null;
   revisionId?: number | null;
   revisionHash?: string | null;

@@ -1,6 +1,10 @@
+import { initialStartupOverview, normalizeStartupOverview } from "~/lib/startup-overview";
+import { StartupOverviewField } from "~/components/vibe-raising/StartupOverview";
 import { getUpdatePeriod, updateCalendarDate, getUpdateTitles } from "~/lib/startup-updates-presentation";
 import { defaultUpdateSourceWindow, toLocalDateTime, fromLocalDateTime } from "~/lib/update-source-window";
 import ProgressChartPicker from "~/components/vibe-raising/ProgressChartPicker";
+import PulseFinancialHistoryPicker from "~/components/vibe-raising/PulseFinancialHistoryPicker";
+import { normalizeFinancialHistorySelection, parseFinancialHistorySelection, type FinancialHistory, type FinancialHistorySelection } from "~/lib/pulse-financial-history";
 import { parseChartSelections, type ProgressChartSpec, type ProgressChartSnapshot } from "~/lib/startup-progress";
 import { getStartupProgress } from "~/lib/startup-progress.server";
 import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
@@ -558,7 +562,10 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         coverImage: update.coverImage || null,
         progressCharts: update.progressCharts,
         chartSelections: update.progressCharts?.map(chart => chart.spec),
+        financialHistory: update.financialHistory,
+        financialHistorySelection: update.financialHistorySelection,
         summary: update.summary || "",
+        startupOverview: update.startupOverview,
         sourceUrl: update.sourceUrl || "",
         pitchDeckUrl: update.pitchDeckUrl || "",
         pitchDeckStoragePath: update.pitchDeckStoragePath || "",
@@ -723,6 +730,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
 
     return {
         ...(formData.has("chartSelections") ? { chartSelections: parseChartSelections(formData.get("chartSelections")) } : {}),
+        ...(formData.has("financialHistorySelection") ? { financialHistorySelection: parseFinancialHistorySelection(formData.get("financialHistorySelection")) } : {}),
         updateId: String(formData.get("updateId") || "") || null,
         creationKey: String(formData.get("creationKey") || "") || null,
         updateDate: String(formData.get("updateDate") || "") || null,
@@ -731,6 +739,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
         year: Number(formData.get("year") || 0),
         ...(formData.has("coverImage") ? { coverImage: parseUpdateCoverForm(formData.get("coverImage")) } : {}),
         summary: String(formData.get("summary") || "").trim() || null,
+        ...(formData.has("startupOverview") ? { startupOverview: String(formData.get("startupOverview") || "").trim() } : {}),
         sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
         manualDocumentIds,
         manualSummary: String(formData.get("manualSummary") || "").trim() || null,
@@ -2462,7 +2471,7 @@ function CollapsibleFeedback({ icon, headline, color, children }: { icon: React.
 }
 
 // Collapsible past month card for the founder preview
-function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> } }) {
+function PastMonthPreviewCard({ pm }: { pm: { month: string; startupOverview?: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> } }) {
     const [open, setOpen] = useState(false);
     return (
         <div className="overflow-hidden rounded-xl border border-[var(--vr-color-border)] bg-white shadow-sm">
@@ -2964,6 +2973,10 @@ function CreateUpdateEditor() {
     const [chartSelections, setChartSelections] = useState<ProgressChartSpec[] | undefined>(() =>
         defaultData.chartSelections ?? (existingData ? undefined : progress ? [] : undefined));
     const [frozenProgressCharts, setFrozenProgressCharts] = useState<ProgressChartSnapshot[]>(defaultData.progressCharts || []);
+    // Omission leaves older publications alone; adding a chart requires an explicit choice.
+    const [financialHistorySelection, setFinancialHistorySelection] = useState<FinancialHistorySelection | undefined>(() =>
+        normalizeFinancialHistorySelection(defaultData.financialHistorySelection) || undefined);
+    const [frozenFinancialHistory, setFrozenFinancialHistory] = useState<FinancialHistory | null>(defaultData.financialHistory || null);
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [pitchDeckPreviewUrl, setPitchDeckPreviewUrl] = useState<string | null>(defaultData?.pitchDeckUrl || null);
@@ -3075,6 +3088,9 @@ function CreateUpdateEditor() {
     const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
     const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
     const [pitchDeckSummary, setPitchDeckSummary] = useState<string>(() => defaultData?.pitchDeckSummary || storedManualMaterials.pitchDeckSummary || "");
+    const [startupOverview, setStartupOverview] = useState(() => initialStartupOverview(defaultData?.startupOverview, user.shortDescription, !isEdit && !existingData && !actionData));
+    const [startupOverviewEdited, setStartupOverviewEdited] = useState(typeof defaultData?.startupOverview === "string");
+    const editStartupOverview = (value: string) => { setStartupOverview(value); setStartupOverviewEdited(true); };
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -3467,7 +3483,7 @@ function CreateUpdateEditor() {
 
     const applyDraftCandidate = (data: any, keepWriting = false) => {
         if (!editorMountedRef.current) return;
-        const ownWriting = { summary, highlights, challenges, learnings, next30Days, asks };
+        const ownWriting = { startupOverview, startupOverviewEdited, summary, highlights, challenges, learnings, next30Days, asks };
         if (data.updateId || data.id) setActiveUpdateId(String(data.updateId || data.id));
         setExpectedRevision(data.revisionId || null);
         setMetricEvidence(data.metricEvidence || {});
@@ -3492,6 +3508,7 @@ function CreateUpdateEditor() {
         setConciseAnalysis(data.conciseAnalysis || data.concise_analysis || null);
         setPresentationMode(data.presentationMode || data.presentation_mode || "");
         setSummary(data.summary || "");
+        setStartupOverview(normalizeStartupOverview(data) || ""); setStartupOverviewEdited(typeof normalizeStartupOverview(data) === "string");
         if (data.sourceUrl || data.source_url) setSourceUrl(data.sourceUrl || data.source_url);
         if (Array.isArray(data.manualDocuments || data.manual_documents)) {
             const documents = (data.manualDocuments || data.manual_documents) as VibeRaisingManualDocument[];
@@ -3520,6 +3537,7 @@ function CreateUpdateEditor() {
         setPastMonthCards((data.pastMonths || []).map((pm: any) => ({
             ...pm,
             month: pm.month || "Unknown",
+            startupOverview: normalizeStartupOverview(pm),
             expanded: Boolean(pm.expanded),
             highlights: pm.highlights || "",
             challenges: pm.challenges || "",
@@ -3542,6 +3560,7 @@ function CreateUpdateEditor() {
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
         if (keepWriting) {
+            setStartupOverview(ownWriting.startupOverview); setStartupOverviewEdited(ownWriting.startupOverviewEdited);
             setSummary(ownWriting.summary); setHighlights(ownWriting.highlights); setChallenges(ownWriting.challenges);
             setLearnings(ownWriting.learnings); setNext30Days(ownWriting.next30Days); setAsks(ownWriting.asks);
         }
@@ -4030,6 +4049,7 @@ function CreateUpdateEditor() {
                     narrativeStart: narrativeStart || undefined, narrativeEnd: narrativeEnd || undefined,
                     manualDocumentIds,
                     manualSummary,
+                    ...(startupOverviewEdited || startupOverview.trim() ? { startupOverview } : {}),
                 },
             );
             emailDraftIgnoredRunIdRef.current = null;
@@ -4050,7 +4070,7 @@ function CreateUpdateEditor() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso, activeUpdateId, creationKey, updateDate, expectedRevision, narrativeStart, narrativeEnd, user.activeCompanyId]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, startupOverview, startupOverviewEdited, selectedInputSources, targetMonthIso, activeUpdateId, creationKey, updateDate, expectedRevision, narrativeStart, narrativeEnd, user.activeCompanyId]);
 
     const validateDraftDate = useCallback(() => {
         if (!getUpdateDraftDateError(updateDate, today)) return true;
@@ -4319,6 +4339,8 @@ function CreateUpdateEditor() {
         if ("updateDate" in restored) setUpdateDate(restored.updateDate || "");
         else if (new URLSearchParams(location.search).get("date")) setUpdateDate(new URLSearchParams(location.search).get("date")!);
         setNarrativeStart(restored.narrativeStart || ""); setNarrativeEnd(restored.narrativeEnd || "");
+        setStartupOverview(initialStartupOverview(restored.startupOverview, user.shortDescription, !isEdit && !existingData && !actionData));
+        setStartupOverviewEdited(saved ? (saved.startupOverviewEdited ?? typeof saved.startupOverview === "string") : typeof base.startupOverview === "string");
         setSummary(restored.summary || ""); setHighlights(restored.highlights || "");
         setChallenges(restored.challenges || ""); setLearnings(restored.learnings || "");
         setNext30Days(restored.next30Days || ""); setAsks(restored.asks || "");
@@ -4326,6 +4348,9 @@ function CreateUpdateEditor() {
         const restoredCharts: ProgressChartSpec[] | undefined = Array.isArray(restored.chartSelections) ? restored.chartSelections as ProgressChartSpec[] : base.chartSelections ?? (existingData ? undefined : progress ? [] : undefined);
         setChartSelections(incomingChart ? [...(restoredCharts || []).filter(chart => chart.id !== incomingChart.id), incomingChart].slice(0, 12) : restoredCharts);
         setFrozenProgressCharts(restored.frozenProgressCharts || base.progressCharts || []);
+        const restoredFinancialSelection = normalizeFinancialHistorySelection(restored.financialHistorySelection) || normalizeFinancialHistorySelection(base.financialHistorySelection);
+        setFinancialHistorySelection(restoredFinancialSelection ? { ...restoredFinancialSelection, ...(restored.financialHistorySelection?.refresh === true ? { refresh: true } : {}) } : undefined);
+        setFrozenFinancialHistory(restored.frozenFinancialHistory || base.financialHistory || null);
         setSourceUrl(restored.sourceUrl || "");
         setAudienceVisibility(normalizeAudienceVisibilityValue(restored.audienceVisibility));
         setFinancialSnapshot(restored.financialSnapshot || null);
@@ -4333,7 +4358,7 @@ function CreateUpdateEditor() {
         setMetricValues(restored.metrics || {}); setSelectedMetrics(new Set(Object.keys(restored.metrics || {})));
         setExpectedRevision(saved ? saved.expectedRevision ?? null : base.revisionId || null);
         setDraftCandidate(saved?.candidate || null);
-        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ updateDate: base.updateDate ?? (existingData ? "" : today), narrativeStart: "", narrativeEnd: "", summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {}, chartSelections: base.chartSelections ?? (existingData ? undefined : progress ? [] : undefined) }));
+        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ updateDate: base.updateDate ?? (existingData ? "" : today), narrativeStart: "", narrativeEnd: "", startupOverview: initialStartupOverview(base.startupOverview, user.shortDescription, !isEdit && !existingData && !actionData), summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {}, chartSelections: base.chartSelections ?? (existingData ? undefined : progress ? [] : undefined), financialHistorySelection: normalizeFinancialHistorySelection(base.financialHistorySelection) || undefined }));
         // Legacy attachments are retained, even though the new form no longer asks for them.
         setPitchDeckUrl(restored.pitchDeckUrl || ""); setPitchDeckStoragePath(restored.pitchDeckStoragePath || "");
         setPitchDeckContentType(restored.pitchDeckContentType || ""); setPitchDeckFileSizeBytes(restored.pitchDeckFileSizeBytes || null);
@@ -4351,13 +4376,13 @@ function CreateUpdateEditor() {
         // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [workingScope]);
-    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues, chartSelections });
+    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, startupOverview, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues, chartSelections, financialHistorySelection });
     const hasUnsavedChanges = workingContent !== lastSavedContent;
     useEffect(() => {
         if (loadedWorkingScope !== workingScope) return;
         const available = writeUpdateWorkingCopy(workingScope, {
-            ...JSON.parse(workingContent), activeUpdateId, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, frozenProgressCharts,
-            candidate: draftCandidate, selectedSources: selectedInputSources, lastSavedContent, sourceUrl,
+            ...JSON.parse(workingContent), activeUpdateId, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, frozenProgressCharts, frozenFinancialHistory,
+            candidate: draftCandidate, startupOverviewEdited, selectedSources: selectedInputSources, lastSavedContent, sourceUrl,
             pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary,
             videoUrl: uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename,
         });
@@ -4366,7 +4391,7 @@ function CreateUpdateEditor() {
             if (copy) writeUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `id:${activeUpdateId}`), copy);
         }
         setLocalRecoveryAvailable(available);
-    }, [activeUpdateId, workingScope, loadedWorkingScope, workingContent, frozenProgressCharts, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
+    }, [activeUpdateId, workingScope, loadedWorkingScope, workingContent, frozenProgressCharts, frozenFinancialHistory, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, startupOverviewEdited, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
     useEffect(() => {
         const saved = saveDraftFetcher.data?.step === "draft-saved" ? saveDraftFetcher.data.update : actionData?.step === "feedback" ? actionData.update : null;
         if (!saved) return;
@@ -4374,7 +4399,12 @@ function CreateUpdateEditor() {
         setExpectedRevision(saved.revisionId || null);
         setMetricEvidence(saved.metricEvidence || {}); setReportingPeriod(saved.reportingPeriod || null);
         setFrozenProgressCharts(saved.progressCharts || []);
-        setLastSavedContent(saveAttemptContent);
+        setFrozenFinancialHistory(saved.financialHistory || null);
+        const savedSelection = normalizeFinancialHistorySelection(saved.financialHistorySelection) || undefined;
+        // Refresh is an action, not a setting; clear it after the server captures a revision.
+        setFinancialHistorySelection(savedSelection);
+        const savedContent = JSON.parse(saveAttemptContent || "{}");
+        setLastSavedContent(JSON.stringify({ ...savedContent, financialHistorySelection: savedSelection }));
     }, [saveDraftFetcher.data, actionData]);
     useEffect(() => {
         if (!hasUnsavedChanges || localRecoveryAvailable) return;
@@ -5185,7 +5215,7 @@ function CreateUpdateEditor() {
             <VibeRaisingWorkflowLayout variant="gallery" activeStep="review">
                 <div className="update-editor update-reader update-gallery">
                     <header className="update-editor-header"><div><button type="button" className="update-back" onClick={() => setDismissedFeedback(true)}><ArrowLeftIcon className="h-3.5 w-3.5" />Back to draft</button><h1>Review your update</h1></div><nav className="gallery-progress" aria-label="Update progress"><ol><li>Draft</li><li>Refine</li><li aria-current="step">Review</li></ol></nav></header>
-                    <div className="update-review-note"><span>This is how your update will appear.</span><span>Audience: {reviewAudienceVisibility.includes("community") ? "Community" : "Just for me"}</span></div>
+                    <div className="update-review-note"><span>Read this as someone new to your startup: can they understand what changed and how to help?</span><span>Audience: {reviewAudienceVisibility.includes("community") ? "Community" : "Just for me"}</span></div>
                 <Form id={SEND_TO_MLAI_FORM_ID} method="POST" className="hidden">
                     <input type="hidden" name="intent" value="publish" />
                     {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
@@ -5280,6 +5310,7 @@ function CreateUpdateEditor() {
                         <input key={metricKey} type="hidden" name={metricKey} value={metricValues[metricKey] || ""} />
                     ))}
                     {progress && chartSelections !== undefined && <input type="hidden" name="chartSelections" value={JSON.stringify(chartSelections)} />}
+                    {financialHistorySelection !== undefined && <input type="hidden" name="financialHistorySelection" value={JSON.stringify(financialHistorySelection)} />}
                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
                     <input
                         type="hidden"
@@ -5527,6 +5558,8 @@ function CreateUpdateEditor() {
                             Local recovery is unavailable in this browser. Save your draft before leaving this page.
                         </p>
                     )}
+                    <PulseFinancialHistoryPicker selection={financialHistorySelection} history={frozenFinancialHistory} reportingMonth={targetMonthIso}
+                        onChange={setFinancialHistorySelection} disabled={isSubmitting || saveDraftFetcher.state !== "idle"} />
                     {progress && <>
                         <ProgressChartPicker series={progress?.series || []} selected={chartSelections || []}
                             onChange={setChartSelections} cutoff={updateDate && updateDate < today ? updateDate : today} frozen={frozenProgressCharts} />
@@ -5538,6 +5571,7 @@ function CreateUpdateEditor() {
                             <h2>Your draft</h2>
                             <p>{generatedRevisionId ? "Your AI draft is ready. Edit and make it yours." : "AI will fill in the key points from your sources."}</p>
                         </div>
+                        <section className="update-section"><StartupOverviewField value={startupOverview} edited={startupOverviewEdited} onChange={editStartupOverview} /></section>
                         <section className="update-section">
                             <label htmlFor="update-summary" className="update-summary-label">
                                 The short version

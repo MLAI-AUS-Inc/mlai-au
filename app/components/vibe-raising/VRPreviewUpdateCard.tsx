@@ -1,3 +1,4 @@
+import { StartupOverview } from "./StartupOverview";
 import ReportingEvidenceNotice from "./ReportingEvidenceNotice";
 import UpdateEvidenceText from "./UpdateEvidenceText";
 import { useState } from "react";
@@ -269,6 +270,7 @@ export function VRPreviewUpdateCard({
                 </div>
             </div>
 
+            {update.startupOverview?.trim() ? <div className="px-4 py-4 sm:px-6"><StartupOverview value={update.startupOverview} /></div> : null}
             <ReportingEvidenceNotice period={update.reportingPeriod} warnings={update.evidenceWarnings} />
             {financialSnapshot ? (
                 <FinancialChartsSection snapshot={financialSnapshot} analysis={update.conciseAnalysis} />

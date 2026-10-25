@@ -57,6 +57,14 @@ describe("editor save and review action", () => {
       summary: "An unfinished thought",
     });
   });
+  test("an unrelated save leaves a missing historical introduction omitted", async () => {
+    await submit("save-draft", { summary: "An unrelated edit" });
+    expect(save.mock.calls[0][2]).not.toHaveProperty("startupOverview");
+  });
+  test("an intentional introduction clear reaches the saved revision", async () => {
+    await submit("save-draft", { summary: "An unrelated edit", startupOverview: "" });
+    expect(save.mock.calls[0][2]).toHaveProperty("startupOverview", "");
+  });
   test("blocks review until three meaningful narrative sections are present", async () => {
     expect(
       (
@@ -106,5 +114,26 @@ test("save forwards explicit chart removal without accepting browser chart value
 });
 test("invalid chart choices preserve the draft with a validation error", async () => {
   expect((await submit("save-draft", { chartSelections: "not-json" }))?.step).toBe("validation-error");
+  expect(save).not.toHaveBeenCalled();
+});
+
+test("financial sharing is explicit and browser history values are never accepted", async () => {
+  expect((await submit("save-draft"))?.step).toBe("draft-saved");
+  expect(save.mock.calls[0][2].financialHistorySelection).toBeUndefined();
+  save.mockClear();
+  expect((await submit("save-draft", { financialHistorySelection: '{"enabled":true,"shareAmounts":false}', financialHistory: '{"revenue":999}' }))?.step).toBe("draft-saved");
+  expect(save.mock.calls[0][2].financialHistorySelection).toEqual({ enabled: true, shareAmounts: false });
+  expect(save.mock.calls[0][2].financialHistory).toBeUndefined();
+});
+
+test("actual amount opt-in and deliberate refresh reach only the server builder", async () => {
+  expect((await submit("save-draft", { financialHistorySelection: '{"enabled":true,"shareAmounts":true,"refresh":true}' }))?.step).toBe("draft-saved");
+  expect(save.mock.calls[0][2].financialHistorySelection).toEqual({ enabled: true, shareAmounts: true, refresh: true });
+});
+
+test("malformed financial sharing keeps the draft mounted and does not save", async () => {
+  for (const value of ['{"enabled":true,"shareAmounts":"yes"}', 'not-json', '{"enabled":false,"shareAmounts":true}']) {
+    expect((await submit("save-draft", { financialHistorySelection: value }))?.step).toBe("validation-error");
+  }
   expect(save).not.toHaveBeenCalled();
 });
