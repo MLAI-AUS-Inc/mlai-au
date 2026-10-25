@@ -44,6 +44,36 @@ legacy datasets when explicit chart selection is present.
 Current scope is calendar-month series. Native social/CRM/product connectors,
 Sheets OAuth and Search Console are separate future adapters.
 
+## Optional financial snapshots on Pulse
+
+The editor offers a separate financial history choice, independent of the private
+Progress feature flag. Both inclusion and sharing dollar amounts start off.
+Founders can opt into a relative chart, or separately consent to sharing actual
+revenue and cost amounts with the selected update audience. Saving prepares the
+server-built chart; the saved revision and audience are reviewed before approval.
+
+The `financialHistorySelection` save input contains only `enabled`, `shareAmounts`
+and an optional one-time `refresh` action. The browser never submits chart values.
+Omission preserves an existing choice, while `enabled: false` explicitly removes
+the chart from the next revision. `Use latest source figures` requests a fresh
+snapshot for review; ordinary text edits and subsequent connector syncs retain
+the saved figures. Local draft recovery retains the sharing choice.
+
+`financialHistory` is a dedicated, validated disclosure with exactly six calendar
+months ending in the reporting month. The full article shows it after the summary,
+highlights the reporting month and provides an expandable data table. Relative
+mode uses one scale across both lines and all months, with the highest absolute
+value equal to 100 and no currency. Actual amounts require the explicit
+`shareAmounts` choice. Partial periods are labelled, missing months remain gaps,
+and one observed month uses a summary instead of a trend line. Capture date,
+coverage cutoff and reporting month have separate meanings.
+
+The chart renders only when the backend returns this new disclosure. No history
+is inferred from legacy `progressCharts`, private evidence or dashboard data.
+Older publications without `financialHistory` retain their existing rendering;
+there is no automatic backfill. New relative history previews suppress private
+legacy financial context and monetary generic charts.
+
 Validation: `bun run typecheck`; `bun test tests/startup-progress.test.tsx
 tests/update-editor-action.test.ts tests/update-article.test.tsx
 tests/update-working-copy.test.ts tests/vibe-raising-updates-integration.test.tsx`.

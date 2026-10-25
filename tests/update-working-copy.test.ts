@@ -100,6 +100,18 @@ describe("working copy recovery", () => {
     expect(recoverUpdateWorkingCopy(local, { revisionId: 12 })).toBe(local);
     expect(recoverUpdateWorkingCopy(local, null)).toBe(local);
   });
+  test("an unsaved financial disclosure choice is recovered instead of silently reset", () => {
+    const content = {
+      updateDate: "2026-09-24", narrativeStart: "", narrativeEnd: "", summary: "Saved update",
+      highlights: "Launch", challenges: "Hiring", learnings: "Talk to users", next30Days: "Pilot", asks: "Introductions",
+      coverImage: null, audienceVisibility: ["community"], metrics: {}, chartSelections: [],
+      financialHistorySelection: { enabled: true, shareAmounts: false },
+    };
+    const clean = { ...content, expectedRevision: 11, lastSavedContent: JSON.stringify(content) };
+    expect(recoverUpdateWorkingCopy(clean, { revisionId: 12 })).toBeNull();
+    const local = { ...clean, financialHistorySelection: { enabled: true, shareAmounts: true } };
+    expect(recoverUpdateWorkingCopy(local, { revisionId: 12 })).toBe(local);
+  });
   test("known financial fields and custom imported finance fields remain locked", () => {
     expect(isFinancialMetric("revenue")).toBe(true);
     expect(

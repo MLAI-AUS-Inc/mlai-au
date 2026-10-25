@@ -212,6 +212,8 @@ export interface VibeRaisingDraftedContent {
 
 export interface VibeRaisingMonthlyUpdate {
   startupOverview?: string | null;
+  financialHistory?: import("~/lib/pulse-financial-history").FinancialHistory | null;
+  financialHistorySelection?: import("~/lib/pulse-financial-history").FinancialHistorySelection | null;
   progressCharts?: import("~/lib/startup-progress").ProgressChartSnapshot[] | null;
   updateId?: string | number | null;
   creationKey?: string | null;

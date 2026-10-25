@@ -3,6 +3,8 @@ import { StartupOverviewField } from "~/components/vibe-raising/StartupOverview"
 import { getUpdatePeriod, updateCalendarDate, getUpdateTitles } from "~/lib/startup-updates-presentation";
 import { defaultUpdateSourceWindow, toLocalDateTime, fromLocalDateTime } from "~/lib/update-source-window";
 import ProgressChartPicker from "~/components/vibe-raising/ProgressChartPicker";
+import PulseFinancialHistoryPicker from "~/components/vibe-raising/PulseFinancialHistoryPicker";
+import { normalizeFinancialHistorySelection, parseFinancialHistorySelection, type FinancialHistory, type FinancialHistorySelection } from "~/lib/pulse-financial-history";
 import { parseChartSelections, type ProgressChartSpec, type ProgressChartSnapshot } from "~/lib/startup-progress";
 import { getStartupProgress } from "~/lib/startup-progress.server";
 import UpdateArticle from "~/components/vibe-raising/UpdateArticle";
@@ -560,6 +562,8 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         coverImage: update.coverImage || null,
         progressCharts: update.progressCharts,
         chartSelections: update.progressCharts?.map(chart => chart.spec),
+        financialHistory: update.financialHistory,
+        financialHistorySelection: update.financialHistorySelection,
         summary: update.summary || "",
         startupOverview: update.startupOverview,
         sourceUrl: update.sourceUrl || "",
@@ -726,6 +730,7 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
 
     return {
         ...(formData.has("chartSelections") ? { chartSelections: parseChartSelections(formData.get("chartSelections")) } : {}),
+        ...(formData.has("financialHistorySelection") ? { financialHistorySelection: parseFinancialHistorySelection(formData.get("financialHistorySelection")) } : {}),
         updateId: String(formData.get("updateId") || "") || null,
         creationKey: String(formData.get("creationKey") || "") || null,
         updateDate: String(formData.get("updateDate") || "") || null,
@@ -2968,6 +2973,10 @@ function CreateUpdateEditor() {
     const [chartSelections, setChartSelections] = useState<ProgressChartSpec[] | undefined>(() =>
         defaultData.chartSelections ?? (existingData ? undefined : progress ? [] : undefined));
     const [frozenProgressCharts, setFrozenProgressCharts] = useState<ProgressChartSnapshot[]>(defaultData.progressCharts || []);
+    // Omission leaves older publications alone; adding a chart requires an explicit choice.
+    const [financialHistorySelection, setFinancialHistorySelection] = useState<FinancialHistorySelection | undefined>(() =>
+        normalizeFinancialHistorySelection(defaultData.financialHistorySelection) || undefined);
+    const [frozenFinancialHistory, setFrozenFinancialHistory] = useState<FinancialHistory | null>(defaultData.financialHistory || null);
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [pitchDeckPreviewUrl, setPitchDeckPreviewUrl] = useState<string | null>(defaultData?.pitchDeckUrl || null);
@@ -4339,6 +4348,9 @@ function CreateUpdateEditor() {
         const restoredCharts: ProgressChartSpec[] | undefined = Array.isArray(restored.chartSelections) ? restored.chartSelections as ProgressChartSpec[] : base.chartSelections ?? (existingData ? undefined : progress ? [] : undefined);
         setChartSelections(incomingChart ? [...(restoredCharts || []).filter(chart => chart.id !== incomingChart.id), incomingChart].slice(0, 12) : restoredCharts);
         setFrozenProgressCharts(restored.frozenProgressCharts || base.progressCharts || []);
+        const restoredFinancialSelection = normalizeFinancialHistorySelection(restored.financialHistorySelection) || normalizeFinancialHistorySelection(base.financialHistorySelection);
+        setFinancialHistorySelection(restoredFinancialSelection ? { ...restoredFinancialSelection, ...(restored.financialHistorySelection?.refresh === true ? { refresh: true } : {}) } : undefined);
+        setFrozenFinancialHistory(restored.frozenFinancialHistory || base.financialHistory || null);
         setSourceUrl(restored.sourceUrl || "");
         setAudienceVisibility(normalizeAudienceVisibilityValue(restored.audienceVisibility));
         setFinancialSnapshot(restored.financialSnapshot || null);
@@ -4346,7 +4358,7 @@ function CreateUpdateEditor() {
         setMetricValues(restored.metrics || {}); setSelectedMetrics(new Set(Object.keys(restored.metrics || {})));
         setExpectedRevision(saved ? saved.expectedRevision ?? null : base.revisionId || null);
         setDraftCandidate(saved?.candidate || null);
-        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ updateDate: base.updateDate ?? (existingData ? "" : today), narrativeStart: "", narrativeEnd: "", startupOverview: initialStartupOverview(base.startupOverview, user.shortDescription, !isEdit && !existingData && !actionData), summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {}, chartSelections: base.chartSelections ?? (existingData ? undefined : progress ? [] : undefined) }));
+        setLastSavedContent(saved?.lastSavedContent || JSON.stringify({ updateDate: base.updateDate ?? (existingData ? "" : today), narrativeStart: "", narrativeEnd: "", startupOverview: initialStartupOverview(base.startupOverview, user.shortDescription, !isEdit && !existingData && !actionData), summary: base.summary || "", highlights: base.highlights || "", challenges: base.challenges || "", learnings: base.learnings || "", next30Days: base.next30Days || "", asks: base.asks || "", coverImage: base.coverImage || null, audienceVisibility: normalizeAudienceVisibilityValue(base.audienceVisibility), metrics: base.metrics || {}, chartSelections: base.chartSelections ?? (existingData ? undefined : progress ? [] : undefined), financialHistorySelection: normalizeFinancialHistorySelection(base.financialHistorySelection) || undefined }));
         // Legacy attachments are retained, even though the new form no longer asks for them.
         setPitchDeckUrl(restored.pitchDeckUrl || ""); setPitchDeckStoragePath(restored.pitchDeckStoragePath || "");
         setPitchDeckContentType(restored.pitchDeckContentType || ""); setPitchDeckFileSizeBytes(restored.pitchDeckFileSizeBytes || null);
@@ -4364,12 +4376,12 @@ function CreateUpdateEditor() {
         // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [workingScope]);
-    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, startupOverview, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues, chartSelections });
+    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, startupOverview, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues, chartSelections, financialHistorySelection });
     const hasUnsavedChanges = workingContent !== lastSavedContent;
     useEffect(() => {
         if (loadedWorkingScope !== workingScope) return;
         const available = writeUpdateWorkingCopy(workingScope, {
-            ...JSON.parse(workingContent), activeUpdateId, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, frozenProgressCharts,
+            ...JSON.parse(workingContent), activeUpdateId, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, frozenProgressCharts, frozenFinancialHistory,
             candidate: draftCandidate, startupOverviewEdited, selectedSources: selectedInputSources, lastSavedContent, sourceUrl,
             pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary,
             videoUrl: uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename,
@@ -4379,7 +4391,7 @@ function CreateUpdateEditor() {
             if (copy) writeUpdateWorkingCopy(updateWorkingCopyKey(String(user.authUser.id), resolveActiveCompanyId(user) || "", `id:${activeUpdateId}`), copy);
         }
         setLocalRecoveryAvailable(available);
-    }, [activeUpdateId, workingScope, loadedWorkingScope, workingContent, frozenProgressCharts, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, startupOverviewEdited, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
+    }, [activeUpdateId, workingScope, loadedWorkingScope, workingContent, frozenProgressCharts, frozenFinancialHistory, expectedRevision, metricEvidence, reportingPeriod, financialSnapshot, draftCandidate, startupOverviewEdited, selectedInputSources, lastSavedContent, sourceUrl, pitchDeckUrl, pitchDeckStoragePath, pitchDeckContentType, pitchDeckFileSizeBytes, pitchDeckOriginalFilename, pitchDeckSummary, uploadedVideoUrl, videoStoragePath, videoContentType, videoFileSizeBytes, videoOriginalFilename]);
     useEffect(() => {
         const saved = saveDraftFetcher.data?.step === "draft-saved" ? saveDraftFetcher.data.update : actionData?.step === "feedback" ? actionData.update : null;
         if (!saved) return;
@@ -4387,7 +4399,12 @@ function CreateUpdateEditor() {
         setExpectedRevision(saved.revisionId || null);
         setMetricEvidence(saved.metricEvidence || {}); setReportingPeriod(saved.reportingPeriod || null);
         setFrozenProgressCharts(saved.progressCharts || []);
-        setLastSavedContent(saveAttemptContent);
+        setFrozenFinancialHistory(saved.financialHistory || null);
+        const savedSelection = normalizeFinancialHistorySelection(saved.financialHistorySelection) || undefined;
+        // Refresh is an action, not a setting; clear it after the server captures a revision.
+        setFinancialHistorySelection(savedSelection);
+        const savedContent = JSON.parse(saveAttemptContent || "{}");
+        setLastSavedContent(JSON.stringify({ ...savedContent, financialHistorySelection: savedSelection }));
     }, [saveDraftFetcher.data, actionData]);
     useEffect(() => {
         if (!hasUnsavedChanges || localRecoveryAvailable) return;
@@ -5293,6 +5310,7 @@ function CreateUpdateEditor() {
                         <input key={metricKey} type="hidden" name={metricKey} value={metricValues[metricKey] || ""} />
                     ))}
                     {progress && chartSelections !== undefined && <input type="hidden" name="chartSelections" value={JSON.stringify(chartSelections)} />}
+                    {financialHistorySelection !== undefined && <input type="hidden" name="financialHistorySelection" value={JSON.stringify(financialHistorySelection)} />}
                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
                     <input
                         type="hidden"
@@ -5540,6 +5558,8 @@ function CreateUpdateEditor() {
                             Local recovery is unavailable in this browser. Save your draft before leaving this page.
                         </p>
                     )}
+                    <PulseFinancialHistoryPicker selection={financialHistorySelection} history={frozenFinancialHistory} reportingMonth={targetMonthIso}
+                        onChange={setFinancialHistorySelection} disabled={isSubmitting || saveDraftFetcher.state !== "idle"} />
                     {progress && <>
                         <ProgressChartPicker series={progress?.series || []} selected={chartSelections || []}
                             onChange={setChartSelections} cutoff={updateDate && updateDate < today ? updateDate : today} frozen={frozenProgressCharts} />
