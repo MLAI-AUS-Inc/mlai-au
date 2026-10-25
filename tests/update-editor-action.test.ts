@@ -57,6 +57,14 @@ describe("editor save and review action", () => {
       summary: "An unfinished thought",
     });
   });
+  test("an unrelated save leaves a missing historical introduction omitted", async () => {
+    await submit("save-draft", { summary: "An unrelated edit" });
+    expect(save.mock.calls[0][2]).not.toHaveProperty("startupOverview");
+  });
+  test("an intentional introduction clear reaches the saved revision", async () => {
+    await submit("save-draft", { summary: "An unrelated edit", startupOverview: "" });
+    expect(save.mock.calls[0][2]).toHaveProperty("startupOverview", "");
+  });
   test("blocks review until three meaningful narrative sections are present", async () => {
     expect(
       (

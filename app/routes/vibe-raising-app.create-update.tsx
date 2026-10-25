@@ -5546,13 +5546,12 @@ function CreateUpdateEditor() {
                         <Link className="progress-text-button" to="/founder-tools/progress">Manage your progress metrics ↗</Link>
                         {chartSelections === undefined && <p className="update-section-help">This update still uses its original figures. <button type="button" className="progress-text-button" onClick={() => setChartSelections([])}>Choose no charts instead</button></p>}
                     </>}
-                    <input type="hidden" name="startupOverview" value={startupOverview} />
                     <div className="update-writing" ref={draftTemplateSectionRef}>
                         <div className="gallery-writing-heading">
                             <h2>Your draft</h2>
                             <p>{generatedRevisionId ? "Your AI draft is ready. Edit and make it yours." : "AI will fill in the key points from your sources."}</p>
                         </div>
-                        <section className="update-section"><StartupOverviewField value={startupOverview} onChange={editStartupOverview} /></section>
+                        <section className="update-section"><StartupOverviewField value={startupOverview} edited={startupOverviewEdited} onChange={editStartupOverview} /></section>
                         <section className="update-section">
                             <label htmlFor="update-summary" className="update-summary-label">
                                 The short version

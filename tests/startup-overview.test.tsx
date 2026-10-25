@@ -2,6 +2,7 @@ import { describe, expect, it, spyOn } from "bun:test";
 import axios from "axios";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
+import { Window } from "happy-dom";
 import { initialStartupOverview, normalizeStartupOverview } from "../app/lib/startup-overview";
 import { normalizeDraftedContent, normalizeMonthlyUpdate, runVibeRaisingStartupUpdate, saveVibeRaisingMonthlyUpdate } from "../app/lib/vibe-raising";
 import VRPreviewUpdateCard from "../app/components/vibe-raising/VRPreviewUpdateCard";
@@ -79,6 +80,21 @@ describe("saved startup introductions", () => {
     expect(markup).toContain("Explain specialist terms");
     expect(markup).toContain("who can help and how");
     expect(markup).toContain("aria-describedby");
+  });
+
+  it("omits an untouched historical introduction from form submission but submits an intentional clear", () => {
+    const browser = new Window();
+    const formData = (value: string, edited: boolean) => {
+      browser.document.body.innerHTML = renderToStaticMarkup(
+        <form><input name="summary" defaultValue="An unrelated edit" /><StartupOverviewField value={value} edited={edited} onChange={() => {}} /></form>,
+      );
+      return new browser.FormData(browser.document.querySelector("form")!);
+    };
+    const historical = formData(initialStartupOverview(undefined, introduction, false), false);
+    expect(historical.get("summary")).toBe("An unrelated edit");
+    expect(historical.has("startupOverview")).toBe(false);
+    expect(formData("", true).get("startupOverview")).toBe("");
+    expect(formData(introduction, false).get("startupOverview")).toBe(introduction);
   });
 
   it("round-trips the founder's introduction through the save request and response", async () => {

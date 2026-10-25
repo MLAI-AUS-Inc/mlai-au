@@ -8,9 +8,10 @@ export function StartupOverview({ value }: { value?: string | null }) {
   </section>;
 }
 
-export function StartupOverviewField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export function StartupOverviewField({ value, edited = false, onChange }: { value: string; edited?: boolean; onChange: (value: string) => void }) {
   const id = useId();
   return <div className="space-y-2">
+    {(edited || value.trim()) ? <input type="hidden" name="startupOverview" value={value} /> : null}
     <label htmlFor={id} className="block text-base font-bold text-gray-950">What we do</label>
     <p id={`${id}-hint`} className="text-sm leading-6 text-gray-600">Introduce your startup in one or two sentences: what you do, who you help, and the problem you solve. Use everyday words and check that this saved description is still right.</p>
     <textarea id={id} value={value} onChange={(event) => onChange(event.target.value)} rows={3} maxLength={2000}
