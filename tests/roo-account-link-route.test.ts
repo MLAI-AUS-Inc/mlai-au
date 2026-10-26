@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -19,6 +19,9 @@ const getCurrentUser = mock(async () => ({ email: "founder@example.com" }));
 // Preserve real pure helpers. Replacing apiErrorDetail made unrelated tests
 // observe this route fixture when Bun discovered these files in another order.
 const realApi = { ...await import("../app/lib/api") };
+const realAuth = { ...await import("../app/lib/auth") };
+const realEnv = { ...await import("../app/lib/env.server") };
+const realVibeRaising = { ...await import("../app/lib/vibe-raising") };
 mock.module("../app/lib/api", () => ({
   ...realApi,
   createApiClient,
@@ -26,10 +29,12 @@ mock.module("../app/lib/api", () => ({
 }));
 
 mock.module("../app/lib/auth", () => ({
+  ...realAuth,
   getCurrentUser,
 }));
 
 mock.module("../app/lib/env.server", () => ({
+  ...realEnv,
   getEnv: () => ({
     BACKEND_BASE_URL: "https://api.mlai.au",
     VITE_SITE_URL: "https://mlai.au",
@@ -37,8 +42,17 @@ mock.module("../app/lib/env.server", () => ({
 }));
 
 mock.module("../app/lib/vibe-raising", () => ({
+  ...realVibeRaising,
   getVibeRaisingLoginHref: () => "/platform/login",
 }));
+
+// Keep route fixtures out of later suites that exercise actual HTTP clients.
+afterAll(() => {
+  mock.module("../app/lib/api", () => realApi);
+  mock.module("../app/lib/auth", () => realAuth);
+  mock.module("../app/lib/env.server", () => realEnv);
+  mock.module("../app/lib/vibe-raising", () => realVibeRaising);
+});
 
 const { action, loader } = await import(
   "../app/routes/founder-tools.link-roo"

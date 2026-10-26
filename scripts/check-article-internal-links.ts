@@ -16,6 +16,7 @@ const VALID_STATIC_ROUTES = new Set([
   "/hackathons",
   "/medhack",
   "/mlai-studio",
+  "/mlai-studio/build-with-us",
   "/mlai-studio/start-project",
   "/platform/dashboard",
   "/platform/login",

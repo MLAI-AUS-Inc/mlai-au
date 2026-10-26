@@ -1,132 +1,127 @@
 import { Home } from "lucide-react";
 import { Link } from "react-router";
+import AuthorBio from "~/components/AuthorBio";
 import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
 import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
-import { DATA_SCIENCE_PORTFOLIO as LAB, DATA_SCIENCE_PORTFOLIO_FILES } from "~/lib/data-science-portfolio";
+import { getDefaultArticleAuthorDetails } from "../../authors";
+import { DATA_SCIENCE_PORTFOLIO as LAB } from "~/lib/data-science-portfolio";
 
 export const useCustomHeader = true;
 export const CATEGORY = "featured";
 export const SLUG = "how-to-get-data-science-job";
 export const DATE_PUBLISHED = "2025-11-19";
-export const DATE_MODIFIED = "2026-09-15";
-const TITLE = "How to get a data science job in Australia: build evidence of delivery";
-export const DESCRIPTION = "Choose a target data role, build a reproducible portfolio with leakage and failure checks, and turn real evidence into applications or a scoped builder brief.";
-const PATH = "/articles/featured/how-to-get-data-science-job";
+export const DATE_MODIFIED = "2026-10-25";
+const TITLE = "How to get a data science job in Australia: skills, pathways and applications";
+export const DESCRIPTION = "A practical Australian data science career guide: entry pathways, Python and SQL skills, employer examples, portfolio projects, job searches, CVs and interviews.";
 const HERO = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-8cebc51f-5bc8-46f4-8676-bd361214e6b3.jpg?alt=media&token=273d8b6c-afd5-411f-89e9-fa04b4413f6d";
+const AUTHOR = getDefaultArticleAuthorDetails();
+export const PORTFOLIO_TUTORIAL = "/downloads/data-science-portfolio/tutorial.html";
 export const articleMeta = { title: TITLE, category: CATEGORY, slug: SLUG, description: DESCRIPTION, datePublished: DATE_PUBLISHED, dateModified: DATE_MODIFIED, author: "Dr Sam Donegan", image: HERO, imageAlt: "Laptop displaying charts on a desk beside an Australian flag" };
 export const summaryHighlights = {
-  heading: "Make your next application inspectable",
-  intro: "For early-career Australian builders using AI coding tools—not a promise of employment or a survey of hiring demand.",
+  heading: "Your route into data science",
+  intro: "Choose a suitable entry point, develop the skills it asks for, and show how you use them to solve a problem.",
   items: [
-    { label: "Choose a role", description: "Use current position descriptions to separate analysis, modelling and production delivery." },
-    { label: "Show your checks", description: "Include a baseline, unseen evaluation data, failure tests and reproducible setup." },
-    { label: "Explain your contribution", description: "Separate AI assistance, your decisions and measured results from hypothetical business value." },
+    { label: "Starting without experience?", description: "Compare graduate, internship and analyst roles as well as data scientist vacancies. Check each role’s eligibility and daily work." },
+    { label: "What should you learn?", description: "Build a foundation in SQL, Python, statistics and clear communication, then use target job descriptions to choose your next skill." },
+    { label: "What makes an application useful?", description: "Connect each requirement to a real example, a readable project and a result you can explain in an interview." },
   ],
 };
+export const employerExamples = [
+  { employer: "INGRITY", role: "2027 graduate intake", location: "Confirm placement location in the individual advertisement", href: "https://ingrity.com/careers/?jobId=QqhI52JUTFyI", requirements: "The employer describes structured learning and client work across analytics, cloud and AI. Check the linked vacancy for degree, work-rights and intake conditions.", takeaway: "Look for an explicitly graduate pathway when you need supervised experience." },
+  { employer: "Amazon", role: "Data Scientist, job 10509589", location: "Sydney", href: "https://www.amazon.jobs/en/jobs/10509589/data-scientist", requirements: "The listing asks for prior data science and querying experience, statistical modelling, and a quantitative master’s or a bachelor’s plus five years of relevant experience. Python is preferred.", takeaway: "A data scientist title can describe an experienced role; check the requirements before treating it as an entry opening." },
+  { employer: "Zip", role: "Senior Data Scientist I", location: "Sydney", href: "https://job-boards.greenhouse.io/zipcolimited/jobs/4718273006", requirements: "The listing asks for five or more years in data science, advanced Python and SQL, experimentation, production ML and clear communication.", takeaway: "Use senior advertisements to understand progression, while targeting roles appropriate to your present experience." },
+] as const;
 export const faqItems = [
-  { question: "Do I need a degree?", answer: "Check the actual position description. Do not assume a portfolio replaces a mandatory qualification, or that every role requires the same credential. Compare requirements before paying for a course." },
-  { question: "Can I use AI coding tools in a portfolio?", answer: "Yes, if the project and data terms permit it. Explain what the tool assisted with, inspect the changes and demonstrate tests and decisions you understand. For hiring assessments, follow the employer's explicit AI-use rules." },
-  { question: "Does a portfolio guarantee paid work?", answer: "No. It provides evidence for an employer or client to assess. Work depends on suitability, eligibility, demand and the selection process; a Studio application does not guarantee an assignment." },
-  { question: "Should I claim a model improved business revenue?", answer: "Only with evidence supporting that outcome. Offline predictive performance is not proof of revenue, savings or causal impact. Label demonstrations and illustrative scenarios clearly." },
+  { question: "How do I get a data science job with no experience?", answer: "Look for graduate programs, internships and junior data or analyst roles whose eligibility you meet. Use coursework, a permitted volunteer task or a small personal project to show data cleaning, SQL or Python, evaluation and communication. Explain your own contribution and apply while improving the specific gaps in your target roles." },
+  { question: "Do I need a degree to become a data scientist in Australia?", answer: "Requirements vary by employer and level. Some advertisements specify a quantitative degree and experience; others consider different evidence. Read several relevant vacancies before choosing study. A portfolio can demonstrate skills but does not replace a mandatory qualification." },
+  { question: "Should I learn Python or SQL first?", answer: "For a reporting or analyst target, start with SQL and explaining a checked result. For a modelling target, develop Python and statistics alongside SQL. Use one small dataset to practise both, then follow the requirements of the roles you want." },
+  { question: "How long does it take to become a data scientist?", answer: "Your starting skills and target role determine the work involved. A degree has a formal study duration; a career transition also requires practical evidence and a job search. Set milestones for skills, projects and applications instead of relying on a universal job-ready deadline." },
+  { question: "Is data science in demand in Australia?", answer: "The employer examples in this guide show different advertised pathways, but three examples cannot measure national demand or your chance of employment. Review current vacancies in your location and experience range, including analyst and graduate titles, and record which requirements recur." },
+  { question: "Can I use AI coding tools in a portfolio or interview?", answer: "For a portfolio, follow the data and project terms, explain the assistance and verify code you can defend. For a hiring assessment, follow the employer’s explicit AI-use rules. Report actual results and identify your own work." },
 ];
 
 export default function ArticlePage() {
   return <div>
-    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: TITLE, current: true }]} title={TITLE} titleHighlight="build evidence of delivery" headerBgColor="purple" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "Data science careers", current: true }]} title={TITLE} headerBgColor="purple" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
     <div className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-indigo [&_h2]:scroll-mt-20 [&_h3]:scroll-mt-20 [&_[role=region]]:scroll-mt-20" data-cf-article-body>
-      <p><strong>Start with one target role and a project another person can inspect and rerun.</strong> A notebook screenshot or list of AI tools does not show how you handle bad inputs, validate a result or hand work over. This guide helps early-career builders turn those decisions into evidence for Australian applications and scoped project work.</p>
-      <p>It is an editorial delivery framework, not a hiring-market study. There is no promised job-ready timeline, salary or required number of portfolio projects. AI-assisted building is useful only when you can explain and check what you ship.</p>
-
-      <h2 id="choose-role">1. Choose the work before choosing another course</h2>
-      <p>Read a small sample of current position descriptions from employers you could realistically work for. Save the URL and date, location, work-rights conditions, mandatory qualifications, daily tasks and requested evidence. A handful of advertisements helps you target an application; it does not establish national demand.</p>
-      <div className="overflow-x-auto" role="region" aria-label="Role-to-evidence comparison" tabIndex={0}><table className="min-w-[640px]">
-        <caption>A role-to-evidence planning aid, not a universal employer specification</caption>
-        <thead><tr><th>Work emphasis</th><th>Evidence to prepare</th><th>Question to ask</th></tr></thead>
+      <p>To get a data science job in Australia, start with roles that match your experience, learn the skills those roles require, build evidence of your work and practise explaining it. Qualifications, practical experience and communication all matter; their weight depends on the employer and the work.</p>
+      <p>This guide covers the whole application journey. The employer examples were checked on <time dateTime={DATE_MODIFIED}>25 October 2026</time>. Our suggested exercises and application steps are editorial guidance, with sources beside the factual claims.</p>
+      <h2 id="choose-role">1. Choose an entry pathway that fits your starting point</h2>
+      <h3>If you are a student or recent graduate</h3>
+      <p>Check graduate programs, internships, university placements and research projects alongside junior vacancies. Record graduation-year eligibility, location, work-rights requirements, application deadlines and requested documents. A capstone can provide evidence if you can explain your own work and have permission to share it.</p>
+      <h3>If you are changing careers</h3>
+      <p>Start with a problem you understand from your current field. An operations professional might analyse service delays; a finance analyst might test a forecast. Compare data analyst, BI analyst, analytics engineer and data scientist duties, then choose a role where your existing knowledge helps. An internal analytics project can also make your contribution easier to demonstrate.</p>
+      <h3>If you have no professional data experience</h3>
+      <p>Choose a small project you can finish and explain. Combine it with relevant coursework, an eligible internship or a clearly scoped volunteer task. Label each experience accurately. You can apply for suitable entry roles while developing your skills; you do not need to wait until you know every tool in a senior advertisement.</p>
+      <p>For formal study, <a href="https://www.rmit.edu.au/study-with-us/information-technology/data-science/how-to-become-a-data-scientist">RMIT describes undergraduate and postgraduate pathways into data science</a>. Compare admission rules, curriculum and workload with your skill gaps. If you need a smaller learning step, use our <Link to="/articles/featured/learn-ai-melbourne">Melbourne AI course comparison</Link>.</p>
+      <h2 id="employer-examples">2. Read Australian employer requirements at the right level</h2>
+      <p>These three employer pages illustrate a graduate pathway, an experienced role and a senior role. They are a small editorial sample checked on 25 October 2026, not a representative survey or a live vacancy feed. Availability and requirements can change; use the linked employer page before applying.</p>
+      <p className="text-sm">On a small screen, scroll the tables sideways to compare all columns.</p>
+      <div className="overflow-x-auto" role="region" aria-label="Dated Australian employer examples" tabIndex={0}><table className="min-w-[640px]">
+        <caption>Employer requirements and what they mean for your search</caption>
+        <thead><tr><th scope="col">Employer and role</th><th scope="col">What the source says</th><th scope="col">How to use it</th></tr></thead>
+        <tbody>{employerExamples.map(example => <tr key={example.employer}><th scope="row"><a href={example.href}>{example.employer}: {example.role}</a><br /><span className="font-normal">{example.location}</span></th><td>{example.requirements}</td><td>{example.takeaway}</td></tr>)}</tbody>
+      </table></div>
+      <p>For your own shortlist, save the employer, source URL, date checked, seniority, location, required versus preferred skills, qualifications, eligibility and closing date. Compare a manageable set of roles you could actually accept. A mandatory degree or clearance needs a different response from a preferred tool you could learn.</p>
+      <h2 id="skills">3. Develop the skills your target roles ask for</h2>
+      <p>Use this practice map to turn a skill name into something you can show. SQL, Python, modelling and communication appear in the employer examples above; the exercises below are MLAI’s suggestions for demonstrating them.</p>
+      <div className="overflow-x-auto" role="region" aria-label="Data science skills and practice evidence" tabIndex={0}><table className="min-w-[640px]">
+        <thead><tr><th scope="col">Skill</th><th scope="col">What to practise</th><th scope="col">Evidence to show</th></tr></thead>
         <tbody>
-          <tr><td>Analysis and reporting</td><td>Validated SQL, reconciled totals, a clear decision memo</td><td>Can someone trace the recommendation back to the data?</td></tr>
-          <tr><td>Statistical modelling</td><td>A baseline, justified split and metric, uncertainty and error analysis</td><td>Would the evaluation hold on genuinely unseen cases?</td></tr>
-          <tr><td>Production ML or data delivery</td><td>Repeatable pipeline, input checks, tests, logging and handover</td><td>What happens when the input or dependency fails?</td></tr>
+          <tr><th scope="row">SQL and data quality</th><td>Joins, aggregation, window functions, missing values and duplicate records.</td><td>A query with a small test fixture and reconciled totals; explain how you avoided counting a row twice.</td></tr>
+          <tr><th scope="row">Python and reproducibility</th><td>Load, clean and explore data; organise functions and record dependencies.</td><td>A readable notebook or script another person can run from its README.</td></tr>
+          <tr><th scope="row">Statistics and experimentation</th><td>Sampling, uncertainty, confounding and the distinction between association and causation.</td><td>A short analysis explaining what the data supports and what further evidence a decision needs.</td></tr>
+          <tr><th scope="row">Machine learning and evaluation</th><td>Choose a baseline, metric and appropriate split; investigate errors and leakage.</td><td>Baseline and model results on the same evaluation cases, including a failure.</td></tr>
+          <tr><th scope="row">Communication and domain knowledge</th><td>Define the decision, explain a chart and recommend a next step.</td><td>A one-page memo understandable to someone outside the project.</td></tr>
+          <tr><th scope="row">Role-specific delivery</th><td>Use the cloud, dashboard or deployment tools named in your target roles.</td><td>For production roles, add tests, logging and a handover; for reporting roles, show a checked dashboard.</td></tr>
         </tbody>
       </table></div>
-      <p>Job titles overlap. Use the actual duties rather than assuming every “data scientist” position needs the same stack. If a qualification is mandatory, a portfolio is not a substitute. If you already have operations or domain experience, show how it informs a concrete data decision instead of discarding it.</p>
-
-      <h2 id="portfolio-brief">2. Build a bounded portfolio, not an invented case study</h2>
-      <p>Here is an illustrative brief you can adapt: forecast the next fortnight's daily workload for a fictional service team, using a permitted public dataset or explicitly synthetic records. A synthetic exercise demonstrates engineering and reasoning, not real customer demand or savings. The runnable example below uses only invented records.</p>
-      <ol>
-        <li><strong>Decision:</strong> what action would a forecast inform, and who would check it? Keep automatic staffing or customer actions outside the demonstration.</li>
-        <li><strong>Data:</strong> document origin, licence, collection period, units, missing values and permitted redistribution. Publicly accessible does not mean unrestricted use.</li>
-        <li><strong>Baseline:</strong> compare with a simple previous-period or seasonal estimate. Explain why that baseline matches the decision.</li>
-        <li><strong>Evaluation:</strong> reserve later observations for a time-dependent forecast, and explain whether repeated customers or other groups can leak across the split.</li>
-        <li><strong>Result:</strong> report the metric, units, evaluation period and failures. If the model loses to the baseline, report that—it is still a useful result.</li>
-        <li><strong>Handover:</strong> include setup commands, pinned dependencies, a small permitted fixture and expected outputs. Do not require private credentials to inspect the core demonstration.</li>
-      </ol>
-      <p>Fit preprocessing only on training data and apply the learned transformations consistently to evaluation data. Do not tune on the final test set. Pipelines help enforce the sequence, but cannot repair a badly chosen split or features unavailable at prediction time. See the <a href="https://scikit-learn.org/stable/common_pitfalls.html">scikit-learn guide to leakage and preprocessing</a>.</p>
-
-      <h3 id="run-portfolio-project">Run the portfolio example: when the baseline wins</h3>
-      <p><strong>This is a completed local teaching exercise, not a client case or blind benchmark.</strong> You need to be comfortable reading JavaScript, using a terminal and checking arithmetic. Node is used to keep this example dependency-free; it is not an employer requirement. There is no provider account, installation of packages, customer data or automated staffing action.</p>
-      <p>Save <code>forecast.mjs</code>, <code>synthetic-workload.json</code> and <code>forecast.test.mjs</code> in one folder. The README contains the editable checklist and the result file lets you compare every output. Read the files before running them; if your browser adds <code>.txt</code> to a code filename, restore the displayed name.</p>
-      <ul>{DATA_SCIENCE_PORTFOLIO_FILES.map(file => <li key={file.name}><a href={file.href} download>{file.name}</a> — {file.purpose}.</li>)}</ul>
-      <pre className="whitespace-pre-wrap break-words"><code>{"node --test forecast.test.mjs\nnode forecast.mjs"}</code></pre>
-      <p>Recorded locally on 10 September 2026 using {LAB.runtime}: <strong>11 tests passed</strong>. The script prints its full JSON report; it does not contact a service or save a file. These are automated checks of this version, not independent human review or a guarantee that a different runtime works.</p>
-
-      <h3 id="forecast-comparison">Compare the same future dates, not a flattering screenshot</h3>
-      <p>The 42 synthetic records contain a deliberately changing workload pattern. Fit on <strong>5 January–1 February 2026</strong> ({LAB.trainingDays} days), then forecast <strong>2–15 February</strong> ({LAB.evaluationDays} days) from the end of 1 February. Both methods keep that same forecast origin; neither updates with observations from the forecast period.</p>
+      <p>Study one gap at a time and apply it to the same small project. If preprocessing or model evaluation is new to you, the <a href="https://scikit-learn.org/stable/common_pitfalls.html">scikit-learn guide to common pitfalls</a> explains inconsistent preprocessing and data leakage.</p>
+      <h2 id="portfolio-brief">4. Build a portfolio that explains your decisions</h2>
+      <p>Give the reader a clear problem, permitted data, a reproducible method, a checked result and a limitation. A reporting project could reconcile totals and explain an operational trend. A modelling project should compare a simple baseline with a candidate model on the same held-out cases.</p>
+      <p><strong>Worked example:</strong> MLAI’s synthetic workload exercise forecasts a fictional service team’s next fortnight. On its 14 evaluation days, the baseline MAE is <strong>{LAB.baselineMae.toFixed(1)} requests/day</strong> and the candidate MAE is <strong>{LAB.candidateMae.toFixed(1)} requests/day</strong>. The useful conclusion is that the more elaborate model loses on these cases. This demonstrates evaluation, not a saving achieved for a customer.</p>
+      <p><a href={PORTFOLIO_TUTORIAL}>Open the full forecasting tutorial, runnable files and acceptance checklist</a>. The separate tutorial keeps the commands, recorded results and failure analysis together. It uses JavaScript to keep setup small; that choice is not a data science hiring requirement.</p>
       <ul>
-        <li><strong>Baseline:</strong> repeat the last training week's count for the matching weekday. The second forecast week still uses training data.</li>
-        <li><strong>Candidate:</strong> fit a line to four training weekly means, then add each weekday's average training deviation. It estimates a simple trend and weekday pattern, not a language model. Negative estimates would be flagged and clipped to zero; none were clipped here.</li>
-        <li><strong>Metric:</strong> mean absolute error (MAE)—add the absolute daily errors and divide by the number of evaluated days. It has units of requests/day, not percent accuracy or money saved.</li>
+        <li><strong>Explain the input:</strong> source, permission, units, missing values and exclusions.</li>
+        <li><strong>Explain the evaluation:</strong> split, metric, baseline and a failure you investigated.</li>
+        <li><strong>Make it reproducible:</strong> setup, versions, a permitted fixture and expected output.</li>
+        <li><strong>Show your contribution:</strong> identify AI assistance, your changes and decisions you can defend.</li>
       </ul>
-      <p>For the method background, see Hyndman and Athanasopoulos on <a href="https://otexts.com/fpp3/simple-methods.html">seasonal naive baselines</a> and <a href="https://otexts.com/fpp3/accuracy.html">out-of-sample error and MAE</a>. Those sources explain the methods; they did not test this original fixture or validate its result.</p>
-      <div className="overflow-x-auto" role="region" aria-label="Recorded synthetic forecast results" tabIndex={0}><table className="min-w-[640px]">
-        <caption>Actual local output on invented data; lower MAE is better on these dates</caption>
-        <thead><tr><th>Evaluation period</th><th>Baseline MAE</th><th>Candidate MAE</th><th>What it shows</th></tr></thead>
-        <tbody>
-          <tr><td>2–8 February, 7 days</td><td>{LAB.firstWeek.baselineMae.toFixed(1)} requests/day</td><td>{LAB.firstWeek.candidateMae.toFixed(1)} requests/day</td><td>The extrapolated trend already overpredicts.</td></tr>
-          <tr><td>9–15 February, 7 days</td><td>{LAB.secondWeek.baselineMae.toFixed(1)} requests/day</td><td>{LAB.secondWeek.candidateMae.toFixed(1)} requests/day</td><td>The candidate's error grows in the second week.</td></tr>
-          <tr><td>All 14 days</td><td>{LAB.baselineMae.toFixed(1)} requests/day</td><td>{LAB.candidateMae.toFixed(1)} requests/day</td><td>{LAB.baselineAbsoluteError} ÷ 14 versus {LAB.candidateAbsoluteError} ÷ 14 absolute errors.</td></tr>
-        </tbody>
-      </table></div>
-      <p>Trace one failure: on <strong>9 February</strong>, the invented observed count is {LAB.example.actual}; the baseline predicts {LAB.example.baseline} (absolute error {LAB.example.baselineError}) and the candidate predicts {LAB.example.candidate} (error {LAB.example.candidateError}). The training pattern grows, but the constructed evaluation levels decline. A good training fit did not make extrapolation appropriate.</p>
-      <p><strong>Decision: do not recommend this candidate on this result.</strong> Retain the baseline for the exercise and explain the failure. Neither method is approved for a real staffing decision: there are no prediction intervals, representative customer observations, holiday effects, business costs or operational acceptance. Reproducing the files alone is not a job-ready portfolio.</p>
-      <p>“Held out” here means excluded from fitting, not unknown to the lesson's designer. The full fixture and result are visible. If you change the model after inspecting them, these dates are development evidence—not a fresh test. Plan a training-only validation process and an untouched evaluation period before making a new performance claim.</p>
-      <p>The supplied tests check a hand-solvable trend, independent error arithmetic, invalid/missing fields, duplicate/gapped dates, forecast overlap, fixed-origin predictions and missing input files. They also prove that altering future counts cannot change fitted values or predictions in this implementation. They do not establish that your replacement dataset or features are free from every kind of leakage.</p>
+      <p>Ask a peer to follow the README and record feedback if that review occurs. Obtain permission before publishing client work. Add another project when it demonstrates a missing skill, rather than aiming for an arbitrary project count.</p>
+      <h2 id="find-roles">5. Find suitable jobs and organise your applications</h2>
+      <p>Search employer careers pages, <a href="https://www.seek.com.au/data-scientist-jobs">SEEK’s data scientist listings</a>, <a href="https://www.linkedin.com/jobs/">LinkedIn Jobs</a> and <a href="https://www.apsjobs.gov.au/">APS Jobs</a>. Students should also check their university careers service. Try adjacent titles such as graduate data analyst, BI analyst and analytics engineer, then read the duties rather than relying on the title.</p>
+      <p>Track the role URL, closing date, mandatory conditions, evidence needed, application date, interview stage and feedback. Keep a copy of the advertisement so you can prepare if it disappears. Compare salary advertisements on the same basis: base pay, superannuation, hours and seniority. Ask whether quoted pay includes superannuation and which part of a range applies to your experience level.</p>
+      <p>For local conversations, bring a specific project question to a relevant <Link to="/articles/featured/where-to-find-ai-events-in-melbourne">Melbourne AI event</Link> or <Link to="/events">MLAI session</Link>. A useful conversation can help you learn about the work; participation does not guarantee a referral or vacancy.</p>
+      <h2 id="application">6. Write a CV and application around evidence</h2>
+      <p>Follow the employer’s requested format and length. Put relevant skills, recent work or study and accessible project links where a reviewer can find them. For each selection criterion, connect a real example to the action you took, the result and your contribution. The <a href="https://www.apsc.gov.au/working-aps/joining-aps/cracking-code">Australian Public Service Commission’s application guide</a> is a useful starting point for APS recruitment.</p>
+      <p><strong>Annotated example using the supplied synthetic lab:</strong></p>
+      <blockquote>Evaluated a workload forecast on 14 synthetic daily observations; compared a seasonal baseline with a trend model, measured MAE of 1.5 versus 6.0 requests/day, and documented why the candidate should not be selected.</blockquote>
+      <p>The sentence names the task, data type, comparison, metric and decision. It does not claim employment or commercial impact. Use this wording only after doing and understanding the work, and add what you personally changed. A real workplace example should use its actual result and permitted evidence.</p>
+      <p>Before submitting, open your project links in a signed-out browser, check the requested attachments, and proofread employer and role names. Remove confidential data and credentials from repositories.</p>
+      <h2 id="interviews">7. Prepare for technical and stakeholder interviews</h2>
+      <p>Ask the recruiter about the assessment format, tools, time limit and permitted AI assistance. Prepare these exercises against the role description; individual employers use different selection processes.</p>
+      <ul>
+        <li><strong>SQL exercise:</strong> explain the table grain, join keys, duplicates and checks before presenting a total.</li>
+        <li><strong>Data investigation:</strong> describe missingness, outliers and assumptions before choosing a model.</li>
+        <li><strong>Modelling discussion:</strong> justify the metric and split, compare a baseline, and explain one failure.</li>
+        <li><strong>Project walkthrough:</strong> practise a concise account of the question, your work, result, limitations and next step.</li>
+        <li><strong>Stakeholder discussion:</strong> explain what decision the evidence supports and when you would gather more information.</li>
+      </ul>
+      <p>For a take-home, agree the scope and expected time commitment. Keep notes on assumptions and finish with reproducible instructions. Follow the employer’s AI-use rules and be ready to change or explain your solution without relying on generated explanations.</p>
+      <h2 id="next-step">Your next steps</h2>
+      <ol>
+        <li>Shortlist suitable roles and identify the requirement for which you have the weakest evidence.</li>
+        <li>Complete one bounded piece of work addressing that gap, with a README and a clear limitation.</li>
+        <li>Practise explaining it, submit a tailored application and record what happens.</li>
+        <li>Use actual feedback to decide whether to improve your evidence, broaden your search or pursue more study.</li>
+      </ol>
+      <h3 id="paid-projects">Already able to deliver a scoped project?</h3>
+      <p><Link to="/mlai-studio/build-with-us">MLAI Studio accepts builder applications</Link> for assessment and potential matching. This is not an offer of an available contract. Paid work requires agreement on scope, acceptance tests, availability, payment and ownership; it is a separate commitment from completing a learning exercise.</p>
 
-      <h2 id="acceptance-checklist">3. Use this portfolio acceptance checklist</h2>
-      <p>Copy the following checks into your repository issue tracker. Record pass/fail, the command or evidence link, and an unresolved limitation for each. This is a practical review aid, not an employer certification.</p>
-      <div className="overflow-x-auto" role="region" aria-label="Portfolio acceptance checklist" tabIndex={0}><table className="min-w-[640px]">
-        <thead><tr><th>Check</th><th>Evidence to attach</th><th>Failure to investigate</th></tr></thead>
-        <tbody>
-          <tr><td>Clean setup</td><td>A fresh-environment run with documented commands and versions</td><td>Hidden local files or undeclared packages</td></tr>
-          <tr><td>Input contract</td><td>Tests for missing columns, invalid values and duplicate records</td><td>Silent coercion or plausible-looking incorrect output</td></tr>
-          <tr><td>Evaluation integrity</td><td>Split rationale, leakage review and unchanged held-out cases</td><td>Future information or test-set tuning</td></tr>
-          <tr><td>Baseline comparison</td><td>Same cases and metric for baseline and model</td><td>Comparing different periods or units</td></tr>
-          <tr><td>Failure behaviour</td><td>A broken dependency/input test and explicit error or fallback</td><td>A crash without useful diagnostics</td></tr>
-          <tr><td>Ownership</td><td>README, limitations, AI-assistance note and permitted data fixture</td><td>Code you cannot explain or data you cannot share</td></tr>
-        </tbody>
-      </table></div>
-      <p>Ask another person to rerun the documented setup and identify one confusing decision. Record feedback only if the review actually occurs; do not label a self-check an independent review. Remove secrets and confidential records before sharing a repository or sending material to an AI service.</p>
-      <p>The <a href="/downloads/data-science-portfolio/README.md" download>downloadable portfolio checklist and handover notes</a> include fields for your role evidence, data permissions, source version, results, AI assistance and actual reviewer feedback. For a separate software-delivery task after this evaluation exercise, use the <Link to="/articles/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence">bounded AI-assisted prototype guide</Link>. Do not describe either learning lab as paid client experience.</p>
-
-      <h2 id="ai-tools">4. Show judgment when using AI coding tools</h2>
-      <p>Use assistance for a bounded change: drafting a parser, proposing edge cases or explaining an error. Review the diff before execution, verify dependencies and run tests you understand. Keep a short note of the tool/version, task, accepted changes, rejected suggestions and your checks. Do not publish confidential prompts or raw client inputs.</p>
-      <p>For an interview or take-home, ask what assistance is permitted before using it. Be ready to explain a failure, alter a test and defend the metric without treating generated text as authority. A polished explanation unsupported by the repository is not delivery evidence.</p>
-      <p><strong>This reference lab's provenance:</strong> an AI assistant drafted its code, synthetic fixture and tests; those tests and the command-line report were run locally. No hiring manager, client or independent delivery reviewer has approved it. When adapting it, identify your own changes, rejected suggestions and checks rather than presenting the unchanged starter as entirely your work.</p>
-    <p><Link to="/events">Explore upcoming MLAI events</Link> and check the listing for its topic, format and participation requirements.</p>
-
-      <h2 id="application">5. Translate evidence into an honest application</h2>
-      <p>Connect each selection criterion to a real example. Use the employer's requested format, rather than a universal résumé length or keyword target. For public-service applications, consult the <a href="https://www.apsc.gov.au/working-aps/joining-aps/cracking-code">Australian Public Service Commission's application guide</a> and the specific vacancy instructions.</p>
-      <p>A safe project statement template is: “Built [artifact] using [permitted data]; compared [method] with [baseline] on [held-out period]; measured [actual result and unit]; documented [limitation].” Replace brackets only with your evidence. Do not turn an offline accuracy gain into “reduced churn” or claim commercial impact without a real outcome study.</p>
-      <p>Search employer career pages, <a href="https://www.apsjobs.gov.au/">APS Jobs</a> and your university's careers service where relevant. Check closing dates and eligibility in each listing. Track applications by role, evidence supplied, stage and feedback; distinguish no response from a stated reason for rejection.</p>
-
-      <h2 id="paid-projects">6. Treat paid projects as a separate delivery commitment</h2>
-      <p>If you can already deliver a bounded feature with AI coding tools, scoped project work may provide relevant experience. It is not a guaranteed route to employment. Before accepting work, agree deliverables, acceptance tests, availability, payment terms, support boundaries and ownership. Obtain permission before publishing client work in a portfolio.</p>
-      <p>MLAI Studio's builder application is for assessment and potential matching, not an offer of an available contract. The current intake is Australia-focused; do not assume a New Zealand pathway is supported without checking eligibility with the team. If you are still exploring rather than ready to deliver, <Link to="/events">find an MLAI event</Link> and bring a specific project question.</p>
-
-      <h2 id="next-step">Your next step</h2>
-      <p>Choose one suitable position description, identify your weakest evidence gap and improve one repository against the checklist. Then submit an application with claims someone can verify. Add further projects when they demonstrate a missing capability—not to meet an arbitrary quota.</p>
-      <h2 id="method">Sources and limits</h2>
-      <p>Substantively revised 15 September 2026. The scikit-learn, forecasting and APS pages were rechecked on that date for their respective guidance; they do not validate national hiring demand, our synthetic example or this framework's effect on job outcomes. The lab has actual local execution evidence but is not a completed customer project, recruiter survey or independently tested hiring programme.</p>
+      <h2 id="method">Sources and editorial method</h2>
+      <p>Updated 25 October 2026. We checked the linked INGRITY, Amazon and Zip employer pages to illustrate differences in level and requirements; we did not survey the Australian market or interview hiring managers. RMIT supports the study-pathway discussion, APSC supports the application guidance, and scikit-learn supports the evaluation advice. The synthetic lab’s original execution record remains dated 10 September 2026 in its tutorial.</p>
       <ArticleFAQ items={faqItems} />
+      <AuthorBio author={{ name: AUTHOR.name, role: AUTHOR.role ?? AUTHOR.credentials, bio: AUTHOR.bio, avatarUrl: AUTHOR.avatarUrl }} />
     </div>
   </div>;
 }

@@ -30,7 +30,7 @@ const CONTENT: Record<ArticleConversionType, ConversionContent> = {
     destination: "/events",
     background: "bg-[#4b1bd1]",
     foreground: "text-white",
-    buttonClass: "bg-[#ff3d00] text-black hover:bg-[#e93700]",
+    buttonClass: "bg-[#ff3d00] text-white hover:bg-[#e93700]",
   },
   "studio-builder": {
     title: "Build real AI systems with MLAI Studio",
@@ -47,7 +47,7 @@ const CONTENT: Record<ArticleConversionType, ConversionContent> = {
     button: "Start a Studio project brief",
     destination: "/mlai-studio/start-project",
     background: "bg-[#ff3d00]",
-    foreground: "text-black",
+    foreground: "text-white",
     buttonClass: "bg-white text-gray-950 hover:bg-gray-100",
   },
   "founder-tools": {

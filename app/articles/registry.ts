@@ -479,18 +479,19 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     hasContent: true,
   },
   "featured/learn-ai-melbourne": {
-    title: "Learn AI Melbourne: courses, meetups, and pathways",
+    title: "Learn AI in Melbourne: courses, costs and learning pathways",
     date: "2026-01-28",
     description:
-      "A practical 2026 guide to learning AI in Melbourne—compare university/TAFE options, online vs on-campus delivery, time and costs, plus local meetups and portfolio tips.",
+      "Compare Melbourne AI courses, short courses and community learning: current fees, prerequisites, delivery, 2026–27 intakes and a practical first step.",
     author: "Dr Sam Donegan",
     slug: "featured/learn-ai-melbourne",
     analyticsArticleId: "b98e048e-c082-4690-a724-ae4f9d9dea27",
     image:
       "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-f3e7ca80-f08c-4d98-9bc9-773ec059c33f.jpg?alt=media&token=cbbb31dd-a11e-49d5-a062-13256412f7e4",
     imageAlt:
-      "Tech enthusiasts collaborate in a vibrant 90s film aesthetic, showcasing AI learning and community in Melbourne.",
+      "Open laptop and small robotic arm on a desk, with people working in the background.",
     hasContent: true,
+    dateModified: "2026-10-25",
   },
   "featured/how-small-business-owners-can-get-started-with-ai-2026": {
     title: "How small business owners can get started with AI (2026)",
@@ -664,16 +665,16 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     "dateModified": "2026-09-15"
   },
   "featured/how-to-get-data-science-job": {
-    "title": "How to get a data science job in Australia: build evidence of delivery",
+    "title": "How to get a data science job in Australia: skills, pathways and applications",
     "date": "2025-11-19",
-    "description": "Choose a target data role, build a reproducible portfolio with leakage and failure checks, and turn real evidence into applications or a scoped builder brief.",
+    "description": "A practical Australian data science career guide: entry pathways, Python and SQL skills, employer examples, portfolio projects, job searches, CVs and interviews.",
     "author": "Dr Sam Donegan",
     "slug": "featured/how-to-get-data-science-job",
     "analyticsArticleId": "04d9b070-8338-47bf-ac29-12bf350a3807",
     "image": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-8cebc51f-5bc8-46f4-8676-bd361214e6b3.jpg?alt=media&token=273d8b6c-afd5-411f-89e9-fa04b4413f6d",
     "imageAlt": "Laptop displaying charts on a desk beside an Australian flag",
     "hasContent": true,
-    "dateModified": "2026-09-15"
+    "dateModified": "2026-10-25"
   },
   "featured/how-to-pitch-your-idea": {
     title: "How to pitch an early idea and ask for useful feedback",

@@ -132,7 +132,7 @@ export default function ArticleContent() {
       </p>
 
       <div className="prose prose-lg prose-slate max-w-none bg-transparent">
-        <section aria-labelledby="plain-answer-heading" className="not-prose rounded-3xl bg-[#ff3d00] p-6 text-black sm:p-8">
+        <section aria-labelledby="plain-answer-heading" className="not-prose rounded-3xl bg-[#ff3d00] p-6 text-white sm:p-8">
           <h2 id="plain-answer-heading" className="text-2xl font-bold">The short answer</h2>
           <p className="mt-4 text-lg leading-8">
             Artificial intelligence, or AI, is technology that uses information
