@@ -32,10 +32,10 @@ export default function UpcomingEventsCTA({
     const cardStyles = [
         {
             bg: 'bg-[#ff3d00]', // sidebar "Hello" orange
-            text: 'text-black',
-            meta: 'text-black/85',
+            text: 'text-white',
+            meta: 'text-white/85',
             border: 'border-transparent',
-            icon: 'text-black',
+            icon: 'text-white',
         },
         {
             bg: 'bg-[#4b1bd1]', // sidebar deep purple
@@ -74,7 +74,7 @@ export default function UpcomingEventsCTA({
                     <Link
                         to={calendarHref}
                         onClick={() => onCtaClick?.(calendarHref)}
-                        className="inline-flex max-w-full items-center justify-center gap-2 rounded-full bg-[#ff3d00] px-7 py-3 text-center text-base font-semibold text-black shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-normal focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                        className="inline-flex max-w-full items-center justify-center gap-2 rounded-full bg-[#ff3d00] px-7 py-3 text-center text-base font-semibold text-white shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-normal focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
                     >
                         <span className="min-w-0 break-words">{copy?.button ?? 'View Event Calendar'}</span>
                         <span aria-hidden="true" className="shrink-0">→</span>
@@ -109,7 +109,7 @@ export default function UpcomingEventsCTA({
                         onClick={() => onCtaClick?.(getEventUrl(event))}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`group relative flex flex-col rounded-[28px] overflow-hidden shadow-[0_25px_70px_-30px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-1.5 border ${style.border} ${style.bg}`}
+                        className={`group relative flex flex-col rounded-[28px] overflow-hidden shadow-[0_25px_70px_-30px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-1.5 border ${style.border} ${style.bg} ${style.text}`}
                     >
                         {/* Event Details */}
                         <div className="flex flex-col flex-grow p-5 sm:p-6">
@@ -143,7 +143,7 @@ export default function UpcomingEventsCTA({
                 <Link
                     to={calendarHref}
                     onClick={() => onCtaClick?.(calendarHref)}
-                    className="inline-flex max-w-full items-center justify-center gap-2 rounded-full bg-[#ff3d00] px-8 py-3 text-center text-base font-semibold text-black shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-normal focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                    className="inline-flex max-w-full items-center justify-center gap-2 rounded-full bg-[#ff3d00] px-8 py-3 text-center text-base font-semibold text-white shadow-lg hover:translate-y-[-2px] hover:shadow-xl transition-all whitespace-normal focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
                 >
                     <span className="min-w-0 break-words">{copy?.button ?? 'View All Events'}</span>
                     <span aria-hidden="true" className="shrink-0">→</span>

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import ts from "typescript";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import EditorialBriefFields from "../app/components/EditorialBriefFields";
@@ -99,7 +100,29 @@ test("brief SSR requires explicit choices and distinguishes unavailability from 
 test("all three article-start routes await a fresh brief before dispatch and render the selector", () => {
   for (const route of ["founder-tools.marketing", "founder-tools.marketing.create", "founder-tools.marketing.run"]) {
     const source = readFileSync(`app/routes/${route}.tsx`, "utf8");
-    expect(source).toMatch(/const editorialBrief = await articleBriefFromRequest[\s\S]*?startVibeMarketingArticle\(env, request, \{\s*editorialBrief,/);
+    const tree = ts.createSourceFile(route, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    let brief: ts.VariableDeclaration | undefined;
+    let dispatch: ts.CallExpression | undefined;
+    function visit(node: ts.Node) {
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === "editorialBrief"
+        && node.initializer && ts.isAwaitExpression(node.initializer)
+        && ts.isCallExpression(node.initializer.expression) && ts.isIdentifier(node.initializer.expression.expression)
+        && node.initializer.expression.expression.text === "articleBriefFromRequest") brief = node;
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)
+        && node.expression.text === "startVibeMarketingArticle") dispatch = node;
+      ts.forEachChild(node, visit);
+    }
+    visit(tree);
+    expect(brief, route).toBeDefined();
+    expect(dispatch, route).toBeDefined();
+    expect(brief!.getStart()).toBeLessThan(dispatch!.getStart());
+    const options = dispatch!.arguments[2];
+    expect(ts.isObjectLiteralExpression(options), route).toBe(true);
+    // Request properties may be reordered or extended with a billing quote.
+    // The resolved brief must still be passed into this dispatch call.
+    expect(ts.isObjectLiteralExpression(options) && options.properties.some(property =>
+      ts.isShorthandPropertyAssignment(property) && property.name.text === "editorialBrief"
+    ), route).toBe(true);
     expect(source).toContain("<EditorialBriefFields"); expect(source).toContain("loadEditorialCatalog");
     expect(source).toContain("onAvailabilityChange={setEditorialAvailable}");
     expect(source).toContain("!editorialAvailable");

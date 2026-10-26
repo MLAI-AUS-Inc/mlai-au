@@ -58,14 +58,14 @@ export function ArticleHeroHeader({
         cyan: 'text-black',
         purple: 'text-white',
         blue: 'text-white',
-        orange: 'text-black',
+        orange: 'text-white',
     }
 
     const breadcrumbLinkColor = {
         cyan: 'text-black hover:underline',
         purple: 'text-white hover:underline',
         blue: 'text-white hover:underline',
-        orange: 'text-black hover:underline',
+        orange: 'text-white hover:underline',
     }
 
     // Article content is cast past these prop types, so an unknown color
@@ -74,7 +74,9 @@ export function ArticleHeroHeader({
 
     const highlightColor = heroColor === 'purple' || heroColor === 'blue'
         ? 'text-[#fefc22]'
-        : 'text-black underline decoration-current decoration-2 underline-offset-4'
+        : heroColor === 'orange'
+            ? 'text-white underline decoration-current decoration-2 underline-offset-4'
+            : 'text-black underline decoration-current decoration-2 underline-offset-4'
 
     return (
         <div
@@ -143,7 +145,7 @@ export function ArticleHeroHeader({
                 <div className={`grid grid-cols-1 ${summary && heroImage ? "lg:grid-cols-2" : ""} gap-4 mt-4`}>
                     {/* Orange Summary Card */}
                     {summary && (
-                        <div className="bg-[#ff3d00] rounded-2xl p-6 sm:p-8 text-black">
+                        <div className="bg-[#ff3d00] rounded-2xl p-6 sm:p-8 text-white">
                             <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider mb-3">
                                 {summary.heading}
                             </h2>
@@ -155,7 +157,7 @@ export function ArticleHeroHeader({
                                     <li key={index} className="flex gap-3 text-sm sm:text-base">
                                         <span
                                             aria-hidden
-                                            className="mt-1.5 h-2.5 w-2.5 flex-none rounded-full bg-black flex-shrink-0"
+                                            className="mt-1.5 h-2.5 w-2.5 flex-none rounded-full bg-white flex-shrink-0"
                                         />
                                         <div>
                                             <p className="font-semibold m-0">{item.label}</p>

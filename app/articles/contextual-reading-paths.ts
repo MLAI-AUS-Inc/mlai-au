@@ -229,8 +229,26 @@ export const ARTICLE_CONTEXTUAL_READING_PATHS: Record<string, readonly Contextua
   ],
   "/articles/featured/learn-ai-melbourne": [
     {
+      "href": "/articles/featured/how-to-get-data-science-job",
+      "reason": "For a data-career goal, connect your learning choice with job requirements, a portfolio and interview preparation."
+    },
+    {
+      "href": "/articles/featured/where-to-find-ai-events-in-melbourne",
+      "reason": "Find a relevant local session and bring one question about your next learning step."
+    },
+    {
       "href": "/articles/featured/best-way-to-learn-about-ai-2026",
       "reason": "Compare local study options with a broader practical learning route."
+    }
+  ],
+  "/articles/featured/how-to-get-data-science-job": [
+    {
+      "href": "/articles/featured/learn-ai-melbourne",
+      "reason": "Choose a Melbourne course or learning session to address a specific gap in your target data role."
+    },
+    {
+      "href": "/articles/featured/where-to-find-ai-events-in-melbourne",
+      "reason": "Find a relevant local session and bring a specific question about your data project or career path."
     }
   ],
   "/articles/featured/what-is-general-artificial-intelligence-and-why-it-matters": [
