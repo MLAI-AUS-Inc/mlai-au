@@ -43,10 +43,28 @@ test('accelerator worksheet preserves mismatches and saves exactly the copyable 
 });
 test('an open accelerator page marks its source checks overdue at Sydney midnight',async({page},info)=>{
   test.skip(info.project.name==='without-javascript','Unit tests and corpus checks separately cover server-clock rendering.');
-  await page.clock.install({time:new Date('2026-09-21T13:59:30Z')});
+  // Source review is due 30 October; Sydney is on AEDT (UTC+11).
+  await page.clock.install({time:new Date('2026-10-29T12:59:30Z')});
   await page.goto('/articles/featured/startup-accelerator-australia');
   await expect(page.locator('[data-review-state="fresh"]')).toHaveCount(7);
   await page.clock.fastForward(60_000);
   await expect(page.locator('[data-review-state="needs-review"]')).toHaveCount(7);
   await expect(page.locator('[data-review-state="fresh"]')).toHaveCount(0);
+});
+
+
+test('Startmate deadline changes from today to passed while the source check remains overdue',async({page},info)=>{
+  test.skip(info.project.name==='without-javascript','Unit tests separately cover the deadline and server-clock rendering.');
+  // The provider states 1 November, 11:59 pm AEDT. Before that minute the
+  // notice must still ask readers to confirm the exact time, not promise entry.
+  await page.clock.install({time:new Date('2026-11-01T12:58:30Z')});
+  await page.goto('/articles/featured/startup-accelerator-australia');
+  const notice=page.locator('[data-accelerator-status="startmate"]');
+  await expect(notice).toHaveAttribute('data-review-state','needs-review');
+  await expect(notice).toContainText('Recorded deadline is today');
+  await expect(notice).toContainText('confirm the exact time and timezone');
+  await page.clock.fastForward(120_000);
+  await expect(notice).toHaveAttribute('data-review-state','needs-review');
+  await expect(notice).toContainText('Recorded application deadline has passed');
+  await expect(notice).not.toContainText('Recorded deadline is today');
 });
