@@ -78,9 +78,9 @@ export function ArticleResourceCTA({
             <div className={`absolute inset-0 ${styles.overlay}`} />
 
             <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
-                <div className="space-y-5 text-white">
+                <div className="min-w-0 space-y-5 text-white">
                     <p className="text-sm font-extrabold uppercase tracking-[0.2em] text-white">{eyebrow}</p>
-                    <h3 className="text-3xl sm:text-4xl font-black leading-tight">
+                    <h3 className="break-words text-3xl sm:text-4xl font-black leading-tight">
                         {title}
                     </h3>
                     <p className="text-white/90 leading-relaxed text-lg max-w-xl">
@@ -90,7 +90,7 @@ export function ArticleResourceCTA({
                         <a
                             href={buttonHref}
                             download={buttonHref.startsWith("/downloads/") || undefined}
-                            className={`inline-flex items-center justify-center rounded-full px-7 sm:px-8 py-3.5 text-lg font-black shadow-[0_16px_40px_-18px_rgba(0,0,0,0.7)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 ${styles.button}`}
+                            className={`inline-flex max-w-full whitespace-normal break-words text-center items-center justify-center rounded-full px-7 sm:px-8 py-3.5 text-lg font-black shadow-[0_16px_40px_-18px_rgba(0,0,0,0.7)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 ${styles.button}`}
                         >
                             {buttonLabel}
                         </a>

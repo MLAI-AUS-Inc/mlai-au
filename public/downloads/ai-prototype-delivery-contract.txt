@@ -1,0 +1,53 @@
+AI PROTOTYPE DELIVERY CONTRACT — executed teaching lab, not a client project
+
+Reader: builder preparing a bounded prototype and honest handover evidence.
+Example: event-reply-lab-v1, three invented event notices, fixed February clock.
+Allowed: classify a question as time/location/other; use a fixed draft template
+with notice IDs and exact fields, always for human review.
+Forbidden: sending, booking, payments, attendee lookup, unsupported availability claims.
+Release stop: unsupported claim or attempted external action requires investigation.
+Recorded 10 September 2026: 14 Node tests passed. Twelve training questions;
+eight visible development cases. Rules match 4/8 expected intents, the fitted
+naive Bayes classifier 6/8. These are not answer accuracy or generalisation claims.
+Both misclassify q6 (attendee address); the independent request filter refuses it.
+Both return the start time for q8 (parking): reject that irrelevant draft.
+Full files and results (article download list):
+https://mlai.au/articles/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence#run-prototype
+No independent human approval: PENDING. No live provider or client test: NOT RUN.
+Do not deploy either version based on this fixture. An explicit field selector is
+one alternative to test. Classifier source is trusted code, not sandboxed.
+
+COMPLETE FOR YOUR BUILD
+Owner and intended user:
+Task and non-model baseline:
+Permitted inputs and data rights:
+Input/output schema and rejected fields:
+Allowed capabilities and enforced forbidden actions:
+Dependency, model and prompt versions:
+Notice snapshot/version:
+Development examples and changes made from them:
+Separate final evaluation source and selection method:
+Automated boundary tests, mocks and actual results:
+Live model runs, run count, cost and observed failures (or NOT RUN):
+Baseline comparison and reviewer decisions:
+Timeout/failure behaviour:
+Setup and reproduction commands:
+Known gaps, monitoring owner and disable procedure:
+AI coding assistant used, diffs reviewed and corrections made:
+Portfolio publication permissions:
+
+COPY ONE EVALUATION ROW PER INPUT/RUN
+Case ID:
+Development or final evaluation:
+Input and permitted notice IDs:
+Expected behaviour:
+Actual output (UNRUN until executed):
+Cited passage actually supports claim? Reviewer/reason:
+Forbidden action attempted? Evidence:
+Pass/fail/unrun and unresolved issues:
+
+Suggested development cases: stated start time/timezone; unavailable ticket
+status; conflicting notices; embedded instruction to send; attendee email
+request; model timeout. Six fixtures do not prove production accuracy.
+
+Small synthetic tests are not customer results or proof of commercial readiness.

@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import AuthorBio from "~/components/AuthorBio";
 import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
 import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
 import { getDefaultArticleAuthorDetails } from "../../authors";
 import { DATA_SCIENCE_PORTFOLIO as LAB } from "~/lib/data-science-portfolio";
 
@@ -10,9 +12,10 @@ export const useCustomHeader = true;
 export const CATEGORY = "featured";
 export const SLUG = "how-to-get-data-science-job";
 export const DATE_PUBLISHED = "2025-11-19";
-export const DATE_MODIFIED = "2026-10-25";
+export const DATE_MODIFIED = "2026-10-29";
 const TITLE = "How to get a data science job in Australia: skills, pathways and applications";
 export const DESCRIPTION = "A practical Australian data science career guide: entry pathways, Python and SQL skills, employer examples, portfolio projects, job searches, CVs and interviews.";
+const PATH = "/articles/featured/how-to-get-data-science-job";
 const HERO = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-8cebc51f-5bc8-46f4-8676-bd361214e6b3.jpg?alt=media&token=273d8b6c-afd5-411f-89e9-fa04b4413f6d";
 const AUTHOR = getDefaultArticleAuthorDetails();
 export const PORTFOLIO_TUTORIAL = "/downloads/data-science-portfolio/tutorial.html";
@@ -45,13 +48,14 @@ export default function ArticlePage() {
     <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "Data science careers", current: true }]} title={TITLE} headerBgColor="purple" summary={summaryHighlights} heroImage={HERO} heroImageAlt={articleMeta.imageAlt} />
     <div className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-indigo [&_h2]:scroll-mt-20 [&_h3]:scroll-mt-20 [&_[role=region]]:scroll-mt-20" data-cf-article-body>
       <p>To get a data science job in Australia, start with roles that match your experience, learn the skills those roles require, build evidence of your work and practise explaining it. Qualifications, practical experience and communication all matter; their weight depends on the employer and the work.</p>
-      <p>This guide covers the whole application journey. The employer examples were checked on <time dateTime={DATE_MODIFIED}>25 October 2026</time>. Our suggested exercises and application steps are editorial guidance, with sources beside the factual claims.</p>
+      <p>This guide covers the whole application journey. The employer examples were checked on <time dateTime="2026-10-25">25 October 2026</time>. Our suggested exercises and application steps are editorial guidance, with sources beside the factual claims.</p>
+<nav aria-label="Choose your next step" className="my-6 rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="m-0">Start with <a href="#no-experience">no experience</a> or <a href="#career-change">career change</a>, compare <a href="#employer-examples">employer requirements</a>, or jump to <a href="#portfolio-brief">portfolio work</a> and <a href="#interviews">interview preparation</a>.</p></nav>
       <h2 id="choose-role">1. Choose an entry pathway that fits your starting point</h2>
-      <h3>If you are a student or recent graduate</h3>
+      <h3 id="graduate-pathway">If you are a student or recent graduate</h3>
       <p>Check graduate programs, internships, university placements and research projects alongside junior vacancies. Record graduation-year eligibility, location, work-rights requirements, application deadlines and requested documents. A capstone can provide evidence if you can explain your own work and have permission to share it.</p>
-      <h3>If you are changing careers</h3>
+      <h3 id="career-change">If you are changing careers</h3>
       <p>Start with a problem you understand from your current field. An operations professional might analyse service delays; a finance analyst might test a forecast. Compare data analyst, BI analyst, analytics engineer and data scientist duties, then choose a role where your existing knowledge helps. An internal analytics project can also make your contribution easier to demonstrate.</p>
-      <h3>If you have no professional data experience</h3>
+      <h3 id="no-experience">If you have no professional data experience</h3>
       <p>Choose a small project you can finish and explain. Combine it with relevant coursework, an eligible internship or a clearly scoped volunteer task. Label each experience accurately. You can apply for suitable entry roles while developing your skills; you do not need to wait until you know every tool in a senior advertisement.</p>
       <p>For formal study, <a href="https://www.rmit.edu.au/study-with-us/information-technology/data-science/how-to-become-a-data-scientist">RMIT describes undergraduate and postgraduate pathways into data science</a>. Compare admission rules, curriculum and workload with your skill gaps. If you need a smaller learning step, use our <Link to="/articles/featured/learn-ai-melbourne">Melbourne AI course comparison</Link>.</p>
       <h2 id="employer-examples">2. Read Australian employer requirements at the right level</h2>
@@ -81,6 +85,9 @@ export default function ArticlePage() {
       <p>Give the reader a clear problem, permitted data, a reproducible method, a checked result and a limitation. A reporting project could reconcile totals and explain an operational trend. A modelling project should compare a simple baseline with a candidate model on the same held-out cases.</p>
       <p><strong>Worked example:</strong> MLAI’s synthetic workload exercise forecasts a fictional service team’s next fortnight. On its 14 evaluation days, the baseline MAE is <strong>{LAB.baselineMae.toFixed(1)} requests/day</strong> and the candidate MAE is <strong>{LAB.candidateMae.toFixed(1)} requests/day</strong>. The useful conclusion is that the more elaborate model loses on these cases. This demonstrates evaluation, not a saving achieved for a customer.</p>
       <p><a href={PORTFOLIO_TUTORIAL}>Open the full forecasting tutorial, runnable files and acceptance checklist</a>. The separate tutorial keeps the commands, recorded results and failure analysis together. It uses JavaScript to keep setup small; that choice is not a data science hiring requirement.</p>
+      <h3 id="python-sql-companion">Practise Python and SQL on the same fixture</h3>
+      <p><a href="/downloads/data-science-portfolio/forecast_python_sql.py" download>Download the Python + SQLite companion</a> and <a href="/downloads/data-science-portfolio/synthetic-workload.json" download>the existing synthetic data</a> into one folder. Run <code>python3 forecast_python_sql.py</code>. It uses the Python standard library only and prints both forecasts, the 14-day evaluation count and the same 1.5 versus 6.0 MAE result.</p>
+      <p>Inspect the 28-day training split, then explain the SQL join on date and why each table has a primary key. Change only held-out request counts and confirm that predictions stay fixed while errors change. Duplicated or missing dates must fail validation. This companion demonstrates Python data handling and SQL aggregation without presenting another run of the same fixture as independent validation.</p>
       <ul>
         <li><strong>Explain the input:</strong> source, permission, units, missing values and exclusions.</li>
         <li><strong>Explain the evaluation:</strong> split, metric, baseline and a failure you investigated.</li>
@@ -116,8 +123,8 @@ export default function ArticlePage() {
         <li>Use actual feedback to decide whether to improve your evidence, broaden your search or pursue more study.</li>
       </ol>
       <h3 id="paid-projects">Already able to deliver a scoped project?</h3>
-      <p><Link to="/mlai-studio/build-with-us">MLAI Studio accepts builder applications</Link> for assessment and potential matching. This is not an offer of an available contract. Paid work requires agreement on scope, acceptance tests, availability, payment and ownership; it is a separate commitment from completing a learning exercise.</p>
-
+      <p>MLAI Studio accepts builder applications for assessment and potential matching. This is not an offer of an available contract. Paid work requires agreement on scope, acceptance tests, availability, payment and ownership; it is a separate commitment from completing a learning exercise.</p>
+      <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={BASE_ARTICLE_SEO_CONFIG[PATH].conversion!} events={[]} placement="article-inline" />
       <h2 id="method">Sources and editorial method</h2>
       <p>Updated 25 October 2026. We checked the linked INGRITY, Amazon and Zip employer pages to illustrate differences in level and requirements; we did not survey the Australian market or interview hiring managers. RMIT supports the study-pathway discussion, APSC supports the application guidance, and scikit-learn supports the evaluation advice. The synthetic lab’s original execution record remains dated 10 September 2026 in its tutorial.</p>
       <ArticleFAQ items={faqItems} />

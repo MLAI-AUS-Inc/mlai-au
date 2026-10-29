@@ -123,7 +123,7 @@ export function ArticleHeroHeader({
 
                 {/* Title */}
                 <h1
-                    className={`text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight ${textColorMap[heroColor]}`}
+                    className={`break-words text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight ${textColorMap[heroColor]}`}
                     style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
                     data-cf-component-id="title"
                     data-cf-component-type="title"

@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   createEmptyFounderExperiment,
   EXPERIMENT_DECISIONS,
   founderExperimentLedgerToCsv,
-  parseStoredFounderExperiments,
+  readFounderLedger,
+  saveFounderLedger,
+  FOUNDER_LEDGER_STORAGE_KEY,
+  EXPERIMENT_EVIDENCE_STATUSES,
+  FOUNDER_LEDGER_EXAMPLE,
   type FounderExperimentRow,
 } from "~/lib/founder-experiment-ledger";
-
-const STORAGE_KEY = "mlai-founder-experiment-ledger-v1";
 
 function createRowId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -63,34 +65,62 @@ export default function FounderExperimentLedger() {
   ]);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
+  const [exportMessage, setExportMessage] = useState("");
+  const expectedRaw = useRef<string | null>(null);
+  const canSave = useRef(false);
 
   useEffect(() => {
-    const restored = parseStoredFounderExperiments(
-      window.localStorage.getItem(STORAGE_KEY),
-    );
-    if (restored) setRows(restored);
+    try {
+      const restored = readFounderLedger(window.localStorage);
+      if (restored.rows) setRows(restored.rows);
+      canSave.current = restored.kind === 'ready';
+      expectedRaw.current = restored.raw ?? null;
+      setSavedMessage(restored.kind === 'ready'
+        ? (restored.rows ? 'Restored from this browser. Changes will save here when storage is available.' : 'Blank ledger. Changes will save in this browser when storage is available.')
+        : restored.kind === 'invalid'
+          ? 'The saved ledger could not be read safely and was not changed. This on-screen draft is not saved; export it before leaving.'
+          : 'Browser storage is unavailable. This on-screen draft is not saved; export it before leaving.');
+    } catch {
+      canSave.current = false;
+      setSavedMessage('Browser storage is unavailable. This on-screen draft is not saved; export it before leaving.');
+    }
     setHasHydrated(true);
   }, []);
 
-  useEffect(() => {
-    if (!hasHydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
-    setSavedMessage("Saved on this device");
-  }, [hasHydrated, rows]);
+  const changeRows = (next: FounderExperimentRow[]) => {
+    setRows(next);
+    if (!canSave.current) return;
+    try {
+      const saved = saveFounderLedger(window.localStorage, next, expectedRaw.current);
+      if (saved.kind === 'saved') {
+        expectedRaw.current = saved.raw;
+        setSavedMessage('Saved in this browser. Export a backup before leaving.');
+      } else {
+        canSave.current = false;
+        setSavedMessage(saved.kind === 'conflict'
+          ? 'The saved ledger changed elsewhere. Your on-screen draft was not saved over it. Export your draft, then reload to inspect the saved version.'
+          : 'The latest changes could not be saved. Your on-screen draft is still here; export it before leaving.');
+      }
+    } catch {
+      canSave.current = false;
+      setSavedMessage('The latest changes could not be saved. Your on-screen draft is still here; export it before leaving.');
+    }
+  };
 
   const updateRow = (
     id: string,
     field: keyof Omit<FounderExperimentRow, "id">,
     value: string,
   ) => {
-    setRows((current) =>
-      current.map((row) =>
+    changeRows(
+      rows.map((row) =>
         row.id === id ? { ...row, [field]: value } : row,
       ),
     );
   };
 
   const exportCsv = () => {
+    try {
     const csv = founderExperimentLedgerToCsv(rows);
     const blob = new Blob([`\uFEFF${csv}`], {
       type: "text/csv;charset=utf-8",
@@ -102,7 +132,11 @@ export default function FounderExperimentLedger() {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-    URL.revokeObjectURL(objectUrl);
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    setExportMessage('CSV download requested. Check that your browser saved it before leaving.');
+    } catch {
+      setExportMessage('CSV download could not start. Copy your entries before leaving; the on-screen draft is unchanged.');
+    }
   };
 
   return (
@@ -117,22 +151,28 @@ export default function FounderExperimentLedger() {
           </p>
           <h2
             id="experiment-ledger-heading"
-            className="mt-2 text-3xl font-black tracking-tight text-gray-950"
+            className="mt-2 text-3xl font-black tracking-tight text-gray-950 scroll-mt-28"
           >
             Turn assumptions into decisions
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-800">
             Set the success signal before running the test. Record what actually
-            happened, then choose to continue, change or stop. Entries stay in
-            this browser until you clear its site data.
+            happened, then choose to continue, change or stop. Mark whether the
+            evidence is planned, fictional or observed. A decision alone does
+            not make a test complete.
           </p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-800">Use anonymised notes, not customer secrets or personal data. Local storage is not encrypted by this tool; other people using this browser profile and scripts on this site may access it. Browser settings, clearing site data or storage failures can remove your work. This tool has no submit action or cloud backup.</p>
+          <p className="mt-3 text-sm leading-6"><a href="/downloads/founder-experiment-example.txt" download="founder-experiment-example.txt" className="font-bold underline">Download the blank record and fictional example</a> to work in a text editor.</p>
+          <noscript><p className="mt-3 font-bold">JavaScript is off. The interactive ledger is disabled; use the text download or completed example below.</p></noscript>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
+            id="founder-ledger-add-experiment"
             type="button"
+            disabled={!hasHydrated}
             onClick={() =>
-              setRows((current) => [
-                ...current,
+              changeRows([
+                ...rows,
                 createEmptyFounderExperiment(createRowId()),
               ])
             }
@@ -142,17 +182,20 @@ export default function FounderExperimentLedger() {
           </button>
           <button
             type="button"
+            disabled={!hasHydrated}
             onClick={exportCsv}
             className="rounded-full border-2 border-gray-950 bg-gray-950 px-4 py-2 text-sm font-black text-white hover:bg-[#4b1bd1] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#00ffd7]"
           >
             Export CSV
           </button>
+          <button type="button" disabled={!hasHydrated} onClick={() => changeRows([...rows, { ...FOUNDER_LEDGER_EXAMPLE, id: createRowId() }])} className="rounded-full border-2 border-gray-950 bg-white px-4 py-2 text-sm font-black text-gray-950 focus-visible:ring-4 focus-visible:ring-[#00ffd7]">Add fictional example</button>
         </div>
       </div>
 
       <div className="mt-7 space-y-5">
         {rows.map((row, index) => (
           <fieldset
+            disabled={!hasHydrated}
             key={row.id}
             className="rounded-[24px] border border-gray-400 bg-white p-4 sm:p-6"
           >
@@ -161,6 +204,7 @@ export default function FounderExperimentLedger() {
             </legend>
 
             <div className="grid gap-5 lg:grid-cols-2">
+              <label className="block text-sm font-black text-gray-900 lg:col-span-2">Evidence status<select value={row.evidenceStatus ?? 'Not recorded'} onChange={event => updateRow(row.id, 'evidenceStatus', event.target.value)} className="mt-2 w-full rounded-xl border border-gray-400 bg-white px-3 py-2 text-sm text-gray-950 focus-visible:ring-4 focus-visible:ring-purple-100">{EXPERIMENT_EVIDENCE_STATUSES.map(status => <option key={status} value={status}>{status}</option>)}</select></label>
               <Field
                 label="Riskiest assumption"
                 value={row.assumption}
@@ -225,11 +269,11 @@ export default function FounderExperimentLedger() {
             {rows.length > 1 ? (
               <button
                 type="button"
-                onClick={() =>
-                  setRows((current) =>
-                    current.filter((candidate) => candidate.id !== row.id),
-                  )
-                }
+                onClick={() => {
+                  if (!window.confirm('Remove this experiment? Export it first if you want to keep it.')) return;
+                  changeRows(rows.filter((candidate) => candidate.id !== row.id));
+                  document.getElementById('founder-ledger-add-experiment')?.focus();
+                }}
                 className="mt-5 text-sm font-black text-red-700 underline decoration-2 underline-offset-4 hover:text-red-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-red-200"
               >
                 Remove experiment {index + 1}
@@ -241,21 +285,30 @@ export default function FounderExperimentLedger() {
 
       <div className="mt-6 flex flex-col gap-3 rounded-2xl bg-gray-950 p-4 text-sm text-white sm:flex-row sm:items-center sm:justify-between">
         <p aria-live="polite" className="m-0 text-gray-200">
-          {savedMessage || "Your ledger will save locally after this page loads."}
-          {" "}Nothing is submitted to MLAI from this worksheet.
+          {savedMessage || "The interactive ledger is loading. Use the text download if it does not become available."}
         </p>
         <button
           type="button"
+          disabled={!hasHydrated}
           onClick={() => {
-            window.localStorage.removeItem(STORAGE_KEY);
-            setRows([createEmptyFounderExperiment(createRowId())]);
-            setSavedMessage("Ledger reset to a blank experiment");
+            if (!window.confirm('Reset this ledger and remove its saved entries, including any changes in another tab? Export anything you need first. Other site data is not removed.')) return;
+            try {
+              window.localStorage.removeItem(FOUNDER_LEDGER_STORAGE_KEY);
+              expectedRaw.current = null;
+              canSave.current = true;
+              setRows([createEmptyFounderExperiment(createRowId())]);
+              setSavedMessage('Saved ledger removed. The blank experiment is not saved until you edit it.');
+            } catch {
+              setSavedMessage('Could not remove the saved ledger. Your on-screen entries were kept; export them before leaving.');
+            }
           }}
           className="shrink-0 font-black text-[#00ffd7] underline decoration-2 underline-offset-4 hover:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-[#fefc22]"
         >
           Reset local ledger
         </button>
       </div>
+      <p className="mt-4 text-sm leading-6 text-gray-800">CSV exports label missing evidence status as “Not recorded”. Formula-like values receive a visible “Text: ” prefix in the export; your entries here are unchanged. Import columns as text and check the file before sharing. Spreadsheet applications handle CSV differently.</p>
+      <p role="status" className="mt-2 text-sm text-gray-900">{exportMessage}</p>
     </section>
   );
 }

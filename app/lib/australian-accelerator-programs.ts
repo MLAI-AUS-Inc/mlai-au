@@ -1,7 +1,7 @@
-export const ACCELERATOR_DATASET_VERIFIED_AT = "2026-09-15";
-export const ACCELERATOR_DATASET_OWNER = "Maintainer assignment pending";
-export const ACCELERATOR_DATASET_REVIEW_CADENCE = "Recheck by 22 September 2026, and sooner at a deadline or reported change";
-export const ACCELERATOR_REVIEW_AFTER = "2026-09-22";
+export const ACCELERATOR_DATASET_VERIFIED_AT = "2026-10-29";
+export const ACCELERATOR_DATASET_OWNER = "MLAI editorial";
+export const ACCELERATOR_DATASET_REVIEW_CADENCE = "Recheck by 30 October 2026, before the 1 November Startmate deadline, and whenever a provider reports a change";
+export const ACCELERATOR_REVIEW_AFTER = "2026-10-30";
 
 export type AustralianAcceleratorProgram = {
   id: string;
@@ -28,28 +28,28 @@ export type AustralianAcceleratorProgram = {
   termsSourceUrl?: string;
 };
 
-const review = { lastVerified: ACCELERATOR_DATASET_VERIFIED_AT, intakeVerifiedAt: ACCELERATOR_DATASET_VERIFIED_AT, reviewAfter: ACCELERATOR_REVIEW_AFTER, previousFullCheck: "2026-07-29" };
+const review = { lastVerified: ACCELERATOR_DATASET_VERIFIED_AT, intakeVerifiedAt: ACCELERATOR_DATASET_VERIFIED_AT, reviewAfter: ACCELERATOR_REVIEW_AFTER, previousFullCheck: "2026-09-10" };
 
 export const AUSTRALIAN_ACCELERATOR_PROGRAMS: AustralianAcceleratorProgram[] = [
   {
     id: "startmate",
     name: "Startmate Accelerator",
     ...review,
-    intakeKind: "expression-of-interest",
-    intakeClosesOn: "2026-11-08",
-    programStartsOn: "2027-01-25",
-    programEndsOn: "2027-04-29",
+    intakeKind: "application-link",
+    intakeClosesOn: "2026-11-01",
+    programStartsOn: "2027-02-01",
+    programEndsOn: "2027-05-07",
     kind: "accelerator",
     bestFor: "Early-stage Australia or New Zealand startups seeking investment, customers and a fundraising network.",
-    locationFormat: "Hybrid from Australia or New Zealand, with three in-person weeks. Confirm locations, attendance and travel costs.",
-    duration: "12 weeks",
+    locationFormat: "Remote-first, with three in-person weeks including Week 0 in Melbourne; confirm travel costs and attendance.",
+    duration: "14 weeks",
     publishedTerms:
-      "A$120,000; the linked terms describe a A$1.5m post-money SAFE cap for founders who have not raised. Matching previous terms requires at least A$250,000 from VC/angel investors and executed documents. Request the actual instrument.",
+      "A$120,000 at A$1.5m post-money for founders who have not raised; the page offers SAFE or priced equity. Prior-term matching requires A$250,000+ from VC/angels and executed documents before interviews. Confirm the actual instrument.",
     currentIntake:
-      "The reviewed page lists 25 January–29 April 2027 and an 8 November 2026 application close; its current button is an expression of interest.",
+      "Summer 2027: 1 February–7 May. Apply link visible; applications close 1 November 2026 at 11:59 pm AEDT. The application form was not submitted.",
     eligibilitySignal:
-      "At least one co-founder must work on the startup full time, and at least one founder must be based in Australia or New Zealand; confirm the complete cohort criteria.",
-    sourceUrl: "https://www.startmate.com/accelerator/program",
+      "At least one founder must be full-time for the programme. Overseas founders can apply with a strong Australia/New Zealand connection and the required in-person attendance.",
+    sourceUrl: "https://www.startmate.com/accelerator",
     sourceLabel: "Startmate program page",
     termsSourceUrl: "https://www.startmate.com/writing/startmate-accelerator-investment-terms-101",
   },
@@ -78,7 +78,7 @@ export const AUSTRALIAN_ACCELERATOR_PROGRAMS: AustralianAcceleratorProgram[] = [
     id: "unsw",
     name: "UNSW Founders 10x Accelerator",
     ...review,
-    intakeKind: "expression-of-interest",
+    intakeKind: "closed",
     intakeClosesOn: "2026-05-18",
     programStartsOn: "2026-08-05",
     programEndsOn: "2026-10-07",
@@ -90,7 +90,7 @@ export const AUSTRALIAN_ACCELERATOR_PROGRAMS: AustralianAcceleratorProgram[] = [
     publishedTerms:
       "A$100,000 seed investment through a pre-money SAFE with a 15% discount and no valuation cap; the program itself is free.",
     currentIntake:
-      "2026 applications closed 18 May. Programme dates: 5 August–7 October, with Demo Day 15 October. A generic expression-of-interest link is visible; a 2027 intake is not dated on the reviewed page.",
+      "2026 applications closed 18 May. Programme dates: 5 August–7 October, with Demo Day 15 October. No dated 2027 intake is established by the reviewed page.",
     eligibilitySignal:
       "Australian company or planned company, with a current UNSW student, staff member or alumnus as a co-founder.",
     sourceUrl: "https://unswfounders.com/10x-accelerator",
@@ -108,7 +108,7 @@ export const AUSTRALIAN_ACCELERATOR_PROGRAMS: AustralianAcceleratorProgram[] = [
     duration:
       "Three-month core commercialisation program, with selection and showcase milestones across a longer annual cycle.",
     publishedTerms:
-      "Free and non-dilutive; IP remains with the team or sponsoring institute. The page describes A$20,000 per team via its TTO after immersion and up to A$80,000 per high-performing team.",
+      "Free programme; IP remains with the team or sponsoring institute. The current page does not confirm the previous snapshot’s A$20,000/A$80,000 cash amounts; do not budget for them.",
     currentIntake: "The source states applications are closed. Subscribe to CSIRO for future rounds; no next opening is confirmed here.",
     eligibilitySignal:
       "Teams of 3–6, all in Australia, with specified university/PFRO research or licensed-IP involvement. At least three attend workshops; the team commits one full-time equivalent outside sessions.",
@@ -126,12 +126,12 @@ export const AUSTRALIAN_ACCELERATOR_PROGRAMS: AustralianAcceleratorProgram[] = [
     programStartsOn: "2026-08-03",
     programEndsOn: "2026-12-11",
     kind: "accelerator",
-    bestFor: "Climate-tech startups with a scalable emissions-reduction or climate solution; the page spans stages, but selection depends on readiness and fit.",
+    bestFor: "Climate-tech startups at any stage that can scale an emissions-reduction or climate solution.",
     locationFormat:
       "The FAQ permits participation from the Pacific Rim; most activities run 10 am–2 pm Sydney time. Confirm the precise attendance and travel requirements.",
     duration: "3 August–11 December 2026 for the current cohort",
     publishedTerms:
-      "Approximately A$80,000–A$100,000. Participation requires accepting the investment: the FAQ uses the latest post-money valuation after a priced round, or A$1m pre-money if no priced round has been raised. Confirm the actual offer.",
+      "Approximately A$80,000–A$100,000. Participation requires accepting investment: the FAQ uses the last priced round’s post-money valuation, or A$1,000,000 pre-money when no priced round has been raised. Request the actual terms.",
     currentIntake:
       "2026 applications ran 12 January–15 March. A 2027 expression of interest is visible; the next application opening is listed as 11 January 2027. An EOI is not an application or acceptance.",
     eligibilitySignal:
@@ -158,7 +158,7 @@ export const AUSTRALIAN_ACCELERATOR_PROGRAMS: AustralianAcceleratorProgram[] = [
     sourceUrl:
       "https://www.unimelb.edu.au/mec/MECPrograms/melbourne-accelerator-program",
     sourceLabel: "University of Melbourne MAP page",
-    sourceLimit: "The retrieved page exposes a Key Dates Banner label without dates. No current application window or programme duration was verified; the portal link alone does not confirm an open intake.",
+    sourceLimit: "Programme text was retrieved on 29 October; the Key Dates banner supplies no readable dates in that retrieval. The portal was not submitted or inspected for a current intake. An earlier September browser challenge is historical, not a new check.",
   },
   {
     id: "antler",

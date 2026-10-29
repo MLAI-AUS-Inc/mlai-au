@@ -10,10 +10,10 @@ import handover from "../../../../public/downloads/environment-handover/recorded
 export const useCustomHeader = true;
 export const SLUG = "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8";
 export const articleMeta = {
-  title: "AI Bits #8: Environment handovers and a 2023 Proton correction",
+  title: "Environment handover checklist and runnable kit | AI Bits #8",
   description: "Download a tested environment-handover kit, inspect source hashes and reproduce a held classification review. Includes the corrected scope of a 2023 Proton gaming paper.",
   datePublished: "2026-03-11",
-  dateModified: "2026-09-10",
+  dateModified: "2026-10-29",
 };
 export const summaryHighlights = {
   heading: "Make the next operator's first run inspectable",
@@ -51,10 +51,12 @@ export const faqItems = [
 
 export default function ArticleContent() {
   return <div>
-    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "AI Bits #8", current: true }]} title={articleMeta.title} titleHighlight="Environment handovers" headerBgColor="cyan" summary={summaryHighlights} />
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "AI Bits #8", current: true }]} title={articleMeta.title} titleHighlight="Environment handover" headerBgColor="cyan" summary={summaryHighlights} />
     <div data-cf-article-body className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-indigo">
       <p>An AI-assisted build that runs on your laptop is not yet a demonstrated handover. If you want to deliver a scoped project for someone else, give its next operator the source identity, setup, commands, expected result and known failures. This guide supplies a completed teaching example you can inspect and repeat; it does not qualify you for client work or recommend an operating-system change.</p>
+<aside aria-label="A handover someone can inspect" className="my-6 rounded-xl border border-slate-300 bg-slate-50 p-5"><p><strong>A handover someone can inspect</strong></p><ol><li>Record source identity and runtime.</li><li>Supply permitted inputs and exact commands.</li><li>Keep complete outputs, exit codes and known failures.</li><li>State fallback, unsupported environments and pending review.</li></ol><p><a href='/downloads/environment-handover-kit.zip' download>Download the complete handover kit</a> · <a href='#reproduction-exercise'>Run the recorded example</a> · <a href='/articles/featured/best-way-to-learn-about-ai-2026#lab'>Read the included classification lab</a></p></aside>
       <ArticleTocPlaceholder />
+      <details className="my-6 rounded-xl border border-gray-300 p-4"><summary className="cursor-pointer font-semibold">Historical note: correction to the 2023 Proton comparison</summary>
       <aside aria-label="Editorial correction" className="border-l-4 border-amber-500 pl-4">
         <p><strong>Correction — 9 September 2026:</strong> the original March issue attributed specific performance effects to Windows background services and used a gaming comparison to suggest advantages for development and AI workloads. We could not substantiate those detailed attributions from the accessible source, so they have been removed. This does not establish that the paper's results are false; it establishes a limit on what this article can responsibly report.</p>
       </aside>
@@ -76,6 +78,7 @@ export default function ArticleContent() {
       </table></div>
       <p>“Plausible explanation” and “measured cause” are different statements. Drivers, settings, caching, workload mix and measurement choices can change a comparison. Do not select a favourite explanation without evidence that separates it from alternatives.</p>
 
+      </details>
       <h2 id="builder-task" className="scroll-mt-28">The builder task: make your environment inspectable</h2>
       <p>If you use AI coding tools to deliver software, a more useful next step than choosing an OS winner is documenting the environment someone else needs to reproduce your work. Code that runs only on your laptop is not yet a demonstrated handover.</p>
       <p>The completed record below uses the <Link to="/articles/featured/best-way-to-learn-about-ai-2026">learning guide's review-only classification lab</Link>. Its seven existing files remain unchanged; this article adds five handover files. Both classifiers are keyword rules, <strong>not an AI model or client system</strong>. All fourteen examples are fictional and were visible during authoring.</p>

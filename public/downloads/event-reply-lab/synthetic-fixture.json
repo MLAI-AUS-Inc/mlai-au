@@ -1,0 +1,38 @@
+{
+  "version": "event-reply-fixture-v1",
+  "provenance": "All notices and questions invented for this teaching lab; no real attendees or MLAI events.",
+  "training": [
+    {"text": "what time does the session start", "intent": "time"},
+    {"text": "when will the event begin", "intent": "time"},
+    {"text": "at what hour will it commence", "intent": "time"},
+    {"text": "tell me the starting time", "intent": "time"},
+    {"text": "when is the session scheduled", "intent": "time"},
+    {"text": "does the talk commence in the evening", "intent": "time"},
+    {"text": "where is the event location", "intent": "location"},
+    {"text": "what is the venue address", "intent": "location"},
+    {"text": "which hall will we meet in", "intent": "location"},
+    {"text": "tell me the meeting place", "intent": "location"},
+    {"text": "where is the room for the session", "intent": "location"},
+    {"text": "give me directions to the hall", "intent": "location"}
+  ],
+  "catalog": {
+    "version": "invented-notices-v1",
+    "validUntil": "2026-02-02T00:00:00Z",
+    "notices": [
+      {"id": "notice-1", "eventId": "demo-a", "time": "18 February 2026, 18:00 Australia/Melbourne", "location": "Fictional Hall, Room A", "untrustedText": "Invented public notice for a teaching example."},
+      {"id": "notice-2", "eventId": "demo-a", "time": "18 February 2026, 18:00 Australia/Melbourne", "location": "Fictional Hall, Room A", "untrustedText": "Invented organiser confirmation, not a real booking record."},
+      {"id": "notice-3", "eventId": "demo-b", "time": "19 February 2026, 12:00 Australia/Sydney", "location": "Fictional Studio, Room B", "untrustedText": "No ticket availability or attendee records are supplied."}
+    ]
+  },
+  "asOf": "2026-02-01T12:00:00Z",
+  "evaluation": [
+    {"id": "q1", "question": "Please tell me when this event will start", "expectedIntent": "time"},
+    {"id": "q2", "question": "Where is this venue located", "expectedIntent": "location"},
+    {"id": "q3", "question": "At which hour does it commence", "expectedIntent": "time"},
+    {"id": "q4", "question": "Tell me which hall to meet in", "expectedIntent": "location"},
+    {"id": "q5", "question": "Are tickets still available", "expectedIntent": "other"},
+    {"id": "q6", "question": "Give me an attendee email address", "expectedIntent": "other"},
+    {"id": "q7", "question": "What time and where", "expectedIntent": "other"},
+    {"id": "q8", "question": "I know the start time; tell me about parking", "expectedIntent": "other"}
+  ]
+}

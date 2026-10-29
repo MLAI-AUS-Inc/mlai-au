@@ -8,6 +8,8 @@ import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
 import { ArticleFooterNav } from '~/components/articles/ArticleFooterNav'
 import { ArticleTocPlaceholder } from '~/components/articles/ArticleTocPlaceholder'
 import { ArticleCallout } from '~/components/articles/ArticleCallout'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
 import { getDefaultArticleAuthorDetails } from '../../authors'
 
 export const useCustomHeader = true
@@ -16,8 +18,8 @@ export const CATEGORY = 'featured'
 export const SLUG = 'learn-ai-melbourne'
 // Preserve the established public registry date, not the conflicting old module date.
 export const DATE_PUBLISHED = '2026-01-28'
-export const DATE_MODIFIED = '2026-10-25'
-export const DESCRIPTION = 'Compare Melbourne AI courses, short courses and community learning: current fees, prerequisites, delivery, 2026–27 intakes and a practical first step.'
+export const DATE_MODIFIED = '2026-10-29'
+export const DESCRIPTION = 'Compare Melbourne AI courses by goal, fees, prerequisites and workload. Includes 2026–27 provider dates, a dated source check and a downloadable decision record.'
 export const FEATURED_FOCUS = 'ai'
 const AUTHOR = getDefaultArticleAuthorDetails()
 const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-f3e7ca80-f08c-4d98-9bc9-773ec059c33f.jpg?alt=media&token=cbbb31dd-a11e-49d5-a062-13256412f7e4'
@@ -83,9 +85,16 @@ export default function ArticleContent() {
         <p>
           You can learn AI in Melbourne through a business short course, a technical course, a university or TAFE qualification, or a community session.
           The right choice depends on whether you want to use AI at work, build software, earn a credential or meet people learning alongside you.
-          This guide compares specific options and their commitments, checked on <time dateTime={DATE_MODIFIED}>25 October 2026</time>.
+          This guide compares specific options and their commitments, checked on <time dateTime={DATE_MODIFIED}>29 October 2026</time>.
         </p>
 
+        <nav aria-label="Choose a learning comparison"><p><a href="#provider-comparison">Compare four course options</a>, <a href="#worked-learning-decision">check a workload decision</a>, or <a href="/downloads/melbourne-ai-learning-decision.txt" download>download the decision record</a>.</p></nav>
+        <div role="region" aria-label={"Quick shortlist by goal; confirm eligibility and fee basis in the full comparison"} tabIndex={0} className="min-w-0 max-w-full overflow-x-auto"><table><caption>Quick shortlist by goal; confirm eligibility and fee basis in the full comparison</caption><thead><tr><th>Goal</th><th>Starting route</th><th>Commitment to check</th></tr></thead><tbody>
+          <tr><td>Explore without coding</td><td>Free AI introduction and a beginner-suitable community session</td><td>Confirm the session level and ticket separately; no formal qualification implied.</td></tr>
+          <tr><td>Business application</td><td>MBS AI for Business</td><td>Two in-person days; November listed tuition A$3,500, with travel/time extra.</td></tr>
+          <tr><td>Technical practice</td><td>RMIT Generative AI</td><td>A$1,000; intermediate Python/ML; 48–64 study hours over eight weeks; next intake unconfirmed.</td></tr>
+          <tr><td>Formal qualification</td><td>VU graduate certificate or Holmesglen diploma</td><td>Different entry levels and durations; CSP/subsidised fees depend on eligibility and are not full-fee equivalents.</td></tr>
+        </tbody></table></div>
         <h2 id="choose-a-learning-task">Choose your starting point</h2>
         <ul>
           <li><strong>New to AI, with no coding experience:</strong> start with our free <Link to="/articles/featured/what-is-artificial-intelligence-in-simple-words">plain-language AI introduction</Link>. Choose one everyday use, check an output against its source and bring a question to a beginner-suitable session. Confirm the level before attending.</li>
@@ -94,13 +103,13 @@ export default function ArticleContent() {
           <li><strong>Seeking a qualification:</strong> compare VU’s graduate certificate with Holmesglen’s broader cloud/AI diploma. Check admission, units, assessment and timetable against your goal. For a career goal, also read the <Link to="/articles/featured/how-to-get-data-science-job">Australian data science job guide</Link>.</li>
         </ul>
 
-        <h2 id="provider-comparison">Melbourne AI courses compared — checked 25 October 2026</h2>
+        <h2 id="provider-comparison">Melbourne AI courses compared — checked 29 October 2026</h2>
         <p>
           These four examples cover different learning goals and formats. We checked official provider pages for the details below;
           we have not ranked or attended all four courses. The descriptions establish what was advertised, not teaching quality or employment outcomes.
         </p>
         <ArticleCallout title="A dated snapshot, not live availability" variant="info">
-          Fees and intakes were checked on 25 October 2026. Confirm places, your student category, timetable and written fee quote with the provider.
+          Fees and intakes were rechecked on 29 October 2026. Confirm places, your student category, timetable and written fee quote with the provider.
           Where the next date or fee could not be confirmed, it is marked below rather than carrying forward an old intake or price.
         </ArticleCallout>
         <p className="text-sm">On a small screen, scroll the table sideways to compare fees, entry requirements and dates.</p>
@@ -127,7 +136,7 @@ export default function ArticleContent() {
                 <th scope="row"><a href={learningSources.vu}>Victoria University: Graduate Certificate in Artificial Intelligence (NTAI)</a><br /><span className="font-normal">Postgraduate qualification</span></th>
                 <td>Relevant bachelor-level qualification, or consideration of at least three years of approved work experience. Minimum eligibility does not guarantee admission.</td>
                 <td>City Campus; in person; half a year full-time.</td>
-                <td>Commonwealth supported place advertised. A current 2027 contribution was not confirmed; request the applicable tuition and student-services total. The old 2026 figure is not a 2027 quote.</td>
+                <td>Commonwealth supported place advertised. The 2027 indicative full-time contribution is A$4,940 per semester for eligible CSP students, excluding materials and SSAF. Unit selection changes the total; request your actual quote.</td>
                 <td>15 February 2027 start; applications close 7 February 2027. Later 2027 intakes also listed. Dates may change or close early.</td>
               </tr>
               <tr>
@@ -200,7 +209,7 @@ export default function ArticleContent() {
         </p>
 
         <h2 id="learning-decision-record">Copyable course and learning decision record</h2>
-        <p>Copy this into your own notes for each option. All fourteen fields are available here; no download or sign-up is required.</p>
+        <p>Copy these fourteen fields into your own notes, or <a href="/downloads/melbourne-ai-learning-decision.txt" download>download the editable record with the Rina example</a>. No account is required.</p>
         <pre className="whitespace-pre-wrap break-words text-sm" aria-label="Course and learning decision record">{learningDecisionFields.map((field) => field + '\n').join('\n')}</pre>
         <p>
           Mark unknowns as unknown rather than filling them with an estimate. Compare options only after essential constraints are confirmed.
@@ -213,6 +222,8 @@ export default function ArticleContent() {
           It is not a substitute for a qualification. MLAI runs community activities, not the provider courses compared above.
           Ask about prerequisites and what you will actually do; an engineering event title does not establish beginner suitability.
         </p>
+        <p>For the next available session, use the <Link to="/events">current MLAI calendar</Link> and <Link to="/articles/featured/where-to-find-ai-events-in-melbourne">Melbourne AI event guide</Link>. Check the listing’s date, prerequisites, ticket and admission before committing.</p>
+        <details className="my-6 rounded-xl border border-gray-300 p-4"><summary className="cursor-pointer font-semibold">Historical listing observations from 25 October 2026</summary>
         <p><strong>Two dated examples checked on 25 October 2026:</strong></p>
         <ul>
           <li><a href="https://luma.com/mlai-c122">AI Engineer Night Melbourne #2</a> — 29 October, 6–9 pm AEDT, at Stone &amp; Chalk Melbourne. The public listing showed full/waitlist at the check. Topic and experience-level detail were limited; ask the organiser if you need a beginner introduction.</li>
@@ -223,13 +234,14 @@ export default function ArticleContent() {
           and the <Link to="/articles/featured/where-to-find-ai-events-in-melbourne">Melbourne AI event guide</Link>.
           Before attending, write one question you want answered; afterwards, record one thing you learned and one small next step.
         </p>
+        </details>
         <h2 id="first-step">Choose one action this week</h2>
         <p>
           A beginner can check one AI answer against a public source. A technical learner can run one small exercise and explain a failure.
           A qualification seeker can compare the entry rules and timetable for two courses. Someone exploring a data career can use our <Link to="/articles/featured/how-to-get-data-science-job">skills, portfolio and application guide</Link>{' '}
           to connect learning with a specific role. Keep the course decision worksheet above so you can compare the answers you receive.
         </p>
-
+        <ArticleConversionCTA articleSlug="featured/learn-ai-melbourne" config={BASE_ARTICLE_SEO_CONFIG['/articles/featured/learn-ai-melbourne'].conversion!} events={[]} placement="article-inline" />
       </div>
       <ArticleFAQ items={faqItems} />
       <AuthorBio author={{ name: AUTHOR.name, role: AUTHOR.role ?? AUTHOR.credentials, bio: AUTHOR.bio, avatarUrl: AUTHOR.avatarUrl }} />

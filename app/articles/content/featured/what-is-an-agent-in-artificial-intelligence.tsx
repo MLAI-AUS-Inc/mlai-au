@@ -2,6 +2,8 @@ import { Home } from "lucide-react";
 import { Link } from "react-router";
 import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
 import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
 import ArticleTocPlaceholder from "~/components/articles/ArticleTocPlaceholder";
 import { AGENT_DESIGN_OPTIONS, AGENT_DESIGN_COSTS, AGENT_CASE_RECORDS, AGENT_APPROVAL_STEPS, AGENT_COMPLETED_FIELDS, AGENT_DECISION_DOWNLOAD, AGENT_SLOW_REVIEW, agentDecisionMoney, agentDecisionMinutes, agentScopeFields } from "~/lib/agent-workflow-decision";
 export { agentScopeFields } from "~/lib/agent-workflow-decision";
@@ -10,7 +12,7 @@ export const useCustomHeader = true;
 export const CATEGORY = "featured";
 export const SLUG = "what-is-an-agent-in-artificial-intelligence";
 export const DATE_PUBLISHED = "2026-04-17";
-export const DATE_MODIFIED = "2026-09-15";
+export const DATE_MODIFIED = "2026-10-29";
 const TITLE = "What is an AI agent—and does your business need one?";
 export const DESCRIPTION = "Compare fixed automation, AI-assisted workflows and agents on one business task. Define approvals, failure tests and costs before commissioning a build.";
 const PATH = "/articles/" + CATEGORY + "/" + SLUG;
@@ -38,7 +40,16 @@ export default function ArticleContent() {
     <div className="prose prose-lg prose-slate max-w-none">
       <p>If you own a small or medium business and want less administration or rework, you do not need to choose an “agent platform” before describing the problem. An AI agent is a system that uses observations to select actions toward a goal. The term covers different designs; this guide focuses on modern language-model systems connected to business tools.</p>
       <p>The buying decision is whether a model needs to choose the next step dynamically, or whether a fixed workflow with an optional AI drafting step would do the job. More autonomy is not automatically more value. You can use this guide to prepare a non-technical implementation brief in Australia or another market; service availability and local requirements still need confirmation.</p>
-      <p><strong>Worked example:</strong> a completed maintenance-office decision now compares all three designs, separates their cost assumptions and shows exactly why changed content needs a new approval. The records are invented and the proposed demonstrations have not been run.</p>
+      <p><strong>11 September update:</strong> a completed maintenance-office decision now compares all three designs, separates their cost assumptions and shows exactly why changed content needs a new approval. The records are invented and the proposed demonstrations have not been run.</p>
+      <nav aria-label="Choose a workflow design" className="not-prose my-6 rounded-2xl border border-slate-300 bg-slate-50 p-5">
+        <h2 className="text-xl font-bold">A quick decision before the detail</h2>
+        <ol className="mt-3 list-decimal space-y-2 pl-5">
+          <li>Known fields and fixed next steps? Start with <a className="underline" href="#three-options">a form or fixed automation</a>.</li>
+          <li>Free text needs interpretation, but the steps stay the same? Compare an <a className="underline" href="#worked-decision">AI draft with human review</a>.</li>
+          <li>Useful next steps genuinely vary? Test a bounded agent only after defining <a className="underline" href="#approval">its permissions</a>.</li>
+        </ol>
+        <p className="mt-3">The fictional M-104 comparison selects the improved form first; neither an assisted workflow nor an agent has demonstrated additional value. Jump to <a className="underline" href="#economics">cost assumptions</a> or the <a className="underline" href="#brief">implementation brief</a>.</p>
+      </nav>
       <ArticleTocPlaceholder />
 
       <h2 id="three-options" className="scroll-mt-28">Compare three designs on the same task</h2>
@@ -125,11 +136,11 @@ export default function ArticleContent() {
       <p>Copy the fields below or <a href={AGENT_DECISION_DOWNLOAD} download="agent-workflow-decision.txt">save the editable brief and fictional completed example</a>. The file includes M-104, all three designs and cost assumptions, the proposed approval demonstration, twelve completed fields and blank comparison/acceptance records. No signup is required. You do not need to choose a model or write code to state the business task, consequences and approval rules.</p>
       <details><summary>Completed maintenance-office decision</summary><dl>{AGENT_COMPLETED_FIELDS.map(field => <div key={field.label}><dt className="font-semibold">{field.label}</dt><dd>{field.value}</dd></div>)}</dl></details>
       <details><summary>Copy a blank workflow and approval brief</summary><pre className="whitespace-pre-wrap break-words" aria-label="Agent workflow decision brief"><code>{agentScopeFields.join("\n")}</code></pre></details>
-      <p>If you need implementation help, share a non-confidential version with <Link to="/mlai-studio/start-project">MLAI Studio</Link>. Ask for the simplest design that meets the acceptance criteria, including an option without an agent. An enquiry is not a promise of acceptance, a free assessment or savings.</p>
-    <p><Link to="/events">Explore upcoming MLAI events</Link> and check the listing for its topic, format and participation requirements.</p>
+      <p>If you need implementation help, share a non-confidential version with MLAI Studio. Ask for the simplest design that meets the acceptance criteria, including an option without an agent. An enquiry is not a promise of acceptance, a free assessment or savings.</p>
+      <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={BASE_ARTICLE_SEO_CONFIG[PATH].conversion!} events={[]} placement="article-inline" />
       <p>The downloaded file is not automatically attached to your enquiry. Share only a permitted, non-confidential summary; confirm delivery eligibility with MLAI before planning work.</p>
       <p>For a fuller delivery specification, continue to <Link to="/articles/featured/how-to-build-ai-for-real-business-problems">the business-build brief</Link>. The separate <Link to="/articles/featured/what-is-an-intelligent-agent-in-artificial-intelligence">PEAS design and test tutorial</Link> is for builders implementing an exercise, not this owner purchasing decision. If you are only exploring the topic, <Link to="/events">MLAI events</Link> offer a separate learning route; check the actual listing for topic and format.</p>
-      <p><small>Sources checked 15 September 2026. Codex assisted the fictional decision, cost comparison, approval record and local checks. No AI system, approval gateway or client workflow was evaluated. Independent owner/technical review remains outstanding. The scenario is not a security certification or vendor benchmark; data, access and regulatory requirements need assessment for the actual business and jurisdiction.</small></p>
+      <p><small>Sources checked 11 September 2026. Codex assisted the fictional decision, cost comparison, approval record and local checks. No AI system, approval gateway or client workflow was evaluated. Independent owner/technical review remains outstanding. The scenario is not a security certification or vendor benchmark; data, access and regulatory requirements need assessment for the actual business and jurisdiction.</small></p>
       <ArticleFAQ items={faqItems} />
     </div>
   </div>;

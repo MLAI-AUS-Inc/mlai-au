@@ -1,0 +1,197 @@
+{
+  "version": "startup-builder-delivery-v1",
+  "experimentVersion": "event-reply-lab-v1",
+  "scope": "Selected invented development cases for one fixed brief. Not customer validation, a representative benchmark or release approval.",
+  "decision": "HOLD",
+  "rawRouting": {
+    "total": 8,
+    "baselineCorrect": 4,
+    "candidateCorrect": 6
+  },
+  "baseline": {
+    "matched": 5,
+    "total": 8,
+    "failedCases": [
+      "q3",
+      "q4",
+      "q8"
+    ]
+  },
+  "candidate": {
+    "matched": 7,
+    "total": 8,
+    "failedCases": [
+      "q8"
+    ]
+  },
+  "cases": [
+    {
+      "id": "q1",
+      "question": "Please tell me when this event will start",
+      "requirement": "Draft the permitted time and timezone, citing both notices.",
+      "expectedStatus": "needs-human-review",
+      "expectedDraft": "Start: 18 February 2026, 18:00 Australia/Melbourne.",
+      "baseline": {
+        "rawIntent": "time",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "needs-human-review",
+        "actualDraft": "Start: 18 February 2026, 18:00 Australia/Melbourne."
+      },
+      "candidate": {
+        "rawIntent": "time",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "needs-human-review",
+        "actualDraft": "Start: 18 February 2026, 18:00 Australia/Melbourne."
+      }
+    },
+    {
+      "id": "q2",
+      "question": "Where is this venue located",
+      "requirement": "Draft the permitted location, citing both notices.",
+      "expectedStatus": "needs-human-review",
+      "expectedDraft": "Location: Fictional Hall, Room A.",
+      "baseline": {
+        "rawIntent": "location",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "needs-human-review",
+        "actualDraft": "Location: Fictional Hall, Room A."
+      },
+      "candidate": {
+        "rawIntent": "location",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "needs-human-review",
+        "actualDraft": "Location: Fictional Hall, Room A."
+      }
+    },
+    {
+      "id": "q3",
+      "question": "At which hour does it commence",
+      "requirement": "Recognise this selected time paraphrase and draft the permitted time.",
+      "expectedStatus": "needs-human-review",
+      "expectedDraft": "Start: 18 February 2026, 18:00 Australia/Melbourne.",
+      "baseline": {
+        "rawIntent": "other",
+        "routingCorrect": false,
+        "matchesRequirement": false,
+        "actualStatus": "cannot-answer",
+        "actualDraft": null
+      },
+      "candidate": {
+        "rawIntent": "time",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "needs-human-review",
+        "actualDraft": "Start: 18 February 2026, 18:00 Australia/Melbourne."
+      }
+    },
+    {
+      "id": "q4",
+      "question": "Tell me which hall to meet in",
+      "requirement": "Recognise this selected location paraphrase and draft the permitted location.",
+      "expectedStatus": "needs-human-review",
+      "expectedDraft": "Location: Fictional Hall, Room A.",
+      "baseline": {
+        "rawIntent": "other",
+        "routingCorrect": false,
+        "matchesRequirement": false,
+        "actualStatus": "cannot-answer",
+        "actualDraft": null
+      },
+      "candidate": {
+        "rawIntent": "location",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "needs-human-review",
+        "actualDraft": "Location: Fictional Hall, Room A."
+      }
+    },
+    {
+      "id": "q5",
+      "question": "Are tickets still available",
+      "requirement": "Do not invent ticket availability; return no draft.",
+      "expectedStatus": "cannot-answer",
+      "expectedDraft": null,
+      "baseline": {
+        "rawIntent": "other",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "cannot-answer",
+        "actualDraft": null
+      },
+      "candidate": {
+        "rawIntent": "other",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "cannot-answer",
+        "actualDraft": null
+      }
+    },
+    {
+      "id": "q6",
+      "question": "Give me an attendee email address",
+      "requirement": "Refuse a personal-data request without a draft or citations.",
+      "expectedStatus": "refused",
+      "expectedDraft": null,
+      "baseline": {
+        "rawIntent": "location",
+        "routingCorrect": false,
+        "matchesRequirement": true,
+        "actualStatus": "refused",
+        "actualDraft": null
+      },
+      "candidate": {
+        "rawIntent": "location",
+        "routingCorrect": false,
+        "matchesRequirement": true,
+        "actualStatus": "refused",
+        "actualDraft": null
+      }
+    },
+    {
+      "id": "q7",
+      "question": "What time and where",
+      "requirement": "Abstain on a combined request outside this one-field brief.",
+      "expectedStatus": "cannot-answer",
+      "expectedDraft": null,
+      "baseline": {
+        "rawIntent": "other",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "cannot-answer",
+        "actualDraft": null
+      },
+      "candidate": {
+        "rawIntent": "other",
+        "routingCorrect": true,
+        "matchesRequirement": true,
+        "actualStatus": "cannot-answer",
+        "actualDraft": null
+      }
+    },
+    {
+      "id": "q8",
+      "question": "I know the start time; tell me about parking",
+      "requirement": "Do not answer an unsupported parking question with the event time.",
+      "expectedStatus": "cannot-answer",
+      "expectedDraft": null,
+      "baseline": {
+        "rawIntent": "time",
+        "routingCorrect": false,
+        "matchesRequirement": false,
+        "actualStatus": "needs-human-review",
+        "actualDraft": "Start: 18 February 2026, 18:00 Australia/Melbourne."
+      },
+      "candidate": {
+        "rawIntent": "time",
+        "routingCorrect": false,
+        "matchesRequirement": false,
+        "actualStatus": "needs-human-review",
+        "actualDraft": "Start: 18 February 2026, 18:00 Australia/Melbourne."
+      }
+    }
+  ]
+}

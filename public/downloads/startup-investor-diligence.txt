@@ -1,0 +1,28 @@
+STARTUP INVESTOR DILIGENCE RECORD
+Updated 29 October 2026. General education, not an investment offer or suitability assessment. No independent financial/legal review is claimed.
+
+COMPLETED FICTIONAL CASE — DraftDesk
+Claim: ten customers. Evidence: ten demo signups, two unsigned trials, no invoices/receipts. Decision: correct claim; paid adoption unestablished.
+Cash plan: assumes new investment in month 3 and omits contractor obligation. Decision: rebuild without uncommitted financing; gap unknown.
+Rights: no share-class terms, shareholder agreement or reconciled option/convertible schedule. Decision: request documents and qualified explanation before estimating ownership.
+Conflict: one prospective trial relates to a founder business. Decision: disclose and separate from independent customers.
+AI reliability: scripted demo only; no held-out evaluation. Decision: request baseline/failures and permitted evidence.
+Overall: PAUSE; no funds committed. Proceed would mean further diligence, not investment approval.
+
+YOUR RECORD
+Issuer/instrument/amount:
+Claim and exact source/version/date:
+Evidence received and what it establishes:
+Contradiction or missing document:
+Share rights, dilution and exit limits:
+Cash, obligations and uncertain receipts:
+Conflicts or related parties:
+Risk/financial/legal questions for qualified advisers:
+Question owner and response date:
+Proceed with diligence / pause / decline and reason:
+What would change the decision:
+
+Official sources checked 29 October 2026:
+https://moneysmart.gov.au/shares/buying-shares-through-crowd-sourced-funding
+https://www.asic.gov.au/crowd-sourced-funding
+CSF-specific protections must not be assumed for private offers, SAFEs or loans. A startup can fail and unlisted shares may be unsellable.

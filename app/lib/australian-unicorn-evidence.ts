@@ -1,4 +1,4 @@
-export const UNICORN_DATASET_VERIFIED_AT = "2026-07-29";
+export const UNICORN_DATASET_VERIFIED_AT = "2026-10-29";
 export const UNICORN_DATASET_OWNER = "MLAI editorial";
 export const UNICORN_DATASET_REVIEW_CADENCE = "Quarterly";
 
@@ -37,17 +37,17 @@ export const AUSTRALIAN_UNICORN_EVIDENCE: AustralianUnicornEvidence[] = [
       "https://www.airwallex.com/global/newsroom/awx-raises-usd330m-series-g-at-usd8b-valuation-establishes-sf-as-dual-global-hq",
     connectionSourceTitle: "Airwallex Series G company profile",
     valuationDate: "2026-06-25",
-    financingEvent: "Financing led by Addition",
+    financingEvent: "Series H led by Addition",
     disclosedValuation: "US$11 billion",
     valuationUsdFloorBillions: 11,
     sourceUrl:
-      "https://www.airwallex.com/global/blog/the-ai-era-has-no-home-market-build-accordingly",
-    sourceTitle: "The AI Era Has No Home Market. Build Accordingly.",
+      "https://www.airwallex.com/global/newsroom/airwallex-secures-320-million-in-series-h-funding-valuation-hits-11-billion",
+    sourceTitle: "Airwallex Series H announcement, 25 June 2026",
     sourceType: "company announcement",
     statusConfidence: "recent-company-report",
-    statusLabel: "Recent company-reported valuation",
+    statusLabel: "June 2026 company-reported event",
     statusNote:
-      "This was the newest explicit company-reported valuation found in the 29 July 2026 review. It is still a private-company claim, not a continuously traded market price.",
+      "The 25 June financing announcement gives the event; the company profile explicitly labels the $11 billion figure USD. Both were rechecked 29 October 2026. This is not a continuously traded market price.",
     lastVerified: UNICORN_DATASET_VERIFIED_AT,
   },
   {
@@ -69,7 +69,7 @@ export const AUSTRALIAN_UNICORN_EVIDENCE: AustralianUnicornEvidence[] = [
     statusConfidence: "historical-threshold",
     statusLabel: "Historical threshold evidence",
     statusNote:
-      "The announcement proves that the threshold was crossed at this 2021 round. It does not establish Canva’s current valuation in July 2026.",
+      "The announcement proves that the threshold was crossed at this 2021 round. It does not establish Canva’s current valuation.",
     lastVerified: UNICORN_DATASET_VERIFIED_AT,
   },
   {
@@ -90,7 +90,7 @@ export const AUSTRALIAN_UNICORN_EVIDENCE: AustralianUnicornEvidence[] = [
     statusConfidence: "historical-threshold",
     statusLabel: "Historical threshold evidence",
     statusNote:
-      "The announcement proves that the threshold was crossed at this 2021 round. MLAI did not find a newer explicit first-party US-dollar valuation during this review.",
+      "The announcement proves that the threshold was crossed at this 2021 round. This retained historical round is not a claim about the current valuation or listing/acquisition status.",
     lastVerified: UNICORN_DATASET_VERIFIED_AT,
   },
   {
@@ -112,14 +112,14 @@ export const AUSTRALIAN_UNICORN_EVIDENCE: AustralianUnicornEvidence[] = [
     statusConfidence: "historical-threshold",
     statusLabel: "Historical threshold evidence",
     statusNote:
-      "The company announcement proves a greater-than-US$1 billion valuation at the 2021 round. It is not treated here as a current July 2026 valuation.",
+      "The company announcement proves a greater-than-US$1 billion valuation at the 2021 round. It is not treated here as a current valuation.",
     lastVerified: UNICORN_DATASET_VERIFIED_AT,
   },
   {
     company: "Linktree",
     australianConnection:
       "The company announcement was issued from Melbourne; Linktree’s company profile says it is headquartered there and was founded in 2016.",
-    connectionSourceUrl: "https://linktr.ee/s/about",
+    connectionSourceUrl: "https://linktr.ee/about",
     connectionSourceTitle: "Linktree’s founders’ story",
     valuationDate: "2022-03-16",
     financingEvent: "US$110 million funding round",
@@ -133,7 +133,7 @@ export const AUSTRALIAN_UNICORN_EVIDENCE: AustralianUnicornEvidence[] = [
     statusConfidence: "historical-threshold",
     statusLabel: "Historical threshold evidence",
     statusNote:
-      "The announcement proves that the threshold was crossed at this 2022 round. It does not establish Linktree’s current valuation in July 2026.",
+      "The announcement proves that the threshold was crossed at this 2022 round. It does not establish Linktree’s current valuation.",
     lastVerified: UNICORN_DATASET_VERIFIED_AT,
   },
 ];

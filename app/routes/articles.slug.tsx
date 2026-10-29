@@ -27,7 +27,7 @@ const articleModules = import.meta.glob<{
 
 export function meta({ data }: Route.MetaArgs) {
     if (!data?.article) {
-        return [{ title: "Article Not Found | MLAI" }];
+        return [{ title: "Article Not Found | MLAI" }, { name: "robots", content: "noindex, follow" }];
     }
     const articlePath = `/articles/${resolveArticleRouteSlug(data.article.slug)}`;
     const canonicalUrl = `https://mlai.au${articlePath}`;
@@ -148,6 +148,7 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
  */
 function ArticleContent({ article }: { article: ArticleWithSlug }) {
     const ContentComponent = useMemo(() => {
+        if (article.publicationStatus === "under-review") return null;
         // Construct the expected file path key for the glob map
         // article.slug is like 'featured/my-article'
         // glob key is like '../articles/content/featured/my-article.tsx'
@@ -156,9 +157,8 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
         const loader = articleModules[globKey];
         if (!loader) return null;
 
-        // Purely return the lazy component without side-effects
         return lazy(loader as any);
-    }, [article.slug]);
+    }, [article.slug, article.publicationStatus]);
 
     if (article.publicationStatus === "under-review") {
         const isIssueNine = article.slug.endsWith(
@@ -167,6 +167,8 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
         const isCodingBenchmark = article.slug.endsWith(
             "how-to-choose-the-best-ai-for-coding-in-2025",
         );
+        const isSalaryGuide = article.slug.endsWith("how-much-do-data-scientists-make");
+        const isSingaporeCount = article.slug.endsWith("how-many-startup-accelerators-and-incubators-are-there-in-si");
 
         return (
             <section
@@ -182,10 +184,14 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
                 </p>
                 <h1 id="editorial-review-heading" className="mt-3 text-3xl font-black tracking-tight">
                     {isIssueNine
-                        ? "AI Bits Issue 9 is being corrected and rebuilt."
+                        ? "AI Bits Issue 9: correction and source review."
                         : isCodingBenchmark
                           ? "The stale coding-tools list has been withdrawn."
-                        : "This article is temporarily unavailable."}
+                          : isSalaryGuide
+                            ? "The Australian data scientist salary guide is under review."
+                            : isSingaporeCount
+                              ? "The Singapore accelerator and incubator count is under review."
+                              : "This article is temporarily unavailable."}
                 </h1>
                 {isIssueNine ? (
                     <>
@@ -229,14 +235,34 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
                             removed that body from search and discovery surfaces.
                         </p>
                         <p className="mt-4 max-w-3xl text-base leading-7">
-                            Its replacement will be a date-neutral benchmark using
+                            A replacement comparison needs a dated benchmark using
                             licence-safe fixtures, frozen tool and model settings,
                             hidden acceptance tests, failures, costs, interventions
-                            and raw results. The protocol is being registered before
-                            any comparison results are examined. No winner is being
-                            claimed while that work remains incomplete.
+                            and raw results. The protocol must be recorded before
+                            comparison results are examined. No completed benchmark
+                            or best-tool result is available from this withdrawn article.
                         </p>
                     </>
+                ) : isSalaryGuide ? (
+                    <>
+                        <p className="mt-4 max-w-3xl text-base leading-7">
+                            The earlier salary answer is withheld while its figures and methodology are checked.
+                            This page currently supplies no salary estimates. A replacement needs dated Australian
+                            evidence separating base salary, superannuation, total compensation and contractor rates,
+                            with role, seniority, location and sample limits clearly stated.
+                        </p>
+                        <p className="mt-4 max-w-3xl text-base leading-7">
+                            For skills, entry pathways and application preparation, read the{" "}
+                            <a className="underline" href="/articles/featured/how-to-get-data-science-job">Australian data science career guide</a>.
+                        </p>
+                    </>
+                ) : isSingaporeCount ? (
+                    <p className="mt-4 max-w-3xl text-base leading-7">
+                        The earlier programme count is withheld. This page currently supplies no verified total.
+                        A replacement needs a dated roster of active Singapore programmes, a clear definition of
+                        accelerator and incubator, and published exclusions and duplicate-counting rules.
+                        The URL remains available so the status of the earlier article is clear.
+                    </p>
                 ) : (
                     <p className="mt-4 max-w-2xl text-base leading-7">
                         MLAI is re-checking the evidence, claims, and attribution on this page.
@@ -245,7 +271,7 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
                     </p>
                 )}
                 <p className="mt-4 text-sm font-semibold">
-                    Last status update: {isCodingBenchmark ? "29 July 2026" : "28 July 2026"}.
+                    Notice clarified 29 October 2026. The underlying article review remains incomplete.
                 </p>
             </section>
         );

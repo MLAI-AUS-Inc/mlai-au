@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
 import { DEFAULT_AUTHOR_KEY, getAuthorProfile, DEFAULT_AUTHOR_AVATAR_FALLBACK_URL } from '../../authors'
@@ -10,18 +11,17 @@ import ArticleTocPlaceholder from '../../../components/articles/ArticleTocPlaceh
 import { ArticleReferences } from '../../../components/articles/ArticleReferences'
 import ArticleDisclaimer from '../../../components/articles/ArticleDisclaimer'
 import QuoteBlock from '../../../components/articles/QuoteBlock'
-import AudienceGrid from '../../../components/articles/AudienceGrid'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
 
 export const useCustomHeader = true
 
-const TOPIC = 'Invest in Business Startups Before You Commit'
+const TOPIC = 'Startup investing in Australia: evidence to check before committing'
 export const CATEGORY = 'featured'
 export const SLUG = 'invest-in-business-startups-before-you-commit'
 export const DATE_PUBLISHED = '2026-07-15'
-export const DATE_MODIFIED = '2026-07-15'
-export const DESCRIPTION = 'Invest in business startups with a disciplined review of team, market, evidence and valuation.'
+export const DATE_MODIFIED = '2026-10-29'
+export const DESCRIPTION = 'Review an Australian startup investment with a worked diligence case: capital-loss risk, share rights, conflicts, cash evidence and reasons to pause.'
 const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e0c9e564-2307-4457-8728-32dba9f6de85.jpg?alt=media&token=508f7364-448a-4d95-b25c-7122d20de479'
 const HERO_IMAGE_ALT = 'Founder and investor reviewing startup financials and market notes at a small table'
 export const FEATURED_FOCUS = 'funding'
@@ -82,8 +82,8 @@ export const faqItems: FAQ[] = [
 ]
 
 export const summaryHighlights = {
-  heading: 'Key facts: Invest in Business Startups Before You Commit',
-  intro: 'Invest in business startups with a disciplined review of team, market, evidence and valuation.',
+  heading: 'Review the evidence before committing money',
+  intro: 'Understand the risks, request the actual documents and keep a record of what remains unverified.',
   items: [
     { label: 'What should you assess before investing in an early-stage startup?', description: 'Assess the founders’ ability to execute, the customer problem, market opportunity, available traction and valuation together. A prototype, pitch or single metric alone does not prove an investable business.' },
     { label: 'How should you assess a startup’s valuation?', description: 'Treat early-stage valuation as a judgement rather than a precise formula, then connect it to comparable context and the milestone the new capital is intended to fund.' },
@@ -92,7 +92,7 @@ export const summaryHighlights = {
 }
 
 export const articleMeta = {
-  title: 'Invest in Business Startups Before You Commit',
+  title: TOPIC,
   topic: TOPIC,
   category: CATEGORY,
   slug: SLUG,
@@ -105,27 +105,7 @@ export const articleMeta = {
   featuredFocus: FEATURED_FOCUS,
 }
 
-const faqSchemaItems = [
-  { question: 'What should you assess before investing in an early-stage startup?', answer: 'Assess the founders’ ability to execute, the customer problem, market opportunity, available traction and valuation together. A prototype, pitch or single metric alone does not prove an investable business.' },
-  { question: 'How should you assess a startup’s valuation?', answer: 'Treat early-stage valuation as a judgement rather than a precise formula, then connect it to comparable context and the milestone the new capital is intended to fund.' },
-  { question: 'When should you decline a startup investment?', answer: 'Decline an opportunity when you cannot understand or accept its risks. A decision should rest on a connected case across the team, problem, market, evidence and valuation.' },
-  { question: 'How should you assess startup founders before investing?', answer: 'Assess whether the founders understand the problem and can make sound decisions while building. Clear answers should link the customer, the problem and the next practical step.' },
-  { question: 'What early customer evidence should investors look for?', answer: 'Look for evidence that founders have tested assumptions with customers and learned from those conversations. Customer interest or early use is stronger when linked to a clear problem and product value.' },
-  { question: 'Why is a large market estimate not enough?', answer: 'A large market estimate does not show who will adopt first or why. A credible market case connects the initial customer segment to a practical path for broader growth.' },
-  { question: 'When should an investor seek independent advice?', answer: 'Seek independent legal, tax and financial advice where appropriate to your circumstances before acting. Early-stage investing involves substantial uncertainty, and no valuation approach removes it.' },
-]
 
-const faqStructuredData = faqSchemaItems.length
-  ? JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqSchemaItems.map((item) => ({
-        '@type': 'Question',
-        name: item.question,
-        acceptedAnswer: { '@type': 'Answer', text: item.answer },
-      })),
-    })
-  : null
 
 function ContentFactoryInspectorBridge() {
   return null
@@ -136,7 +116,6 @@ export default function ArticleContent() {
 
   return (
     <>
-
       <ContentFactoryInspectorBridge />
       <ArticleHeroHeader
         breadcrumbs={[
@@ -161,16 +140,31 @@ export default function ArticleContent() {
         </div>
 
         <div data-cf-component-id={'audience-grid:review-depth-by-investor'} data-cf-component-type={'audience-grid'} data-cf-component-label={'Choose the depth of your review'}>
-          <AudienceGrid
-            heading='Choose the depth of your review'
-            cards={[
-              { title: 'First-time angel investor', description: 'Slow down, document the assumptions behind the pitch and seek independent legal, tax and financial advice where appropriate before acting.', variant: 'purple' },
-              { title: 'Operator or domain investor', description: 'Test customer, market and execution claims independently, even when the industry narrative or product problem feels familiar.', variant: 'purple' },
-            ]}
-          />
+          <nav aria-label="Investor learning steps"><p>Start with the <a href="#investor-brief">risk and documents</a>, inspect the <a href="#worked-diligence">fictional diligence case</a>, or <a href="/downloads/startup-investor-diligence.txt" download>save the editable record</a>.</p></nav>
         </div>
 
         <div id='assess-the-founding-team' data-cf-component-id={'section:assess-the-founding-team'} data-cf-component-type={'section'} data-cf-component-label={'Assess Whether the Founders Can Execute'} data-cf-source-section-id={'assess-the-founding-team'}>
+          <section id="investor-brief">
+            <h2>Start with the risk and the documents</h2>
+            <p>This is an investor learning guide, not an investment offer or a recommendation about a particular company. Before comparing pitches, identify the instrument, issuer, amount at risk and documents that define what you would own. A polished AI demonstration does not settle those questions.</p>
+            <p>ASIC’s <a href="https://moneysmart.gov.au/shares/buying-shares-through-crowd-sourced-funding">Moneysmart guide to crowd-sourced share funding</a>, updated 29 September 2026 and checked 29 October, explains that early companies can fail, investors can lose all their money, and unlisted shares may be difficult or impossible to sell. It also directs investors to check the intermediary’s licence. Those are CSF-specific signposts; do not assume its protections apply to a private share offer, SAFE or loan.</p>
+            <p><a href="https://www.asic.gov.au/crowd-sourced-funding">ASIC’s CSF guidance</a> describes offer documents and intermediary responsibilities. For an actual transaction, have an appropriately qualified adviser explain the applicable offer rules, ownership, tax and contractual rights. This article has not received an independent financial or legal review.</p>
+            <ul><li><strong>Rights:</strong> request the actual share class or instrument, constitution, shareholder agreement and fully diluted ownership record. Ask about voting, information, future dilution, sale restrictions and how proceeds would be distributed.</li><li><strong>Cash:</strong> reconcile historical statements, obligations and use of funds with the forecast. Keep expected financing and customer receipts separate from available cash.</li><li><strong>Conflicts:</strong> identify founder/related-party payments, existing investor rights and anyone paid for an introduction or promotion.</li><li><strong>Loss and exit:</strong> consider whether you could bear a total loss and an indefinite holding period; neither another funding round nor a buyer is assured.</li></ul>
+            <p><a href="#worked-diligence">Inspect the worked case</a> or <a href="/downloads/startup-investor-diligence.txt" download>download its completed and blank diligence record</a>.</p>
+          </section>
+          <section id="worked-diligence">
+            <h2>A worked decision: pause when the records disagree</h2>
+            <p><strong>Entirely fictional teaching case:</strong> DraftDesk proposes review-only quote drafting and describes “ten customers” in its deck. The following documents and responses are invented; no actual company or investment was investigated.</p>
+            <div role="region" aria-label="Fictional startup diligence record" tabIndex={0} className="overflow-x-auto"><table className="min-w-[40rem]"><thead><tr><th>Claim or question</th><th>Supplied evidence</th><th>Next check</th></tr></thead><tbody>
+             <tr><td>Ten customers</td><td>Ten demo signups; two unsigned trial outlines; no invoices or receipts.</td><td>Correct the claim to ten demo signups. Ask separately about trials, payment and continued use.</td></tr>
+             <tr><td>Six-month cash plan</td><td>A spreadsheet assumes a new investment in month three; a contractor obligation is excluded.</td><td>Rebuild receipts and obligations by date without uncommitted funding. The funding gap is unknown.</td></tr>
+             <tr><td>Ownership and rights</td><td>A headline valuation is supplied, but no share-class terms, shareholder agreement or reconciled option/convertible schedule.</td><td>Request the missing documents and qualified explanation before estimating ownership or proceeds.</td></tr>
+             <tr><td>Independent traction</td><td>One prospective trial is with a founder’s related business; the relationship is disclosed after questioning.</td><td>Label the relationship and examine terms and payments separately from independent customers.</td></tr>
+             <tr><td>AI reliability</td><td>A scripted demo is available; no held-out evaluation or permitted customer-output review.</td><td>Request the workflow boundary, baseline, failure record and evidence for any benefit claim.</td></tr>
+            </tbody></table></div>
+            <p><strong>Recorded decision: pause.</strong> The evidence cannot yet support the customer count, cash plan or ownership calculation. The reviewer requests corrected claims and documents; no funds are committed. Decline if the missing information or risks remain unacceptable. “Proceed” would mean continuing diligence, not automatic approval to invest.</p>
+            <p>This record separates a founder statement, a document and a conclusion. In your own log, retain the source/date, contradiction, question owner, next response and reason for the decision. Redact personal and confidential details before discussing the method with others.</p>
+          </section>
           <h2>{'Assess Whether the Founders Can Execute'}</h2>
           <p>{'At the earliest stage, the founding team is often the central underwriting question. A product may still be incomplete and market evidence may be limited, so assess whether the founders understand the problem well enough to make sound decisions as they build.'}</p>
           <p>{'Use conversations to test how the founders think, not just how they present. Clear answers should connect the problem, the customer and the next practical step. Strong credentials are useful context, but early-stage conviction should rest on demonstrated judgment, learning speed and ability to execute.'}</p>
@@ -196,8 +190,7 @@ export default function ArticleContent() {
 
         <div id='test-problem-market-and-traction' data-cf-component-id={'section:test-problem-market-and-traction'} data-cf-component-type={'section'} data-cf-component-label={'Test the Problem, Market and Early Customer Evidence'} data-cf-source-section-id={'test-problem-market-and-traction'}>
           <h2>{'Test the Problem, Market and Early Customer Evidence'}</h2>
-          <p>{'A practical way to think about test the problem, market and early customer evidence is through Start with the customer problem and Connect early demand to a scalable market.'}</p>
-          <p>{"Separate customer interviews, expressions of interest, paid trials and repeat sales in the evidence record. They describe different levels of commitment; none should be relabelled as another."}</p>
+          <p>Keep a claim log with the claim, the dated source, what the source actually shows and what remains unanswered. Label a founder estimate as an estimate and a customer quote as that person's account; neither independently establishes the size of a market. This is an evidence-organising exercise, not a recommendation to invest.</p>
           <div data-cf-component-id={'image:test-problem-market-and-traction'} data-cf-component-type={'image'} data-cf-component-label={'Image: Test the Problem, Market and Early Customer Evidence'} data-cf-source-section-id={'test-problem-market-and-traction'}>
             <ArticleImageBlock
               src='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-0c9f4344-3f46-48b7-8d99-912684987ff9.jpg?alt=media&token=84609ad2-ac35-4d82-9f06-520799e4fcf3'
@@ -279,40 +272,41 @@ export default function ArticleContent() {
             eyebrow='Free checklist'
             title={'Startup Investment Diligence Checklist'}
             description='Use this checklist to assess a startup investment case systematically, identify questions that need evidence and make a deliberate decision.'
-            buttonLabel='Download the PDF'
-            buttonHref='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fresources%2Finvest-in-business-startups-before-you-commit-checklist-1be8dc63.pdf?alt=media&token=545c6aac-9511-431f-a212-9e80b1e91825'
+            buttonLabel='Download the editable record'
+            buttonHref='/downloads/startup-investor-diligence.txt'
             accent='purple'
             previewCards={[
-              { title: 'Five-part diligence', subtitle: 'PDF', color: 'bg-[#ff3d00]', textColor: 'text-white', rotationClass: 'rotate-[-6deg]' },
-              { title: 'Decision checklist', subtitle: 'PDF', color: 'bg-[#00ffd7]', textColor: 'text-black', rotationClass: 'rotate-[7deg]' },
+              { title: 'Five-part diligence', subtitle: 'TXT', color: 'bg-[#ff3d00]', textColor: 'text-white', rotationClass: 'rotate-[-6deg]' },
+              { title: 'Decision checklist', subtitle: 'TXT', color: 'bg-[#00ffd7]', textColor: 'text-black', rotationClass: 'rotate-[7deg]' },
             ]}
           />
         </div>
 
         <ArticleReferences
           references={[
-            { id: 1, href: 'https://www.svb.com/startup-insights/startup-strategy/what-investors-look-for-povs-from-the-other-side-of-the-table/', title: 'What Investors Look For & Questions They Will Ask', publisher: 'svb.com', description: "", category: 'guide' },
-            { id: 2, href: 'https://vivatech.com/news/investment-checklist-for-startups-what-investors-want-to-see', title: 'Startup Investment Checklist: A Guide to Securing Funding', publisher: 'vivatech.com', description: "", category: 'guide' },
-            { id: 3, href: 'https://www.forumvc.com/thought-pieces/what-vcs-look-for-early-stage-investment', title: 'What VCs Look for in Early-Stage Startups: Key Criteria', publisher: 'forumvc.com', description: "", category: 'guide' },
-            { id: 4, href: 'https://www.linkedin.com/posts/gregmoran_how-to-evaluate-a-startups-valuation-before-activity-7277084309407055873-KmLY', title: 'How to Evaluate a Startup’s Valuation Before You Invest 💡 Startup investing is about more than just numbers—it’s about making informed decisions based on the right frameworks. Here’s how to… | Greg Moran', publisher: 'linkedin.com', description: "", category: 'guide' },
-            { id: 5, href: 'https://www.brex.com/journal/startup-valuation', title: 'How to do a startup valuation: 8 different methods', publisher: 'brex.com', description: "", category: 'guide' },
-            { id: 6, href: 'https://sprintlaw.com.au/articles/startup-investment-in-australia-essential-legal-and-business-guide/', title: 'Startup Investment in Australia | Sprintlaw Australia', publisher: 'sprintlaw.com.au', description: "", category: 'guide' },
-            { id: 7, href: 'https://europe.republic.com/investors-site/guides/how-to-select-startups-to-invest-in/', title: 'How To Select Startups To Invest In - Republic Europe Investor Resources', publisher: 'europe.republic.com', description: "", category: 'guide' },
-            { id: 8, href: 'https://www.bentleys.com.au/resources/startup-funding-strategy-advising-australian-entrepreneurs-on-how-to-get-capital-growth/', title: 'Startup Funding Australia: Get Capital & Grow Your Business', publisher: 'bentleys.com.au', description: "", category: 'guide' },
-            { id: 9, href: 'https://sprintlaw.com.au/articles/small-business-investment-in-australia-essential-legal-guide/', title: 'Small Business Investment in Australia: Guide | Sprintlaw Australia', publisher: 'sprintlaw.com.au', description: "", category: 'guide' },
-            { id: 10, href: 'https://aerion.com.au/blog/investing-in-startups-rewards-and-risks/', title: 'Investing in Startups: Rewards and Risks Guide', publisher: 'aerion.com.au', description: "", category: 'guide' },
+            { id: 1, href: 'https://www.svb.com/startup-insights/startup-strategy/what-investors-look-for-povs-from-the-other-side-of-the-table/', title: 'What Investors Look For & Questions They Will Ask', publisher: 'svb.com',  category: 'guide' },
+            { id: 2, href: 'https://vivatech.com/news/investment-checklist-for-startups-what-investors-want-to-see', title: 'Startup Investment Checklist: A Guide to Securing Funding', publisher: 'vivatech.com',  category: 'guide' },
+            { id: 3, href: 'https://www.forumvc.com/thought-pieces/what-vcs-look-for-early-stage-investment', title: 'What VCs Look for in Early-Stage Startups: Key Criteria', publisher: 'forumvc.com',  category: 'guide' },
+            { id: 4, href: 'https://www.linkedin.com/posts/gregmoran_how-to-evaluate-a-startups-valuation-before-activity-7277084309407055873-KmLY', title: 'How to Evaluate a Startup’s Valuation Before You Invest 💡 Startup investing is about more than just numbers—it’s about making informed decisions based on the right frameworks. Here’s how to… | Greg Moran', publisher: 'linkedin.com',  category: 'guide' },
+            { id: 5, href: 'https://www.brex.com/journal/startup-valuation', title: 'How to do a startup valuation: 8 different methods', publisher: 'brex.com',  category: 'guide' },
+            { id: 6, href: 'https://sprintlaw.com.au/articles/startup-investment-in-australia-essential-legal-and-business-guide/', title: 'Startup Investment in Australia | Sprintlaw Australia', publisher: 'sprintlaw.com.au',  category: 'guide' },
+            { id: 7, href: 'https://europe.republic.com/investors-site/guides/how-to-select-startups-to-invest-in/', title: 'How To Select Startups To Invest In - Republic Europe Investor Resources', publisher: 'europe.republic.com',  category: 'guide' },
+            { id: 8, href: 'https://www.bentleys.com.au/resources/startup-funding-strategy-advising-australian-entrepreneurs-on-how-to-get-capital-growth/', title: 'Startup Funding Australia: Get Capital & Grow Your Business', publisher: 'bentleys.com.au',  category: 'guide' },
+            { id: 9, href: 'https://sprintlaw.com.au/articles/small-business-investment-in-australia-essential-legal-guide/', title: 'Small Business Investment in Australia: Guide | Sprintlaw Australia', publisher: 'sprintlaw.com.au',  category: 'guide' },
+            { id: 10, href: 'https://aerion.com.au/blog/investing-in-startups-rewards-and-risks/', title: 'Investing in Startups: Rewards and Risks Guide', publisher: 'aerion.com.au',  category: 'guide' },
           ]}
           heading='Sources & further reading'
         />
 
+        <p>For ownership arithmetic, use the <Link to="/articles/featured/how-vcs-value-startups">valuation and dilution worked examples</Link>. A community event can help you discuss the method; it does not provide investment advice, due diligence or introductions.</p>
         <ArticleDisclaimer />
 
         <div className='my-12 not-prose' data-cf-component-id={'cta'} data-cf-component-type={'company-cta'} data-cf-component-label={'Company CTA'}>
           <ArticleCompanyCTA
             title='Make decisions from connected evidence'
             body='Record the claims, supporting evidence and open questions before deciding whether the investment case is strong enough to proceed.'
-            buttonText='Review the decision framework'
-            buttonHref='#run-a-staged-diligence-process'
+            buttonText='Explore community learning'
+            buttonHref='/events'
           />
         </div>
       </div>

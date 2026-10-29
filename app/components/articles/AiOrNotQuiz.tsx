@@ -1,4 +1,5 @@
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { trackArticleEngagement } from "~/lib/article-conversions";
 
 type QuizAnswer = "ai" | "not-ai";
 
@@ -76,6 +77,12 @@ export default function AiOrNotQuiz() {
   const [answers, setAnswers] = useState<Record<string, QuizAnswer>>({});
 
   const completed = Object.keys(answers).length;
+  const completionRecorded = useRef(false);
+  useEffect(() => {
+    if (completed !== SCENARIOS.length || completionRecorded.current) return;
+    completionRecorded.current = true;
+    trackArticleEngagement("featured/what-is-artificial-intelligence-in-simple-words", "quiz_complete", "ai-or-not-v1");
+  }, [completed]);
   const score = useMemo(
     () =>
       SCENARIOS.reduce(
@@ -185,6 +192,14 @@ export default function AiOrNotQuiz() {
           >
             Try again
           </button>
+        </div>
+      ) : null}
+
+      {completed === SCENARIOS.length ? (
+        <div className="mt-5 rounded-2xl border border-gray-300 p-4 text-sm leading-6 text-gray-800">
+          <h3 className="font-bold text-gray-950">Choose your next step</h3>
+          {score < SCENARIOS.length ? <p className="mt-2">Still mixing up a fixed rule and a model? <a className="font-semibold underline" href="#what-makes-it-ai">Revisit the timer and spam-filter comparison</a>, then explain one missed answer in your own words.</p> : <p className="mt-2">Ready to practise? <a className="font-semibold underline" href="/articles/featured/best-way-to-learn-about-ai-2026">Choose one beginner learning task</a> and record a mistake you can check yourself.</p>}
+          <p className="mt-2">For familiar situations to discuss, explore <a className="font-semibold underline" href="/articles/featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life">everyday AI uses and their human checks</a>. The score is feedback on these eight examples, not a qualification.</p>
         </div>
       ) : null}
 

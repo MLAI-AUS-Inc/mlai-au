@@ -1,0 +1,46 @@
+SYDNEY AI AND TECH EVENT PARTICIPATION RECORD
+MLAI editorial aid — 10 September 2026
+
+This file is editable text, not an RSVP or live event feed. It does not save
+the website filters. Review the organiser before registration and travel.
+Sources need rechecking by 17 September 2026, 00:00 Australia/Sydney, or sooner
+if changed. Do not reuse this snapshot as a current availability claim.
+
+COMPLETED FICTIONAL EXAMPLE — NOT AN ATTENDEE ACCOUNT
+Reader: Alex, a Sydney developer seeking free, hands-on team building.
+Capacity: Friday evening and Saturday, 4–5 December 2026.
+Candidate: AI Engineer Sydney Hackathon, Web Directions with MLAI.
+Source: https://webdirections.org/ai-engineer/hack-day/
+Checked: 10 September 2026. Recheck due: 17 September, 00:00 AEST.
+Listed format/price: Sydney in person, free; limited places.
+Venue: dedicated page says Stone & Chalk, Sydney; programme hub says TBA.
+Unknowns: exact address/hours, access, equipment, team rules, actual admission.
+Question: What are the team/demo requirements, and what should I bring?
+Decision: shortlist pending answers; no non-refundable travel booked.
+RSVP submitted: no. Admission confirmed: no.
+Not the same offer: the separately paid conference/streaming pass.
+No paid work, job, portfolio permission or customer outcome is assumed.
+
+COUNTEREXAMPLE
+A free online request does not match the free in-person hackathon or a past
+Zoom seminar. An honest no-match is better than substituting a paid stream.
+
+YOUR RECORD
+Goal and prior experience:
+Sydney in person / online / either:
+Dates, total time and cost I can commit:
+Specific event and organiser URL:
+Source checked at / recheck due:
+Actual format and price for my ticket:
+Unknowns: address, access, hours, equipment, admission:
+Question to ask the organiser:
+Decision: shortlist / ask / defer / not suitable:
+RSVP submitted? Admission actually confirmed?
+One question or contribution to bring:
+Follow-up only if mutually agreed:
+
+MLAI CALENDAR
+Sydney preference: https://mlai.au/events?event_format=sydney
+Online preference: https://mlai.au/events?event_format=online
+The full feed may contain unclassified or different-city events. Check the
+actual ticket format; a matching source record is not a reserved place.

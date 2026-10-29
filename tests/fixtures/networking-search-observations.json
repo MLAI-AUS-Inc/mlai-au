@@ -1,0 +1,41 @@
+{
+  "reviewed_at": "2026-09-10T12:33:24Z",
+  "scope": "Minimal public source observations supporting the dated networking tutorial. No private account navigation or registration data retained.",
+  "eventbrite": {
+    "online": {
+      "url": "https://www.eventbrite.com.au/d/online/ai/?page=1",
+      "elements": [
+        {
+          "role": "heading",
+          "name": "Online ai events"
+        },
+        {
+          "role": "StaticText",
+          "name": "Online ai events"
+        }
+      ]
+    }
+  },
+  "humanitix": {
+    "listing": {
+      "url": "https://events.humanitix.com/intro-ai",
+      "elements": [
+        {
+          "role": "StaticText",
+          "name": "This class is currently full. If you would like to join the waitlist, please click \u201cBook Now\u201d."
+        }
+      ]
+    }
+  },
+  "linkedin": {
+    "results": {
+      "url": "https://www.linkedin.com/search/results/events/?keywords=AI%20Melbourne&origin=SWITCH_SEARCH_VERTICAL",
+      "elements": [
+        {
+          "role": "StaticText",
+          "name": "4 results"
+        }
+      ]
+    }
+  }
+}

@@ -7,9 +7,9 @@ export const useCustomHeader = true
 export const CATEGORY = 'community'
 export const SLUG = 'weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2'
 export const DATE_PUBLISHED = '2026-01-19'
-export const DATE_MODIFIED = '2026-09-09'
+export const DATE_MODIFIED = '2026-10-29'
 export const DESCRIPTION = 'Separate model preference from correctness with a source-based comparison exercise, a clear reading of a small user study and a practical feedback record.'
-const TITLE = 'AI Bits #2: Liking an AI answer is not the same as trusting it'
+const TITLE = 'How to evaluate an AI answer: facts, completeness and style | AI Bits #2'
 export const faqItems = [
  { id: 1, question: 'Can a model preference reveal my personality?', answer: 'This article does not establish that. Do not diagnose or classify a person from their preferred chatbot. Ask about their task and communication preferences directly.' },
  { id: 2, question: 'Can two people reasonably prefer different answers?', answer: 'Yes, they can value different wording or levels of detail. Check factual accuracy and task requirements separately before treating either answer as usable.' },
@@ -18,7 +18,7 @@ export const faqItems = [
 export default function ArticlePage() {
  return <div className="bg-white">
   <ArticleHeroHeader breadcrumbs={[{ label: 'Home', href: '/', icon: Home }, { label: 'Articles', href: '/articles' }, { label: 'AI Bits #2', current: true }]}
-   title={TITLE} titleHighlight="not the same as trusting it" headerBgColor="cyan"
+   title={TITLE} titleHighlight="evaluate an AI answer" headerBgColor="cyan"
    summary={{ heading: 'Compare answers on two separate questions', intro: 'For AI-curious readers discussing what makes an answer useful—not a personality test or model recommendation.', items: [
     { label: 'Does it meet the task?', description: 'Check facts, omissions and unsupported additions against the source.' },
     { label: 'Do I like the presentation?', description: 'Record clarity and tone without letting them excuse an error.' },
@@ -26,10 +26,11 @@ export default function ArticlePage() {
    ] }}
   />
   <article className="prose prose-lg max-w-3xl mx-auto px-4 py-10">
+<aside aria-label="Check correctness before choosing a style" className="my-6 rounded-xl border border-slate-300 bg-slate-50 p-5"><p><strong>Check correctness before choosing a style</strong></p><p>Score source accuracy, required information and presentation separately. A warmer answer can still contain a false promise. Use the <a href='#exercise'>two-answer exercise</a> or <a href='/downloads/ai-answer-comparison.txt' download>download the source card, corrected answer and blank comparison sheet</a>.</p></aside>
    <p><strong>Editorial correction, 9 September 2026:</strong> this issue previously described model choice as a mirror of personality and generalised about engineers and creators. Those claims went beyond the evidence. The original January publication date is retained; this revision focuses on comparing answers for an actual task.</p>
    <h2 id="study">What the small study found</h2>
    <p><a href="https://arxiv.org/abs/2508.21628v1">Yunusov and colleagues’ August 2025 paper</a> reports 32 participants, evenly distributed across four Keirsey types, using GPT-4 and Claude 3.5 for four collaborative tasks. Its abstract reports different preferences within those groups despite similar aggregate helpfulness ratings.</p>
-   <p>That is a result about this sample, task set and model comparison. It does not establish a rule for assigning people a chatbot, prove the validity of personality categories, or rank current models. This revision checked the abstract and version record, not the full study data or a replication.</p>
+   <p>That is a result about this sample, task set and model comparison. It does not establish a rule for assigning people a chatbot, prove the validity of personality categories, or rank current models. The 29 October 2026 check also inspected the <a href="https://arxiv.org/html/2508.21628v1#S3">experimental setup</a>: 32 university students recruited through university mailing lists and direct outreach; eight selected per Keirsey group. Sixteen used each model, giving four people per personality/model cell. Each person used one assigned model for four tasks in random order through an interface hiding the model name. Helpfulness ratings from this small student sample do not establish population-wide preferences. The underlying data were not independently analysed.</p>
    <h2 id="exercise">Try this without a model subscription</h2>
    <p><strong>Fictional exercise; all event details and answers are invented.</strong> Read the source card first:</p>
    <blockquote><p>Harbour AI Reading Circle is an online discussion on 14 October at 6 pm Sydney time. It lasts 45 minutes. Registration is required. The notice does not say whether a recording will be available.</p></blockquote>
@@ -39,7 +40,7 @@ export default function ArticlePage() {
    <h3>Answer B</h3>
    <blockquote><p>We’d love to see you at the Harbour AI Reading Circle! Drop in online at 6 pm Sydney time on 14 October—no registration needed. Don’t worry if you miss it: a recording will be shared afterwards.</p></blockquote>
    <p>These are editorial examples, not generated model outputs. Decide which wording you prefer, then check each against the source before reading the comparison below.</p>
-   <div className="my-6 max-w-full overflow-x-auto" role="region" aria-label="Answer preference and correctness comparisons" tabIndex={0}><table><thead><tr><th>Check</th><th>Answer A</th><th>Answer B</th></tr></thead><tbody>
+   <div role="region" aria-label={"Compare answers A and B for correctness, completeness and style"} tabIndex={0} className="min-w-0 max-w-full overflow-x-auto"><table><thead><tr><th>Check</th><th>Answer A</th><th>Answer B</th></tr></thead><tbody>
     <tr><td>Time and online format</td><td>Matches the source</td><td>Matches the source</td></tr>
     <tr><td>Registration</td><td>Preserves the requirement</td><td>Contradicts the source</td></tr>
     <tr><td>Recording</td><td>Retains uncertainty</td><td>Adds an unsupported promise</td></tr>
@@ -47,6 +48,7 @@ export default function ArticlePage() {
     <tr><td>Style preference</td><td>Direct and compact</td><td>Warmer opening; preference does not repair its errors</td></tr>
    </tbody></table></div>
    <p>You can prefer a warmer opening while rejecting Answer B as written. A useful revision would keep that opening, restore the registration requirement and say that recording availability is unconfirmed. Do not turn a preference for warmth into a personality label or a conclusion that the answer is more accurate.</p>
+   <h3>A corrected warm answer</h3><blockquote><p>We’d love to see you at the Harbour AI Reading Circle online on 14 October at 6 pm Sydney time. The discussion lasts 45 minutes and registration is required. Recording availability has not been confirmed.</p></blockquote><p>This editorial revision keeps the tone while restoring the facts. Compare it against every requirement in the source card. For numerical evaluation, the <a href='/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates'>accuracy and recall example</a> shows another way a single attractive score can conceal failure.</p>
    <h2 id="real-comparison">Use the distinction in a real comparison</h2>
    <ol>
     <li>Choose a permitted, low-stakes task with source material and clear requirements. Do not upload private material merely to compare tools.</li>
@@ -73,7 +75,7 @@ export default function ArticlePage() {
    <p>Bring a permitted example and ask: “Do we disagree about whether this is correct, or about how it is written?” Choose an event whose topic and level fit, and check online or in-person details. The fictional event above is not an MLAI listing or a registration invitation.</p>
    <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
    <h2 id="scope">Source and limits</h2>
-   <p>The linked paper abstract was checked on 9 September 2026. The answer pair, checklist and record are editorial teaching material, not a new experiment or evidence about named current products. Prior tool and book endorsements were removed to keep the issue focused.</p>
+   <p>The abstract was checked on 9 September and the recruitment, model assignment and procedure sections on 29 October 2026. The answer pair, checklist and record are editorial teaching material, not a new experiment or evidence about named current products. Prior tool and book endorsements were removed to keep the issue focused.</p>
    <ArticleFAQ items={faqItems} />
   </article>
  </div>

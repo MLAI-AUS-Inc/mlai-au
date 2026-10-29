@@ -85,7 +85,17 @@ function lineNumberForIndex(source: string, index: number) {
 }
 
 function isValidInternalRoute(route: string) {
-  return VALID_STATIC_ROUTES.has(route) || VALID_ARTICLE_ROUTES.has(route) || VALID_PUBLIC_FILES.has(route);
+  // A fragment identifies a section within a valid route, not a separate page.
+  // Keep the exact pathname check: aliases and invented URLs still fail.
+  const destination = new URL(route, "https://mlai.au");
+  if (destination.origin !== "https://mlai.au") return false;
+  const pathname = destination.pathname;
+  if (VALID_ARTICLE_ROUTES.has(pathname) && destination.hash) {
+    const source = readFileSync(path.join(ARTICLE_CONTENT_ROOT, pathname.slice("/articles/".length) + ".tsx"), "utf8");
+    const ids = [...source.matchAll(/\bid\s*=\s*["']([^"']+)["']/g)].map(match => match[1]);
+    if (!ids.includes(decodeURIComponent(destination.hash.slice(1)))) return false;
+  }
+  return VALID_STATIC_ROUTES.has(pathname) || VALID_ARTICLE_ROUTES.has(pathname) || VALID_PUBLIC_FILES.has(pathname);
 }
 
 // A static destination must exist; a /downloads prefix alone proves nothing.

@@ -1,0 +1,98 @@
+MLAI business AI commissioning record — 2026-09-10
+Article: https://mlai.au/articles/featured/how-to-build-ai-for-real-business-problems
+Editorial scoping aid, not a contract, financial forecast or legal/compliance advice.
+Use non-confidential facts. The completed example is entirely fictional: no client results, MLAI price or supplier quote.
+
+BLANK BRIEF
+AI workflow brief — replace prompts with your own non-confidential facts
+Business outcome and baseline:
+User and accountable owner:
+Trigger and expected monthly volume:
+Permitted inputs and data owner:
+Required output and human approval:
+Allowed actions / explicitly prohibited actions:
+Existing systems and available test environment:
+Acceptance cases and expected results:
+Critical stop conditions and manual fallback:
+Setup budget / ongoing cost ceiling / uncertainty:
+Deliverables, access ownership and support boundary:
+Version, change approval and review record:
+Decision date and unresolved questions:
+
+COMPLETED FICTIONAL BRIEF — NO PURCHASE OR RELEASE APPROVED
+
+1. Business outcome and baseline:
+Reduce effort preparing routine enquiry replies without unsupported commitments. Fictional one-month baseline: 120 enquiries, 10 active minutes each including checking and corrections; 20 hours total. Twelve cases needed corrections within that total. No time saving has been observed.
+
+2. User and accountable owner:
+One enquiry coordinator uses the prototype. The operations manager owns scope, output review, pause decisions and acceptance; the business owner decides whether spending is justified. A backup reviewer must be named before any trial.
+
+3. Trigger and expected monthly volume:
+A coordinator deliberately selects a synthetic enquiry in the test queue. Planning volume is 120 tasks/month, not a promise that future demand is constant. No unattended inbox monitoring.
+
+4. Permitted inputs and data owner:
+Invented enquiries and a manager-approved public policy document, labelled Policy v1. The manager confirms permitted material. No customer inbox, customer records, credentials or confidential pricing enters this prototype.
+
+5. Required output and human approval:
+An internal suggested category, proposed reply and source passage, or an unresolved reason. The coordinator checks the exact draft. Nothing is sent; any later sending integration is a separate scope and approval decision.
+
+6. Allowed actions / explicitly prohibited actions:
+Read the permitted test materials and save an internal draft. Sending messages, refunds, booking changes, customer-record updates and price commitments are unavailable to the prototype's tools and service account, not merely forbidden by a prompt.
+
+7. Existing systems and available test environment:
+The existing shared inbox remains untouched. Use an isolated test queue, synthetic account identities and a restricted draft store. Provider, plan, retention and access controls are unresolved until due diligence; no live connector is approved.
+
+8. Acceptance cases and expected results:
+C-01: supported routine draft; C-02: missing/conflicting policy escalates; C-03: malicious instructions grant no authority; C-04: other-account access denied; C-05: timeout/retry preserves one recoverable case; C-06: revoked access rejected. Keep some cases out of development. Expected behaviour is specified; actual results are NOT RUN.
+
+9. Critical stop conditions and manual fallback:
+Pause on unauthorised access, an external action, an unsupported consequential commitment or lost work. Log failures, fix and retest before resuming. The manager can disable new tasks; the coordinator continues the unchanged manual inbox process.
+
+10. Setup budget / ongoing cost ceiling / uncertainty:
+Illustrative planning ceiling: A$3,600 external setup plus 10 internal setup hours at A$45/hour, not an authorised purchase. Allow A$100/month additional cash costs and two internal support hours. Actual provider/support prices are unknown; require a scoped quote and stop/requote before exceeding agreed limits.
+
+11. Deliverables, access ownership and support boundary:
+Request source/configuration, dependency and account inventory, test inputs/results, failure/usage logs and an owner walkthrough. Business-controlled accounts and licences must be agreed in real terms. The example assumes one handover session; ongoing monitoring, incident cover and new integrations are not silently included.
+
+12. Version, change approval and review record:
+Label the prototype, prompts, model/settings, Policy v1 and test cases in each review record. The operations manager approves material changes and requires affected cases to be rerun. A later send action needs a new scope and approval tied to its exact recipient/content/version.
+
+13. Decision date and unresolved questions:
+Review before accepting a build proposal, after the template comparison, access review and actual quote are available. Date: to be agreed. Decision: NOT APPROVED. The cash-saving case is negative under these assumptions; do not commission on a payroll-saving promise. No supplier, paid discovery, trial or release is authorised by this example.
+
+ILLUSTRATIVE COST RECORD — NOT A QUOTE; CONSISTENT AUD/GST BASIS
+Discovery and acceptance plan: A$600. Evidence requested: A checked scope, data/access questions and agreed test plan; no build approval implied.
+Draft-only prototype and test evidence: A$2,400. Evidence requested: A test environment, restricted actions, versioned outputs and a complete failure log.
+Owner walkthrough and handover: A$600. Evidence requested: Pause/recovery/access-removal rehearsal, source/configuration and support boundaries.
+External setup cash: A$3,600. Internal setup: 10 x A$45 = A$450. Total economic setup: A$4,050.
+Baseline: 120 x 10 / 60 = 20 human hours/month, including existing checking and corrections.
+Unmeasured assisted assumption: 120 x 6 / 60 = 12 hours/month, including review, correction and average manual fallback.
+Additional internal maintenance: 2 hours/month. Net capacity release: 6 hours/month.
+Net capacity value after A$100 running cash costs: A$170/month. This is not profit.
+Avoidable labour spending: A$0. Monthly cash change: −A$100. No positive cash payback under these assumptions.
+Additional revenue, taxes, financing, seasonal changes and unmeasured error benefits are excluded. Do not count internal hours again inside external cash costs.
+Decision: NOT APPROVED. Compare a clearer policy/template, obtain actual quotes and measure the unmet need before committing. Six released salaried hours do not fund the setup invoice.
+
+PROPOSED HANDOVER — NOT YET PERFORMED
+Builder: Demonstrate C-01 to C-06 on the labelled version, including failures and held-out cases. Supply actual evidence; no screenshot alone proves access enforcement.
+Operations manager and backup: Rehearse pausing new tasks, finding unresolved work, restoring the manual process and removing the builder's test access. Record who can do each action without the builder.
+Business owner: Review quality, whole-task effort, actual cost, unresolved risks and support terms. Record accept / change scope / reject; do not treat a paid invoice or delivered code as acceptance.
+
+ACCEPTANCE RECORD TO COMPLETE AFTER ACTUAL TESTING
+Prototype / model / prompt / policy / case-set versions:
+Case ID / expected result / actual result and evidence reference:
+Reviewer / date / pass, fail, unresolved or not run:
+Critical error / exception / review and fallback effort:
+Actual setup and running costs; comparison with agreed limits:
+Pause / recovery / access-removal demonstration evidence:
+Unresolved issues, support boundaries and authorised decision:
+A small test set does not establish general reliability. Keep failed cases. This file supplies no executed test evidence.
+
+Optional enquiry: https://mlai.au/mlai-studio/start-project
+Request a discussion of fit; no promise of acceptance, free assessment, availability or savings.
+
+SOURCE ROLES — checked 10 September 2026
+ACSC: small-business data, output and supplier-risk controls; not support for the example's prices or savings.
+https://www.cyber.gov.au/business-government/secure-design/artificial-intelligence/artificial-intelligence-for-small-business
+OAIC: commercial-AI privacy due diligence and publicly available generative-AI cautions; not a determination of this project's compliance.
+https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/guidance-on-privacy-and-the-use-of-commercially-available-ai-products

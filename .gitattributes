@@ -1,1 +1,4 @@
 drafts/article-recovery-20261003/source/public/downloads/*.pdf binary
+
+# Downloadable documents must be reviewed as binary assets.
+public/downloads/*.pdf binary

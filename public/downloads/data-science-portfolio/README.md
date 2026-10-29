@@ -138,3 +138,9 @@ https://mlai.au/articles/featured/a-practical-guide-on-how-to-create-an-artifici
 If you can independently deliver and explain a scoped project, consider applying:
 https://mlai.au/mlai-studio#apply
 An application is not guaranteed paid work, job readiness or employment.
+
+## Python and SQL companion (29 October 2026)
+
+Download `forecast_python_sql.py` beside the same `synthetic-workload.json`, then run `python3 forecast_python_sql.py`. Python 3.9+ and its standard-library SQLite are sufficient; no package installation, network or accounts are used. The 28/14 split, fixed-origin weekly model and baseline reproduce the JavaScript fixture predictions. SQLite joins one actual and one prediction per date and calculates MAE: baseline 1.5, candidate 6.0 requests/day. This adds Python and SQL practice, not independent validation.
+
+Explain why date primary keys matter. Modify held-out targets and verify predictions remain fixed. Add a duplicate date and verify it fails rather than inflating the join. All data remain synthetic; the original failed-model conclusion and operational limitations apply.

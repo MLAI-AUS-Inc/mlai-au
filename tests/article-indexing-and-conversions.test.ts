@@ -33,8 +33,10 @@ import { calculatePrimaryRound } from "../app/components/articles/UnicornValuati
 import {
   SYDNEY_AI_TECH_EVENTS,
   SYDNEY_EVENT_DATASET_VERIFIED_AT,
+  SYDNEY_ORGANISER_RECHECKS,
+  currentSydneySessions,
 } from "../app/lib/sydney-ai-tech-events";
-import { rankSydneyEvents } from "../app/components/articles/SydneyEventFitFinder";
+import { selectSydneySessions } from "../app/components/articles/SydneyEventFitFinder";
 
 const SALARY_SLUG = "featured/how-much-do-data-scientists-make";
 const ISSUE_NINE_SLUG =
@@ -102,7 +104,7 @@ describe("article editorial containment", () => {
       '"The stale coding-tools list has been withdrawn."',
     );
     expect(routeSource).toContain(
-      "The protocol is being registered before",
+      "The protocol must be recorded before",
     );
   });
 });
@@ -124,22 +126,22 @@ describe("urgent article conversion mapping", () => {
     for (const pathName of urgentPaths) {
       expect(BASE_ARTICLE_SEO_CONFIG[pathName]?.conversion?.primary).toBeTruthy();
       expect(BASE_ARTICLE_SEO_CONFIG[pathName]?.conversion?.version).toMatch(
-        /^(urgent-v1|unicorn-evidence-v1|sydney-event-finder-v1|article-pilot-2026-09|simple-ai-2026-10-06)$/,
+        /^(urgent-v1|unicorn-literacy-v2|sydney-event-journey-v3|entrepreneur-learning-v3|agi-evidence-v2|simple-ai-2026-10-06)$/,
       );
     }
   });
 
-  test("the missing origin/main investment pair is preconfigured for the branch reconciliation", () => {
+  test("investment diligence and founder funding keep distinct reader-fit paths", () => {
     expect(
       BASE_ARTICLE_SEO_CONFIG[
         "/articles/featured/invest-in-business-startups-before-you-commit"
       ]?.conversion?.primary,
-    ).toBe("vibe-raising");
+    ).toBe("none");
     expect(
       BASE_ARTICLE_SEO_CONFIG[
         "/articles/featured/startup-company-investment-for-ai-founders"
       ]?.conversion?.primary,
-    ).toBe("vibe-raising");
+    ).toBe("events");
   });
 });
 
@@ -147,7 +149,7 @@ describe("beginner AI canonical rebuild", () => {
   test("retains one indexable canonical and retires the query duplicate", () => {
     expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG]).toBeDefined();
     expect(isArticleIndexable(ARTICLE_REGISTRY[BEGINNER_AI_SLUG])).toBeTrue();
-    expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG].dateModified).toBe("2026-10-06");
+    expect(ARTICLE_REGISTRY[BEGINNER_AI_SLUG].dateModified).toBe("2026-10-29");
     expect(ARTICLE_REGISTRY[BEGINNER_AI_DUPLICATE_SLUG]).toBeUndefined();
 
     const routesSource = readFileSync(
@@ -186,12 +188,12 @@ describe("beginner AI canonical rebuild", () => {
 describe("first-founder canonical rebuild", () => {
   test("retires the weaker startup query page into the entrepreneur canonical", () => {
     expect(ARTICLE_REGISTRY[ENTREPRENEUR_SLUG]).toBeDefined();
-    expect(ARTICLE_REGISTRY[ENTREPRENEUR_SLUG].dateModified).toBe("2026-07-28");
+    expect(ARTICLE_REGISTRY[ENTREPRENEUR_SLUG].dateModified).toBe("2026-10-29");
     expect(ARTICLE_REGISTRY[STARTUP_DUPLICATE_SLUG]).toBeUndefined();
     expect(
       BASE_ARTICLE_SEO_CONFIG[`/articles/${ENTREPRENEUR_SLUG}`]?.conversion
         ?.primary,
-    ).toBe("founder-tools");
+    ).toBe("events");
 
     const routesSource = readFileSync(
       path.join(process.cwd(), "app", "routes.ts"),
@@ -255,14 +257,14 @@ describe("AGI canonical rebuild", () => {
   test("retires the acronym duplicate into the evidence-guide canonical", () => {
     expect(ARTICLE_REGISTRY[AGI_SLUG]).toBeDefined();
     expect(isArticleIndexable(ARTICLE_REGISTRY[AGI_SLUG])).toBeTrue();
-    expect(ARTICLE_REGISTRY[AGI_SLUG].dateModified).toBe("2026-07-28");
+    expect(ARTICLE_REGISTRY[AGI_SLUG].dateModified).toBe("2026-10-29");
     expect(ARTICLE_REGISTRY[AGI_DUPLICATE_SLUG]).toBeUndefined();
     expect(
       BASE_ARTICLE_SEO_CONFIG[`/articles/${AGI_SLUG}`]?.conversion?.primary,
     ).toBe("events");
     expect(
       BASE_ARTICLE_SEO_CONFIG[`/articles/${AGI_SLUG}`]?.conversion?.secondary,
-    ).toBe("studio-project");
+    ).toBeUndefined();
 
     const routesSource = readFileSync(
       path.join(process.cwd(), "app", "routes.ts"),
@@ -307,7 +309,7 @@ describe("Australian accelerator canonical rebuild", () => {
 
     expect(canonicalArticle).toBeDefined();
     expect(isArticleIndexable(canonicalArticle)).toBeTrue();
-    expect(canonicalArticle.dateModified).toBe("2026-09-15");
+    expect(canonicalArticle.dateModified).toBe("2026-10-29");
     expect(singaporeArticle).toBeDefined();
     expect(singaporeArticle.indexing).toBe("noindex");
     expect(singaporeArticle.publicationStatus).toBe("under-review");
@@ -319,8 +321,8 @@ describe("Australian accelerator canonical rebuild", () => {
     const conversion =
       BASE_ARTICLE_SEO_CONFIG[`/articles/${ACCELERATOR_SLUG}`]?.conversion;
     expect(conversion?.primary).toBe("events");
-    expect(conversion?.secondary).toBeUndefined();
-    expect(conversion?.version).toBe("article-pilot-2026-09");
+    expect(conversion?.secondary).toBe("founder-tools");
+    expect(conversion?.version).toBe("accelerator-evidence-journey-v3");
   });
 
   test("ships seven uniquely sourced and currently verified program rows", () => {
@@ -363,18 +365,18 @@ describe("Australian accelerator canonical rebuild", () => {
 });
 
 describe("Australian unicorn evidence-guide rebuild", () => {
-  test("keeps the canonical indexable with fundraising and event conversion paths", () => {
+  test("keeps the canonical indexable with a community learning event path", () => {
     const article = ARTICLE_REGISTRY[UNICORN_SLUG];
 
     expect(article).toBeDefined();
     expect(isArticleIndexable(article)).toBeTrue();
-    expect(article.dateModified).toBe("2026-07-29");
+    expect(article.dateModified).toBe("2026-10-29");
 
     const conversion =
       BASE_ARTICLE_SEO_CONFIG[`/articles/${UNICORN_SLUG}`]?.conversion;
-    expect(conversion?.primary).toBe("vibe-raising");
-    expect(conversion?.secondary).toBe("events");
-    expect(conversion?.version).toBe("unicorn-evidence-v1");
+    expect(conversion?.primary).toBe("events");
+    expect(conversion?.secondary).toBeUndefined();
+    expect(conversion?.version).toBe("unicorn-literacy-v2");
   });
 
   test("publishes at least five explicit US-dollar valuation events with status confidence", () => {
@@ -427,7 +429,7 @@ describe("Australian unicorn evidence-guide rebuild", () => {
     expect(articleSource).toContain(
       "Method, changelog, limitations and disclosure",
     );
-    expect(articleSource).toContain("Current editorial gate");
+    expect(articleSource).toContain("Review limits");
     expect(articleSource).not.toContain('"@type": "FAQPage"');
     expect(articleSource).not.toContain("faqStructuredData");
     expect(articleSource).not.toContain("Download now");
@@ -459,37 +461,34 @@ describe("Sydney AI and tech event-finder rebuild", () => {
 
     expect(article).toBeDefined();
     expect(isArticleIndexable(article)).toBeTrue();
-    expect(article.dateModified).toBe("2026-07-29");
+    expect(article.dateModified).toBe("2026-10-29");
 
     const conversion =
       BASE_ARTICLE_SEO_CONFIG[`/articles/${SYDNEY_MEETUP_SLUG}`]?.conversion;
     expect(conversion?.primary).toBe("events");
-    expect(conversion?.version).toBe("sydney-event-finder-v1");
+    expect(conversion?.version).toBe("sydney-event-journey-v3");
   });
 
-  test("publishes eight unique organiser-sourced rows with conservative activity labels", () => {
-    expect(SYDNEY_AI_TECH_EVENTS.length).toBeGreaterThanOrEqual(8);
-    expect(
-      new Set(SYDNEY_AI_TECH_EVENTS.map((event) => event.name)).size,
-    ).toBe(SYDNEY_AI_TECH_EVENTS.length);
-
-    for (const event of SYDNEY_AI_TECH_EVENTS) {
-      expect(event.lastVerified).toBe(SYDNEY_EVENT_DATASET_VERIFIED_AT);
-      expect(event.sourceUrl.startsWith("https://")).toBeTrue();
-      expect(event.audience.length).toBeGreaterThan(40);
-      expect(event.nextOrLatestActivity.length).toBeGreaterThan(40);
-      expect(event.accessibility.length).toBeGreaterThan(40);
+  test("publishes eight unique organiser sources with separately dated session evidence", () => {
+    expect(SYDNEY_AI_TECH_EVENTS).toHaveLength(8);
+    expect(new Set(SYDNEY_AI_TECH_EVENTS.map(event => event.name)).size).toBe(8);
+    expect(SYDNEY_ORGANISER_RECHECKS).toHaveLength(8);
+    for (const check of SYDNEY_ORGANISER_RECHECKS) expect(check.last_verified_at).toBe(SYDNEY_EVENT_DATASET_VERIFIED_AT);
+    for (const group of SYDNEY_AI_TECH_EVENTS) {
+      expect(group.sourceUrl.startsWith("https://")).toBeTrue();
+      expect(group.audience.length).toBeGreaterThan(40);
+      expect(group.sessions.length).toBeGreaterThan(0);
+      for (const session of group.sessions) {
+        expect(session.sourceUrl.startsWith("https://")).toBeTrue();
+        expect(["2026-09-10", "2026-10-29"]).toContain(session.checkedAt.slice(0, 10));
+        expect(Date.parse(session.reviewAfter)).toBeGreaterThan(Date.parse(session.checkedAt));
+        expect(session.admission.length).toBeGreaterThan(40);
+      }
     }
-
-    expect(
-      SYDNEY_AI_TECH_EVENTS.filter(
-        (event) => event.activityStatus === "upcoming",
-      ).map((event) => event.name),
-    ).toEqual([
-      "Cursor Sydney",
-      "Proof to Production Australia — AI on Tap",
-      "AI Week Sydney",
-    ]);
+    const current = currentSydneySessions(Date.parse("2026-10-29T11:06:00Z")).map(event => event.id);
+    expect(current).not.toContain("cursor-august");
+    expect(current).toContain("sydney-ai-october");
+    expect(current).toContain("sydney-hackathon");
   });
 
   test("ships the directory and event-fit worksheet without search-query filler or duplicate FAQ schema", () => {
@@ -508,10 +507,10 @@ describe("Sydney AI and tech event-finder rebuild", () => {
     expect(articleSource).toContain("SYDNEY_AI_TECH_EVENTS.map");
     expect(articleSource).toContain("<SydneyEventFitFinder />");
     expect(articleSource).toContain(
-      "Method, changelog, limitations and disclosure",
+      "Method, changes and limitations",
     );
-    expect(articleSource).toContain("Current editorial gate");
-    expect(articleSource).toContain('to="/events"');
+    expect(articleSource).toContain("No interviews, testimonials, venue access tests or reader outcomes are claimed");
+    expect(articleSource).toContain("<ArticleConversionCTA");
     expect(articleSource).toContain('to="/contact"');
     expect(articleSource.toLowerCase()).not.toContain("singles");
     expect(articleSource.toLowerCase()).not.toContain("dating");
@@ -519,16 +518,10 @@ describe("Sydney AI and tech event-finder rebuild", () => {
     expect(articleSource).not.toContain("faqStructuredData");
   });
 
-  test("ranks a future web-builder meetup first for an in-person web goal", () => {
-    const [match] = rankSydneyEvents({
-      goal: "web",
-      format: "in-person",
-      cost: "either",
-    });
-
-    expect(match.event.name).toBe("Cursor Sydney");
-    expect(match.reasons).toContain("Matches: Build for the web");
-    expect(match.reasons).toContain("Future date verified");
+  test("current filters exclude past web meetups and retain the free online research seminar", () => {
+    const now = Date.parse("2026-10-29T11:06:00Z");
+    expect(selectSydneySessions({ now, goal: "web", preference: "sydney" })).toEqual([]);
+    expect(selectSydneySessions({ now, goal: "research", preference: "online", cost: "free" }).map(event => event.id)).toEqual(["sydney-ai-october"]);
   });
 });
 
@@ -539,7 +532,7 @@ describe("coding-assistant benchmark containment and preregistration", () => {
     expect(article).toBeDefined();
     expect(article.indexing).toBe("noindex");
     expect(article.publicationStatus).toBe("under-review");
-    expect(article.dateModified).toBe("2026-07-29");
+    expect(article.dateModified).toBe("2026-10-29");
     expect(isArticleIndexable(article)).toBeFalse();
     expect(ORDERED_ARTICLE_ROUTE_SLUGS).not.toContain(STALE_CODING_SLUG);
     expect(

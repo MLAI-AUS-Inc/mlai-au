@@ -93,7 +93,7 @@ test('metadata, buyer CTA, primary evidence and table regions remain aligned', (
  const slug = 'featured/how-to-get-started-with-ai-2026';
  const entry = ARTICLE_REGISTRY[slug];
  for (const key of ['title', 'description', 'author', 'imageAlt'] as const) expect(entry[key]).toBe(articleMeta[key]);
- expect(entry.date).toBe('2025-02-10'); expect(entry.dateModified).toBe(articleMeta.dateModified); expect(articleMeta.dateModified).toBe('2026-09-11');
+ expect(entry.date).toBe('2025-02-10'); expect(entry.dateModified).toBe(articleMeta.dateModified); expect(articleMeta.dateModified).toBe('2026-10-29');
  const c = BASE_ARTICLE_SEO_CONFIG['/articles/' + slug].conversion;
  expect(c?.primary).toBe('studio-project'); expect(c?.primaryIcp).toBe('SMB'); expect(c?.version).toBe('first-workflow-cost-v3');
  const html = renderToStaticMarkup(<MemoryRouter><Article /></MemoryRouter>);
