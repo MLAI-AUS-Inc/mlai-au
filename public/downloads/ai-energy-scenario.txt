@@ -1,0 +1,40 @@
+AI ENERGY SCENARIO — editable worksheet
+All prefilled numbers are hypothetical, not a provider measurement.
+
+INPUTS
+Source/version/date: invented teaching scenario
+Lower electricity estimate: 0.5 Wh/request
+Upper electricity estimate: 1.5 Wh/request
+Initial requests: 10000
+Retries: 2000
+Do initial requests already include retries? NO
+Counted requests: 10000 + 2000 = 12000
+Does Wh/request already include facility overhead? YES (assumed)
+Training/manufacturing included? NO
+Accepted-task definition and count: UNKNOWN
+
+CALCULATION
+Counted requests = initial requests if retries included, otherwise initial + retries.
+Lower kWh = counted requests * lower Wh / 1000 = 6
+Upper kWh = counted requests * upper Wh / 1000 = 18
+If 10000 already includes retries, range = 5–15 kWh.
+Do not count retries or included overhead twice. This range is not a confidence interval.
+
+SEPARATE UNRESOLVED QUANTITIES
+Water: UNKNOWN. Need compatible water factor, location, period, boundary and withdrawal/consumption definition.
+Emissions: UNKNOWN. Need compatible emissions factor, location, period and accounting boundary.
+No missing factor becomes zero. No electricity range establishes accepted-answer quality.
+
+YOUR SCENARIO
+Source, version, date:
+Model/workload/input-output tokens:
+Measured/disclosed/inferred/assumed inputs:
+Low/high Wh per request:
+Initial count / retry count / already included?:
+Overhead included?:
+Counted requests and kWh arithmetic:
+Included/excluded lifecycle stages:
+Accepted-task count / failures:
+Water factor and scope, or unknown:
+Emissions factor and scope, or unknown:
+Sensitivity / missing evidence / next check:

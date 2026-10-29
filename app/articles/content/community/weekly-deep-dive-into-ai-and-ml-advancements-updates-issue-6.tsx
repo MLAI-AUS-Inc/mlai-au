@@ -13,7 +13,7 @@ export const articleMeta = {
   title: "AI Bits #6: Test the customer problem before scaling outreach",
   description: "Test an AI startup's customer problem with interview prompts, a completed fictional discovery record and an unrun experiment plan. Download the worksheet and discuss your next question.",
   datePublished: "2026-02-25",
-  dateModified: "2026-09-10",
+  dateModified: "2026-10-29",
 };
 export const summaryHighlights = {
   heading: "From an AI idea to a testable customer problem",
@@ -29,6 +29,7 @@ export default function ArticlePage() {
     <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "AI Bits #6", current: true }]} title={articleMeta.title} titleHighlight="Test the customer problem" headerBgColor="cyan" summary={summaryHighlights} />
     <div data-cf-article-body className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-indigo">
       <p><strong>Before scaling outreach for an AI product, establish whose problem you are testing and what would change your mind.</strong> This issue offers a conversation guide and a decision log you can use before investing in another feature. Neither compliments nor a clever demo establish demand.</p>
+<aside aria-label="Six customer-discovery questions" className="my-6 rounded-xl border border-slate-300 bg-slate-50 p-5"><p><strong>Six customer-discovery questions</strong></p><ol>{DISCOVERY_QUESTIONS.map(([question]) => <li key={question}>{question}</li>)}</ol><p><a href='/downloads/customer-problem-discovery.txt' download>Download the questions and decision log</a> · <a href='#worked-example'>Read the three contrasting outcomes</a></p></aside>
       <aside aria-label="Editorial correction" className="rounded-xl border border-amber-300 bg-amber-50 p-5">
         <p><strong>Correction — 9 September 2026.</strong> The original February issue misdescribed the research method and attributed sales frameworks to the paper without sufficient verification. Those claims and unsupported acquisition recipes have been removed. The research summary below is limited to the abstract; the practical exercise is editorial guidance, not a result from the study.</p>
       </aside>
@@ -36,7 +37,7 @@ export default function ArticlePage() {
       <p>This is for Australian AI/startup-curious founders deciding whether an idea addresses a worthwhile problem. The immediate outcome is a reasoned decision to investigate, change scope or stop—not a sales funnel or a contractor application.</p>
       <ArticleTocPlaceholder />
 
-      <h2 id="research" className="scroll-mt-28">What the paper actually examines</h2>
+      <details className="my-6 rounded-xl border border-gray-300 p-4"><summary className="cursor-pointer font-semibold">Historical research and correction: what the sales paper examines</summary><h2 id="research" className="scroll-mt-28">What the paper actually examines</h2>
       <p>Viktor Jarotschkin, Mostofa Wahid Soykoth and Nawar N. Chaker's 2025 paper, <a href="https://doi.org/10.1016/j.jbusres.2025.115383">Artificial intelligence in sales research: Identifying emergent themes and looking forward</a>, appears in the Journal of Business Research. The source check below uses the <a href="https://www.sciencedirect.com/science/article/abs/pii/S0148296325002061">publisher-indexed abstract</a>, checked on 10 September 2026; full text was not independently reviewed.</p>
       <p>On small screens, scroll the tables sideways. Keyboard users can focus each labelled table region and use the arrow keys.</p>
       <div role="region" aria-label="Sales research claim boundaries" tabIndex={0} className="max-w-full overflow-x-auto"><table className="min-w-[38rem]">
@@ -50,6 +51,7 @@ export default function ArticlePage() {
       </table></div>
       <p>Neither a universal build-versus-sell time allocation nor a guaranteed acquisition rate is established here. The literature review does not validate the exercise.</p>
 
+      </details>
       <h2 id="hypothesis" className="scroll-mt-28">1. Write a problem hypothesis, not a product pitch</h2>
       <p>Choose one role, one situation and one suspected difficulty. “Businesses need AI” is too broad to test. State what someone does today and why changing that work might matter. Write down a competing explanation before speaking to anyone.</p>
       <p><strong>Illustrative example, not customer research:</strong> “An owner of a small service business spends time checking whether enquiries received a reply.” A competing explanation is that the existing inbox already handles this adequately; the real issue might be unclear responsibility rather than missing software. Do not assume an AI agent is the answer.</p>
@@ -104,6 +106,7 @@ export default function ArticlePage() {
       <p>If you want peers to challenge your assumptions, bring the non-confidential problem statement and one unresolved question to a suitable community event. Ask whether someone wants to discuss it; attending is not consent to a sales sequence. Peers can help improve the test, but their feedback does not replace evidence from your intended customers.</p>
       <ArticleConversionCTA articleSlug={SLUG} config={BASE_ARTICLE_SEO_CONFIG["/articles/" + SLUG].conversion!} events={[]} placement="article-inline" />
       <p>Only once a problem warrants an offer, continue with the <Link to="/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026">first-customer conversation and scoped-offer guide</Link>. That is a later decision, not a reason to ignore contrary evidence here. No worksheet is automatically shared with event organisers or attendees.</p>
+      <p>Once the problem and offer are clear, use the <Link to='/articles/featured/go-to-market-for-startups'>GTM channel-test worksheet</Link> to compare a permitted acquisition route. Keep discovery evidence separate from channel conversion.</p>
       <p className="text-sm">Original publication: 25 February 2026. Substantive correction: 9 September; worked-example update: 10 September 2026. Original contributor credits remain in the publication record. Codex assisted the fictional teaching material and local checks; no actual customer research or new independent expert review is claimed.</p>
     </div>
   </div>;

@@ -15,7 +15,7 @@ export const CATEGORY = "featured";
 export const SLUG =
   "what-is-general-artificial-intelligence-and-why-it-matters";
 export const DATE_PUBLISHED = "2026-04-12";
-export const DATE_MODIFIED = "2026-07-28";
+export const DATE_MODIFIED = "2026-10-29";
 export const DESCRIPTION =
   "A plain-English guide to artificial general intelligence, how AGI definitions differ, and an interactive worksheet for testing AGI claims against real evidence.";
 const HERO_IMAGE =
@@ -326,7 +326,7 @@ export default function ArticleContent() {
         <p>
           ARC-AGI is a useful example because its designers deliberately focus
           on skill acquisition and novel problems rather than accumulated
-          knowledge. The 2026 ARC-AGI-3 technical report introduces interactive
+          knowledge. The ARC-AGI-3 technical report dated 22 April 2026 introduces interactive
           environments that require exploration, goal inference and planning.
           It reports that humans in its study solved all tested environments
           while evaluated frontier systems scored below one per cent as of
@@ -335,6 +335,14 @@ export default function ArticleContent() {
           intelligence.
         </p>
 
+        <h3>A completed claim-reading example</h3>
+        <p><strong>Claim under review:</strong> “A low ARC-AGI-3 result proves AI cannot be generally intelligent.” This is a hypothetical overstatement, not a quotation from the report. The following is an editorial application of our unvalidated reading framework, not a new benchmark run.</p>
+        <dl>
+          <dt><strong>Source and protocol</strong></dt><dd><a href="https://arcprize.org/media/ARC_AGI_3_Technical_Report.pdf">ARC-AGI-3 technical report, 22 April 2026</a>, re-opened 29 October. Its abstract dates the frontier-system observation to March; it studies adaptation in interactive environments.</dd>
+          <dt><strong>What the source supports</strong></dt><dd>A bounded comparison under the report’s task construction, human baseline and action-efficiency scoring. A result belongs to those evaluated systems and conditions.</dd>
+          <dt><strong>What is missing from the broad claim</strong></dt><dd>An agreed threshold covering other domains, later system versions, comparable budgets and independent replication of this interpretation. We have not run the benchmark or evaluated the current leaderboard.</dd>
+          <dt><strong>Conclusion</strong></dt><dd>Reject the universal conclusion. Retain the dated benchmark observation and inspect the protocol before comparing a later result. No checklist total can turn it into proof about all possible AGI definitions.</dd>
+        </dl>
         <h3>Minimum questions for any benchmark headline</h3>
         <ol>
           <li>
@@ -363,9 +371,9 @@ export default function ArticleContent() {
           </li>
         </ol>
 
-        <h2>What can be said responsibly in July 2026?</h2>
+        <h2>Read dated evidence without turning it into a current verdict</h2>
         <p>
-          The International AI Safety Report 2026 says general-purpose AI
+          The International AI Safety Report executive summary published 3 February 2026 says general-purpose AI
           capabilities have continued to improve, including through techniques
           applied after initial training. It also describes several plausible
           paths to 2030: progress could slow, continue at recent rates or
@@ -468,10 +476,9 @@ export default function ArticleContent() {
               disclosure completeness, not intelligence.
             </li>
             <li>
-              <strong className="text-white">Review gate:</strong> MLAI has not
+              <strong className="text-white">Review limits:</strong> MLAI has not
               yet run the planned Australian expert roundtable on contested AGI
-              definitions. A named human subject reviewer is still required
-              before this article is declared final or scored 80+.
+              definitions. No named independent subject review is claimed.
             </li>
             <li>
               <strong className="text-white">AI assistance:</strong> this July
@@ -482,10 +489,18 @@ export default function ArticleContent() {
           </ul>
         </aside>
 
+        <h2>Turn the claim into a discussion question</h2>
+        <p>
+          Pick one public capability claim and note its definition, test
+          conditions and missing evidence. Bring that question to a relevant
+          <Link to="/events">MLAI event</Link> rather than assuming the word AGI identifies a product you
+          should buy. Check the listing: not every session covers AGI.
+        </p>
+
         <ArticleReferences
           references={[...REFERENCES]}
           heading="Primary definitions and evidence"
-          description="Sources checked for this 28 July 2026 revision."
+          description="Definitions originally checked 28 July; ARC-AGI-3 report and 2026 safety-report summary rechecked 29 October. Their dated findings remain historical."
           previewCount={4}
         />
 

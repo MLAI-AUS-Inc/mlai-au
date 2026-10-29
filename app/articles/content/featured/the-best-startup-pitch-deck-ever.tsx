@@ -2,14 +2,17 @@ import { Home } from 'lucide-react'
 import { Link } from 'react-router'
 import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
 import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import ArticleConversionCTA from '~/components/articles/ArticleConversionCTA'
+import { BASE_ARTICLE_SEO_CONFIG } from '~/articles/seo-config'
 import { ArticleTocPlaceholder } from '~/components/articles/ArticleTocPlaceholder'
+import { ArticleEventPreference } from '~/components/articles/ArticleEventPreference'
 import { DECK_PROVENANCE, DECK_REVIEW_STATUS, DECK_PILOT_ROWS, DECK_SETUP_MINUTES, DECK_CORRECTIONS, DECK_CLAIMS, DECK_FIELDS, DECK_READ_THROUGH, summariseDeckPilot } from '~/lib/pitch-deck-evidence'
 
 export const useCustomHeader = true
 export const CATEGORY = 'featured'
 export const SLUG = 'the-best-startup-pitch-deck-ever'
 export const DATE_PUBLISHED = '2025-11-23'
-export const DATE_MODIFIED = '2026-09-15'
+export const DATE_MODIFIED = '2026-10-29'
 export const DESCRIPTION = 'Review startup deck claims using founder-published examples, twenty synthetic timing records, scripted corrections and a completed downloadable evidence worksheet.'
 export const FEATURED_FOCUS = 'funding'
 const TITLE = 'A startup pitch deck you can defend: an evidence-first review'
@@ -37,6 +40,18 @@ export default function ArticlePage() {
   <div className="prose prose-lg prose-slate max-w-none">
    <p>Searching for the “best startup pitch deck ever” can lead you to copy a successful company’s slides without knowing what evidence or relationships sat behind them. A template cannot prove demand for your business. This guide helps you produce a defensible draft and a focused feedback question; it does not establish a winning deck or offer financial advice.</p>
    <p>Check claims in a document that may be forwarded without you. For a short spoken explanation and a consent-based rehearsal, use the separate <Link to="/articles/featured/how-to-pitch-your-idea">early idea pitch guide</Link>.</p>
+   <h2 id="deck-outline">A seven-slide teaching outline</h2>
+   <p><strong>Original MLAI teaching deck, entirely fictional.</strong> This text-first outline uses the quote-drafting example below. Each slide includes the limit a reader must retain; it is not a funded founder deck or customer case study.</p>
+   <ol>
+    <li><strong>Purpose:</strong> “Review-only quote drafts for equipment hire.” Ask for feedback on the proposed workflow, not an investment commitment.</li>
+    <li><strong>Problem:</strong> the assumed difficulty is preparing consistent drafts. Label it a hypothesis; no customer interviews or market-size evidence are supplied.</li>
+    <li><strong>Current alternative:</strong> a staff member uses approved prices and a template. Do not claim competitors are absent or the manual method is worse without a comparison.</li>
+    <li><strong>Proposed solution:</strong> create a draft for staff review, with no live integration or sending. A mock-up demonstrates an idea, not reliability.</li>
+    <li><strong>Evidence:</strong> twenty invented timing rows total 200 baseline minutes and 190 assisted minutes including setup. The 10-minute difference is illustrative; no cash saving or accuracy rate was measured.</li>
+    <li><strong>Unknowns:</strong> real task frequency, willingness to pay, software costs, upkeep and representative quality. Include the four scripted corrections as failure examples.</li>
+    <li><strong>Next request:</strong> ask a consenting workflow owner whether this is a relevant problem and what would justify a bounded test. A positive conversation would not establish demand or approval to deploy.</li>
+   </ol>
+   <p><a href="/downloads/quote-drafting-teaching-deck.txt" download>Download the original slide outline and filled evidence checklist</a>, then use the <a href="#record">claim worksheet</a> for your own source-backed version.</p>
    <ArticleTocPlaceholder />
    <h2 id="purpose" className="scroll-mt-28">Name the decision before choosing slides</h2>
    <p>Write down who will read the deck, what they already know and what you want them to do next. Use a different request for a customer discovery conversation, a community practice session or an investment discussion. Do not treat an event attendee as a prospective investor without asking.</p>
@@ -44,12 +59,12 @@ export default function ArticlePage() {
    <h2 id="original-decks" className="scroll-mt-28">Read original decks alongside their authors’ corrections</h2>
    <p>The following are founder-published historical examples. Their authors made the material public, but we have not verified a licence to reproduce their images. Open the original pages for the slides; the annotations here are our written interpretations. These examples do not establish current Australian investor preferences or a deck structure that causes funding.</p>
    <h3 className="scroll-mt-28" id="buffer-example">Buffer: the competition slide answers a recurring question</h3>
-   <p><a href="https://buffer.com/resources/the-slide-deck-we-used-to-raise-half-a-million-dollars/">Leo Widrich’s Buffer seed-deck retrospective</a>, 23 May 2013, describes repeated confusion about competitors and a revised positioning slide. His commentary explains how the revised competition slide addressed that confusion.</p>
+   <p><a href="https://buffer.com/resources/the-slide-deck-we-used-to-raise-half-a-million-dollars/">Leo Widrich’s Buffer seed-deck retrospective</a>, 23 May 2013, describes repeated confusion about competitors and a revised positioning slide. The “Competitive Landscape” image groups tools by function and places Buffer within that landscape.</p>
    <p><strong>Our annotation:</strong> identify the specific alternative your reader is comparing you with, then show the relevant distinction. A diagram of logos does not prove superiority, and this historical market map cannot establish who competes with your product today. The author’s account of fundraising does not isolate the slide’s effect.</p>
    <h3 className="scroll-mt-28" id="linkedin-example">LinkedIn: customer quotations can still be weak evidence</h3>
-   <p><a href="https://www.reidhoffman.org/linkedin-pitch-to-greylock/">Reid Hoffman’s annotated LinkedIn Series B deck</a> revisits his 2004 pitch. In his commentary on customer feedback, Hoffman says he would delete the slide that used quotations as evidence of product-market fit, explaining why it added little to the argument.</p>
+   <p><a href="https://www.reidhoffman.org/linkedin-pitch-to-greylock/">Reid Hoffman’s annotated LinkedIn Series B deck</a> revisits his 2004 pitch. The image labelled Slide 26 presents customer quotations about recruitment outcomes. Hoffman says he would remove that slide and explains why those quotations added little to the argument.</p>
    <p><strong>Our annotation:</strong> a quotation needs context and permission, and may still fail to support the claim you want to make. Separate customer reports from measured results. Do not borrow the old slide’s savings figures or treat a successful company’s deck as evidence that every slide worked.</p>
-   <p>These annotations use selected passages in the authors’ commentary; the underlying business records were not checked. The original slides remain on their sites. No third-party deck images are reproduced in this article or its download.</p>
+   <p>We inspected these selected images and their accompanying commentary, not the complete underlying business records. An accessible written annotation does not replace a full accessible deck. Original-deck reuse permission and independent source review remain open.</p>
 
    <h2 id="review" className="scroll-mt-28">Build an evidence map before a slide order</h2>
    <p>Wide tables scroll sideways. Focus a table region and use arrow keys on a keyboard, or read the same worked record in the text download below.</p>
@@ -106,10 +121,11 @@ export default function ArticlePage() {
    <h2 id="next-step" className="scroll-mt-28">Bring one evidence question to an MLAI event</h2>
    <p>Choose a relevant MLAI founder event and ask whether a participant is willing to discuss one anonymised slide. For example: “Does this sentence make clear what we measured and what remains untested?” Check the event’s topic, format and participation rules; a listing is not a promise of deck review or investor access.</p>
    <p>For this example, the useful question is “Can you tell that these are invented timings rather than measured cash savings?” Pick an event whose actual programme matches the discussion you want. You can attend to learn without pitching or sharing your deck.</p>
+   <ArticleEventPreference articlePath={PATH} idPrefix="deck-evidence" description="Choose a preferred MLAI event format. This does not upload your deck, share your claim record, book a review or reserve a pitch slot." />
    <p>If your separate task is reporting progress to existing stakeholders, <Link to="/vibe-raising">Vibe Raising</Link> is an optional way to prepare an update. Opening the workspace requires an account; this worksheet is not imported automatically, and the tool does not verify your claims or endorse a valuation. For share-count assumptions, see the <Link to="/articles/featured/how-vcs-value-startups">valuation evidence guide</Link>.</p>
-    <p><Link to="/events">Explore upcoming MLAI events</Link> and check the listing for its topic, format and participation requirements.</p>
+   <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
    <h2 id="sources" className="scroll-mt-28">Sources and editorial limits</h2>
-   <p>The Sequoia, Buffer and Reid Hoffman pages were checked on 15 September 2026. The linked founder retrospectives provide historical author accounts, not current market research or independent fundraising attribution. Independent source review remains pending. A future reproduction of third-party deck images would require a separate rights and accessibility check.</p>
+   <p>The Sequoia, Buffer and Reid Hoffman pages were checked on 11 September 2026. The linked founder retrospectives provide historical author accounts, not current market research or independent fundraising attribution. The original-deck image permissions, full accessibility and independent source review remain unresolved.</p>
    <p>{DECK_REVIEW_STATUS} The evidence map, fictional records and read-through are teaching material. No deck outcome, Australian investor preference or legal eligibility is inferred. Seek qualified advice for an actual fundraising transaction. The original publication date is preserved; this revision adds supplied source material and a completed record.</p>
    <ArticleFAQ items={faqItems} />
   </div>

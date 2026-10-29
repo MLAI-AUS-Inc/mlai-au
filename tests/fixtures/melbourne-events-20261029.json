@@ -1,0 +1,74 @@
+{
+  "checked_at": "2026-10-29",
+  "method": "Luma connected search_events plus public organiser pages opened in web; no registration or purchase",
+  "records": [
+    {
+      "id": "evt-3AEC34EXY8boajL",
+      "url": "https://luma.com/mlai-zfol",
+      "name": "Unconference \u2014 Road to AI Engineer",
+      "start_at": "2026-10-30T23:00:00.000Z",
+      "end_at": "2026-10-31T05:00:00.000Z",
+      "timezone": "Australia/Melbourne",
+      "ticket_info": {
+        "price": null,
+        "is_free": true,
+        "max_price": null,
+        "is_sold_out": false,
+        "spots_remaining": null,
+        "is_near_capacity": false,
+        "require_approval": false
+      },
+      "location_public_page": "Stone & Chalk Melbourne Startup Hub, 121 King St, Melbourne VIC 3000, Australia"
+    },
+    {
+      "id": "evt-4p8gWxPUFFDflk6",
+      "url": "https://luma.com/strangerbuilds-mel",
+      "name": "STRANGER BUILDS l $10k USD CASH PRIZES I Halloween Hackathon (MELBOURNE)",
+      "start_at": "2026-10-30T23:00:00.000Z",
+      "end_at": "2026-10-31T07:00:00.000Z",
+      "timezone": "Australia/Melbourne",
+      "ticket_info": {
+        "price": {
+          "cents": 4460,
+          "currency": "aud",
+          "is_flexible": false
+        },
+        "is_free": false,
+        "max_price": {
+          "cents": 9640,
+          "currency": "aud"
+        },
+        "is_sold_out": false,
+        "spots_remaining": null,
+        "is_near_capacity": false,
+        "require_approval": true
+      },
+      "location_public_page": "Public page withholds exact address until registration"
+    },
+    {
+      "id": "evt-MxMa8RcM9oyUg80",
+      "url": "https://luma.com/sdwtdfud",
+      "name": "How to Raise Money For My Startup",
+      "start_at": "2026-11-06T23:00:00.000Z",
+      "end_at": "2026-11-07T03:00:00.000Z",
+      "timezone": "Australia/Melbourne",
+      "ticket_info": {
+        "price": {
+          "cents": 18900,
+          "currency": "aud",
+          "is_flexible": false
+        },
+        "is_free": false,
+        "max_price": {
+          "cents": 26900,
+          "currency": "aud"
+        },
+        "is_sold_out": false,
+        "spots_remaining": 11,
+        "is_near_capacity": false,
+        "require_approval": false
+      },
+      "location_public_page": "Stone & Chalk Melbourne Startup Hub, 121 King St, Melbourne VIC 3000, Australia"
+    }
+  ]
+}

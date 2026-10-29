@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { appendPilotNotes, isCurrentStudioPilotHandoff, takeStudioPilotHandoff, type StudioPilotHandoff } from "~/lib/studio-pilot-handoff";
 
 import {
   getStoredArticleAttribution,
@@ -16,10 +17,30 @@ const fieldClass =
 const labelClass = "block text-sm font-black text-gray-950";
 
 export default function MlaiStudioProjectForm() {
+  const id = useId();
   const [brief, setBrief] = useState<StudioProjectBrief>(EMPTY_STUDIO_PROJECT_BRIEF);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [pilotNotes, setPilotNotes] = useState<StudioPilotHandoff>();
+  const [pilotMessage, setPilotMessage] = useState("");
+
+  useEffect(() => {
+    const handoff = takeStudioPilotHandoff();
+    if (handoff) setPilotNotes(handoff);
+  }, []);
+
+  function addPilotNotes() {
+    if (!pilotNotes) return;
+    if (!isCurrentStudioPilotHandoff(pilotNotes)) {
+      setPilotNotes(undefined);
+      setPilotMessage("The worksheet handoff expired. Return to the article or paste your saved copy if you still want to include it.");
+      return;
+    }
+    setBrief(current => ({ ...current, previousAttempts: appendPilotNotes(current.previousAttempts, pilotNotes) }));
+    setPilotNotes(undefined);
+    setPilotMessage("Worksheet added to previous attempts / pilot notes. Review and edit it below; it has not been submitted.");
+  }
 
   const set = <K extends keyof StudioProjectBrief>(key: K, value: StudioProjectBrief[K]) => {
     setBrief((current) => ({ ...current, [key]: value }));
@@ -35,9 +56,8 @@ export default function MlaiStudioProjectForm() {
     setSubmitting(true);
     setError("");
 
-    const payload = buildStudioProjectPayload(brief, {
-      attribution: getStoredArticleAttribution(),
-    });
+    const attribution = getStoredArticleAttribution("studio_project_brief_submitted");
+    const payload = buildStudioProjectPayload(brief, { attribution });
 
     try {
       const response = await fetch(`${API_URL}/api/v1/mlai-studio/applications/`, {
@@ -48,9 +68,11 @@ export default function MlaiStudioProjectForm() {
       if (!response.ok) {
         throw new Error(`Project brief submission failed: ${response.status}`);
       }
-      trackAttributedConversion("studio_project_brief_submitted");
+      trackAttributedConversion("studio_project_brief_submitted", attribution);
       setSubmitted(true);
       setBrief(EMPTY_STUDIO_PROJECT_BRIEF);
+      setPilotNotes(undefined);
+      setPilotMessage("");
     } catch {
       setError(
         "We could not submit your brief right now. Please try again, or email the same details to hi@mlai.au.",
@@ -89,7 +111,21 @@ export default function MlaiStudioProjectForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-8" noValidate={false}>
+    <form onSubmit={submit} data-clarity-mask="true" className="space-y-8" noValidate={false}>
+      {pilotNotes && <section aria-labelledby={`${id}-pilot-title`} className="rounded-2xl border border-purple-300 bg-purple-50 p-5 text-gray-950">
+        <h3 id={`${id}-pilot-title`} className="text-xl font-black">Review your pilot worksheet</h3>
+        <p className="mt-2 text-sm leading-6">These are the inputs and estimates you carried from the article—not verified savings or agreed requirements. Add them to your notes, or discard them. Your other fields and consent stay unchanged.</p>
+        <details className="mt-3">
+          <summary className="cursor-pointer font-bold underline">Preview carried worksheet</summary>
+          <label htmlFor={`${id}-pilot-text`} className="mt-3 block text-sm font-bold">Carried worksheet (read only)</label>
+          <textarea id={`${id}-pilot-text`} readOnly value={pilotNotes.text} rows={12} className={fieldClass} />
+        </details>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button type="button" onClick={addPilotNotes} className="min-h-12 rounded-full bg-purple-800 px-5 py-3 font-bold text-white">Add worksheet to my notes</button>
+          <button type="button" onClick={() => { setPilotNotes(undefined); setPilotMessage("Carried worksheet discarded. It will not be included in this enquiry."); }} className="min-h-12 rounded-full border border-gray-500 px-5 py-3 font-bold">Discard worksheet</button>
+        </div>
+      </section>}
+      {pilotMessage && <p role="status" className="text-sm font-bold text-gray-700">{pilotMessage}</p>}
       <div className="grid gap-6 sm:grid-cols-2">
         <label className={labelClass}>
           Your name <span className="text-red-600">*</span>
@@ -183,7 +219,7 @@ export default function MlaiStudioProjectForm() {
           />
         </label>
         <label className={labelClass}>
-          What have you already tried?
+          What have you already tried? / Pilot notes
           <textarea
             rows={4}
             value={brief.previousAttempts}

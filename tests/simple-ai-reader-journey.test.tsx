@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 import ArticleContent, { articleMeta, faqItems } from "../app/articles/content/featured/what-is-artificial-intelligence-in-simple-words";
-import { ARTICLE_REGISTRY, getNextArticleSlug } from "../app/articles/registry";
+import { ARTICLE_REGISTRY } from "../app/articles/registry";
 import { BASE_ARTICLE_SEO_CONFIG } from "../app/articles/seo-config";
 import { ArticleLayout } from "../app/components/articles/ArticleLayout";
 
@@ -38,7 +38,7 @@ test("the beginner page serves working next steps and consistent visible and str
   expect(html).toContain('id="ai-or-not-heading"');
   expect(html.match(/Find an AI event/g)).toHaveLength(2);
   expect(html).toContain('href="/events"');
-  expect(html).toContain(`href="/articles/${config.nextArticleSlug}"`);
+  expect(html).toContain(`href="${config.readingPaths![0].href}"`);
   expect(html).not.toContain('href="/articles/featured/what-an-entrepreneur-does-and-how-to-start-well"');
 });
 
@@ -48,7 +48,7 @@ test("the next-read override cannot send readers to a withheld article or back t
     for (const candidate of [slug, "featured/does-not-exist", "featured/how-to-choose-the-best-ai-for-coding-in-2025"]) {
       config.nextArticleSlug = candidate;
       const html = renderPage();
-      expect(html).toContain(`href="/articles/${getNextArticleSlug(slug)}"`);
+      expect(html).toContain(`href="${config.readingPaths![0].href}"`);
       if (candidate !== slug) expect(html).not.toContain(`href="/articles/${candidate}"`);
     }
   } finally {

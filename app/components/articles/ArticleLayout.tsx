@@ -1,14 +1,10 @@
 import React from 'react'
-import { ArticleReadingLinks } from './ArticleReadingLinks'
 
 import { Container } from "~/components/Container"
 import { Prose } from '../Prose'
 import { type ArticleWithSlug } from "~/articles/registry"
 import {
   getArticleBySlug,
-  getNextArticleSlug, // implemented
-  isArticleIndexable,
-  ORDERED_ARTICLE_ROUTE_SLUGS,
   resolveArticleRouteSlug,
 } from "~/articles/registry"
 import SearchSessionInitializer from '../SearchSessionInitializer'
@@ -27,6 +23,8 @@ import { type Event } from '~/lib/events'
 // import { loadArticleFeaturedProfessionals } from '@/lib/professionals/articleFeaturedProfessionals'
 import type { ClinicianProfile } from '~/data/types'
 import type { ArticleFAQItem } from './ArticleFAQ'
+import { resolveArticleReadingPaths } from '~/lib/article-reading-paths'
+import { articleLinkEngagement, trackArticleEngagement } from '~/lib/article-conversions'
 
 const DEFAULT_SITE_URL = 'https://mlai.au'
 
@@ -334,37 +332,6 @@ function buildArticleStructuredData({
   }
 }
 
-function buildRelatedArticleSlugs(
-  articlePath: string,
-  currentSlug: string,
-): string[] {
-  const config = ARTICLE_SEO_CONFIG[articlePath]
-  const fromConfig = (config?.internalLinks || [])
-    .filter((href: any) => typeof href === 'string' && href.startsWith('/articles/'))
-    .map((href: string) => href.replace(/^\/articles\//, '').replace(/\/$/, ''))
-    .filter((slug: string) => slug && slug !== currentSlug)
-    .filter((slug: string) => {
-      const relatedArticle = getArticleBySlug(slug)
-      return Boolean(relatedArticle && isArticleIndexable(relatedArticle))
-    })
-
-  if (fromConfig.length > 0) {
-    return Array.from(new Set(fromConfig))
-  }
-
-  if (ORDERED_ARTICLE_ROUTE_SLUGS.length === 0) return []
-
-  const idx = ORDERED_ARTICLE_ROUTE_SLUGS.indexOf(currentSlug)
-  const results: string[] = []
-  for (let offset = 1; results.length < 3 && offset < ORDERED_ARTICLE_ROUTE_SLUGS.length; offset++) {
-    const candidate = ORDERED_ARTICLE_ROUTE_SLUGS[(idx >= 0 ? idx + offset : offset - 1) % ORDERED_ARTICLE_ROUTE_SLUGS.length]
-    if (candidate !== currentSlug) {
-      results.push(candidate)
-    }
-  }
-  return results
-}
-
 function buildArticlePath(slug?: string): string {
   if (!slug) return '/articles'
   if (slug.startsWith('/')) return slug
@@ -497,8 +464,6 @@ export function ArticleLayout({
     ? createBreadcrumbJson(resolvedBreadcrumbItems, articlePath)
     : null
   const isUnderEditorialReview = article.publicationStatus === 'under-review'
-  const routeSlug = resolvedRouteSlug.replace(/^\/+/, "")
-
   const resolvedPersona = featuredProfessionalsPersona ?? article.professionalsPersona
   const professionalsLimit = 9
   // const professionals = featuredProfessionals ?? (await loadArticleFeaturedProfessionals({
@@ -510,31 +475,12 @@ export function ArticleLayout({
   const professionalsTitle = featuredProfessionalsTitle ?? "Professionals ready to help with your NDIS goals"
   const hasProfessionals = professionals.length > 0
 
-  const preferredNextArticle = seoConfig.nextArticleSlug
-    ? getArticleBySlug(seoConfig.nextArticleSlug)
-    : undefined
-  const nextArticleSlug = preferredNextArticle &&
-    preferredNextArticle.slug !== routeSlug &&
-    preferredNextArticle.publicationStatus !== 'under-review' &&
-    isArticleIndexable(preferredNextArticle)
-      ? preferredNextArticle.slug
-      : getNextArticleSlug(routeSlug)
-  const hasMultipleArticles = ORDERED_ARTICLE_ROUTE_SLUGS.length > 1
-  const shouldShowNextArticle = Boolean(
-    !isUnderEditorialReview &&
-    nextArticleSlug &&
-    (hasMultipleArticles || nextArticleSlug !== routeSlug),
-  )
-  const nextArticleMeta = shouldShowNextArticle && nextArticleSlug
-    ? getArticleBySlug(nextArticleSlug)
-    : undefined
-  const nextArticleHref = shouldShowNextArticle && nextArticleSlug
-    ? `/articles/${nextArticleSlug}`
-    : undefined
-
-  const relatedArticleSlugs = isUnderEditorialReview
-    ? []
-    : buildRelatedArticleSlugs(articlePath, routeSlug)
+  // Curated task explanations are required; never silently substitute the next
+  // publication or a legacy keyword link when a path is missing or withheld.
+  const readingPaths = isUnderEditorialReview ? [] : resolveArticleReadingPaths(articlePath, seoConfig.readingPaths)
+  const [nextArticle, ...relatedArticles] = readingPaths
+  const nextArticleMeta = nextArticle?.article
+  const nextArticleHref = nextArticle?.href
   const canonicalUrl = new URL(articlePath, DEFAULT_SITE_URL).toString()
   const structuredDataConfig = seoConfig.structuredData
   const structuredFaqItems =
@@ -617,7 +563,16 @@ export function ArticleLayout({
       ) : null}
       <div className="xl:relative">
         <div className={`mx-auto ${resolvedContentMaxWidth}`}>
-          <article aria-label={article.title}>
+          <article aria-label={article.title} data-article-icp={seoConfig.contentOwnsConversion ? seoConfig.conversion?.primaryIcp : undefined}
+            onClickCapture={event => {
+              if (isUnderEditorialReview || !(event.target instanceof Element)) return
+              const link = event.target.closest('a[href]')
+              if (!link || !event.currentTarget.contains(link)) return
+              const href = link.getAttribute('href')
+              if (!href) return
+              const engagement = articleLinkEngagement(href, window.location.origin)
+              if (engagement && engagement.target !== articlePath) trackArticleEngagement(article.slug, engagement.action, engagement.target)
+            }}>
             <Prose id={contentId} className={resolvedContentPaddingClassName}>
               <ArticleEnhancer
                 articleTitle={article.title}
@@ -636,7 +591,6 @@ export function ArticleLayout({
                 </div>
               ) : null}
               <div data-article-content className="[overflow-wrap:anywhere] [&_table]:[overflow-wrap:normal]">{children}</div>
-              <ArticleReadingLinks articlePath={articlePath} />
               {showDisclaimer && !isUnderEditorialReview && !seoConfig.contentOwnsDisclaimer ? <ArticleDisclaimer /> : null}
               <div className="not-prose my-12">
                 {/* <FindProfessionalsCTA
@@ -647,18 +601,16 @@ export function ArticleLayout({
                   description="Free matching, tailored to your suburb, budget and availability."
                 /> */}
               </div>
-              {shouldShowNextArticle && nextArticleHref ? (
-                <div className="not-prose my-12">
+              {nextArticle && nextArticleHref ? (
+                <nav data-article-reading-links aria-label="Next article" data-cf-component-id="next-article" data-cf-component-type="related-articles" data-cf-component-label="Next reading task" className="not-prose my-12">
                   <NextArticleCTA
                     label="Next up"
                     title={nextArticleMeta?.title ?? 'Explore the next article'}
-                    description={nextArticleMeta?.description}
+                    description={nextArticle.reason}
                     to={nextArticleHref}
-                    slug={nextArticleSlug}
                     image={nextArticleMeta?.image}
-                    imageAlt={nextArticleMeta?.imageAlt}
                   />
-                </div>
+                </nav>
               ) : null}
               <div className="not-prose my-12">
                 {/* <AuthorBio
@@ -667,15 +619,16 @@ export function ArticleLayout({
                   datePublishedISO={article.date}
                 /> */}
               </div>
-              {relatedArticleSlugs.length > 0 ? (
+              {relatedArticles.length > 0 ? (
                 <div className="not-prose my-12">
                   <RelatedArticlesCarousel
                     title="Related reads"
-                    itemsSlugs={relatedArticleSlugs}
-                    variant="compact"
+                    items={relatedArticles}
                   />
                 </div>
               ) : null}
+              {/* Sources belong with the article's claims. Never append a
+                  site-wide reference list as evidence for unrelated content. */}
             </Prose>
 
             {/* -------- Browse services by need (chips) --------- */}
@@ -714,7 +667,7 @@ export function ArticleLayout({
               </div>
             </div> */}
 
-            {seoConfig.contentOwnsConversion ? null : seoConfig.conversion ? (
+            {isUnderEditorialReview || seoConfig.contentOwnsConversion ? null : seoConfig.conversion ? (
               <ArticleConversionCTA
                 articleSlug={article.slug}
                 config={seoConfig.conversion}

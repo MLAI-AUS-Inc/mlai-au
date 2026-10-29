@@ -1,0 +1,109 @@
+MLAI AI use-case prioritisation record — 2026-09-11
+Article: https://mlai.au/articles/featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life
+Fictional retailer, invented inputs and planning decisions. Not a supplier quote, AI benchmark, client result, financial forecast or compliance approval.
+Independent owner/technical review pending. All proposed business tests are NOT RUN. No live trial or purchase is approved.
+
+THREE TASKS — SAME MONTHLY BASIS
+Active baseline and assisted case minutes include case review, correction and fallback. Rework cases are a subset, not extra time to add again. Extra oversight/maintenance is separate.
+A$60/hour is an invented internal capacity value. All cash figures need a consistent cost/tax basis in real quotes. Existing payroll is not avoided; no additional revenue is evidenced.
+
+Extract supplier-invoice fields
+Monthly workload and rework: 40 cases x 8 minutes = 320 baseline minutes; 6 cases need correction within that total.
+Planned assisted work: 40 x 4 = 160 case minutes, plus 60 additional oversight minutes. Potential capacity release: 100 minutes/month.
+Data availability: Invented invoice samples can be used for a demonstration. Live supplier records have not been approved for connection; the accounts lead must confirm permission and source access.
+Human oversight: Accounts lead checks every proposed field against the original. No posting to accounts, bank-detail changes or payments are in scope.
+Cost of error: A wrong total, duplicate or misread credit creates reconciliation work. Payment must remain unavailable. The cost and frequency of escaped errors are unknown, not zero.
+Setup cash: A$300; internal setup: 4 hours x A$60 = A$240; combined setup economic value: A$540.
+Incremental monthly cash: subscription A$15, usage A$5, external support A$10, extra labour cash A$0; total A$30.
+Monthly cash change with no avoidable payroll: −A$30. No positive cash payback under these assumptions. Capacity is not profit.
+Non-AI alternative: Compare manual entry, supplier CSV exports and existing accounting rules before a model.
+Decision: Investigate invoice extraction. Prepare a synthetic demonstration brief with the accounts lead, then check document-level quality and review effort. This is not permission for a live pilot or a purchase.
+
+Draft routine customer replies
+Monthly workload and rework: 60 cases x 5 minutes = 300 baseline minutes; 9 cases need correction within that total.
+Planned assisted work: 60 x 3 = 180 case minutes, plus 90 additional oversight minutes. Potential capacity release: 30 minutes/month.
+Data availability: The fictional returns policy has conflicting versions. No approved answer source is ready; reviewer time has not been committed.
+Human oversight: The operations lead must approve the policy and assign a reviewer. Any future system would draft only; sending and commitments remain separate.
+Cost of error: An unsupported refund, price or delivery promise can create a customer dispute. Consequential losses are unpriced; a fluent answer is not a control.
+Setup cash: A$150; internal setup: 3 hours x A$60 = A$180; combined setup economic value: A$330.
+Incremental monthly cash: subscription A$15, usage A$5, external support A$5, extra labour cash A$0; total A$25.
+Monthly cash change with no avoidable payroll: −A$25. No positive cash payback under these assumptions. Capacity is not profit.
+Non-AI alternative: Repair the policy and saved replies first.
+Decision: Fix the source first. Do not select this AI trial while policy versions conflict or reviewer capacity is unknown, even if the arithmetic appears favourable.
+
+Suggest compatible catalogue items
+Monthly workload and rework: 120 cases x 3 minutes = 360 baseline minutes; 12 cases need correction within that total.
+Planned assisted work: 120 x 2 = 240 case minutes, plus 60 additional oversight minutes. Potential capacity release: 60 minutes/month.
+Data availability: The fictional catalogue has approved compatibility fields and a catalogue owner. Customer profiling data is unnecessary for the initial comparison.
+Human oversight: Staff confirm suitability and stock before recommending an item. A ranking does not approve a sale or determine customer eligibility.
+Cost of error: Wrong compatibility can cause returns, replacement work and trust damage. These losses are not measured or priced into this planning example.
+Setup cash: A$300; internal setup: 6 hours x A$60 = A$360; combined setup economic value: A$660.
+Incremental monthly cash: subscription A$10, usage A$5, external support A$10, extra labour cash A$0; total A$25.
+Monthly cash change with no avoidable payroll: −A$25. No positive cash payback under these assumptions. Capacity is not profit.
+Non-AI alternative: An exact compatibility filter using the existing catalogue is the first comparison.
+Decision: Try the catalogue filter first. The highest task volume is not a reason to add AI. Establish what the simpler filter cannot do before considering generated recommendations.
+
+SENSITIVITY — NOT A NEW OBSERVED RESULT
+If invoice review/correction/fallback requires seven minutes per case: 40 x (8 - 7) - 60 = -20 net minutes/month. It uses 20 more minutes, not a saving. The monthly cash change remains −A$30.
+Setup, subscriptions, usage, external support, internal maintenance and per-case review are recorded separately. Error losses, revenue effects, taxes, financing, seasonality and actual supplier/support terms are not established. These exclusions prevent a complete ROI claim; obtain relevant evidence before spending.
+
+COMPLETED CAPABILITY-TO-TASK REQUEST — INVESTIGATE ONLY
+1. My business task and current method:
+Copy supplier-invoice fields into a review sheet. Fictional baseline: 40 documents/month, 8 active minutes each including existing checks and rework; six cases need correction. No actual baseline was collected.
+2. Capability needed: draft, extract, recommend, detect or other:
+Extraction: proposed supplier, date, document type and total alongside the source. It is not accounting advice, autonomous bookkeeping or payment approval.
+3. Permitted input and source owner:
+Invented documents initially; accounts lead owns the source/checking rules. Live-record permission and vendor data handling remain unresolved.
+4. Exact output and who checks it:
+Proposed fields or an unresolved reason, with source location and version. The accounts lead reviews each complete document, not just an overall field-accuracy percentage.
+5. What the output must NOT trigger automatically:
+No accounting write, payment, supplier bank-detail change or outbound commitment. The implementer must demonstrate these boundaries; they are not implemented by this worksheet.
+6. Normal, missing, misleading and duplicate test cases:
+Clear invoice; unreadable total; credit note; repeated document; embedded hostile instructions. Actual outcomes: NOT RUN. Retain failures and review effort.
+7. Evidence needed to judge accuracy and review effort:
+Original input, expected and actual fields, whole-document acceptance, all attempted cases, errors and review/correction/fallback time on the identified version. Seven review minutes per document would erase the planned capacity benefit.
+8. Non-AI alternative to compare:
+Manual entry, a supplier-provided CSV and existing accounting rules. Stop if the simpler option meets the task without an AI build.
+9. Systems involved, budget constraints and unresolved questions:
+Unconnected test document folder and review sheet. Illustrative A$300 setup cash plus four internal hours; A$30/month extra cash and one hour/month extra oversight. Obtain actual quotes and a spend cap. No purchase, live trial, independent review or positive cash payback is established.
+
+BLANK PRIORITISATION WORKSHEET — COPY FOR EACH OF YOUR THREE TASKS
+Business task / capability / current workaround / process owner:
+Representative period / task count / active time including current checks and rework:
+Rework case count (subset, not extra minutes) / input availability and permission:
+Required output / reviewer and capacity / forbidden automatic action:
+Error consequence / recovery work / unresolved cost or obligation:
+Non-AI alternative and evidence of an unmet need:
+Assisted case time including review, correction and fallback:
+Extra maintenance/oversight time / internal hourly capacity value:
+External setup cash / internal setup time / training and handover:
+Monthly subscriptions / API use / external support / extra labour cash:
+Spending demonstrably avoidable / extra contribution evidenced (do not double count):
+Unknown costs / required quotes / tax basis / spend cap:
+Investigate, fix prerequisites, prefer simpler option or reject — and why:
+Evidence that would change the choice / owner / next review date:
+
+BLANK CAPABILITY REQUEST
+My business task and current method:
+Capability needed: draft, extract, recommend, detect or other:
+Permitted input and source owner:
+Exact output and who checks it:
+What the output must NOT trigger automatically:
+Normal, missing, misleading and duplicate test cases:
+Evidence needed to judge accuracy and review effort:
+Non-AI alternative to compare:
+Systems involved, budget constraints and unresolved questions:
+
+ACTUAL TEST RECORD — DO NOT REPLACE UNKNOWN WITH ZERO
+Case ID / permitted source and version / normal, missing, conflicting or duplicate:
+Expected output / actual output / whole-document or whole-task decision:
+Reviewer / date / failure and recovery / handling minutes / actual costs:
+Pass, fail, unresolved or NOT RUN / decision and next action:
+
+Optional enquiry: https://mlai.au/mlai-studio/start-project
+Bring a permitted summary of the selected task, current work and acceptance criteria. The file is not automatically attached; acceptance, availability or savings are not guaranteed.
+
+SOURCE ROLES — checked 11 September 2026
+https://business.gov.au/online-and-digital/artificial-intelligence — possible business capabilities and responsible adoption; not support for fictional prices or savings.
+https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/guidance-on-privacy-and-the-use-of-commercially-available-ai-products — commercial-AI privacy due diligence, not compliance approval of this example.
+Use non-confidential facts only. Do not insert customer documents, credentials or private business details into a public article form.

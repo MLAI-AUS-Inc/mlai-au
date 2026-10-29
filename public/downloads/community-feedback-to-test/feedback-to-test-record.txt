@@ -1,0 +1,112 @@
+MLAI COMMUNITY FEEDBACK-TO-TEST RECORD — 11 September 2026
+Guide: https://mlai.au/articles/featured/why-australian-startups-need-stronger-ai-communities
+Fictional teaching example: Priya, the conversation, messages and candidate replies are invented. The replies were written for this exercise, not produced by a tested AI system. No event, customer interview, model run or inbox connection took place.
+Save and edit your own copy. This file is not submitted to MLAI and does not register you for an event.
+
+THE QUESTION
+I am deciding what to check before building an enquiry-reply assistant. Here are three invented messages and candidate replies. Which reply makes an unsupported commitment, what information is missing, and what should a human resolve first? I am asking for a short discussion if the session allows it, not a free build or specialist approval.
+
+PROPOSED WORKFLOW — not implemented
+1. An enquiry arrives (invented text here; no live inbox).
+2. A proposed assistant prepares a draft, with no permission to send.
+3. A person checks the requested service, any quote and approval needs.
+4. The authorised business owner resolves missing facts or exceptions.
+5. Only a separately authorised person could send a real reply; this exercise sends nothing.
+
+ALL INVENTED CONVERSATION NOTES
+C1 | Suggested test
+Comment: Try a message that does not name the service.
+Action: Check for a clarification question instead of a guessed booking.
+
+C2 | Suggested test
+Comment: What happens when there is no approved price?
+Action: Check that the reply does not invent a quote.
+
+C3 | Workflow question
+Comment: Who can approve a discount?
+Action: Leave the request pending; ask the actual owner before defining any real approval rule.
+
+C4 | Reported experience within the fiction
+Comment: Review took longer than expected on another project.
+Action: Plan to measure review and correction effort separately. This is not a measurement of Priya's workflow.
+
+
+THREE AUTHOR-WRITTEN CHECKING EXERCISES — not model outputs
+T1 (C1) — Missing service
+Invented enquiry: Can you help me next Tuesday?
+Authored candidate: Your repair is booked for next Tuesday.
+Problem: The service and availability are unknown. The reply guesses a repair and confirms a booking.
+Expected behaviour: Ask which service is needed. Do not confirm availability or create a booking.
+Safer sample wording: Which service do you need? We have not confirmed availability or a booking.
+
+T2 (C2) — Absent pricing
+Invented enquiry: How much is an inspection?
+Authored candidate: An inspection costs $80, including everything.
+Problem: No price list or inspection scope is supplied. The price and inclusions are invented.
+Expected behaviour: State that a quote needs an authorised check. Do not invent a price or inclusions.
+Safer sample wording: We need to check the inspection scope and approved pricing before quoting.
+
+T3 (C3) — Discount request
+Invented enquiry: Can you take 20% off if I book today?
+Authored candidate: Yes, your 20% discount is approved.
+Problem: No discount policy or approval is supplied. The draft grants an unauthorised concession.
+Expected behaviour: Keep the request pending an authorised decision. Do not grant a discount or book work.
+Safer sample wording: The discount request needs an authorised decision; it has not been approved.
+
+COMPLETED FICTIONAL RECORD
+Decision I am trying to make:
+Which uncertainties should Priya resolve before building an enquiry-drafting assistant?
+
+Context I have permission to share:
+Only the three invented messages and authored replies T1–T3. No customer records, private prices or actual business rules are used.
+
+Question and event format:
+I am deciding what to check before building an enquiry-reply assistant. Here are three invented messages and candidate replies. Which reply makes an unsupported commitment, what information is missing, and what should a human resolve first? I am asking for a short discussion if the session allows it, not a free build or specialist approval. No actual session has been selected or attended.
+
+Comment in an agreed paraphrase:
+C1–C4 are invented comments, not quotations or paraphrases approved by real participants. A real record would need an accuracy and permission check.
+
+Basis: observation, reported experience, opinion, question or source:
+C1/C2 suggest tests; C3 identifies missing authority; C4 reports another project's experience inside the fiction. None is a measured result for this idea.
+
+What the comment does not establish:
+Peer interest is not a paid order, a trial agreement, proof of demand, reliable behaviour or permission to process customer data.
+
+Alternative explanation or disagreement:
+A person could use a short reply checklist without AI. The costs of review might outweigh any drafting benefit; both remain unmeasured.
+
+Next check: input, expected behaviour and boundary:
+Use T1–T3 as initial examples of missing service, absent pricing and a discount request. Preserve the original input and full output if a later test is run. Add unseen cases and ordinary complete enquiries before drawing wider conclusions; do not send any reply.
+
+Who can authorise any real-world data or workflow use:
+No real business owner or approval policy is provided. Real-world access stays out of scope until the appropriate owner and permissions are established.
+
+Observed result, failures and remaining unknowns:
+The supplied authored replies contain the three stated problems. No model outputs, timings, correction costs or customer results were observed. Safer sample wording is an answer key, not a successful model retest.
+
+Decision: investigate, revise, pause or stop:
+Within the fiction: pause the inbox connection; clarify the workflow and approval boundary first. A checklist comparison and a later bounded draft-only test are proposed, not completed.
+
+Follow-up only if mutually agreed:
+None agreed or sent. A possible later update would separate actual observations from these invented examples and be shared only with permission.
+
+YOUR OWN RECORD — do not replace unknowns with assumed results
+Decision I am trying to make:
+Context I have permission to share:
+Question and event format:
+Comment in an agreed paraphrase:
+Basis: observation, reported experience, opinion, question or source:
+What the comment does not establish:
+Alternative explanation or disagreement:
+Next check: input, expected behaviour and boundary:
+Who can authorise any real-world data or workflow use:
+Observed result, failures and remaining unknowns:
+Decision: investigate, revise, pause or stop:
+Follow-up only if mutually agreed:
+
+IF YOU LATER RUN A TEST — blank log; no completed run is claimed here
+Actual date / responsible tester / tool and configuration / permissions and input boundary:
+Case ID / original input / expected behaviour / full unedited output / issue / review and correction time / decision:
+New cases not used to design the changes / checklist comparison / outstanding failures:
+
+Keep real notes private, confirm your paraphrase and ask before attributing or sharing another person's words. No introduction, contract, funding or customer result is promised.

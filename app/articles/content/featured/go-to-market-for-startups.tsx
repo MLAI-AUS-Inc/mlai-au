@@ -2,14 +2,17 @@ import { Home } from "lucide-react";
 import { Link } from "react-router";
 import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
 import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { ArticleEventPreference } from "~/components/articles/ArticleEventPreference";
 import { ArticleTocPlaceholder } from "~/components/articles/ArticleTocPlaceholder";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
 import { GTM_BLANK_FIELDS, GTM_COMPLETED_FIELDS, GTM_STAGE_ROWS, GTM_RECORDS, GTM_LOG_HEADERS, gtmRecordCells, GTM_PROVENANCE, GTM_OBJECTIONS, GTM_DECISION, GTM_UNKNOWN, GTM_REVIEW_STATUS } from "~/lib/gtm-channel-test";
 
 export const useCustomHeader = true;
 export const CATEGORY = "featured";
 export const SLUG = "go-to-market-for-startups";
 export const DATE_PUBLISHED = "2026-04-04";
-export const DATE_MODIFIED = "2026-09-15";
+export const DATE_MODIFIED = "2026-10-29";
 const TITLE = "Go to market for startups: design a channel test you can learn from";
 export const DESCRIPTION = "A worked channel-test plan for Australian early-stage founders: define the buyer, offer, cost limits and evidence before deciding what to repeat.";
 const PATH = "/articles/" + CATEGORY + "/" + SLUG;
@@ -39,6 +42,7 @@ export default function ArticleContent() {
     <div className="prose prose-lg prose-slate max-w-none">
       <p>This guide is for a founder choosing how to reach an initial Australian customer segment—not an established business buying an AI transformation or a developer seeking contract work. You will leave with a test record and a decision rule, rather than a list of every marketing channel.</p>
       <p>If you cannot yet describe a problem someone has experienced, start with the <Link to="/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026">first-customer conversation guide</Link>. That page helps you prepare and record individual conversations; this one helps you design and interpret a channel test. If you already have a buyer and need to scope delivery, use the <Link to="/articles/featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers">prototype-to-paid-pilot guide</Link>.</p>
+<aside aria-label="The channel test in one line" className="my-6 rounded-xl border border-slate-300 bg-slate-50 p-5"><p><strong>The channel test in one line</strong></p><p><strong>Fictional example:</strong> maintenance-business owner → A$600 review-only pilot offer → agreed introductions or opt-in session → separately count fit, attended demo, accepted terms and payment → pause when the 12-hour acquisition limit is exhausted.</p><p><a href='/downloads/gtm-channel-test.txt' download>Download the channel-test worksheet and example</a>. Start with <Link to='/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6'>customer discovery</Link> if the problem is still an assumption.</p></aside>
       <ArticleTocPlaceholder />
 
       <h2 id="buyer-offer" className="scroll-mt-28">1. Specify a buyer and an offer before a channel</h2>
@@ -49,7 +53,7 @@ export default function ArticleContent() {
       <p>Write your message around the task: “See how a draft follow-up is checked against the quote before anyone sends it.” Avoid “autonomous revenue engine” or a savings percentage you have not measured. Make clear what exists today, what is a prototype and what still requires development.</p>
 
       <h2 id="channel-choice" className="scroll-mt-28">2. Choose a route you can access appropriately</h2>
-      <p><a href="https://business.gov.au/planning/business-plans/develop-your-marketing-plan">business.gov.au’s marketing-plan guidance</a> connects a target market, goals, activities and a budget, then calls for analysing results and refining the plan. It does not establish a universally best channel.</p>
+      <p><a href="https://www.stoneandchalk.com.au/articles/go-to-market-strategy-guide-for-saas-startups">Stone &amp; Chalk’s SaaS guide</a> recommends founders stay close to early customer feedback and test acquisition, pricing and sales before scaling. Its practical advice is not a controlled comparison showing one channel always wins.</p>
       <div role="region" aria-label="GTM channel selection" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4"><table className="min-w-[38rem]">
         <thead><tr><th>Route in this example</th><th>What it might reveal</th><th>What can distort the result</th></tr></thead>
         <tbody>
@@ -64,7 +68,7 @@ export default function ArticleContent() {
       <p>Copy these fields into your own document or <a href="/downloads/gtm-channel-test.txt" download="gtm-channel-test.txt">save the editable text worksheet and completed example</a>. The file includes the same completed fields, stage definitions, record log and decision shown here, plus space for actual follow-up evidence. It is an editorial planning aid, not a validated scoring system.</p>
       <pre className="whitespace-pre-wrap" aria-label="Channel test worksheet">{channelTestWorksheet.join("\n")}</pre>
       <h3 id="completed-record" className="scroll-mt-28">Completed fictional channel-test record</h3>
-      <p>{GTM_PROVENANCE} The schedule deliberately describes a future fictional decision, not a forecast. This expanded log assigns statuses to illustrate the earlier aggregate counts; it is not newly discovered customer evidence.</p>
+      <p>{GTM_PROVENANCE} This is a fictional historical example dated 5 October 2026, not a forecast or customer result. This expanded log assigns statuses to illustrate the earlier aggregate counts; it is not newly discovered customer evidence.</p>
       <dl className="space-y-5">{GTM_COMPLETED_FIELDS.map((field, index) => <div key={field.label} data-gtm-record-field={index + 1}><dt className="font-bold">{field.label}</dt><dd className="ml-0 mt-1">{field.value}</dd></div>)}</dl>
 
       <h2 id="worked-results" className="scroll-mt-28">4. Interpret counts without inventing a winner</h2>
@@ -105,9 +109,10 @@ export default function ArticleContent() {
 
       <h2 id="peer-review" className="scroll-mt-28">Take one unresolved decision to peers</h2>
       <p>Bring an anonymised version of your worksheet and one question—such as whether your fit rule distinguishes a user from a buyer—to a relevant founder or AI discussion. Give useful context without sharing prospect identities, confidential quotes or contact lists. MLAI events are for participation and learning, not guaranteed customer introductions.</p>
-    <p><Link to="/events">Explore upcoming MLAI events</Link> and check the listing for its topic, format and participation requirements.</p>
+      <ArticleEventPreference articlePath={PATH} idPrefix="gtm" description="This transfers only an online or in-person calendar preference. Your worksheet and prospect notes are not uploaded or attached. Check actual listings: it does not book a place, arrange a sales review or guarantee a suitable session." />
+      <ArticleConversionCTA articleSlug={CATEGORY + "/" + SLUG} config={BASE_ARTICLE_SEO_CONFIG[PATH].conversion!} events={[]} placement="article-inline" />
       <p>If your next task is organising company evidence for an update or content plan, explore <Link to="/founder-tools/start">Founder Tools</Link>; opening a workspace requires an account. Keep pending experiments distinct from confirmed results. No worksheet is automatically imported, and a polished update is not customer evidence.</p>
-      <p><small>Sources checked 15 September 2026. The worksheet, synthetic dataset and decision framework are editorial aids; neither linked organisation has endorsed or validated them. {GTM_REVIEW_STATUS} This page does not claim original customer research or a completed pilot.</small></p>
+      <p><small>Sources checked 11 September 2026. The worksheet, synthetic dataset and decision framework are editorial aids; neither linked organisation has endorsed or validated them. {GTM_REVIEW_STATUS} This page does not claim original customer research or a completed pilot.</small></p>
       <ArticleFAQ items={faqItems} />
     </div>
   </div>;

@@ -12,7 +12,7 @@ export const useCustomHeader = true
 export const CATEGORY = 'featured'
 export const SLUG = 'how-to-pitch-your-idea'
 export const DATE_PUBLISHED = '2025-06-01'
-export const DATE_MODIFIED = '2026-09-11'
+export const DATE_MODIFIED = '2026-10-29'
 export const DESCRIPTION = 'Explain an early idea with annotated pitch videos, a seven-slide example and an editable rehearsal record that separates clear wording from evidence of demand.'
 export const FEATURED_FOCUS = 'startups'
 const TITLE = 'How to pitch an early idea and ask for useful feedback'
@@ -38,6 +38,15 @@ export default function ArticleContent() {
    <p>An early idea pitch can simply be a short explanation followed by a question. You do not need to present yourself as an investor-ready founder or persuade everyone to join you. The task here is to help a willing listener understand the idea and identify something you still need to learn.</p>
    <p>This guide is for informal learning conversations, not an investment solicitation, sales promise or clinical product demonstration. If you are preparing an actual deck, use the separate <Link to="/articles/featured/the-best-startup-pitch-deck-ever">pitch-deck evidence review</Link>.</p>
    <ArticleTocPlaceholder />
+<nav aria-label="Choose your next step" className="my-6 rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="m-0">Draft a <a href="#sixty-seconds">short pitch</a>, inspect the <a href="#example">before/after example</a>, or <a href="/downloads/idea-pitch-rehearsal.txt" download>download the rehearsal record</a>.</p></nav>
+   <h2 id="sixty-seconds">A 60-second starting template</h2>
+   <blockquote>I am exploring [specific problem] for [person]. Today they [current approach], and I want to test [bounded change]. So far I have [actual evidence, or say this is a hypothesis]. A person would still [review/control]. Could you help me understand [one question]?</blockquote>
+   <p>Use 60 seconds as a rehearsal budget, not a required format or measured performance claim. Read it aloud, time your own version and remove jargon before adding slides.</p>
+   <h2 id="example" className="scroll-mt-28">Before and after: a fictional event-information idea</h2>
+   <p><strong>{PITCH_PROVENANCE}</strong></p>
+   <p><strong>Before:</strong> “{PITCH_BEFORE}”</p>
+   <p><strong>Draft for the first rehearsal:</strong> “{PITCH_DRAFT}”</p>
+   <p>For your own version, replace the invented observation with a permission-cleared real observation or explicitly state that it is a hypothesis. Do not copy the example as your personal experience.</p>
    <h2 id="permission" className="scroll-mt-28">Check the setting and ask first</h2>
    <p>At an event, read the format and participation rules. During a break, try: “Would you be open to hearing an early idea and telling me what is unclear?” If the person declines or is busy, leave it there. An online session may have a designated question channel; do not interrupt or send unsolicited decks to attendees.</p>
    <p>Ask before recording, quoting someone or adding them to a contact list. Remove private customer details from examples. You can describe a problem without exposing a client, employer or participant.</p>
@@ -67,13 +76,8 @@ export default function ArticleContent() {
     <li><a href="https://www.youtube.com/watch?v=8yJnf-ISi9E&t=220s">3:40–4:02</a>: implementation technologies are described. Naming a model or retrieval method is not an accuracy test.</li>
    </ul>
    <p><strong>Transcript:</strong> expand the YouTube description and choose Show transcript; the full caption text was available signed out in our check. Automatically generated names and technical terms need correction before quotation.</p>
-   <p>Neither recording proves that following its structure improves conversion. We have not reproduced their full transcripts or cleared reuse of their footage, personal stories or deck images. The exercise below is our separate, explicitly fictional before-and-after comparison—not a claim that either presenter made these revisions.</p>
+   <p>Neither recording proves that following its structure improves conversion. We have not reproduced their full transcripts or cleared reuse of their footage, personal stories or deck images. The opening exercise is our separate, explicitly fictional before-and-after comparison—not a claim that either presenter made these revisions.</p>
 
-   <h2 id="example" className="scroll-mt-28">Before and after: a fictional event-information idea</h2>
-   <p><strong>{PITCH_PROVENANCE}</strong></p>
-   <p><strong>Before:</strong> “{PITCH_BEFORE}”</p>
-   <p><strong>Draft for the first rehearsal:</strong> “{PITCH_DRAFT}”</p>
-   <p>For your own version, replace the invented observation with a permission-cleared real observation or explicitly state that it is a hypothesis. Do not copy the example as your personal experience.</p>
    <h2 id="questions" className="scroll-mt-28">Match the question to what you need to learn</h2>
    <ul>
     <li><strong>Clarity:</strong> “What do you think the idea would do?” Ask before supplying more explanation.</li>
@@ -119,7 +123,7 @@ export default function ArticleContent() {
     <p>Our new text-only example, not copied from a real company deck. All claims remain within the P1–P3 teaching scenario.</p>
     <dl className="space-y-5">{PITCH_DECK_EXAMPLE.map(row => <div key={row.slide} data-pitch-slide><dt className="font-bold">{row.slide}</dt><dd className="ml-0 mt-1">{row.example}</dd></div>)}</dl>
    </details>
-   <p>A conversation may not need slides at all. For a formal submission, check the organiser’s requirements and use the linked pitch-deck evidence review to distinguish claims, sources and missing evidence.</p>
+   <p>A conversation may not need slides at all. For a formal submission, check the organiser’s requirements and use the <Link to="/articles/featured/the-best-startup-pitch-deck-ever">pitch-deck evidence review</Link> to distinguish claims, sources and missing evidence.</p>
 
    <h2 id="event" className="scroll-mt-28">Take your revised question to a relevant MLAI event</h2>
    <p>Look for a topic and experience level that match your interests, then check the location or online format. Bring your draft as a starting point, not a demand for feedback. Event attendance does not guarantee cofounders, investors, clients or a pitch slot.</p>
@@ -128,7 +132,7 @@ export default function ArticleContent() {
    <ArticleConversionCTA articleSlug={CATEGORY + '/' + SLUG} config={BASE_ARTICLE_SEO_CONFIG['/articles/' + CATEGORY + '/' + SLUG].conversion!} events={[]} placement="article-inline" />
    <h2 id="scope" className="scroll-mt-28">Sources, access and editorial scope</h2>
    <p>The linked resources were checked on 11 September 2026. The Style Manual page was updated 20 December 2024. Caption access, historical source claims and reuse permission are separate checks; access can change. Speaker/audio verification, full accessible transcript provision and media reuse review remain pending.</p>
-   <p>{PITCH_REVIEW_STATUS} The script, scenario and record are MLAI editorial exercises, not measured interventions. No funding, conversion, safety or clarity improvement is claimed. The original publication date is retained; this revision adds source annotations and a worked rehearsal.</p>
+   <p>{PITCH_REVIEW_STATUS} The script, scenario and record are MLAI editorial exercises, not measured interventions. No funding, conversion, safety or clarity improvement is claimed. The written annotations and original exercise can be used without watching the videos.</p>
    <ArticleFAQ items={faqItems} />
   </div>
  </div>

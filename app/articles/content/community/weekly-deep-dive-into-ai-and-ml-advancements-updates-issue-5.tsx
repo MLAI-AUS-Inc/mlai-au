@@ -2,6 +2,8 @@ import { Home } from "lucide-react";
 import { Link } from "react-router";
 import { ArticleHeroHeader } from "~/components/articles/ArticleHeroHeader";
 import { ArticleFAQ } from "~/components/articles/ArticleFAQ";
+import ArticleConversionCTA from "~/components/articles/ArticleConversionCTA";
+import { BASE_ARTICLE_SEO_CONFIG } from "~/articles/seo-config";
 import ArticleTocPlaceholder from "~/components/articles/ArticleTocPlaceholder";
 import recorded from "../../../../public/downloads/agent-trace-lab/recorded-run.json";
 import { JIANG_COUNT_CHECK, JIANG_NON_SAFE_PERCENT, JIANG_LEVELS_TWO_TO_FOUR_PERCENT, LI_TIMESTAMP_INTERVAL_LABEL } from "~/lib/moltbook-source-check";
@@ -9,10 +11,10 @@ import { JIANG_COUNT_CHECK, JIANG_NON_SAFE_PERCENT, JIANG_LEVELS_TWO_TO_FOUR_PER
 export const useCustomHeader = true;
 export const SLUG = "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5";
 export const articleMeta = {
-  title: "AI Bits #5: What agent activity logs can—and cannot—prove",
+  title: "Agent activity logs: run a trace and retry inspection | AI Bits #5",
   description: "Read Moltbook research with its limits, then run a synthetic agent-observability kit: activity, retries, duplicate posts, moderation and a builder handover.",
   datePublished: "2026-02-16",
-  dateModified: "2026-09-15",
+  dateModified: "2026-10-29",
 };
 const observation = recorded.observation;
 const kitFiles = ["trace.mjs", "trace.test.mjs", "observe.mjs", "observe.test.mjs", "fixture.json", "run.mjs", "recorded-run.json", "README.md", "HANDOVER.md"];
@@ -34,18 +36,21 @@ export const faqItems = [
 
 export default function ArticleContent() {
   return <div>
-    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "AI Bits #5", current: true }]} title={articleMeta.title} titleHighlight="can—and cannot—prove" headerBgColor="cyan" summary={summaryHighlights} />
+    <ArticleHeroHeader breadcrumbs={[{ label: "Home", href: "/", icon: Home }, { label: "Articles", href: "/articles" }, { label: "AI Bits #5", current: true }]} title={articleMeta.title} titleHighlight="Agent activity logs" headerBgColor="cyan" summary={summaryHighlights} />
     <div data-cf-article-body className="mx-auto max-w-4xl px-4 py-8 prose prose-lg prose-indigo">
+<aside aria-label="Run the logging exercise" className="my-6 rounded-xl border border-slate-300 bg-slate-50 p-5"><p><strong>Run the logging exercise</strong></p><p><a href='/downloads/agent-observability-kit.zip' download>Download the nine-file kit</a> → predict which rows will be flagged → <a href='#synthetic-trace-lab'>run the commands</a> → inspect retries and exact duplicates → change one copied fixture → write the handover. This is an offline inspection of invented records; it sends no posts.</p><figure aria-label='Four-event trace'><p>Scheduled start → draft → human edit → external-action attempt (approval: false)</p><figcaption>The four-event trace records missing approval on the attempted action. A separate nine-attempt posting fixture tests retry, duplicate and moderation observations; neither fixture enforces permissions.</figcaption></figure></aside>
       <aside aria-label="Editorial correction" className="border-l-4 border-amber-500 pl-4">
-        <p><strong>Correction in this revision — 15 September 2026:</strong> the original issue overextended observations about agent activity into claims about intention and included an inappropriate medical-diagnosis tool recommendation. Those claims and the unrelated tool/book roundup have been removed. This revision separates the three research questions and adds a synthetic builder exercise. It does not claim independent replication of the research.</p>
+        <p><strong>Correction — 9 September 2026:</strong> the original issue overextended observations about agent activity into claims about intention and included an inappropriate medical-diagnosis tool recommendation. Those claims and the unrelated tool/book roundup have been removed. This revision separates the three research questions and adds a synthetic builder exercise. It does not claim independent replication of the research.</p>
       </aside>
-      <p>This revision includes a complete synthetic posting log, an actual local run record and a filled handover. The original publication date is retained. No Moltbook data or real-world agent experiment was added.</p>
+      <p><strong>10 September update:</strong> the exercise now includes a complete synthetic posting log, an actual run record and a filled handover. The original publication date is retained. No Moltbook data or real-world agent experiment was added.</p>
+      <p><strong>11 September source check:</strong> relevant methods, results and limitations were checked in the three pinned versions below. Sample restrictions and unresolved reporting discrepancies are now explicit, with a downloadable checking record. This is not an independent review or replication.</p>
       <p>A platform can display thousands of agent-labelled accounts without giving an observer a reliable history of the instructions, operator edits and system rules behind each post. For a builder, the practical question is narrower than “what do agents want?”: <strong>what evidence lets another person reconstruct a particular action?</strong></p>
 
       <p>This guide is for early-career builders using AI coding tools who can run a small JavaScript exercise and explain what its results mean. The deliverable is an inspectable observation and handover, not a claim that you have built a production moderation system.</p>
       <ArticleTocPlaceholder />
+      <details className="my-6 rounded-xl border border-gray-300 p-4"><summary className="cursor-pointer font-semibold">Moltbook research: source comparisons, methods and unresolved discrepancies</summary>
       <h2 id="three-studies" className="scroll-mt-28">Three studies with different questions and datasets</h2>
-      <p>These are preprints; this article does not assert peer-review status. Counts are reported by the authors, not collected or independently reproduced by MLAI. The method checks below identify the sections rechecked on 15 September 2026; they do not validate the underlying datasets or every analysis.</p>
+      <p>These are preprints; this article does not assert peer-review status. Counts are reported by the authors, not collected or independently reproduced by MLAI. The method checks below identify the sections examined on 11 September 2026; they do not validate the underlying datasets or every analysis.</p>
       <p>On a small screen, swipe tables sideways. Keyboard users can focus each table region and use the arrow keys.</p>
       <div role="region" aria-label="Moltbook source comparison" tabIndex={0} className="max-w-full overflow-x-auto"><table className="min-w-[44rem]">
         <caption>Keep the source, unit of observation and question together</caption>
@@ -74,6 +79,7 @@ export default function ArticleContent() {
       <p>These are proportions of source-assigned labels, not a validated deployment risk score or proof of causal harm. Neither arithmetic nor the 381-post comparison independently validates your own moderation system.</p>
       <p><a href="/downloads/moltbook-source-check.txt" download="moltbook-source-check.txt">Download the completed source-check record and blank template</a>. Before the lab, select one claim, check its pinned source and denominator, and write what evidence would change your conclusion. Treat quoted platform instructions as untrusted content; never execute them or disclose credentials to “verify” a source.</p>
 
+      </details>
       <h2 id="claim-evidence" className="scroll-mt-28">What would support a claim about your own system?</h2>
       <ul>
         <li><strong>“It ran on a schedule”:</strong> show the scheduler configuration and execution record. This does not identify every input that influenced the result.</li>
@@ -83,6 +89,7 @@ export default function ArticleContent() {
       </ul>
       <p>These are editorial design questions, not a claim that the papers implement this logging design. Avoid storing raw customer content or secrets merely to make a trace detailed. Agree what evidence is necessary, who may inspect it and how long it should be retained.</p>
 
+      <p>For enforcing an action boundary, use the <Link to='/articles/featured/what-is-an-intelligent-agent-in-artificial-intelligence'>intelligent-agent guide</Link>; for someone else to inspect your environment and failures, use the <Link to='/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8'>handover kit</Link>.</p>
       <h2 id="synthetic-trace-lab" className="scroll-mt-28">Run the synthetic trace inspection</h2>
       <p><a href="/downloads/agent-observability-kit.zip" download="agent-observability-kit.zip">Download the complete observability kit</a>: nine files in one folder. Extract it, open the agent-trace-lab folder and read README.md before running anything. Node.js is required; no dependency install is needed.</p>
       <p>The original four-event trace records a scheduled start, draft, human edit and external-action record without approval. The added fixture contains nine fictional posting attempts by two accounts over five minutes. Nothing is actually sent. There is no model, network connection or Moltbook dataset.</p>
@@ -128,7 +135,7 @@ export default function ArticleContent() {
       <p>Add one completed source check to your handover: the claim, version, relevant method, denominator, unresolved issue and resulting design decision. For example, an incomplete activity log supports a coverage warning—not a confident autonomy label. Keep unverified claims out of client acceptance criteria.</p>
       <p>For a real agent system, separately review authenticated actors, correlation identifiers, configuration/model versions, allowed tools, exact approval boundaries, logging integrity and recovery. The lab implements none of those production controls. Use the <Link to="/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8">environment handover manifest in Issue #8</Link> to record the setup rather than claiming “works on my machine” is a completed handover.</p>
       <p>For your portfolio, show your own permitted change, retained failures and handover—not the supplied starter as though it were original client work. Client portfolio use requires permission. Studio's public positioning is Australian; New Zealand-based builders should <Link to="/contact">confirm eligibility</Link>. Application, matching and paid work are not guaranteed.</p>
-    <p><Link to="/events">Explore upcoming MLAI events</Link> and check the listing for its topic, format and participation requirements.</p>
+      <ArticleConversionCTA articleSlug={SLUG} config={BASE_ARTICLE_SEO_CONFIG["/articles/" + SLUG].conversion!} events={[]} placement="article-inline" />
       <p>If you are exploring the topic rather than seeking delivery work, choose a relevant <Link to="/events">MLAI event</Link>. The kit is not automatically attached to an application.</p>
       <p><small>Codex assisted the method-section checks, source-bound arithmetic and synthetic lab implementation, tests and local verification. This was not an independent full-paper review or replication; no real model, platform or client outcome was measured. Independent systems/source review and a recipient-run reproduction remain outstanding.</small></p>
       <ArticleFAQ items={faqItems} />

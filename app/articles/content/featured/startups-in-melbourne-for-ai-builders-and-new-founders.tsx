@@ -16,14 +16,14 @@ import { ArticleResourceCTA } from '../../../components/articles/ArticleResource
 
 export const useCustomHeader = true
 
-const TOPIC = "Startups in Melbourne for AI Builders and New Founders"
+const TOPIC = "Starting an AI Startup in Melbourne: People, Support and First Steps"
 export const CATEGORY = "featured"
 export const SLUG = "startups-in-melbourne-for-ai-builders-and-new-founders"
 export const DATE_PUBLISHED = "2026-09-13"
-export const DATE_MODIFIED = '2026-09-15'
-export const DESCRIPTION = "Start with LaunchVic\u2019s event listings, find AI peers, test a customer problem and use official business setup guidance to begin building in Melbourne."
+export const DATE_MODIFIED = '2026-10-29'
+export const DESCRIPTION = "Find Melbourne AI peers, explore Victorian founder support and plan a first week of customer validation with a dated resource map and worked example."
 const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-da78dd9e-bd65-48aa-819c-f49377d96b65.jpg?alt=media&token=84ba0b79-1709-4762-9d04-036b2fb60b08"
-const HERO_IMAGE_ALT = "Close-up of Melbourne AI founders testing a startup idea at a LaunchVic networking event"
+const HERO_IMAGE_ALT = "Illustrative image accompanying a guide to starting an AI business in Melbourne"
 export const FEATURED_FOCUS = "startups"
 
 const AUTHOR_PROFILE = getAuthorProfile(DEFAULT_AUTHOR_KEY)
@@ -78,7 +78,7 @@ export const faqItems: FAQ[] = [
 
 export const summaryHighlights = {
   heading: "Key facts: Startups in Melbourne for AI Builders and New Founders",
-  intro: "Start with LaunchVic\u2019s event listings, find AI peers, test a customer problem and use official business setup guidance to begin building in Melbourne.",
+  intro: "Choose a resource for the question you need to answer: technical peers, customer evidence, Victorian support or practical business setup.",
   items: [
     { label: "Where can Melbourne founders find connections?", description: "Use official event listings to find relevant conversations, then check the organiser’s current audience, date, location, cost and booking details. Customer research, rather than meetup attendance or peer enthusiasm, provides evidence about demand." },
     { label: "What belongs in an AI startup brief?", description: "A startup\u2019s business proposition needs a defined customer problem, a revenue approach, startup and monthly costs, and a customer-acquisition plan. An interesting AI demonstration alone does not establish customer demand." },
@@ -87,7 +87,7 @@ export const summaryHighlights = {
 }
 
 export const articleMeta = {
-  title: "Startups in Melbourne for AI Builders and New Founders",
+  title: "Starting an AI Startup in Melbourne: People, Support and First Steps",
   topic: TOPIC,
   category: CATEGORY,
   slug: SLUG,
@@ -172,17 +172,33 @@ export default function ArticleContent() {
         <p>{"For AI-focused learning and peer connections, MLAI is an Australian not-for-profit, volunteer community that runs events and offers founder-oriented tools. Check its current event calendar rather than assuming a particular Melbourne event or venue will be available."}</p>
         <p>{"Community participation is different from setting up a business. When you are ready to operate, use business.gov.au\u2019s starting-a-business guide to work through readiness, your customer and market, planning, business structure, registration, finances and getting customers. The best first move is the one that addresses your immediate uncertainty: the problem, the people needed to build, or the practical steps to trade."}</p>
         </div>
-        <div id="launchvic-events" data-cf-component-id={"section:launchvic-events"} data-cf-component-type={"section"} data-cf-component-label={"Find Melbourne startup events through LaunchVic"} data-cf-source-section-id={"launchvic-events"}>
-          <h2>{"Find Melbourne startup events through LaunchVic"}</h2>
+        <section id="resource-map">
+          <h2>A resource map for your next decision</h2>
+          <p>This is a starting guide for people building in Melbourne, not a directory of companies or an endorsement of a programme. Official links below were checked on 29 October 2026; individual event and programme terms still need their own check.</p>
+          <div role="region" aria-label="Melbourne founder resource map" tabIndex={0} className="max-w-full overflow-x-auto"><table className="min-w-[42rem]"><thead><tr><th>Need</th><th>Source</th><th>Audience / geography</th><th>Next check</th></tr></thead><tbody>
+            <tr><td>Find a dated event</td><td><a href="https://launchvic.org/featured-events/">LaunchVic events</a>; <a href="/articles/featured/where-to-find-ai-events-in-melbourne">MLAI Melbourne event shortlist</a></td><td>Startup events across Victoria; the shortlist separates Melbourne and online formats.</td><td>Organiser date, audience, address, price and admission.</td></tr>
+            <tr><td>Find technical peers</td><td><a href="/events">MLAI event calendar</a></td><td>AI learners, builders and founders; check each city and level.</td><td>Bring one technical question; an event is not a promised mentor or cofounder match.</td></tr>
+            <tr><td>Find founder support</td><td><a href="https://www.innovationvictoria.com/">Innovation Victoria</a></td><td>Victorian innovation ecosystem; LaunchVic’s site points to this current organisation.</td><td>Open the specific programme to establish eligibility, dates and obligations.</td></tr>
+            <tr><td>Prepare to trade</td><td><a href="https://business.gov.au/guide/starting">business.gov.au starting guide</a></td><td>Australian business setup; requirements depend on the business and location.</td><td>Confirm the structure, registrations and licences relevant to your activity.</td></tr>
+          </tbody></table></div>
+        </section>
+        <section id="first-week">
+          <h2>A completed first-week plan</h2>
+          <p><strong>Fictional example:</strong> Priya can build a prototype but does not know whether small repair businesses need a job-request summariser. Her gap is customer evidence, not an investor list.</p>
+          <ul><li><strong>Monday:</strong> write the question “Where are job details lost before scheduling?” and a six-hour weekly time allowance. No savings claim or customer evidence yet.</li><li><strong>Tuesday–Wednesday:</strong> request two conversations, with permission to take notes. Use the <a href="/articles/featured/how-to-get-the-first-customers-for-my-startup-in-2026">customer-validation guide</a>; record refusals and contradictions as well as interest.</li><li><strong>Thursday:</strong> shortlist one relevant technical event and bring an invented request. Registration is not submitted; no attendance or useful introduction is assumed.</li><li><strong>Friday:</strong> compare what was actually learned with the original problem. If conversations do not substantiate it, change or stop the prototype. Before trading, work through the <a href="/articles/featured/how-to-startup-a-small-business-in-australia">Australian setup guide</a>.</li></ul>
+          <p><strong>Completed planning record:</strong> audience = repair-business scheduler; unresolved fact = recurring lost details; first action = ask for conversations; success evidence = specific recent examples, not compliments; decision = investigate before building. All observations remain unknown until the work occurs.</p>
+        </section>
+        <div id="launchvic-events" data-cf-component-id={"section:launchvic-events"} data-cf-component-type={"section"} data-cf-component-label={"Find Melbourne startup events through current organiser sources"} data-cf-source-section-id={"launchvic-events"}>
+          <h2>{"Find Melbourne startup events through current organiser sources"}</h2>
           <p>{"LaunchVic\u2019s Events & Networking page is a useful starting point for finding startup events in Victoria. Its calendar includes founder meetups, pitch nights, workshops and investor sessions in Melbourne and regional locations, as well as online events. Treat it as a statewide discovery tool rather than assuming every listing is in Melbourne."}</p>
           <p>{"Open the organiser’s listing and check the audience, current date, location or online format, cost and booking availability. Choose an event because it helps answer your question. If you need to understand a customer’s actual work, a direct conversation may be more useful than a general founder meetup."}</p>
           <p>{"Choose the format based on the conversation you need. A founder meetup may suit peer discussion, while a workshop can be useful when you want to learn around a defined topic. Pitch nights and investor sessions are different settings again, so it helps to arrive with a clear question rather than treating every event as the same networking opportunity."}</p>
           <p>{"For contact that continues after a single event, look at specialised community groups. LaunchVic describes these groups as networks organised around shared industries, experiences or startup stages, with regular meetups and ongoing peer support. A group that matches your immediate question is likely to make follow-up conversations more relevant."}</p>
-          <div data-cf-component-id={"image:launchvic-events"} data-cf-component-type={"image"} data-cf-component-label={"Image: Find Melbourne startup events through LaunchVic"} data-cf-source-section-id={"launchvic-events"}>
+          <div data-cf-component-id={"image:launchvic-events"} data-cf-component-type={"image"} data-cf-component-label={"Image: Find Melbourne startup events through current organiser sources"} data-cf-source-section-id={"launchvic-events"}>
           <ArticleImageBlock
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Finline-2131a3f3-8f83-45ea-a8f8-dfd0205ed5f9.jpg?alt=media&token=3453e634-00a5-49ce-94bd-87339567ee8c"
             alt="Blurred hand passing notebooks, coffee cups and event flyers on a Melbourne startup meetup table"
-            caption="Find Melbourne startup events through LaunchVic"
+            caption="Find Melbourne startup events through current organiser sources"
             width={1200}
             height={800}
           />
@@ -308,6 +324,7 @@ export default function ArticleContent() {
           heading="Sources & further reading"
         />
 
+        <p><small>Resource map checked 29 October 2026 against the LaunchVic handoff, Innovation Victoria homepage, organiser-backed Melbourne listings and business.gov.au. The plan is fictional; no interviews, event attendance, acceptance or business outcomes are claimed.</small></p>
         <ArticleDisclaimer />
 
         <div className="my-12 not-prose" data-cf-component-id={"cta"} data-cf-component-type={"company-cta"} data-cf-component-label={"Company CTA"}>

@@ -1,0 +1,52 @@
+MLAI STARTUP BUILDER - PROBLEM VALIDATION RECORD
+Revised 9 September 2026. Editable plain text, not legal or tax advice.
+Use permitted data. Keep personal details and private notes out of public copies.
+
+BLANK RECORD
+Date and owner:
+Intended user and specific task:
+Learning exercise, product experiment or client delivery:
+Current process and alternatives:
+Evidence source, date, context and permission:
+What was actually said or observed:
+My interpretation (not an observed fact):
+Contradictory evidence and unanswered questions:
+Proposed smallest test, inputs and expected output:
+Forbidden actions and fallback:
+Acceptance criteria and reviewer:
+Actual result (UNRUN until performed):
+Next decision: continue, change, stop or gather evidence:
+Reason and evidence required before the next commitment:
+Build/test/documentation/review effort and available hours:
+Operating activity/jurisdiction and requirements to check:
+Official source or qualified adviser, owner and confirmation date:
+Unresolved requirements (not approval or an exemption):
+Data, code and portfolio sharing permissions:
+
+FICTIONAL WORKED EXAMPLE - no real customer interview or result
+User/task: a small club organiser answering questions about event times.
+Current process: manually find a public notice and draft a reply.
+Evidence: invented for this exercise; no actual conversation performed.
+Reported observation in the scenario: organiser describes repetitive lookup.
+Interpretation: better retrieval might help; willingness to pay is unknown.
+Contradictory possibility: existing search may already be sufficient.
+Smallest test: show the relevant passage from three permitted sample notices.
+Optional extension: draft a reply with the supporting notice ID for review.
+Forbidden: sending, booking, payments, attendee lookup or invented availability.
+Acceptance: preserve the stated timezone; flag conflicting/missing information.
+Actual result: UNRUN. Do not turn expected results into reported performance.
+Next step: test the baseline and discuss the current process with permission.
+Effort illustration: build 6h + tests 4h + documentation 2h + review 2h = 14h.
+Availability illustration: 8h; gap 6h. Narrow scope or change schedule.
+Operating requirements: unresolved; this example supplies no determination.
+
+CHECK OBLIGATIONS ALONGSIDE VALIDATION
+Customer interest is not a universal trigger for registrations or other duties.
+Check the requirements for your actual activities before operating or making
+commitments. An experimental label does not establish an exemption.
+Official Australian starting point: https://business.gov.au/guide/starting
+Registration guidance: https://business.gov.au/registrations
+Seek qualified advice for your circumstances. This sheet is not a legal checklist.
+
+Synthetic examples, small tests and compliments do not prove market demand,
+production readiness, client experience, available paid work or earnings.

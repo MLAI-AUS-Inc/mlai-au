@@ -1,0 +1,42 @@
+MELBOURNE AI LEARNING DECISION
+Provider source recheck: 29 October 2026. No admission or enrolment guaranteed.
+
+One thing I want to understand or do:
+
+Why I need it, and whether I need a formal qualification:
+
+Evidence of my current skills, including gaps:
+
+Course/session name and official URL:
+
+Student category and entry requirements confirmed by:
+
+Weekly study, scheduled attendance and travel I can sustain:
+
+Duration, start date, deadline and date checked:
+
+Tuition amount, currency, fee period and eligibility basis:
+
+Extra equipment/software/service/travel costs:
+
+Assessment, feedback, accessibility and catch-up arrangements:
+
+Permitted small project or learning record I will produce:
+
+How I will test/explain it and what it will not demonstrate:
+
+Unanswered question and who can answer it:
+
+Decision: proceed, ask for clarification, choose a foundation step or defer:
+
+FICTIONAL COMPLETED EXAMPLE — Rina
+Goal: understand document-answering evaluation; no formal qualification currently needed.
+Skills: can edit a simple script; has not studied ML.
+Candidate: RMIT Generative AI, https://shortcourses.rmit.edu.au/products/fs-generative-ai-air116u
+Prerequisites: intermediate Python, ML/LLM knowledge and prompting; readiness unconfirmed.
+Available effort: four hours/week for eight weeks  = 32 hours. Advertised requirement 48–64 hours; gap 16–32 hours.
+Fee: A$1000 including GST at the 29 October check; extra costs/support unknown.
+Intake: dates to be announced, not a booked place.
+Decision: ask provider about prerequisites; choose a foundation exercise or defer. No course completion, attendance or job outcome claimed.
+
+Provider checks: MBS two days, 25–26 November A$3500; RMIT: 8 weeks, 6–8 hours/week, A$1,000, dates to be announced; VU: 2027 CSP guide A$4,940/semester excluding materials and SSAF, starts 15 February, closes 7 February; Holmesglen indicative A$15,810 full fee / A$8,823 subsidised, plus A$85 per semester, intake unconfirmed. Verify the personal fee basis and all dates with the provider.

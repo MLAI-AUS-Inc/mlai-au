@@ -40,7 +40,7 @@ export function acceleratorIntakeNotice(program: AustralianAcceleratorProgram, a
   switch (program.intakeKind) {
     case "closed": return "Provider reported applications closed at the source check. A next round is not confirmed.";
     case "expression-of-interest": return "Expression-of-interest route observed — not a confirmed application, acceptance or place.";
-    case "application-link": return "Application link observed — the dated intake, eligibility and acceptance remain unverified.";
+    case "application-link": return "Application link observed — confirm current availability, eligibility and acceptance with the provider.";
     default: return "No dated application window verified — ask the provider before preparing an application.";
   }
 }

@@ -1,0 +1,18 @@
+CAPTION REVIEW — fictional staff-only exercise
+Not a recording, product test or learner study.
+
+REFERENCE SCRIPT
+This activity is optional. Do not submit it for a grade. The water sample starts at twenty degrees Celsius.
+
+CAPTION A
+This activity is optional. Submit it for a grade. The water sample starts at twenty degrees Celsius.
+
+CAPTION B
+This activity is optional. Do not submit it for a grade. The water sample starts at twenty degrees Fahrenheit.
+
+Before reading the key: underline changed meaning and state whether each caption can be used.
+KEY
+A deletes the negation and reverses the submission instruction. B changes Celsius to Fahrenheit. Both fail. The reference script supplies corrected words, but does not verify audio timing, speaker identification, player controls or accessibility.
+
+CURRENT DECISION
+Retain reviewed text in the approved system. No learner pilot or accessibility benefit has been demonstrated. Ask the institution's teaching/accessibility/privacy teams about any further proposal.

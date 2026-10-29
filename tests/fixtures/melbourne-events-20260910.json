@@ -1,0 +1,37 @@
+{
+  "checked_at": "2026-09-10",
+  "records": [
+    {
+      "key": "office-hours",
+      "url": "https://luma.com/x05a1zzc",
+      "status": 200,
+      "schema": [
+        "{\"@type\": \"Event\", \"startDate\": \"2026-09-10T17:30:00.000+10:00\", \"endDate\": \"2026-09-10T18:30:00.000+10:00\"}"
+      ]
+    },
+    {
+      "key": "hype-to-practice",
+      "url": "https://luma.com/mlai-nu4n",
+      "status": 200,
+      "schema": [
+        "{\"@type\": \"Event\", \"startDate\": \"2026-09-15T17:30:00.000+10:00\", \"endDate\": \"2026-09-15T20:30:00.000+10:00\"}"
+      ]
+    },
+    {
+      "key": "engineer-night",
+      "url": "https://luma.com/mlai-m1d6",
+      "status": 200,
+      "schema": [
+        "{\"@type\": \"Event\", \"startDate\": \"2026-09-16T18:00:00.000+10:00\", \"endDate\": \"2026-09-16T21:00:00.000+10:00\"}"
+      ]
+    },
+    {
+      "key": "productathon",
+      "url": "https://luma.com/baz94tl4",
+      "status": 200,
+      "schema": [
+        "{\"@type\": \"Event\", \"startDate\": \"2026-09-27T14:00:00.000+10:00\", \"endDate\": \"2026-09-27T18:00:00.000+10:00\"}"
+      ]
+    }
+  ]
+}

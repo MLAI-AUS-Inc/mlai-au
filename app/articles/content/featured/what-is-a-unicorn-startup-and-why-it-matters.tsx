@@ -20,7 +20,7 @@ const TOPIC =
 export const CATEGORY = "featured";
 export const SLUG = "what-is-a-unicorn-startup-and-why-it-matters";
 export const DATE_PUBLISHED = "2026-04-23";
-export const DATE_MODIFIED = "2026-07-29";
+export const DATE_MODIFIED = "2026-10-29";
 export const DESCRIPTION =
   "Understand the US$1 billion unicorn threshold, inspect five sourced Australian valuation events, and model dilution in a transparent founder calculator.";
 const HERO_IMAGE =
@@ -127,8 +127,8 @@ const REFERENCES = [
   },
   {
     id: 2,
-    href: "https://www.airwallex.com/global/blog/the-ai-era-has-no-home-market-build-accordingly",
-    title: "The AI Era Has No Home Market. Build Accordingly.",
+    href: "https://www.airwallex.com/global/newsroom/airwallex-secures-320-million-in-series-h-funding-valuation-hits-11-billion",
+    title: "Airwallex Series H announcement, 25 June 2026",
     publisher: "Airwallex",
     description:
       "Company announcement of a June 2026 financing at a US$11 billion valuation.",
@@ -345,6 +345,7 @@ export default function ArticleContent() {
           </p>
         </aside>
 
+        <p><strong>Currency evidence for Airwallex:</strong> its <a href="https://www.airwallex.com/en-us/who-we-are">company profile</a> explicitly describes the $11 billion valuation as USD; the dated Series H announcement supplies the financing event. The 29 October check retains the four older rounds as historical evidence. It does not certify that every company remains private or establish a current ranking.</p>
         <h2>Currency and inclusion rules</h2>
         <p>
           The threshold is denominated in US dollars, so currency handling can
@@ -394,6 +395,7 @@ export default function ArticleContent() {
           hands and the cash generally goes to the seller, not the company.
         </p>
 
+        <p><strong>Compare a secondary sale:</strong> if a founder sells existing shares representing 10 percentage points of the company, the buyer pays that founder. No new shares are issued in this simplified example, the company receives no new cash, and other holders are not diluted by that transfer. This differs from the A$100 million primary investment above. Neither example establishes a US-dollar unicorn valuation.</p>
         <UnicornValuationCalculator />
 
         <h2>What a US$1 billion valuation does—and does not—mean</h2>
@@ -525,15 +527,15 @@ export default function ArticleContent() {
             </li>
             <li>
               <strong className="text-white">Verification:</strong> the five
-              source pages were opened and checked on 29 July 2026. MLAI did
+              valuation announcements were rechecked on 29 October 2026. MLAI did
               not inspect confidential transaction documents or independently
               value the companies.
             </li>
             <li>
               <strong className="text-white">Status rule:</strong> only the
-              recent 2026 Airwallex announcement is labelled recent. Older
+              Airwallex row identifies the June 2026 financing event. Older
               events are historical threshold evidence and do not establish a
-              July 2026 valuation.
+              current valuation or a complete check of listings and acquisitions.
             </li>
             <li>
               <strong className="text-white">Original asset:</strong> MLAI built
@@ -548,11 +550,10 @@ export default function ArticleContent() {
               structured data.
             </li>
             <li>
-              <strong className="text-white">Current editorial gate:</strong>{" "}
+              <strong className="text-white">Review limits:</strong>{" "}
               the planned two interviews with relevant Australian founders,
               investors or qualified advisers and a named financial/legal
-              review have not yet been completed. Do not mark this article
-              final or score it 80+ until those gates are satisfied.
+              review have not yet been completed. No interview findings or independent review are claimed.
             </li>
             <li>
               <strong className="text-white">AI assistance:</strong> AI tools
@@ -563,10 +564,18 @@ export default function ArticleContent() {
           </ul>
         </aside>
 
+        <p>
+          If you are reading to understand startup headlines, a relevant MLAI
+          event is a place to discuss what a valuation does—and does not—show.
+          An investor-update tool is a separate next step for founders who
+          actually need to communicate their own company evidence, not a
+          requirement for readers learning the terminology.
+        </p>
+
         <ArticleReferences
           references={[...REFERENCES]}
           heading="Valuation, fundraising and definition sources"
-          description="Sources checked for the 29 July 2026 revision."
+          description="Dated valuation announcements rechecked 29 October 2026; historical events are not current market prices."
           previewCount={5}
         />
 

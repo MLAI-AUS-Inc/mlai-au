@@ -11,11 +11,11 @@ import { ArticleReferences } from "~/components/articles/ArticleReferences";
 
 export const useCustomHeader = true;
 
-const TOPIC = "What Is Artificial Intelligence in Simple Words?";
+const TOPIC = "AI Explained Simply: Everyday Examples and an 8-Question Quiz";
 export const CATEGORY = "featured";
 export const SLUG = "what-is-artificial-intelligence-in-simple-words";
 export const DATE_PUBLISHED = "2026-04-18";
-export const DATE_MODIFIED = "2026-10-06";
+export const DATE_MODIFIED = "2026-10-29";
 export const DESCRIPTION =
   "Understand AI with everyday examples, a short quiz and a step-by-step look at how it works, where it goes wrong, and what to check before using it.";
 const HERO_IMAGE =
@@ -128,7 +128,7 @@ export default function ArticleContent() {
 
       <p className="not-prose mb-6 text-sm leading-6 text-gray-700">
         By <a href={AUTHOR_URL} className="font-semibold underline underline-offset-4">Dr Sam Donegan</a>
-        {" · "}MLAI{" · "}Updated <time dateTime={DATE_MODIFIED}>6 October 2026</time>
+        {" · "}MLAI{" · "}Updated <time dateTime={DATE_MODIFIED}>29 October 2026</time>
       </p>
 
       <div className="prose prose-lg prose-slate max-w-none bg-transparent">
@@ -165,7 +165,7 @@ export default function ArticleContent() {
           mean a system can give reliable advice about your health or finances.
         </p>
 
-        <h2>What makes it AI?</h2>
+        <h2 id="what-makes-it-ai">What makes it AI?</h2>
         <p>
           A simple timer follows a rule: turn the light on at 7 pm. A spam
           filter has a different task. It has to work out whether a new message
@@ -280,7 +280,7 @@ export default function ArticleContent() {
         <h2>Keep exploring</h2>
         <p>
           For more familiar examples, read <Link to="/articles/featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life">how AI is used in everyday work and life</Link>.
-          If you've heard about tools that take actions for you, our <Link to="/articles/featured/what-is-an-agent-in-artificial-intelligence">guide to AI agents</Link>{" "}
+          To try a bounded writing task with fictional facts, use the <Link to="/articles/featured/build-an-ai-personal-assistant-for-one-small-business-task">opening-hours assistant exercise</Link>. If you've heard about tools that take actions for you, our <Link to="/articles/featured/what-is-an-agent-in-artificial-intelligence">guide to AI agents</Link>{" "}
           explains what changes when software can do more than suggest an answer.
         </p>
 
@@ -288,8 +288,8 @@ export default function ArticleContent() {
 
         <details className="not-prose my-8 rounded-2xl border border-gray-300 p-5 text-sm leading-6 text-gray-700">
           <summary className="cursor-pointer font-bold text-gray-950">About this guide</summary>
-          <p className="mt-3">The shop example and quiz are made up to help explain the ideas. They aren't product tests or a formal assessment. AI tools helped with research, writing and code. The sources below explain the definitions and advice in more detail.</p>
-          <p className="mt-3">Published <time dateTime={DATE_PUBLISHED}>18 April 2026</time>. Updated <time dateTime={DATE_MODIFIED}>6 October 2026</time> with simpler explanations, a worked example and clearer next steps.</p>
+          <p className="mt-3">The shop example and quiz are made up to help explain the ideas. They aren't product tests or a formal assessment. AI tools helped with research, writing and code. No beginner comprehension study or independent subject review is claimed. The sources below explain the definitions and advice in more detail.</p>
+          <p className="mt-3">Published <time dateTime={DATE_PUBLISHED}>18 April 2026</time>. Updated <time dateTime={DATE_MODIFIED}>29 October 2026</time> with a quiz reading bridge and a clearer title. The explanation and worked example retain the 6 October revision.</p>
         </details>
 
         <ArticleReferences references={[...REFERENCES]} heading="Sources and further reading" description="For a closer look at the ideas in this guide." previewCount={4} />

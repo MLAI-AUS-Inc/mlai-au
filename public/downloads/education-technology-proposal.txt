@@ -1,0 +1,47 @@
+CAPTION REVIEW — fictional staff-only exercise
+Not a recording, product test or learner study.
+
+REFERENCE SCRIPT
+This activity is optional. Do not submit it for a grade. The water sample starts at twenty degrees Celsius.
+
+CAPTION A
+This activity is optional. Submit it for a grade. The water sample starts at twenty degrees Celsius.
+
+CAPTION B
+This activity is optional. Do not submit it for a grade. The water sample starts at twenty degrees Fahrenheit.
+
+Before reading the key: underline changed meaning and state whether each caption can be used.
+KEY
+A deletes the negation and reverses the submission instruction. B changes Celsius to Fahrenheit. Both fail. The reference script supplies corrected words, but does not verify audio timing, speaker identification, player controls or accessibility.
+
+CURRENT DECISION
+Retain reviewed text in the approved system. No learner pilot or accessibility benefit has been demonstrated. Ask the institution's teaching/accessibility/privacy teams about any further proposal.
+
+PROPOSAL SHEET — complete from evidence; unknowns remain unknown
+Specific reader / learner group and educational task:
+
+Problem with the current approach, with existing evidence:
+
+Current non-AI or already-approved alternative:
+
+Proposed change and why it might help:
+
+Supporting source / setting / date / measured outcome:
+
+Important differences between that evidence and this setting:
+
+Tool, account, input material, rights and data destination:
+
+Required institutional decisions and responsible people:
+
+Quality and accessibility checks / serious-error stop condition:
+
+Comparison, outcome definition and missing-data handling:
+
+Setup, review, correction and ongoing workload to count:
+
+Proposed duration and reason / permissions still required:
+
+Decision: keep current approach, investigate, pause or seek approval:
+
+Next evidence, owner and review date:

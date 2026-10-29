@@ -1,0 +1,30 @@
+AI ANSWER COMPARISON — editorial exercise, all event details invented
+
+SOURCE CARD
+Harbour AI Reading Circle: online, 14 October at 6 pm Sydney time, 45 minutes. Registration required. Recording availability not stated.
+TASK
+Briefly explain when/how to attend and whether a recording is available. Do not invent facts.
+ANSWER A
+Join the online discussion on 14 October at 6 pm Sydney time. It lasts 45 minutes, and you need to register. The notice does not confirm a recording.
+ANSWER B
+We’d love to see you at the Harbour AI Reading Circle! Drop in online at 6 pm Sydney time on 14 October—no registration needed. Don’t worry if you miss it: a recording will be shared afterwards.
+CHECK
+A preserves the required facts. B contradicts registration, invents a recording and omits duration. Warmth does not repair these errors.
+CORRECTED WARM ANSWER
+We’d love to see you at the Harbour AI Reading Circle online on 14 October at 6 pm Sydney time. The discussion lasts 45 minutes and registration is required. Recording availability has not been confirmed.
+
+YOUR COMPARISON
+Task and permitted source:
+Required facts:
+Model/version/date/settings (or editorial examples):
+Prompt and conversation conditions:
+Output A and B:
+Contradictions:
+Omissions:
+Unsupported additions:
+Preferred style and why:
+Corrected answer:
+Remaining unknowns and comparison limits:
+Permission to retain/share feedback:
+
+Keep real results separate from this fictional example. One task does not identify the best model or a person's personality.

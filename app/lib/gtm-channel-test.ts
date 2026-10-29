@@ -107,7 +107,7 @@ export const GTM_COMPLETED_FIELDS = [
   { label: 'Message and next action offered', value: 'See how a draft follow-up is checked against the quote before anyone sends it. Invite a demonstration first; show the same pilot scope and price at every attended demo. Acceptance of an introduction is not acceptance of this offer.' },
   { label: 'Fit rule and denominator for each stage', value: 'Verify owner role, a recent quote-follow-up problem and authority to consider a pilot. Individually invite only verified-fit people. Count yes/no replies per invitee, attended demos per invitee, accepted terms per terms shown, payments per accepted offer, and completed ten-record reviews per paid buyer. Unknown fit, pending replies, pending terms and pending payments stay separate.' },
   { label: 'Time, cash and delivery-capacity limits', value: 'Across both routes: at most 12 acquisition hours, AUD 250 acquisition cash and two accepted pilot commitments. Invented planning value: AUD 60 per founder hour. Pilot delivery and support effort are outside that acquisition budget and remain unestimated; two slots are a promise ceiling, not proof the founder can deliver them.' },
-  { label: 'Start, end, follow-up and decision dates', value: 'Fictional future schedule: test 14–25 September 2026; appropriately agreed follow-up until 2 October; decision on 5 October. Statuses below are an author-created snapshot at that fictional decision, not events that have happened or a forecast.' },
+  { label: 'Start, end, follow-up and decision dates', value: 'Fictional historical schedule: test 14–25 September 2026; appropriately agreed follow-up until 2 October; decision on 5 October. Statuses below are an author-created snapshot at that fictional decision, not events that have happened or a forecast.' },
   { label: 'Observed counts, costs, objections and missing data', value: 'Use the 28 synthetic status rows below. Introductions: 5 of 8 fit, 4 of 5 invitees replied, 3 demos, 1 accepted pilot, 1 payment, 0 completed reviews. Session: 4 of 20 fit, 3 of 4 invitees replied, 2 demos, 1 accepted pilot, payment pending, 0 completed reviews. Acquisition: AUD 40 / 4 hours and AUD 180 / 8 hours. Objection reasons and delivery economics are not supplied; see the stage definitions and cost limits, not an invented customer story.' },
   { label: 'Repeat / change / stop decision and next uncertainty', value: GTM_DECISION + ' ' + GTM_UNKNOWN },
 ] as const;
@@ -139,9 +139,9 @@ export function gtmWorksheetText() {
     '[Record a new bounded decision, not an automatic extension of this fictional test.]', '',
     'EVENT DISCUSSION',
     'Bring one anonymised or synthetic question about the test decision. The event format control transfers only online/in-person preference, not this record. No automatic upload, booking, customer introduction or sales review is promised.',
-    'Sources checked 15 September 2026; practical guidance, not endorsement of this fixture:',
+    'Sources checked 11 September 2026; practical guidance, not endorsement of this fixture:',
     'https://startups.aws.com/learn/prove-whats-possible-make-your-idea-success-solid-go-to-market-strategy',
-    'https://business.gov.au/planning/business-plans/develop-your-marketing-plan',
+    'https://www.stoneandchalk.com.au/articles/go-to-market-strategy-guide-for-saas-startups',
     'Full explanation: https://mlai.au/articles/featured/go-to-market-for-startups', '',
   ].join('\n');
 }

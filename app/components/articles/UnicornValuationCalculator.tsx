@@ -2,10 +2,6 @@ import { useMemo, useState } from "react";
 
 type Currency = "AUD" | "USD";
 
-function toSafeNumber(value: number) {
-  return Number.isFinite(value) && value >= 0 ? value : 0;
-}
-
 function formatMoney(value: number, currency: Currency) {
   return new Intl.NumberFormat("en-AU", {
     style: "currency",
@@ -29,39 +25,46 @@ export function calculatePrimaryRound({
   newMoney: number;
   founderOwnership: number;
 }) {
-  const safePreMoney = toSafeNumber(preMoney);
-  const safeNewMoney = toSafeNumber(newMoney);
-  const safeFounderOwnership = Math.min(
-    100,
-    toSafeNumber(founderOwnership),
-  );
-  const postMoney = safePreMoney + safeNewMoney;
-  const existingHolderFactor = postMoney > 0 ? safePreMoney / postMoney : 0;
-  const investorOwnership =
-    postMoney > 0 ? (safeNewMoney / postMoney) * 100 : 0;
-  const founderOwnershipAfter =
-    safeFounderOwnership * existingHolderFactor;
+  if (![preMoney, newMoney, founderOwnership].every(Number.isFinite) || preMoney <= 0 || newMoney < 0 || founderOwnership < 0 || founderOwnership > 100 || !Number.isFinite(preMoney + newMoney)) return null;
+  const postMoney = preMoney + newMoney;
+  const existingHolderFactor = preMoney / postMoney;
+  const investorOwnership = (newMoney / postMoney) * 100;
+  const founderOwnershipAfter = founderOwnership * existingHolderFactor;
 
   return {
     postMoney,
     investorOwnership,
     founderOwnershipAfter,
-    founderDilutionPoints: safeFounderOwnership - founderOwnershipAfter,
+    founderDilutionPoints: founderOwnership - founderOwnershipAfter,
   };
 }
 
+export function primaryRoundCsv(currency: Currency, preMoney: number, newMoney: number, founderOwnership: number) {
+  const result = calculatePrimaryRound({ preMoney, newMoney, founderOwnership });
+  if (!result) return null;
+  const rows = [
+    ["Scenario", "Simplified primary priced round"], ["Currency", currency],
+    ["Pre-money valuation (millions)", preMoney], ["New primary investment (millions)", newMoney],
+    ["Post-money valuation (millions)", result.postMoney], ["New investor ownership (%)", result.investorOwnership.toFixed(2)],
+    ["Founder group before (%)", founderOwnership], ["Founder group after (%)", result.founderOwnershipAfter.toFixed(2)],
+    ["Important limitation", "Excludes option-pool changes, SAFEs, notes, preferences, debt, tax and secondary sales. Obtain legal and financial advice."],
+  ];
+  return rows.map(row => row.map(escapeCsv).join(",")).join("\n");
+}
+
+const numberFromInput = (value: string) => value.trim() === "" ? NaN : Number(value);
 export default function UnicornValuationCalculator() {
   const [currency, setCurrency] = useState<Currency>("AUD");
-  const [preMoney, setPreMoney] = useState(900);
-  const [newMoney, setNewMoney] = useState(100);
-  const [founderOwnership, setFounderOwnership] = useState(60);
+  const [preMoney, setPreMoney] = useState("900");
+  const [newMoney, setNewMoney] = useState("100");
+  const [founderOwnership, setFounderOwnership] = useState("60");
 
   const result = useMemo(
     () =>
       calculatePrimaryRound({
-        preMoney,
-        newMoney,
-        founderOwnership,
+        preMoney: numberFromInput(preMoney),
+        newMoney: numberFromInput(newMoney),
+        founderOwnership: numberFromInput(founderOwnership),
       }),
     [founderOwnership, newMoney, preMoney],
   );
@@ -69,21 +72,8 @@ export default function UnicornValuationCalculator() {
   const downloadScenario = () => {
     if (typeof window === "undefined") return;
 
-    const rows = [
-      ["Scenario", "Simplified primary priced round"],
-      ["Currency", currency],
-      ["Pre-money valuation (millions)", preMoney],
-      ["New primary investment (millions)", newMoney],
-      ["Post-money valuation (millions)", result.postMoney],
-      ["New investor ownership (%)", result.investorOwnership.toFixed(2)],
-      ["Founder group before (%)", founderOwnership],
-      ["Founder group after (%)", result.founderOwnershipAfter.toFixed(2)],
-      [
-        "Important limitation",
-        "Excludes option-pool changes, SAFEs, notes, preferences, debt, tax and secondary sales. Obtain legal and financial advice.",
-      ],
-    ];
-    const csv = rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+    const csv = primaryRoundCsv(currency, numberFromInput(preMoney), numberFromInput(newMoney), numberFromInput(founderOwnership));
+    if (!csv) return;
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     const link = document.createElement("a");
     link.href = url;
@@ -131,9 +121,7 @@ export default function UnicornValuationCalculator() {
             min="0"
             step="1"
             value={preMoney}
-            onChange={(event) =>
-              setPreMoney(toSafeNumber(event.currentTarget.valueAsNumber))
-            }
+            onChange={(event) => setPreMoney(event.currentTarget.value)}
             className="mt-2 w-full rounded-xl border border-gray-400 bg-white px-3 py-3 text-base text-gray-950 focus:border-[#4b1bd1] focus:outline-none focus:ring-4 focus:ring-purple-100"
           />
         </label>
@@ -144,9 +132,7 @@ export default function UnicornValuationCalculator() {
             min="0"
             step="1"
             value={newMoney}
-            onChange={(event) =>
-              setNewMoney(toSafeNumber(event.currentTarget.valueAsNumber))
-            }
+            onChange={(event) => setNewMoney(event.currentTarget.value)}
             className="mt-2 w-full rounded-xl border border-gray-400 bg-white px-3 py-3 text-base text-gray-950 focus:border-[#4b1bd1] focus:outline-none focus:ring-4 focus:ring-purple-100"
           />
         </label>
@@ -158,20 +144,13 @@ export default function UnicornValuationCalculator() {
             max="100"
             step="0.1"
             value={founderOwnership}
-            onChange={(event) =>
-              setFounderOwnership(
-                Math.min(
-                  100,
-                  toSafeNumber(event.currentTarget.valueAsNumber),
-                ),
-              )
-            }
+            onChange={(event) => setFounderOwnership(event.currentTarget.value)}
             className="mt-2 w-full rounded-xl border border-gray-400 bg-white px-3 py-3 text-base text-gray-950 focus:border-[#4b1bd1] focus:outline-none focus:ring-4 focus:ring-purple-100"
           />
         </label>
       </div>
 
-      <div
+      {result ? <div
         aria-live="polite"
         className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
       >
@@ -207,6 +186,8 @@ export default function UnicornValuationCalculator() {
         ))}
       </div>
 
+      : <p role="status" className="mt-6 rounded-xl bg-amber-50 p-4 text-amber-950">Enter all three values. Pre-money must be greater than zero, new investment cannot be negative, and founder ownership must be 0–100%. No result or download is available for invalid inputs.</p>}
+
       <div className="mt-6 rounded-2xl bg-gray-950 p-5 text-sm leading-6 text-gray-200">
         <p className="font-black text-white">What the formula assumes</p>
         <p className="mt-2">
@@ -222,6 +203,7 @@ export default function UnicornValuationCalculator() {
         <button
           type="button"
           onClick={downloadScenario}
+          disabled={!result}
           className="rounded-full bg-[#4b1bd1] px-5 py-3 text-sm font-black text-white transition hover:bg-purple-800 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-200"
         >
           Download scenario as CSV
@@ -230,9 +212,9 @@ export default function UnicornValuationCalculator() {
           type="button"
           onClick={() => {
             setCurrency("AUD");
-            setPreMoney(900);
-            setNewMoney(100);
-            setFounderOwnership(60);
+            setPreMoney("900");
+            setNewMoney("100");
+            setFounderOwnership("60");
           }}
           className="text-sm font-black text-[#4b1bd1] underline decoration-2 underline-offset-4 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-200"
         >

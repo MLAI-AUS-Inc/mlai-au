@@ -9,7 +9,7 @@ export const useCustomHeader = true
 export const CATEGORY = 'featured'
 export const SLUG = 'how-modern-technology-affects-education-today-and-in-the-fut'
 export const DATE_PUBLISHED = '2025-12-26'
-export const DATE_MODIFIED = '2026-09-15'
+export const DATE_MODIFIED = '2026-10-29'
 export const DESCRIPTION = 'Evaluate education technology claims using a dated planning-time trial, Australian sector guidance and a worked caption-review example. Turn future possibilities into questions you can test.'
 export const FEATURED_FOCUS = 'ai'
 const TITLE = 'Modern technology in education: evidence today and questions for the future'
@@ -51,8 +51,9 @@ export default function ArticleContent() {
    <p>Modern technology can change how an educational activity is prepared, accessed, completed or assessed. Those are different changes: a caption helps present spoken information in text; a drafting assistant produces material to review; a learning platform distributes work. Whether a particular use improves access, workload or understanding needs its own evidence.</p>
    <p>This guide helps an Australian educator turn a broad proposal into a specific question. It is not a census of technology use, a recommended-products list or a forecast that every classroom will become AI-led. For earlier changes, see the <Link to="/articles/featured/how-technology-has-changed-education">Australian education technology timeline</Link>; for classroom harms and privacy questions, see the <Link to="/articles/featured/how-technology-affects-education-negatively">education technology risk guide</Link>.</p>
 
+   <div role="region" aria-label="Education technology choices" tabIndex={0} className="overflow-x-auto"><table><caption>Start with the teaching task; source details follow below</caption><thead><tr><th>Task</th><th>Possible benefit</th><th>Evidence and risk</th><th>Existing alternative</th></tr></thead><tbody><tr><td>Prepare science materials</td><td>Less preparation effort</td><td>English trial measured preparation time; errors and local transfer still require checking</td><td>Reviewed resources and current planning process</td></tr><tr><td>Make an explanation available as text</td><td>Another way to access speech</td><td>The caption fixture exposes meaning errors; it is not a learner-accessibility study</td><td>Teacher-reviewed transcript in an approved system</td></tr><tr><td>Assess understanding</td><td>More practice and feedback opportunities</td><td>Generated output can obscure who demonstrated the skill; sector assessment rules still apply</td><td>Teacher-led explanation, supervised practice and existing assessment</td></tr></tbody></table></div><p><a href='/downloads/education-caption-review.txt' download>Print the caption-review exercise</a> · <a href='/downloads/education-technology-proposal.txt' download>Edit the proposal worksheet</a>. Both are plain text, with the same examples and fields used below.</p>
    <h2 id="current-evidence">What current guidance and a measured trial actually establish</h2>
-   <p>Sources checked 15 September 2026. This is a deliberately small, mixed evidence set, not a systematic review. The three Australian rows describe responsibilities or policy; the English trial measures a particular workload outcome. They cannot be averaged into a score for “technology in education”.</p>
+   <p>Sources checked 9 September 2026. This is a deliberately small, mixed evidence set, not a systematic review. The three Australian rows describe responsibilities or policy; the English trial measures a particular workload outcome. They cannot be averaged into a score for “technology in education”.</p>
    <p className="text-sm">The source table scrolls horizontally on small screens. Focus it to use the arrow keys.</p>
    <div id="education-evidence-table" role="region" aria-label="Education technology evidence and scope" tabIndex={0} className="overflow-x-auto scroll-mt-24">
     <table className="min-w-[40rem]"><caption>Source, setting, finding and limit</caption><thead><tr><th>Source and period</th><th>Type and setting</th><th>Supported point</th><th>Limit</th></tr></thead><tbody>
@@ -65,7 +66,7 @@ export default function ArticleContent() {
 
    <h2 id="planning-trial">A promising result, with the denominator left attached</h2>
    <p>The EEF project summary reports 259 teachers in 68 English secondary schools. Preparation time averaged 56.2 minutes per week in the ChatGPT group versus 81.5 in the comparison: 25.3 minutes less, approximately 31%. That concerns the selected science preparation, not the entire working week.</p>
-   <p>The linked <a href="https://d2tic4wvo1iusb.cloudfront.net/production/documents/projects/chatgpt_in_lesson_planning_-_evaluation_report.pdf">December 2024 evaluation report</a>, executive summary, PDF file pages 5–6, describes weekly diaries and an outcome window in weeks 6–10 after five initial weeks. It reports incomplete diary data excluded 18.5% of enrolled teachers from the primary analysis. A blinded resource review found no evidence of a quality difference; that is not proof of identical quality or improved student attainment.</p>
+   <p>The linked <a href="https://d2tic4wvo1iusb.cloudfront.net/production/documents/projects/chatgpt_in_lesson_planning_-_evaluation_report.pdf">December 2024 evaluation report</a>, executive summary pages 4–5, describes weekly diaries and an outcome window in weeks 6–10 after five initial weeks. It reports incomplete diary data excluded 18.5% of enrolled teachers from the primary analysis. A blinded resource review found no evidence of a quality difference; that is not proof of identical quality or improved student attainment.</p>
    <p>Before transferring a result, compare subject, staff experience, approved tools, preparation task and support. A faster first draft can still require substantial checking. Keep setup, verification and correction in a workload estimate rather than reporting generation time alone.</p>
 
    <h2 id="caption-example">Worked example: a caption exists, but does it preserve the explanation?</h2>
@@ -86,7 +87,7 @@ export default function ArticleContent() {
     <dt>Evidence still missing</dt><dd>Actual audio alignment, keyboard and assistive-technology usability, learner needs, total preparation effort and the institution’s tool decision.</dd>
     <dt>Decision now</dt><dd>Keep the approved text route. Do not begin a student pilot or claim improved access from these fixtures. Take the unanswered questions to the institution’s teaching, accessibility and privacy teams.</dd>
    </dl>
-   <p>Copy the following into your planning notes. It is a proposal worksheet, not an approved research protocol or a promise of a downloadable classroom kit.</p>
+   <p>Copy the following into your planning notes. It is a proposal worksheet, not an approved research protocol. The editable text download above contains these same fields and the fictional caption exercise.</p>
    <pre className="whitespace-pre-wrap break-words" aria-label="Education technology proposal worksheet">{[
     'Specific reader / learner group and educational task:',
     'Problem with the current approach, with existing evidence:',
