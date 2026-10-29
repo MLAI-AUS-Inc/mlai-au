@@ -89,12 +89,12 @@ export default function ArticleContent() {
         </p>
 
         <nav aria-label="Choose a learning comparison"><p><a href="#provider-comparison">Compare four course options</a>, <a href="#worked-learning-decision">check a workload decision</a>, or <a href="/downloads/melbourne-ai-learning-decision.txt" download>download the decision record</a>.</p></nav>
-        <table><caption>Quick shortlist by goal; confirm eligibility and fee basis in the full comparison</caption><thead><tr><th>Goal</th><th>Starting route</th><th>Commitment to check</th></tr></thead><tbody>
+        <div role="region" aria-label={"Quick shortlist by goal; confirm eligibility and fee basis in the full comparison"} tabIndex={0} className="min-w-0 max-w-full overflow-x-auto"><table><caption>Quick shortlist by goal; confirm eligibility and fee basis in the full comparison</caption><thead><tr><th>Goal</th><th>Starting route</th><th>Commitment to check</th></tr></thead><tbody>
           <tr><td>Explore without coding</td><td>Free AI introduction and a beginner-suitable community session</td><td>Confirm the session level and ticket separately; no formal qualification implied.</td></tr>
           <tr><td>Business application</td><td>MBS AI for Business</td><td>Two in-person days; November listed tuition A$3,500, with travel/time extra.</td></tr>
           <tr><td>Technical practice</td><td>RMIT Generative AI</td><td>A$1,000; intermediate Python/ML; 48–64 study hours over eight weeks; next intake unconfirmed.</td></tr>
           <tr><td>Formal qualification</td><td>VU graduate certificate or Holmesglen diploma</td><td>Different entry levels and durations; CSP/subsidised fees depend on eligibility and are not full-fee equivalents.</td></tr>
-        </tbody></table>
+        </tbody></table></div>
         <h2 id="choose-a-learning-task">Choose your starting point</h2>
         <ul>
           <li><strong>New to AI, with no coding experience:</strong> start with our free <Link to="/articles/featured/what-is-artificial-intelligence-in-simple-words">plain-language AI introduction</Link>. Choose one everyday use, check an output against its source and bring a question to a beginner-suitable session. Confirm the level before attending.</li>

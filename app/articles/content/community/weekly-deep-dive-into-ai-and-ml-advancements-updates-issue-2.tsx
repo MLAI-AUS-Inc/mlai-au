@@ -40,13 +40,13 @@ export default function ArticlePage() {
    <h3>Answer B</h3>
    <blockquote><p>We’d love to see you at the Harbour AI Reading Circle! Drop in online at 6 pm Sydney time on 14 October—no registration needed. Don’t worry if you miss it: a recording will be shared afterwards.</p></blockquote>
    <p>These are editorial examples, not generated model outputs. Decide which wording you prefer, then check each against the source before reading the comparison below.</p>
-   <table><thead><tr><th>Check</th><th>Answer A</th><th>Answer B</th></tr></thead><tbody>
+   <div role="region" aria-label={"Compare answers A and B for correctness, completeness and style"} tabIndex={0} className="min-w-0 max-w-full overflow-x-auto"><table><thead><tr><th>Check</th><th>Answer A</th><th>Answer B</th></tr></thead><tbody>
     <tr><td>Time and online format</td><td>Matches the source</td><td>Matches the source</td></tr>
     <tr><td>Registration</td><td>Preserves the requirement</td><td>Contradicts the source</td></tr>
     <tr><td>Recording</td><td>Retains uncertainty</td><td>Adds an unsupported promise</td></tr>
     <tr><td>Duration</td><td>Includes 45 minutes</td><td>Omits it</td></tr>
     <tr><td>Style preference</td><td>Direct and compact</td><td>Warmer opening; preference does not repair its errors</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <p>You can prefer a warmer opening while rejecting Answer B as written. A useful revision would keep that opening, restore the registration requirement and say that recording availability is unconfirmed. Do not turn a preference for warmth into a personality label or a conclusion that the answer is more accurate.</p>
    <h3>A corrected warm answer</h3><blockquote><p>We’d love to see you at the Harbour AI Reading Circle online on 14 October at 6 pm Sydney time. The discussion lasts 45 minutes and registration is required. Recording availability has not been confirmed.</p></blockquote><p>This editorial revision keeps the tone while restoring the facts. Compare it against every requirement in the source card. For numerical evaluation, the <a href='/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates'>accuracy and recall example</a> shows another way a single attractive score can conceal failure.</p>
    <h2 id="real-comparison">Use the distinction in a real comparison</h2>

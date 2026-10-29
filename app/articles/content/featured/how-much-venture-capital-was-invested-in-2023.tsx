@@ -43,12 +43,12 @@ export default function ArticleContent() {
    <p>For a year-on-year chart, use the same provider and compatible definitions for both years. Do not join one provider’s 2023 value to another provider’s 2024 value and label the result market growth without checking comparability.</p>
    <h2 id="example">A large total does not describe the typical deal</h2>
    <p><strong>Fictional teaching example, amounts in millions of US dollars—not actual 2023 deals:</strong> suppose a dataset contains five rounds of 1, 1, 2, 3 and 93.</p>
-   <table><thead><tr><th>Measure</th><th>Calculation</th><th>Question it answers</th></tr></thead><tbody>
+   <div role="region" aria-label={"A large total does not describe the typical deal — Measure, Calculation, Question it answers"} tabIndex={0} className="min-w-0 max-w-full overflow-x-auto"><table><thead><tr><th>Measure</th><th>Calculation</th><th>Question it answers</th></tr></thead><tbody>
     <tr><td>Total funding</td><td>1 + 1 + 2 + 3 + 93 = 100 million</td><td>How much is recorded across these rounds?</td></tr>
     <tr><td>Deal count</td><td>5</td><td>How many rounds are included?</td></tr>
     <tr><td>Mean deal size</td><td>100 ÷ 5 = 20 million</td><td>What is the arithmetic average?</td></tr>
     <tr><td>Median deal size</td><td>2 million, the middle sorted value</td><td>Where is the midpoint of the deal-size distribution?</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <p>Four of the five rounds are smaller than the mean. If the 93-million round is excluded, total funding becomes 7 million and mean size 1.75 million; the median is then 1.5 million. That is a different dataset, not a correction you can silently make. Report why an exclusion is relevant and retain the original result for comparison.</p>
    <p>The old guide advised preferring medians without explaining this distinction. A median cannot answer the title’s total-funding question. Nor does a mean or median represent an offer available to a particular founder.</p>
    <h2 id="record">Copy a funding-statistic citation record</h2>

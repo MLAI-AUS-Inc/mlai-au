@@ -29,16 +29,16 @@ export default function SydneyEventFitFinder() {
   return <section id="sydney-event-fit" aria-labelledby="sydney-event-fit-heading" className="not-prose my-10 min-w-0 rounded-2xl border-2 border-gray-950 bg-[#c7ff5e] p-5 text-gray-950 sm:p-8">
     <h2 id="sydney-event-fit-heading" className="text-3xl font-bold">Make a Sydney or online shortlist</h2>
     <p className="mt-3">Choose the participation you want. Matches satisfy every selected filter and are ordered by listed start, not quality or popularity. Past, overdue and uncertain-closing listings stay in the source directory below, not the current shortlist.</p>
-    <form method="get" key={params.toString()} className="mt-5 grid gap-4 sm:grid-cols-2" onSubmit={event => {
+    <form method="get" key={params.toString()} className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2" onSubmit={event => {
       event.preventDefault();
       const data = new FormData(event.currentTarget);
       const next = new URLSearchParams(params);
       for (const key of ["event_goal", "event_format", "event_cost"]) next.set(key, String(data.get(key) ?? ""));
       setParams(next, { preventScrollReset: true });
     }}>
-      <label className="flex flex-col gap-2 font-semibold">Main goal<select name="event_goal" defaultValue={choices.goal} className="rounded-lg border border-gray-500 bg-white p-3 text-base">{Object.entries(SYDNEY_GOAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <label className="flex flex-col gap-2 font-semibold">Format<select name="event_format" defaultValue={choices.preference} className="rounded-lg border border-gray-500 bg-white p-3 text-base"><option value="sydney">Sydney in person</option><option value="online">Online options</option><option value="all">Either format</option>{choices.preference === "melbourne" && <option value="melbourne">Melbourne — use the Melbourne guide</option>}</select></label>
-      <label className="flex flex-col gap-2 font-semibold">Cost preference<select name="event_cost" defaultValue={choices.cost} className="rounded-lg border border-gray-500 bg-white p-3 text-base"><option value="either">Any stated or unknown cost</option><option value="free">Explicitly free</option><option value="paid">Paid</option></select></label>
+      <label className="flex min-w-0 flex-col gap-2 font-semibold">Main goal<select name="event_goal" defaultValue={choices.goal} className="min-w-0 w-full max-w-full rounded-lg border border-gray-500 bg-white p-3 text-base">{Object.entries(SYDNEY_GOAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label className="flex min-w-0 flex-col gap-2 font-semibold">Format<select name="event_format" defaultValue={choices.preference} className="min-w-0 w-full max-w-full rounded-lg border border-gray-500 bg-white p-3 text-base"><option value="sydney">Sydney in person</option><option value="online">Online options</option><option value="all">Either format</option>{choices.preference === "melbourne" && <option value="melbourne">Melbourne — use the Melbourne guide</option>}</select></label>
+      <label className="flex min-w-0 flex-col gap-2 font-semibold">Cost preference<select name="event_cost" defaultValue={choices.cost} className="min-w-0 w-full max-w-full rounded-lg border border-gray-500 bg-white p-3 text-base"><option value="either">Any stated or unknown cost</option><option value="free">Explicitly free</option><option value="paid">Paid</option></select></label>
       <div className="flex flex-wrap items-end gap-3"><button type="submit" className="min-h-11 rounded-lg bg-gray-950 px-5 py-3 font-bold text-white">Apply shortlist</button><a href="?event_format=sydney" className="inline-flex min-h-11 items-center font-semibold underline">Reset shortlist</a></div>
     </form>
     <p className="mt-3 text-sm">These non-sensitive selections appear in the page URL and browser history. No RSVP is sent. The form works without JavaScript; with scripts enabled, date status also updates while this page stays open.</p>

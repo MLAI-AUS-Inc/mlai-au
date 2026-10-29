@@ -35,17 +35,17 @@ export default function ArticlePage() {
    <p>The methods identify <code>gemini-1.5-pro-002</code> and 15 manually selected image triplets per telescope. Those guide examples are prompting context, not model training. The inspected sections do not make the guide/evaluation exclusion rule explicit enough to certify an independent held-out split here. Verify the released data/code before making that claim.</p>
    <p>The simple mean of the three displayed accuracies is 93.13%, which rounds to the headline 93%; the article does not establish a pooled case-weighted count. The paper also reports a later run against an updated endpoint. Keep it separate from Table 1 rather than silently replacing the original result.</p>
    <h2 id="meaning">Separate three claims before repeating them</h2>
-   <table><thead><tr><th>Claim</th><th>Evidence needed</th><th>What not to infer</th></tr></thead><tbody>
+   <div role="region" aria-label={"Separate three claims before repeating them — Claim, Evidence needed, What not to infer"} tabIndex={0} className="min-w-0 max-w-full overflow-x-auto"><table><thead><tr><th>Claim</th><th>Evidence needed</th><th>What not to infer</th></tr></thead><tbody>
     <tr><td>The classification is correct.</td><td>A trustworthy reference label and the actual prediction</td><td>A convincing explanation must mean the label is correct</td></tr>
     <tr><td>The explanation describes visible evidence.</td><td>Comparison with the input and a qualified interpretation where needed</td><td>A second model agreeing establishes truth</td></tr>
     <tr><td>The approach transfers to another dataset.</td><td>An evaluation under that dataset’s conditions</td><td>The original average applies to any image task</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <h2 id="accuracy">A 95% score that misses every target</h2>
    <p><strong>Fictional arithmetic—not the paper’s data:</strong> imagine 1,000 labelled candidates: 50 genuine targets and 950 non-targets. A classifier labels every candidate a non-target.</p>
-   <table><thead><tr><th>Reference label</th><th>Predicted target</th><th>Predicted non-target</th></tr></thead><tbody>
+   <div role="region" aria-label={"A 95% score that misses every target — Reference label, Predicted target, Predicted non-target"} tabIndex={0} className="min-w-0 max-w-full overflow-x-auto"><table><thead><tr><th>Reference label</th><th>Predicted target</th><th>Predicted non-target</th></tr></thead><tbody>
     <tr><td>50 actual targets</td><td>0</td><td>50</td></tr>
     <tr><td>950 actual non-targets</td><td>0</td><td>950</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <p>It gets 950 of 1,000 labels right: 95% accuracy. But it finds zero of the 50 targets: target recall is 0%. Precision for target predictions has a zero denominator because there are no positive predictions; do not present it as a meaningful measured percentage without stating the convention used.</p>
    <p>This does not show that the published study made this error. It shows why a headline score is insufficient by itself. Ask for class counts, the confusion matrix and the consequences of false positives and false negatives. A higher overall score need not answer the question you care about.</p>
    <h2 id="explanation">Exercise: turn an explanation into checkable observations</h2>

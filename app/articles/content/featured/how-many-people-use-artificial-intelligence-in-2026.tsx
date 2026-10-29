@@ -60,12 +60,12 @@ export default function ArticleContent() {
    <p>The Australian Digital Inclusion Index researchers’ <a href={AU_SOURCE}>3 December 2025 survey account</a> reports that 45.6% of Australians had recently used a generative-AI tool. Fieldwork was in <strong>2024</strong>, with more than 5,500 adults across states and territories, including people who do not use the internet. This is a dated survey finding, not Australia’s rate today.</p>
    <p>The same account reports text generation at 82.6% <em>among Australian generative-AI users</em>, not all Australians. Its “recently” wording is retained here; this summary does not establish a monthly active-user measure. Do not equate it with the global estimate.</p>
    <h2 id="measures">Four measures that should not be mixed</h2>
-   <table><thead><tr><th>Measure</th><th>Check</th><th>Does not establish</th></tr></thead><tbody>
+   <div role="region" aria-label={"Four measures that should not be mixed — Measure, Check, Does not establish"} tabIndex={0} className="min-w-0 max-w-full overflow-x-auto"><table><thead><tr><th>Measure</th><th>Check</th><th>Does not establish</th></tr></thead><tbody>
     <tr><td>People who tried a tool</td><td>Question, population and recall period</td><td>Continued or daily use</td></tr>
     <tr><td>Monthly active users</td><td>Definition of active, month and person/account unit</td><td>Unique people across services</td></tr>
     <tr><td>Visits or device identities</td><td>Repeated visits, devices and app coverage</td><td>A direct human headcount</td></tr>
     <tr><td>Businesses adopting AI</td><td>Business sample and adoption definition</td><td>Share of employees or residents using AI</td></tr>
-   </tbody></table>
+   </tbody></table></div>
    <h2 id="overlap">Try the double-counting exercise</h2>
    <p><strong>Fictional exercise—not market data:</strong> a group of 100 people answers a complete survey about the same month. Sixty used Tool A, forty used Tool B and thirty used both. Assume one response per person and no missing answers.</p>
    <p>Unique users of either tool = <strong>60 + 40 − 30 = 70</strong>. Adding the platform totals counts the thirty overlapping people twice. Thirty people used neither of these two tools; that does not establish that they used no AI elsewhere.</p>
