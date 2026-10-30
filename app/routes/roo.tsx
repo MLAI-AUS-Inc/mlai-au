@@ -154,7 +154,7 @@ const REWARD_GROUPS = [
     title: "Events",
     className: "bg-[var(--brutalist-orange)] text-white",
     items: [
-      ["15 points", "Free community event ticket"],
+      ["32 points", "Free community event ticket (regular price below A$100)"],
       ["30 points", "50% off paid workshop"],
       ["48 points", "Free workshop ticket"],
     ],
