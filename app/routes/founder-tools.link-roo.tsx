@@ -64,17 +64,21 @@ export const meta: Route.MetaFunction = () => [
     content: "Securely connect your Roo Slack identity to Founder Tools.",
   },
   { name: "robots", content: "noindex, nofollow" },
-  { name: "referrer", content: "no-referrer" },
+  { name: "referrer", content: "same-origin" },
 ];
 
+// Rendered documents have already scrubbed the capability from the URL. Keep
+// native same-origin form POSTs from becoming Origin: null (rejected by React
+// Router before action), while still suppressing cross-origin referrers.
 export function headers() {
   return {
     "Cache-Control": "no-store",
     "Content-Security-Policy": LINK_ROUTE_CSP,
-    "Referrer-Policy": "no-referrer",
+    "Referrer-Policy": "same-origin",
   };
 }
 
+// Redirects can start at a token-bearing URL: never relax their privacy policy.
 function responseHeaders(setCookie?: string) {
   const headers = new Headers({
     "Cache-Control": "no-store",

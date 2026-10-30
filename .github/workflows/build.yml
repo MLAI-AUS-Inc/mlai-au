@@ -62,6 +62,7 @@ jobs:
             tests/roo-account-link.test.ts \
             tests/roo-account-link-route.test.ts \
             tests/roo-account-link-worker.test.ts \
+            tests/roo-account-link-document.test.ts \
             tests/session-refresh.test.ts
 
       - name: Test monthly update contracts
@@ -72,6 +73,9 @@ jobs:
 
       - name: Install browsers for article and arcade checks
         run: bunx playwright install --with-deps chromium webkit
+
+      - name: Check Roo native account-link confirmation
+        run: bun run test:roo:browser
 
       - name: Check article delivery and keyboard controls
         run: bun run test:articles:browser

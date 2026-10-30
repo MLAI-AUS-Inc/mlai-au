@@ -4,8 +4,8 @@ export default defineConfig({
   testDir: './e2e',
   // Keep browser journeys out of Bun's unit-test discovery.
   testMatch: '**/*.pw.ts',
-  // The interactive arcade has its own WebGL, touch and WebKit projects.
-  testIgnore: '**/team-arcade*.pw.ts',
+  // Arcade and Roo linking have dedicated browser configurations.
+  testIgnore: ['**/team-arcade*.pw.ts', '**/roo-account-link.pw.ts'],
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4,
   retries: 0,
