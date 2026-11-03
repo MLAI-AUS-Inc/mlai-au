@@ -213,6 +213,9 @@ export interface VibeRaisingDraftedContent {
 export interface VibeRaisingMonthlyUpdate {
   startupOverview?: string | null;
   financialHistory?: import("~/lib/pulse-financial-history").FinancialHistory | null;
+  /** Authenticated owner-only preview; never included in shared updates. */
+  financialHistoryOwnerPreview?: import("~/lib/pulse-financial-history").FinancialHistory | null;
+  financialHistoryAudiencePreview?: import("~/lib/pulse-financial-history").FinancialHistory | null;
   financialHistorySelection?: import("~/lib/pulse-financial-history").FinancialHistorySelection | null;
   progressCharts?: import("~/lib/startup-progress").ProgressChartSnapshot[] | null;
   updateId?: string | number | null;

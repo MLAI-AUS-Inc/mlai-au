@@ -3,7 +3,9 @@ import { StartupOverviewField } from "~/components/vibe-raising/StartupOverview"
 import { getUpdatePeriod, updateCalendarDate, getUpdateTitles } from "~/lib/startup-updates-presentation";
 import { defaultUpdateSourceWindow, toLocalDateTime, fromLocalDateTime } from "~/lib/update-source-window";
 import ProgressChartPicker from "~/components/vibe-raising/ProgressChartPicker";
-import PulseFinancialHistoryPicker from "~/components/vibe-raising/PulseFinancialHistoryPicker";
+import PulseFinancialRefreshCard from "~/components/vibe-raising/PulseFinancialRefreshCard";
+import { useFinancialRefresh } from "~/hooks/useFinancialRefresh";
+import { financialRefreshCandidateId, type FinancialProvider } from "~/lib/pulse-financial-refresh";
 import { normalizeFinancialHistorySelection, parseFinancialHistorySelection, type FinancialHistory, type FinancialHistorySelection } from "~/lib/pulse-financial-history";
 import { parseChartSelections, type ProgressChartSpec, type ProgressChartSnapshot } from "~/lib/startup-progress";
 import { getStartupProgress } from "~/lib/startup-progress.server";
@@ -563,6 +565,8 @@ function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
         progressCharts: update.progressCharts,
         chartSelections: update.progressCharts?.map(chart => chart.spec),
         financialHistory: update.financialHistory,
+        financialHistoryOwnerPreview: update.financialHistoryOwnerPreview,
+        financialHistoryAudiencePreview: update.financialHistoryAudiencePreview,
         financialHistorySelection: update.financialHistorySelection,
         summary: update.summary || "",
         startupOverview: update.startupOverview,
@@ -731,6 +735,8 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     return {
         ...(formData.has("chartSelections") ? { chartSelections: parseChartSelections(formData.get("chartSelections")) } : {}),
         ...(formData.has("financialHistorySelection") ? { financialHistorySelection: parseFinancialHistorySelection(formData.get("financialHistorySelection")) } : {}),
+        ...(formData.get("financialCandidateId") ? { financialCandidateId: String(formData.get("financialCandidateId")) } : {}),
+        ...(formData.has("inputSources") ? { inputSources: parseInputSources(String(formData.get("inputSources") || "")) } : {}),
         updateId: String(formData.get("updateId") || "") || null,
         creationKey: String(formData.get("creationKey") || "") || null,
         updateDate: String(formData.get("updateDate") || "") || null,
@@ -2977,6 +2983,8 @@ function CreateUpdateEditor() {
     const [financialHistorySelection, setFinancialHistorySelection] = useState<FinancialHistorySelection | undefined>(() =>
         normalizeFinancialHistorySelection(defaultData.financialHistorySelection) || undefined);
     const [frozenFinancialHistory, setFrozenFinancialHistory] = useState<FinancialHistory | null>(defaultData.financialHistory || null);
+    const [frozenFinancialOwnerHistory, setFrozenFinancialOwnerHistory] = useState<FinancialHistory | null>(defaultData.financialHistoryOwnerPreview || null);
+    const [frozenFinancialAudienceHistory, setFrozenFinancialAudienceHistory] = useState<FinancialHistory | null>(defaultData.financialHistoryAudiencePreview || null);
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [pitchDeckPreviewUrl, setPitchDeckPreviewUrl] = useState<string | null>(defaultData?.pitchDeckUrl || null);
@@ -3480,6 +3488,13 @@ function CreateUpdateEditor() {
     const [saveAttemptContent, setSaveAttemptContent] = useState("");
     const editorMountedRef = useRef(true);
     useEffect(() => { editorMountedRef.current = true; return () => { editorMountedRef.current = false; }; }, []);
+
+    const financialSources = selectedInputSources.filter((source): source is FinancialProvider => source === "xero" || source === "stripe");
+    const financialRefresh = useFinancialRefresh(backendBaseUrl, {
+        founderId: String(user.authUser.id), companyId: resolveActiveCompanyId(user) || "",
+        updateId: activeUpdateId, creationKey, expectedRevision, targetMonth: targetMonthIso, inputSources: financialSources,
+    });
+    const financialCandidateId = financialRefreshCandidateId(financialRefresh.state);
 
     const applyDraftCandidate = (data: any, keepWriting = false) => {
         if (!editorMountedRef.current) return;
@@ -4351,6 +4366,8 @@ function CreateUpdateEditor() {
         const restoredFinancialSelection = normalizeFinancialHistorySelection(restored.financialHistorySelection) || normalizeFinancialHistorySelection(base.financialHistorySelection);
         setFinancialHistorySelection(restoredFinancialSelection ? { ...restoredFinancialSelection, ...(restored.financialHistorySelection?.refresh === true ? { refresh: true } : {}) } : undefined);
         setFrozenFinancialHistory(restored.frozenFinancialHistory || base.financialHistory || null);
+        setFrozenFinancialOwnerHistory(base.financialHistoryOwnerPreview || null);
+        setFrozenFinancialAudienceHistory(base.financialHistoryAudiencePreview || null);
         setSourceUrl(restored.sourceUrl || "");
         setAudienceVisibility(normalizeAudienceVisibilityValue(restored.audienceVisibility));
         setFinancialSnapshot(restored.financialSnapshot || null);
@@ -4376,7 +4393,7 @@ function CreateUpdateEditor() {
         // Revalidation must never replace a dirty working copy. Only changing its scope restores data.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [workingScope]);
-    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, startupOverview, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues, chartSelections, financialHistorySelection });
+    const workingContent = JSON.stringify({ updateDate, narrativeStart, narrativeEnd, startupOverview, summary, highlights, challenges, learnings, next30Days, asks, coverImage, audienceVisibility: privateAudienceVisibility, metrics: metricValues, chartSelections, financialHistorySelection, financialCandidateId });
     const hasUnsavedChanges = workingContent !== lastSavedContent;
     useEffect(() => {
         if (loadedWorkingScope !== workingScope) return;
@@ -4400,11 +4417,13 @@ function CreateUpdateEditor() {
         setMetricEvidence(saved.metricEvidence || {}); setReportingPeriod(saved.reportingPeriod || null);
         setFrozenProgressCharts(saved.progressCharts || []);
         setFrozenFinancialHistory(saved.financialHistory || null);
+        setFrozenFinancialOwnerHistory(saved.financialHistoryOwnerPreview || null);
+        setFrozenFinancialAudienceHistory(saved.financialHistoryAudiencePreview || null);
         const savedSelection = normalizeFinancialHistorySelection(saved.financialHistorySelection) || undefined;
         // Refresh is an action, not a setting; clear it after the server captures a revision.
         setFinancialHistorySelection(savedSelection);
         const savedContent = JSON.parse(saveAttemptContent || "{}");
-        setLastSavedContent(JSON.stringify({ ...savedContent, financialHistorySelection: savedSelection }));
+        setLastSavedContent(JSON.stringify({ ...savedContent, financialHistorySelection: savedSelection, financialCandidateId: undefined }));
     }, [saveDraftFetcher.data, actionData]);
     useEffect(() => {
         if (!hasUnsavedChanges || localRecoveryAvailable) return;
@@ -5311,6 +5330,8 @@ function CreateUpdateEditor() {
                     ))}
                     {progress && chartSelections !== undefined && <input type="hidden" name="chartSelections" value={JSON.stringify(chartSelections)} />}
                     {financialHistorySelection !== undefined && <input type="hidden" name="financialHistorySelection" value={JSON.stringify(financialHistorySelection)} />}
+                    {financialCandidateId && <input type="hidden" name="financialCandidateId" value={financialCandidateId} />}
+                    {financialCandidateId && <input type="hidden" name="inputSources" value={selectedInputSources.join(",")} />}
                     <input type="hidden" name="displayConfig" value={displayConfigFormValue} />
                     <input
                         type="hidden"
@@ -5444,7 +5465,7 @@ function CreateUpdateEditor() {
                                 </div>
                                 <p className="update-ai-note">
                                     {reportingPeriod?.is_partial ? "This month is incomplete. " : ""}Correct imported
-                                    figures at the source, then draft again to refresh them.
+                                    figures at the source, then choose Refresh financials below.
                                 </p>
                             </details>
                         )}
@@ -5558,8 +5579,15 @@ function CreateUpdateEditor() {
                             Local recovery is unavailable in this browser. Save your draft before leaving this page.
                         </p>
                     )}
-                    <PulseFinancialHistoryPicker selection={financialHistorySelection} history={frozenFinancialHistory} reportingMonth={targetMonthIso}
-                        onChange={setFinancialHistorySelection} disabled={isSubmitting || saveDraftFetcher.state !== "idle"} />
+                    <PulseFinancialRefreshCard selection={financialHistorySelection} history={frozenFinancialHistory}
+                        ownerHistory={frozenFinancialOwnerHistory} audienceHistory={frozenFinancialAudienceHistory} reportingMonth={targetMonthIso}
+                        state={financialRefresh.state} sources={financialSources} connectedSources={connectedDraftInputSources} connectionsHref={manageConnectionsHref}
+                        onRefresh={() => {
+                            setFinancialHistorySelection(normalizeFinancialHistorySelection(financialHistorySelection) || { enabled: false, shareAmounts: false });
+                            void financialRefresh.refresh();
+                        }}
+                        onChange={setFinancialHistorySelection}
+                        disabled={isSubmitting || saveDraftFetcher.state !== "idle" || compactSourcesLoading || Boolean(compactSourcesError) || isSelectedMonthUnavailable} />
                     {progress && <>
                         <ProgressChartPicker series={progress?.series || []} selected={chartSelections || []}
                             onChange={setChartSelections} cutoff={updateDate && updateDate < today ? updateDate : today} frozen={frozenProgressCharts} />

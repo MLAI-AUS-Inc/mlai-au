@@ -47,6 +47,7 @@ describe("editor save and review action", () => {
     expect(
       (await submit("save-draft", { summary: "An unfinished thought" }))?.step,
     ).toBe("draft-saved");
+    expect(save.mock.calls[0][2]).not.toHaveProperty("inputSources");
     expect(save.mock.calls[0][2]).toMatchObject({
       companyId: "startup-1",
       expectedRevision: 11,
@@ -136,4 +137,12 @@ test("malformed financial sharing keeps the draft mounted and does not save", as
     expect((await submit("save-draft", { financialHistorySelection: value }))?.step).toBe("validation-error");
   }
   expect(save).not.toHaveBeenCalled();
+});
+
+test("a financial candidate saves with the exact revision and writing, never browser preview values", async () => {
+  expect((await submit("save-draft", { financialCandidateId: "candidate-opaque", inputSources: "gmail,xero,stripe", summary: "My carefully edited story",
+    financialHistorySelection: '{"enabled":true,"shareAmounts":false}', financialHistoryOwnerPreview: '{"revenue":999}' }))?.step).toBe("draft-saved");
+  expect(save.mock.calls[0][2]).toMatchObject({ financialCandidateId: "candidate-opaque", expectedRevision: 11,
+    companyId: "startup-1", inputSources: ["gmail", "xero", "stripe"], summary: "My carefully edited story", financialHistorySelection: { enabled: true, shareAmounts: false } });
+  expect(save.mock.calls[0][2]).not.toHaveProperty("financialHistoryOwnerPreview");
 });
