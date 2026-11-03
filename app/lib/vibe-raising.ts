@@ -1,6 +1,6 @@
 import { normalizeStartupOverview } from "~/lib/startup-overview";
 import { normalizeUpdateCover } from "~/lib/update-cover";
-import { normalizeFinancialHistory, normalizeFinancialHistorySelection } from "~/lib/pulse-financial-history";
+import { normalizeFinancialHistory, normalizeFinancialHistoryPreview, normalizeFinancialHistorySelection } from "~/lib/pulse-financial-history";
 import type { VibeRaisingUpdateCover } from "~/types/vibe-raising";
 import { redirect } from "react-router";
 import { normalizeAuthNextForApp } from "~/lib/auth-return";
@@ -1108,6 +1108,8 @@ export function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate |
   return {
     startupOverview: normalizeStartupOverview(payload),
     financialHistory: normalizeFinancialHistory(payload.financialHistory),
+    financialHistoryOwnerPreview: normalizeFinancialHistoryPreview(payload.financialHistoryOwnerPreview, true),
+    financialHistoryAudiencePreview: normalizeFinancialHistoryPreview(payload.financialHistoryAudiencePreview, false),
     financialHistorySelection: normalizeFinancialHistorySelection(payload.financialHistorySelection),
     progressCharts: Array.isArray(payload.progressCharts) ? payload.progressCharts as VibeRaisingMonthlyUpdate["progressCharts"] : null,
     updateId: asNullableIdentifier(payload.updateId ?? payload.id ?? payload.draftId),
@@ -2661,6 +2663,8 @@ export async function saveVibeRaisingMonthlyUpdate(
   request: Request,
   body: {
     financialHistorySelection?: import("~/lib/pulse-financial-history").FinancialHistorySelection;
+    financialCandidateId?: string;
+    inputSources?: VibeRaisingInputSourceKey[];
     chartSelections?: import("~/lib/startup-progress").ProgressChartSpec[];
     updateId?: string | null;
     creationKey?: string | null;

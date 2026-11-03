@@ -2,12 +2,13 @@ import { type FinancialHistory, type FinancialHistorySelection } from "~/lib/pul
 import PulseFinancialHistory from "./PulseFinancialHistory";
 import "~/styles/pulse-financial-history.css";
 
-export default function PulseFinancialHistoryPicker({ selection, history, reportingMonth, onChange, disabled = false }: {
+export default function PulseFinancialHistoryPicker({ selection, history, reportingMonth, onChange, disabled = false, controlsOnly = false }: {
   selection?: FinancialHistorySelection | null;
   history?: FinancialHistory | null;
   reportingMonth?: string;
   onChange: (selection: FinancialHistorySelection) => void;
   disabled?: boolean;
+  controlsOnly?: boolean;
 }) {
   const enabled = selection?.enabled === true;
   const shareAmounts = selection?.shareAmounts === true;
@@ -21,9 +22,9 @@ export default function PulseFinancialHistoryPicker({ selection, history, report
       {enabled && <>
         <label className="pulse-financial-history-choice"><input type="checkbox" checked={shareAmounts} disabled={disabled} onChange={event => onChange({ enabled: true, shareAmounts: event.target.checked })} /><span>Share actual revenue and cost amounts with this update’s audience</span></label>
         <p className="pulse-financial-history-note">{shareAmounts ? "Your audience will see the exact amounts for every available month shown. Review the figures and audience before publishing." : "Dollar amounts stay hidden. Both lines use the same relative scale across all six months; your audience can see financial trends and the relationship between revenue and costs."}</p>
-        {current ? <PulseFinancialHistory history={history} /> : <p role="status" className="pulse-financial-history-note">Save the draft or choose Save and review to prepare the exact chart for approval.</p>}
-        {history && !selection?.refresh && <button type="button" className="progress-text-button" disabled={disabled} onClick={() => onChange({ enabled: true, shareAmounts, refresh: true })}>Use latest source figures</button>}
-        {selection?.refresh && <p className="pulse-financial-history-note">The next save will capture fresh figures in a new revision. Review that revision before publishing.</p>}
+        {!controlsOnly && (current ? <PulseFinancialHistory history={history} /> : <p role="status" className="pulse-financial-history-note">Save the draft or choose Save and review to prepare the exact chart for approval.</p>)}
+        {!controlsOnly && history && !selection?.refresh && <button type="button" className="progress-text-button" disabled={disabled} onClick={() => onChange({ enabled: true, shareAmounts, refresh: true })}>Use latest source figures</button>}
+        {!controlsOnly && selection?.refresh && <p className="pulse-financial-history-note">The next save will capture fresh figures in a new revision. Review that revision before publishing.</p>}
       </>}
     </section>
   );

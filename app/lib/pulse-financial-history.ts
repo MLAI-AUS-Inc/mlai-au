@@ -98,3 +98,9 @@ export function financialHistoryDate(date: string): string {
 export function financialHistoryMonth(date: string): string {
   return new Intl.DateTimeFormat("en-AU", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${date.slice(0, 7)}-01T12:00:00Z`));
 }
+
+/** Owner-only values cannot be mistaken for an audience-safe relative preview. */
+export function normalizeFinancialHistoryPreview(raw: unknown, shareAmounts: boolean): FinancialHistory | null {
+  const history = normalizeFinancialHistory(raw);
+  return history?.shareAmounts === shareAmounts ? history : null;
+}

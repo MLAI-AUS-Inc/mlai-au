@@ -4,8 +4,8 @@ import { financialHistoryDate, financialHistoryMonth, normalizeFinancialHistory,
 import { formatProgress, progressMonth } from "~/lib/startup-progress";
 import "~/styles/pulse-financial-history.css";
 
-/** Render only the frozen, explicitly approved financial disclosure. */
-export default function PulseFinancialHistory({ history: input }: { history: FinancialHistory }) {
+/** Render a server-built financial snapshot; owner previews stay inside the editor. */
+export default function PulseFinancialHistory({ history: input, preview }: { history: FinancialHistory; preview?: "owner" | "audience" }) {
   const id = useId();
   const history = normalizeFinancialHistory(input);
   if (!history) return null;
@@ -55,7 +55,7 @@ export default function PulseFinancialHistory({ history: input }: { history: Fin
       <p className="pulse-financial-history-note">
         {partialMonth ? `Partial ${financialHistoryMonth(history.reportingMonth)} through ${financialHistoryDate(finalPoint.periodEnd || history.cutoff)}. Figures are not comparable with a complete month. ` : ""}
         {points.slice(0, 5).some(point => point.partial) ? "Includes earlier partial months, marked in the table. " : ""}
-        Saved with this update · figures through {financialHistoryDate(history.cutoff)}. Missing months stay empty. Snapshot captured {financialHistoryDate(new Date(history.capturedAt).toISOString().slice(0, 10))} (UTC).
+        {preview === "owner" ? "Private preview" : preview === "audience" ? "Audience preview" : "Saved with this update"} · figures through {financialHistoryDate(history.cutoff)}. Missing months stay empty. Snapshot captured {financialHistoryDate(new Date(history.capturedAt).toISOString().slice(0, 10))} (UTC).
       </p>
       <details className="progress-data">
         <summary>View financial chart data</summary>
