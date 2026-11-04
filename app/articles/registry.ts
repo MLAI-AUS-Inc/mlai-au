@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/an-ai-agent-handover-checklist-for-your-small-business': {
+        title: "An AI agent handover checklist for your small business",
+        date: "2026-11-04",
+        dateModified: "2026-11-04",
+        description: "Choose one workflow, define your AI agent's limits and human takeover rules, and set pilot measures before buying tools or expanding access.",
+        author: "Dr Sam Donegan",
+        slug: "featured/an-ai-agent-handover-checklist-for-your-small-business",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-350b1da7-e652-4443-92fd-f6783f3e35ea.jpg?alt=media&token=47781a67-6fb5-4727-9eb3-1b780017aeed",
+        imageAlt: "Two people look at a document beside a laptop, one holding a pen and the other wearing glasses with a hand near their mouth.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
