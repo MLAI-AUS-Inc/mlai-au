@@ -32,6 +32,7 @@ export default [
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),
   route("/platform/dashboard", "routes/platform.dashboard.tsx"),
+  route("/platform/agents", "routes/platform.agents.tsx"),
   route("/platform/logout", "routes/platform.logout.tsx"),
   route("/verify-email", "routes/verify-email.tsx"),
 
