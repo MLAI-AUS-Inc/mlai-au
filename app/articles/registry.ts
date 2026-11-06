@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/choosing-a-conversational-artificial-intelligence-platform': {
+        title: "Choosing a conversational artificial intelligence platform",
+        date: "2026-11-06",
+        dateModified: "2026-11-06",
+        description: "Choose one small-business workflow, compare three conversational AI routes, and set data, handover and AUD cost limits before committing to a pilot.",
+        author: "Dr Sam Donegan",
+        slug: "featured/choosing-a-conversational-artificial-intelligence-platform",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-42f558db-72ed-4380-8987-147797208f3f.jpg?alt=media&token=0a225c48-23ea-48fe-bf96-bb54ec846b9e",
+        imageAlt: "Two people sit at a table with a laptop and open notebook. One holds a pen and gestures while the other rests a hand on their chin.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",
