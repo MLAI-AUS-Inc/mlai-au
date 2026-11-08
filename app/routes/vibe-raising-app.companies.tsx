@@ -301,7 +301,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                             }}
                                         >
                                             <CheckBadgeIcon className="w-3.5 h-3.5" />
-                                            {activeCompany.abrVerifiedAt && activeCompany.acn ? "Verified" : "Registered"}
+                                            {activeCompany.registrationVerified ? "Verified" : "Registered"}
                                         </span>
                                     )}
                                 </div>
@@ -343,8 +343,8 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                     Status
                                 </div>
                                 <div className="vr-company-info-value">
-                                    {activeCompany.abrVerifiedAt && activeCompany.acn
-                                        ? "Verified registered company"
+                                    {activeCompany.registrationVerified
+                                        ? "ABN verified"
                                         : activeCompany.registered
                                             ? "Registered"
                                             : "Not yet registered"}
