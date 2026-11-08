@@ -255,7 +255,7 @@ function normalizeFounderProfiles(raw: unknown): VibeRaisingFounderProfile[] {
     }, []);
 }
 
-function normalizeCompany(raw: unknown): VibeRaisingCompany {
+export function normalizeCompany(raw: unknown): VibeRaisingCompany {
   const payload = unwrapPayload(raw) as Record<string, unknown>;
   const id =
     payload.id ??
@@ -379,6 +379,7 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     acn,
     entityTypeName,
     abrVerifiedAt,
+    registrationVerified: asRecord(payload.registrationVerification)?.verified === true,
     location,
     avatarUrl,
     founderProfiles,
@@ -426,6 +427,7 @@ function normalizeProfile(raw: unknown): VibeRaisingProfile {
         domain: payload.domain ?? payload.company_domain,
         companyLinkedInUrl: payload.companyLinkedInUrl ?? payload.company_linkedin_url,
         abn: payload.abn ?? payload.company_abn,
+        registrationVerification: payload.registrationVerification,
         location: payload.location ?? payload.company_location,
         founderProfiles: payload.founderProfiles ?? payload.founder_profiles,
         founderNames: payload.founderNames ?? payload.founder_names,

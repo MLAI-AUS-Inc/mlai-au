@@ -55,7 +55,7 @@ export default function FounderToolsIndex() {
   const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
   if (!user) return null;
   const activeCompany = getActiveVibeRaisingCompany(user);
-  const isVerifiedCompany = Boolean(activeCompany?.abrVerifiedAt && activeCompany?.acn);
+  const isVerifiedCompany = activeCompany?.registrationVerified;
   const details = [
     { label: "Website", value: detailValue(activeCompany?.domain), icon: GlobeAltIcon },
     { label: "Location", value: detailValue(activeCompany?.location), icon: MapPinIcon },
@@ -64,7 +64,7 @@ export default function FounderToolsIndex() {
     {
       label: "Status",
       value: isVerifiedCompany
-        ? "Verified registered company"
+        ? "ABN verified"
         : activeCompany?.registered
           ? "Set up"
           : "Incomplete",

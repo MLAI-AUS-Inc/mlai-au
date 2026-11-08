@@ -19,6 +19,7 @@ export interface VibeRaisingCompany {
   acn?: string | null;
   entityTypeName?: string | null;
   abrVerifiedAt?: string | null;
+  registrationVerified?: boolean;
   location?: string | null;
   avatarUrl?: string | null;
   founderProfiles?: VibeRaisingFounderProfile[];
