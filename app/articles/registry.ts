@@ -82,6 +82,18 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/plan-your-first-mvp-with-ai-powered-coding-assistants': {
+        title: "Plan your first MVP with AI-powered coding assistants",
+        date: "2026-11-09",
+        dateModified: "2026-11-09",
+        description: "Decide whether to build, then plan a quote-request tracker with AI coding prompts, synthetic data, human checks and a scorecard for your first MVP.",
+        author: "Dr Sam Donegan",
+        slug: "featured/plan-your-first-mvp-with-ai-powered-coding-assistants",
+        analyticsArticleId: "",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-4ef93752-d190-4a98-9abd-d3f45c4692fd.jpg?alt=media&token=d1fd5961-fffd-45de-bc59-ec6f5b3d44aa",
+        imageAlt: "Two people look at a laptop. One gestures toward the screen while the other rests a hand on their chin. A notebook and pen sit on the table.",
+        editorial: null,
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",

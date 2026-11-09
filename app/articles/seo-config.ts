@@ -56,6 +56,13 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/plan-your-first-mvp-with-ai-powered-coding-assistants': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         toc: true, howTo: false, mediaObject: false, citations: true,
         contentOwnsConversion: true, contentOwnsDisclaimer: true,
