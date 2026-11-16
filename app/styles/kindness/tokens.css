@@ -1,0 +1,65 @@
+/* Random Hacks of Kindness: tokens (design bible section 3).
+   Scoped to the page wrapper so nothing leaks into the rest of the MLAI site.
+   Fixed chrome inside the wrapper inherits these like any other child. */
+
+.rk-page {
+  /* 3.1 Colour: MLAI palette only */
+  --rk-ink: #1a1a1a;
+  --rk-ink-2: #2c2c2c;
+  --rk-ink-3: #4a4a4a;
+  --rk-cream: #f5f0e6;
+  --rk-cream-2: #ebe4d4;
+  --rk-cream-soft: #b8b2a4;
+  --rk-teal: #00ffd7;
+  --rk-orange: #ff3c00;
+  --rk-yellow: #fefc22;
+  --rk-red: #ff003d;
+  --rk-blue: #3637dc;
+  --rk-purple: #4b0db3;
+
+  /* 3.2 Type (all four families are loaded by the root layout) */
+  --rk-shout: "Anton", "Oswald", Impact, sans-serif;
+  --rk-display: "Oswald", "Arial Narrow", sans-serif;
+  --rk-body: "Roboto", system-ui, sans-serif;
+  --rk-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* 3.4 Motion */
+  --rk-ease: cubic-bezier(.16, 1, .3, 1);
+  --rk-pop: cubic-bezier(.2, 1.6, .4, 1);
+  --rk-hop: cubic-bezier(.2, 1.5, .4, 1);
+  --rk-letter: cubic-bezier(.3, 1.6, .5, 1);
+  --rk-in: cubic-bezier(.7, 0, .84, 0);
+
+  /* 3.5 Layout */
+  --rk-fw: clamp(6px, 1.15vw, 18px);
+  --rk-pad: clamp(20px, 5vw, 84px);
+  --rk-sec-pad: clamp(64px, 10vh, 112px);
+  --rk-max: 1320px;
+
+  /* 3.3 Shadow recipes (zero blur, down-right) */
+  --rk-shadow-head: 3px 3px 0 var(--rk-orange), 6px 6px 0 rgba(0, 0, 0, .85);
+  --rk-shadow-title: 4px 4px 0 var(--rk-orange), 9px 9px 0 rgba(0, 0, 0, .9);
+  --rk-shadow-teal-title: 4px 4px 0 var(--rk-cream), 9px 9px 0 rgba(26, 26, 26, .5);
+  --rk-shadow-giant: .03em .03em 0 var(--rk-teal), .06em .06em 0 var(--rk-blue);
+  --rk-shadow-split: -.035em 0 0 var(--rk-teal), .035em 0 0 var(--rk-red), .07em .07em 0 var(--rk-ink);
+  --rk-slab-rest: 5px 5px 0 var(--rk-cream), 5px 5px 0 2px var(--rk-ink);
+  --rk-slab-hover: 9px 9px 0 var(--rk-teal), 9px 9px 0 2px var(--rk-ink);
+  --rk-slab-press: 1px 1px 0 var(--rk-cream), 1px 1px 0 2px var(--rk-ink);
+
+  /* 3.6 Texture: the one speckle tile (IMG-09) */
+  --rk-grain-url: url("/kindness/grain.webp");
+}
+
+/* Visually hidden, still read by screen readers. */
+.rk-sr {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

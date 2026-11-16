@@ -1,0 +1,1348 @@
+/* Random Hacks of Kindness: shell (01-shell.md).
+   Shared building blocks first (buttons, links, eyebrows, Hop heading, stamp,
+   tape, grain, filters), then the fixed chrome, then the page ground and the
+   section shell. Written phone first: the base rules are the phone layout and
+   the min-width layers (561, 761, 901, 961) sit at the end of the file.
+   Rule for every part: a base rule is the finished, visible pose. Every :hover
+   rule sits inside @media (hover: hover); focus rules stay outside it. */
+
+/* ------------------------------------------------------------------------ */
+/* Page-level rules and the small reset (Page ground, build notes)           */
+/* ------------------------------------------------------------------------ */
+
+html:has(.rk-page) {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+  background: #1a1a1a;
+  color-scheme: dark;
+}
+
+html:has(.rk-page) body {
+  background: #1a1a1a;
+}
+
+.rk-page {
+  position: relative;
+  overflow-x: hidden;
+  overflow-x: clip;
+  min-height: 100vh;
+  background: var(--rk-ink);
+  color: var(--rk-cream);
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Zero specificity, so any section rule wins over the reset. */
+:where(.rk-page),
+:where(.rk-page) *,
+:where(.rk-page) *::before,
+:where(.rk-page) *::after {
+  box-sizing: border-box;
+}
+
+:where(.rk-page) :where(h1, h2, h3, h4, h5, h6, p, ul, ol, li, figure, blockquote, dl, dd) {
+  margin: 0;
+  padding: 0;
+}
+
+:where(.rk-page) :where(ul, ol) {
+  list-style: none;
+}
+
+:where(.rk-page) :where(i) {
+  font-style: normal;
+}
+
+:where(.rk-page) :where(a) {
+  color: inherit;
+  text-decoration: none;
+}
+
+:where(.rk-page) :where(mark) {
+  background: none;
+  color: var(--rk-yellow);
+}
+
+:where(.rk-page) :where(button) {
+  font: inherit;
+  color: inherit;
+}
+
+.rk-lead {
+  font-size: clamp(15px, 1.25vw, 18px);
+  line-height: 1.6;
+}
+
+/* Focus and selection: one ring, one selection colour. Teal, cream and yellow
+   surfaces set --rk-focus: var(--rk-ink). */
+.rk-page :focus-visible {
+  outline: 3px solid var(--rk-focus, var(--rk-teal));
+  outline-offset: 4px;
+}
+
+.rk-page ::selection {
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Sticker button (rk-btn)                                                   */
+/* ------------------------------------------------------------------------ */
+
+.rk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .8em;
+  position: relative;
+  white-space: nowrap;
+  line-height: 1;
+  padding: .7em 1em;
+  background: var(--rk-orange);
+  color: var(--rk-ink);
+  border: 2px solid var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  font-size: clamp(18px, 1.5vw, 22.5px);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--rk-slab-rest);
+  /* Tilt in rotate, lift in translate: an entrance that sets transform or
+     scale can never wipe them. */
+  rotate: -2deg;
+  translate: 0 0;
+  transition:
+    rotate .35s var(--rk-ease),
+    translate .35s var(--rk-ease),
+    box-shadow .35s var(--rk-ease),
+    background-color .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rk-btn__label {
+  display: block;
+}
+
+.rk-btn__icon {
+  display: block;
+  flex: none;
+  width: 1em;
+  height: .86em;
+  max-width: none;
+}
+
+.rk-btn__arrow {
+  width: auto;
+  height: auto;
+  line-height: 1;
+}
+
+.rk-heart {
+  overflow: visible;
+  transform-origin: 50% 50%;
+}
+
+@keyframes rk-beat {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  50% {
+    transform: translate(1px, -2px) rotate(8deg) scale(1.18);
+  }
+}
+
+/* --small (phone size in the base; 16.5px from 761px) */
+.rk-btn--small {
+  font-size: 13.5px;
+  padding: .47em .53em;
+  box-shadow: 3px 3px 0 var(--rk-cream), 3px 3px 0 2px var(--rk-ink);
+}
+
+/* --hero: big buttons with a radar ring. The Hero part sets its own size. */
+.rk-btn--hero {
+  font-size: var(--rk-btn-size, clamp(21px, 2.03vw, 30px));
+  padding: .77em 1.27em;
+  white-space: normal;
+  text-align: center;
+}
+
+.rk-btn--hero::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  border: 3px solid var(--rk-orange);
+  opacity: 0;
+  animation: rk-ring 1.8s ease-out infinite;
+}
+
+@keyframes rk-ring {
+  from {
+    opacity: .9;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.22, 1.6);
+  }
+}
+
+/* --crew: the yellow secondary action that leaves the page (↗, no beat). */
+.rk-btn--crew {
+  flex: none;
+  padding: .77em 1.07em;
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+  border: 3px solid var(--rk-ink);
+  font-size: clamp(19.5px, 1.73vw, 25.5px);
+  box-shadow: 6px 6px 0 var(--rk-cream), 6px 6px 0 3px var(--rk-ink);
+  transition:
+    rotate .35s var(--rk-pop),
+    translate .35s var(--rk-pop),
+    box-shadow .35s var(--rk-ease),
+    background-color .2s;
+}
+
+/* --halo: dashed yellow rectangle rocking round the button. Declared after
+   --hero, so its padding and size win when both are set. */
+.rk-btn--halo {
+  font-size: clamp(24px, 2.7vw, 39px);
+  padding: .8em 1.47em;
+}
+
+.rk-btn--halo::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  pointer-events: none;
+  border: 2px dashed rgb(254 252 34 / .5);
+  rotate: 2deg;
+  animation: rk-sway 5s ease-in-out infinite;
+}
+
+@keyframes rk-sway {
+  0%,
+  100% {
+    rotate: -4deg;
+  }
+
+  50% {
+    rotate: 4deg;
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+/* Chip link (rk-chip)                                                       */
+/* ------------------------------------------------------------------------ */
+
+.rk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .5em;
+  position: relative;
+  padding: .7em .8em;
+  white-space: nowrap;
+  line-height: 1;
+  background: var(--rk-ink);
+  color: var(--rk-cream);
+  border: 1px solid rgb(245 240 230 / .55);
+  box-shadow: 2px 2px 0 var(--rk-teal);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: 12px;
+  text-decoration: none;
+  rotate: var(--rk-rot, 0deg);
+  translate: 0 0;
+  transition:
+    color .2s,
+    border-color .2s,
+    box-shadow .3s var(--rk-ease),
+    rotate .3s var(--rk-ease),
+    translate .3s var(--rk-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Invisible hit area on phones: 31px chip + 2 x 7px = 45px tall target. */
+.rk-chip::after {
+  content: "";
+  position: absolute;
+  inset: -7px 0;
+}
+
+.rk-chip__arrow {
+  display: inline-block;
+  translate: 0 0;
+  transition: translate .3s var(--rk-ease);
+}
+
+.rk-chip--quiet {
+  text-transform: none;
+  letter-spacing: .02em;
+  font-size: 12px;
+}
+
+.rk-chip--outline {
+  background: transparent;
+  border-color: var(--rk-cream);
+  box-shadow: 0 0 0 var(--rk-teal);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Text link (rk-link)                                                       */
+/* ------------------------------------------------------------------------ */
+
+.rk-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .6em;
+  /* Phone and touch: a 44px target without moving the text. */
+  padding-block: 13px;
+  margin-block: -13px;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--rk-cream);
+  text-decoration: none;
+  background: linear-gradient(currentColor, currentColor) 0 calc(100% - 8px) / 100% 1px no-repeat;
+  transition:
+    color .25s,
+    background-size .4s var(--rk-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rk-link--small {
+  font-size: 11px;
+}
+
+.rk-link__arrow {
+  display: inline-block;
+  translate: 0 0;
+  transition: translate .3s var(--rk-ease);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Plain and Shout eyebrows                                                  */
+/* ------------------------------------------------------------------------ */
+
+.rk-eyebrow {
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .2em;
+  color: var(--rk-cream);
+  font-size: clamp(10px, .82vw, 12px);
+  line-height: 1.6;
+}
+
+.rk-eyebrow i {
+  margin: 0 .4em;
+  opacity: .6;
+  font-style: normal;
+}
+
+.rk-eyebrow--teal {
+  color: var(--rk-teal);
+}
+
+.rk-eyebrow--shout {
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  color: var(--rk-yellow);
+  letter-spacing: .12em;
+  font-size: clamp(19.5px, 1.95vw, 28.5px);
+  line-height: 1.1;
+}
+
+/* As the kicker of a section head. */
+.rk-head .rk-eyebrow--shout {
+  font-size: clamp(27px, 3.45vw, 51px);
+  letter-spacing: .04em;
+  line-height: 1.1;
+  text-shadow: 3px 3px 0 var(--rk-orange), 5px 5px 0 rgba(0, 0, 0, .9);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Hop heading (rk-hop): the look only in release 1; letters rest in place.  */
+/* ------------------------------------------------------------------------ */
+
+.rk-hop {
+  display: block;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -.01em;
+  color: var(--rk-cream);
+  font-size: var(--rk-title-size, clamp(42px, 6.9vw, 102px));
+  line-height: .98;
+  margin-top: .35em;
+  text-shadow: var(--rk-shadow-head);
+}
+
+.rk-hop__lines,
+.rk-hop__line {
+  display: block;
+}
+
+.rk-hop__word {
+  white-space: nowrap;
+}
+
+.rk-hop__ch {
+  display: inline-block;
+  transform-origin: 50% 90%;
+  /* Lighter worn ink on phones; the full filter from 761px. */
+  filter: url(#rk-ink-s);
+}
+
+.rk-hop mark {
+  background: none;
+  color: var(--rk-yellow);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Stamp (rk-stamp)                                                          */
+/* ------------------------------------------------------------------------ */
+
+:where(.rk-stamp) {
+  position: relative;
+}
+
+.rk-stamp {
+  display: inline-block;
+  padding: .25em .5em;
+  background: var(--rk-red);
+  color: var(--rk-cream);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: var(--rk-stamp-size, clamp(20px, 2.2vw, 32px));
+  line-height: 1;
+  white-space: nowrap;
+  outline: 2px solid var(--rk-cream);
+  outline-offset: -6px;
+  rotate: var(--rk-rot, -6deg);
+  filter: url(#rk-ink-s);
+  /* No slab shadow: ink sits in the paper. */
+  box-shadow: none;
+}
+
+/* Dark grain, 180px, multiply, .55. */
+.rk-stamp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 180px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .55;
+}
+
+/* For cream, yellow and teal paper, and anywhere red would touch orange. */
+.rk-stamp--ink {
+  background: transparent;
+  color: var(--rk-ink);
+  border: 3px solid var(--rk-ink);
+  outline-color: var(--rk-ink);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Tape (rk-tape): strips and bands                                          */
+/* ------------------------------------------------------------------------ */
+
+.rk-tape {
+  /* Ragged short ends: hand-written notches, uneven on each end. */
+  --rk-tape-cut: polygon(
+    2% 0, 98.5% 0, 100% 19%, 96.5% 38%, 99.5% 61%, 97% 80%, 100% 100%,
+    1% 100%, 3.5% 83%, 0 64%, 2.5% 41%, 0 17%
+  );
+  position: absolute;
+  display: block;
+  width: 80px;
+  height: 25px;
+  pointer-events: none;
+  filter: drop-shadow(1px 2px 0 rgba(0, 0, 0, .55));
+}
+
+.rk-tape::before,
+.rk-tape::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--rk-tape-cut);
+}
+
+.rk-tape::before {
+  background: rgb(254 252 34 / .75);
+}
+
+.rk-tape::after {
+  background: var(--rk-grain-url) 0 0 / 180px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .55;
+}
+
+.rk-tape--cream::before {
+  background: rgb(245 240 230 / .55);
+}
+
+.rk-tape--s {
+  --rk-tape-cut: polygon(
+    3% 0, 100% 0, 96% 30%, 100% 58%, 97% 100%,
+    0 100%, 4% 72%, 0 44%, 3.5% 18%
+  );
+  width: 56px;
+  height: 22px;
+}
+
+/* Strips are 80px wide at 560 and below, 110 by 34 above. Kept here, before
+   the band, so the band's own sizes win at the same specificity. */
+@media (min-width: 561px) {
+  .rk-tape {
+    width: 110px;
+    height: 34px;
+  }
+
+  .rk-tape--s {
+    width: 56px;
+    height: 22px;
+  }
+}
+
+/* Band: opaque yellow, carries a section's marquee track. */
+.rk-tape--band {
+  position: relative;
+  z-index: 5;
+  display: block;
+  overflow: hidden;
+  width: auto;
+  height: auto;
+  margin: -18px 0;
+  filter: none;
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+  border-block: 3px solid var(--rk-ink);
+  box-shadow: 0 10px 0 rgba(0, 0, 0, .55);
+  rotate: -1.4deg;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(21px, 2.55vw, 36px);
+  line-height: 1;
+}
+
+.rk-tape--band::before {
+  content: none;
+}
+
+.rk-tape--band::after {
+  clip-path: none;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Grain (rk-grain): one speckle tile, tuned by three properties             */
+/* ------------------------------------------------------------------------ */
+
+:where(.rk-grain) {
+  position: relative;
+}
+
+.rk-grain:not(.rk-grain--before)::after,
+.rk-grain--before::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / var(--rk-grain-size, 512px) repeat;
+  mix-blend-mode: var(--rk-grain-blend, screen);
+  opacity: var(--rk-grain-o, .3);
+}
+
+/* The tile is white specks: every multiply use prints it dark. */
+.rk-grain--dark:not(.rk-grain--before)::after,
+.rk-grain--dark.rk-grain--before::before {
+  filter: invert(1);
+}
+
+/* Animated section grain: #last-time and #contact only. */
+:where(.rk-grain--live) {
+  position: relative;
+  overflow: hidden;
+}
+
+.rk-grain--live::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  z-index: 30;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 256px repeat;
+  mix-blend-mode: overlay;
+  opacity: .13;
+  transform: translate(0);
+  animation: rk-grain .9s steps(5, end) infinite;
+}
+
+@keyframes rk-grain {
+  0% {
+    transform: translate(0);
+  }
+
+  20% {
+    transform: translate(-3%, 2%);
+  }
+
+  40% {
+    transform: translate(2%, -4%);
+  }
+
+  60% {
+    transform: translate(-4%, -1%);
+  }
+
+  80% {
+    transform: translate(3%, 3%);
+  }
+
+  100% {
+    transform: translate(0);
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+/* Worn ink and Line boil (filters live in the hidden SVG, .rk-defs)         */
+/* ------------------------------------------------------------------------ */
+
+.rk-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.rk-ink {
+  filter: url(#rk-ink);
+}
+
+.rk-ink-s {
+  filter: url(#rk-ink-s);
+}
+
+.rk-boil {
+  filter: url(#rk-boil-1);
+  animation: rk-boil var(--rk-boil-t, .52s) step-end infinite;
+}
+
+@keyframes rk-boil {
+  0% {
+    filter: url(#rk-boil-1);
+  }
+
+  25% {
+    filter: url(#rk-boil-2);
+  }
+
+  50% {
+    filter: url(#rk-boil-3);
+  }
+
+  75% {
+    filter: url(#rk-boil-4);
+  }
+
+  100% {
+    filter: url(#rk-boil-1);
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+/* Motion switch button (rk-motion-btn): placed by the footer ticket         */
+/* ------------------------------------------------------------------------ */
+
+.rk-motion-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5em;
+  position: relative;
+  padding: .7em .8em;
+  white-space: nowrap;
+  line-height: 1;
+  background: transparent;
+  color: var(--rk-ink);
+  border: 2px solid var(--rk-ink);
+  box-shadow: 3px 3px 0 var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: 12px;
+  cursor: pointer;
+  translate: 0 0;
+  transition:
+    box-shadow .2s,
+    translate .2s,
+    background-color .2s,
+    color .2s;
+  --rk-focus: var(--rk-ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rk-motion-btn::after {
+  content: "";
+  position: absolute;
+  inset: -7px 0;
+}
+
+/* Motion paused: the switch inverts to an ink face with a yellow label. */
+html.rk-motion-off .rk-motion-btn {
+  background: var(--rk-ink);
+  color: var(--rk-yellow);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Motion switch: the global contract under html.rk-motion-off               */
+/* ------------------------------------------------------------------------ */
+
+html.rk-motion-off *,
+html.rk-motion-off *::before,
+html.rk-motion-off *::after {
+  animation: none !important;
+}
+
+html.rk-motion-off:has(.rk-page) {
+  scroll-behavior: auto;
+}
+
+html.rk-motion-off .rk-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+html.rk-motion-off .rk-confetti,
+html.rk-motion-off .rk-torch,
+html.rk-motion-off .rk-strobe,
+html.rk-motion-off .rk-intro {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Fixed chrome                                                              */
+/* ------------------------------------------------------------------------ */
+
+/* Skip link: first focusable element, parked above the viewport. */
+.rk-skip {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 200;
+  transform: translate(-50%, -120%);
+  padding: 10px 18px;
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.rk-skip:focus,
+.rk-skip:focus-visible {
+  transform: translate(-50%, calc(var(--rk-fw) + 8px));
+}
+
+/* Frame: the viewport as a framed print. */
+.rk-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+  border: var(--rk-fw) solid var(--rk-cream);
+}
+
+.rk-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--rk-teal);
+  box-shadow:
+    0 0 0 2px var(--rk-ink),
+    inset 0 0 0 2px var(--rk-ink),
+    inset 0 0 60px rgba(0, 0, 0, .55);
+}
+
+/* Grain overlay: still print speckle over everything, chrome included. */
+.rk-grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 512px repeat;
+  mix-blend-mode: screen;
+  opacity: .3;
+  transition: opacity 1.2s;
+}
+
+html.rk-takeover-on .rk-grain-overlay {
+  opacity: .14;
+}
+
+html.rk-motion-off .rk-grain-overlay {
+  transition: none;
+}
+
+/* Corner button: phones dock it bottom right in the thumb zone; from 761px it
+   sits top right. Cream face, 3px slab, tilted the other way. */
+.rk-btn--corner {
+  position: fixed;
+  z-index: 100;
+  top: auto;
+  right: calc(var(--rk-fw) + 12px + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--rk-fw) + 12px + env(safe-area-inset-bottom, 0px));
+  min-height: 48px;
+  padding: 0 16px;
+  font-size: 16px;
+  background: var(--rk-cream);
+  color: var(--rk-ink);
+  box-shadow: 3px 3px 0 var(--rk-cream), 3px 3px 0 2px var(--rk-ink);
+  rotate: 2deg;
+  transform: none;
+  /* The hand-off offset is the only thing in transform; its 0.8 s delay never
+     slows the undelayed hover feedback on rotate and translate. */
+  transition:
+    rotate .35s var(--rk-ease),
+    translate .35s var(--rk-ease),
+    box-shadow .35s var(--rk-ease),
+    background-color .2s,
+    transform .35s var(--rk-ease) .8s;
+  animation: rk-fade-in .8s .8s both;
+}
+
+/* Invisible hit area so the small target reaches 44px on touch. */
+.rk-btn--corner::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+/* Hand-off while the hero's own button is on screen (the class is set from
+   release 2; release 1 never sets it, so the button always shows). */
+html.rk-on-hero .rk-btn--corner {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  animation: none;
+  transform: translateY(12px);
+  transition:
+    rotate .35s var(--rk-ease),
+    translate .35s var(--rk-ease),
+    box-shadow .35s var(--rk-ease),
+    background-color .2s;
+}
+
+html.rk-motion-off .rk-btn--corner {
+  transition:
+    rotate .35s var(--rk-ease),
+    translate .35s var(--rk-ease),
+    box-shadow .35s var(--rk-ease),
+    background-color .2s,
+    opacity .35s;
+}
+
+html.rk-motion-off.rk-on-hero .rk-btn--corner {
+  transform: none;
+  transition:
+    rotate .35s var(--rk-ease),
+    translate .35s var(--rk-ease),
+    box-shadow .35s var(--rk-ease),
+    background-color .2s,
+    opacity .35s,
+    visibility 0s .35s;
+}
+
+@keyframes rk-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Top links: three side doors that scroll away with the hero. Phones: a
+   wrapped row top left. From 761px: a column under the corner button. */
+.rk-top-links {
+  position: absolute;
+  z-index: 100;
+  top: calc(var(--rk-fw) + 12px);
+  left: calc(var(--rk-fw) + 12px);
+  right: auto;
+  max-width: calc(100% - 2 * var(--rk-fw) - 24px);
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 14px 8px;
+}
+
+.rk-top-links .rk-chip {
+  animation: rk-fade-in .8s 1s both;
+}
+
+.rk-top-links .rk-chip:nth-child(2) {
+  animation-delay: 1.2s;
+}
+
+.rk-top-links .rk-chip:nth-child(3) {
+  animation-delay: 1.4s;
+}
+
+/* Chapter rail: hidden at 960 and below. */
+.rk-rail {
+  position: fixed;
+  z-index: 96;
+  right: calc(var(--rk-fw) + 16px);
+  top: 50%;
+  translate: 0 -50%;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  /* The hidden labels must not catch clicks meant for the page: only the
+     ticks take the pointer until the rail is hovered. */
+  pointer-events: none;
+}
+
+.rk-rail a {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  color: var(--rk-cream);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rk-rail__label {
+  display: block;
+  padding: 2px 6px;
+  background: var(--rk-ink);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, .85);
+  color: var(--rk-cream);
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: .22em;
+  white-space: nowrap;
+  opacity: 0;
+  translate: 8px 0;
+  transition:
+    opacity .3s,
+    translate .4s var(--rk-ease),
+    color .3s;
+}
+
+.rk-rail__tick {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 12px;
+  height: 2px;
+  background: rgb(245 240 230 / .5);
+  box-shadow: 0 0 0 1px rgb(26 26 26 / .6);
+  pointer-events: auto;
+  transition:
+    width .4s var(--rk-ease),
+    background-color .3s;
+}
+
+/* The tick's hit area fills its row. */
+.rk-rail__tick::after {
+  content: "";
+  position: absolute;
+  inset: -14px -10px;
+}
+
+.rk-rail a:focus-visible {
+  outline-offset: 2px;
+}
+
+.rk-rail a:focus-visible .rk-rail__label {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.rk-rail a.is-on .rk-rail__label {
+  color: var(--rk-yellow);
+}
+
+.rk-rail a.is-on .rk-rail__tick {
+  width: 30px;
+  background: var(--rk-yellow);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Page ground and section shell                                             */
+/* ------------------------------------------------------------------------ */
+
+/* One continuous glow-lit ground under the eight middle sections. */
+.rk-ground {
+  position: relative;
+  background:
+    radial-gradient(1000px 760px at 50% 2%, rgb(255 60 0 / .26), transparent 70%),
+    radial-gradient(900px 700px at 12% 20%, rgb(254 252 34 / .09), transparent 70%),
+    radial-gradient(900px 760px at 88% 36%, rgb(0 255 215 / .11), transparent 70%),
+    radial-gradient(1000px 800px at 18% 58%, rgb(54 55 220 / .2), transparent 70%),
+    radial-gradient(900px 700px at 85% 78%, rgb(75 13 179 / .2), transparent 70%),
+    linear-gradient(rgb(0 0 0 / .4), rgb(0 0 0 / .4)),
+    var(--rk-ink);
+}
+
+.rk-sec {
+  position: relative;
+  overflow: hidden;
+  /* Anchor jumps land just inside the frame (phones part, chrome build notes). */
+  scroll-margin-top: calc(var(--rk-fw) + 16px);
+  padding: var(--rk-sec-pad) calc(16px + var(--rk-fw));
+  background: var(--rk-ink);
+}
+
+/* Transparent inside the shared ground; a section that paints its own ground
+   (the teal FAQ slab) still wins with its own class. */
+:where(.rk-ground) .rk-sec {
+  background: transparent;
+}
+
+/* Every section id that does not set its own scroll margin. */
+:where(.rk-page) :where(section[id], footer[id]) {
+  scroll-margin-top: calc(var(--rk-fw) + 16px);
+}
+
+:where(.rk-sec) > * {
+  max-width: var(--rk-max);
+  margin-inline: auto;
+}
+
+:where(.rk-sec) h3 {
+  text-transform: uppercase;
+}
+
+.rk-head {
+  margin-bottom: clamp(36px, 6vh, 70px);
+}
+
+/* Media reset after the section child cap, so media keep max-width: 100%. */
+:where(.rk-page) :where(img, video, canvas) {
+  display: block;
+  max-width: 100%;
+}
+
+/* Sparkle haze (IMG-06) behind dark sections. Content sits above it. */
+.rk-haze::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url("/kindness/sparkle-haze.webp") var(--rk-haze-pos, center) / cover no-repeat;
+  mix-blend-mode: screen;
+  opacity: var(--rk-haze-o, .45);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+}
+
+:where(.rk-haze) > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Stage mist (IMG-08): a low band drifting sideways, one tile per loop. */
+.rk-mist {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: none;
+  margin: 0;
+  height: var(--rk-mist-h, 240px);
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: .55;
+}
+
+.rk-mist::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: calc(100% + var(--rk-mist-h, 240px) * 4);
+  background: url("/kindness/stage-mist.webp") 0 100% / calc(var(--rk-mist-h, 240px) * 4) 100% repeat-x;
+  translate: 0 0;
+  animation: rk-mist 50s linear infinite;
+}
+
+@keyframes rk-mist {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: calc(var(--rk-mist-h, 240px) * -4) 0;
+  }
+}
+
+/* Section joins. A tape seam overlaps its neighbours; a torn section is cut
+   top and bottom by two hand-drawn masks and a solid middle (1px overlaps). */
+.rk-seam {
+  position: relative;
+  z-index: 5;
+}
+
+.rk-torn {
+  --rk-tear: clamp(28px, 4vw, 56px);
+  padding-block: calc(var(--rk-sec-pad) + var(--rk-tear));
+  -webkit-mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 56' preserveAspectRatio='none'%3E%3Cpath d='M0 56V25L61 35L89 33L112 43L131 49L145 41L206 40L229 46L248 42L276 45L317 50L345 44L364 34L383 27L411 15L430 27L482 40L496 48L510 50L562 46L590 35L609 21L661 12L689 4L750 4L778 4L801 7L853 4L886 22L919 11L942 24L961 41L1022 45L1063 37L1082 46L1110 44L1171 10L1194 6L1217 4L1245 4L1273 7L1334 10L1353 9L1386 19L1419 31L1440 22V56Z'/%3E%3C/svg%3E") top / 100% var(--rk-tear) no-repeat,
+    linear-gradient(#000 0 0) center / 100% calc(100% - 2 * var(--rk-tear) + 2px) no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 56' preserveAspectRatio='none'%3E%3Cpath d='M0 0V31L41 33L60 28L112 42L173 47L192 38L244 28L267 36L295 32L328 24L380 24L403 32L464 35L483 43L506 45L525 32L577 43L600 49L628 31L642 29L665 23L679 34L693 28L707 29L721 29L735 13L776 6L804 6L832 8L846 10L874 18L902 14L916 25L949 31L963 28L986 33L1038 46L1052 39L1075 12L1127 29L1168 29L1182 21L1210 22L1251 6L1312 47L1373 31L1406 23L1434 27L1440 9V0Z'/%3E%3C/svg%3E") bottom / 100% var(--rk-tear) no-repeat;
+  mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 56' preserveAspectRatio='none'%3E%3Cpath d='M0 56V25L61 35L89 33L112 43L131 49L145 41L206 40L229 46L248 42L276 45L317 50L345 44L364 34L383 27L411 15L430 27L482 40L496 48L510 50L562 46L590 35L609 21L661 12L689 4L750 4L778 4L801 7L853 4L886 22L919 11L942 24L961 41L1022 45L1063 37L1082 46L1110 44L1171 10L1194 6L1217 4L1245 4L1273 7L1334 10L1353 9L1386 19L1419 31L1440 22V56Z'/%3E%3C/svg%3E") top / 100% var(--rk-tear) no-repeat,
+    linear-gradient(#000 0 0) center / 100% calc(100% - 2 * var(--rk-tear) + 2px) no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 56' preserveAspectRatio='none'%3E%3Cpath d='M0 0V31L41 33L60 28L112 42L173 47L192 38L244 28L267 36L295 32L328 24L380 24L403 32L464 35L483 43L506 45L525 32L577 43L600 49L628 31L642 29L665 23L679 34L693 28L707 29L721 29L735 13L776 6L804 6L832 8L846 10L874 18L902 14L916 25L949 31L963 28L986 33L1038 46L1052 39L1075 12L1127 29L1168 29L1182 21L1210 22L1251 6L1312 47L1373 31L1406 23L1434 27L1440 9V0Z'/%3E%3C/svg%3E") bottom / 100% var(--rk-tear) no-repeat;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Hover (hover-capable devices only)                                        */
+/* ------------------------------------------------------------------------ */
+
+@media (hover: hover) {
+  .rk-btn:hover {
+    rotate: 0deg;
+    translate: -3px -3px;
+    box-shadow: var(--rk-slab-hover);
+  }
+
+  .rk-btn:hover .rk-heart {
+    animation: rk-beat .35s steps(2, end) infinite;
+  }
+
+  .rk-btn--crew:hover {
+    box-shadow: 10px 10px 0 var(--rk-cream), 10px 10px 0 3px var(--rk-ink);
+  }
+
+  .rk-btn--corner:hover {
+    rotate: 0deg;
+    translate: -2px -2px;
+    box-shadow: var(--rk-slab-hover);
+  }
+
+  .rk-chip:hover {
+    color: var(--rk-yellow);
+    border-color: var(--rk-yellow);
+    box-shadow: 4px 4px 0 var(--rk-teal);
+    rotate: 0deg;
+    translate: -2px -2px;
+  }
+
+  .rk-chip--outline:hover {
+    box-shadow: 3px 3px 0 var(--rk-teal);
+  }
+
+  .rk-chip:hover .rk-chip__arrow {
+    translate: 2px -2px;
+  }
+
+  .rk-link:hover {
+    color: var(--rk-link-hover, var(--rk-yellow));
+    background-size: 100% 3px;
+  }
+
+  .rk-link:hover .rk-link__arrow--out {
+    translate: 3px -3px;
+  }
+
+  .rk-link:hover .rk-link__arrow--right {
+    translate: 3px 0;
+  }
+
+  .rk-link:hover .rk-link__arrow--down {
+    translate: 0 3px;
+  }
+
+  .rk-motion-btn:hover {
+    box-shadow: 5px 5px 0 var(--rk-orange);
+    translate: -2px -2px;
+  }
+
+  .rk-rail:hover {
+    pointer-events: auto;
+  }
+
+  .rk-rail:hover .rk-rail__label {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  .rk-rail a:hover .rk-rail__tick {
+    width: 22px;
+    background: var(--rk-cream);
+  }
+
+  .rk-rail a.is-on:hover .rk-rail__tick {
+    width: 30px;
+    background: var(--rk-yellow);
+  }
+}
+
+/* Pressed states come after hover so they win while the pointer is down:
+   the face is pushed flat into the page and the slab shrinks to 1px. */
+.rk-btn:active {
+  rotate: 0deg;
+  translate: 3px 3px;
+  box-shadow: var(--rk-slab-press);
+}
+
+.rk-btn--crew:active {
+  box-shadow: 1px 1px 0 var(--rk-cream), 1px 1px 0 3px var(--rk-ink);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Width layers                                                              */
+/* ------------------------------------------------------------------------ */
+
+/* Big phone */
+@media (min-width: 561px) {
+  .rk-sec {
+    padding-inline: calc(var(--rk-pad) + var(--rk-fw));
+  }
+}
+
+/* Tablet: chrome takes its desktop places */
+@media (min-width: 761px) {
+  .rk-btn--small {
+    font-size: 16.5px;
+    padding: .47em .67em;
+  }
+
+  .rk-btn--hero {
+    white-space: nowrap;
+    text-align: start;
+  }
+
+  .rk-btn--corner {
+    top: calc(var(--rk-fw) + 14px);
+    right: calc(var(--rk-fw) + 16px);
+    bottom: auto;
+    min-height: 0;
+    padding: .47em .67em;
+    font-size: 16.5px;
+  }
+
+  html.rk-on-hero .rk-btn--corner {
+    transform: translateY(-12px);
+  }
+
+  html.rk-motion-off.rk-on-hero .rk-btn--corner {
+    transform: none;
+  }
+
+  .rk-chip {
+    padding: .45em .7em;
+    font-size: 13.5px;
+  }
+
+  .rk-chip--quiet {
+    font-size: 12px;
+  }
+
+  .rk-chip::after {
+    content: none;
+  }
+
+  .rk-motion-btn {
+    padding: .45em .7em;
+    font-size: 13.5px;
+  }
+
+  .rk-motion-btn::after {
+    content: none;
+  }
+
+  .rk-link {
+    padding-block: 0 5px;
+    margin-block: 0;
+    background-position: 0 100%;
+  }
+
+  .rk-hop__ch {
+    filter: url(#rk-ink);
+  }
+
+  .rk-tape--band {
+    margin: -18px -4vw;
+  }
+
+  .rk-top-links {
+    top: calc(var(--rk-fw) + 66px);
+    right: calc(var(--rk-fw) + 16px);
+    left: auto;
+    max-width: none;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 10px;
+  }
+}
+
+/* Small desktop */
+@media (min-width: 901px) {
+  .rk-btn--halo {
+    font-size: clamp(21px, 2.1vw, 30px);
+  }
+}
+
+/* Rail */
+@media (min-width: 961px) {
+  .rk-rail {
+    display: flex;
+  }
+}
+
+/* Touch screens of any width keep the 44px targets. */
+@media (pointer: coarse) {
+  .rk-link {
+    padding-block: 13px;
+    margin-block: -13px;
+    background-position: 0 calc(100% - 8px);
+  }
+
+  .rk-rail a {
+    padding: 15px 0;
+  }
+}
+
+/* Sections that take focus from in-page jumps show no ring. */
+.rk-page section[tabindex="-1"]:focus { outline: none; }

@@ -1,0 +1,1173 @@
+/* Random Hacks of Kindness: hero (#top) and the logo tape.
+   Mobile first: base rules are the phone layout (760 and below), then 561, 761
+   and 1180, then the two hero height queries. Every base rule is the finished,
+   visible pose; entrances run from first paint and end there. */
+
+/* ---------- Hero container and ground ---------- */
+
+.rk-sec.rk-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  /* Title-stack sizes, shared by Roo, the wordmark and the oval (phone values). */
+  --rk-roo-w: clamp(96px, 19svh, 132px);
+  --rk-roo-over: clamp(-28px, -2.6vh, -14px);
+  --rk-art-h: 26svh;
+  --rk-oval-h: clamp(112px, 16.5svh, 140px);
+  --rk-oval-over: calc(52px - var(--rk-oval-h) / 2);
+  min-height: 100svh;
+  padding: calc(var(--rk-fw) + 124px) 0 0;
+  color: var(--rk-cream);
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.55)),
+    radial-gradient(60% 45% at 50% 34%, color-mix(in srgb, var(--rk-purple) 34%, transparent), transparent),
+    radial-gradient(90% 60% at 50% 108%, color-mix(in srgb, var(--rk-blue) 32%, transparent), transparent 70%),
+    var(--rk-ink);
+}
+
+/* The section shell caps direct children at the content width; the hero's
+   layers and rows span the whole poster instead. */
+.rk-sec.rk-hero > * {
+  max-width: none;
+  margin-inline: 0;
+}
+
+/* ---------- Sparkle haze layer ---------- */
+
+.rk-hero__haze {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: url("/kindness/sparkle-haze.webp") 50% / cover no-repeat;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  will-change: transform;
+  animation: rk-haze 90s linear infinite alternate;
+}
+
+@keyframes rk-haze {
+  from {
+    transform: none;
+  }
+  to {
+    transform: scale(1.18) rotate(2deg);
+  }
+}
+
+/* ---------- Heart spark sticker ---------- */
+
+.rk-hero__spark {
+  position: absolute;
+  top: 38%;
+  right: 3%;
+  z-index: -1;
+  width: 90px;
+  pointer-events: none;
+}
+
+.rk-hero .rk-spark {
+  --rk-boil-t: 0.34s;
+  position: relative;
+  rotate: 2.5deg;
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--rk-teal) 70%, transparent));
+}
+
+.rk-hero .rk-spark__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation:
+    rk-boil var(--rk-boil-t) step-end -0.14s infinite,
+    rk-spark-swap 1s step-end infinite;
+}
+
+.rk-hero .rk-spark__img--fat {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation:
+    rk-boil var(--rk-boil-t) step-end -0.14s infinite,
+    rk-spark-swap 1s step-end -0.5s infinite;
+}
+
+@keyframes rk-spark-swap {
+  0% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Megaphone and sound cone ---------- */
+
+.rk-hero .rk-mega {
+  position: absolute;
+  top: 13%;
+  left: 4%;
+  z-index: -1;
+  width: 86px;
+  pointer-events: none;
+}
+
+.rk-hero .rk-mega__float {
+  position: relative;
+  animation: rk-float 6s ease-in-out infinite;
+}
+
+.rk-hero .rk-mega__art {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  scale: -1 1;
+  filter: drop-shadow(-6px 10px 0 rgba(0, 0, 0, 0.55));
+}
+
+.rk-hero .rk-mega__cone {
+  position: absolute;
+  left: calc(100% - var(--rk-mouth-x, 13.5%));
+  top: var(--rk-mouth-y, 38.7%);
+  translate: 0 -50%;
+  width: 125%;
+  aspect-ratio: 125 / 44;
+  transform-origin: 0 50%;
+  clip-path: polygon(0 34%, 100% 0, 100% 100%, 0 66%);
+  background:
+    repeating-radial-gradient(
+      circle at 0 50%,
+      transparent 0 14px,
+      color-mix(in srgb, var(--rk-yellow) 55%, transparent) 14px 17px
+    ),
+    linear-gradient(90deg, color-mix(in srgb, var(--rk-yellow) 50%, transparent), transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 25%, transparent);
+  mask-image: linear-gradient(90deg, #000 25%, transparent);
+  filter: blur(2px);
+  opacity: 0.9;
+  animation: rk-cone 7s ease-in-out infinite;
+}
+
+@keyframes rk-float {
+  0%,
+  100% {
+    transform: translate(0) rotate(-5deg);
+  }
+  50% {
+    transform: translate(18px, -16px) rotate(4deg);
+  }
+}
+
+@keyframes rk-cone {
+  0%,
+  100% {
+    transform: rotate(-14deg);
+    opacity: 0.9;
+  }
+  50% {
+    transform: rotate(16deg);
+    opacity: 0.5;
+  }
+}
+
+/* ---------- Eyebrow ---------- */
+
+.rk-hero p.rk-hero__eyebrow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--rk-fw) + 96px);
+  z-index: 2;
+  margin: 0;
+  padding: 0 16px;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: 0.06em;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.9);
+}
+
+/* On phones both names are in the Backed-by box; keep them for screen readers. */
+.rk-hero__eyebrow-org {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Title stack ---------- */
+
+.rk-hero__stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 0;
+  padding: 0 var(--rk-pad);
+}
+
+/* Roo and the wordmark. Only the wordmark may shrink (the safety valve), so
+   every box between the stack and the art passes the squeeze down. */
+.rk-hero__title-drift,
+.rk-hero__title {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-width: 100%;
+}
+
+.rk-hero__title-drift {
+  z-index: 2;
+}
+
+/* ---------- Roo sticker ---------- */
+
+.rk-hero .rk-roo {
+  position: relative;
+  z-index: 1;
+  display: block;
+  flex: none;
+  width: var(--rk-roo-w);
+  margin: 0 0 var(--rk-roo-over);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  cursor: default;
+  rotate: 2deg;
+  transition: rotate 0.35s var(--rk-ease);
+}
+
+.rk-hero .rk-roo:not(:disabled) {
+  cursor: pointer;
+}
+
+.rk-hero .rk-roo:focus-visible {
+  outline: 3px solid var(--rk-teal);
+  outline-offset: 4px;
+  rotate: 0deg;
+}
+
+@media (hover: hover) {
+  .rk-hero .rk-roo:hover {
+    rotate: 0deg;
+  }
+}
+
+.rk-hero .rk-roo__art {
+  position: relative;
+  display: block;
+  filter: drop-shadow(4px 5px 0 rgba(0, 0, 0, 0.6));
+}
+
+.rk-hero .rk-roo__img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Glints: a cream plus-shaped pixel sparkle on each lens (five cells of a 3 by 3 grid). */
+.rk-hero .rk-roo__glint {
+  position: absolute;
+  left: var(--rk-lens-lx, 52%);
+  top: var(--rk-lens-ly, 41.9%);
+  width: 9%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--rk-cream), var(--rk-cream)) 50% 50% / 33.34% 100% no-repeat,
+    linear-gradient(var(--rk-cream), var(--rk-cream)) 50% 50% / 100% 33.34% no-repeat;
+  animation: rk-glint 3s step-end infinite;
+}
+
+.rk-hero .rk-roo__glint--r {
+  left: var(--rk-lens-rx, 70.3%);
+  top: var(--rk-lens-ry, 41.5%);
+  animation-delay: 0.12s;
+}
+
+@keyframes rk-glint {
+  0% {
+    opacity: 0;
+  }
+  86% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Wordmark (the h1) ---------- */
+
+.rk-hero .rk-wordmark {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 1 auto;
+  min-height: 120px;
+  max-width: 100%;
+  margin: 0;
+  font-size: inherit;
+}
+
+.rk-hero .rk-wordmark__plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-width: 100%;
+  filter:
+    drop-shadow(4px 4px 0 var(--rk-orange))
+    drop-shadow(6px 10px 0 rgba(0, 0, 0, 0.6))
+    drop-shadow(0 0 60px color-mix(in srgb, var(--rk-teal) 40%, transparent));
+}
+
+.rk-hero .rk-wordmark__art {
+  display: block;
+  flex: 0 1 auto;
+  min-height: 0;
+  width: auto;
+  height: auto;
+  max-width: 84vw;
+  max-height: var(--rk-art-h);
+  object-fit: contain;
+  /* Alt text, if the art fails without script, still reads as the title. */
+  font-family: var(--rk-shout);
+  font-size: clamp(32px, 6vw, 64px);
+  line-height: 0.9;
+  color: var(--rk-teal);
+  text-transform: uppercase;
+}
+
+/* RANDOM: a yellow tape label slapped over the art's top-left corner. */
+.rk-hero .rk-wordmark__random {
+  --rk-rot: -2.5deg;
+  position: absolute;
+  /* Spec anchor is top: 4%. On the final art the top line starts 15% in, so a
+     label at 4% hid the H; it is raised to straddle the art's top edge instead. */
+  left: 2%;
+  top: -12%;
+  z-index: 1;
+  isolation: isolate;
+  padding: 0.18em 0.6em;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  /* Phones: the art is width-bound there, so the label follows the width too. */
+  font-size: clamp(15px, min(3vh, 4.6vw), 30px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--rk-ink);
+  rotate: var(--rk-rot);
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.55));
+}
+
+.rk-hero .rk-wordmark__random::before,
+.rk-hero .rk-wordmark__random::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(
+    0 6%, 2.5% 0, 97% 0, 100% 12%, 98% 34%, 100% 57%, 97.5% 79%, 100% 100%,
+    3% 100%, 0 82%, 2.2% 61%, 0 38%, 1.6% 20%
+  );
+}
+
+.rk-hero .rk-wordmark__random::before {
+  background: color-mix(in srgb, var(--rk-yellow) 92%, transparent);
+}
+
+.rk-hero .rk-wordmark__random::after {
+  background: url("/kindness/grain.webp") 0 0 / 180px;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+
+/* Live fallback (P2 sets is-broken on the h1 when the art fails). */
+.rk-hero .rk-wordmark__live {
+  font-family: var(--rk-shout);
+  font-size: clamp(56px, min(12.6vh, 21vw), 150px);
+  line-height: 0.9;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--rk-teal);
+  text-shadow:
+    4px 4px 0 var(--rk-orange),
+    6px 10px 0 rgba(0, 0, 0, 0.6);
+  filter: url(#rk-ink);
+}
+
+.rk-hero .rk-wordmark__live > span {
+  display: block;
+}
+
+.rk-hero .rk-wordmark.is-broken .rk-wordmark__plate {
+  display: none;
+}
+
+.rk-hero .rk-wordmark.is-broken .rk-wordmark__live:not([hidden]) {
+  display: block;
+}
+
+/* ---------- Spotlight oval ---------- */
+
+/* The oval may be wider than the stack's padded column on phones (94vw); the
+   wrapper centres it so it overhangs both gutters evenly. */
+.rk-hero__oval-drift {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  flex: none;
+  max-width: 100%;
+}
+
+.rk-hero .rk-oval {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 94vw;
+  height: var(--rk-oval-h);
+  margin-top: var(--rk-oval-over);
+}
+
+.rk-hero .rk-oval__ring {
+  position: absolute;
+  inset: -14px -22px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    var(--rk-teal),
+    var(--rk-blue),
+    var(--rk-yellow),
+    var(--rk-orange),
+    var(--rk-teal)
+  );
+  filter: blur(26px);
+  opacity: 0.42;
+  pointer-events: none;
+  will-change: transform;
+  animation: rk-spin 14s linear infinite;
+}
+
+.rk-hero .rk-oval__plate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--rk-ink);
+  box-shadow:
+    0 0 0 2px var(--rk-ink),
+    8px 10px 0 rgba(0, 0, 0, 0.6);
+}
+
+.rk-hero .rk-oval__plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.62) 60%, transparent 95%);
+}
+
+.rk-hero .rk-oval__spray {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: 200%;
+  aspect-ratio: 32 / 9;
+  background: url("/kindness/spray-bands.webp") 0 0 / 50% 100% repeat-x;
+  filter: saturate(1.15) brightness(0.82);
+  animation: rk-spray 23s linear infinite;
+}
+
+.rk-hero .rk-oval__headline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  text-align: center;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.94;
+  color: var(--rk-cream);
+  text-shadow:
+    3px 3px 0 var(--rk-orange),
+    6px 6px 0 rgba(0, 0, 0, 0.85);
+}
+
+.rk-hero .rk-oval__small {
+  display: block;
+  margin-bottom: 0.3em;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-shadow:
+    2px 2px 0 var(--rk-orange),
+    4px 4px 0 rgba(0, 0, 0, 0.85);
+}
+
+.rk-hero .rk-oval__line {
+  display: block;
+  font-size: clamp(33px, 9.9vw, 42px);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.rk-hero .rk-oval__digit {
+  display: inline-block;
+  font-style: normal;
+  color: var(--rk-yellow);
+  animation: rk-digit 3.2s step-end infinite;
+}
+
+@keyframes rk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rk-spray {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Yellow for 2.94 s, then a 256 ms misprint: teal skew, red skew, red upright.
+   While red, the shadow's orange step turns teal so red never sits on orange. */
+@keyframes rk-digit {
+  0% {
+    color: var(--rk-yellow);
+    transform: none;
+    text-shadow:
+      3px 3px 0 var(--rk-orange),
+      6px 6px 0 rgba(0, 0, 0, 0.85);
+  }
+  92% {
+    color: var(--rk-teal);
+    transform: translate(-3px, 2px) skew(-12deg);
+    text-shadow:
+      3px 3px 0 var(--rk-orange),
+      6px 6px 0 rgba(0, 0, 0, 0.85);
+  }
+  94% {
+    color: var(--rk-red);
+    transform: translate(3px, -2px) skew(10deg);
+    text-shadow:
+      3px 3px 0 var(--rk-teal),
+      6px 6px 0 rgba(0, 0, 0, 0.85);
+  }
+  96% {
+    color: var(--rk-red);
+    transform: none;
+    text-shadow:
+      3px 3px 0 var(--rk-teal),
+      6px 6px 0 rgba(0, 0, 0, 0.85);
+  }
+  100% {
+    color: var(--rk-yellow);
+    transform: none;
+    text-shadow:
+      3px 3px 0 var(--rk-orange),
+      6px 6px 0 rgba(0, 0, 0, 0.85);
+  }
+}
+
+/* ---------- Bottom bar ---------- */
+
+.rk-hero__bar {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  justify-items: center;
+  gap: 10px;
+  padding: 4px calc(var(--rk-pad) + var(--rk-fw)) calc(var(--rk-fw) + 12px);
+  text-align: center;
+}
+
+.rk-hero__cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 24px;
+}
+
+/* ---------- Big button with ring ----------
+   The shell's Sticker button draws the face, slab, hover and the --hero ring
+   (rk-ring); the hero sets only its size and padding. */
+
+.rk-hero .rk-hero__btn {
+  --rk-btn-size: clamp(20px, 2.2vw, 32px);
+  padding: 1.05em 1.6em;
+  max-width: 100%;
+}
+
+/* ---------- Place and dates block ---------- */
+
+.rk-hero .rk-where {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rk-hero .rk-where__eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.3;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rk-cream);
+  text-wrap: balance;
+}
+
+.rk-hero .rk-where__dates {
+  margin: 0 0 clamp(6px, 1.2vh, 12px);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(26px, 8.4vw, 33px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--rk-yellow);
+}
+
+.rk-hero .rk-where__dates > span {
+  display: block;
+  white-space: nowrap;
+}
+
+.rk-hero .rk-where__body {
+  margin: 0;
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--rk-cream);
+}
+
+.rk-hero .rk-where__body > span {
+  display: block;
+}
+
+.rk-hero .rk-where__body > span + span {
+  margin-top: 4px;
+  color: color-mix(in srgb, var(--rk-cream) 86%, transparent);
+}
+
+.rk-hero .rk-where__links {
+  margin: 6px 0 0;
+  font-family: var(--rk-body);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.rk-hero .rk-where__link {
+  display: inline-block;
+  /* A 44px tap target that does not move the text. */
+  padding-block: 13px;
+  margin-block: -13px;
+  font-weight: 700;
+  color: var(--rk-yellow);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.rk-hero .rk-where__link + .rk-where__link {
+  margin-left: 0.7em;
+}
+
+.rk-hero .rk-where__arrow {
+  display: inline-block;
+  text-decoration: none;
+  transition: translate 0.3s var(--rk-ease);
+}
+
+.rk-hero .rk-where__link:focus-visible .rk-where__arrow--down {
+  translate: 0 3px;
+}
+
+.rk-hero .rk-where__link:focus-visible .rk-where__arrow--right {
+  translate: 3px 0;
+}
+
+@media (hover: hover) {
+  .rk-hero .rk-where__link:hover .rk-where__arrow--down {
+    translate: 0 3px;
+  }
+  .rk-hero .rk-where__link:hover .rk-where__arrow--right {
+    translate: 3px 0;
+  }
+}
+
+/* ---------- Backed-by box ---------- */
+
+.rk-hero__backers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: stretch;
+  gap: 14px;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 14px;
+}
+
+.rk-hero .rk-backed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(288px, 100%);
+  max-width: 100%;
+  padding: 13px 14px 9px;
+  background: var(--rk-ink);
+  border: 2px solid color-mix(in srgb, var(--rk-cream) 32%, transparent);
+  box-shadow:
+    5px 5px 0 var(--rk-orange),
+    5px 5px 0 2px rgba(0, 0, 0, 0.9);
+}
+
+.rk-hero .rk-backed__label {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% -55%;
+  rotate: -2deg;
+  margin: 0;
+  padding: 4px 10px;
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+  border: 2px solid var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rk-hero .rk-backed__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rk-hero .rk-backed__row--main {
+  --rk-logo-h: 20px;
+  gap: 8px 22px;
+}
+
+.rk-hero .rk-backed__row--main + .rk-backed__row {
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px dashed color-mix(in srgb, var(--rk-cream) 28%, transparent);
+}
+
+.rk-hero .rk-backed__row--partners {
+  --rk-logo-h: 11px;
+  gap: 6px 14px;
+}
+
+.rk-hero .rk-backed__row > li {
+  display: flex;
+  align-items: center;
+  min-height: var(--rk-logo-h);
+}
+
+/* Official lockups: flat, exactly as supplied. No filter, shadow or transform. */
+.rk-hero .rk-backed__logo {
+  display: block;
+  width: auto;
+  height: var(--rk-logo-h);
+  max-width: none;
+}
+
+.rk-hero .rk-backed__name {
+  display: block;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--rk-cream);
+}
+
+.rk-hero .rk-hero__briefs {
+  color: color-mix(in srgb, var(--rk-cream) 82%, transparent);
+  --rk-link-hover: var(--rk-yellow);
+}
+
+.rk-hero .rk-hero__briefs:focus-visible {
+  color: var(--rk-yellow);
+}
+
+@media (hover: hover) {
+  .rk-hero .rk-hero__briefs:hover {
+    color: var(--rk-yellow);
+  }
+}
+
+/* ---------- Load-in choreography ----------
+   One-shot entrances from first paint, scoped to #top:not(.is-in) so the P2
+   engine can retire them. Backers have no entrance: the box holds an official
+   lockup. Static tilts use `rotate`, entrances animate `transform`. */
+
+.rk-hero:not(.is-in) .rk-wordmark__art {
+  animation: rk-logo-in 1.2s var(--rk-ease) both;
+}
+
+.rk-hero:not(.is-in) .rk-hero__eyebrow {
+  animation: rk-rise 1s var(--rk-ease) 0.1s both;
+}
+
+.rk-hero:not(.is-in) .rk-roo {
+  animation: rk-roo-in 1.1s var(--rk-ease) 0.15s both;
+}
+
+.rk-hero:not(.is-in) .rk-oval {
+  animation: rk-rise 1s var(--rk-ease) 0.35s both;
+}
+
+.rk-hero:not(.is-in) .rk-where,
+.rk-hero:not(.is-in) .rk-hero__cta {
+  animation: rk-rise 1s var(--rk-ease) 0.55s both;
+}
+
+.rk-hero:not(.is-in) .rk-wordmark__random {
+  animation: rk-stamp 0.5s var(--rk-pop) 0.85s both;
+}
+
+@keyframes rk-logo-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.7);
+    filter: blur(18px) brightness(3);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: blur(0) brightness(1);
+  }
+}
+
+@keyframes rk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The shell's Stamp slap (M-SHELL-14), written from the shell spec so the
+   RANDOM label slaps on in P1 too. Only the start pose is given; it lands on
+   each element's own rest (`rotate: var(--rk-rot)`, scale 1, opacity 1), and
+   --rk-pop gives the small overshoot. Identical to the shell's definition. */
+@keyframes rk-stamp {
+  from {
+    opacity: 0;
+    scale: 2.6;
+    rotate: calc(var(--rk-rot) + 18deg);
+  }
+}
+
+@keyframes rk-roo-in {
+  from {
+    opacity: 0;
+    transform: translateY(60px) scale(0.5) rotate(-12deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Logo tape ---------- */
+
+.rk-tape--crew .rk-tape__track {
+  display: flex;
+  width: max-content;
+  padding: 0.5em 0;
+  font-size: 19px;
+  white-space: nowrap;
+  animation: rk-marquee var(--rk-tape-time, 52s) linear infinite;
+}
+
+.rk-tape--crew .rk-tape__group,
+.rk-tape--crew .rk-tape__item {
+  display: flex;
+  align-items: center;
+  gap: 1.25em;
+  flex: none;
+}
+
+.rk-tape--crew .rk-tape__group {
+  padding-right: 1.25em;
+}
+
+.rk-tape--crew .rk-tape__label {
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 1.5em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--rk-ink);
+}
+
+.rk-tape--crew .rk-tape__logo {
+  display: block;
+  width: auto;
+  height: calc(1.45em * var(--rk-logo-s, 1));
+  max-width: none;
+  filter: brightness(0);
+  opacity: 0.9;
+}
+
+.rk-tape--crew .rk-tape__name {
+  font-family: var(--rk-display);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--rk-ink);
+  opacity: 0.9;
+}
+
+.rk-tape--crew .rk-tape__heart {
+  display: block;
+  width: 0.8em;
+  height: auto;
+  flex: none;
+  color: var(--rk-red);
+}
+
+@keyframes rk-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ================= 561 and up: big phones ================= */
+
+@media (min-width: 561px) {
+  .rk-hero__bar {
+    grid-template-columns: minmax(0, 520px);
+    justify-content: center;
+  }
+}
+
+/* ================= 761 and up: tablets and desktops ================= */
+
+@media (min-width: 761px) {
+  .rk-sec.rk-hero {
+    --rk-roo-w: clamp(88px, calc(19.5vh - 42px), 176px);
+    --rk-art-h: clamp(150px, calc(33.3vh - 80px), 300px);
+    --rk-oval-h: clamp(140px, 20vh, 210px);
+    --rk-oval-over: clamp(-24px, -2vh, -12px);
+    padding-top: calc(var(--rk-fw) + clamp(44px, 7vh, 68px));
+  }
+
+  .rk-hero__spark {
+    top: 44%;
+    right: 16%;
+    width: clamp(90px, 11vw, 170px);
+  }
+
+  .rk-hero .rk-mega {
+    top: 19%;
+    left: 7%;
+    width: clamp(86px, 9.5vw, 150px);
+  }
+
+  .rk-hero p.rk-hero__eyebrow {
+    top: calc(var(--rk-fw) + clamp(16px, 2.6vh, 28px));
+    padding: 0 var(--rk-pad);
+    font-size: clamp(16px, min(2.2vw, 3.4vh), 32px);
+    letter-spacing: 0.08em;
+  }
+
+  .rk-hero__eyebrow-org {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  .rk-hero .rk-wordmark__art {
+    max-width: min(84vw, 100%);
+  }
+
+  .rk-hero .rk-oval {
+    width: min(94vw, clamp(520px, 78vh, 880px));
+  }
+
+  .rk-hero .rk-wordmark__random {
+    font-size: clamp(15px, 3vh, 30px);
+  }
+
+  .rk-hero .rk-oval__small {
+    font-size: clamp(13px, 2.2vh, 22px);
+  }
+
+  .rk-hero .rk-oval__line {
+    font-size: clamp(30px, min(6.4vh, 9.4vw), 60px);
+  }
+
+  .rk-hero__bar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "cta cta"
+      "where backers";
+    justify-content: stretch;
+    justify-items: stretch;
+    gap: 20px 24px;
+    padding-top: clamp(16px, 3vh, 40px);
+    padding-bottom: calc(var(--rk-fw) + clamp(12px, 2.2vh, 26px));
+    text-align: left;
+  }
+
+  .rk-hero__cta {
+    grid-area: cta;
+    justify-self: center;
+    margin-top: 0;
+  }
+
+  .rk-hero .rk-where {
+    grid-area: where;
+    justify-self: start;
+  }
+
+  .rk-hero .rk-where__eyebrow {
+    font-size: clamp(11px, 0.86vw, 14px);
+    text-wrap: wrap;
+  }
+
+  .rk-hero .rk-where__dates {
+    font-size: clamp(26px, min(3.15vw, 4.6vh), 48px);
+  }
+
+  .rk-hero .rk-where__body,
+  .rk-hero .rk-where__links {
+    font-size: clamp(13px, 0.95vw, 15px);
+  }
+
+  .rk-hero .rk-where__body {
+    max-width: 30em;
+  }
+
+  .rk-hero__backers {
+    grid-area: backers;
+    justify-self: end;
+    align-items: flex-end;
+    margin: 0 0 6px;
+  }
+
+  .rk-hero .rk-backed {
+    width: max-content;
+    padding: 15px 24px 11px;
+  }
+
+  .rk-hero .rk-backed__row--main {
+    --rk-logo-h: clamp(20px, 2.9vh, 28px);
+    gap: 10px 34px;
+  }
+
+  .rk-hero .rk-backed__row--partners {
+    --rk-logo-h: 14px;
+    gap: 8px 22px;
+  }
+
+  .rk-tape--crew .rk-tape__track {
+    font-size: clamp(14px, 1.7vw, 24px);
+  }
+}
+
+/* ================= 1180 and up: desktops ================= */
+
+@media (min-width: 1180px) {
+  .rk-hero__bar {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas: "where cta backers";
+    gap: 24px;
+  }
+}
+
+/* Hero height lock: the whole poster, button included, fits one screen. */
+@media (min-width: 1180px) and (min-height: 700px) {
+  .rk-sec.rk-hero {
+    height: 100svh;
+    /* Safety valve: if the bar runs taller than the budget expects, only the
+       wordmark gives way (floor 120px). The stack is a size container, so the
+       art's own box shrinks and the RANDOM label stays on its corner. */
+    --rk-art-h: max(
+      120px,
+      min(
+        clamp(150px, calc(33.3vh - 80px), 300px),
+        calc(100cqh - var(--rk-roo-w) - var(--rk-roo-over) - var(--rk-oval-h) - var(--rk-oval-over))
+      )
+    );
+  }
+
+  .rk-hero__stack {
+    container-type: size;
+  }
+}
+
+/* Short desktops: unlocked, with smaller pieces. */
+@media (min-width: 1180px) and (max-height: 699px) {
+  .rk-sec.rk-hero {
+    --rk-roo-w: 72px;
+    --rk-art-h: 120px;
+    --rk-oval-h: 124px;
+  }
+
+  .rk-hero .rk-oval__line {
+    font-size: 38px;
+  }
+}

@@ -12,6 +12,8 @@ export const PERMANENT_PATH_REDIRECTS: Readonly<Record<string, string>> = {
   "/$": "/",
   "/hackathon": "/hackathons",
   "/hackathons):": "/hackathons",
+  "/rhok": "/kindness",
+  "/hacks-of-kindness": "/kindness",
   "/articles/*": "/articles",
   "/practical-ai-learning-beginners-builders": "/articles",
   "/ai-startup-building-pitching": "/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit",

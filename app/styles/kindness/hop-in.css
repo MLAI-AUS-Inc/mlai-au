@@ -1,0 +1,1275 @@
+/* Random Hacks of Kindness: hop-in (#hop-in).
+   Spec: 05-hop-in.md and 10-mobile.md. Mobile-first: base rules are the phone
+   layout, then 561, 761 (no change here), 901 and 1180 (no change here).
+   Every base rule is the finished, visible pose: the loops below only move
+   things away from it and back, and html.rk-motion-off (shell) stops them all.
+   Shared keyframes used as defined elsewhere: rk-boil (shell), rk-glint and
+   rk-spark-swap (hero). Hover rules sit inside @media (hover: hover). */
+
+/* ------------------------------------------------------------------------ */
+/* Section ground and sparkle backdrop                                       */
+/* ------------------------------------------------------------------------ */
+
+/* Never a stacking context (no isolation, z-index, transform, filter or
+   opacity here), so the backdrop's screen blend reaches the page ground. */
+.rk-hop-in {
+  --rk-haze-o: .55;
+  overflow: clip;
+  scroll-margin-top: 0;
+  background:
+    radial-gradient(55% 45% at 50% 22%, rgb(75 13 179 / .34), transparent),
+    radial-gradient(40% 40% at 8% 80%, rgb(54 55 220 / .22), transparent),
+    radial-gradient(35% 35% at 95% 70%, rgb(0 255 215 / .14), transparent),
+    transparent;
+}
+
+.rk-hop-in::before {
+  background: url("/kindness/sparkle-haze.webp") 50% 0 / 100% auto repeat-y;
+  opacity: .55;
+  -webkit-mask-image: linear-gradient(transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(transparent, #000 10%, #000 90%, transparent);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Megaphone and heart spark                                                 */
+/* ------------------------------------------------------------------------ */
+
+.rk-hop-in .rk-hop-in-deco__mega {
+  position: absolute;
+  z-index: 0;
+  top: 28px;
+  left: 2%;
+  width: clamp(80px, 10vw, 150px);
+  max-width: none;
+  height: auto;
+  margin: 0;
+  pointer-events: none;
+  rotate: -10deg;
+  animation: rk-bob 5s ease-in-out infinite;
+}
+
+.rk-hop-in .rk-hop-in-deco__spark {
+  position: absolute;
+  z-index: 0;
+  top: 40px;
+  right: 6%;
+  width: clamp(46px, 5vw, 80px);
+  max-width: none;
+  aspect-ratio: 1;
+  margin: 0;
+  pointer-events: none;
+  rotate: 12deg;
+  opacity: .9;
+}
+
+.rk-hop-in-deco__spark-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: rk-spark-swap 1s step-end infinite;
+}
+
+.rk-hop-in-deco__spark-img--fat {
+  opacity: 0;
+  animation-delay: -.5s;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Oval title                                                                */
+/* ------------------------------------------------------------------------ */
+
+.rk-hop-in__head {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.rk-hop-in__head .rk-eyebrow--shout {
+  font-size: clamp(27px, 3.45vw, 51px);
+  letter-spacing: .04em;
+  line-height: 1.1;
+  text-shadow: 3px 3px 0 var(--rk-orange), 5px 5px 0 rgba(0, 0, 0, .9);
+}
+
+.rk-hop-in-oval {
+  position: relative;
+}
+
+.rk-hop-in-oval__disc {
+  position: absolute;
+  z-index: -1;
+  top: 60%;
+  left: 50%;
+  translate: -50% -50%;
+  width: 150%;
+  aspect-ratio: 1.9;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--rk-purple);
+  box-shadow: 0 0 0 6px var(--rk-ink), 0 0 90px 10px rgb(0 255 215 / .45);
+}
+
+/* Spray layer: three 16:9 tiles, overhanging to the left, sliding one tile. */
+.rk-hop-in-oval__disc::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  aspect-ratio: 16 / 3;
+  background: url("/kindness/spray-bands.webp") 0 0 / 33.3334% 100% repeat-x;
+  animation: rk-spray-slide 28s linear infinite;
+}
+
+/* Plate, then vignette. */
+.rk-hop-in-oval__disc::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(closest-side, rgba(0, 0, 0, .62) 60%, transparent 100%),
+    radial-gradient(closest-side, transparent 55%, rgba(26, 26, 26, .65));
+}
+
+.rk-hop-in-oval__title {
+  --rk-title-size: clamp(96px, 34.5vw, 180px);
+  display: inline-block;
+  position: relative;
+  line-height: .9;
+  margin-top: .15em;
+  text-shadow: var(--rk-shadow-title);
+  -webkit-text-stroke: 6px var(--rk-ink);
+  paint-order: stroke fill;
+}
+
+/* Big letters stay crisp: no Worn ink here. Two forced lines on phones. */
+.rk-hop-in-oval__title .rk-hop__ch {
+  filter: none;
+}
+
+.rk-hop-in-oval__title .rk-hop__word {
+  display: block;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Step cards grid and pixel-heart connector                                 */
+/* ------------------------------------------------------------------------ */
+
+.rk-steps {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  max-width: 1260px;
+  margin-top: clamp(56px, 8vw, 120px);
+}
+
+.rk-steps::before,
+.rk-steps::after {
+  content: "";
+  grid-area: 2 / 1;
+  justify-self: center;
+  width: clamp(28px, 8vw, 40px);
+  aspect-ratio: 20 / 72;
+  margin: 6px 0;
+  /* Downward drawing: three upright pixel hearts, then an arrowhead. */
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 72'%3E%3Cpath d='M5 0h4v2h-4zM11 0h4v2h-4zM3 2h14v4h-14zM5 6h10v2h-10zM7 8h6v2h-6zM9 10h2v2h-2zM5 18h4v2h-4zM11 18h4v2h-4zM3 20h14v4h-14zM5 24h10v2h-10zM7 26h6v2h-6zM9 28h2v2h-2zM5 36h4v2h-4zM11 36h4v2h-4zM3 38h14v4h-14zM5 42h10v2h-10zM7 44h6v2h-6zM9 46h2v2h-2zM0 54h20v4h-20zM2 58h16v4h-16zM4 62h12v4h-12zM6 66h8v4h-8zM8 70h4v2h-4z'/%3E%3C/svg%3E") 50% / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 72'%3E%3Cpath d='M5 0h4v2h-4zM11 0h4v2h-4zM3 2h14v4h-14zM5 6h10v2h-10zM7 8h6v2h-6zM9 10h2v2h-2zM5 18h4v2h-4zM11 18h4v2h-4zM3 20h14v4h-14zM5 24h10v2h-10zM7 26h6v2h-6zM9 28h2v2h-2zM5 36h4v2h-4zM11 36h4v2h-4zM3 38h14v4h-14zM5 42h10v2h-10zM7 44h6v2h-6zM9 46h2v2h-2zM0 54h20v4h-20zM2 58h16v4h-16zM4 62h12v4h-12zM6 66h8v4h-8zM8 70h4v2h-4z'/%3E%3C/svg%3E") 50% / contain no-repeat;
+}
+
+/* The hard shadow copy rides on translate; the nudge (901+) on transform. */
+.rk-steps::before {
+  background: var(--rk-orange);
+  translate: 3px 3px;
+}
+
+.rk-steps::after {
+  background: var(--rk-yellow);
+}
+
+.rk-ticket-wrap {
+  grid-row: 1;
+  min-width: 0;
+}
+
+.rk-pledge-sheet-wrap {
+  grid-row: 3;
+  min-width: 0;
+}
+
+/* Step label shared by both cards: "STEP 1" then a dashed rule. */
+.rk-hop-in-step {
+  display: flex;
+  align-items: center;
+  gap: .7em;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: .24em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.rk-hop-in-step i {
+  flex: 1;
+  border-top: 2px dashed;
+  opacity: .45;
+}
+
+/* Card headings: ink type with one hard shadow and the lighter Worn ink. */
+.rk-ticket__title,
+.rk-pledge-sheet__title {
+  --rk-title-size: clamp(39px, 12.6vw, 54px);
+  color: var(--rk-ink);
+  line-height: .95;
+  margin-top: .45em;
+}
+
+.rk-ticket__title .rk-hop__ch,
+.rk-pledge-sheet__title .rk-hop__ch {
+  filter: url(#rk-ink-s);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Free ticket                                                               */
+/* ------------------------------------------------------------------------ */
+
+/* The shadow lives on the wrapper so it follows the notches. */
+.rk-ticket-wrap {
+  filter: drop-shadow(10px 10px 0 var(--rk-orange));
+}
+
+.rk-ticket {
+  --rk-focus: var(--rk-ink);
+  color: var(--rk-ink);
+  rotate: -2deg;
+}
+
+.rk-ticket__main,
+.rk-ticket__stub {
+  position: relative;
+  background: var(--rk-yellow);
+}
+
+.rk-ticket__main {
+  padding: clamp(26px, 3vw, 44px) clamp(22px, 3vw, 44px) clamp(18px, 2.4vw, 30px);
+  -webkit-mask:
+    radial-gradient(16px at 0 100%, transparent 98%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(16px at 100% 100%, transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
+  mask:
+    radial-gradient(16px at 0 100%, transparent 98%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(16px at 100% 100%, transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
+}
+
+.rk-ticket__stub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: -1px;
+  padding: clamp(16px, 2vw, 24px) clamp(22px, 3vw, 44px) clamp(26px, 3vw, 40px);
+  border-top: 3px dashed rgba(26, 26, 26, .5);
+  -webkit-mask:
+    radial-gradient(16px at 0 0, transparent 98%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(16px at 100% 0, transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
+  mask:
+    radial-gradient(16px at 0 0, transparent 98%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(16px at 100% 0, transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
+}
+
+/* Grain multiplied on the yellow (dark specks), inside each masked part. */
+.rk-ticket__main::after,
+.rk-ticket__stub::after,
+.rk-pledge-sheet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 420px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .35;
+}
+
+.rk-ticket__title {
+  text-shadow: 3px 3px 0 var(--rk-cream);
+}
+
+.rk-ticket__body {
+  margin-top: 12px;
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.rk-ticket__admit {
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: .24em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.rk-ticket__barcode {
+  flex: none;
+  width: 96px;
+  height: 22px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--rk-ink) 0 2px,
+    transparent 2px 5px,
+    var(--rk-ink) 5px 6px,
+    transparent 6px 9px,
+    var(--rk-ink) 9px 12px,
+    transparent 12px 14px
+  );
+}
+
+/* City buttons: their own ink slab on yellow (not rendered while a Luma link is null). */
+.rk-ticket__cities {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: clamp(18px, 2.4vw, 30px);
+}
+
+.rk-ticket__city {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .4em;
+  min-width: 0;
+  min-height: 48px;
+  padding: .85em .7em;
+  background: var(--rk-ink);
+  color: var(--rk-yellow);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 4px 4px 0 var(--rk-orange);
+  rotate: -1deg;
+  transition:
+    translate .25s var(--rk-ease),
+    rotate .25s var(--rk-ease),
+    box-shadow .25s var(--rk-ease),
+    background-color .2s ease,
+    color .2s ease;
+}
+
+.rk-ticket__city--melbourne {
+  rotate: 1deg;
+}
+
+.rk-ticket__city-icon {
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.rk-ticket__city:focus-visible {
+  translate: -2px -2px;
+  rotate: 0deg;
+  background: var(--rk-teal);
+  color: var(--rk-ink);
+  box-shadow: 7px 7px 0 var(--rk-orange);
+}
+
+.rk-ticket__city:active {
+  translate: 3px 3px;
+  box-shadow: 1px 1px 0 var(--rk-orange);
+  transition-duration: .1s;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Kindness pledge card, signature line, paw stamp and Roo                   */
+/* ------------------------------------------------------------------------ */
+
+.rk-pledge-sheet-wrap {
+  --rk-roo-w: 180px;
+  position: relative;
+  padding-top: 120px;
+}
+
+.rk-pledge-sheet-roo {
+  position: absolute;
+  z-index: 0;
+  top: -10px;
+  left: 50%;
+  width: var(--rk-roo-w);
+  aspect-ratio: 1;
+  margin-left: calc(var(--rk-roo-w) / -2);
+  pointer-events: none;
+}
+
+.rk-pledge-sheet-roo__disc {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: var(--rk-teal);
+}
+
+/* The bob lives on this inner span, so it can never touch the centring. */
+.rk-pledge-sheet-roo__bob {
+  position: absolute;
+  inset: 0;
+  animation: rk-bob 3.6s ease-in-out infinite;
+}
+
+.rk-pledge-sheet-roo__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.rk-pledge-sheet {
+  position: relative;
+  z-index: 1;
+  padding: clamp(26px, 3vw, 44px);
+  color: var(--rk-ink);
+  rotate: 1.6deg;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 31px, rgb(54 55 220 / .12) 31px 32px),
+    radial-gradient(120% 90% at 50% 0, var(--rk-cream), var(--rk-cream-2) 70%);
+  box-shadow: 10px 10px 0 var(--rk-teal), 10px 10px 0 3px var(--rk-ink);
+}
+
+/* Certificate double rule. */
+.rk-pledge-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  pointer-events: none;
+  border: 2px solid rgb(54 55 220 / .55);
+  outline: 1px solid rgb(54 55 220 / .3);
+  outline-offset: 4px;
+}
+
+.rk-pledge-sheet__title {
+  text-shadow: 3px 3px 0 var(--rk-orange);
+}
+
+.rk-pledge-sheet__lines {
+  margin-top: clamp(16px, 2vw, 22px);
+}
+
+.rk-pledge-sheet__lines li {
+  position: relative;
+  padding-left: 24px;
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: clamp(15px, 1.25vw, 18px);
+  line-height: 32px;
+}
+
+.rk-pledge-sheet__heart {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 12px;
+  height: auto;
+  color: var(--rk-red);
+}
+
+.rk-pledge-sheet__sign {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin-top: clamp(22px, 3vw, 34px);
+}
+
+.rk-pledge-sheet__pen {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  color: var(--rk-orange);
+  rotate: -30deg;
+}
+
+.rk-pledge-sheet__line {
+  position: relative;
+  flex: 1;
+  height: 0;
+  margin-bottom: 8px;
+  border-bottom: 2px solid var(--rk-ink);
+}
+
+/* Rests fully inked; the loop shoots it out from zero and back. */
+.rk-pledge-sheet__line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 38%;
+  height: 2px;
+  background: var(--rk-orange);
+  transform-origin: 0 50%;
+  transform: scaleX(1);
+  animation: rk-sign 2.4s var(--rk-ease) 1.4s infinite alternate backwards;
+}
+
+.rk-pledge-sheet__caption {
+  margin-top: 6px;
+  padding-left: 42px;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: .18em;
+  line-height: 1.4;
+  color: var(--rk-ink);
+}
+
+.rk-pledge-sheet__paw {
+  position: absolute;
+  z-index: 2;
+  bottom: clamp(-26px, -2vw, -18px);
+  right: clamp(-18px, -1vw, -8px);
+  display: grid;
+  place-items: center;
+  width: clamp(74px, 7vw, 100px);
+  aspect-ratio: 1;
+  color: var(--rk-ink);
+  background: var(--rk-teal);
+  border-radius: 47% 53% 50% 50% / 52% 46% 54% 48%;
+  box-shadow:
+    inset 0 0 0 6px var(--rk-teal),
+    inset 0 0 0 9px var(--rk-ink),
+    4px 5px 0 var(--rk-ink);
+  rotate: -14deg;
+  filter: url(#rk-ink-s);
+  animation: rk-paw-pulse 2.6s ease-in-out infinite;
+}
+
+.rk-pledge-sheet__paw-print {
+  width: 50%;
+  height: auto;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Run sheet                                                                 */
+/* ------------------------------------------------------------------------ */
+
+.rk-run-sheet {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin-top: clamp(56px, 7vw, 96px);
+  scroll-margin-top: clamp(80px, 22vh, 180px);
+}
+
+.rk-run-sheet .rk-run-sheet__title {
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(36px, 5.1vw, 72px);
+  line-height: .98;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--rk-cream);
+  text-shadow: var(--rk-shadow-head);
+}
+
+.rk-run-sheet__steps {
+  position: relative;
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+/* The gaffer tape: ::before is the hard shadow, ::after the face. */
+.rk-run-sheet__steps::before,
+.rk-run-sheet__steps::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 14px;
+  top: 24px;
+  bottom: 24px;
+  width: 12px;
+  pointer-events: none;
+  clip-path: polygon(
+    0 6px, 30% 1px, 55% 5px, 80% 0, 100% 7px,
+    100% calc(100% - 4px), 72% 100%, 46% calc(100% - 6px), 18% calc(100% - 1px), 0 calc(100% - 7px)
+  );
+}
+
+.rk-run-sheet__steps::before {
+  background: rgba(0, 0, 0, .9);
+  translate: 3px 3px;
+}
+
+.rk-run-sheet__steps::after {
+  background: var(--rk-orange);
+}
+
+/* Dark grain on the face: the specks are punched through to the shadow below. */
+@supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+  .rk-run-sheet__steps::after {
+    -webkit-mask: var(--rk-grain-url) 0 0 / 180px repeat, linear-gradient(#000, #000);
+    -webkit-mask-composite: xor;
+    mask: var(--rk-grain-url) 0 0 / 180px repeat exclude, linear-gradient(#000, #000);
+  }
+}
+
+.rk-run-sheet__step {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding-bottom: clamp(18px, 2.4vw, 28px);
+}
+
+.rk-run-sheet__no {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 27px;
+  line-height: 1;
+  box-shadow: 4px 4px 0 var(--rk-orange);
+}
+
+.rk-run-sheet__box {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding: 12px 16px 14px;
+  background: rgba(26, 26, 26, .82);
+  border: 1px solid rgb(245 240 230 / .22);
+}
+
+.rk-run-sheet__name {
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(24px, 2.25vw, 31.5px);
+  line-height: 1.1;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: var(--rk-cream);
+}
+
+.rk-run-sheet__detail {
+  margin-top: 8px;
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--rk-cream);
+}
+
+.rk-run-sheet__time {
+  margin-top: 6px;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--rk-yellow);
+}
+
+.rk-run-sheet__go {
+  display: inline-flex;
+  align-items: center;
+  gap: .35em;
+  min-height: 44px;
+  margin-top: 10px;
+  padding: .55em .8em;
+  border: 1px solid var(--rk-yellow);
+  color: var(--rk-yellow);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 16.5px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.rk-run-sheet__go:focus-visible {
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Slack strip and code-of-conduct note                                      */
+/* ------------------------------------------------------------------------ */
+
+.rk-slack-strip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(56px, 7vw, 90px);
+}
+
+.rk-slack-strip__sheet {
+  --rk-focus: var(--rk-ink);
+  position: relative;
+  display: inline-block;
+  min-height: 56px;
+  padding: .9em 1.4em;
+  background: var(--rk-teal);
+  color: var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.25;
+  text-transform: uppercase;
+  text-align: center;
+  rotate: -1.5deg;
+  box-shadow: 5px 5px 0 var(--rk-ink), 5px 5px 0 2px var(--rk-teal);
+}
+
+.rk-slack-strip .rk-slack-strip__tape {
+  top: -10px;
+  width: 56px;
+  height: 22px;
+}
+
+.rk-slack-strip__tape--l {
+  left: -8px;
+  rotate: -8deg;
+}
+
+.rk-slack-strip__tape--r {
+  right: -8px;
+  rotate: 8deg;
+}
+
+.rk-slack-strip__link {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 3px solid var(--rk-ink);
+  transition: background-color .2s ease, color .2s ease;
+}
+
+/* Phones: the whole strip is the link's hit area. */
+.rk-slack-strip__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.rk-slack-strip__link:focus-visible {
+  background: var(--rk-ink);
+  color: var(--rk-teal);
+}
+
+.rk-hop-in .rk-hop-in__note {
+  position: relative;
+  z-index: 1;
+  margin-top: 14px;
+  text-align: center;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: .18em;
+  line-height: 1.6;
+  color: var(--rk-cream-soft);
+}
+
+.rk-hop-in__note a {
+  position: relative;
+  color: var(--rk-yellow);
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+/* A 44px hit area around the short link. */
+.rk-hop-in__note a::after {
+  content: "";
+  position: absolute;
+  inset: -12px -4px;
+}
+
+/* ------------------------------------------------------------------------ */
+/* The weekend, date cards and the perched Roo                               */
+/* ------------------------------------------------------------------------ */
+
+.rk-weekend {
+  position: relative;
+  z-index: 1;
+  max-width: 1260px;
+  margin-top: clamp(70px, 9vw, 130px);
+}
+
+.rk-weekend__tag {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.rk-weekend .rk-weekend__eyebrow {
+  flex: none;
+  text-shadow: none;
+}
+
+.rk-weekend__rule {
+  flex: 1;
+  height: 3px;
+  background: linear-gradient(90deg, var(--rk-yellow), var(--rk-orange), var(--rk-teal));
+}
+
+.rk-weekend__days {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 28px;
+}
+
+/* The spray band behind the cards: only from 901. */
+.rk-weekend__days::before {
+  content: "";
+  display: none;
+}
+
+/* Phones: dark cards are label-and-date rows. */
+.rk-weekend__day {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  min-height: 0;
+  padding: 16px 16px 14px;
+  background: var(--rk-ink-2);
+  border: 2px solid var(--rk-cream);
+  box-shadow: 6px 6px 0 var(--rk-cream);
+  rotate: 1.5deg;
+  transition: translate .35s var(--rk-ease), rotate .35s var(--rk-ease);
+}
+
+.rk-weekend__day:nth-child(3) {
+  rotate: -1deg;
+}
+
+.rk-weekend__day:nth-child(4) {
+  rotate: 2deg;
+}
+
+/* One dotted layer: punched holes on yellow, a dashed top edge on dark. */
+.rk-weekend__day::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 18px;
+  right: 18px;
+  height: 14px;
+  pointer-events: none;
+  background: radial-gradient(circle 5px, var(--rk-ink) 90%, transparent) 0 50% / 26px 14px repeat-x;
+}
+
+.rk-weekend__when {
+  flex: none;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: .2em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--rk-cream-soft);
+}
+
+.rk-weekend__when span {
+  white-space: nowrap;
+}
+
+.rk-weekend__what {
+  min-width: 0;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: .98;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  text-align: right;
+  color: var(--rk-cream);
+}
+
+/* The Friday kickoff: yellow and perforated like a ticket. */
+.rk-weekend .rk-weekend__day--first {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 28px;
+  padding: 20px 18px 18px;
+  background: var(--rk-yellow);
+  border-color: var(--rk-ink);
+  box-shadow: 8px 8px 0 var(--rk-orange), 8px 8px 0 3px var(--rk-ink);
+  rotate: -2deg;
+}
+
+.rk-weekend__day--first .rk-weekend__when {
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(30px, 3.6vw, 54px);
+  line-height: .98;
+  letter-spacing: -.01em;
+  white-space: normal;
+  color: var(--rk-ink);
+}
+
+.rk-weekend__day--first .rk-weekend__what {
+  font-size: clamp(25.5px, 2.7vw, 39px);
+  text-align: left;
+  color: var(--rk-ink);
+}
+
+.rk-weekend-roo {
+  position: absolute;
+  z-index: 2;
+  top: clamp(-96px, -7vw, -60px);
+  right: -14px;
+  width: clamp(90px, 9vw, 140px);
+  aspect-ratio: 1;
+  pointer-events: none;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, .55));
+  animation: rk-bob 3s ease-in-out infinite;
+}
+
+.rk-weekend-roo__img {
+  width: 100%;
+  height: auto;
+}
+
+/* The hero's CSS glint: two crossed cream bars, placed on each lens. */
+.rk-weekend-roo__glint {
+  position: absolute;
+  left: var(--rk-lens-lx, 52%);
+  top: var(--rk-lens-ly, 41.9%);
+  width: 9%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  opacity: 0;
+  background:
+    linear-gradient(var(--rk-cream), var(--rk-cream)) 50% 50% / 33.34% 100% no-repeat,
+    linear-gradient(var(--rk-cream), var(--rk-cream)) 50% 50% / 100% 33.34% no-repeat;
+  animation: rk-glint 4.2s step-end infinite;
+}
+
+.rk-weekend-roo__glint--r {
+  left: var(--rk-lens-rx, 70.3%);
+  top: var(--rk-lens-ry, 41.5%);
+  animation-delay: .168s;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Keyframes owned by this area (rk-bob repeated as the bible defines it)    */
+/* ------------------------------------------------------------------------ */
+
+@keyframes rk-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -10px;
+  }
+}
+
+@keyframes rk-spray-slide {
+  to {
+    transform: translateX(33.3334%);
+  }
+}
+
+@keyframes rk-nudge {
+  0%,
+  100% {
+    transform: translate(0);
+  }
+
+  50% {
+    transform: translate(8px);
+  }
+}
+
+@keyframes rk-sign {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes rk-paw-pulse {
+  0%,
+  100% {
+    scale: 1;
+  }
+
+  50% {
+    scale: 1.06;
+  }
+}
+
+@keyframes rk-band-slide {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+/* Hover (never on touch)                                                    */
+/* ------------------------------------------------------------------------ */
+
+@media (hover: hover) {
+  .rk-ticket__city:hover {
+    translate: -2px -2px;
+    rotate: 0deg;
+    background: var(--rk-teal);
+    color: var(--rk-ink);
+    box-shadow: 7px 7px 0 var(--rk-orange);
+  }
+
+  .rk-ticket__city:hover:active {
+    translate: 3px 3px;
+    box-shadow: 1px 1px 0 var(--rk-orange);
+  }
+
+  .rk-run-sheet__go:hover {
+    background: var(--rk-yellow);
+    color: var(--rk-ink);
+  }
+
+  .rk-slack-strip__link:hover {
+    background: var(--rk-ink);
+    color: var(--rk-teal);
+  }
+
+  .rk-weekend .rk-weekend__day:hover {
+    translate: 0 -8px;
+    rotate: 0deg;
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+/* 561: big phones. Stacked objects stop growing; one-line title.            */
+/* ------------------------------------------------------------------------ */
+
+@media (min-width: 561px) {
+  .rk-hop-in .rk-hop-in-deco__mega {
+    top: clamp(40px, 6vw, 90px);
+    left: 4%;
+  }
+
+  .rk-hop-in .rk-hop-in-deco__spark {
+    top: clamp(60px, 8vw, 120px);
+  }
+
+  .rk-hop-in-oval__disc {
+    top: 58%;
+    width: min(1100px, 118%);
+    aspect-ratio: 2.6;
+  }
+
+  .rk-hop-in-oval__title {
+    --rk-title-size: clamp(96px, 22.5vw, 354px);
+  }
+
+  .rk-hop-in-oval__title .rk-hop__word {
+    display: inline;
+  }
+
+  .rk-ticket-wrap,
+  .rk-pledge-sheet-wrap {
+    justify-self: center;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .rk-ticket__title,
+  .rk-pledge-sheet__title {
+    --rk-title-size: clamp(42px, 5.1vw, 81px);
+  }
+
+  .rk-ticket__city {
+    padding: .9em 1em;
+    font-size: clamp(16.5px, 1.5vw, 21px);
+  }
+
+  .rk-pledge-sheet-wrap {
+    --rk-roo-w: clamp(190px, 19vw, 280px);
+    padding-top: clamp(120px, 12vw, 170px);
+  }
+
+  .rk-pledge-sheet-roo {
+    left: 58%;
+  }
+
+  .rk-run-sheet__steps::before,
+  .rk-run-sheet__steps::after {
+    left: 19px;
+    width: 14px;
+  }
+
+  .rk-run-sheet__step {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: clamp(14px, 2vw, 24px);
+  }
+
+  .rk-run-sheet__no {
+    width: 52px;
+    height: 52px;
+    font-size: 33px;
+  }
+
+  .rk-run-sheet__detail {
+    font-size: 15px;
+  }
+
+  .rk-slack-strip__sheet {
+    font-size: clamp(18px, 1.8vw, 25.5px);
+    text-align: start;
+  }
+
+  .rk-slack-strip__tape--l {
+    left: -18px;
+  }
+
+  .rk-slack-strip__tape--r {
+    right: -18px;
+  }
+
+  .rk-slack-strip__link {
+    position: relative;
+  }
+
+  .rk-slack-strip__link::after {
+    content: none;
+  }
+
+  .rk-hop-in .rk-hop-in__note {
+    margin-top: clamp(18px, 3vh, 28px);
+  }
+
+  .rk-weekend__day {
+    justify-self: center;
+    width: 100%;
+    max-width: 520px;
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+/* 901: small desktop. Ticket, connector, pledge in a row; weekend 4 across. */
+/* ------------------------------------------------------------------------ */
+
+@media (min-width: 901px) {
+  .rk-hop-in-oval__disc {
+    width: min(860px, 104%);
+  }
+
+  .rk-hop-in-oval__title {
+    --rk-title-size: clamp(96px, 15vw, 240px);
+  }
+
+  .rk-steps {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: clamp(14px, 2vw, 30px);
+    max-width: 1080px;
+  }
+
+  .rk-steps::before,
+  .rk-steps::after {
+    grid-area: 1 / 2;
+    width: clamp(72px, 9vw, 132px);
+    aspect-ratio: 72 / 20;
+    margin: 0;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 20'%3E%3Cpath d='M2 4h4v2h-4zM8 4h4v2h-4zM0 6h14v4h-14zM2 10h10v2h-10zM4 12h6v2h-6zM6 14h2v2h-2zM20 4h4v2h-4zM26 4h4v2h-4zM18 6h14v4h-14zM20 10h10v2h-10zM22 12h6v2h-6zM24 14h2v2h-2zM38 4h4v2h-4zM44 4h4v2h-4zM36 6h14v4h-14zM38 10h10v2h-10zM40 12h6v2h-6zM42 14h2v2h-2zM54 0h4v20h-4zM58 2h4v16h-4zM62 4h4v12h-4zM66 6h4v8h-4zM70 8h2v4h-2z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 20'%3E%3Cpath d='M2 4h4v2h-4zM8 4h4v2h-4zM0 6h14v4h-14zM2 10h10v2h-10zM4 12h6v2h-6zM6 14h2v2h-2zM20 4h4v2h-4zM26 4h4v2h-4zM18 6h14v4h-14zM20 10h10v2h-10zM22 12h6v2h-6zM24 14h2v2h-2zM38 4h4v2h-4zM44 4h4v2h-4zM36 6h14v4h-14zM38 10h10v2h-10zM40 12h6v2h-6zM42 14h2v2h-2zM54 0h4v20h-4zM58 2h4v16h-4zM62 4h4v12h-4zM66 6h4v8h-4zM70 8h2v4h-2z'/%3E%3C/svg%3E");
+    animation: rk-nudge 1.6s ease-in-out infinite;
+  }
+
+  .rk-ticket-wrap,
+  .rk-pledge-sheet-wrap {
+    grid-row: 1;
+    width: auto;
+    max-width: none;
+    justify-self: stretch;
+  }
+
+  .rk-ticket-wrap {
+    grid-column: 1;
+  }
+
+  .rk-pledge-sheet-wrap {
+    --rk-roo-w: clamp(150px, 14vw, 210px);
+    grid-column: 3;
+  }
+
+  .rk-ticket__title,
+  .rk-pledge-sheet__title {
+    --rk-title-size: clamp(36px, 3.75vw, 60px);
+  }
+
+  .rk-weekend {
+    max-width: 1080px;
+  }
+
+  .rk-weekend__days {
+    grid-template-columns: minmax(0, 1.55fr) repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: clamp(12px, 1.6vw, 22px);
+  }
+
+  .rk-weekend__days::before {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    top: 55%;
+    left: -4%;
+    right: -4%;
+    height: clamp(40px, 4.4vw, 64px);
+    rotate: -1.5deg;
+    border-block: 3px solid var(--rk-ink);
+    background: url("/kindness/spray-bands.webp") 0% 50% / 50% auto repeat-x;
+    animation: rk-band-slide 20s linear infinite;
+  }
+
+  .rk-weekend__day {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 16px;
+    width: auto;
+    max-width: none;
+    justify-self: stretch;
+    min-height: clamp(150px, 14vw, 200px);
+    padding: 20px 18px 18px;
+  }
+
+  .rk-weekend .rk-weekend__day--first {
+    gap: 16px;
+    min-height: clamp(200px, 17vw, 250px);
+  }
+
+  .rk-weekend__when {
+    white-space: normal;
+  }
+
+  .rk-weekend__what {
+    font-size: clamp(22.5px, 2.25vw, 33px);
+    text-align: left;
+  }
+}

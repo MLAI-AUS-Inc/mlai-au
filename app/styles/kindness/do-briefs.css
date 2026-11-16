@@ -1,0 +1,1463 @@
+/* Random Hacks of Kindness: What you do, the care tapes and The briefs
+   (04-do-briefs.md; phones and tablets from 10-mobile.md).
+   Written phone first: base rules are the layout at 900 and below, then the
+   561, 901 and 1180 layers at the end of the file. Every base rule is the
+   finished, visible pose (release 1 has no reveal engine), every loop is CSS,
+   and html.rk-motion-off (shell) stops them all, leaving these rest poses.
+   Every :hover rule sits inside @media (hover: hover). */
+
+/* ======================================================================== */
+/* What you do (#what-you-do)                                               */
+/* ======================================================================== */
+
+/* Ground: ink under three night glows, the shared Sparkle haze on ::before. */
+.rk-sec.rk-do {
+  --rk-haze-o: .55;
+  background:
+    radial-gradient(900px 600px at 82% 8%, color-mix(in srgb, var(--rk-blue) 22%, transparent), transparent 70%),
+    radial-gradient(800px 700px at 10% 40%, color-mix(in srgb, var(--rk-purple) 22%, transparent), transparent 70%),
+    radial-gradient(700px 500px at 60% 92%, color-mix(in srgb, var(--rk-teal) 14%, transparent), transparent 70%),
+    var(--rk-ink);
+}
+
+/* The haze tiles at its shipped width and stays dense behind the heading
+   (mask stops in px on purpose: they track the heading, not the section). */
+.rk-do.rk-haze::before {
+  background: url("/kindness/sparkle-haze.webp") top / 1456px auto repeat;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 420px, rgb(0 0 0 / .35) 780px);
+  mask-image: linear-gradient(to bottom, #000 0 420px, rgb(0 0 0 / .35) 780px);
+}
+
+.rk-do__wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1140px;
+  margin-inline: auto;
+}
+
+/* Eyebrow and heading: three server-rendered lines, the last in yellow. */
+.rk-do__head {
+  --rk-title-size: clamp(40px, 12.5vw, 84px);
+  margin-bottom: 0;
+}
+
+.rk-do__head .rk-hop {
+  line-height: .92;
+}
+
+/* ---------- Megaphone with cone (decorative) ---------- */
+
+.rk-do__megaphone {
+  --rk-cone-l: 120px;
+  position: absolute;
+  z-index: 1;
+  top: 24px;
+  right: -24px;
+  width: 130px;
+  max-width: none;
+  margin: 0;
+  opacity: .9;
+  pointer-events: none;
+  /* Rest pose equals the first keyframe, so pausing never jumps. */
+  rotate: -6deg;
+  translate: 0 0;
+  animation: rk-megaphone-drift 7s ease-in-out infinite;
+}
+
+/* Fixed aim: the level side-view art points its bell down-left at the cards.
+   Mouth position measured from the art (shared with the hero). */
+.rk-do__aim {
+  --rk-mouth-x: 13.5%;
+  --rk-mouth-y: 38.7%;
+  --rk-mouth-angle: 90deg;
+  position: relative;
+  display: block;
+  rotate: -28deg;
+}
+
+.rk-do__mega-art {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  /* Filters draw in the art's own frame, before the -28deg aim and the -6deg
+     rest tilt turn it. This offset is 6px right, 10px down rotated back by
+     34deg, so on screen the hard shadow falls 6px right and 10px down. */
+  filter: drop-shadow(-.6px 11.7px 0 rgb(0 0 0 / .55));
+}
+
+/* The cone: narrow end on the bell's mouth, drawn pointing down and laid along
+   the bell's axis by a quarter turn. The bell covers its root. */
+.rk-do__cone {
+  position: absolute;
+  left: var(--rk-mouth-x);
+  top: var(--rk-mouth-y);
+  width: 56%;
+  height: var(--rk-cone-l);
+  translate: -50% 0;
+  transform-origin: 50% 0;
+  rotate: var(--rk-mouth-angle);
+  clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+  background:
+    repeating-radial-gradient(
+      circle at 50% 0,
+      transparent 0 27%,
+      color-mix(in srgb, var(--rk-yellow) 55%, transparent) 27% 30%
+    ),
+    linear-gradient(color-mix(in srgb, var(--rk-yellow) 50%, transparent), transparent);
+  filter: blur(2px);
+  opacity: .55;
+  animation: rk-cone-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes rk-megaphone-drift {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: -6deg;
+  }
+
+  50% {
+    translate: -26px 14px;
+    rotate: 3deg;
+  }
+}
+
+@keyframes rk-cone-breathe {
+  0%,
+  100% {
+    opacity: .55;
+  }
+
+  50% {
+    opacity: .9;
+  }
+}
+
+/* ---------- Flickering sparkles (decorative) ---------- */
+
+.rk-do__sparkle {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  width: clamp(48px, 6vw, 90px);
+  max-width: none;
+  margin: 0;
+  color: var(--rk-teal);
+  opacity: .9;
+  pointer-events: none;
+  animation: rk-flicker 3s step-end infinite;
+}
+
+.rk-do__sparkle svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Tilt and mirror on their own properties: the keyframe touches opacity only. */
+.rk-do__sparkle--left {
+  top: 44%;
+  left: 4%;
+  rotate: -12deg;
+}
+
+.rk-do__sparkle--right {
+  top: 62%;
+  right: 3%;
+  rotate: 18deg;
+  scale: -1 1;
+  animation-delay: 1.3s;
+}
+
+@keyframes rk-flicker {
+  0%,
+  86% {
+    opacity: .9;
+  }
+
+  88% {
+    opacity: 0;
+  }
+
+  92% {
+    opacity: 1;
+  }
+
+  94% {
+    opacity: .2;
+  }
+
+  100% {
+    opacity: .9;
+  }
+}
+
+/* ---------- Poster stage and the three gig-poster cards ---------- */
+
+.rk-do__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 56px;
+  max-width: 460px;
+  margin: 48px auto 0;
+}
+
+.rk-poster {
+  /* Delay base for the [P2] assembly: fixed while stacked (cards reveal one at a time). */
+  --rk-d: .1s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Per-card colour story (blue night, yellow Saturday, teal handover) and tilt. */
+.rk-poster:nth-child(3n + 1) {
+  --rk-tilt: -1.2deg;
+  --rk-c: var(--rk-blue);
+  --rk-fill: radial-gradient(circle at 50% 62%, var(--rk-blue), var(--rk-purple) 62%);
+}
+
+.rk-poster:nth-child(3n + 2) {
+  --rk-tilt: .9deg;
+  --rk-c: var(--rk-yellow);
+  --rk-fill: radial-gradient(circle at 50% 70%, var(--rk-cream), var(--rk-yellow) 66%);
+}
+
+.rk-poster:nth-child(3n + 3) {
+  --rk-tilt: -.7deg;
+  --rk-c: var(--rk-teal);
+  --rk-fill: radial-gradient(circle at 50% 60%, var(--rk-cream), var(--rk-teal) 66%);
+}
+
+/* Big number straddling the frame's top-left corner (decorative). */
+.rk-poster__no {
+  position: absolute;
+  z-index: 3;
+  top: -.42em;
+  left: -.08em;
+  font-family: var(--rk-shout);
+  font-weight: 400;
+  font-size: 72px;
+  line-height: 1;
+  letter-spacing: -.02em;
+  color: var(--rk-yellow);
+  text-shadow: 3px 3px 0 var(--rk-orange), 5px 5px 0 rgb(0 0 0 / .85);
+  pointer-events: none;
+}
+
+/* Frame: ink border, cream keyline inside, orange slab; grain under the art
+   (the shared Grain recipe for card panels: 420px, multiply, .35, dark). */
+.rk-poster__art {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: end center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 4px solid var(--rk-ink);
+  outline: 3px solid var(--rk-cream);
+  outline-offset: -8px;
+  background: var(--rk-fill);
+  box-shadow: 8px 8px 0 var(--rk-orange), 8px 8px 0 3px var(--rk-ink);
+  rotate: var(--rk-tilt);
+  translate: 0 0;
+  transition:
+    translate .45s var(--rk-ease),
+    rotate .45s var(--rk-ease),
+    box-shadow .45s var(--rk-ease);
+}
+
+/* A static sunburst: 7deg rays every 18deg, centred low. */
+.rk-poster__art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 64%,
+    color-mix(in srgb, var(--rk-cream) 22%, transparent) 0 7deg,
+    transparent 7deg 18deg
+  );
+  mix-blend-mode: soft-light;
+}
+
+.rk-poster__art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 420px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .35;
+}
+
+/* The figures stand bottom-centre, over the grain and under the keyline. */
+.rk-poster__img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 94%;
+  max-width: none;
+  height: auto;
+  margin-bottom: 2%;
+}
+
+.rk-poster__title {
+  position: relative;
+  z-index: 2;
+  margin-top: clamp(16px, 1.6vw, 22px);
+  padding-right: .12em;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(33px, 3vw, 48px);
+  line-height: .95;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: var(--rk-cream);
+  text-shadow: var(--rk-shadow-head);
+  text-wrap: balance;
+}
+
+.rk-poster__body {
+  position: relative;
+  z-index: 2;
+  width: fit-content;
+  max-width: 36ch;
+  margin-top: 8px;
+  padding: .5em .75em;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.55;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--rk-cream);
+  background: color-mix(in srgb, var(--rk-ink) 82%, transparent);
+  border-left: 4px solid var(--rk-c);
+}
+
+/* REAL PROBLEM badge (card 01): teal on ink, with a dot that pings. */
+.rk-poster__live {
+  position: absolute;
+  z-index: 2;
+  top: 22px;
+  right: 22px;
+  display: flex;
+  align-items: center;
+  gap: .5em;
+  padding: .45em .8em;
+  background: var(--rk-ink);
+  color: var(--rk-teal);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(12px, 1vw, 15px);
+  line-height: 1;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--rk-orange);
+  rotate: 4deg;
+}
+
+.rk-poster__live::before {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--rk-teal);
+  animation: rk-ping 1.4s ease-out infinite;
+}
+
+@keyframes rk-ping {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--rk-teal) 70%, transparent);
+  }
+
+  to {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--rk-teal) 0%, transparent);
+  }
+}
+
+/* SHIPPED stamps: the shared Stamp (red on card 01, ink on the bright cards),
+   placed per card; each angle is its --rk-rot (set inline). */
+.rk-poster .rk-poster__stamp {
+  --rk-stamp-size: clamp(28px, 3vw, 46px);
+  position: absolute;
+  z-index: 2;
+  /* Block padding raised from .12em (spec check): Oswald's capitals sit low
+     in a line-height of 1, so at .12em the 2px keyline, 4 to 6px inside the
+     edge, crossed the word. These keep about 2px clear at every size. */
+  padding: 6px .45em 8px;
+  letter-spacing: .04em;
+}
+
+.rk-poster:nth-child(3n + 1) .rk-poster__stamp {
+  bottom: 10%;
+  left: 6%;
+}
+
+.rk-poster:nth-child(3n + 2) .rk-poster__stamp {
+  top: 12%;
+  right: 6%;
+}
+
+.rk-poster:nth-child(3n + 3) .rk-poster__stamp {
+  top: 16%;
+  left: 9%;
+}
+
+/* ---------- Ticket button ---------- */
+
+.rk-do__go {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  margin-top: 56px;
+}
+
+/* ======================================================================== */
+/* Care tapes: the seam between #what-you-do and #briefs                     */
+/* ======================================================================== */
+
+/* No background and no overflow clip: the page root's overflow-x: clip trims
+   the tape ends, so the raised end of tape A is never cut at the top. */
+.rk-tapes {
+  position: relative;
+  z-index: 5;
+  margin: -22px 0;
+  padding: 14px 0 20px;
+  pointer-events: none;
+}
+
+.rk-tapes__tape {
+  position: relative;
+  height: 28px;
+  margin: 0 -4vw;
+  overflow: hidden;
+  border-block: 3px solid var(--rk-ink);
+  color: var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.rk-tapes__tape--a {
+  background: var(--rk-yellow);
+  box-shadow: 0 6px 0 var(--rk-orange);
+  rotate: -1.6deg;
+}
+
+/* Fully opaque so its ink words keep the ink-on-orange contrast; paints over A. */
+.rk-tapes__tape--b {
+  margin-top: -14px;
+  background: var(--rk-orange);
+  rotate: 1.2deg;
+}
+
+/* Grain multiplied on each tape; it does not travel. */
+.rk-tapes__tape::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 180px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .35;
+}
+
+/* The run slides exactly one 440px unit (two 220px units on B): no seam. */
+.rk-tapes__run {
+  position: absolute;
+  inset: 0 0 0 -440px;
+  display: flex;
+  align-items: center;
+  translate: 0 0;
+  animation: rk-tape-run 14s linear infinite;
+}
+
+.rk-tapes__tape--b .rk-tapes__run {
+  animation-direction: reverse;
+}
+
+.rk-tapes__unit {
+  flex: 0 0 440px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  white-space: nowrap;
+}
+
+.rk-tapes__tape--b .rk-tapes__unit {
+  flex-basis: 220px;
+}
+
+@keyframes rk-tape-run {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: 440px 0;
+  }
+}
+
+/* ======================================================================== */
+/* The briefs (#briefs)                                                      */
+/* ======================================================================== */
+
+/* The after-hours room: purple glow behind the heading, blue lower left, so the
+   lamp's beam is the only orange light. Halftone screen on ::after, over the
+   ground and the beam, under the content. */
+.rk-sec.rk-briefs {
+  --rk-lamp-h: clamp(40px, 4vw, 56px);
+  background:
+    radial-gradient(1100px 700px at 50% 30%, color-mix(in srgb, var(--rk-purple) 30%, transparent), transparent 70%),
+    radial-gradient(700px 500px at 15% 90%, color-mix(in srgb, var(--rk-blue) 16%, transparent), transparent 70%),
+    var(--rk-ink);
+}
+
+.rk-briefs::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(0 0 0 / .28) 1px, transparent 1.6px) 0 0 / 5px 5px;
+}
+
+.rk-briefs__wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1140px;
+  margin-inline: auto;
+}
+
+/* ---------- ON AIR lamp and its beam ---------- */
+
+/* The beam's square is centred on the sign at every width with nothing
+   measured: margins centre it, so the animated rotate cannot displace it. */
+.rk-onair__sweep {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--rk-sec-pad, clamp(64px, 10vh, 112px)) + var(--rk-lamp-h) / 2);
+  width: 220vmax;
+  height: 220vmax;
+  max-width: none;
+  margin: -110vmax 0 0 -110vmax;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 330deg,
+    color-mix(in srgb, var(--rk-orange) 28%, transparent) 345deg,
+    transparent 360deg
+  );
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+  /* Parked pointing straight down at the zine row. */
+  rotate: 195deg;
+  animation: rk-onair-sweep 6s linear infinite;
+}
+
+@keyframes rk-onair-sweep {
+  from {
+    rotate: 195deg;
+  }
+
+  to {
+    rotate: -165deg;
+  }
+}
+
+.rk-briefs__head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.rk-onair {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  height: var(--rk-lamp-h);
+  padding-inline: .7em;
+  margin: 0 0 clamp(14px, 1.6vw, 22px);
+  background: var(--rk-ink);
+  border: 3px solid var(--rk-orange);
+  color: var(--rk-orange);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(20px, 2vw, 28px);
+  line-height: 1;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--rk-orange) 55%, transparent);
+  rotate: -2deg;
+}
+
+/* One cream tape strip across the sign's top edge. */
+.rk-onair .rk-onair__tape {
+  top: -12px;
+  left: 50%;
+  translate: -50% 0;
+  rotate: 6deg;
+}
+
+/* ---------- Eyebrow with the blinking status light ---------- */
+
+.rk-briefs__eyebrow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0 .7em;
+}
+
+.rk-briefs__status {
+  display: inline-flex;
+  align-items: center;
+  gap: .35em;
+  color: var(--rk-cream);
+}
+
+/* Only the dot blinks; the word stays readable. A status light, so it glows. */
+.rk-briefs__dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--rk-orange);
+  box-shadow: 0 0 12px var(--rk-orange);
+  animation: rk-blink 1s step-end infinite;
+}
+
+@keyframes rk-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .15;
+  }
+}
+
+/* ---------- Title with the misregistration twitch, then the lede ---------- */
+
+.rk-briefs__title {
+  --rk-title-size: clamp(42px, 13.5vw, 84px);
+  position: relative;
+  margin-top: .35em;
+  font-size: var(--rk-title-size);
+}
+
+/* Per-letter spans do not kern, so neither does the copy: the slices then sit
+   exactly on the letters. */
+.rk-briefs__title .rk-hop {
+  margin-top: 0;
+  line-height: .92;
+  font-kerning: none;
+}
+
+.rk-briefs__misprint {
+  position: absolute;
+  inset: 0;
+  display: block;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: var(--rk-title-size);
+  line-height: .92;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  font-kerning: none;
+  color: var(--rk-teal);
+  pointer-events: none;
+  opacity: 0;
+  translate: -6px 0;
+  clip-path: inset(40% 0 48%);
+  animation: rk-misprint 3s step-end infinite;
+}
+
+.rk-briefs__misprint-line {
+  display: block;
+  white-space: nowrap;
+}
+
+@keyframes rk-misprint {
+  0%,
+  90%,
+  95%,
+  100% {
+    opacity: 0;
+    translate: -6px 0;
+    clip-path: inset(40% 0 48%);
+    color: var(--rk-teal);
+  }
+
+  91% {
+    opacity: .85;
+    translate: -8px 0;
+    clip-path: inset(12% 0 70%);
+    color: var(--rk-teal);
+  }
+
+  93% {
+    opacity: .85;
+    translate: 8px 0;
+    clip-path: inset(60% 0 22%);
+    color: var(--rk-red);
+  }
+}
+
+.rk-briefs__lede {
+  max-width: 56ch;
+  text-wrap: pretty;
+  margin: 1.1em auto 0;
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: clamp(15px, 1.25vw, 18px);
+  line-height: 1.6;
+  color: var(--rk-cream);
+}
+
+/* ---------- Zine row and shelf ---------- */
+
+/* Two by two while stacked; an odd last zine is centred. */
+.rk-briefs__row {
+  --rk-gap: 18px;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 56px var(--rk-gap);
+  margin: 44px auto 0;
+}
+
+/* Column index for the [P2] reveal stagger; it restarts on each row. */
+.rk-zine:nth-child(odd) {
+  --rk-col: 0;
+}
+
+.rk-zine:nth-child(even) {
+  --rk-col: 1;
+}
+
+.rk-zine:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - 9px);
+}
+
+.rk-briefs__shelf {
+  display: none;
+}
+
+/* ---------- Sealed zine: envelope ---------- */
+
+.rk-zine {
+  position: relative;
+  min-width: 0;
+}
+
+/* Heights vary like real zines (by index only); tilts and cover colours cycle. */
+.rk-zine:nth-child(4n + 1) {
+  --rk-tilt: -2deg;
+  --rk-ratio: .68;
+  --rk-c: var(--rk-teal);
+  --rk-c-slab: var(--rk-blue);
+}
+
+.rk-zine:nth-child(4n + 2) {
+  --rk-tilt: 1.2deg;
+  --rk-ratio: .6;
+  --rk-c: var(--rk-yellow);
+  --rk-c-slab: var(--rk-orange);
+}
+
+.rk-zine:nth-child(4n + 3) {
+  --rk-tilt: -1deg;
+  --rk-ratio: .64;
+  --rk-c: var(--rk-yellow);
+  --rk-c-slab: var(--rk-orange);
+}
+
+.rk-zine:nth-child(4n + 4) {
+  --rk-tilt: 2.2deg;
+  --rk-ratio: .62;
+  --rk-c: var(--rk-teal);
+  --rk-c-slab: var(--rk-blue);
+}
+
+/* The hard shadow is a filter, so it follows the clipped silhouette (and the
+   tape's overhanging ends and the pin). Tilt and hover live here, not on the
+   li, so the reveal's delay and paused-motion rule never touch the hover. */
+.rk-zine__shell {
+  position: relative;
+  aspect-ratio: .56;
+  filter: drop-shadow(10px 10px 0 var(--rk-orange));
+  rotate: var(--rk-tilt);
+  translate: 0 0;
+  transition:
+    rotate .4s var(--rk-ease),
+    translate .4s var(--rk-ease);
+}
+
+/* The zine's top edge, one corner dog-eared, pokes out of the envelope. */
+.rk-zine__sleeve {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(7% 0, 86% 0, 93% 5%, 93% 8%, 100% 8%, 100% 100%, 0 100%, 0 8%, 7% 8%);
+  background:
+    linear-gradient(var(--rk-ink), var(--rk-ink)) 0 8% / 100% 3px no-repeat,
+    repeating-linear-gradient(0deg, var(--rk-cream) 0 2px, var(--rk-ink-3) 2px 3px) 0 0 / 100% 8% no-repeat,
+    radial-gradient(circle, rgb(26 26 26 / .16) 1px, transparent 1.5px) 0 0 / 6px 6px,
+    var(--rk-cream-2);
+}
+
+/* ---------- Zine cover: the window in the envelope ---------- */
+
+/* Layers, top first: ink wash and window ring (::after), the cover drawing
+   (img), grain, cream paper. A coloured top bar on ::before. */
+.rk-zine__cover {
+  position: absolute;
+  z-index: 1;
+  inset: 13% 8% 17%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1vw, 14px);
+  padding: 16px 6% 8%;
+  overflow: hidden;
+  background: var(--rk-grain-url) 0 0 / 400px repeat, var(--rk-cream);
+  border: 2px solid color-mix(in srgb, var(--rk-cream) 35%, transparent);
+  border-radius: 4px;
+}
+
+.rk-zine__cover::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: var(--rk-c);
+}
+
+.rk-zine__cover::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(rgb(26 26 26 / .35), rgb(26 26 26 / .92) 55%);
+  box-shadow: inset 0 0 0 5px rgb(26 26 26 / .8);
+}
+
+.rk-zine__art {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+
+/* Number on an ink plate, so it reads over any drawing. */
+.rk-zine__no {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  padding: .12em .4em;
+  background: var(--rk-ink);
+  color: var(--rk-cream);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(20px, 2.1vw, 30px);
+  line-height: 1;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / .9);
+}
+
+/* Cause chip: only rendered once a brief's cause area is confirmed. */
+.rk-zine__cause {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  max-width: 100%;
+  padding: .45em .8em;
+  background: var(--rk-c);
+  color: var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--rk-c-slab);
+  rotate: -2deg;
+}
+
+.rk-zine__cause--long {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.05;
+}
+
+/* Pushed down, with room left under it for the tape. It may shrink on a short
+   zine (the lines clip, softly, under their blur) but never pushes the cover. */
+.rk-zine__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  margin-top: auto;
+  margin-bottom: 34px;
+}
+
+/* Lines you cannot read: placeholder letters, never the real brief. */
+.rk-zine__lines {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+  filter: blur(6px);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rk-zine__line {
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(11px, 1.25vw, 18px);
+  line-height: 1.1;
+  color: var(--rk-cream);
+  white-space: nowrap;
+}
+
+.rk-zine__bar {
+  display: block;
+  width: 82%;
+  height: 7px;
+  background: color-mix(in srgb, var(--rk-cream) 50%, transparent);
+}
+
+.rk-zine__bar + .rk-zine__bar {
+  width: 56%;
+}
+
+/* ---------- Zine seal: stamp, tape and safety pin ---------- */
+
+.rk-zine .rk-zine__stamp {
+  --rk-stamp-size: 20px;
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  margin-top: -.8em;
+  translate: -50% 0;
+  /* Raised from .1em so the keyline clears the word (as on the cards). */
+  padding: 5px .45em 7px;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+/* The strip is drawn on ::before (ragged ends like the shared Tape), so the
+   clip cannot cut the overhanging pin; its shadow is a zero-blur filter. */
+.rk-zine__tape {
+  --rk-zine-tape-cut: polygon(
+    2% 0, 98.5% 0, 100% 19%, 96.5% 38%, 99.5% 61%, 97% 80%, 100% 100%,
+    1% 100%, 3.5% 83%, 0 64%, 2.5% 41%, 0 17%
+  );
+  position: absolute;
+  z-index: 3;
+  bottom: 9%;
+  left: -7%;
+  right: -7%;
+  height: 24px;
+  filter: drop-shadow(1px 4px 0 rgb(0 0 0 / .55));
+  rotate: -6deg;
+}
+
+.rk-zine:nth-child(even) .rk-zine__tape {
+  rotate: 5deg;
+}
+
+.rk-zine__tape::before,
+.rk-zine__tape::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--rk-zine-tape-cut);
+  pointer-events: none;
+}
+
+.rk-zine__tape::before {
+  background: color-mix(in srgb, var(--rk-yellow) 88%, transparent);
+  border-block: 2px solid var(--rk-ink);
+}
+
+.rk-zine__tape::after {
+  background: var(--rk-grain-url) 0 0 / 180px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .55;
+}
+
+/* Centred with translate, rattled with rotate, so pausing never moves it. */
+.rk-zine__pin {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 36px;
+  height: 36px;
+  translate: -50% -50%;
+  rotate: 6deg;
+  filter: drop-shadow(3px 3px 0 var(--rk-ink));
+  animation: rk-pin-jiggle 2.6s ease-in-out infinite;
+  animation-delay: calc(var(--rk-n, 0) * .4s);
+}
+
+.rk-zine__pin svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes rk-pin-jiggle {
+  0%,
+  80%,
+  100% {
+    rotate: 6deg;
+  }
+
+  84% {
+    rotate: -14deg;
+  }
+
+  88% {
+    rotate: 12deg;
+  }
+
+  92% {
+    rotate: -6deg;
+  }
+}
+
+/* ---------- Grand-final card ---------- */
+
+/* Pulses but does not glow: it carries the cards' hard slab. Stacked on three
+   centred lines while the zines sit two by two. */
+.rk-briefs__grand {
+  --rk-grand-peak: 1.05;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .2em;
+  width: max-content;
+  max-width: 100%;
+  margin: 56px auto 0;
+  padding: .7em 1em;
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+  border: 3px solid var(--rk-ink);
+  box-shadow: 8px 8px 0 var(--rk-orange), 8px 8px 0 3px var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(22px, 6.9vw, 33px);
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: normal;
+  rotate: -1.5deg;
+  scale: 1;
+  animation: rk-grand-pulse 2.2s ease-in-out infinite;
+}
+
+.rk-briefs__grand-dot {
+  display: none;
+}
+
+@keyframes rk-grand-pulse {
+  0%,
+  100% {
+    scale: 1;
+  }
+
+  50% {
+    scale: var(--rk-grand-peak);
+  }
+}
+
+/* ---------- Countdown line ---------- */
+
+/* Lower case as written, teal on ink, with a cursor that blinks in step with
+   the eyebrow's dot. */
+.rk-briefs__countdown {
+  position: relative;
+  width: max-content;
+  max-width: 100%;
+  margin: clamp(28px, 3vw, 44px) auto 0;
+  padding: .7em 1.1em;
+  background: var(--rk-ink);
+  color: var(--rk-teal);
+  border: 1px solid var(--rk-ink-3);
+  box-shadow: 4px 4px 0 var(--rk-purple);
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: clamp(13px, 1.3vw, 18px);
+  line-height: 1.3;
+  letter-spacing: .06em;
+  text-transform: none;
+  rotate: .8deg;
+}
+
+.rk-briefs__cursor {
+  color: var(--rk-yellow);
+  animation: rk-blink 1s step-end infinite;
+}
+
+/* ---------- Pitch-a-problem note (left out while its link is unset) ---------- */
+
+.rk-briefs__pitch {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: .6em;
+  width: fit-content;
+  max-width: 100%;
+  margin: 18px auto 0;
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: clamp(14px, 1.15vw, 17px);
+  color: var(--rk-cream);
+  text-align: center;
+}
+
+/* The icon stays with the question when the note wraps. */
+.rk-briefs__pitch-q {
+  display: inline-flex;
+  align-items: center;
+  gap: .6em;
+}
+
+.rk-briefs__pitch-icon {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  color: var(--rk-teal);
+  rotate: 0deg;
+  animation: rk-pitch-shake 2.6s ease-in-out infinite;
+}
+
+.rk-briefs__pitch-heart {
+  fill: var(--rk-ink);
+}
+
+/* The shared Text link, set in teal on ink; its hover colour stays yellow. */
+.rk-briefs__pitch .rk-briefs__pitch-link {
+  color: var(--rk-teal);
+}
+
+@keyframes rk-pitch-shake {
+  0%,
+  82%,
+  100% {
+    rotate: 0deg;
+  }
+
+  86% {
+    rotate: -16deg;
+  }
+
+  90% {
+    rotate: 12deg;
+  }
+
+  94% {
+    rotate: -5deg;
+  }
+}
+
+/* Each stacked zine is a size container (phones part): its insides scale with
+   it, so a 266px zine on a tablet is not an empty 164px drawing blown up.
+   At 164px wide (390 phone) every value equals its pixel floor above; from
+   901 the desktop clamps below take over. */
+@supports (width: 1cqi) {
+  .rk-zine__shell {
+    container-type: inline-size;
+  }
+
+  .rk-zine__cover {
+    gap: max(8px, 4.9cqi);
+    padding-top: max(16px, 9.75cqi);
+  }
+
+  .rk-zine__no {
+    font-size: max(20px, 12.5cqi);
+  }
+
+  .rk-zine__cause {
+    font-size: max(11px, 6.7cqi);
+  }
+
+  .rk-zine__body {
+    margin-bottom: max(34px, 20.7cqi);
+  }
+
+  .rk-zine__line {
+    font-size: max(11px, 7cqi);
+  }
+
+  .rk-zine .rk-zine__stamp {
+    --rk-stamp-size: max(20px, 12.5cqi);
+  }
+
+  .rk-zine__tape {
+    height: max(24px, 14.6cqi);
+  }
+
+  .rk-zine__pin {
+    width: max(36px, 22cqi);
+    height: max(36px, 22cqi);
+  }
+}
+
+/* ======================================================================== */
+/* Hover (hover-capable devices only)                                        */
+/* ======================================================================== */
+
+@media (hover: hover) {
+  /* Anywhere on a card: the frame lifts off its slab and straightens. */
+  .rk-poster:hover .rk-poster__art {
+    translate: -4px -4px;
+    rotate: 0deg;
+    box-shadow: 12px 12px 0 var(--rk-orange), 12px 12px 0 3px var(--rk-ink);
+  }
+
+  /* Pulled a little way off the shelf; shadow, tape and pin ride along. */
+  .rk-zine:hover .rk-zine__shell {
+    rotate: 0deg;
+    translate: 0 -10px;
+  }
+}
+
+/* ======================================================================== */
+/* Width layers                                                              */
+/* ======================================================================== */
+
+/* Big phone: the stacked zines stop growing. */
+@media (min-width: 561px) {
+  .rk-briefs__row {
+    max-width: 520px;
+  }
+}
+
+/* Small desktop: cards three across, zines four across on their shelf. */
+@media (min-width: 901px) {
+  .rk-do__head {
+    --rk-title-size: clamp(60px, 7.5vw, 117px);
+  }
+
+  .rk-do__megaphone {
+    --rk-cone-l: clamp(140px, 18vw, 280px);
+    top: clamp(40px, 6vw, 90px);
+    right: clamp(-30px, 2vw, 40px);
+    width: clamp(120px, 19vw, 280px);
+    opacity: 1;
+  }
+
+  .rk-do__stage {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(20px, 2.6vw, 40px);
+    max-width: 1040px;
+    margin: clamp(40px, 4.5vw, 64px) auto 0;
+  }
+
+  .rk-poster {
+    --rk-d: calc(var(--rk-n, 0) * .18s + .1s);
+  }
+
+  .rk-poster__no {
+    left: -.12em;
+    font-size: clamp(60px, 5.4vw, 84px);
+  }
+
+  .rk-poster__art {
+    outline-offset: -10px;
+  }
+
+  .rk-poster .rk-poster__stamp {
+    --rk-stamp-size: clamp(23px, 2.3vw, 34px);
+  }
+
+  .rk-do__go {
+    margin-top: clamp(44px, 5vw, 72px);
+  }
+
+  .rk-tapes__tape {
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .rk-briefs__title {
+    --rk-title-size: clamp(60px, 7.5vw, 117px);
+  }
+
+  .rk-briefs__row {
+    --rk-gap: clamp(16px, 2.4vw, 40px);
+    grid-template-columns: repeat(var(--rk-cols, 4), minmax(0, 1fr));
+    gap: var(--rk-gap);
+    max-width: calc(var(--rk-cols, 4) * 245px);
+    margin: clamp(48px, 5.5vw, 80px) auto 0;
+  }
+
+  /* More than four: rows of up to four, the last row centred. */
+  .rk-briefs__row--wrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 56px;
+  }
+
+  .rk-briefs__row--wrap > .rk-zine {
+    flex: 0 0 calc((100% - 3 * var(--rk-gap)) / 4);
+  }
+
+  .rk-zine:nth-child(4n + 1) {
+    --rk-col: 0;
+  }
+
+  .rk-zine:nth-child(4n + 2) {
+    --rk-col: 1;
+  }
+
+  .rk-zine:nth-child(4n + 3) {
+    --rk-col: 2;
+  }
+
+  .rk-zine:nth-child(4n + 4) {
+    --rk-col: 3;
+  }
+
+  .rk-zine:last-child:nth-child(odd) {
+    grid-column: auto;
+    justify-self: stretch;
+    width: auto;
+  }
+
+  .rk-zine__shell {
+    aspect-ratio: var(--rk-ratio);
+  }
+
+  .rk-zine__cover {
+    inset: 13% 9% 17%;
+    gap: clamp(8px, 1vw, 14px);
+    padding: clamp(18px, 1.8vw, 26px) 8% 8%;
+  }
+
+  .rk-zine__no {
+    font-size: clamp(20px, 2.1vw, 30px);
+  }
+
+  .rk-zine__cause {
+    font-size: clamp(11px, 1.1vw, 16px);
+  }
+
+  .rk-zine__line {
+    font-size: clamp(11px, 1.25vw, 18px);
+  }
+
+  .rk-zine__body {
+    margin-bottom: clamp(30px, 3vw, 46px);
+  }
+
+  .rk-zine .rk-zine__stamp {
+    --rk-stamp-size: clamp(20px, 2vw, 30px);
+  }
+
+  .rk-zine__tape {
+    height: clamp(24px, 2.4vw, 34px);
+  }
+
+  .rk-zine__pin {
+    width: clamp(36px, 3.4vw, 50px);
+    height: clamp(36px, 3.4vw, 50px);
+  }
+
+  /* The shelf: the one thing in the room that sits square. Later than the
+     row, so it paints over the zines' feet. */
+  .rk-briefs__shelf {
+    position: relative;
+    z-index: 2;
+    display: block;
+    max-width: calc(var(--rk-cols, 4) * 245px + 80px);
+    height: clamp(44px, 4.6vw, 64px);
+    margin: -8px auto 0;
+    background: linear-gradient(var(--rk-ink-2), var(--rk-ink));
+    border: 3px solid var(--rk-ink-3);
+    border-top-width: 6px;
+    border-radius: 4px 4px 18px 18px;
+    box-shadow:
+      8px 12px 0 rgb(0 0 0 / .55),
+      inset 0 3px 0 color-mix(in srgb, var(--rk-cream) 6%, transparent);
+  }
+
+  .rk-briefs__shelf::before {
+    content: "";
+    position: absolute;
+    top: 30%;
+    left: 6%;
+    right: 6%;
+    height: 9px;
+    border-radius: 5px;
+    background: rgb(0 0 0 / .9);
+  }
+
+  /* On one line, overlapping the shelf's lower edge. */
+  .rk-briefs__grand {
+    --rk-grand-peak: 1.03;
+    flex-direction: row;
+    gap: .6em;
+    margin: -14px auto 0;
+    padding: .75em 1.4em;
+    font-size: clamp(22px, 2.55vw, 36px);
+    white-space: nowrap;
+  }
+
+  .rk-briefs__grand-dot {
+    display: block;
+  }
+
+  /* No shelf when the zines need more than one row. */
+  .rk-briefs__row--wrap + .rk-briefs__grand {
+    margin-top: 56px;
+  }
+}
