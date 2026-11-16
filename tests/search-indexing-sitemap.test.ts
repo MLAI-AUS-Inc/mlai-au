@@ -7,6 +7,9 @@ import { PUBLIC_INDEXABLE_PAGES } from "../app/lib/public-pages";
 import { getSitemapEntries, normalizeLastmod, renderSitemap, resolveSitemapOrigin, validatePublishedModules } from "../scripts/lib/sitemap";
 import { collectRegisteredRoutePaths } from "../scripts/lib/route-inventory";
 
+// Public pages published after the production inventory was recovered.
+const PAGES_ADDED_SINCE_RECOVERY = ["/mentors"];
+
 test("recovered canonical inventory preserves all 76 production URLs without redirects or notices", () => {
   const baseline = JSON.parse(readFileSync("tests/fixtures/search-indexing/live-http-sitemap.json", "utf8"));
   const recovered: string[] = baseline.responses.filter((r: any) => r.in_current_production_sitemap).map((r: any) => r.requested_url).sort();
@@ -20,8 +23,9 @@ test("recovered canonical inventory preserves all 76 production URLs without red
     Object.values(ARTICLE_REGISTRY).filter(isArticleIndexable).map(article => "/articles/" + resolveArticleRouteSlug(article.slug)),
   );
   for (const entry of entries.filter(entry => !recovered.includes("https://mlai.au" + entry.path))) {
-    expect(indexableArticlePaths.has(entry.path), entry.path).toBe(true);
+    expect(indexableArticlePaths.has(entry.path) || PAGES_ADDED_SINCE_RECOVERY.includes(entry.path), entry.path).toBe(true);
   }
+  for (const page of PAGES_ADDED_SINCE_RECOVERY) expect(urls, page).toContain("https://mlai.au" + page);
   expect(entries.some(entry => entry.path === "/medhack")).toBe(false);
   for (const article of Object.values(ARTICLE_REGISTRY).filter(a => !isArticleIndexable(a))) {
     expect(entries.some(entry => entry.path === "/articles/" + article.slug), article.slug).toBe(false);
