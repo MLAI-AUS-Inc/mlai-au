@@ -50,7 +50,7 @@ const PRODUCTS = [
     icon: MegaphoneIcon,
     accent: "bg-[#00ffd7] text-gray-950",
     action: "Open Vibe Marketing",
-    href: "/founder-tools/marketing",
+    href: "https://chat.mlai.au/my-startup/marketing",
     publicPreview: false,
   },
   {
@@ -60,7 +60,7 @@ const PRODUCTS = [
     icon: CircleStackIcon,
     accent: "bg-[#fefc22] text-gray-950",
     action: "Set up your company",
-    href: "/founder-tools",
+    href: "https://chat.mlai.au/my-startup",
     publicPreview: false,
   },
 ];
@@ -79,14 +79,14 @@ export default function FounderToolsStart() {
           <p className="mt-6 max-w-3xl text-lg leading-8 text-gray-300">
             Founder Tools helps Australian founders organise company context, publish
             consistent investor updates and create marketing from approved evidence.
-            Creating or opening a workspace requires an MLAI account.
+            Open your workspace in MLAI Chat.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              to="/founder-tools"
+              to="https://chat.mlai.au/my-startup"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#fefc22] px-6 py-3 text-sm font-black text-gray-950 transition hover:bg-yellow-300"
             >
-              Create or open Founder Tools
+              Open My Startup in MLAI Chat
               <ArrowRightIcon className="h-4 w-4" />
             </Link>
             <Link

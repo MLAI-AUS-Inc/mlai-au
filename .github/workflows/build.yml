@@ -47,35 +47,20 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Test monthly-update reminder links
-        run: bun test tests/monthly-update-reminder-link.test.ts
-
       - name: Test homepage donation modal
         run: bun test tests/donation-modal.test.ts
 
       - name: Test app privacy and support disclosures
         run: bun test tests/ccc-app-review-privacy.test.ts
 
-      - name: Test Roo account-link security
-        run: |
-          bun test \
-            tests/roo-account-link.test.ts \
-            tests/roo-account-link-route.test.ts \
-            tests/roo-account-link-worker.test.ts \
-            tests/roo-account-link-document.test.ts \
-            tests/session-refresh.test.ts
-
-      - name: Test monthly update contracts
-        run: bun test tests/monthly-update-evidence.test.tsx tests/monthly-update-reminder-link.test.ts tests/vibe-raising-*.test.*
+      - name: Test member handoffs to MLAI Chat
+        run: bun test tests/retired-apps.test.ts
 
       - name: Build project
         run: bun run build
 
       - name: Install browsers for article and arcade checks
         run: bunx playwright install --with-deps chromium webkit
-
-      - name: Check Roo native account-link confirmation
-        run: bun run test:roo:browser
 
       - name: Check article delivery and keyboard controls
         run: bun run test:articles:browser

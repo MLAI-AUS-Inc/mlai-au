@@ -11,10 +11,8 @@ Main repos:
 - `mlai-backend` - Django API and backend jobs
 - `roo` - Roo Slack/agent service
 
-`mlai-chat`, `mlai-plane`, and `mlai-plane-edge` are inactive experiments in
-deploying the open-source Buzz and Plane products. They are not part of the
-standard onboarding or supported MLAI architecture. Do not clone or run them
-unless a task explicitly investigates or reactivates an experiment.
+`mlai-chat` owns member login and Pulse. Members enter Chat through the
+public website's login link; the website no longer hosts signed-in workspaces.
 
 Clone `content-factory` too only when working on article/content generation flows. The backend full local stack expects it as a sibling repo.
 

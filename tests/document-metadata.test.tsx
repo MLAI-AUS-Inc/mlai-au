@@ -211,34 +211,13 @@ test("robots allows the indexed Hospital entry and login but preserves narrow pr
   }
 });
 
-test("actual Hospital loaders retain authentication and normalize the login return destination", async () => {
-  const process = Bun.spawn([Bun.which("bun")!, "tests/fixtures/hospital-indexing-probe.tsx"], { stdout: "pipe", stderr: "pipe" });
-  const [stdout, stderr, exit] = await Promise.all([new Response(process.stdout).text(), new Response(process.stderr).text(), process.exited]);
-  expect({ exit, stderr }).toEqual({ exit: 0, stderr: "" });
-  const evidence = JSON.parse(stdout);
-  expect(evidence.anonymous).toHaveLength(2);
-  for (const result of evidence.anonymous) {
-    expect(result.status).toBe(302);
-    expect(result.location).toBe("/platform/login?app=hospital&next=/hospital/app");
-    expect(result.contentReads).toBe(0);
-  }
-  expect(evidence.authenticated).toHaveLength(2);
-  for (const result of evidence.authenticated) {
-    expect(result.user.email).toBe("private-fixture@example.test");
-    expect(result.meta.filter((row: MetaDescriptor) => row.name === "robots")).toEqual([{ name: "robots", content: "noindex, nofollow" }]);
-  }
-  expect(evidence.authenticationFailurePropagated).toBe(true);
-  expect(evidence.alias).toBe("/hospital/app");
-  expect(evidence.closed).toEqual({ status: 302, location: "/platform/login?app=hospital&next=/hospital/app&error=healthhack_closed", contentReads: 0 });
-});
-
-test("the real root Layout and entry handler render complete heads for ordinary, private and 404 documents", async () => {
+test("the real root Layout and entry handler render complete heads for public and error documents", async () => {
   const process = Bun.spawn([Bun.which("bun")!, "tests/fixtures/root-document-probe.tsx"], { stdout: "pipe", stderr: "pipe" });
   const [stdout, stderr, exit] = await Promise.all([new Response(process.stdout).text(), new Response(process.stderr).text(), process.exited]);
   expect(exit).toBe(0);
   expect(stderr.trim()).toBe('No routes matched location "/never-existed"');
   const records = JSON.parse(stdout);
-  expect(records).toHaveLength(6);
+  expect(records).toHaveLength(4);
   for (const row of records) {
     expect(row.htmlDocument, row.path).toBe(true);
     expect(row.headCount, row.path).toBe(1);
@@ -248,19 +227,14 @@ test("the real root Layout and entry handler render complete heads for ordinary,
   expect(records[0].canonicals).toEqual(["https://mlai.au/contact"]);
   expect(records[0].title).toContain("Contact MLAI");
   for (const row of records.slice(1, 3)) {
-    expect(row.status).toBe(200);
-    expect(row.robots).toEqual(["noindex, nofollow"]);
-    expect(row.canonicals).toEqual([]);
-  }
-  for (const row of records.slice(3, 5)) {
     expect(row.status).toBe(404);
     expect(row.robots).toEqual(["noindex, nofollow"]);
     expect(row.canonicals).toEqual([]);
     expect(row.title).toBe("Page Not Found | MLAI");
     expect(row.missingBody).toBe(true);
   }
-  expect(records[5].status).toBe(503);
-  expect(records[5].robots).toEqual(["noindex, nofollow"]);
-  expect(records[5].canonicals).toEqual([]);
-  expect(records[5].title).toBe("Page Error | MLAI");
+  expect(records[3].status).toBe(503);
+  expect(records[3].robots).toEqual(["noindex, nofollow"]);
+  expect(records[3].canonicals).toEqual([]);
+  expect(records[3].title).toBe("Page Error | MLAI");
 }, 15_000);

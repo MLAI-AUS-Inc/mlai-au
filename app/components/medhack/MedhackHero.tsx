@@ -37,10 +37,10 @@ export default function MedhackHero() {
               Get tickets
             </a>
             <a
-              href={HEALTHHACK_BRAND.routes.app}
+              href="https://chat.mlai.au/"
               className="inline-flex items-center justify-center rounded-lg border-2 border-white/80 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
             >
-              Open HealthHack app
+              Open MLAI Chat
             </a>
           </div>
         </div>

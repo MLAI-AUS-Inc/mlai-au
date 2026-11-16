@@ -38,25 +38,11 @@ describe("single-step known URL normalization", () => {
     expect(final.headers.has("Location")).toBe(false);
   });
 
-  test("keeps auth return values and OAuth fields while dropping only tracking", async () => {
-    const h = harness();
-    const original = new URL("http://www.mlai.au/platform/login?app=hospital&next=%2Fhospital%2Fapp%3Ftab%3Dteam&code=oauth-code&state=opaque-state&utm_campaign=healthhack");
-    const response = await h.fetch(original.href);
-    const target = new URL(response.headers.get("Location")!);
-    expect(target.origin).toBe("https://mlai.au");
-    expect(target.searchParams.get("app")).toBe("hospital");
-    expect(target.searchParams.get("next")).toBe("/hospital/app?tab=team");
-    expect(target.searchParams.get("code")).toBe("oauth-code");
-    expect(target.searchParams.get("state")).toBe("opaque-state");
-    expect(target.searchParams.has("utm_campaign")).toBe(false);
-  });
-
   test("preserves exact cleanup aliases and healthy functional queries", async () => {
     const h = harness();
     for (const [path, target] of [["/hackathons):", "/hackathons"], ["/$", "/"], ["/articles/*", "/articles"], ["/medhack", "/healthhack"], ["/vibe-raising/", "/vibe-raising"], ["/how-to-pitch-your-idea", "/articles/featured/how-to-pitch-your-idea"]]) {
       expect((await h.fetch(path)).headers.get("Location")).toBe(`https://mlai.au${target}`);
     }
-    expect((await h.fetch("/platform/login?next=/hospital/app")).status).toBe(200);
     expect((await h.fetch("/articles?page=2")).status).toBe(200);
     expect((await h.fetch("http://localhost:5173/events")).status).toBe(200);
   });
@@ -68,7 +54,6 @@ describe("single-step known URL normalization", () => {
       expect(response.status).toBe(404);
       expect(response.headers.has("Location")).toBe(false);
     }
-    expect((await h.fetch("/platform/login?utm_source=slack", { method: "POST", body: "action=login" })).status).toBe(200);
   });
 
   test("router fallback shares the final article destination and preserves reader preferences", () => {
@@ -179,15 +164,7 @@ describe("homepage public cache eligibility", () => {
 });
 
 describe("response exclusions preserve application behavior", () => {
-  test("private HTML is excluded and no-store without changing content or status", async () => {
-    const h = harness(() => completeHtml({ "X-Robots-Tag": "index, nofollow, nosnippet" }));
-    for (const path of ["/hospital/app", "/hospital/app/team", "/platform/login", "/founder-tools", "/founder-tools/marketing", "/roo/topup/purchase-id", "/verify-email", "/valley"]) {
-      const response = await h.fetch(path);
-      expect(response.status).toBe(200);
-      expect(response.headers.get("X-Robots-Tag")).toBe("noindex, nofollow, nosnippet");
-      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
-      expect(await response.text()).toContain("MLAI public homepage");
-    }
+  test("public pages remain indexable", () => {
     for (const path of ["/founder-tools/start", "/founder-tools/start/", "/vibe-raising", "/healthhack", "/community", "/articles/featured/example"]) expect(isPrivateSearchPath(path)).toBe(false);
   });
 
@@ -230,4 +207,21 @@ test("real React SSR renders complete cached homepage HTML in both human/crawler
     expect(record.hasHiddenStream).toBe(false);
     expect(record.hasFallback).toBe(false);
   }
+});
+
+test("serves built public HTML without sending browser credentials to the asset lookup", async () => {
+  const lookups: Request[] = [];
+  const env = { ASSETS: { fetch(request: Request) {
+    lookups.push(request);
+    return new Response("<h1>Built article directory: page two</h1>");
+  } } } as unknown as Env;
+  const worker = createWebsiteWorker(async () => { throw Error("Unexpected dynamic render"); }, () => new MemoryCache());
+  const response = await worker.fetch(new Request("https://mlai.au/articles?page=2", { headers: { Cookie: "session=private", Authorization: "Bearer private" } }), env, {} as ExecutionContext);
+  expect(await response.text()).toContain("page two");
+  expect(lookups[0].url).toBe("https://mlai.au/__pages/articles/page-2.snapshot");
+  expect(lookups[0].headers.has("Cookie")).toBe(false);
+  expect(lookups[0].headers.has("Authorization")).toBe(false);
+  expect(response.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
+  const hidden = await worker.fetch(new Request(lookups[0].url), env, {} as ExecutionContext);
+  expect(hidden.status).toBe(404);
 });

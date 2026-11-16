@@ -3,15 +3,11 @@
 import { createRequestHandler, type ServerBuild } from "react-router";
 import * as root from "../../app/root";
 import * as contact from "../../app/routes/contact";
-import { meta as loginMeta } from "../../app/routes/platform.login";
-import { meta as checkoutMeta } from "../../app/routes/roo.topup.$purchaseId";
 import handleRequest from "../../app/entry.server";
 
 const routes: ServerBuild["routes"] = {
   root: { id: "root", path: "", module: root },
   contact: { id: "contact", parentId: "root", path: "contact", module: contact },
-  login: { id: "login", parentId: "root", path: "platform/login", module: { default: () => <main>Login fixture</main>, meta: loginMeta } },
-  checkout: { id: "checkout", parentId: "root", path: "roo/topup/:purchaseId", module: { default: () => <main>Checkout fixture</main>, meta: checkoutMeta } },
   missing: { id: "missing", parentId: "root", path: "missing", module: { default: () => <main>Unexpected fixture</main>, loader: () => { throw new Response("Not Found", { status: 404 }); } } },
   unavailable: { id: "unavailable", parentId: "root", path: "server-error", module: { default: () => <main>Unexpected fixture</main>, loader: () => { throw new Response("Unavailable", { status: 503 }); } } },
 };
@@ -32,7 +28,7 @@ const build: ServerBuild = {
 };
 const handler = createRequestHandler(build, "production");
 const records = [];
-for (const path of ["/contact?utm_source=search", "/platform/login?app=hospital", "/roo/topup/session-fixture", "/missing", "/never-existed", "/server-error"]) {
+for (const path of ["/contact?utm_source=search", "/missing", "/never-existed", "/server-error"]) {
   const response = await handler(new Request(`https://mlai.au${path}`), { cloudflare: { env: {} } } as any);
   const html = await response.text();
   records.push({

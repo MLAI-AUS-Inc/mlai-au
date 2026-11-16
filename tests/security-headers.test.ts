@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { applySecurityHeaders } from "../workers/security-headers";
-import { rejectedRooAccountLinkCapabilityResponse } from "../app/lib/roo-account-link-url";
 
 const production = new URL("https://mlai.au/articles");
 const html = (headers: HeadersInit = {}) => new Response("<p>Streaming content</p>", {
@@ -55,10 +54,6 @@ describe("worker security headers", () => {
     expect(response.headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'; default-src 'none'");
     expect(response.headers.get("Permissions-Policy")).toBe("camera=(), microphone=()");
     expect(response.headers.getSetCookie()).toEqual(original.headers.getSetCookie());
-    const rejected = applySecurityHeaders(rejectedRooAccountLinkCapabilityResponse(), production);
-    expect(rejected.headers.get("Referrer-Policy")).toBe("no-referrer");
-    expect(rejected.headers.get("Location")).toBeNull();
-    expect(rejected.status).toBe(400);
   });
 
   test("keeps first-party update recording available", () => {

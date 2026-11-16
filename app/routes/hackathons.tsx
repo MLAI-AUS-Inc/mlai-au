@@ -13,7 +13,7 @@ export default function Hackathons() {
                         Hackathons
                     </h1>
                     <p className="mt-4 text-xl text-black/55">
-                        Choose a hackathon to access its event platform.
+                        Explore MLAI hackathons and their event guides.
                     </p>
                 </div>
 
@@ -38,8 +38,8 @@ export default function Hackathons() {
 
                     {/* HealthHack Card */}
                     <Link
-                        to="/hospital/app"
-                        aria-label="Open HealthHack"
+                        to="/healthhack"
+                        aria-label="Read the HealthHack event guide"
                         className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--brutalist-blue)]"
                     >
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_30%,rgba(139,92,246,0.7),transparent_33%),linear-gradient(135deg,#16082d,#40158c_55%,#170b39)]" />

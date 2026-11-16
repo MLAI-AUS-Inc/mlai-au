@@ -11,14 +11,6 @@ const PUBLIC_BRAND_FILES = [
 const USER_FACING_SOURCES = [
   "app/routes/hackathons.tsx",
   "app/routes/healthhack.tsx",
-  "app/routes/hospital.app.dashboard.tsx",
-  "app/routes/hospital.app.coding.tsx",
-  "app/routes/hospital.app.pitching.tsx",
-  "app/routes/hospital.app.leaderboard.tsx",
-  "app/routes/hospital.app.resources.tsx",
-  "app/routes/platform.login.tsx",
-  "app/components/HospitalAppLayout.tsx",
-  "app/components/hospital/SlackChat.tsx",
   "app/components/medhack/MedhackAbout.tsx",
   "app/components/medhack/MedhackHero.tsx",
   "app/data/medhack-frontiers.ts",
@@ -28,7 +20,6 @@ describe("HealthHack brand contract", () => {
   test("uses the canonical product and organiser names", () => {
     expect(HEALTHHACK_BRAND.name).toBe("HealthHack");
     expect(HEALTHHACK_BRAND.organizerLine).toContain("UNSW No Code Society");
-    expect(HEALTHHACK_BRAND.routes.app).toBe("/hospital/app");
     expect(HEALTHHACK_BRAND.routes.infoPack).toBe("/healthhack");
   });
 

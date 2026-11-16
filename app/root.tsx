@@ -5,8 +5,9 @@ import {
   Scripts,
   ScrollRestoration,
   useLocation,
+  useRevalidator,
 } from "react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Footer from "~/components/footer";
 
 import type { Route } from "./+types/root";
@@ -14,7 +15,6 @@ import "./app.css";
 import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
 import { DocumentMeta } from "~/lib/document-metadata";
-import { useSessionKeepalive } from "~/lib/session-keepalive";
 
 // Stable reviewed integration identity; CI binds it to the exact tested commit.
 const MLAI_ARTICLES_ARTIFACT_DIGEST = "92f0f9158c4777eecafc06d068bf5764dbcaa8df5852ed78f9054a8e083f7ef9";
@@ -68,7 +68,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const shouldLoadThirdPartyAnalytics = import.meta.env.PROD;
+  const shouldLoadThirdPartyAnalytics = import.meta.env.PROD && location.pathname !== "/roo/topup";
   const pagePath = `${location.pathname}${location.search}`;
 
   useEffect(() => {
@@ -83,35 +83,6 @@ export function Layout({ children }: { children: ReactNode }) {
       page_title: document.title,
     });
   }, [pagePath, shouldLoadThirdPartyAnalytics]);
-
-  // Hide the global chrome inside authenticated app surfaces.
-  const isEsafetyApp = location.pathname.startsWith("/esafety");
-  const isHospitalApp = location.pathname.startsWith("/hospital/app");
-  const isVibeRaisingLegacyApp =
-    location.pathname.startsWith("/vibe-raising/") &&
-    location.pathname !== "/vibe-raising/";
-  const isPublicFounderToolsPage =
-    location.pathname === "/founder-tools/start" ||
-    location.pathname === "/founder-tools/start/";
-  const isFounderToolsApp =
-    !isPublicFounderToolsPage &&
-    (location.pathname === "/founder-tools" ||
-      location.pathname.startsWith("/founder-tools/"));
-  const isValleyApp =
-    location.pathname === "/valley" ||
-    location.pathname.startsWith("/valley/");
-  const isWattTheHackApp = location.pathname.startsWith("/watt-the-hack");
-  const isAppRoute =
-    isEsafetyApp ||
-    isHospitalApp ||
-    isVibeRaisingLegacyApp ||
-    isFounderToolsApp ||
-    isValleyApp ||
-    isWattTheHackApp;
-
-  // Signed-in surfaces renew their access token in the background, so a tab left open
-  // for days keeps working instead of quietly 401-ing. Public pages never ping.
-  useSessionKeepalive(isAppRoute);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -149,13 +120,12 @@ export function Layout({ children }: { children: ReactNode }) {
             />
           </noscript>
         ) : null}
-        {/* Only show platform-wide components if NOT in specific apps */}
-        {!isAppRoute && <Sidebar />}
-        {!isAppRoute && <SectionMarkers />}
-        <div className={isAppRoute ? "" : "lg:pl-[220px] bg-[var(--brutalist-beige)]"}>
+        <Sidebar />
+        <SectionMarkers />
+        <div className="lg:pl-[220px] bg-[var(--brutalist-beige)]">
           {children}
         </div>
-        {!isAppRoute && <Footer />}
+        <Footer />
         <ScrollRestoration />
 
         {shouldLoadThirdPartyAnalytics ? (
@@ -223,6 +193,18 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+  const { revalidate } = useRevalidator();
+  const firstDocument = useRef(true);
+  useEffect(() => {
+    if (!firstDocument.current) return;
+    firstDocument.current = false;
+    // Built HTML is immediately readable. Refresh the events, newsletter and
+    // article reading date from their public loaders after the first paint.
+    if (pathname === "/" || pathname === "/events" || pathname.startsWith("/articles/")) {
+      void revalidate();
+    }
+  }, [pathname, revalidate]);
   return <Outlet />;
 }
 
