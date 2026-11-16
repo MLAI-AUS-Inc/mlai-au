@@ -1,12 +1,9 @@
 # MLAI website
 
-The public MLAI website and browser application, served at
-[mlai.au](https://mlai.au). This repository contains the public site, member
-experiences, founder tools, editorial content, and event-specific applications.
-
-This is a React Router v7 application deployed as a Cloudflare Worker. Most
-authenticated and data-backed features call the Django APIs in
-[`mlai-backend`](https://github.com/MLAI-AUS-Inc/mlai-backend).
+The public MLAI website at [mlai.au](https://mlai.au). The production build
+renders public HTML and serves it through Cloudflare. The website does not
+sign members in or refresh sessions. **Log in** opens [MLAI Chat](https://chat.mlai.au/);
+founders write [monthly Pulse updates](https://chat.mlai.au/my-startup/updates?view=new) there.
 
 ## Start here
 
@@ -20,15 +17,14 @@ repository.
 
 ## What this repository owns
 
-- Public MLAI pages, events, community pages, and editorial articles
-- Member login and platform-facing browser flows
-- Founder Tools and Vibe Raising browser experiences
-- eSafety, HealthHack, MedHack, and Watt The Hack browser applications
-- The Valley founder-profile prototype
-- Cloudflare Worker routing and browser-facing configuration
+- Public pages, event guides, Studio intake, articles and downloadable resources
+- Static HTML generation, public feed data and legacy URL redirects
+- Public previews of MLAI founder tools; the member workspace lives in Chat
 
-It does not own the Django API, persistent application data, scheduled backend
-jobs, MLAI Chat, Plane, or the `admin.mlai.au` edge gateway.
+Old event dashboards link to public guides. Existing Roo account links go to Chat. Roo top-up links open a static,
+session-free purchase review; only explicit terms acceptance can open Stripe
+Checkout. The website does not process old app form submissions. Operations signs administrators in on its own domain. Deploy
+the Operations login before rolling out this website change.
 
 Routes are declared centrally in [`app/routes.ts`](app/routes.ts). Feature code
 generally lives under `app/routes`, `app/components`, and `app/lib`.
@@ -57,14 +53,16 @@ Common routes include:
 | --- | --- |
 | Public website | `/` |
 | Articles | `/articles` |
-| Member platform | `/platform/login` |
-| Founder Tools | `/founder-tools` |
-| Watt The Hack | `/watt-the-hack` |
-| HealthHack | `/healthhack` and `/hospital/app` |
-| Valley prototype | `/valley` |
+| Member login (redirect) | `/login` or `/platform/login` |
+| Founder Tools public introduction | `/founder-tools/start` |
+| HealthHack guide | `/healthhack` |
+| Hackathon directory | `/hackathons` |
 
-The Valley feature is documented separately in
-[`docs/features/valley.md`](docs/features/valley.md).
+The build renders the canonical public pages, article URLs and directory pages
+with the built Worker in an isolated local runtime. It does not require feed
+credentials. On the first visit the browser refreshes events, newsletter
+listings and time-sensitive article information using public loaders.
+Query-specific views, redirects and errors still go through the Worker.
 
 ## Checks
 
@@ -75,9 +73,8 @@ bun run typecheck
 bun run build
 ```
 
-The build submits IndexNow data in `postbuild`; consult `package.json` and the
-maintainer for the intended environment before running it with live
-credentials. `bun run typecheck` also validates internal article links.
+`bun run test:coverage:check` runs the full suite. IndexNow submission is a
+separate manual command. `bun run typecheck` also validates internal article links.
 
 ## Configuration and deployment
 
@@ -96,7 +93,6 @@ from other frontend projects.
 
 - [`docs/NEW_DEVELOPER_SETUP.md`](docs/NEW_DEVELOPER_SETUP.md): onboarding for
   the original website/backend/Roo repository group
-- [`docs/features/valley.md`](docs/features/valley.md): Valley prototype
 - [`AGENTS.md`](AGENTS.md): repository rules for AI coding agents
 
 Keep task scratchpads, handoff notes, PR drafts, dated audits, and generated

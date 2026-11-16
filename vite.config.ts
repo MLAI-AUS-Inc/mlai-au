@@ -36,7 +36,6 @@ const livePreviewDisableHmr = ["1", "true", "yes", "on"].includes(
 );
 const inspectorPort =
   livePreviewDisableHmr || process.env.CLOUDFLARE_INSPECTOR_PORT === "false" ? false : undefined;
-const wattTheHackApiPathPattern = /^\/api\/v1\/hackathons\/(?:watt|watt-the-hack)(?:\/|$)/;
 type GuardedHotChannel = {
   send: (...args: any[]) => any;
   __cloudflareRaceGuard?: true;
@@ -99,17 +98,9 @@ const sharedOptimizeDepsInclude = [
   "@heroicons/react/24/solid",
   "@heroicons/react/24/outline",
   "@headlessui/react",
-  "@ffmpeg/ffmpeg",
-  "@ffmpeg/util",
   "class-variance-authority",
   "clsx",
-  "date-fns",
-  "gsap",
-  "gsap/ScrollTrigger",
   "jszip",
-  "motion/react",
-  "react-dropzone",
-  "recharts",
   "tailwind-merge",
 ];
 
@@ -132,18 +123,6 @@ export default defineConfig({
   ],
   server: {
     hmr: { overlay: false },
-    proxy: {
-      '/api': {
-        target: 'http://localhost',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-        bypass(req) {
-          const pathname = new URL(req.url || "/", "http://localhost").pathname;
-          return wattTheHackApiPathPattern.test(pathname) ? req.url : undefined;
-        },
-      },
-    },
   },
   environments: {
     ssr: {

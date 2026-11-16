@@ -8,7 +8,6 @@ export const HEALTHHACK_BRAND = {
     ncs: "/healthhack/brand/unsw-ncs.png",
   },
   routes: {
-    app: "/hospital/app",
     infoPack: "/healthhack",
   },
   kaggle: {

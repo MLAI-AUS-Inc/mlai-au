@@ -10,14 +10,9 @@
     "nodejs_compat"
   ],
   "main": "./workers/app.ts",
-  "vars": {
-    "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare",
-    "BACKEND_BASE_URL": "https://api.mlai.au",
-    "VITE_GOOGLE_CLIENT_ID": "",
-    "VITE_ENABLE_FOUNDER_TOOLS_DISCOVER": "false",
-    "STARTUP_PROGRESS_ENABLED": "false",
-    "VIBE_RAISING_ADMIN_EMAILS": "samyang102238188@gmail.com",
-    "WTH_ADMIN_URL": "https://eval.eliascorp.org"
+  "assets": {
+    "binding": "ASSETS",
+    "run_worker_first": ["/__pages/*"]
   },
   "routes": [
     {

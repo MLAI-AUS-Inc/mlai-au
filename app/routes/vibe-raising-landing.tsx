@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { PULSE_EDITOR_URL } from "~/lib/chat-destinations";
 import VibeRaisingFounderOverview from "~/components/VibeRaisingFounderOverview";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import type { Route } from "./+types/vibe-raising-landing";
@@ -24,10 +24,9 @@ export async function loader({}: Route.LoaderArgs) {
 
 export default function VibeRaisingLandingPage({}: Route.ComponentProps) {
   const [showIntroVideo, setShowIntroVideo] = useState(false);
-  const navigate = useNavigate();
 
   const continueToUpdateCreation = () => {
-    navigate("/platform/login?app=founder-tools&next=/founder-tools/updates/create");
+    window.location.assign(PULSE_EDITOR_URL);
   };
 
   return (

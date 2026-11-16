@@ -31,10 +31,10 @@ test('page two contains its own articles and crawlable previous and next links',
   await expect(pagination.getByRole('link', { name: 'Next', exact: true })).toBeVisible();
 });
 
-test('login retains its single noindex directive', async ({ page }) => {
-  await page.goto('/platform/login', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('meta[name="robots"]')).toHaveCount(1);
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
+test('member login hands navigation to Chat', async ({ request }) => {
+  const response = await request.get('/platform/login', { maxRedirects: 0 });
+  expect(response.status()).toBe(302);
+  expect(response.headers().location).toBe('https://chat.mlai.au/');
 });
 
 test('invalid pagination returns a real HTTP 404 and aliases redirect permanently', async ({ request }) => {
