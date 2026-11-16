@@ -8,6 +8,7 @@ const footerNavigation = {
       name: "Apply to Volunteer",
       href: "/volunteers",
     },
+    { name: "Mentor at MLAI", href: "/mentors" },
   ] as Array<{ name: string; href: string; target?: string; rel?: string }>,
   Sponsoring: [{ name: "Info for sponsors", href: "/sponsors" }],
   About: [

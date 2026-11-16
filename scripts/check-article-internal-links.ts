@@ -24,6 +24,7 @@ const VALID_STATIC_ROUTES = new Set([
   "/privacy",
   "/resources",
   "/roo",
+  "/mentors",
   "/sponsors",
   "/terms",
   "/verify-email",

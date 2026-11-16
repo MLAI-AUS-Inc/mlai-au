@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { Link } from "react-router";
 import type { Route } from "./+types/roo";
 
 const SLACK_INVITE_URL =
@@ -500,7 +501,11 @@ export default function RooPage({}: Route.ComponentProps) {
 
                 <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72 sm:text-xl">
                   Help the community, earn points for meaningful contributions, and spend
-                  them on coworking, events, mentoring, merch, and more, all through
+                  them on coworking, events,{" "}
+                  <Link to="/mentors" className="underline underline-offset-4 hover:text-white">
+                    mentoring
+                  </Link>
+                  , merch, and more, all through
                   Slack.
                 </p>
 
