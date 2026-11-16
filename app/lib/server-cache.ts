@@ -1,10 +1,11 @@
 interface CacheEntry<T> {
   expiresAt: number;
-  hasValue: boolean;
-  pending?: Promise<T>;
-  value?: T;
+  value: T;
 }
 
+// Only completed, public feed data may outlive a request. In Workers, a pending
+// fetch/body/timer belongs to the request that created it; sharing its promise
+// can strand later renders when that request completes or is canceled.
 const cacheStore = new Map<string, CacheEntry<unknown>>();
 
 export async function getCachedValue<T>(
@@ -17,47 +18,22 @@ export async function getCachedValue<T>(
   const now = Date.now();
   const cached = cacheStore.get(key) as CacheEntry<T> | undefined;
 
-  if (cached?.hasValue && cached.expiresAt > now) {
-    return cached.value as T;
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
   }
 
-  if (cached?.pending) {
-    return cached.pending.catch((error) => {
-      if (cached.hasValue) return cached.value as T;
-      onError?.(error);
-      return emptyValue;
+  try {
+    const value = await loader();
+    cacheStore.set(key, {
+      expiresAt: Date.now() + ttlMs,
+      value,
     });
+    return value;
+  } catch (error) {
+    onError?.(error);
+    // Another request may have refreshed the feed while this one failed. Keep
+    // that success rather than deleting it or replacing it with an older value.
+    const fallback = (cacheStore.get(key) as CacheEntry<T> | undefined) ?? cached;
+    return fallback ? fallback.value : emptyValue;
   }
-
-  const pending = loader()
-    .then((value) => {
-      cacheStore.set(key, {
-        expiresAt: Date.now() + ttlMs,
-        hasValue: true,
-        value,
-      });
-      return value;
-    })
-    .catch((error) => {
-      onError?.(error);
-      if (cached?.hasValue) {
-        cacheStore.set(key, {
-          expiresAt: cached.expiresAt,
-          hasValue: true,
-          value: cached.value,
-        });
-        return cached.value as T;
-      }
-      cacheStore.delete(key);
-      return emptyValue;
-    });
-
-  cacheStore.set(key, {
-    expiresAt: cached?.expiresAt ?? 0,
-    hasValue: cached?.hasValue ?? false,
-    pending,
-    value: cached?.value,
-  });
-
-  return pending;
 }
