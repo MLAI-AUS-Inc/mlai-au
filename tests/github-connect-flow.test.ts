@@ -12,7 +12,9 @@ mock.module("../app/lib/env.server", () => ({
   getEnv: () => ({ BACKEND_BASE_URL: "https://api.mlai.au" }),
 }));
 
+const realVibeMarketing = { ...(await import("../app/lib/vibe-marketing")) };
 mock.module("../app/lib/vibe-marketing", () => ({
+  ...realVibeMarketing,
   connectVibeMarketingGithub: connectGithub,
 }));
 
@@ -27,6 +29,7 @@ mock.module("../app/lib/vibe-raising", () => ({
 }));
 afterAll(() => {
   mock.module("../app/lib/vibe-raising", () => realVibeRaising);
+  mock.module("../app/lib/vibe-marketing", () => realVibeMarketing);
 });
 
 const { action, loader } = await import(
