@@ -222,7 +222,7 @@ export default function HopIn() {
   const { runSheet, slack } = hopIn;
 
   return (
-    <section id={sections.hopIn.id} className="rk-sec rk-haze rk-hop-in" aria-labelledby={TITLE_ID}>
+    <section id={sections.hopIn.id} tabIndex={-1} className="rk-sec rk-haze rk-hop-in" aria-labelledby={TITLE_ID}>
       {/* Corner stickers: the floating megaphone and the redrawing heart spark. */}
       <img
         className="rk-hop-in-deco__mega"
@@ -270,9 +270,7 @@ export default function HopIn() {
 
       <div id={runSheet.id} className="rk-run-sheet rk-reveal">
         <h3 id={`${runSheet.id}-title`} className="rk-run-sheet__title">
-          {runSheet.title.map(line => (
-            <span key={line}>{line}</span>
-          ))}
+          {runSheet.title.join(" ")}
         </h3>
         <ol className="rk-run-sheet__steps" role="list" aria-labelledby={`${runSheet.id}-title`}>
           {runSheet.steps.map((step, i) => (

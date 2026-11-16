@@ -1,1 +1,937 @@
-/* Random Hacks of Kindness: closing */
+/* Closing (07-closing.md): Who's behind it and the footer encore.
+   Last time is switched off in data and has no styles in release 1.
+   Every base rule is the finished, visible pose; motion only adds loops.
+   Under html.rk-motion-off the shell removes every animation. */
+
+/* ======================================================================== */
+/* Who's behind it (#whos-behind-it)                                        */
+/* ======================================================================== */
+
+.rk-behind {
+  display: grid;
+  place-items: center;
+  min-height: max(92svh, 620px);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  scroll-margin-top: 0;
+  background: var(--rk-ink);
+  color: var(--rk-cream);
+}
+
+/* Footage: only rendered once real footage and its poster exist. */
+.rk-behind__footage {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  filter: saturate(.8) contrast(1.05);
+  transform: scale(1.03);
+  animation: rk-kenburns 28s ease-in-out infinite alternate;
+}
+
+@keyframes rk-kenburns {
+  from {
+    transform: scale(1.03);
+  }
+
+  to {
+    transform: scale(1.16) translate(-1.5%, 1%);
+  }
+}
+
+html.rk-motion-off .rk-behind__footage {
+  transform: none;
+}
+
+/* Halftone dots, vignette, and ink fades top and bottom. */
+.rk-behind__shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(color-mix(in srgb, var(--rk-cream) 7%, transparent) 1px, transparent 1.2px) 0 0 / 5px 5px,
+    radial-gradient(70% 70%, color-mix(in srgb, var(--rk-ink) 70%, transparent), color-mix(in srgb, var(--rk-ink) 86%, transparent)),
+    linear-gradient(var(--rk-ink), transparent 22% 72%, var(--rk-ink));
+}
+
+.rk-behind__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  min-width: 0;
+  padding: 14vh var(--rk-pad);
+}
+
+.rk-behind__eyebrow {
+  margin: 0;
+}
+
+/* Giant words: the h2 is a Reveal hook that never fades itself. */
+.rk-behind__words,
+.rk-behind__words.rk-reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.rk-behind__words {
+  margin: .14em 0 .2em;
+  font-family: var(--rk-shout);
+  font-weight: 400;
+  font-size: clamp(38px, 11.6vw, 220px);
+  line-height: .86;
+  letter-spacing: -.02em;
+  text-transform: uppercase;
+  color: var(--rk-cream);
+  text-shadow: .03em .03em 0 var(--rk-teal), .06em .06em 0 var(--rk-blue);
+}
+
+.rk-behind__line {
+  display: block;
+}
+
+.rk-behind__word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.rk-behind__letter {
+  display: inline-block;
+}
+
+/* [P2] letter slam; letters only hide while the engine is about to reveal them. */
+html.rk-js:not(.rk-motion-off) .rk-behind__words:not(.is-in) .rk-behind__letter {
+  opacity: 0;
+}
+
+html.rk-js .rk-behind__words.is-in .rk-behind__letter {
+  animation: rk-letter-slam .65s cubic-bezier(.2, 1.2, .4, 1) calc(var(--rk-n, 0) * 45ms) both;
+}
+
+@keyframes rk-letter-slam {
+  0% {
+    opacity: 0;
+    transform: translateY(-130%) rotate(-9deg) scale(1.5);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(5%) rotate(1deg) scale(.97);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rk-behind__body {
+  max-width: 26em;
+  margin: 0 auto;
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: clamp(14px, 1.25vw, 18px);
+  line-height: 1.65;
+  color: var(--rk-cream);
+}
+
+.rk-behind__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 26px 44px;
+  margin-top: 36px;
+}
+
+/* Count sticker */
+.rk-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+}
+
+.rk-count__num {
+  --rk-rot: -4deg;
+  display: inline-grid;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(44px, 5.4vw, 78px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--rk-ink);
+  background: var(--rk-yellow);
+  border: 2px solid var(--rk-ink);
+  box-shadow: 5px 5px 0 var(--rk-teal);
+  padding: .22em .34em;
+  rotate: var(--rk-rot);
+  scale: 1;
+  transition:
+    rotate .4s var(--rk-ease),
+    scale .4s var(--rk-ease);
+}
+
+.rk-count__sizer,
+.rk-count__live {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+}
+
+.rk-count__sizer {
+  visibility: hidden;
+}
+
+.rk-count__label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--rk-cream);
+}
+
+/* ======================================================================== */
+/* Footer encore (#contact)                                                 */
+/* ======================================================================== */
+
+.rk-encore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(70px, 9vw, 130px) 0 calc(var(--rk-fw) + clamp(22px, 3vw, 40px));
+  border-top: 10px solid var(--rk-teal);
+  box-shadow: inset 0 10px 0 var(--rk-orange);
+  color: var(--rk-cream);
+  background:
+    radial-gradient(60% 45% at 50% 62%, color-mix(in srgb, var(--rk-orange) 22%, transparent), transparent 70%),
+    radial-gradient(40% 30% at 82% 22%, color-mix(in srgb, var(--rk-blue) 32%, transparent), transparent 70%),
+    var(--rk-ink);
+}
+
+/* Sparkle layers: one ten-mark pixel tile, far (520px) and near (340px).
+   Data URIs cannot read tokens, so the hex values mirror cream, teal,
+   yellow and orange. */
+.rk-encore__sparkles {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520' shape-rendering='crispEdges'><rect x='40' y='60' width='3' height='3' fill='%23f5f0e6'/><rect x='212' y='30' width='2' height='2' fill='%2300ffd7'/><rect x='332' y='142' width='3' height='3' fill='%23fefc22'/><rect x='470' y='250' width='2' height='2' fill='%23f5f0e6'/><rect x='92' y='330' width='3' height='3' fill='%23ff3c00'/><rect x='392' y='440' width='2' height='2' fill='%2300ffd7'/><path fill='%23fefc22' d='M147 180h7v1h-7zM150 177h1v7h-1z'/><path fill='%23f5f0e6' d='M437 80h7v1h-7zM440 77h1v7h-1z'/><path fill='%2300ffd7' d='M259 400h7v1h-7zM262 397h1v7h-1z'/><path fill='%23ff3c00' transform='translate(58 462)' d='M1 0h2v1H1zM4 0h2v1H4zM0 1h7v2H0zM1 3h5v1H1zM2 4h3v1H2zM3 5h1v1H3z'/></svg>") 0 0 / 520px 520px repeat;
+  opacity: 1;
+  animation: rk-twinkle 4s ease-in-out infinite alternate;
+}
+
+.rk-encore__sparkles--near {
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='340' height='340' viewBox='0 0 340 340' shape-rendering='crispEdges'><rect x='26' y='39' width='3' height='3' fill='%23f5f0e6'/><rect x='139' y='20' width='2' height='2' fill='%2300ffd7'/><rect x='217' y='93' width='3' height='3' fill='%23fefc22'/><rect x='307' y='163' width='2' height='2' fill='%23f5f0e6'/><rect x='60' y='216' width='3' height='3' fill='%23ff3c00'/><rect x='256' y='288' width='2' height='2' fill='%2300ffd7'/><path fill='%23fefc22' d='M95 118h7v1h-7zM98 115h1v7h-1z'/><path fill='%23f5f0e6' d='M285 52h7v1h-7zM288 49h1v7h-1z'/><path fill='%2300ffd7' d='M168 262h7v1h-7zM171 259h1v7h-1z'/><path fill='%23ff3c00' transform='translate(38 302)' d='M1 0h2v1H1zM4 0h2v1H4zM0 1h7v2H0zM1 3h5v1H1zM2 4h3v1H2zM3 5h1v1H3z'/></svg>") 120px 60px / 340px 340px repeat;
+  opacity: .6;
+  animation-duration: 2.6s;
+}
+
+@keyframes rk-twinkle {
+  from {
+    opacity: .45;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Heart sparks: two drawings stacked in one cell, a lub-dub flash. */
+.rk-encore__spark {
+  position: absolute;
+  z-index: 1;
+  width: clamp(60px, 8vw, 120px);
+  pointer-events: none;
+  opacity: 1;
+  scale: 1;
+  animation: rk-spark 5.5s step-end infinite;
+}
+
+.rk-encore__spark--one {
+  top: 16%;
+  left: 5%;
+  rotate: -12deg;
+}
+
+.rk-encore__spark--two {
+  top: 40%;
+  right: 6%;
+  rotate: 14deg;
+}
+
+.rk-encore__spark-in {
+  display: grid;
+}
+
+.rk-encore__spark--two .rk-encore__spark-in {
+  scale: -1 1;
+}
+
+.rk-encore__spark-in img {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: auto;
+}
+
+.rk-encore__spark-base {
+  opacity: 1;
+  animation: rk-spark-hold 5.5s step-end infinite;
+}
+
+.rk-encore__spark-swap {
+  opacity: 0;
+  animation: rk-spark-flip 5.5s step-end infinite;
+}
+
+.rk-encore__spark--two,
+.rk-encore__spark--two .rk-encore__spark-base,
+.rk-encore__spark--two .rk-encore__spark-swap {
+  animation-delay: -3.1s;
+}
+
+@keyframes rk-spark {
+  0% {
+    opacity: 0;
+    scale: 1;
+  }
+
+  2% {
+    opacity: 1;
+    scale: 1.12;
+  }
+
+  4% {
+    opacity: .2;
+    scale: .96;
+  }
+
+  6% {
+    opacity: 1;
+    scale: 1.12;
+  }
+
+  14% {
+    opacity: 0;
+    scale: 1;
+  }
+
+  100% {
+    opacity: 0;
+    scale: 1;
+  }
+}
+
+@keyframes rk-spark-flip {
+  0% {
+    opacity: 0;
+  }
+
+  4% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes rk-spark-hold {
+  0% {
+    opacity: 1;
+  }
+
+  4% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Stage: a Reveal hook that never fades itself, and no stacking context,
+   so MLAI's mark can sit above the section grain. */
+.rk-encore__stage,
+.rk-encore__stage.rk-reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.rk-encore__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.rk-encore__by {
+  position: relative;
+  z-index: 3;
+  margin: 0 0 .5em;
+  font-family: var(--rk-display);
+  font-weight: 600;
+  font-size: clamp(18px, 1.875vw, 27px);
+  line-height: 1.1;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--rk-yellow);
+  transform: skew(-12deg);
+}
+
+.rk-encore__names {
+  position: relative;
+  z-index: 3;
+  margin: 0;
+  padding: 0 var(--rk-pad);
+  white-space: nowrap;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(33px, 6.75vw, 114px);
+  line-height: .95;
+  text-transform: uppercase;
+  color: var(--rk-yellow);
+  transform: skew(-12deg);
+  translate: 0 0;
+  text-shadow: -.035em 0 0 var(--rk-teal), .035em 0 0 var(--rk-red), .07em .07em 0 var(--rk-ink);
+  --rk-split: .08em;
+}
+
+.rk-encore__names a {
+  color: inherit;
+  text-decoration: none;
+  transition: color .25s ease;
+}
+
+.rk-encore__names a:focus-visible {
+  color: var(--rk-cream);
+}
+
+.rk-encore__names i {
+  display: inline-block;
+  margin: 0 .15em;
+  font-size: .5em;
+  font-style: normal;
+  vertical-align: .32em;
+  color: var(--rk-teal);
+  text-shadow: none;
+}
+
+/* [P2] rise and twitch, started by is-in on the stage. */
+html.rk-js:not(.rk-motion-off) .rk-encore__stage:not(.is-in) .rk-encore__names,
+html.rk-js:not(.rk-motion-off) .rk-encore__stage:not(.is-in) .rk-encore__mail {
+  opacity: 0;
+}
+
+html.rk-js .rk-encore__stage.is-in .rk-encore__names {
+  animation:
+    rk-names-rise 1s var(--rk-ease) .1s backwards,
+    rk-split-twitch 3s steps(1) 1.2s infinite;
+}
+
+html.rk-js .rk-encore__stage.is-in .rk-encore__mail {
+  animation: rk-mail-pop .8s var(--rk-pop) .5s backwards;
+}
+
+@keyframes rk-names-rise {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    translate: 0 .4em;
+  }
+}
+
+@keyframes rk-split-twitch {
+  0% {
+    text-shadow: -.035em 0 0 var(--rk-teal), .035em 0 0 var(--rk-red), .07em .07em 0 var(--rk-ink);
+    translate: 0 0;
+  }
+
+  3% {
+    text-shadow: var(--rk-split) 0 0 var(--rk-teal), calc(var(--rk-split) * -1) 0 0 var(--rk-red), .07em .07em 0 var(--rk-ink);
+    translate: -.02em 0;
+  }
+
+  9%,
+  100% {
+    text-shadow: -.035em 0 0 var(--rk-teal), .035em 0 0 var(--rk-red), .07em .07em 0 var(--rk-ink);
+    translate: 0 0;
+  }
+}
+
+@keyframes rk-mail-pop {
+  from {
+    opacity: 0;
+    transform: scale(.6) rotate(-6deg);
+  }
+}
+
+/* Encore scene */
+.rk-encore__scene {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  width: min(1500px, 112%);
+  margin-top: clamp(-60px, -3vw, -14px);
+}
+
+.rk-encore__float {
+  display: block;
+  position: relative;
+  transform: translateY(0);
+  animation: rk-scene-float 6s ease-in-out infinite;
+}
+
+.rk-encore__float img {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  transform-origin: 51% 11%;
+  transform: scale(1);
+  transition: transform 1.2s var(--rk-ease);
+}
+
+@keyframes rk-scene-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.rk-encore__glow {
+  position: absolute;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: .85;
+  scale: 1;
+}
+
+.rk-encore__glow--mega {
+  top: var(--rk-mega-y, 14.8%);
+  left: var(--rk-mega-x, 39.8%);
+  width: 16%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--rk-cream) 95%, transparent) 0 6%,
+    color-mix(in srgb, var(--rk-teal) 75%, transparent) 18%,
+    color-mix(in srgb, var(--rk-purple) 30%, transparent) 42%,
+    transparent 68%
+  );
+  animation: rk-glow-pulse 1.6s ease-in-out infinite;
+}
+
+.rk-encore__glow--lamp {
+  top: -6%;
+  left: 57.5%;
+  width: 30%;
+  height: 40%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--rk-teal) 35%, transparent), transparent);
+  animation: rk-glow-pulse 2.4s ease-in-out infinite reverse;
+}
+
+@keyframes rk-glow-pulse {
+  0%,
+  100% {
+    opacity: .65;
+    scale: .75;
+  }
+
+  50% {
+    opacity: 1;
+    scale: 1.15;
+  }
+}
+
+/* Stage mist: the shell's block; this section sets only its height and box. */
+.rk-encore__mist {
+  --rk-mist-h: clamp(220px, 34vw, 544px);
+  z-index: 2;
+  bottom: -2%;
+  left: -10%;
+  right: -10%;
+}
+
+/* Email lines (not rendered while both addresses are unconfirmed) */
+.rk-encore__mails {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .4em;
+  margin: clamp(-150px, -9vw, -36px) 0 0;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(24px, 4.2vw, 72px);
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--rk-cream);
+  text-shadow: .04em .04em 0 var(--rk-orange), .08em .08em 0 var(--rk-ink);
+}
+
+.rk-encore__mail {
+  display: inline-block;
+  padding: 0 var(--rk-pad);
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+  transform: none;
+  transition:
+    color .25s ease,
+    transform .4s var(--rk-ease);
+}
+
+.rk-encore__mail span {
+  padding-bottom: .06em;
+  background: linear-gradient(var(--rk-yellow), var(--rk-yellow)) 0 100% / 100% .08em no-repeat;
+}
+
+.rk-encore__mail:focus-visible {
+  color: var(--rk-yellow);
+  transform: translateY(-6px) rotate(-1deg);
+}
+
+/* MLAI's mark: flat, level and still on a plain ink plate above the grain. */
+.rk-encore__mark {
+  display: block;
+  position: relative;
+  z-index: 31;
+  margin-top: 12px;
+  padding: 28px;
+  background: var(--rk-ink);
+}
+
+.rk-encore__mark img {
+  display: block;
+  height: 28px;
+  width: auto;
+  max-width: none;
+}
+
+/* Ticket bar */
+.rk-endticket {
+  position: relative;
+  z-index: 7;
+  rotate: -1deg;
+  margin-top: clamp(50px, 6vw, 90px);
+  width: calc(100% - 2 * (var(--rk-pad) + var(--rk-fw)));
+  max-width: 1080px;
+}
+
+.rk-endticket__roo {
+  position: absolute;
+  top: -86px;
+  right: clamp(10px, 4vw, 70px);
+  z-index: 8;
+  width: 96px;
+  pointer-events: none;
+  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, .85));
+  transform: translateY(0) rotate(-6deg);
+  animation: rk-perch-bob 3.4s ease-in-out infinite;
+}
+
+.rk-endticket__roo img {
+  width: 100%;
+  height: auto;
+}
+
+@keyframes rk-perch-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+
+  50% {
+    transform: translateY(-12px) rotate(4deg);
+  }
+}
+
+.rk-endticket__wrap {
+  filter: drop-shadow(8px 8px 0 var(--rk-orange));
+}
+
+.rk-endticket__paper {
+  --rk-notch-y: 50%;
+  --rk-focus: var(--rk-ink);
+  display: flex;
+  align-items: stretch;
+  background: var(--rk-cream);
+  color: var(--rk-ink);
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  -webkit-mask:
+    radial-gradient(11px at 0 var(--rk-notch-y), transparent 98%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(11px at 100% var(--rk-notch-y), transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
+  mask:
+    radial-gradient(11px at 0 var(--rk-notch-y), transparent 98%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(11px at 100% var(--rk-notch-y), transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
+}
+
+.rk-endticket__paper :focus-visible {
+  outline-width: 2px;
+  outline-offset: 2px;
+}
+
+.rk-endticket__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 22px 34px;
+  background: radial-gradient(color-mix(in srgb, var(--rk-ink) 8%, transparent) 1px, transparent 1.2px) 0 0 / 6px 6px;
+}
+
+.rk-endticket__line {
+  flex: 1 1 100%;
+  margin: 0;
+  font-family: var(--rk-display);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: .14em;
+}
+
+.rk-endticket__line > span {
+  white-space: nowrap;
+}
+
+.rk-endticket__line i {
+  margin: 0 .5em 0 0;
+  font-style: normal;
+  color: var(--rk-orange);
+}
+
+.rk-endticket__row {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 28px;
+}
+
+.rk-endticket__nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rk-endticket__nav a {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  color: var(--rk-ink);
+  text-decoration: none;
+}
+
+.rk-endticket__nav a:focus-visible {
+  background: var(--rk-yellow);
+}
+
+.rk-endticket__switch {
+  padding: 8px 14px;
+  font-size: 13.5px;
+}
+
+.rk-endticket__switch:active {
+  translate: 2px 2px;
+  box-shadow: 1px 1px 0 var(--rk-ink);
+}
+
+.rk-endticket__stub {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 30px 0 26px;
+  background: var(--rk-yellow);
+  border-left: 2px dashed color-mix(in srgb, var(--rk-ink) 50%, transparent);
+}
+
+.rk-endticket__stub a {
+  display: inline-block;
+  padding: 6px 8px;
+  font-family: var(--rk-display);
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.1;
+  letter-spacing: .08em;
+  white-space: nowrap;
+  color: var(--rk-ink);
+  text-decoration: none;
+}
+
+.rk-endticket__stub a:focus-visible {
+  background: var(--rk-ink);
+  color: var(--rk-yellow);
+}
+
+/* Hover (pointer devices only) */
+@media (hover: hover) {
+  .rk-count:hover .rk-count__num {
+    rotate: 3deg;
+    scale: 1.06;
+  }
+
+  .rk-encore__names a:hover {
+    color: var(--rk-cream);
+  }
+
+  .rk-encore__scene:hover .rk-encore__float img {
+    transform: scale(1.03);
+  }
+
+  .rk-encore__mail:hover {
+    color: var(--rk-yellow);
+    transform: translateY(-6px) rotate(-1deg);
+  }
+
+  .rk-endticket__nav a:hover {
+    background: var(--rk-yellow);
+  }
+
+  .rk-endticket__stub a:hover {
+    background: var(--rk-ink);
+    color: var(--rk-yellow);
+  }
+
+}
+
+@media (pointer: coarse) {
+  .rk-endticket__switch {
+    min-height: 44px;
+  }
+
+  .rk-endticket__nav a {
+    min-height: 44px;
+    margin-block: 0;
+  }
+}
+
+/* Tablets and phones */
+@media (max-width: 900px) {
+  .rk-encore {
+    padding-top: 70px;
+  }
+
+  .rk-encore__spark {
+    width: 56px;
+  }
+
+  .rk-encore__spark--one {
+    top: 8%;
+  }
+
+  .rk-encore__spark--two {
+    top: 28%;
+  }
+
+  .rk-encore__names {
+    font-size: clamp(26px, 8.2vw, 140px);
+  }
+
+  .rk-encore__scene {
+    width: 150%;
+    align-self: flex-start;
+    margin-left: -35%;
+  }
+
+  .rk-encore__mails {
+    margin-top: -14px;
+    font-size: clamp(18px, 5.6vw, 26px);
+  }
+
+  .rk-endticket {
+    width: calc(100% - 40px);
+    margin-top: 96px;
+    rotate: -1.5deg;
+  }
+
+  .rk-endticket__roo {
+    width: 72px;
+    top: -70px;
+    right: 8px;
+  }
+
+  .rk-endticket__paper {
+    --rk-notch-y: calc(100% - 56px);
+    flex-direction: column;
+  }
+
+  .rk-endticket__main {
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px 16px;
+    text-align: center;
+  }
+
+  .rk-endticket__line {
+    flex: none;
+    max-width: 100%;
+    text-wrap: balance;
+  }
+
+  .rk-endticket__row {
+    flex: none;
+    max-width: 100%;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .rk-endticket__nav ul {
+    justify-content: center;
+    gap: 8px 18px;
+  }
+
+  .rk-endticket__stub {
+    height: 56px;
+    padding: 16px;
+    border-left: 0;
+    border-top: 2px dashed color-mix(in srgb, var(--rk-ink) 50%, transparent);
+  }
+}
+
+@media (max-width: 760px) {
+  .rk-encore {
+    padding-bottom: calc(var(--rk-fw) + 76px + env(safe-area-inset-bottom));
+  }
+
+  .rk-encore__names {
+    --rk-split: max(.08em, 3px);
+  }
+}

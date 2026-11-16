@@ -522,10 +522,18 @@ export const why = {
 export const behind = {
   eyebrow: "THE PEOPLE BEHIND THIS",
   words: ["WEB DIRECTIONS", "× MLAI."],
+  /** Accessible name of the giant words ("and" for the "×"). */
+  wordsLabel: "Web Directions and MLAI.",
   /** Web Directions sentence. Wording not confirmed with Web Directions yet. */
   webDirectionsLine: null as string | null,
   mlaiLine: "MLAI is Australia's volunteer-run AI community.",
-  count: { value: 12000, display: "12,000+", label: ["PEOPLE IN THE", "MLAI", "COMMUNITY"] },
+  count: {
+    value: 12000,
+    display: "12,000+",
+    label: ["PEOPLE IN THE", "MLAI", "COMMUNITY"],
+    /** What screen readers hear for the sticker. */
+    srText: "12,000+ people in the MLAI community",
+  },
   links: [
     { label: "Meet Web Directions", arrow: "↗", href: facts.webDirectionsUrl },
     { label: "Meet MLAI", arrow: "↗", href: facts.mlaiUrl },
@@ -557,7 +565,14 @@ export const footer = {
     ],
     stub: "HOP BACK UP ↑",
   },
-  encore: { src: "/kindness/encore.webp", alt: "" },
+  encore: {
+    src: "/kindness/encore.webp",
+    alt: "Roo the kangaroo on a milk crate with a megaphone, in front of a crowd of animals.",
+  },
+  /** Utility label for the ticket bar's link list (not in the copy deck). */
+  navLabel: "Footer",
+  /** Hidden word read for the "×" between the two names. */
+  and: "and",
 };
 
 export const takeover = {

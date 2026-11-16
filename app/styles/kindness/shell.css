@@ -1343,3 +1343,6 @@ html.rk-motion-off.rk-on-hero .rk-btn--corner {
     padding: 15px 0;
   }
 }
+
+/* Sections that take focus from in-page jumps show no ring. */
+.rk-page section[tabindex="-1"]:focus { outline: none; }

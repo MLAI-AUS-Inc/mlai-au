@@ -43,7 +43,7 @@ export default function Hero() {
 
   return (
     <>
-      <section id={sections.hero.id} className="rk-sec rk-hero" aria-labelledby="rk-hero-title">
+      <section id={sections.hero.id} tabIndex={-1} className="rk-sec rk-hero" aria-labelledby="rk-hero-title">
         {/* Back layers: drawn sparkles, the heart spark, the megaphone. */}
         <div className="rk-hero__haze" aria-hidden="true" />
 
