@@ -1,0 +1,1197 @@
+/* Random Hacks of Kindness: What's in it (#whats-in-it) and Your crew (#crew).
+   03-win-crew.md, with 10-mobile.md for phones and tablets.
+   Phone first: the base rules are the phone layout (560 and below), then the
+   561 and 901 layers (761 and 1180 change nothing here). Every base rule is the
+   finished, visible pose. Release 1 runs one loop in these sections: Roo
+   rocking on the "0". Hover rules sit inside @media (hover: hover); focus
+   rules stay outside it. Shared blocks (Hop heading, eyebrows, Sticker button,
+   Text link, Tape) keep the shell's look: they are only placed and sized here. */
+
+/* ======================================================================== */
+/* What's in it: section ground and seam                                     */
+/* ======================================================================== */
+
+.rk-win {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  text-align: center;
+  padding: 96px calc(16px + var(--rk-fw)) clamp(80px, 10vw, 140px);
+  color: var(--rk-cream);
+  background:
+    radial-gradient(52% 46% at 50% 44%, color-mix(in srgb, var(--rk-purple) 42%, transparent), transparent 72%),
+    radial-gradient(70% 50% at 50% 110%, color-mix(in srgb, var(--rk-yellow) 12%, transparent), transparent 70%),
+    var(--rk-ink);
+}
+
+/* Seam: under all content (z 0), so it only eats rays, beams and hearts. */
+.rk-win::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  height: clamp(120px, 14vw, 220px);
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--rk-ink));
+}
+
+/* Holds the mist filter; never painted. */
+.rk-win__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ---------- Rays: 24 printed orange rays, static ---------- */
+
+.rk-win__rays {
+  position: absolute;
+  z-index: -2;
+  top: 44%;
+  left: 50%;
+  width: 120vmax;
+  height: 120vmax;
+  translate: -50% -50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--rk-orange) 20%, transparent) 0 5deg,
+    transparent 5deg 15deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, #000 12.67%, transparent 98.17%);
+  mask-image: radial-gradient(closest-side, #000 12.67%, transparent 98.17%);
+}
+
+/* ---------- Floor spotlights: two crossing beams, static ---------- */
+
+/* The beam emits light, so it keeps a 2px blur; the shape is clipped on the
+   inner layer so the blur softens the clipped edge. */
+.rk-win__spot {
+  position: absolute;
+  z-index: -1;
+  bottom: -10%;
+  width: clamp(260px, 34vw, 520px);
+  height: 130%;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  filter: blur(2px);
+}
+
+.rk-win__spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(44% 100%, 56% 100%, 100% 0, 0 0);
+  background: linear-gradient(transparent 22%, color-mix(in srgb, var(--rk-cream) 34%, transparent));
+}
+
+.rk-win__spot--l {
+  left: 2%;
+  rotate: 16deg;
+}
+
+.rk-win__spot--r {
+  right: 2%;
+  rotate: -15deg;
+}
+
+/* ---------- Pixel-heart scatter: a still scatter ---------- */
+
+.rk-win__hearts {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000 60%, transparent 75%);
+  mask-image: linear-gradient(#000 60%, transparent 75%);
+}
+
+.rk-win__heart {
+  position: absolute;
+  left: var(--rk-heart-x);
+  top: var(--rk-heart-y);
+  rotate: var(--rk-heart-a);
+  width: clamp(22px, 2.2vw, 34px);
+  height: auto;
+  max-width: none;
+  aspect-ratio: 7 / 6;
+  overflow: visible;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, .55));
+}
+
+.rk-win__heart--red {
+  color: var(--rk-red);
+}
+
+.rk-win__heart--teal {
+  color: var(--rk-teal);
+}
+
+.rk-win__heart--cream {
+  color: var(--rk-cream);
+}
+
+/* Phones: only the eight even-index hearts (index 0 is the first child). */
+.rk-win__heart:nth-child(even) {
+  display: none;
+}
+
+/* ---------- Section heading ---------- */
+
+.rk-win .rk-win__head {
+  position: relative;
+  z-index: 3;
+  /* Clears Roo, who stands .484em of the numerals (64.5vw) above their box:
+     31.2vw, plus room for the rock and the title's shadow. */
+  margin-bottom: calc(31.2vw + 20px);
+}
+
+.rk-win .rk-win__title {
+  --rk-title-size: clamp(45px, 5.25vw, 78px);
+  line-height: .98;
+  letter-spacing: -.015em;
+}
+
+/* ======================================================================== */
+/* Monument: numerals, stamp, Roo, plinth, mist                              */
+/* ======================================================================== */
+
+.rk-monument {
+  position: relative;
+  z-index: 2;
+  /* A longer number shrinks so it is at most 1.2 times as wide as "$0". */
+  --rk-win-k: min(1, 2.4 / var(--rk-win-n, 2));
+}
+
+/* Its font-size scales the whole monument: every child is sized in em. */
+.rk-monument__figure {
+  position: relative;
+  width: max-content;
+  margin: 0 auto;
+  line-height: .8;
+  font-size: calc(64.5vw * var(--rk-win-k));
+}
+
+.rk-monument__num {
+  position: relative;
+  display: block;
+  text-align: left;
+  font-family: var(--rk-shout);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: -.065em;
+  white-space: nowrap;
+}
+
+.rk-monument__depth,
+.rk-monument__face {
+  padding-right: .12em;
+}
+
+/* Extrusion: 13 hard steps from orange toward ink, then two dark copies.
+   The face's ink keyline is stroked here, twice as wide, so only its outer
+   half shows past the face and the overlapping "$" and "0" show no seam. */
+.rk-monument__depth {
+  color: var(--rk-orange);
+  -webkit-text-stroke: .008em color-mix(in srgb, var(--rk-ink) 40%, transparent);
+  text-shadow:
+    .004em .004em 0 color-mix(in srgb, var(--rk-orange) 90%, var(--rk-ink)),
+    .008em .008em 0 color-mix(in srgb, var(--rk-orange) 83.75%, var(--rk-ink)),
+    .012em .012em 0 color-mix(in srgb, var(--rk-orange) 77.5%, var(--rk-ink)),
+    .016em .016em 0 color-mix(in srgb, var(--rk-orange) 71.25%, var(--rk-ink)),
+    .02em .02em 0 color-mix(in srgb, var(--rk-orange) 65%, var(--rk-ink)),
+    .024em .024em 0 color-mix(in srgb, var(--rk-orange) 58.75%, var(--rk-ink)),
+    .028em .028em 0 color-mix(in srgb, var(--rk-orange) 52.5%, var(--rk-ink)),
+    .032em .032em 0 color-mix(in srgb, var(--rk-orange) 46.25%, var(--rk-ink)),
+    .036em .036em 0 color-mix(in srgb, var(--rk-orange) 40%, var(--rk-ink)),
+    .04em .04em 0 color-mix(in srgb, var(--rk-orange) 33.75%, var(--rk-ink)),
+    .044em .044em 0 color-mix(in srgb, var(--rk-orange) 27.5%, var(--rk-ink)),
+    .048em .048em 0 color-mix(in srgb, var(--rk-orange) 21.25%, var(--rk-ink)),
+    .052em .052em 0 color-mix(in srgb, var(--rk-orange) 15%, var(--rk-ink)),
+    .07em .07em 0 rgba(0, 0, 0, .9),
+    .09em .1em 0 rgba(0, 0, 0, .55);
+}
+
+/* Face: a highlight screened over a yellow base, both clipped to the text. */
+.rk-monument__face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  background:
+    radial-gradient(60% 70% at 30% 18%, color-mix(in srgb, var(--rk-cream) 35%, transparent), transparent 60%),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--rk-yellow), var(--rk-cream) 30%),
+      var(--rk-yellow) 45%,
+      color-mix(in srgb, var(--rk-yellow), var(--rk-orange) 15%)
+    );
+  background-blend-mode: screen, normal;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Dark grain at 140px, multiplied, on the face only: the grain tile is white
+   specks, so it is used as a mask over ink-coloured copy of the text. */
+.rk-monument__face::before {
+  content: attr(data-rk-text);
+  position: absolute;
+  inset: 0;
+  padding-right: .12em;
+  color: var(--rk-ink);
+  -webkit-text-fill-color: var(--rk-ink);
+  -webkit-mask: var(--rk-grain-url) 0 0 / 140px repeat;
+  mask: var(--rk-grain-url) 0 0 / 140px repeat;
+  mix-blend-mode: multiply;
+  opacity: .6;
+  pointer-events: none;
+}
+
+/* ---------- FREE stamp: a red block hit across the top-left corner ---------- */
+
+.rk-monument__stamp {
+  position: absolute;
+  z-index: 4;
+  top: -.22em;
+  left: -.02em;
+  line-height: 1;
+}
+
+.rk-monument__stamp b {
+  position: relative;
+  display: block;
+  font: 700 .17em/1 var(--rk-display);
+  letter-spacing: .01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: rotate(-8deg);
+  filter: url(#rk-ink-s);
+}
+
+.rk-monument__stamp i,
+.rk-monument__stamp b::before {
+  display: block;
+  padding: .1em .22em .08em;
+  background: var(--rk-red);
+  color: var(--rk-cream);
+  border: .012em solid var(--rk-ink);
+  outline: .03em solid var(--rk-cream);
+  outline-offset: -.09em;
+}
+
+/* The faint second strike, behind the main block. */
+.rk-monument__stamp b::before {
+  content: attr(data-rk-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: .14;
+  transform: translate(.06em, -.05em) rotate(1.5deg);
+}
+
+.rk-monument__stamp i {
+  position: relative;
+  font-style: normal;
+  box-shadow: .03em .03em 0 var(--rk-cream), .06em .06em 0 var(--rk-ink);
+}
+
+.rk-monument__stamp i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 180px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .55;
+}
+
+/* ---------- Perched Roo with the heart flag: the one loop ---------- */
+
+/* Tuned to Anton: the "0" rises .052em above the .8em line box, so a bottom
+   just above the box sets the flat base on the top curve with a .04em overlap.
+   `right` puts the base's middle (the 42% pivot) over the middle of the "0". */
+.rk-monument__roo {
+  position: absolute;
+  z-index: 5;
+  width: calc(.48em / var(--rk-win-k));
+  aspect-ratio: 1;
+  bottom: calc(100% + .004em);
+  right: .022em;
+  transform-origin: 42% 100%;
+  transform: rotate(-3deg);
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, .85));
+  animation: rk-win-perch 3.2s ease-in-out infinite;
+}
+
+.rk-monument__roo img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+}
+
+@keyframes rk-win-perch {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(0);
+  }
+
+  50% {
+    transform: rotate(3deg) translateY(-6px);
+  }
+}
+
+/* ---------- Plinth and plate ---------- */
+
+.rk-plinth {
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: min(108%, 100vw - 32px);
+  margin-top: clamp(-26px, -1.6vw, -10px);
+  /* Centred even when wider than the column (phones). */
+  margin-left: 50%;
+  translate: -50% 0;
+}
+
+.rk-plinth__plate {
+  position: relative;
+  display: block;
+  padding: clamp(12px, 1.4vw, 22px) 12px;
+  border: 3px solid var(--rk-ink);
+  background: linear-gradient(180deg, var(--rk-cream), var(--rk-cream) 60%, var(--rk-cream-2));
+  box-shadow: inset 0 -6px 0 color-mix(in srgb, var(--rk-ink) 12%, transparent);
+  color: var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(25.5px, 4.8vw, 69px);
+  line-height: 1;
+  letter-spacing: -.005em;
+  text-wrap: balance;
+  text-shadow: 2px 2px 0 color-mix(in srgb, var(--rk-orange) 55%, transparent);
+}
+
+.rk-plinth__plate > span {
+  display: block;
+}
+
+/* Grain multiplied at 140px. */
+.rk-plinth__plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 140px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .45;
+}
+
+.rk-plinth__base {
+  display: block;
+  height: clamp(16px, 1.8vw, 26px);
+  margin-inline: max(-3%, -12px);
+  background: var(--rk-orange);
+  border: 3px solid var(--rk-ink);
+  border-top: 0;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, .85);
+}
+
+/* ---------- Mist: a still haze at the foot of the plinth ---------- */
+
+/* The art is drawn on black. A blend mode would only see the plinth's own
+   layer (the plinth is a stacking context), so the filter turns the black
+   into transparency instead and the haze lights whatever is under it. */
+.rk-plinth__mist {
+  position: absolute;
+  z-index: 6;
+  left: -20%;
+  right: -20%;
+  bottom: -60%;
+  height: 140%;
+  opacity: .45;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent);
+  mask-image: radial-gradient(closest-side, #000 30%, transparent);
+}
+
+.rk-plinth__mist img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: fill;
+  filter: url(#rk-win-haze);
+}
+
+/* ======================================================================== */
+/* Ribbon and heart badge                                                    */
+/* ======================================================================== */
+
+.rk-ribbon {
+  position: relative;
+  z-index: 7;
+  max-width: 900px;
+  margin: clamp(56px, 7vw, 96px) auto 0;
+  padding-inline: 22px;
+}
+
+/* Carries the tilt (and, from P2, the swing); the tails swing with it. */
+.rk-ribbon__band {
+  position: relative;
+  display: block;
+  transform: rotate(-1.6deg);
+}
+
+/* Tails: purple swallow-tails tucked behind the band's ends. */
+.rk-ribbon__band::before,
+.rk-ribbon__band::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 22px;
+  bottom: -22px;
+  width: 34px;
+  background: var(--rk-purple);
+  border-block: 3px solid var(--rk-ink);
+}
+
+.rk-ribbon__band::before {
+  left: -24px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 38% 50%);
+}
+
+.rk-ribbon__band::after {
+  right: -24px;
+  clip-path: polygon(0 0, 100% 0, 62% 50%, 100% 100%, 0 100%);
+}
+
+/* The blue face sits on an inner box so the tails (z -1) can pass behind it. */
+.rk-ribbon__face {
+  position: relative;
+  display: block;
+  padding: clamp(18px, 2.2vw, 30px) clamp(16px, 3vw, 48px) clamp(20px, 2.4vw, 34px);
+  background: var(--rk-blue);
+  border-block: 3px solid var(--rk-ink);
+  box-shadow: 0 10px 0 rgba(0, 0, 0, .85);
+}
+
+.rk-ribbon__face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 400px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .4;
+}
+
+/* Chip: almost level while the band slopes. */
+.rk-ribbon__lead {
+  display: block;
+  width: fit-content;
+  margin: 0 auto .9em;
+  padding: .4em .56em .4em .8em;
+  background: var(--rk-ink);
+  color: var(--rk-yellow);
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: clamp(11px, 1vw, 14px);
+  line-height: 1.2;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  transform: rotate(1.5deg);
+}
+
+.rk-ribbon__what {
+  display: block;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(33px, 5.25vw, 81px);
+  line-height: .98;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: var(--rk-yellow);
+  text-shadow: 3px 3px 0 var(--rk-ink), 6px 6px 0 rgba(0, 0, 0, .55);
+  text-wrap: balance;
+}
+
+/* Pin-back heart badge on the ribbon's top-right corner. */
+.rk-ribbon__badge {
+  position: absolute;
+  z-index: 8;
+  top: -40px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  aspect-ratio: 1;
+  border: 3px solid var(--rk-ink);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--rk-yellow), var(--rk-cream) 40%),
+    var(--rk-yellow) 45%,
+    color-mix(in srgb, var(--rk-yellow), var(--rk-orange) 20%)
+  );
+  box-shadow: 4px 4px 0 var(--rk-ink);
+  transform: rotate(12deg);
+}
+
+.rk-ribbon__badge::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 2px dashed color-mix(in srgb, var(--rk-ink) 50%, transparent);
+  border-radius: 50%;
+}
+
+.rk-ribbon__heart {
+  position: relative;
+  width: clamp(30px, 3.4vw, 50px);
+  height: auto;
+  max-width: none;
+  aspect-ratio: 7 / 6;
+  color: var(--rk-red);
+}
+
+/* ======================================================================== */
+/* Perks and kicker                                                          */
+/* ======================================================================== */
+
+.rk-perks {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: .7em;
+  max-width: 46ch;
+  margin: clamp(22px, 3vh, 34px) auto 0;
+  padding: 0 16px;
+  text-align: left;
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: clamp(15px, 1.25vw, 19px);
+  line-height: 1.45;
+  color: var(--rk-cream);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, .9);
+}
+
+.rk-perks li {
+  position: relative;
+  padding-left: 1.6em;
+}
+
+/* Hanging pixel-heart bullet in the 1.6em gutter. */
+.rk-perks__heart {
+  position: absolute;
+  left: 0;
+  top: .38em;
+  width: .8em;
+  height: auto;
+  max-width: none;
+  aspect-ratio: 7 / 6;
+  color: var(--rk-red);
+}
+
+.rk-win__kicker {
+  position: relative;
+  z-index: 3;
+  max-width: 16ch;
+  margin: clamp(28px, 3.4vw, 44px) auto 0;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: clamp(26px, 2.9vw, 42px);
+  line-height: .98;
+  text-transform: uppercase;
+  color: var(--rk-cream);
+  text-shadow: 3px 3px 0 var(--rk-orange), 6px 6px 0 rgba(0, 0, 0, .85);
+  text-wrap: balance;
+}
+
+.rk-win__nowrap {
+  white-space: nowrap;
+}
+
+/* Tape label: yellow with ink text, ragged short ends, grain multiplied. */
+.rk-win__kicker-tag {
+  position: relative;
+  display: inline-block;
+  padding: .12em .4em;
+  background: var(--rk-yellow);
+  color: var(--rk-ink);
+  text-shadow: none;
+  white-space: nowrap;
+  transform: rotate(-2deg);
+  clip-path: polygon(
+    1.5% 0, 99% 0, 100% 22%, 98.2% 47%, 100% 74%, 98.8% 100%,
+    .6% 100%, 2% 76%, 0 50%, 1.6% 24%
+  );
+}
+
+.rk-win__kicker-tag::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 180px repeat;
+  filter: invert(1);
+  mix-blend-mode: multiply;
+  opacity: .55;
+}
+
+/* ======================================================================== */
+/* Your crew: ground and grid                                                */
+/* ======================================================================== */
+
+.rk-crew {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(70px, 8vw, 120px) calc(16px + var(--rk-fw)) clamp(80px, 9vw, 130px);
+  color: var(--rk-cream);
+  background:
+    radial-gradient(50% 50% at 75% 40%, color-mix(in srgb, var(--rk-teal) 12%, transparent), transparent),
+    radial-gradient(45% 50% at 15% 80%, color-mix(in srgb, var(--rk-purple) 13%, transparent), transparent),
+    var(--rk-ink);
+}
+
+/* Bottom fade: content sits at z 1, so it only eats the glows. */
+.rk-crew::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  height: clamp(140px, 16vw, 240px);
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--rk-ink));
+}
+
+/* One column on phones and tablets, vest first; two columns from 901. */
+.rk-crew__in {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 4vw, 64px);
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+/* ---------- Crew copy ---------- */
+
+.rk-crew__copy {
+  position: relative;
+  z-index: 3;
+  width: min(100%, 460px);
+  justify-self: center;
+}
+
+.rk-crew .rk-crew__title {
+  --rk-title-size: clamp(45px, 5.25vw, 78px);
+  line-height: .98;
+  letter-spacing: -.015em;
+}
+
+.rk-crew__body {
+  max-width: 40ch;
+  margin-top: clamp(14px, 1.6vw, 22px);
+  font-family: var(--rk-body);
+  font-weight: 500;
+  font-size: clamp(15px, 1.25vw, 19px);
+  line-height: 1.45;
+  color: var(--rk-cream);
+}
+
+/* ---------- Crew button (the shell's crew variant, placed here) ---------- */
+
+.rk-crew .rk-crew__btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 28px;
+  rotate: -1deg;
+}
+
+.rk-crew .rk-crew__btn:active {
+  rotate: 0deg;
+}
+
+/* ---------- Crew note ---------- */
+
+.rk-crew__note {
+  max-width: 38ch;
+  margin: clamp(16px, 2vw, 26px) auto 0;
+  text-align: center;
+  font-family: var(--rk-mono);
+  font-weight: 500;
+  font-size: clamp(11px, 1vw, 14px);
+  line-height: 1.6;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--rk-cream-soft);
+  text-wrap: balance;
+}
+
+/* ======================================================================== */
+/* Battle vest                                                               */
+/* ======================================================================== */
+
+/* One portrait shape at every width; everything inside is sized in cqw. */
+.rk-vest {
+  --rk-vest-tilt: 1.2deg;
+  position: relative;
+  order: -1;
+  container-type: inline-size;
+  aspect-ratio: 10 / 13;
+  width: min(100% - 12px, 460px);
+  justify-self: center;
+  rotate: var(--rk-vest-tilt);
+}
+
+.rk-vest__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  filter: drop-shadow(2.4cqw 2.4cqw 0 var(--rk-orange));
+}
+
+/* Stencil heart sprayed on the denim: no glow, denim does not emit light. */
+.rk-vest__heart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 46cqw;
+  height: auto;
+  max-width: none;
+  aspect-ratio: 7 / 6;
+  translate: -50% -54%;
+  color: var(--rk-teal);
+  opacity: .2;
+  filter: url(#rk-ink-s);
+}
+
+/* Two yellow strips over the shoulders, half on the denim, half on the ground. */
+.rk-vest .rk-vest__tape {
+  width: 22cqw;
+  height: 5cqw;
+  translate: -50% -50%;
+}
+
+.rk-vest .rk-vest__tape--l {
+  left: 22%;
+  top: 14%;
+  rotate: -14deg;
+}
+
+.rk-vest .rk-vest__tape--r {
+  left: 79%;
+  top: 14.5%;
+  rotate: 9deg;
+}
+
+/* Grain over denim and patches, masked to the vest's outline. */
+.rk-vest::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--rk-grain-url) 0 0 / 160px repeat;
+  mix-blend-mode: overlay;
+  opacity: .35;
+  -webkit-mask: url("/kindness/vest-360.webp") 0 0 / 100% 100% no-repeat;
+  mask: url("/kindness/vest-360.webp") 0 0 / 100% 100% no-repeat;
+}
+
+.rk-vest__list {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------- Community patch: a sewn patch from CSS only ---------- */
+
+.rk-patch {
+  position: absolute;
+  left: var(--rk-patch-x);
+  top: var(--rk-patch-y);
+  width: var(--rk-patch-w);
+  display: grid;
+  place-items: center;
+  padding: var(--rk-patch-pad, 1.4cqw 1.8cqw);
+  background:
+    repeating-linear-gradient(45deg, color-mix(in srgb, var(--rk-cream) 6%, transparent) 0 1px, transparent 1px 3px),
+    var(--rk-patch-bg, var(--rk-ink-2));
+  border: .75cqw solid var(--rk-patch-edge, var(--rk-cream));
+  border-radius: var(--rk-patch-rad, 2cqw);
+  box-shadow: .7cqw .9cqw 0 rgba(0, 0, 0, .55);
+  color: var(--rk-patch-ink, var(--rk-cream));
+  transform: translate(-50%, -50%) rotate(var(--rk-patch-r));
+  cursor: default;
+  transition:
+    transform .3s var(--rk-pop),
+    box-shadow .3s var(--rk-ease);
+}
+
+/* Stitch line. */
+.rk-patch::before {
+  content: "";
+  position: absolute;
+  inset: .5cqw;
+  border: max(1px, .25cqw) dashed var(--rk-patch-stitch, var(--rk-cream-soft));
+  border-radius: max(0px, calc(var(--rk-patch-rad, 2cqw) - .5cqw));
+  pointer-events: none;
+}
+
+.rk-patch__logo {
+  width: 100%;
+  height: auto;
+}
+
+.rk-patch__link {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+}
+
+.rk-patch__name {
+  display: block;
+  font-family: var(--rk-display);
+  font-weight: 700;
+  font-size: 3.6cqw;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+/* Fields: never red, orange at most once. Light fields take a darker stitch. */
+.rk-patch--ink {
+  --rk-patch-bg: var(--rk-ink);
+}
+
+.rk-patch--ink-2 {
+  --rk-patch-bg: var(--rk-ink-2);
+}
+
+.rk-patch--cream {
+  --rk-patch-bg: var(--rk-cream);
+  --rk-patch-edge: var(--rk-cream-2);
+  --rk-patch-stitch: var(--rk-ink-3);
+  --rk-patch-ink: var(--rk-ink);
+}
+
+.rk-patch--cream-2 {
+  --rk-patch-bg: var(--rk-cream-2);
+  --rk-patch-stitch: var(--rk-ink-3);
+  --rk-patch-ink: var(--rk-ink);
+}
+
+.rk-patch--teal {
+  --rk-patch-bg: var(--rk-teal);
+  --rk-patch-stitch: var(--rk-ink-3);
+  --rk-patch-ink: var(--rk-ink);
+  --rk-focus: var(--rk-ink);
+}
+
+.rk-patch--yellow {
+  --rk-patch-bg: var(--rk-yellow);
+  --rk-patch-stitch: var(--rk-ink-3);
+  --rk-patch-ink: var(--rk-ink);
+}
+
+.rk-patch--blue {
+  --rk-patch-bg: var(--rk-blue);
+}
+
+.rk-patch--purple {
+  --rk-patch-bg: var(--rk-purple);
+}
+
+.rk-patch--orange {
+  --rk-patch-bg: var(--rk-orange);
+  --rk-patch-ink: var(--rk-ink);
+}
+
+/* Shapes and treatments. */
+.rk-patch--pill {
+  --rk-patch-rad: 4cqw;
+}
+
+.rk-patch--round {
+  --rk-patch-rad: 50%;
+  aspect-ratio: 1;
+}
+
+.rk-patch--mono .rk-patch__logo {
+  filter: brightness(0);
+}
+
+.rk-patch--crop {
+  overflow: hidden;
+}
+
+.rk-patch--crop .rk-patch__logo {
+  transform: scale(1.45);
+  transform-origin: 84% 60%;
+}
+
+.rk-patch--bare {
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  filter: drop-shadow(.7cqw .9cqw 0 rgba(0, 0, 0, .55));
+}
+
+.rk-patch--bare::before {
+  content: none;
+}
+
+/* A hand-drawn cream safety pin across the top-right corner. */
+.rk-patch__pin {
+  position: absolute;
+  top: -1.4cqw;
+  right: -2.4cqw;
+  width: 7cqw;
+  height: auto;
+  max-width: none;
+  aspect-ratio: 3;
+  rotate: 35deg;
+  color: var(--rk-cream);
+  filter: drop-shadow(.3cqw .4cqw 0 rgba(0, 0, 0, .55));
+  pointer-events: none;
+}
+
+/* ---------- Name tape: the "IN THE CREW:" label patch ---------- */
+
+.rk-patch--label {
+  --rk-patch-bg: var(--rk-yellow);
+  --rk-patch-edge: var(--rk-ink);
+  --rk-patch-stitch: var(--rk-ink-3);
+  --rk-patch-pad: 1.6cqw 2.4cqw;
+  box-shadow: .8cqw .8cqw 0 var(--rk-orange);
+  color: var(--rk-ink);
+  font-family: var(--rk-display);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+}
+
+.rk-patch--label span {
+  display: block;
+  white-space: nowrap;
+}
+
+.rk-patch--label span:first-child {
+  font-size: 4.8cqw;
+}
+
+.rk-patch--label span:last-child {
+  font-size: 6.9cqw;
+}
+
+/* ---------- Decorative patches: one cell of the patch sheet each ---------- */
+
+.rk-patch--deco {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: url("/kindness/patches-512.webp")
+    calc(var(--rk-sprite-col) * 100% / 3) calc(var(--rk-sprite-row) * 100%) / 400% 200% no-repeat;
+  filter: drop-shadow(.7cqw .9cqw 0 rgba(0, 0, 0, .55));
+}
+
+.rk-patch--deco::before {
+  content: none;
+}
+
+/* Keyboard focus on a linked patch: the hover lift plus the shared ring. */
+.rk-patch:has(a:focus-visible) {
+  z-index: 10;
+  transform: translate(-50%, -56%) rotate(0deg) scale(1.08);
+  box-shadow: 1.4cqw 2cqw 0 rgba(0, 0, 0, .55);
+}
+
+.rk-patch--bare:has(a:focus-visible) {
+  box-shadow: none;
+}
+
+/* ======================================================================== */
+/* Hover (hover-capable devices only)                                        */
+/* ======================================================================== */
+
+@media (hover: hover) {
+  .rk-crew .rk-crew__btn:hover {
+    rotate: 0deg;
+  }
+
+  .rk-patch:hover {
+    z-index: 10;
+    transform: translate(-50%, -56%) rotate(0deg) scale(1.08);
+    box-shadow: 1.4cqw 2cqw 0 rgba(0, 0, 0, .55);
+  }
+
+  .rk-patch--label:hover {
+    box-shadow: 1.4cqw 2cqw 0 var(--rk-orange);
+  }
+
+  .rk-patch--bare:hover,
+  .rk-patch--deco:hover {
+    box-shadow: none;
+  }
+}
+
+/* ======================================================================== */
+/* Width layers                                                              */
+/* ======================================================================== */
+
+/* Big phone: numerals and Roo take the tablet sizes, all sixteen hearts. */
+@media (min-width: 561px) {
+  .rk-win .rk-win__head {
+    /* Roo stands .444em of clamp(225px, 46.5vw, 705px) above the numerals. */
+    margin-bottom: clamp(120px, calc(20.65vw + 20px), 333px);
+  }
+
+  .rk-win__heart:nth-child(even) {
+    display: block;
+  }
+
+  .rk-monument__figure {
+    font-size: calc(clamp(225px, 46.5vw, 705px) * var(--rk-win-k));
+  }
+
+  .rk-monument__stamp {
+    top: -.16em;
+  }
+
+  .rk-monument__roo {
+    width: calc(.44em / var(--rk-win-k));
+    right: .045em;
+  }
+
+  .rk-plinth__mist {
+    opacity: .6;
+  }
+
+  .rk-ribbon {
+    padding-inline: clamp(30px, 5vw, 70px);
+  }
+
+  .rk-ribbon__band::before,
+  .rk-ribbon__band::after {
+    width: clamp(40px, 6vw, 86px);
+  }
+
+  .rk-ribbon__band::before {
+    left: clamp(-58px, -4.5vw, -30px);
+  }
+
+  .rk-ribbon__band::after {
+    right: clamp(-58px, -4.5vw, -30px);
+  }
+
+  .rk-ribbon__badge {
+    top: -36px;
+    right: clamp(10px, 4vw, 60px);
+    width: clamp(64px, 7vw, 104px);
+  }
+
+  .rk-win__kicker {
+    max-width: 22ch;
+  }
+
+  .rk-patch--deco {
+    background-image: url("/kindness/patches.webp");
+  }
+}
+
+/* Small desktop: the monument's desktop sizes; crew copy beside the vest. */
+@media (min-width: 901px) {
+  .rk-win {
+    padding-top: clamp(96px, 8vw, 120px);
+    padding-bottom: clamp(50px, 6vw, 90px);
+  }
+
+  .rk-win .rk-win__head {
+    /* Roo stands .444em of clamp(225px, 28.5vw, 435px) above the numerals. */
+    margin-bottom: clamp(120px, calc(12.65vw + 20px), 213px);
+  }
+
+  .rk-win .rk-win__title {
+    --rk-title-size: clamp(42px, 4.2vw, 63px);
+  }
+
+  .rk-monument__figure {
+    font-size: calc(clamp(225px, 28.5vw, 435px) * var(--rk-win-k));
+  }
+
+  .rk-plinth {
+    max-width: 720px;
+  }
+
+  .rk-plinth__plate {
+    font-size: clamp(25.5px, 3.45vw, 51px);
+  }
+
+  .rk-ribbon {
+    margin-top: clamp(30px, 3.4vw, 56px);
+  }
+
+  .rk-ribbon__what {
+    font-size: clamp(30px, 3.9vw, 60px);
+  }
+
+  .rk-crew {
+    padding-top: clamp(60px, 6vw, 96px);
+    padding-bottom: clamp(70px, 7vw, 110px);
+  }
+
+  .rk-crew__in {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  }
+
+  .rk-crew__copy {
+    width: auto;
+    justify-self: stretch;
+  }
+
+  .rk-crew .rk-crew__title {
+    --rk-title-size: clamp(42px, 4.2vw, 63px);
+  }
+
+  .rk-crew .rk-crew__btn {
+    width: auto;
+    justify-content: flex-start;
+    margin-top: clamp(28px, 3.4vw, 44px);
+    rotate: -2deg;
+  }
+
+  .rk-crew__note {
+    margin-inline: 0;
+    text-align: left;
+  }
+
+  .rk-vest {
+    --rk-vest-tilt: 2deg;
+    order: 0;
+    width: min(100%, 500px);
+  }
+}

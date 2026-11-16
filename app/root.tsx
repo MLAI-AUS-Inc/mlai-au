@@ -70,6 +70,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const shouldLoadThirdPartyAnalytics = import.meta.env.PROD && location.pathname !== "/roo/topup";
   const pagePath = `${location.pathname}${location.search}`;
+  // The Random Hacks of Kindness page draws its own frame, rail and footer.
+  const isKindnessPage = location.pathname === "/kindness" || location.pathname.startsWith("/kindness/");
+  const hideSiteChrome = isKindnessPage;
 
   useEffect(() => {
     if (!shouldLoadThirdPartyAnalytics) return;
@@ -120,12 +123,16 @@ export function Layout({ children }: { children: ReactNode }) {
             />
           </noscript>
         ) : null}
-        <Sidebar />
-        <SectionMarkers />
-        <div className="lg:pl-[220px] bg-[var(--brutalist-beige)]">
+        {hideSiteChrome ? null : (
+          <>
+            <Sidebar />
+            <SectionMarkers />
+          </>
+        )}
+        <div className={hideSiteChrome ? undefined : "lg:pl-[220px] bg-[var(--brutalist-beige)]"}>
           {children}
         </div>
-        <Footer />
+        {hideSiteChrome ? null : <Footer />}
         <ScrollRestoration />
 
         {shouldLoadThirdPartyAnalytics ? (

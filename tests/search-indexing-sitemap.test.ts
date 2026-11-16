@@ -8,7 +8,7 @@ import { getSitemapEntries, normalizeLastmod, renderSitemap, resolveSitemapOrigi
 import { collectRegisteredRoutePaths } from "../scripts/lib/route-inventory";
 
 // Public pages published after the production inventory was recovered.
-const PAGES_ADDED_SINCE_RECOVERY = ["/mentors"];
+const PAGES_ADDED_SINCE_RECOVERY = ["/mentors", "/kindness"];
 
 test("recovered canonical inventory preserves all 76 production URLs without redirects or notices", () => {
   const baseline = JSON.parse(readFileSync("tests/fixtures/search-indexing/live-http-sitemap.json", "utf8"));
