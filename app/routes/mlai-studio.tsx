@@ -415,7 +415,7 @@ export default function MlaiStudio() {
                   </span>
                 </article>
               </Link>
-              <Link to="/watt-the-hack" className="studio-project-link" aria-label="Explore Watt the Hack">
+              <Link to="/hackathons" className="studio-project-link" aria-label="Explore Watt the Hack">
                 <article className="studio-project-card studio-project-card--hack">
                   <span className="studio-project-number" aria-hidden="true">03</span>
                   <span className="studio-service-index">
