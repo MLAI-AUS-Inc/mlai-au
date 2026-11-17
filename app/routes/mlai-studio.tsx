@@ -6,6 +6,7 @@ import {
   type MetaFunction,
 } from "react-router";
 import StudioBuilders from "~/components/studio/StudioBuilders";
+import { CHAT_URL } from "~/lib/chat-destinations";
 import "~/styles/studio-landing.css";
 
 const PAGE_URL = "https://mlai.au/mlai-studio";
@@ -397,21 +398,21 @@ export default function MlaiStudio() {
               </article>
             </Link>
             <div className="studio-other-work">
-              <a href="https://chat.mlai.au/my-startup/marketing" className="studio-project-link" aria-label="Explore Vibe Marketing">
+              <a href={CHAT_URL} className="studio-project-link" aria-label="Open MLAI Chat">
                 <article className="studio-project-card studio-project-card--marketing">
                   <span className="studio-project-number" aria-hidden="true">02</span>
                   <span className="studio-service-index">
                     BUILT FOR MLAI
                   </span>
                   <h3 className="disp">
-                    Vibe Marketing
+                    MLAI Chat
                   </h3>
                   <p>
-                    Helps founders research article topics and review drafts
-                    before publishing.
+                    Connect with the Australian AI community, join conversations
+                    and share what you’re building.
                   </p>
                   <span className="studio-project-detail">
-                    Content workflows · Founder Tools
+                    Community · Conversations · Collaboration
                   </span>
                 </article>
               </a>
