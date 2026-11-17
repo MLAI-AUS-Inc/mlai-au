@@ -397,7 +397,7 @@ export default function MlaiStudio() {
               </article>
             </Link>
             <div className="studio-other-work">
-              <Link to="/founder-tools/marketing" className="studio-project-link" aria-label="Explore Vibe Marketing">
+              <a href="https://chat.mlai.au/my-startup/marketing" className="studio-project-link" aria-label="Explore Vibe Marketing">
                 <article className="studio-project-card studio-project-card--marketing">
                   <span className="studio-project-number" aria-hidden="true">02</span>
                   <span className="studio-service-index">
@@ -414,7 +414,7 @@ export default function MlaiStudio() {
                     Content workflows · Founder Tools
                   </span>
                 </article>
-              </Link>
+              </a>
               <a href="https://watt-the-hack.com/" className="studio-project-link" aria-label="Explore Watt the Hack">
                 <article className="studio-project-card studio-project-card--hack">
                   <span className="studio-project-number" aria-hidden="true">03</span>

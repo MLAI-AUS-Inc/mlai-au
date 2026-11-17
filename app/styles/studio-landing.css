@@ -560,8 +560,8 @@
 }
 .studio-page .studio-steps > li[data-phase="scope"] {
   --studio-phase-accent: #ff3d00;
-  --studio-phase-ink: #fff;
-  --studio-phase-heading: #f2f2f2;
+  --studio-phase-ink: var(--ink);
+  --studio-phase-heading: var(--ink);
   --studio-phase-rule: rgb(255 255 255 / 25%);
 }
 .studio-page .studio-steps > li[data-phase="build"] {
