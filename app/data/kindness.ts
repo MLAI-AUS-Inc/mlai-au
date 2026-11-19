@@ -260,14 +260,14 @@ export const crew = {
     "src": "/kindness/partners/aie.svg"
   },
   {
-    "name": "UTS Startups",
-    "url": "https://www.uts.edu.au/for-students/current-students/support/opportunities/uts-startups",
-    "role": "venue sponsor, University of Technology Sydney",
+    "name": "University of Technology Sydney (UTS)",
+    "url": "https://www.uts.edu.au/",
+    "role": "venue sponsor",
     "slot": 2,
     "field": "ink",
-    "width": 256,
-    "height": 144,
-    "src": "/kindness/partners/uts.png"
+    "width": 235,
+    "height": 54,
+    "src": "/kindness/partners/uts.svg"
   },
   {
     "name": "Collage Social",
