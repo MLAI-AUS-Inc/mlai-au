@@ -110,8 +110,7 @@ export default function Hero() {
                 </span>
               </button>
 
-              <h1 id="rk-hero-title" className="rk-wordmark">
-                <span className="rk-wordmark__random">{wordmark.label}</span>{" "}
+              <h1 id="rk-hero-title" className="rk-wordmark" aria-label={wordmark.name}>
                 <span className="rk-wordmark__plate">
                   <img
                     className="rk-wordmark__art"

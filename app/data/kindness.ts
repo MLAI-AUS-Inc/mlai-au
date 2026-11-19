@@ -1,4 +1,4 @@
-// Random Hacks of Kindness (/kindness): every fact, link, flag and line of copy.
+// Hacks of Kindness (/kindness): every fact, link, flag and line of copy.
 //
 // Rules for editing this file:
 // - A fact the organisers have not confirmed is `null`. The element that would
@@ -23,7 +23,7 @@ export type KindnessLogo = {
 
 /** Event facts. Change these in one place; every section reads from here. */
 export const facts = {
-  name: "Random Hacks of Kindness",
+  name: "Hacks of Kindness",
   shortName: "Hacks of Kindness",
   cities: ["Sydney", "Melbourne"] as const,
   /** ISO dates with the Melbourne and Sydney summer offset. */
@@ -67,12 +67,12 @@ export const phase = {
 };
 
 export const meta = {
-  title: "Random Hacks of Kindness: build in one day for a for-purpose business",
+  title: "Hacks of Kindness: build in one day for a for-purpose business",
   description:
     "A free hackathon in Sydney and Melbourne, 4 to 5 December 2026. Use tech and AI to solve a real problem for a for-purpose business. Presented by Web Directions and MLAI.",
   image: "https://mlai.au/kindness/social-card.jpg",
   imageAlt:
-    "Random Hacks of Kindness: Roo the kangaroo in pixel sunglasses over a teal hand-lettered wordmark. Sydney and Melbourne, 4 to 5 December 2026. Free.",
+    "Hacks of Kindness: Roo the kangaroo in pixel sunglasses over a teal hand-lettered wordmark. Sydney and Melbourne, 4 to 5 December 2026. Free.",
   themeColor: "#def7fc",
 };
 
@@ -139,13 +139,11 @@ export const chrome = {
 export const hero = {
   eyebrow: "A HACKATHON FOR GOOD · WEB DIRECTIONS × MLAI",
   wordmark: {
-    /** The yellow tape label. Written in sentence case and uppercased in CSS, so the h1 reads "Random Hacks of Kindness". */
-    label: "Random",
     art: { src: "/kindness/wordmark.webp", alt: "Hacks of Kindness", width: 1400, height: 609 },
     /** Live-text fallback lines (P2 shows them if the art fails), uppercased in CSS. */
     live: ["Hacks of", "Kindness"],
     /** The accessible name of the whole wordmark. */
-    name: "Random Hacks of Kindness",
+    name: "Hacks of Kindness",
   },
   oval: {
     small: "A for-purpose business needs a hand.",

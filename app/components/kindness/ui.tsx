@@ -1,4 +1,4 @@
-// Shared building blocks for the Random Hacks of Kindness page. The shell spec
+// Shared building blocks for the Hacks of Kindness page. The shell spec
 // defines them; every section uses them by these names. Server-rendered only:
 // no state and no effects. Styles live in app/styles/kindness/shell.css.
 import type { CSSProperties, ReactNode } from "react";
