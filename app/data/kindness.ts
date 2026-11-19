@@ -43,7 +43,7 @@ export const facts = {
   },
   /** MLAI Slack invite link. Not confirmed yet. */
   slackUrl: null as string | null,
-  /** Where a not-for-profit pitches a problem. Not confirmed yet. */
+  /** Where a for-purpose business pitches a problem. Not confirmed yet. */
   pitchProblemUrl: null as string | null,
   /** Where a society, club or meetup asks to come as a crew. Not confirmed yet. */
   crewContactUrl: null as string | null,
@@ -67,13 +67,13 @@ export const phase = {
 };
 
 export const meta = {
-  title: "Random Hacks of Kindness: build for a not-for-profit in one day",
+  title: "Random Hacks of Kindness: build in one day for a for-purpose business",
   description:
-    "A free hackathon in Sydney and Melbourne, 4 to 5 December 2026. Use tech and AI to solve a real problem for a not-for-profit. Presented by Web Directions and MLAI.",
+    "A free hackathon in Sydney and Melbourne, 4 to 5 December 2026. Use tech and AI to solve a real problem for a for-purpose business. Presented by Web Directions and MLAI.",
   image: "https://mlai.au/kindness/social-card.jpg",
   imageAlt:
     "Random Hacks of Kindness: Roo the kangaroo in pixel sunglasses over a teal hand-lettered wordmark. Sydney and Melbourne, 4 to 5 December 2026. Free.",
-  themeColor: "#1a1a1a",
+  themeColor: "#def7fc",
 };
 
 /** Official MLAI lockups, used flat and exactly as supplied. */
@@ -148,7 +148,7 @@ export const hero = {
     name: "Random Hacks of Kindness",
   },
   oval: {
-    small: "A NOT-FOR-PROFIT NEEDS A HAND.",
+    small: "A for-purpose business needs a hand.",
     lines: ["BUILD THE FIX", "IN 1 DAY."],
     /** The character that misprints. */
     flicker: "1",
@@ -160,7 +160,7 @@ export const hero = {
     dates: ["FRI 4 DEC, EVENING", "SAT 5 DEC, ALL DAY"],
     lines: [
       "Free. Fully catered. Places are limited.",
-      "Not-for-profits bring real problems. You bring your laptop.",
+      "For-purpose businesses bring real problems. You bring your laptop.",
       "Finalists pitch on stage at AI Engineer Sydney on Mon 7 Dec.",
     ],
     stepByStep: { label: "Step by step", arrow: "↓", href: "#run-sheet" },
@@ -217,7 +217,7 @@ export const whatsInIt = {
       detail: null as string | null,
     },
   ],
-  kicker: "THE ACTUAL PRIZE: A NOT-FOR-PROFIT THAT USES WHAT YOU BUILT.",
+  kicker: "The actual prize: a for-purpose business that uses what you built.",
 };
 
 export const crew = {
@@ -280,7 +280,7 @@ export const whatYouDo = {
     {
       n: "01",
       title: "HEAR THE BRIEF",
-      body: "Friday night. A not-for-profit tells you what's broken and why it matters. Ask anything.",
+      body: "Friday night. A for-purpose business tells you what's broken and why it matters. Ask anything.",
       /** The "●" is drawn by CSS (a pinging dot); only the words are rendered. */
       badge: "● REAL PROBLEM" as string | null,
       art: { src: "/kindness/card-brief.webp", alt: "", width: 720, height: 482 },
@@ -318,7 +318,7 @@ export const briefs = {
   /** Visually hidden status read after each zine's number (the stamp is decorative). */
   statusSr: "sealed",
   title: ["SEALED UNTIL", "FRIDAY NIGHT."],
-  body: "Every brief comes from a not-for-profit with a real problem and a real person to answer your questions. We open them together on Friday 4 December.",
+  body: "Every brief comes from a for-purpose business with a real problem and a real person to answer your questions. We open them together on Friday 4 December.",
   /** Four sealed briefs. Cause areas are not confirmed yet. */
   items: [
     { n: "01", label: "BRIEF 01", causeArea: null as string | null, cover: "/kindness/brief-01.webp" },
@@ -343,7 +343,7 @@ export const briefs = {
     pendingSr: "Briefs open on Friday 4 December.",
   },
   pitch: {
-    question: "Work at a not-for-profit?",
+    question: "Work at a for-purpose business?",
     label: "Pitch us a problem",
     arrow: "→" as const,
     href: facts.pitchProblemUrl,
@@ -409,7 +409,7 @@ export const hopIn = {
       },
       { name: "Friday night: hear the briefs", time: facts.fridayStartAt },
       { name: "Pick a brief, find a team." },
-      { name: "Saturday: build", detail: "with mentors and the not-for-profits in the room" },
+      { name: "Saturday: build", detail: "with mentors and the for-purpose businesses in the room" },
       { name: "Demo, judging, handover." },
     ] as HopInStep[],
   },
@@ -467,7 +467,7 @@ export const faq = {
       a: "Nothing. It's free and fully catered. Places are limited, so we approve tickets by hand.",
     },
     {
-      q: "Who are the not-for-profits?",
+      q: "Who are the for-purpose businesses?",
       a: "We'll announce them before the weekend. Each one brings a real problem and a real person to answer your questions.",
     },
     {
@@ -477,7 +477,7 @@ export const faq = {
     },
     {
       q: "What happens after Saturday?",
-      a: "Finalists pitch on stage at AI Engineer Sydney on Monday 7 December. Everyone's build goes home with the not-for-profit it was made for.",
+      a: "Finalists pitch on stage at AI Engineer Sydney on Monday 7 December. Everyone's build goes home with the for-purpose business that it was made for.",
     },
   ] as Array<{ q: string; a: string | null; extra?: string | null }>,
   ask: {
@@ -491,8 +491,8 @@ export const faq = {
 export const why = {
   label: "WHY WE'RE DOING THIS",
   note: [
-    "Not-for-profits do some of the most important work in the country on some of the worst software. Spreadsheets held together with hope. Forms nobody can find. One day of your skills can save them a year of pain.",
-    "So we're putting builders and not-for-profits in one room, feeding everyone, and seeing what a weekend of loud kindness can do. Come build something that matters to someone.",
+    "For-purpose businesses do some of the most important work in the country on some of the worst software. Spreadsheets held together with hope. Forms nobody can find. One day of your skills can save them a year of pain.",
+    "So we're putting builders and for-purpose businesses in one room, feeding everyone, and seeing what a weekend of loud kindness can do. Come build something that matters to someone.",
   ],
   /** Who signs the note. Not confirmed yet, so the signature line is hidden. */
   signers: null as string[] | null,
