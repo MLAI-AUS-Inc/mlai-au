@@ -99,3 +99,5 @@ Keep task scratchpads, handoff notes, PR drafts, dated audits, and generated
 reports local. Common filenames and output directories are gitignored; use
 `.local/` for other working files. Commit maintained documentation and shared
 configuration, and put review summaries in the pull request itself.
+
+MLAI Chat drafts and publishes this site's articles through its GitHub connection.
