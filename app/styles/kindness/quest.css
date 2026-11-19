@@ -3,9 +3,6 @@
   background: var(--rk-quest-card);
   color: var(--rk-ink);
 }
-.rk-page.rk-quest :where(.rk-page) :where(mark) {
-  color: var(--rk-quest-accent);
-}
 .rk-page.rk-quest .rk-chip {
   background: var(--rk-quest-card);
   color: var(--rk-ink);
@@ -37,10 +34,6 @@
 }
 .rk-page.rk-quest .rk-stamp {
   color: var(--rk-ink);
-}
-.rk-page.rk-quest html.rk-motion-off .rk-motion-btn {
-  background: var(--rk-quest-card);
-  color: var(--rk-quest-accent);
 }
 .rk-page.rk-quest .rk-rail a {
   color: var(--rk-ink);
