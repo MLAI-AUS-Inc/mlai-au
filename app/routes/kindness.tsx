@@ -9,6 +9,7 @@ import doBriefsCss from "~/styles/kindness/do-briefs.css?url";
 import hopInCss from "~/styles/kindness/hop-in.css?url";
 import faqWhyCss from "~/styles/kindness/faq-why.css?url";
 import closingCss from "~/styles/kindness/closing.css?url";
+import questCss from "~/styles/kindness/quest.css?url";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -31,7 +32,7 @@ export function meta({}: Route.MetaArgs) {
 
 // Route-scoped styles: tokens and shell first, then one file per section.
 export const links: Route.LinksFunction = () => [
-  ...[tokensCss, shellCss, heroCss, winCrewCss, doBriefsCss, hopInCss, faqWhyCss, closingCss].map(href => ({
+  ...[tokensCss, shellCss, heroCss, winCrewCss, doBriefsCss, hopInCss, faqWhyCss, closingCss, questCss].map(href => ({
     rel: "stylesheet",
     href,
   })),

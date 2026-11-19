@@ -1,0 +1,726 @@
+/* Approved Kindness Quest skin. Paint only; production layout, motion and breakpoints stay in the section styles. */
+.rk-page.rk-quest {
+  background: var(--rk-quest-card);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest :where(.rk-page) :where(mark) {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-chip {
+  background: var(--rk-quest-card);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-chip--outline {
+  border-color: var(--rk-quest-border);
+}
+.rk-page.rk-quest .rk-link {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-eyebrow {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-eyebrow--teal {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-eyebrow--shout {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-head .rk-eyebrow--shout {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-hop {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-hop mark {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-stamp {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest html.rk-motion-off .rk-motion-btn {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-rail a {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-rail__label {
+  background: var(--rk-quest-card);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-rail a.is-on .rk-rail__label {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-ground {
+  background: radial-gradient(1000px 760px at 50% 2%, rgb(255 60 0 / .26), transparent 70%),
+    radial-gradient(900px 700px at 12% 20%, rgb(254 252 34 / .09), transparent 70%),
+    radial-gradient(900px 760px at 88% 36%, rgb(0 255 215 / .11), transparent 70%),
+    radial-gradient(1000px 800px at 18% 58%, rgb(54 55 220 / .2), transparent 70%),
+    radial-gradient(900px 700px at 85% 78%, rgb(75 13 179 / .2), transparent 70%),
+    linear-gradient(rgb(70 110 165 / .06), rgb(70 110 165 / .06)),
+    var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-sec {
+  background: var(--rk-quest-card);
+}
+@media (hover: hover) {
+  .rk-page.rk-quest .rk-chip:hover {
+    color: var(--rk-quest-accent);
+  }
+  .rk-page.rk-quest .rk-link:hover {
+    color: var(--rk-link-hover, var(--rk-quest-accent));
+  }
+}
+.rk-page.rk-quest .rk-sec.rk-hero {
+  color: var(--rk-ink);
+  background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgb(70 110 165 / .06)),
+    radial-gradient(60% 45% at 50% 34%, color-mix(in srgb, var(--rk-purple) 34%, transparent), transparent),
+    radial-gradient(90% 60% at 50% 108%, color-mix(in srgb, var(--rk-blue) 32%, transparent), transparent 70%),
+    var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-hero p.rk-hero__eyebrow {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-hero .rk-wordmark__art {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-hero .rk-wordmark__live {
+  color: var(--rk-quest-accent);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__plate {
+  background: var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__plate::after {
+  background: radial-gradient(closest-side, rgb(70 110 165 / .06) 60%, transparent 95%);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__headline {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__small {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__digit {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-hero .rk-where__eyebrow {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-hero .rk-where__dates {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-hero .rk-where__body {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-hero .rk-where__body > span + span {
+  color: color-mix(in srgb, var(--rk-ink) 86%, transparent);
+}
+.rk-page.rk-quest .rk-hero .rk-where__link {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-hero .rk-backed {
+  background: var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-hero .rk-backed__name {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-hero .rk-hero__briefs {
+  color: color-mix(in srgb, var(--rk-ink) 82%, transparent);
+}
+.rk-page.rk-quest .rk-hero .rk-hero__briefs:focus-visible {
+  color: var(--rk-quest-accent);
+}
+@media (hover: hover) {
+  .rk-page.rk-quest .rk-hero .rk-hero__briefs:hover {
+    color: var(--rk-quest-accent);
+  }
+}
+.rk-page.rk-quest .rk-tape--crew .rk-tape__heart {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-win {
+  color: var(--rk-ink);
+  background: radial-gradient(52% 46% at 50% 44%, color-mix(in srgb, var(--rk-purple) 42%, transparent), transparent 72%),
+    radial-gradient(70% 50% at 50% 110%, color-mix(in srgb, var(--rk-yellow) 12%, transparent), transparent 70%),
+    var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-win::after {
+  background: linear-gradient(transparent, var(--rk-quest-card));
+}
+.rk-page.rk-quest .rk-win__heart--red {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-win__heart--teal {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-win__heart--cream {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-monument__depth {
+  color: var(--rk-quest-accent);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-monument__face {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-monument__stamp i,
+.rk-page.rk-quest .rk-monument__stamp b::before {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-plinth__plate {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-ribbon__lead {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-ribbon__what {
+  color: var(--rk-quest-accent);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-ribbon__heart {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-perks {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-perks__heart {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-win__kicker {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-win__kicker-tag {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-crew {
+  color: var(--rk-ink);
+  background: radial-gradient(50% 50% at 75% 40%, color-mix(in srgb, var(--rk-teal) 12%, transparent), transparent),
+    radial-gradient(45% 50% at 15% 80%, color-mix(in srgb, var(--rk-purple) 13%, transparent), transparent),
+    var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-crew::after {
+  background: linear-gradient(transparent, var(--rk-quest-card));
+}
+.rk-page.rk-quest .rk-crew__body {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-crew__note {
+  color: var(--rk-quest-muted);
+}
+.rk-page.rk-quest .rk-vest__heart {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-patch {
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--rk-cream) 6%, transparent) 0 1px, transparent 1px 3px),
+    var(--rk-patch-bg, var(--rk-quest-soft));
+  color: var(--rk-patch-ink, var(--rk-ink));
+}
+.rk-page.rk-quest .rk-patch__pin {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-sec.rk-do {
+  background: radial-gradient(900px 600px at 82% 8%, color-mix(in srgb, var(--rk-blue) 22%, transparent), transparent 70%),
+    radial-gradient(800px 700px at 10% 40%, color-mix(in srgb, var(--rk-purple) 22%, transparent), transparent 70%),
+    radial-gradient(700px 500px at 60% 92%, color-mix(in srgb, var(--rk-teal) 14%, transparent), transparent 70%),
+    var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-do__sparkle {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-poster__no {
+  color: var(--rk-quest-accent);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-poster__title {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-poster__body {
+  color: var(--rk-ink);
+  background: color-mix(in srgb, var(--rk-quest-card) 82%, transparent);
+}
+.rk-page.rk-quest .rk-poster__live {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-sec.rk-briefs {
+  background: radial-gradient(1100px 700px at 50% 30%, color-mix(in srgb, var(--rk-purple) 30%, transparent), transparent 70%),
+    radial-gradient(700px 500px at 15% 90%, color-mix(in srgb, var(--rk-blue) 16%, transparent), transparent 70%),
+    var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-briefs::after {
+  background: radial-gradient(circle, rgb(70 110 165 / .06) 1px, transparent 1.6px) 0 0 / 5px 5px;
+}
+.rk-page.rk-quest .rk-onair {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-briefs__status {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-briefs__misprint {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-briefs__lede {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-zine__sleeve {
+  background: linear-gradient(var(--rk-quest-card), var(--rk-quest-card)) 0 8% / 100% 3px no-repeat,
+    repeating-linear-gradient(0deg, var(--rk-cream) 0 2px, var(--rk-quest-soft) 2px 3px) 0 0 / 100% 8% no-repeat,
+    radial-gradient(circle, rgb(70 110 165 / .12) 1px, transparent 1.5px) 0 0 / 6px 6px,
+    var(--rk-cream-2);
+}
+.rk-page.rk-quest .rk-zine__cover::after {
+  background: linear-gradient(rgb(70 110 165 / .12), rgb(70 110 165 / .12) 55%);
+}
+.rk-page.rk-quest .rk-zine__no {
+  background: var(--rk-quest-card);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-zine__line {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-briefs__countdown {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-briefs__cursor {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-briefs__pitch {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-briefs__pitch-icon {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-briefs__pitch .rk-briefs__pitch-link {
+  color: var(--rk-quest-accent);
+}
+@media (min-width: 901px) {
+  .rk-page.rk-quest .rk-briefs__shelf {
+    background: linear-gradient(var(--rk-quest-soft), var(--rk-quest-card));
+  }
+  .rk-page.rk-quest .rk-briefs__shelf::before {
+    background: rgb(70 110 165 / .06);
+  }
+}
+.rk-page.rk-quest .rk-hop-in__head .rk-eyebrow--shout {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-hop-in-oval__disc::after {
+  background: radial-gradient(closest-side, rgb(70 110 165 / .06) 60%, transparent 100%),
+    radial-gradient(closest-side, transparent 55%, rgba(26, 26, 26, .65));
+}
+.rk-page.rk-quest .rk-hop-in-oval__title {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-ticket__title {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-ticket__barcode {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--rk-quest-card) 0 2px,
+    transparent 2px 5px,
+    var(--rk-quest-card) 5px 6px,
+    transparent 6px 9px,
+    var(--rk-quest-card) 9px 12px,
+    transparent 12px 14px
+  );
+}
+.rk-page.rk-quest .rk-ticket__city {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-pledge-sheet__title {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-pledge-sheet__heart {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-pledge-sheet__pen {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-run-sheet .rk-run-sheet__title {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-run-sheet__steps::before {
+  background: rgb(70 110 165 / .06);
+}
+.rk-page.rk-quest .rk-run-sheet__name {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-run-sheet__detail {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-run-sheet__time {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-run-sheet__go {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-slack-strip__link:focus-visible {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-hop-in .rk-hop-in__note {
+  color: var(--rk-quest-muted);
+}
+.rk-page.rk-quest .rk-hop-in__note a {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-weekend .rk-weekend__eyebrow {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-weekend__day {
+  background: var(--rk-quest-soft);
+}
+.rk-page.rk-quest .rk-weekend__day::before {
+  background: radial-gradient(circle 5px, var(--rk-quest-card) 90%, transparent) 0 50% / 26px 14px repeat-x;
+}
+.rk-page.rk-quest .rk-weekend__when {
+  color: var(--rk-quest-muted);
+}
+.rk-page.rk-quest .rk-weekend__what {
+  color: var(--rk-ink);
+}
+@media (hover: hover) {
+  .rk-page.rk-quest .rk-slack-strip__link:hover {
+    background: var(--rk-quest-card);
+    color: var(--rk-quest-accent);
+  }
+}
+.rk-page.rk-quest .rk-faq .rk-faq__eyebrow {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-faq .rk-faq__title {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-faq .rk-qa {
+  background: var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-qa__a {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-ask__chip {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-note__text > p:first-child::first-letter {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-slogan {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-slogan__line {
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-slogan__line:last-child {
+  color: var(--rk-quest-accent);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-behind {
+  background: var(--rk-quest-card);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-behind__shade {
+  background: radial-gradient(color-mix(in srgb, var(--rk-cream) 7%, transparent) 1px, transparent 1.2px) 0 0 / 5px 5px,
+    radial-gradient(70% 70%, color-mix(in srgb, var(--rk-quest-card) 70%, transparent), color-mix(in srgb, var(--rk-quest-card) 86%, transparent)),
+    linear-gradient(var(--rk-quest-card), transparent 22% 72%, var(--rk-quest-card));
+}
+.rk-page.rk-quest .rk-behind__words {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-behind__body {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-count__label {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-encore {
+  color: var(--rk-ink);
+  background: radial-gradient(60% 45% at 50% 62%, color-mix(in srgb, var(--rk-orange) 22%, transparent), transparent 70%),
+    radial-gradient(40% 30% at 82% 22%, color-mix(in srgb, var(--rk-blue) 32%, transparent), transparent 70%),
+    var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-encore__by {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-encore__names {
+  color: var(--rk-quest-accent);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-encore__names a:focus-visible {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-encore__names i {
+  color: var(--rk-quest-accent);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-encore__mails {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 var(--rk-quest-shadow), 4px 4px 0 rgb(45 75 120 / .12);
+}
+.rk-page.rk-quest .rk-encore__mail:focus-visible {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-encore__mark {
+  background: var(--rk-quest-card);
+}
+.rk-page.rk-quest .rk-endticket__main {
+  background: radial-gradient(color-mix(in srgb, var(--rk-quest-card) 8%, transparent) 1px, transparent 1.2px) 0 0 / 6px 6px;
+}
+.rk-page.rk-quest .rk-endticket__line i {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-endticket__stub a:focus-visible {
+  background: var(--rk-quest-card);
+  color: var(--rk-quest-accent);
+}
+@media (hover: hover) {
+  .rk-page.rk-quest .rk-encore__names a:hover {
+    color: var(--rk-ink);
+  }
+  .rk-page.rk-quest .rk-encore__mail:hover {
+    color: var(--rk-quest-accent);
+  }
+  .rk-page.rk-quest .rk-endticket__stub a:hover {
+    background: var(--rk-quest-card);
+    color: var(--rk-quest-accent);
+  }
+}
+.rk-page.rk-quest {
+  --rk-ink: #19354f;
+  --rk-ink-2: #2b4a69;
+  --rk-ink-3: #426580;
+  --rk-cream: #fffdfb;
+  --rk-cream-2: #edf5ff;
+  --rk-cream-soft: #46627e;
+  --rk-teal: #a4e9dd;
+  --rk-orange: #ffa895;
+  --rk-yellow: #ffe993;
+  --rk-red: #ed819b;
+  --rk-blue: #a8c7f1;
+  --rk-purple: #cabaf0;
+  --rk-quest-card: #fffdfb;
+  --rk-quest-soft: #eaf4ff;
+  --rk-quest-muted: #45627e;
+  --rk-quest-accent: #254d87;
+  --rk-quest-border: #7da4c7;
+  --rk-quest-shadow: #b1ccec;
+  --rk-quest-sky: #d7ecff;
+  --rk-quest-clouds: url('/kindness/quest-clouds.webp');
+  --rk-shadow-head: 3px 3px 0 #fff,6px 6px 0 #99b9dc;
+  --rk-shadow-title: 4px 4px 0 #fff,9px 9px 0 #abc6e4;
+  --rk-shadow-teal-title: 4px 4px 0 #fff,9px 9px 0 #9dc8cb;
+  --rk-shadow-giant: .03em .03em 0 #fff,.06em .06em 0 #98b8db;
+  --rk-shadow-split: -.035em 0 0 #fff,.035em 0 0 #eca4b8,.07em .07em 0 #abc6e4;
+  --rk-slab-rest: 5px 5px 0 #bad2ee,5px 5px 0 2px #19354f;
+  --rk-slab-hover: 9px 9px 0 #a7e6e1,9px 9px 0 2px #19354f;
+  --rk-slab-press: 1px 1px 0 #bad2ee,1px 1px 0 2px #19354f;
+  background: var(--rk-quest-sky);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest {
+  --rk-ink: #154b61;
+  --rk-teal: #b3e6d6;
+  --rk-orange: #ffc08a;
+  --rk-yellow: #ffe587;
+  --rk-red: #f19ba5;
+  --rk-blue: #a7d2ef;
+  --rk-purple: #cabdee;
+  --rk-quest-accent: #176d79;
+  --rk-quest-sky: #def7fc;
+  --rk-quest-soft: #e7f8f0;
+  --rk-quest-muted: #426b76;
+  --rk-quest-border: #74b3c0;
+  --rk-quest-shadow: #a5d3d7;
+  --rk-quest-clouds: url('/kindness/quest-clouds.webp');
+}
+.rk-page.rk-quest .rk-sec.rk-hero {
+  background: var(--rk-quest-sky);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-hero__haze {
+  background-image: var(--rk-quest-clouds);
+  opacity: .82;
+  mix-blend-mode: normal;
+}
+.rk-page.rk-quest .rk-ground {
+  background: linear-gradient(180deg,var(--rk-quest-sky),#f1f8ff 30%,var(--rk-quest-soft) 65%,var(--rk-quest-sky));
+}
+.rk-page.rk-quest .rk-sec,
+.rk-page.rk-quest .rk-win,
+.rk-page.rk-quest .rk-crew,
+.rk-page.rk-quest .rk-behind,
+.rk-page.rk-quest .rk-encore {
+  background-color: var(--rk-quest-sky);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-win {
+  background: radial-gradient(60% 60% at 50% 45%,#fff9,transparent),var(--rk-quest-soft);
+}
+.rk-page.rk-quest .rk-win::after {
+  background: linear-gradient(transparent,var(--rk-quest-soft));
+}
+.rk-page.rk-quest .rk-crew {
+  background: linear-gradient(155deg,var(--rk-quest-sky),var(--rk-quest-soft));
+}
+.rk-page.rk-quest .rk-haze::before {
+  background-image: var(--rk-quest-clouds);
+  mix-blend-mode: normal;
+  opacity: .38;
+}
+.rk-page.rk-quest .rk-briefs {
+  background: linear-gradient(#ffffff66,#ffffff99),var(--rk-quest-clouds) center/cover,var(--rk-quest-soft);
+}
+.rk-page.rk-quest .rk-why {
+  background: linear-gradient(130deg,var(--rk-quest-soft),var(--rk-quest-sky));
+}
+.rk-page.rk-quest .rk-behind {
+  background: var(--rk-quest-clouds) center/cover,var(--rk-quest-sky);
+}
+.rk-page.rk-quest .rk-behind__shade {
+  background: linear-gradient(#ffffff55,#ffffffbb);
+}
+.rk-page.rk-quest .rk-encore {
+  background: linear-gradient(#ffffff33,#ffffff99),var(--rk-quest-clouds) center/cover,var(--rk-quest-sky);
+}
+.rk-page.rk-quest .rk-encore__sparkles,
+.rk-page.rk-quest .rk-encore__sparkles--near {
+  background-image: var(--rk-quest-clouds);
+  background-size: cover;
+  mix-blend-mode: normal;
+  opacity: .16;
+}
+.rk-page.rk-quest .rk-mist::before {
+  background-image: var(--rk-quest-clouds);
+  opacity: .4;
+}
+.rk-page.rk-quest .rk-hero .rk-oval__spray,
+.rk-page.rk-quest .rk-hop-in-oval__disc::after,
+.rk-page.rk-quest .rk-weekend__days::before {
+  background-image: var(--rk-quest-clouds);
+  filter: none;
+}
+.rk-page.rk-quest .rk-hero .rk-oval__plate {
+  background: #fffdf8;
+  box-shadow: 0 0 0 2px var(--rk-ink),8px 10px 0 var(--rk-quest-shadow);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__plate::after {
+  background: radial-gradient(closest-side,#ffffffbb 30%,#ffffff00 95%);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__headline {
+  color: var(--rk-ink);
+  text-shadow: 2px 2px 0 #fff,4px 4px 0 var(--rk-quest-shadow);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__digit {
+  color: var(--rk-quest-accent);
+  text-shadow: 2px 2px 0 #fff,4px 4px 0 var(--rk-quest-shadow);
+}
+.rk-page.rk-quest .rk-hero .rk-wordmark__art {
+  filter: drop-shadow(2px 2px 0 #fff) drop-shadow(-2px -2px 0 #fff) drop-shadow(0 6px 0 #244b7933);
+}
+.rk-page.rk-quest .rk-grain-overlay {
+  mix-blend-mode: multiply;
+  opacity: .06;
+}
+.rk-page.rk-quest .rk-grain {
+  --rk-grain-o: .1;
+}
+.rk-page.rk-quest .rk-tape::after,
+.rk-page.rk-quest .rk-stamp::after {
+  opacity: .14;
+}
+.rk-page.rk-quest .rk-hero .rk-backed {
+  background: #243c60;
+  color: #fff;
+  border-color: #fff;
+  box-shadow: 5px 5px 0 var(--rk-orange),5px 5px 0 2px var(--rk-ink);
+}
+.rk-page.rk-quest .rk-hero .rk-backed__name {
+  color: #fff;
+}
+.rk-page.rk-quest .rk-qa__q {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-qa__a {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-frame {
+  border-color: var(--rk-blue);
+}
+.rk-page.rk-quest .rk-rail__tick {
+  background: var(--rk-ink);
+  box-shadow: 0 0 0 2px #fff8;
+}
+.rk-page.rk-quest .rk-rail__label {
+  background: var(--rk-quest-card);
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-rail a:hover .rk-rail__tick {
+  background: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-encore__mark {
+  background: #243c60;
+}
+.rk-page.rk-quest .rk-encore__names,
+.rk-page.rk-quest .rk-encore__by,
+.rk-page.rk-quest .rk-slogan {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-slogan__line:last-child {
+  color: var(--rk-quest-accent);
+}
+.rk-page.rk-quest .rk-hop-in-oval__disc {
+  background: var(--rk-blue);
+}
+.rk-page.rk-quest .rk-hop-in__note {
+  color: var(--rk-quest-muted);
+}
+.rk-page.rk-quest .rk-briefs__countdown,
+.rk-page.rk-quest .rk-briefs__body {
+  color: var(--rk-ink);
+}
+.rk-page.rk-quest .rk-btn,
+.rk-page.rk-quest .rk-chip {
+  border-radius: 8px;
+  box-shadow: 4px 5px 0 #0f526a;
+}
+.rk-page.rk-quest .rk-qa,
+.rk-page.rk-quest .rk-weekend__day {
+  border-radius: 10px;
+  box-shadow: 6px 6px 0 #8abfc9;
+}
+.rk-page.rk-quest .rk-qa__q {
+  border-radius: 8px 8px 0 0;
+}
+.rk-page.rk-quest .rk-run-sheet__box {
+  border-style: dashed;
+}
+.rk-page.rk-quest .rk-note__paper {
+  box-shadow: 8px 8px 0 var(--rk-teal),13px 13px 0 #24647b;
+}
+.rk-page.rk-quest .rk-hero .rk-where {
+  background: #fffffff0;
+  box-shadow: 0 0 0 10px #fffffff0;
+  border-radius: 6px;
+}
+.rk-page.rk-quest .rk-run-sheet__box,
+.rk-page.rk-quest .rk-poster__body {
+  background: var(--rk-quest-card);
+  border-color: var(--rk-quest-border);
+}
+.rk-page.rk-quest .rk-hero .rk-oval__digit {
+  color: var(--rk-quest-accent) !important;
+}
+.rk-page.rk-quest .rk-briefs__misprint-line {
+  color: var(--rk-quest-accent);
+}

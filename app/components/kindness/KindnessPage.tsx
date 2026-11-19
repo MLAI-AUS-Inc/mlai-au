@@ -25,7 +25,7 @@ export default function KindnessPage() {
   useEffect(() => mountMotion(chrome.motion), []);
 
   return (
-    <div className="rk-page">
+    <div className="rk-page rk-quest">
       <MotionScript />
       <InkDefs />
       <SkipLink />

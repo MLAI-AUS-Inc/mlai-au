@@ -148,7 +148,7 @@ export default function WhatsInIt() {
         {rest.split(" ").map((word, i) => (
           <Fragment key={i}>
             {i > 0 ? " " : null}
-            {/* A hyphenated word ("NOT-FOR-PROFIT") never breaks at its hyphens. */}
+            {/* Keep any hyphenated display words together. */}
             {word.includes("-") ? <span className="rk-win__nowrap">{word}</span> : word}
           </Fragment>
         ))}
