@@ -34,12 +34,12 @@ export const facts = {
   fridayStartAt: null as string | null,
   /** Venue lines. Not confirmed yet. */
   venues: { sydney: null as string | null, melbourne: null as string | null },
-  /** Luma registration pages. Not confirmed yet. */
+  /** Luma registration pages. City-specific links are not confirmed. */
   luma: {
     sydney: null as string | null,
     melbourne: null as string | null,
-    /** One Luma page listing both cities, if the organisers make one. */
-    both: null as string | null,
+    /** Shared registration page for all participants. */
+    both: "https://luma.com/n6q3mp7y" as string | null,
   },
   /** MLAI Slack invite link. Not confirmed yet. */
   slackUrl: null as string | null,
