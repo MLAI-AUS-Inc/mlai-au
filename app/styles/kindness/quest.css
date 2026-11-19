@@ -208,7 +208,7 @@
 .rk-page.rk-quest .rk-vest__heart {
   color: var(--rk-quest-accent);
 }
-.rk-page.rk-quest .rk-patch {
+.rk-page.rk-quest .rk-patch:not(.rk-patch--deco):not(.rk-patch--bare) {
   background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--rk-cream) 6%, transparent) 0 1px, transparent 1px 3px),
     var(--rk-patch-bg, var(--rk-quest-soft));
   color: var(--rk-patch-ink, var(--rk-ink));
