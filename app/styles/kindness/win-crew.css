@@ -862,6 +862,13 @@
   height: auto;
 }
 
+.rk-patch__caption {
+  display: block;
+  margin-top: .8cqw;
+  font: 600 max(9px, 2.2cqw)/1.1 var(--rk-body);
+  text-align: center;
+  color: var(--rk-ink);
+}
 .rk-patch__link {
   display: block;
   width: 100%;

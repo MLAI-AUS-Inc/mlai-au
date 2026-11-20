@@ -239,17 +239,95 @@ export const crew = {
     /** The name-tape patch (decorative), one line per entry. */
     nameTape: ["IN THE", "CREW:"],
     /** Accessible name of the list of communities on the vest. */
-    listLabel: "In the crew",
+    listLabel: "Event sponsors and partners",
   },
   /**
-   * Community patches on the vest. Empty until communities confirm. Optional
+   * Verified event sponsor and partner marks on the vest. Optional
    * patch settings: `slot` (1 to 11, see the slot table in Crew), `field`
    * (patch colour), `shape` ("pill" or "round"), `mono` (logo forced to ink on
    * light fields), `crop` (only with the community's say-so), `bare` (a logo
    * that is already a badge).
    */
-  communities: [] as Array<
+  communities: [
+  {
+    "name": "AI Engineer Sydney",
+    "url": "https://webdirections.org/ai-engineer/",
+    "role": "ticket sponsor",
+    "slot": 1,
+    "field": "cream",
+    "width": 739,
+    "height": 135,
+    "src": "/kindness/partners/aie.svg"
+  },
+  {
+    "name": "University of Technology Sydney (UTS)",
+    "url": "https://www.uts.edu.au/",
+    "role": "venue sponsor",
+    "slot": 2,
+    "field": "ink",
+    "width": 235,
+    "height": 54,
+    "src": "/kindness/partners/uts.svg"
+  },
+  {
+    "name": "Collage Social",
+    "url": "https://play.google.com/store/apps/details?id=au.com.collageapp",
+    "role": "event partner",
+    "slot": 3,
+    "field": "cream",
+    "caption": true,
+    "width": 256,
+    "height": 256,
+    "src": "/kindness/partners/collage.png"
+  },
+  {
+    "name": "NCS UNSW",
+    "url": "https://luma.com/user/ncsunsw",
+    "role": "event partner",
+    "slot": 4,
+    "field": "cream",
+    "caption": true,
+    "width": 500,
+    "height": 500,
+    "src": "/kindness/partners/ncs.png"
+  },
+  {
+    "name": "Autohand AI",
+    "url": "https://autohand.ai/",
+    "role": "hack partner and sponsor",
+    "slot": 5,
+    "field": "cream",
+    "bare": false,
+    "caption": true,
+    "width": 190,
+    "height": 137,
+    "src": "/kindness/partners/autohand.png"
+  },
+  {
+    "name": "Exa",
+    "url": "https://exa.ai/",
+    "role": "hack partner and sponsor",
+    "slot": 6,
+    "field": "cream",
+    "width": 413,
+    "height": 129,
+    "src": "/kindness/partners/exa.svg"
+  },
+  {
+    "name": "UTS Tech Society",
+    "url": "https://www.utstechsoc.club/",
+    "role": "event partner",
+    "slot": 9,
+    "field": "cream",
+    "caption": true,
+    "width": 256,
+    "height": 256,
+    "src": "/kindness/partners/techsoc.png"
+  }
+] as Array<
     KindnessLogo & {
+      role: string;
+      caption?: boolean;
       slot?: number;
       field?: "ink" | "ink-2" | "cream" | "cream-2" | "teal" | "yellow" | "blue" | "purple" | "orange";
       shape?: "pill" | "round";

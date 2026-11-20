@@ -11,7 +11,7 @@ type Field = NonNullable<Community["field"]>;
 /**
  * Logo slots on the 10:13 vest (Patch slots, layering and sequence): centre x
  * and y in % of the vest, width in cqw, tilt in degrees. `field` is the default
- * patch colour, `spare` the width a spare decorative patch takes in the slot.
+ * patch colour. Unoccupied slots are left as bare denim.
  */
 const SLOTS: ReadonlyArray<{
   n: number;
@@ -20,22 +20,21 @@ const SLOTS: ReadonlyArray<{
   w: number;
   r: number;
   field: Field;
-  spare: number;
   pill?: boolean;
   bare?: boolean;
   pinned?: boolean;
 }> = [
-  { n: 5, x: 32, y: 33, w: 22, r: 4, field: "ink-2", spare: 17 },
-  { n: 6, x: 63, y: 34, w: 31, r: 5, field: "cream", spare: 16 },
-  { n: 7, x: 47, y: 76, w: 25, r: -6, field: "blue", spare: 17, pinned: true },
-  { n: 8, x: 27, y: 76, w: 19, r: 6, field: "teal", spare: 15 },
-  { n: 9, x: 72, y: 49, w: 19, r: 8, field: "ink", spare: 15, bare: true },
-  { n: 10, x: 34, y: 48, w: 27, r: -4, field: "purple", spare: 16, pinned: true },
-  { n: 11, x: 69, y: 89, w: 27, r: -10, field: "yellow", spare: 14, pill: true },
-  { n: 12, x: 37, y: 89, w: 37, r: 3, field: "ink", spare: 14, pill: true },
-  { n: 13, x: 70, y: 74, w: 26, r: 8, field: "cream-2", spare: 16, pinned: true },
-  { n: 14, x: 34, y: 62, w: 29, r: -3, field: "blue", spare: 15 },
-  { n: 15, x: 67, y: 61, w: 32, r: 4, field: "ink-2", spare: 16 },
+  { n: 5, x: 31, y: 33, w: 28, r: 4, field: "ink-2" },
+  { n: 6, x: 65, y: 33, w: 29, r: 5, field: "cream" },
+  { n: 7, x: 50, y: 83, w: 19, r: -6, field: "blue", pinned: true },
+  { n: 8, x: 33, y: 67, w: 24, r: 6, field: "teal" },
+  { n: 9, x: 70, y: 49, w: 22, r: 8, field: "ink", bare: true },
+  { n: 10, x: 34, y: 48, w: 27, r: -4, field: "purple", pinned: true },
+  { n: 11, x: 69, y: 89, w: 27, r: -10, field: "yellow", pill: true },
+  { n: 12, x: 37, y: 89, w: 37, r: 3, field: "ink", pill: true },
+  { n: 13, x: 69, y: 69, w: 24, r: 8, field: "cream-2", pinned: true },
+  { n: 14, x: 34, y: 62, w: 29, r: -3, field: "blue" },
+  { n: 15, x: 67, y: 61, w: 32, r: 4, field: "ink-2" },
 ];
 
 /** The four decorative patches that are always on the vest: sheet cells 0 to 3. */
@@ -45,9 +44,6 @@ const DECOS = [
   { n: 3, x: 56, y: 47, w: 11, r: 9 },
   { n: 4, x: 52, y: 63, w: 9, r: -7 },
 ];
-
-/** Sheet cells 4 to 7 fill empty logo slots, in slot order. */
-const SPARE_CELLS = [4, 5, 6, 7];
 
 function opensTab(href: string) {
   return /^https?:\/\//.test(href) && !href.startsWith("https://mlai.au/");
@@ -95,7 +91,7 @@ function CommunityPatch({ community, slot }: { community: Community; slot: (type
       src={community.src}
       width={community.width}
       height={community.height}
-      alt={community.name}
+      alt={community.caption ? "" : community.name}
       loading="lazy"
       decoding="async"
     />
@@ -104,11 +100,16 @@ function CommunityPatch({ community, slot }: { community: Community; slot: (type
   );
   const url = community.url ?? null;
   const external = url ? opensTab(url) : false;
-  let content: ReactNode = logo;
+  const labelledLogo = <>
+    {logo}
+    {community.caption ? <span className="rk-patch__caption">{community.name}</span> : null}
+    <Sr> — {community.role}</Sr>
+  </>;
+  let content: ReactNode = labelledLogo;
   if (url) {
     content = (
       <a className="rk-patch__link" href={url} {...(external ? { target: "_blank", rel: "noopener" } : {})}>
-        {logo}
+        {labelledLogo}
         {external ? <Sr> (opens in a new tab)</Sr> : null}
       </a>
     );
@@ -152,20 +153,9 @@ function VestPieces() {
     else extras.push(c);
   }
 
-  let spare = 0;
   const slots = SLOTS.map(slot => {
     const community = placed.get(slot.n);
-    if (community) return <CommunityPatch key={slot.n} community={community} slot={slot} />;
-    const cell = SPARE_CELLS[spare++];
-    if (cell === undefined) return null;
-    return (
-      <li
-        key={slot.n}
-        className="rk-patch rk-patch--deco"
-        aria-hidden="true"
-        style={patchStyle({ ...slot, w: slot.spare }, spriteStyle(cell))}
-      />
-    );
+    return community ? <CommunityPatch key={slot.n} community={community} slot={slot} /> : null;
   });
 
   return (
