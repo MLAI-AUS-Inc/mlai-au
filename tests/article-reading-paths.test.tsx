@@ -18,7 +18,7 @@ const text = (value: string) => renderToStaticMarkup(<span>{value}</span>).slice
 const hrefs = (html: string) => [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"/g)].map(match => match[1]);
 
 test('every current published article has an explicit reading decision, with no notices or orphan source files', () => {
-  expect(published).toHaveLength(58);
+  expect(published).toHaveLength(59);
   expect(Object.keys(ARTICLE_READING_PATHS).sort()).toEqual(published.map(a => path(a.slug)).sort());
   for (const article of published) {
     const route = path(article.slug);

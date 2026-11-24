@@ -56,6 +56,19 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/ai-jobs-australia-how-to-get-hired': {
+        toc: true, howTo: false, mediaObject: false, citations: true,
+        internalLinks: ARTICLE_READING_PATHS['/articles/featured/ai-jobs-australia-how-to-get-hired'].map(({ href }) => href),
+        readingPaths: ARTICLE_READING_PATHS['/articles/featured/ai-jobs-australia-how-to-get-hired'],
+        conversion: {
+            primary: 'events', primaryIcp: 'COMMUNITY', version: 'ai-jobs-community-v1', eventCalendarOnly: true,
+            copy: {
+                title: "Meet Australia's AI community",
+                body: "The public MLAI events calendar lists upcoming AI and machine learning meetups and hackathons. Inspect an event and register with its organiser if it fits.",
+                button: 'Explore MLAI events',
+            },
+        },
+    },
     '/articles/featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         toc: true, howTo: false, mediaObject: false, citations: true,
         contentOwnsConversion: true, contentOwnsDisclaimer: true,
