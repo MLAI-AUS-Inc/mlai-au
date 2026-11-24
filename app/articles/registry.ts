@@ -82,6 +82,17 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/ai-jobs-australia-how-to-get-hired': {
+        title: "AI Jobs Australia: Roles, Skills and How to Get Hired",
+        date: "2026-11-24",
+        dateModified: "2026-11-24",
+        description: "How to get an AI job in Australia: which roles are hiring, the skills employers want, and a step-by-step plan using projects, hackathons and community.",
+        author: "Dr Sam Donegan",
+        slug: "featured/ai-jobs-australia-how-to-get-hired",
+        analyticsArticleId: "",
+        image: ARTICLE_FALLBACK_IMAGE,
+        imageAlt: "Illustrative image for a guide to getting an AI job in Australia",
+    },
     'featured/build-an-ai-personal-assistant-for-one-small-business-task': {
         title: "Build an AI Personal Assistant for One Small Business Task",
         date: "2026-09-25",

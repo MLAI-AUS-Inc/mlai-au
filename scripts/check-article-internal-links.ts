@@ -25,6 +25,7 @@ const VALID_STATIC_ROUTES = new Set([
   "/sponsors",
   "/terms",
   "/vibe-raising",
+  "/volunteers",
 ]);
 
 const VALID_ARTICLE_ROUTES = new Set(

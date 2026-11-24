@@ -8,6 +8,11 @@ const issue = (number: number) => `/articles/community/weekly-deep-dive-into-ai-
 const read = (href: string, reason: string): ArticleReadingPath => ({ href, reason });
 
 export const ARTICLE_READING_PATHS: Record<string, readonly ArticleReadingPath[]> = {
+  // Career changers: choose a role, build evidence, then meet the people who hire.
+  [f('ai-jobs-australia-how-to-get-hired')]: [
+    read(f('build-an-ai-personal-assistant-for-one-small-business-task'), 'For a first proof project, scope one small assistant task, test it on fictional data and record its mistakes.'),
+    read(f('where-to-find-ai-events-in-melbourne'), 'To meet people who hire, compare dated Melbourne AI events and bring a specific question about your project.'),
+  ],
   // Recovered published guides retain their original optional learning offer.
   [f('build-an-ai-personal-assistant-for-one-small-business-task')]: [
     read(f('how-small-business-owners-can-get-started-with-ai-2026'), 'After testing the draft-only assistant, compare full pilot costs and corrections before deciding whether to continue.'),
