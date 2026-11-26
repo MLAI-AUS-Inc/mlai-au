@@ -1,0 +1,357 @@
+/* MLAI poster look: the site frame. Rail (sidebar), section ticks,
+   section dividers and the footer. These show on every page that has the
+   site chrome. */
+
+/* ── Rail ───────────────────────────────────────────────────────────── */
+
+.mp-rail {
+  background-color: var(--mp-ink-deep);
+  background-image:
+    linear-gradient(rgb(17 17 17 / 0.78), rgb(17 17 17 / 0.78)),
+    var(--mp-tex-xerox);
+  background-size: auto, 26rem;
+  padding: 1.125rem 0.875rem 0.875rem 0.75rem;
+  gap: 0.875rem;
+  border-right: 0.1875rem solid var(--mp-paper);
+}
+.mp-rail--drawer {
+  padding: 1rem 1.125rem;
+  border-right: 0.1875rem solid var(--mp-paper);
+}
+
+/* The kangaroo mark on a teal block, stuck on crooked with tape. */
+.mp-rail-logo {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  margin-bottom: 0.5rem;
+  background-color: var(--mp-teal);
+  background-image: var(--mp-tex-xerox-ink);
+  background-size: 18rem;
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.3125rem 0.3125rem 0 var(--mp-paper);
+  transform: rotate(var(--mp-b1));
+  transition: transform 90ms steps(2, end);
+}
+.mp-rail-logo::before {
+  content: "";
+  position: absolute;
+  top: -0.75rem;
+  left: 0.5rem;
+  width: 4.25rem;
+  height: 1.375rem;
+  background: var(--mp-art-tape-2) center / 100% 100% no-repeat;
+  transform: rotate(calc(var(--mp-tilt) * -7deg));
+  z-index: 2;
+}
+.mp-rail-logo img {
+  height: 132%;
+  width: auto;
+  object-fit: contain;
+  object-position: bottom;
+  margin-bottom: 0;
+}
+.mp-rail-logo:hover {
+  transform: translate(-0.0625rem, -0.125rem) rotate(calc(var(--mp-tilt) * 1.5deg));
+}
+.mp-rail-logo--sm {
+  width: 6.5rem;
+  margin-bottom: 0;
+}
+
+.mp-rail-nav {
+  gap: 0.5rem;
+}
+
+/* Each stop is a label torn off a roll, in that section's ink. */
+.mp-rail-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+  height: 100%;
+  padding: 0.375rem 0.75rem 0.4375rem 0.75rem;
+  background-color: var(--mp-item);
+  background-image: var(--mp-tex-xerox-ink);
+  background-size: 20rem;
+  color: var(--mp-paper);
+  clip-path: var(--mp-rip);
+  text-decoration: none;
+  transform: rotate(calc(var(--mp-tilt) * -0.9deg));
+  transform-origin: 0 50%;
+  transition: transform 90ms steps(2, end);
+}
+.mp-rail-item:nth-child(even) { transform: rotate(calc(var(--mp-tilt) * 0.8deg)); }
+.mp-rail-item:nth-child(3n) { transform: rotate(calc(var(--mp-tilt) * -0.4deg)); }
+.mp-rail-item[data-mp-tone="dark"] { color: var(--mp-ink); }
+.mp-rail-item[data-mp-tone="ink"] {
+  background-image: var(--mp-tex-xerox-soft);
+  box-shadow: inset 0 0 0 0.125rem var(--mp-paper);
+}
+.mp-rail-num {
+  font-family: var(--mp-font-shout);
+  font-size: 1.375rem;
+  line-height: 1;
+}
+.mp-rail-name {
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 1.1875rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.mp-rail-item:hover {
+  transform: translateX(0.25rem) rotate(calc(var(--mp-tilt) * 1.2deg));
+}
+/* You are here: the label is pulled out of the stack and chevroned. */
+.mp-rail-item[aria-current="true"] {
+  transform: translateX(0.4375rem) rotate(calc(var(--mp-tilt) * -1.6deg));
+  z-index: 1;
+}
+.mp-rail-item[aria-current="true"] .mp-rail-name::after {
+  content: " \00BB\00BB";
+  font-family: var(--mp-font-shout);
+  letter-spacing: -0.02em;
+}
+.mp-rail-item[aria-current="true"] .mp-rail-num {
+  background: var(--mp-yellow);
+  color: var(--mp-ink);
+  align-self: flex-start;
+  padding: 0.0625rem 0.375rem 0;
+  margin: -0.0625rem 0 0 -0.375rem;
+  transform: rotate(calc(var(--mp-tilt) * -4deg));
+}
+.mp-rail-item--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.875rem;
+  min-height: 3.375rem;
+  height: auto;
+  padding: 0.5rem 1rem;
+}
+
+/* Phone menu button: a paper square, inked. */
+.mp-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  min-height: 3rem;
+  background: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.25rem 0.25rem 0 var(--mp-orange);
+  transform: rotate(var(--mp-b1));
+}
+
+/* ── Section ticks (right edge) ─────────────────────────────────────── */
+
+.mp-ticks {
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+}
+.mp-tick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.125rem 0;
+}
+.mp-tick-bar {
+  display: block;
+  width: 0.5rem;
+  height: 1.125rem;
+  background: var(--mp-item);
+  outline: 0.0625rem solid var(--mp-paper);
+  transform: rotate(calc(var(--mp-tilt) * -6deg));
+  transition: width 90ms steps(2, end), height 90ms steps(2, end);
+}
+.mp-tick:nth-child(even) .mp-tick-bar { transform: rotate(calc(var(--mp-tilt) * 5deg)); }
+.mp-tick:hover .mp-tick-bar { height: 1.5rem; }
+.mp-tick[aria-current="true"] .mp-tick-bar {
+  width: 0.875rem;
+  height: 2rem;
+  outline: 0.125rem solid var(--mp-yellow);
+}
+.mp-tick-label {
+  position: absolute;
+  right: 100%;
+  margin-right: 0.625rem;
+  padding: 0.1875rem 0.5rem 0.0625rem;
+  font-family: var(--mp-font-type);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--mp-yellow);
+  color: var(--mp-ink);
+  transform: rotate(calc(var(--mp-tilt) * -2deg));
+  opacity: 0;
+  pointer-events: none;
+}
+.mp-tick:is(:hover, :focus-visible) .mp-tick-label { opacity: 1; }
+
+/* ── Section divider: a scribble in the next bill's ink ─────────────── */
+
+.mp-divider {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem 0.5rem;
+}
+.mp-divider-label {
+  font-family: var(--mp-font-type);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mp-paper);
+}
+.mp-divider-line {
+  display: block;
+  width: clamp(4rem, 9vw, 8rem);
+  height: 0.875rem;
+  background-color: var(--mp-item);
+  mask: url("/poster/scribble-ink.svg") center / 100% 100% no-repeat;
+  transform: rotate(calc(var(--mp-tilt) * -2deg));
+}
+/* The black bill's scribble is drawn in paper so it shows on the wall. */
+.mp-divider[style*="#1a1a1a"] .mp-divider-line { background-color: var(--mp-paper); }
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+
+.mp-foot-wall {
+  background-color: #17141c;
+  background-image: var(--mp-art-brick);
+  background-size: 50rem auto;
+  overflow-x: clip;
+}
+.mp-foot-pad {
+  padding: 2.5rem 0.875rem 1rem;
+}
+.mp-foot {
+  position: relative;
+  background-color: var(--mp-ink-deep);
+  background-image:
+    linear-gradient(rgb(17 17 17 / 0.8), rgb(17 17 17 / 0.8)),
+    var(--mp-tex-xerox);
+  background-size: auto, 30rem;
+  border: 0.1875rem solid var(--mp-paper);
+  border-top: 0;
+  box-shadow: 0.5rem 0.5rem 0 var(--mp-orange);
+  transform: rotate(var(--mp-a3));
+}
+/* Torn top edge. */
+.mp-foot::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 calc(100% - 0.0625rem) 0;
+  height: 1.75rem;
+  background-color: var(--mp-ink-deep);
+  mask-image: var(--mp-art-torn), linear-gradient(#000, #000);
+  mask-size: 46rem 100%, auto;
+  mask-repeat: repeat-x, no-repeat;
+  mask-composite: exclude;
+  transform: scaleY(-1);
+  pointer-events: none;
+}
+.mp-foot-logo {
+  width: 7rem;
+  height: 7rem;
+  object-fit: contain;
+  object-position: top;
+  transform: rotate(var(--mp-b3));
+}
+.mp-foot-title {
+  display: inline-block;
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mp-ink);
+  background: var(--mp-yellow);
+  padding: 0.125rem 0.5rem 0;
+  clip-path: var(--mp-swipe);
+  transform: rotate(var(--mp-b1));
+}
+.mp-foot-list {
+  margin-top: 0.875rem;
+  display: grid;
+  gap: 0.125rem;
+}
+.mp-foot-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-family: var(--mp-font-type);
+  font-size: 0.9375rem;
+  letter-spacing: 0.03em;
+  color: var(--mp-paper);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 0.125rem;
+  text-underline-offset: 0.25em;
+}
+.mp-foot-link:hover {
+  text-decoration-color: var(--mp-orange);
+}
+.mp-foot-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  color: var(--mp-paper);
+  border: 0.125rem solid var(--mp-paper);
+  transform: rotate(var(--mp-b2));
+  transition: transform 90ms steps(2, end);
+}
+.mp-foot-social:nth-child(even) { transform: rotate(var(--mp-b1)); }
+.mp-foot-social:hover {
+  background: var(--mp-yellow);
+  color: var(--mp-ink);
+  transform: translateY(-0.125rem) rotate(0deg);
+}
+.mp-foot-legal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+  font-family: var(--mp-font-type);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--mp-text-soft);
+  text-align: center;
+}
+.mp-foot-legal a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.mp-foot-legal a:hover { color: var(--mp-paper); }
+@media (min-width: 640px) {
+  .mp-foot-legal { flex-direction: row; gap: 0; }
+  .mp-foot-pad { padding: 3rem 1.75rem 1.5rem 1.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-rail-item,
+  .mp-rail-logo,
+  .mp-tick-bar,
+  .mp-foot-social { transition: none; }
+}
+
+/* Below the rail breakpoint the menu button floats top left; give the
+   first thing on a poster page room so the button never sits on words. */
+@media (max-width: 1023px) {
+  .mp-page.mp-wall { padding-top: 3.75rem; }
+}

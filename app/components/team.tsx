@@ -395,15 +395,16 @@ export default function Team() {
           .fighter-select-box, .fighter-nav-arrow { transition: none !important; }
         }
 
+        /* Poster look: the arcade cabinet is a bill on the wall. The game
+           itself keeps its pixel art and stays level. */
         .fighter-select-wrapper {
           width: 100%;
-          background-color: var(--brutalist-beige);
-          padding: 0.5rem;
+          padding: 0.875rem 0.875rem 1.25rem;
         }
 
         @media (min-width: 1024px) {
           .fighter-select-wrapper {
-            padding: 0.75rem;
+            padding: 1rem 1.75rem 1.75rem 1.5rem;
           }
         }
 
@@ -413,13 +414,13 @@ export default function Team() {
           min-height: 400px;
           background-color: #3537dc;
           overflow: hidden;
-          border-radius: 1.5rem;
+          border: 0.1875rem solid #1a1a1a;
+          box-shadow: 0.5rem 0.5rem 0 #fefc22;
           padding: 16px;
         }
 
         @media (min-width: 640px) {
           .fighter-select-container {
-            border-radius: 2rem;
             padding: 20px;
           }
         }
@@ -427,7 +428,6 @@ export default function Team() {
         @media (min-width: 1024px) {
           .fighter-select-container {
             min-height: 500px;
-            border-radius: 2.5rem;
             padding: 24px 32px;
           }
         }

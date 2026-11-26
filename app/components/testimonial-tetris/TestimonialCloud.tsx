@@ -82,9 +82,10 @@ export function TestimonialCloud() {
   const isExpanded = state !== "compact";
 
   return (
-    <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
+    <div className="mp-sec relative">
+      <i className="mp-tp mp-tp--duct mp-tp--tl" aria-hidden="true" />
       <div
-        className={`rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-10 relative z-10 transition-all duration-500 overflow-hidden ${
+        className={`mp-said py-8 sm:py-10 relative z-10 transition-all duration-500 overflow-hidden ${
           isExpanded
             ? "min-h-[600px] sm:min-h-[700px] lg:min-h-[850px]"
             : "min-h-[400px] sm:min-h-[450px]"
@@ -113,7 +114,7 @@ export function TestimonialCloud() {
         {/* Close button - shown when playing */}
         {state === "playing" && (
           <button
-            className="absolute top-4 right-4 z-30 w-10 h-10 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition-colors touch-action-manipulation"
+            className="mp-x mp-x--ink absolute top-4 right-4 z-30 w-11 h-11 flex items-center justify-center touch-action-manipulation"
             onClick={handleClose}
             aria-label="Close game"
           >

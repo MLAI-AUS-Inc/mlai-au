@@ -25,14 +25,15 @@ type LogoCloudState = 'compact' | 'expanding' | 'playing';
 
 function UpcomingEventsSkeleton() {
   return (
-    <div className="bg-white py-16 animate-pulse">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-10 bg-gray-200 rounded w-1/3 mx-auto mb-4" />
-        <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-12" />
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-96 bg-gray-200 rounded-3xl" />
-          ))}
+    <div className="mp-sec">
+      <div className="mp-bill mp-bill--a2 px-4 py-12 sm:px-8" data-mp-ink="purple">
+        <div className="max-w-7xl mx-auto">
+          <div className="mp-skel h-10 w-1/3 mb-10" />
+          <div className="grid grid-cols-1 gap-5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="mp-skel h-24" />
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -41,17 +42,19 @@ function UpcomingEventsSkeleton() {
 
 function SubstackUpdatesSkeleton() {
   return (
-    <div className="bg-white py-16 animate-pulse">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-10 bg-gray-200 rounded w-1/3 mx-auto mb-12" />
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i}>
-              <div className="h-48 bg-gray-200 rounded-lg mb-4" />
-              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-full" />
-            </div>
-          ))}
+    <div className="mp-sec">
+      <div className="mp-bill mp-bill--a4 px-4 py-12 sm:px-8" data-mp-ink="yellow">
+        <div className="max-w-7xl mx-auto">
+          <div className="mp-skel h-10 w-1/3 mb-10" />
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i}>
+                <div className="mp-skel h-48 mb-4" />
+                <div className="mp-skel h-6 w-3/4 mb-2" />
+                <div className="mp-skel h-4 w-full" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -108,7 +111,7 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
   const isExpanded = logoCloudState !== 'compact';
 
   return (
-    <main className="bg-[var(--brutalist-beige)]">
+    <main className="mp-page mp-wall">
       {/* Hero section */}
       <Hero />
 
@@ -119,10 +122,11 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         <SectionDivider color="#ff3d00" />
 
         {/* Logo Cloud - Hover/Tap to Activate Shooter Game! */}
-        <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
+        <div className="mp-sec relative">
+          <i className="mp-tp mp-tp--duct mp-tp--tr" aria-hidden="true" />
           <div
             id="logoCloud"
-            className={`rounded-2xl sm:rounded-[2.5rem] py-6 sm:py-8 relative z-10 transition-all duration-500 overflow-hidden ${isExpanded
+            className={`mp-logos py-6 sm:py-8 relative z-10 transition-all duration-500 overflow-hidden ${isExpanded
               ? 'min-h-[500px] sm:min-h-[600px] lg:min-h-[750px]'
               : 'min-h-[300px] sm:min-h-[350px]'
               } ${logoCloudState === 'playing'
@@ -152,7 +156,7 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
             {/* Close button for mobile - shown when playing */}
             {logoCloudState === 'playing' && (
               <button
-                className="absolute top-4 right-4 z-30 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors touch-action-manipulation"
+                className="mp-x absolute top-4 right-4 z-30 w-11 h-11 flex items-center justify-center touch-action-manipulation"
                 onClick={(e) => {
                   e.stopPropagation();
                   setLogoCloudState('compact');
@@ -176,12 +180,12 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
               </div>
 
               <div className="mt-4 flex justify-center px-2">
-                <p className="text-xs sm:text-sm text-center leading-5 sm:leading-6 text-white text-opacity-90">
+                <p className="mp-logos-note">
                   <span className="block sm:inline">
                     Our events have been sponsored and supported by over 50 awesome
                     organisations across Australia.{" "}
                   </span>
-                  <a href="/sponsors" className="font-semibold text-white hover:text-opacity-80 transition-opacity whitespace-nowrap">
+                  <a href="/sponsors" className="mp-logos-link whitespace-nowrap">
                     Become a sponsor <span aria-hidden="true">&rarr;</span>
                   </a>
                 </p>
@@ -202,7 +206,7 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
 
         {/* Upcoming Events */}
         <Suspense fallback={<UpcomingEventsSkeleton />}>
-          <Await resolve={events} errorElement={<div className="py-8 text-center text-gray-600">Unable to load events</div>}>
+          <Await resolve={events} errorElement={<div className="mp-type py-8 text-center text-[var(--mp-paper)]">Unable to load events</div>}>
             {(resolvedEvents) => <UpcomingEvents events={resolvedEvents} />}
           </Await>
         </Suspense>
@@ -256,7 +260,7 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
 
         {/* Substack Updates */}
         <Suspense fallback={<SubstackUpdatesSkeleton />}>
-          <Await resolve={substackPosts} errorElement={<div className="py-8 text-center text-gray-600">Unable to load updates</div>}>
+          <Await resolve={substackPosts} errorElement={<div className="mp-type py-8 text-center text-[var(--mp-paper)]">Unable to load updates</div>}>
             {(resolvedPosts) => <SubstackUpdates posts={resolvedPosts} />}
           </Await>
         </Suspense>

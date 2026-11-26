@@ -57,8 +57,8 @@ const STATS = [
 const MARQUEE_CSS = `
 @keyframes ms-marquee-l { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes ms-marquee-r { from { transform: translateX(-50%); } to { transform: translateX(0); } }
-.ms-marquee { -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent); mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent); }
-.ms-marquee-track { display: flex; width: max-content; gap: 14px; padding-right: 14px; animation: ms-marquee-l 38s linear infinite; }
+.ms-marquee { padding: 8px 0; }
+.ms-marquee-track { display: flex; width: max-content; gap: 18px; padding-right: 18px; animation: ms-marquee-l 38s linear infinite; }
 .ms-marquee-track.rev { animation-name: ms-marquee-r; }
 .ms-marquee:hover .ms-marquee-track { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .ms-marquee-track { animation: none; } }
@@ -67,7 +67,7 @@ const MARQUEE_CSS = `
 function Pill({ label, color }: { label: string; color: (typeof PILL_COLORS)[number] }) {
   return (
     <span
-      className={`shrink-0 rounded-full px-6 py-3 text-base sm:text-lg font-bold uppercase tracking-wide whitespace-nowrap ${color.dark ? "text-black" : "text-white"}`}
+      className={`mp-label mp-brief shrink-0 text-base sm:text-lg ${color.dark ? "text-black" : "text-white"}`}
       style={{ backgroundColor: color.bg }}
     >
       {label}
@@ -101,16 +101,21 @@ export default function MlaiStudioTeaser() {
   }, []);
 
   return (
-    <div className="w-full bg-[var(--brutalist-beige)] p-2 lg:p-3">
-      <div className="relative w-full bg-gray-900 rounded-2xl sm:rounded-[2.5rem] py-12 sm:py-16 lg:py-20 overflow-hidden">
+    <div className="mp-sec w-full">
+      <div
+        className="mp-bill mp-bill--black mp-bill--a2 mp-studio relative w-full py-12 sm:py-16 lg:py-20"
+        data-mp-ink="red"
+        data-mp-ground="black"
+        data-mp-tape="duct"
+      >
         <style>{MARQUEE_CSS}</style>
 
         {/* Header */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-[#ff003d] text-sm uppercase tracking-widest mb-5">MLAI Studio</p>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+          <p className="mp-eyebrow mb-5">MLAI Studio</p>
+          <h2 className="mp-shout mp-studio-title mb-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
             <span>Get paid to</span>
-            <span className="relative inline-flex items-center justify-center rounded-2xl bg-[#ff003d] px-3 sm:px-4 py-1 text-white overflow-hidden align-middle">
+            <span className="mp-studio-word relative inline-flex items-center justify-center px-3 sm:px-4 overflow-hidden align-middle">
               <span className="invisible" aria-hidden="true">integrate</span>
               <span className="absolute inset-0 flex items-center justify-center overflow-hidden">
                 <AnimatePresence mode="popLayout" initial={false}>
@@ -119,7 +124,7 @@ export default function MlaiStudioTeaser() {
                     initial={{ y: "110%", opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: "-110%", opacity: 0 }}
-                    transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
+                    transition={{ duration: 0.18, ease: "linear" }}
                     className="inline-block"
                   >
                     {ROTATING_WORDS[wordIndex]}
@@ -129,14 +134,14 @@ export default function MlaiStudioTeaser() {
             </span>
             <span>what startups actually need</span>
           </h2>
-          <p className="text-gray-400 text-lg sm:text-xl max-w-3xl mx-auto">
+          <p className="mp-lede max-w-3xl mx-auto">
             MLAI Studio matches vetted Australian AI builders with real, paid startup projects —
             AI, automation, MVPs, integrations and product work. Join the builder pool.
           </p>
         </div>
 
         {/* Live deal-flow — two opposing pill marquees (hover to pause) */}
-        <div className="mt-12 sm:mt-14 flex flex-col gap-3.5">
+        <div className="mt-12 sm:mt-14 flex flex-col gap-2 overflow-hidden">
           <Marquee items={BRIEFS_TOP} offset={0} />
           <Marquee items={BRIEFS_BOTTOM} reverse offset={3} />
         </div>
@@ -146,33 +151,18 @@ export default function MlaiStudioTeaser() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6 text-center">
             {STATS.map((s) => (
               <div key={s.n}>
-                <div className="text-4xl sm:text-5xl font-bold text-[#ff003d] leading-none mb-2">{s.n}</div>
-                <div className="text-gray-400 text-sm sm:text-base max-w-[22ch] mx-auto">{s.l}</div>
+                <div className="mp-studio-stat">{s.n}</div>
+                <div className="mp-type text-sm sm:text-base max-w-[24ch] mx-auto text-[var(--mp-text-soft)]">{s.l}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* CTA with a gentle pulsing glow */}
+        {/* CTA: a red slab */}
         <div className="text-center mt-12">
-          <motion.span
-            className="inline-block rounded-full"
-            animate={{
-              boxShadow: [
-                "0 0 0px #ff003d00, 0 4px 20px rgba(0,0,0,0.3)",
-                "0 0 36px #ff003d90, 0 4px 20px rgba(0,0,0,0.3)",
-                "0 0 0px #ff003d00, 0 4px 20px rgba(0,0,0,0.3)",
-              ],
-            }}
-            transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Link
-              to="/mlai-studio"
-              className="inline-block font-bold py-4 px-12 rounded-full text-lg text-white bg-[#ff003d] transition-transform duration-300 hover:scale-105 active:scale-95"
-            >
-              Explore MLAI Studio →
-            </Link>
-          </motion.span>
+          <Link to="/mlai-studio" className="mp-btn mp-btn--lg mp-btn--spot">
+            Explore MLAI Studio →
+          </Link>
         </div>
       </div>
     </div>

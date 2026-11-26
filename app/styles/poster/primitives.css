@@ -1,0 +1,630 @@
+/* MLAI poster look: the shared pieces.
+   Every class starts with mp-. Page files (shell, home, articles) build on
+   these and must not restate them. */
+
+/* ── Ground ─────────────────────────────────────────────────────────── */
+
+/* The wall the bills are pasted on: near-black brick. */
+.mp-wall {
+  background-color: #17141c;
+  background-image: var(--mp-art-brick);
+  background-size: 50rem auto;
+  color: var(--mp-paper);
+  overflow-x: clip;
+}
+
+.mp-page ::selection,
+.mp-shell ::selection {
+  background: var(--mp-yellow);
+  color: var(--mp-ink);
+}
+
+.mp-page :is(a, button, input, textarea, select, summary, [tabindex]):focus-visible,
+.mp-shell :is(a, button):focus-visible {
+  outline: 0.1875rem solid var(--mp-yellow);
+  outline-offset: 0.1875rem;
+  box-shadow: 0 0 0 0.1875rem var(--mp-ink);
+}
+
+/* ── Type: four voices ──────────────────────────────────────────────── */
+
+.mp-shout {
+  font-family: var(--mp-font-shout);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  letter-spacing: 0.005em;
+}
+.mp-head {
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.035em;
+  line-height: 1.1;
+}
+.mp-type {
+  font-family: var(--mp-font-type);
+  letter-spacing: 0.04em;
+}
+.mp-hand {
+  font-family: var(--mp-font-hand);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* A poster title: shouted, printed off-register in the spot ink, leaning
+   from its bottom left corner. */
+.mp-title {
+  font-family: var(--mp-font-shout);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: 0.005em;
+  color: var(--mp-text);
+  text-shadow: 0.05em 0.05em 0 var(--mp-spot);
+  transform: rotate(calc(var(--mp-tilt) * -1.6deg));
+  transform-origin: 0 100%;
+  padding-block: 0.1em 0.12em;
+  width: fit-content;
+  max-width: 100%;
+  text-wrap: balance;
+}
+.mp-title--center {
+  margin-inline: auto;
+  text-align: center;
+  transform: rotate(calc(var(--mp-tilt) * -1deg));
+  transform-origin: 50% 100%;
+}
+
+/* The same title printed on a pasted black strip. */
+.mp-strip {
+  display: inline-block;
+  padding: 0.14em 0.32em 0.1em 0.26em;
+  background-color: var(--mp-ink);
+  background-image:
+    linear-gradient(rgb(26 26 26 / 0.82), rgb(26 26 26 / 0.82)),
+    var(--mp-tex-lino);
+  background-size: auto, 24rem;
+  color: var(--mp-paper);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Typewriter eyebrow, with two typed slashes. */
+.mp-eyebrow {
+  font-family: var(--mp-font-type);
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mp-text);
+}
+.mp-eyebrow::before {
+  content: "// ";
+  color: var(--mp-spot);
+}
+[data-mp-ground="black"] .mp-eyebrow::before {
+  color: var(--mp-hilite);
+}
+
+/* One swipe of yellow highlighter behind a word or two. */
+.mp-hilite {
+  position: relative;
+  display: inline-block;
+  padding: 0.02em 0.28em 0;
+  color: var(--mp-ink);
+  isolation: isolate;
+}
+.mp-hilite::before {
+  content: "";
+  position: absolute;
+  inset: 0.02em -0.1em -0.02em;
+  background: var(--mp-hilite);
+  clip-path: var(--mp-swipe);
+  transform: rotate(calc(var(--mp-tilt) * -1deg));
+  z-index: -1;
+}
+
+/* A marker note in the margin. */
+.mp-note {
+  display: inline-block;
+  font-family: var(--mp-font-hand);
+  font-weight: 400;
+  line-height: 1.15;
+  transform: rotate(var(--mp-b1));
+}
+
+/* ── Paper: bills, cards, scraps ────────────────────────────────────── */
+
+/* A bill: one big sheet pasted to the wall. Sections of a page are bills.
+   Variants set the stock; data-mp-ink sets the spot colour. */
+.mp-bill {
+  position: relative;
+  background-color: var(--mp-paper);
+  background-image: var(--mp-tex-paste);
+  background-size: 48rem;
+  background-blend-mode: multiply;
+  color: var(--mp-ink);
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.5rem 0.5rem 0 var(--mp-spot);
+  transform: rotate(var(--mp-a1));
+}
+.mp-bill--a2 { transform: rotate(var(--mp-a2)); }
+.mp-bill--a3 { transform: rotate(var(--mp-a3)); }
+.mp-bill--a4 { transform: rotate(var(--mp-a4)); }
+.mp-bill--a5 { transform: rotate(var(--mp-a5)); }
+/* Rule 1 exception: a bill that holds a game, a scroller or long reading
+   stays level. Its tape and labels still lean. */
+.mp-bill--level { transform: none; }
+
+/* Stock: black. Cream type on photocopied black. */
+.mp-bill--black {
+  background-color: var(--mp-ink-deep);
+  background-image:
+    linear-gradient(rgb(17 17 17 / 0.8), rgb(17 17 17 / 0.8)),
+    var(--mp-tex-xerox);
+  background-size: auto, 30rem;
+  background-blend-mode: normal;
+  color: var(--mp-paper);
+  border-color: var(--mp-paper);
+}
+/* Stock: flat spot ink with photocopy speckle on top. */
+.mp-bill--spot {
+  background-color: var(--mp-spot);
+  background-image: var(--mp-tex-xerox-ink);
+  background-size: 30rem;
+  background-blend-mode: normal;
+  color: var(--mp-on-spot);
+  box-shadow: 0.5rem 0.5rem 0 var(--mp-paper);
+}
+.mp-bill--kraft {
+  background-color: #d9b272;
+  background-image: var(--mp-tex-kraft);
+  background-size: 32rem;
+  background-blend-mode: normal;
+}
+
+/* A card: paper stock, inked frame, hard drop, leaning. */
+.mp-card {
+  position: relative;
+  background-color: var(--mp-paper-hi);
+  background-image: var(--mp-tex-card);
+  background-size: 40rem;
+  background-blend-mode: multiply;
+  color: var(--mp-ink);
+  border: 0.375rem solid var(--mp-ink);
+  border-image: url("/poster/frame-ink.svg") 30 / 0.5rem / 0.125rem round;
+  box-shadow: 0.3125rem 0.3125rem 0 var(--mp-line);
+  transform: rotate(var(--mp-a1));
+}
+.mp-card:nth-child(5n + 2) { transform: rotate(var(--mp-a2)); }
+.mp-card:nth-child(5n + 3) { transform: rotate(var(--mp-a3)); }
+.mp-card:nth-child(5n + 4) { transform: rotate(var(--mp-a4)); }
+.mp-card:nth-child(5n + 5) { transform: rotate(var(--mp-a5)); }
+.mp-card:only-child { transform: rotate(var(--mp-a3)); }
+.mp-card--level,
+.mp-card--level:nth-child(n) { transform: none; }
+
+/* A scrap: a card pasted inside something else. Thin line, no drop. */
+.mp-scrap {
+  position: relative;
+  background-color: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  border: 0.125rem solid var(--mp-ink);
+}
+
+/* Tape. data-mp-tape="1|2|3|4" is masking tape; "duct" is grey duct tape.
+   Add `right` to move it. The tape is the element's ::before. */
+[data-mp-tape] {
+  position: relative;
+}
+[data-mp-tape]::before {
+  content: "";
+  position: absolute;
+  top: -0.875rem;
+  left: 10%;
+  width: 6.5rem;
+  height: 1.25rem;
+  background: var(--mp-art-tape-2) center / 100% 100% no-repeat;
+  opacity: 0.95;
+  transform: rotate(calc(var(--mp-tilt) * -4deg));
+  pointer-events: none;
+  z-index: 3;
+}
+[data-mp-tape~="1"]::before {
+  width: 3.75rem;
+  height: 1.75rem;
+  top: -1rem;
+  background-image: var(--mp-art-tape-1);
+  transform: rotate(calc(var(--mp-tilt) * 5deg));
+}
+[data-mp-tape~="3"]::before {
+  width: 3.75rem;
+  height: 1.75rem;
+  top: -1rem;
+  background-image: var(--mp-art-tape-3);
+  transform: rotate(calc(var(--mp-tilt) * -6deg));
+}
+[data-mp-tape~="4"]::before {
+  background-image: var(--mp-art-tape-4);
+  transform: rotate(calc(var(--mp-tilt) * 3deg));
+}
+[data-mp-tape~="duct"]::before {
+  top: -1.25rem;
+  left: 1.5rem;
+  width: 7rem;
+  height: 2.25rem;
+  background-image: var(--mp-art-duct-1);
+  opacity: 1;
+  transform: rotate(calc(var(--mp-tilt) * -5deg));
+}
+[data-mp-tape~="duct"][data-mp-tape~="b"]::before {
+  background-image: var(--mp-art-duct-3);
+}
+[data-mp-tape~="right"]::before {
+  left: auto;
+  right: 8%;
+  transform: rotate(calc(var(--mp-tilt) * 5deg));
+}
+[data-mp-tape~="duct"][data-mp-tape~="right"]::before {
+  right: 1.5rem;
+  background-image: var(--mp-art-duct-4);
+  transform: rotate(calc(var(--mp-tilt) * 6deg));
+}
+/* A second strip, bottom corner, for big bills. Uses ::after. */
+.mp-tape-2::after {
+  content: "";
+  position: absolute;
+  bottom: -1.125rem;
+  right: 2rem;
+  width: 6.5rem;
+  height: 2rem;
+  background: var(--mp-art-duct-2) center / 100% 100% no-repeat;
+  transform: rotate(calc(var(--mp-tilt) * -3deg));
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Torn bottom edge on a black slab. The art is solid below its tear;
+   `exclude` against a full plate keeps the part above it. */
+.mp-torn-bottom::after {
+  content: "";
+  position: absolute;
+  inset: calc(100% - 0.0625rem) 0 auto 0;
+  height: 1.75rem;
+  background: inherit;
+  background-color: var(--mp-ink-deep);
+  mask-image: var(--mp-art-torn), linear-gradient(#000, #000);
+  mask-size: 46rem 100%, auto;
+  mask-repeat: repeat-x, no-repeat;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Marks ──────────────────────────────────────────────────────────── */
+
+/* A marker mark in any ink. Set --mp-m to one of the --mp-mark-* tokens
+   and colour with `color`. */
+.mp-mark {
+  display: inline-block;
+  width: 3rem;
+  aspect-ratio: 1;
+  background-color: currentColor;
+  mask: var(--mp-m, var(--mp-mark-star)) center / contain no-repeat;
+  pointer-events: none;
+  flex: none;
+}
+
+/* A scribbled rule instead of a hairline. */
+.mp-rule {
+  display: block;
+  height: 0.75rem;
+  width: 100%;
+  border: 0;
+  background-color: var(--mp-line);
+  mask: url("/poster/scribble-ink.svg") left center / 15rem 100% repeat-x;
+  transform: rotate(calc(var(--mp-tilt) * 0.25deg));
+}
+.mp-rule--spot { background-color: var(--mp-spot); }
+
+/* A row of typed dashes, for ledgers and lists. */
+.mp-dash {
+  border: 0;
+  border-top: 0.125rem dashed color-mix(in srgb, var(--mp-line) 55%, transparent);
+}
+
+/* Halftone dots in the spot ink. */
+.mp-halftone {
+  background-image: radial-gradient(circle at center, var(--mp-spot) 0 28%, transparent 30%);
+  background-size: 0.5rem 0.5rem;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────── */
+
+.mp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.875rem;
+  padding: 0.5rem 1.125rem;
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  color: var(--mp-paper);
+  background-color: var(--mp-ink);
+  border: 0.125rem solid var(--mp-line);
+  box-shadow: 0.25rem 0.25rem 0 var(--mp-spot);
+  transform: rotate(var(--mp-b1));
+  cursor: pointer;
+  transition:
+    transform 90ms steps(2, end),
+    box-shadow 90ms steps(2, end);
+}
+.mp-btn:nth-child(even) { transform: rotate(var(--mp-b2)); }
+.mp-btn:nth-child(3n) { transform: rotate(calc(var(--mp-tilt) * -1.2deg)); }
+/* The main action: an orange slab. */
+.mp-btn--go {
+  background-color: var(--mp-orange);
+  color: var(--mp-ink);
+  box-shadow: 0.25rem 0.25rem 0 var(--mp-line);
+}
+.mp-btn--spot {
+  background-color: var(--mp-spot);
+  color: var(--mp-on-spot);
+  box-shadow: 0.25rem 0.25rem 0 var(--mp-line);
+}
+.mp-btn--paper {
+  background-color: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  border-color: var(--mp-ink);
+  box-shadow: 0.25rem 0.25rem 0 var(--mp-line);
+}
+.mp-btn--teal {
+  background-color: var(--mp-teal);
+  color: var(--mp-ink);
+  box-shadow: 0.25rem 0.25rem 0 var(--mp-line);
+}
+.mp-btn--lg {
+  min-height: 3.5rem;
+  padding: 0.75rem 1.75rem;
+  font-size: 1.25rem;
+}
+.mp-btn:hover:not(:disabled) {
+  transform: translate(-0.0625rem, -0.1875rem) rotate(calc(var(--mp-tilt) * 1deg));
+  box-shadow: 0.4375rem 0.5rem 0 var(--mp-spot);
+}
+.mp-btn:is(.mp-btn--go, .mp-btn--spot, .mp-btn--paper, .mp-btn--teal):hover:not(:disabled) {
+  box-shadow: 0.4375rem 0.5rem 0 var(--mp-line);
+}
+.mp-btn:active:not(:disabled) {
+  transform: translate(0.1875rem, 0.1875rem) rotate(0deg);
+  box-shadow: 0 0 0 var(--mp-line);
+}
+.mp-btn:disabled {
+  opacity: 0.45;
+  filter: grayscale(1);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* A quiet link: marker underline in the spot ink. */
+.mp-link {
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 0.1875rem;
+  text-underline-offset: 0.22em;
+  text-decoration-color: var(--mp-spot);
+}
+.mp-link:hover {
+  background: var(--mp-hilite);
+  color: var(--mp-ink);
+}
+
+/* ── Labels, stamps, badges ─────────────────────────────────────────── */
+
+/* A label torn off a roll. */
+.mp-label {
+  display: inline-block;
+  padding: 0.3125rem 0.875rem 0.25rem;
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.15;
+  background: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  clip-path: var(--mp-rip);
+  transform: rotate(var(--mp-b2));
+  white-space: nowrap;
+}
+.mp-label:nth-child(even) { transform: rotate(var(--mp-b1)); }
+.mp-label:nth-child(3n) { transform: rotate(calc(var(--mp-tilt) * 0.8deg)); }
+
+/* A rubber stamp: rough double box, spot ink, well off level. */
+.mp-stamp {
+  display: inline-block;
+  font-family: var(--mp-font-shout);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  color: var(--mp-stamp, var(--mp-blue));
+  border: 0.1875rem solid currentColor;
+  outline: 0.0625rem solid currentColor;
+  outline-offset: 0.125rem;
+  padding: 0.1875rem 0.625rem 0.125rem;
+  transform: rotate(var(--mp-b3));
+  opacity: 0.92;
+}
+
+/* A small typed badge. */
+.mp-badge {
+  display: inline-block;
+  font-family: var(--mp-font-type);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  padding: 0.1875rem 0.5rem 0.0625rem;
+  border: 0.09375rem solid currentColor;
+  transform: rotate(var(--mp-b1));
+}
+.mp-badge:nth-child(even) { transform: rotate(var(--mp-b4)); }
+
+/* ── Pictures ───────────────────────────────────────────────────────── */
+
+/* Photos and old illustrations go through the copier. */
+.mp-xerox {
+  filter: var(--mp-copier);
+}
+.mp-xerox--hard {
+  filter: var(--mp-copier-hard);
+}
+/* A photo pasted up: keyline, drop, lean. */
+.mp-photo {
+  border: 0.1875rem solid var(--mp-line);
+  box-shadow: var(--mp-drop-spot);
+  transform: rotate(var(--mp-a4));
+  background: var(--mp-paper-lo);
+}
+
+/* ── Forms: level, always ───────────────────────────────────────────── */
+
+.mp-input {
+  width: 100%;
+  min-height: 2.875rem;
+  padding: 0.5rem 0.75rem;
+  border: 0.125rem solid var(--mp-ink);
+  background: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  font-size: 1rem;
+  border-radius: 0;
+  transform: none;
+}
+.mp-input::placeholder {
+  font-family: var(--mp-font-type);
+  color: #5d5950;
+}
+
+/* Skeletons: ruled-in blocks that blink in two steps. */
+.mp-skel {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--mp-line) 30%, transparent) 0 0.0625rem,
+    transparent 0.0625rem 0.375rem
+  );
+  outline: 0.0625rem dashed color-mix(in srgb, var(--mp-line) 40%, transparent);
+  outline-offset: -0.0625rem;
+  animation: mp-blink 1.1s steps(2, end) infinite;
+}
+@keyframes mp-blink {
+  50% { opacity: 0.45; }
+}
+
+/* Things arrive by being slapped down. */
+@keyframes mp-slap {
+  0% { opacity: 0; transform: translateY(-0.75rem) rotate(calc(var(--mp-tilt) * 3deg)) scale(1.04); }
+  60% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-btn { transition: none; }
+  .mp-skel { animation: none; }
+}
+
+/* ── More shared pieces ─────────────────────────────────────────────── */
+
+/* Rule 2: no machine corners inside a poster page. Round stays for pins
+   only: avatar photos and anything marked mp-round. */
+.mp-page [class*="rounded"]:not(img):not(.mp-round):not(.mp-pin) {
+  border-radius: 0 !important;
+}
+.mp-pin {
+  outline: 0.125rem solid var(--mp-ink);
+  outline-offset: 0;
+}
+
+/* A loose piece of tape as its own element, for parents that clip. */
+.mp-tp {
+  position: absolute;
+  z-index: 12;
+  width: 7rem;
+  height: 2.25rem;
+  background: var(--mp-art-duct-1) center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+.mp-tp--tl { top: -0.25rem; left: 2rem; transform: rotate(calc(var(--mp-tilt) * -5deg)); }
+.mp-tp--tr { top: -0.25rem; right: 2.5rem; background-image: var(--mp-art-duct-4); transform: rotate(calc(var(--mp-tilt) * 6deg)); }
+.mp-tp--mask { width: 6.5rem; height: 1.25rem; background-image: var(--mp-art-tape-2); }
+
+/* Close button on black or spot furniture. */
+.mp-x {
+  background: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  border: 0.125rem solid var(--mp-ink);
+  box-shadow: 0.1875rem 0.1875rem 0 var(--mp-ink);
+  transform: rotate(var(--mp-b4));
+}
+.mp-x svg { color: var(--mp-ink); }
+.mp-x:hover { background: var(--mp-yellow); }
+
+/* Pager arrows and dots. Dots are pins, so they stay round. */
+.mp-pager {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  background: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  border: 0.125rem solid var(--mp-ink);
+  box-shadow: 0.1875rem 0.1875rem 0 var(--mp-ink);
+  transform: rotate(var(--mp-b1));
+  transition: transform 90ms steps(2, end), box-shadow 90ms steps(2, end);
+}
+.mp-pager:last-child { transform: rotate(var(--mp-b2)); }
+.mp-pager:hover:not(:disabled) { transform: translateY(-0.125rem) rotate(0deg); background: var(--mp-yellow); }
+.mp-pager:active:not(:disabled) { transform: translate(0.1875rem, 0.1875rem); box-shadow: none; }
+.mp-pager:disabled { opacity: 0.4; box-shadow: none; cursor: not-allowed; }
+.mp-dot {
+  position: relative;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: transparent;
+}
+.mp-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0.5rem;
+  border-radius: 50%;
+  border: 0.125rem solid currentColor;
+}
+.mp-dot[aria-current="true"]::after {
+  inset: 0.3125rem;
+  background: var(--mp-yellow);
+  border-color: var(--mp-ink);
+}
+
+/* The typed paragraph under a poster title. */
+.mp-lede {
+  font-family: var(--mp-font-type);
+  font-size: clamp(1rem, 1.5vw, 1.1875rem);
+  line-height: 1.55;
+  color: var(--mp-text-soft);
+}
+
+.mp-btn--purple {
+  background-color: var(--mp-purple);
+  color: var(--mp-paper);
+  box-shadow: 0.25rem 0.25rem 0 var(--mp-line);
+}
+.mp-btn--purple:hover:not(:disabled) { box-shadow: 0.4375rem 0.5rem 0 var(--mp-line); }

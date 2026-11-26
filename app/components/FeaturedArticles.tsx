@@ -23,17 +23,17 @@ export default function FeaturedArticles() {
   const articles = FEATURED_ARTICLE_SLUGS.map(slug => ARTICLE_REGISTRY[slug]).filter(Boolean);
 
   return (
-    <section className="p-2 lg:p-3">
-      <div className="w-full bg-[var(--brutalist-yellow)] border border-gray-400 rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-8 lg:p-12">
+    <section className="mp-sec">
+      <div className="mp-bill mp-bill--spot mp-bill--a4 mp-reads w-full p-5 sm:p-8 lg:p-12" data-mp-ink="yellow" data-mp-tape="duct right">
         <Container padded={false}>
           {/* Header with title and see all link */}
-          <div className="flex items-center justify-between mb-6 sm:mb-8 lg:mb-10">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900">
+          <div className="flex items-center justify-between gap-4 mb-7 sm:mb-9 lg:mb-10">
+            <h2 className="mp-title mp-reads-title">
               Articles on Startups & AI
             </h2>
             <Link
               to="/articles"
-              className="inline-flex items-center gap-1 text-sm sm:text-base font-semibold text-gray-900 hover:text-gray-700 transition-colors whitespace-nowrap"
+              className="mp-btn whitespace-nowrap"
             >
               See all
               <span aria-hidden="true">&rarr;</span>
@@ -41,7 +41,7 @@ export default function FeaturedArticles() {
           </div>
 
           {/* Featured articles grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
             {articles.map((article) => (
               <FeaturedArticleCard
                 key={article.slug}

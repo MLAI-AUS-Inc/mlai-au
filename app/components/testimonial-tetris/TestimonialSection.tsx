@@ -43,15 +43,15 @@ function TestimonialCard({
 }: TestimonialCardProps) {
   return (
     <div
-      className="bg-white rounded-2xl p-6 flex flex-col h-full shadow-lg"
+      className="mp-card mp-quote p-6 flex flex-col h-full"
       style={{
         opacity: visible ? 1 : 0,
-        transition: `opacity ${FADE_DURATION}ms ease-in-out`,
+        transition: `opacity ${FADE_DURATION}ms steps(3, end)`,
       }}
     >
       {/* Quote */}
       <blockquote
-        className="text-lg md:text-xl lg:text-2xl font-bold leading-snug flex-grow"
+        className="mp-quote-body flex-grow"
         style={{ color: quoteColor }}
       >
         &ldquo;{body}&rdquo;
@@ -62,21 +62,21 @@ function TestimonialCard({
         <img
           src={authorImage}
           alt={authorName}
-          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+          className="mp-pin mp-xerox w-12 h-12 rounded-full object-cover flex-shrink-0"
         />
         <div>
-          <div className="font-semibold text-gray-900">{authorName} |</div>
+          <div className="mp-head text-[var(--mp-ink)]">{authorName} |</div>
           {authorWebsite ? (
             <a
               href={authorWebsite}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-600 text-sm hover:text-gray-900 hover:underline transition-colors"
+              className="mp-type text-sm text-[#45423c] hover:text-black hover:underline"
             >
               {authorHandle}
             </a>
           ) : (
-            <div className="text-gray-600 text-sm">{authorHandle}</div>
+            <div className="mp-type text-sm text-[#45423c]">{authorHandle}</div>
           )}
         </div>
       </div>
@@ -126,13 +126,13 @@ export function TestimonialSection() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+        <h2 className="mp-title mp-title--center mp-said-title">
           What Our Community Is Saying
         </h2>
       </div>
 
       {/* Testimonial Cards */}
-      <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
+      <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-7 px-5 sm:px-7">
         {currentGroup.map((testimonial) => (
           <TestimonialCard
             key={testimonial.id}
@@ -151,7 +151,7 @@ export function TestimonialSection() {
 
       {/* Dot indicators */}
       {groups.length > 1 && (
-        <div className="flex justify-center gap-2 mt-6">
+        <div className="flex justify-center gap-1 mt-6">
           {groups.map((_, i) => (
             <button
               key={i}
@@ -162,9 +162,8 @@ export function TestimonialSection() {
                   setVisible(true);
                 }, FADE_DURATION);
               }}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                i === groupIndex ? "bg-white" : "bg-white/40 hover:bg-white/60"
-              }`}
+              className="mp-dot"
+              aria-current={i === groupIndex ? "true" : undefined}
               aria-label={`Show testimonials group ${i + 1}`}
             />
           ))}

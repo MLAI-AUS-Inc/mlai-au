@@ -1,0 +1,557 @@
+/* MLAI poster look: article cards, the articles index and article pages.
+   Reading stays level and clean; the poster lives around it. */
+
+/* ── Featured article cards (home page and articles index) ──────────── */
+
+.mp-page .featured-card {
+  border-radius: 0;
+  min-height: 13.5rem;
+  padding: 1.25rem;
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.3125rem 0.3125rem 0 var(--mp-ink);
+  background-image: var(--mp-tex-xerox-ink);
+  background-size: 22rem;
+  transform: rotate(var(--mp-a1));
+  transition: transform 90ms steps(2, end), box-shadow 90ms steps(2, end);
+}
+.mp-page .featured-card:nth-child(4n + 2) { transform: rotate(var(--mp-a4)); }
+.mp-page .featured-card:nth-child(4n + 3) { transform: rotate(var(--mp-a3)); }
+.mp-page .featured-card:nth-child(4n + 4) { transform: rotate(var(--mp-a2)); }
+.mp-page .featured-card:hover {
+  transform: translate(-0.125rem, -0.25rem) rotate(calc(var(--mp-tilt) * 1deg));
+  box-shadow: 0.5625rem 0.625rem 0 var(--mp-ink);
+}
+.mp-page .featured-card:active {
+  transform: translate(0.1875rem, 0.1875rem) rotate(0deg);
+  box-shadow: none;
+}
+.mp-page .featured-card--black {
+  background-image: var(--mp-tex-xerox-soft);
+}
+.mp-page .featured-card--with-person,
+.mp-page .featured-card--image {
+  background-size: cover;
+}
+.mp-page .featured-card--with-person::before {
+  border-radius: 0;
+}
+.mp-page .featured-card__title {
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 1.3125rem;
+  line-height: 1.12;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--mp-paper);
+}
+@media (min-width: 640px) {
+  .mp-page .featured-card__title { font-size: 1.4375rem; }
+}
+
+/* ── Articles index: the library ────────────────────────────────────── */
+
+.mp-library { padding-bottom: 2rem; }
+.mp-library-hero { padding-top: 1.5rem; }
+.mp-page .articles-hero {
+  background-color: var(--mp-yellow);
+  background-image: var(--mp-tex-xerox-ink);
+  background-size: 30rem;
+  background-blend-mode: normal;
+  border-radius: 0;
+  box-shadow: 0.5rem 0.5rem 0 var(--mp-paper);
+}
+.mp-library-title {
+  font-size: clamp(2.25rem, 5.6vw, 4.75rem);
+  text-shadow: 0.05em 0.05em 0 var(--mp-paper);
+}
+.mp-library-intro {
+  margin-top: 1.25rem;
+  font-family: var(--mp-font-type);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--mp-ink);
+  max-width: 46rem;
+}
+
+/* Search: level, inked, typed. */
+.mp-page .article-search-bar__container {
+  border: 0.1875rem solid var(--mp-ink);
+  border-radius: 0;
+  background: var(--mp-paper-hi);
+  box-shadow: 0.25rem 0.25rem 0 var(--mp-ink);
+  flex-wrap: wrap;
+}
+.mp-page .article-search-bar__icon { color: var(--mp-ink); }
+.mp-page .article-search-bar__input {
+  color: var(--mp-ink);
+  font-size: 1rem;
+}
+.mp-page .article-search-bar__input::placeholder {
+  font-family: var(--mp-font-type);
+  color: #5d5950;
+}
+.mp-page .article-search-bar__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.mp-page .article-search-bar__container:focus-within {
+  outline: 0.1875rem solid var(--mp-orange);
+  outline-offset: 0.125rem;
+}
+.mp-page .article-search-bar__pill {
+  border-radius: 0;
+  border: 0.125rem solid var(--mp-ink);
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.3125rem 0.75rem 0.25rem;
+  transform: rotate(var(--mp-b2));
+  transition: transform 90ms steps(2, end);
+}
+.mp-page .article-search-bar__pill:nth-child(even) { transform: rotate(var(--mp-b1)); }
+.mp-page .article-search-bar__pill:hover { opacity: 1; transform: translateY(-0.125rem) rotate(0deg); }
+/* On: slapped down with a hard drop and a tick. */
+.mp-page .article-search-bar__pill[aria-pressed="true"] {
+  box-shadow: 0.1875rem 0.1875rem 0 var(--mp-ink);
+}
+.mp-page .article-search-bar__pill[aria-pressed="true"]::before { content: "\2713\00a0"; }
+
+.mp-list-title {
+  font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+  text-shadow: none;
+  filter: drop-shadow(0.07em 0.07em 0 var(--mp-orange));
+}
+
+/* The ledger: calendar and list on one clean sheet. Level. */
+.mp-ledger {
+  position: relative;
+  background: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.5rem 0.5rem 0 var(--mp-orange);
+}
+.mp-cal-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--mp-ink);
+  border: 0.125rem solid var(--mp-ink);
+  transform: rotate(var(--mp-b1));
+}
+.mp-cal-step:last-child { transform: rotate(var(--mp-b2)); }
+.mp-cal-step:hover:not(:disabled) { background: var(--mp-yellow); }
+.mp-cal-step:disabled { opacity: 0.35; cursor: not-allowed; }
+.mp-cal-week {
+  color: var(--mp-ink);
+  padding-bottom: 0.375rem;
+  border-bottom: 0.125rem solid var(--mp-ink);
+}
+.mp-cal-day {
+  font-family: var(--mp-font-type);
+  color: #8b867a;
+  cursor: default;
+}
+.mp-cal-day--out { color: #b9b3a5; }
+.mp-cal-day--has {
+  color: var(--mp-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.mp-cal-day--has:hover { background: var(--mp-yellow); }
+.mp-cal-day--today { outline: 0.125rem dashed var(--mp-ink); outline-offset: -0.1875rem; }
+.mp-cal-day[aria-pressed="true"] {
+  background: var(--mp-ink);
+  color: var(--mp-paper);
+  box-shadow: 0.1875rem 0.1875rem 0 var(--mp-orange);
+  transform: rotate(var(--mp-b3));
+}
+.mp-cal-pip {
+  width: 0.375rem;
+  height: 0.375rem;
+  background: var(--mp-orange);
+  transform: rotate(45deg);
+}
+.mp-empty {
+  font-family: var(--mp-font-type);
+  border: 0.125rem dashed var(--mp-ink);
+  color: var(--mp-ink);
+}
+
+/* Rows stay level so titles line up; the arrow leans. */
+.mp-rows > li + li { border-top: 0.125rem dashed color-mix(in srgb, var(--mp-ink) 50%, transparent); }
+.mp-row {
+  padding: 1.125rem 0.5rem 1.25rem;
+  color: var(--mp-ink);
+}
+.mp-rows > li:first-child .mp-row { padding-top: 0.25rem; }
+.mp-row-date {
+  font-family: var(--mp-font-type);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #45423c;
+}
+.mp-row-title {
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 1.3125rem;
+  line-height: 1.15;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  color: var(--mp-ink);
+}
+.mp-row:hover .mp-row-title {
+  text-decoration: underline;
+  text-decoration-color: var(--mp-orange);
+  text-decoration-thickness: 0.1875rem;
+  text-underline-offset: 0.18em;
+}
+.mp-row-go {
+  background: var(--mp-ink);
+  color: var(--mp-paper);
+  transform: rotate(var(--mp-b3));
+  transition: transform 90ms steps(2, end);
+}
+.mp-row:hover .mp-row-go {
+  background: var(--mp-orange);
+  color: var(--mp-ink);
+  transform: translateX(0.1875rem) rotate(calc(var(--mp-tilt) * 3deg));
+}
+.mp-row-desc {
+  margin-top: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #33312c;
+}
+.mp-row-more {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.75rem;
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mp-ink);
+  border-bottom: 0.1875rem solid var(--mp-orange);
+}
+
+.mp-pages { border-top: 0.125rem solid var(--mp-ink); }
+.mp-pages-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mp-ink);
+}
+a.mp-pages-step:hover { background: var(--mp-yellow); }
+.mp-pages-step[aria-disabled="true"] { color: #a39d8f; }
+.mp-pages-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0 0.5rem;
+  font-family: var(--mp-font-shout);
+  font-size: 1.125rem;
+  color: var(--mp-ink);
+}
+.mp-pages-num:hover { background: var(--mp-yellow); }
+/* You are here: black block, chevroned by its shape. */
+.mp-pages-num[aria-current="page"] {
+  background: var(--mp-ink);
+  color: var(--mp-paper);
+  box-shadow: 0.1875rem 0.1875rem 0 var(--mp-orange);
+  transform: rotate(var(--mp-b1));
+}
+
+/* ── Article page ───────────────────────────────────────────────────── */
+
+.mp-article-wall {
+  padding: 1.75rem 0.75rem 2.5rem;
+}
+@media (min-width: 1024px) {
+  .mp-article-wall { padding: 2.25rem 1.75rem 3.5rem 1.5rem; }
+}
+/* The sheet: clean, level stock. Rule 1 exception: long reading. */
+.mp-sheet {
+  position: relative;
+  max-width: 82rem;
+  margin-inline: auto;
+  background: var(--mp-paper-hi);
+  color: var(--mp-ink);
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.5rem 0.5rem 0 var(--mp-spot);
+}
+.mp-sheet > .mp-tp { top: -1.125rem; }
+.mp-sheet > div[class*="py-16"] {
+  padding-top: 2.5rem;
+  padding-bottom: 4rem;
+}
+
+/* Hero banner: the article's own bill, pasted at the top of the sheet. */
+.mp-article [data-cf-component-id="hero-header"] > div:first-child {
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.4375rem 0.4375rem 0 var(--mp-ink);
+  background-image: var(--mp-tex-xerox-ink);
+  background-size: 28rem;
+  transform: rotate(var(--mp-a1));
+}
+.mp-article [data-cf-component-id="title"] {
+  font-family: var(--mp-font-shout) !important;
+  font-weight: 400;
+  font-size: clamp(2rem, 4.6vw, 4rem);
+  line-height: 1.02;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.mp-article [data-cf-component-id="title"] > span[class*="underline"] {
+  text-decoration-thickness: 0.08em;
+}
+.mp-article [data-cf-component-id="breadcrumb"] {
+  font-family: var(--mp-font-type);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+/* Quick-look card and hero picture: two scraps, leaning apart. */
+.mp-article [data-cf-component-id="hero-header"] > div:nth-child(2) {
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.mp-article [data-cf-component-id="hero-header"] > div:nth-child(2) > div {
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.3125rem 0.3125rem 0 var(--mp-ink);
+  transform: rotate(var(--mp-a2));
+}
+.mp-article [data-cf-component-id="hero-header"] > div:nth-child(2) > div:nth-child(2) {
+  transform: rotate(var(--mp-a5));
+}
+.mp-article [data-cf-component-id="hero-header"] > div:nth-child(2) > div[class*="bg-[#ff3d00]"] {
+  color: var(--mp-ink);
+  background-image: var(--mp-tex-xerox-ink);
+  background-size: 26rem;
+}
+.mp-article [data-cf-component-id="hero-header"] > div:nth-child(2) h2 {
+  font-family: var(--mp-font-type);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+}
+.mp-article [data-cf-component-id="hero-header"] li > span[aria-hidden] {
+  background: var(--mp-ink);
+  transform: rotate(45deg);
+}
+/* Rule 8: the hero picture goes through the copier. */
+.mp-article [data-cf-component-id="hero-image"] img {
+  filter: var(--mp-copier);
+}
+
+/* Reading: body face, level, clean. Only the section headings shout. */
+.mp-article .prose :where(h2):not(:where(.not-prose, .not-prose *)) {
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  font-size: 1.75rem;
+  line-height: 1.12;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--mp-ink);
+  margin-top: 2.75rem;
+  padding-bottom: 0.5rem;
+  background: url("/poster/scribble-orange.svg") left bottom / 11rem 0.625rem no-repeat;
+}
+.mp-article .prose :where(h3, h4):not(:where(.not-prose, .not-prose *)) {
+  color: var(--mp-ink);
+  font-weight: 700;
+}
+.mp-article .prose :where(p, li):not(:where(.not-prose, .not-prose *)) {
+  color: #2b2925;
+}
+.mp-article .prose :where(a):not(:where(.not-prose, .not-prose *)) {
+  color: var(--mp-ink);
+  font-weight: 600;
+  text-decoration-line: underline;
+  text-decoration-color: var(--mp-orange);
+  text-decoration-thickness: 0.125rem;
+  text-underline-offset: 0.2em;
+}
+.mp-article .prose :where(a):not(:where(.not-prose, .not-prose *)):hover {
+  background: var(--mp-yellow);
+  color: var(--mp-ink);
+}
+.mp-article .prose :where(strong) { color: var(--mp-ink); }
+.mp-article .prose :where(blockquote):not(:where(.not-prose, .not-prose *)) {
+  border-left: 0.5rem solid var(--mp-orange);
+  font-style: normal;
+  color: var(--mp-ink);
+}
+.mp-article .prose :where(hr) {
+  border: 0;
+  height: 0.75rem;
+  background: var(--mp-ink);
+  mask: url("/poster/scribble-ink.svg") left center / 15rem 100% repeat-x;
+}
+.mp-article .prose :where(code):not(:where(pre *)) {
+  font-family: var(--mp-font-type);
+  background: var(--mp-paper-lo);
+  padding: 0.1em 0.3em;
+}
+.mp-article .prose :where(pre) {
+  background: var(--mp-ink-deep);
+  color: var(--mp-paper);
+  border: 0.125rem solid var(--mp-ink);
+}
+
+/* Tables: a typed ledger. Rows stay level so columns line up. */
+.mp-article table { border-collapse: collapse; }
+.mp-article :where(caption) {
+  caption-side: top;
+  text-align: left;
+  padding: 0 0 0.625rem;
+  font-family: var(--mp-font-hand);
+  font-size: 1rem;
+  line-height: 1.3;
+  color: var(--mp-ink);
+}
+.mp-article :where(tbody th) {
+  border-bottom: 0.0625rem dashed color-mix(in srgb, var(--mp-ink) 45%, transparent) !important;
+  text-align: left;
+}
+.mp-article :where(thead th) {
+  font-family: var(--mp-font-type);
+  font-weight: 400;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mp-ink);
+  border-bottom: 0.125rem solid var(--mp-ink) !important;
+}
+.mp-article :where(td) {
+  border-bottom: 0.0625rem dashed color-mix(in srgb, var(--mp-ink) 45%, transparent) !important;
+}
+.mp-article :where(thead, tbody, tr) { border-color: var(--mp-ink); }
+
+/* Rule 2 across everything an article can hold: no soft shadows, no grey
+   hairlines. These catch the article components and the hand-written
+   blocks inside article content alike. */
+.mp-article :where([class*="shadow"]):not(.mp-keep) {
+  --tw-shadow: 0 0 #0000;
+  box-shadow: none;
+}
+.mp-article :where([class*="border-gray-"], [class*="border-zinc-"], [class*="border-slate-"], [class*="border-black/"], [class*="border-[#9ca3af]"]) {
+  border-color: var(--mp-ink);
+}
+.mp-article :where([class*="ring-1"], [class*="ring-2"]) {
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-color: transparent;
+}
+.mp-article :where([class*="backdrop-blur"]) { backdrop-filter: none; }
+
+/* Boxes: anything the old look drew as a rounded, bordered panel becomes
+   a scrap with an ink keyline. */
+.mp-article :where(div, section, nav, aside, article, figure, li, a, details)[class*="rounded"][class*="border"]:not([class*="rounded-full"]):not(input):not(.mp-plain) {
+  border-width: 0.125rem;
+  border-style: solid;
+  border-color: var(--mp-ink);
+}
+.mp-article :where([class*="border-dashed"])[class*="rounded"] { border-style: dashed !important; }
+.mp-article :where([class*="border-l-4"])[class*="rounded"] { border-left-width: 0.625rem !important; }
+
+/* The big call-to-action panels (the old look gave them the largest
+   radius): pasted notices with a hard drop, leaning. */
+.mp-article :where(.not-prose, [class*="not-prose"])[class*="rounded-["],
+.mp-article .not-prose > [class*="rounded-["],
+.mp-article [class*="rounded-[2"],
+.mp-article [class*="rounded-[3"] {
+  border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.375rem 0.375rem 0 var(--mp-ink);
+}
+.mp-article :is([data-article-conversion], [data-article-reading-links], .not-prose) > :is(a, div, section)[class*="rounded-["],
+.mp-article :is(div, section, nav)[class*="not-prose"][class*="rounded-["] {
+  transform: rotate(var(--mp-a2));
+}
+.mp-article :is(div, section, nav)[class*="not-prose"][class*="rounded-["]:nth-of-type(even) {
+  transform: rotate(var(--mp-a1));
+}
+/* Pictures inside those panels are pasted in, not floating. */
+.mp-article [class*="rounded-["] [class*="rounded-["] {
+  box-shadow: none;
+  transform: none;
+  border-width: 0.125rem;
+}
+.mp-article :where(.not-prose) :where(h2, h3) {
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+/* Buttons: every pill-shaped link or button becomes a slab. */
+.mp-article :where(a, button)[class*="rounded-full"][class*="px-"] {
+  font-family: var(--mp-font-head);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 0.125rem solid var(--mp-ink);
+  box-shadow: 0.1875rem 0.1875rem 0 var(--mp-ink);
+  transform: rotate(var(--mp-b1));
+  transition: transform 90ms steps(2, end), box-shadow 90ms steps(2, end);
+}
+.mp-article :where(a, button)[class*="rounded-full"][class*="px-"]:hover {
+  transform: translate(-0.0625rem, -0.1875rem) rotate(calc(var(--mp-tilt) * 1deg));
+  box-shadow: 0.3125rem 0.375rem 0 var(--mp-ink);
+}
+.mp-article :where(a, button)[class*="rounded-full"][class*="px-"]:active {
+  transform: translate(0.1875rem, 0.1875rem) rotate(0deg);
+  box-shadow: none;
+}
+/* Small tags and chips: typed badges. */
+.mp-article :where(span)[class*="rounded-full"][class*="px-"] {
+  font-family: var(--mp-font-type);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 0.09375rem solid currentColor;
+}
+
+/* Old link inks (indigo, purple-as-link) print as ink with a marker
+   underline, so links read as links without a second blue. */
+.mp-article :where(a)[class*="text-indigo-"],
+.mp-article :where(a)[class*="text-purple-"],
+.mp-article :where(a)[class*="text-[#4b1bd1]"],
+.mp-article :where(a)[class*="text-[#1028E0]"] {
+  color: var(--mp-ink);
+  text-decoration-line: underline;
+  text-decoration-color: var(--mp-orange);
+  text-decoration-thickness: 0.125rem;
+}
+
+/* The disclaimer strip: a black label. */
+.mp-article [class*="bg-black"][class*="rounded"] { transform: rotate(var(--mp-a3)); }
+
+/* Avatars are pins: they stay round and get a keyline. */
+.mp-article img[class*="rounded-full"] {
+  outline: 0.125rem solid var(--mp-ink);
+  filter: grayscale(1) contrast(1.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-page .featured-card,
+  .mp-row-go,
+  .mp-article :where(a, button)[class*="rounded-full"][class*="px-"] { transition: none; }
+}
+
+/* The quick-look scrap prints ink on a spot colour: heavier words read. */
+.mp-article [data-cf-component-id="hero-header"] > div:nth-child(2) > div[class*="bg-[#ff3d00]"] :where(p, li, span) {
+  color: var(--mp-ink);
+  font-weight: 500;
+}
