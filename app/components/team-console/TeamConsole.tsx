@@ -100,7 +100,7 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
       if (!cancelled) { setMode("flat"); setReady(true); }
     };
     // After the arcade closes, wait a moment: a quick rematch should not build and tear down a scene.
-    const delay = reopened.current ? 800 : 0;
+    const delay = reopened.current ? 2500 : 0;
     reopened.current = false;
     const timer = window.setTimeout(() => import("./console-scene.client").then(module => {
       if (cancelled || !host.current || !slab.current || !screen.current) return;
