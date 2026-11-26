@@ -34,11 +34,12 @@ function force3D(): boolean {
 
 /** MLAI SLAB-1, the console the team select is played on.
  *
- *  Server-rendered flat. On a wide screen with a mouse it lazily mounts a three.js scene:
+ *  Server-rendered flat. In the browser it lazily mounts a three.js scene, a wide handheld
+ *  on a wide screen and an upright one on a phone:
  *  with the cartridge out you see the whole console floating over the page; put the
  *  cartridge in and the camera dives into its screen until the screen is the team panel.
  *  The panel is ordinary HTML throughout, so every control on it stays a real button.
- *  Touch screens, small screens and reduced motion keep the flat console. */
+ *  Reduced motion keeps the flat console. */
 export default function TeamConsole({ children, cart, onCart, interactive, arcadeOpen, onPrev, onNext, onA, onB }: TeamConsoleProps) {
   const host = useRef<HTMLDivElement>(null);
   const screen = useRef<HTMLDivElement>(null);
@@ -79,24 +80,21 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
     setStatus(message);
   }, [cart]);
 
-  // Who gets the 3D console: wide screen, mouse, no motion or data limits, and a game to play.
+  // Who gets the 3D console: anyone with a game to play and no motion or data limits.
   useEffect(() => {
-    const wide = window.matchMedia("(min-width: 1024px)");
-    const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       const saveData = Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
-      const ok = interactive && canUse3D({ wide: wide.matches, finePointer: fine.matches, reducedMotion: reduced.matches, saveData });
+      const ok = interactive && canUse3D({ reducedMotion: reduced.matches, saveData });
       setEligible(ok);
       if (ok) return;
       setReady(true);
-      // The 3D console is gone (narrow window, reduced motion): a cartridge it pulled goes back in.
+      // The 3D console is gone (reduced motion): a cartridge it pulled goes back in.
       if (autoPulled.current) { autoPulled.current = false; onCart("RESET"); }
     };
     update();
-    const queries = [wide, fine, reduced];
-    queries.forEach(query => query.addEventListener("change", update));
-    return () => queries.forEach(query => query.removeEventListener("change", update));
+    reduced.addEventListener("change", update);
+    return () => reduced.removeEventListener("change", update);
   }, [interactive, onCart]);
 
   // The flash of screen light plays only when the camera really arrives.

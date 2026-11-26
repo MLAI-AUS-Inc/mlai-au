@@ -75,28 +75,30 @@ test("reduced motion gets the flat console and an instant cartridge", async ({ p
   await expect(start(page)).toHaveCount(1);
 });
 
-test("phones get the flat console with a thumb-sized cartridge button", async ({ page }, testInfo) => {
+test("phones get a thumb-sized cartridge tab and never a sideways scroll", async ({ page }, testInfo) => {
   test.skip(!/mobile/.test(testInfo.project.name), "Phone projects only.");
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(String(error)));
   await ready(page);
   const console_ = page.locator(".team-console");
-  await expect(console_).toHaveAttribute("data-console", "flat");
-  await expect(page.locator(".team-console-canvas")).toHaveCount(0);
+  const fits = () => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1);
   const eject = page.getByRole("button", { name: "Eject cartridge", exact: true });
   const box = await eject.boundingBox();
   expect(box && box.width >= 44 && box.height >= 44).toBe(true);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  expect(await fits()).toBe(true);
   await eject.click();
   await expect(console_).toHaveAttribute("data-cart", "out");
-  await page.getByRole("button", { name: "INSERT CART", exact: true }).click();
+  expect(await fits()).toBe(true);
+  // With a graphics card the console is the 3D one and is itself the button; without, the screen offers INSERT CART.
+  const drawn = await console_.getAttribute("data-console");
+  await page.getByRole("button", { name: drawn === "3d" ? "Insert cartridge" : "INSERT CART", exact: true }).click();
   await expect(console_).toHaveAttribute("data-cart", "seated", { timeout: 10_000 });
   await expect(start(page)).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 
 test("the 3D console shows itself with the cartridge out and lands on the team select when it goes in", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop", "One WebGL engine is enough for the 3D console.");
+  test.skip(!["desktop", "mobile"].includes(testInfo.project.name), "One WebGL engine is enough for the 3D console: wide and upright.");
   test.slow();
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(String(error)));
@@ -125,6 +127,8 @@ test("the 3D console shows itself with the cartridge out and lands on the team s
   const insert = page.getByRole("button", { name: "Insert cartridge", exact: true });
   const [button, screen] = await Promise.all([insert.boundingBox(), page.locator(".team-console-screen").boundingBox()]);
   expect(button && screen && Math.abs(button.width - screen.width) < 2 && Math.abs(button.height - screen.height) < 2).toBe(true);
+  // The canvas reaches past the panel; the page must still not scroll sideways.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await insert.click();
   await expect(console_).toHaveAttribute("data-cart", "seated", { timeout: 15_000 });
   await expect(start(page)).toHaveCount(1);

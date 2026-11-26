@@ -66,7 +66,7 @@ export function cartAnnouncement(state: CartState): string {
   return "";
 }
 
-/** The 3D console only mounts for a wide screen with a mouse and no motion or data limits. */
-export function canUse3D(env: { wide: boolean; finePointer: boolean; reducedMotion: boolean; saveData: boolean }): boolean {
-  return env.wide && env.finePointer && !env.reducedMotion && !env.saveData;
+/** The 3D console mounts on any screen, phone or desktop, unless motion or data is limited. */
+export function canUse3D(env: { reducedMotion: boolean; saveData: boolean }): boolean {
+  return !env.reducedMotion && !env.saveData;
 }

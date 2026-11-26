@@ -66,9 +66,9 @@ Local Worker homepage caching uses the `local` build revision. For repeated prev
 
 The team select is the screen of a wide handheld console, `app/components/team-console/`. It is an original MLAI design: a smooth, rounded, matte plastic body with a cross pad, two round buttons and a purple cartridge, carrying MLAI's inks, tape and stickers. It copies no real device and no other site's model.
 
-There are two consoles, chosen by the device.
+There are two consoles, chosen by the motion preference.
 
-**The 3D console** runs on a screen at least 1024 pixels wide with a mouse, with no reduced-motion or Save-Data preference. It also needs the arcade to be enabled and a hardware renderer: a software renderer (SwiftShader, llvmpipe) is declined, unless `localStorage.setItem("mlai-console-3d", "force")` is set, which the forced-3D browser test uses. `TeamConsole.tsx` lazily imports `console-scene.client.ts` when the section nears the viewport; that module is the only one that touches three.js. In this layout the team panel takes the full width of the section and the flat console is not drawn.
+**The 3D console** runs on every screen, phones included, with no reduced-motion or Save-Data preference. `consoleDims` picks its shape from the panel: a wide panel gets a wide handheld with a grip either side, a tall one (a phone) gets an upright handheld with the cross and buttons on a deck under the screen. On a touch screen it sways by itself, having no pointer to lean toward. It also needs the arcade to be enabled and a hardware renderer: a software renderer (SwiftShader, llvmpipe) is declined, unless `localStorage.setItem("mlai-console-3d", "force")` is set, which the forced-3D browser test uses. `TeamConsole.tsx` lazily imports `console-scene.client.ts` when the section nears the viewport; that module is the only one that touches three.js. In this layout the team panel takes the full width of the section and the flat console is not drawn.
 
 - The scene is measured in CSS pixels with the screen at the origin, and the camera is placed so a pixel at z = 0 is a pixel on the page. At scale 1 with no rotation the console's screen covers the panel exactly (`console-layout.ts`).
 - Cartridge out: the canvas shows the whole console floating over the page, leaning toward the pointer, its screen reading INSERT CART. The panel is `inert` and hidden. The cartridge button covers the console, so a click or Enter anywhere on it inserts the cartridge.
@@ -78,7 +78,7 @@ There are two consoles, chosen by the device.
 
 Where the 3D console is eligible but cannot run (no hardware renderer, WebGL failure), the full-width panel stays and the cartridge is a simple tab above it, with the flat NO CART screen.
 
-**The flat console** (styles in `app/styles/poster/console.css`) is server-rendered and stays on touch screens, small screens and with reduced motion: a paper slab around the panel with a cartridge button, a NO CART screen and an INSERT CART button. These devices never download three.js.
+**The flat console** (styles in `app/styles/poster/console.css`) is server-rendered and stays with reduced motion: a paper slab around the panel with a cartridge button, a NO CART screen and an INSERT CART button. Reduced motion and Save-Data never download three.js.
 
 Both are driven by the pure reducer in `cartridge.ts`: seated, ejecting, out, inserting, booting, seated. The cartridge is a real button ("Eject cartridge" / "Insert cartridge"). With the cartridge out PRESS START cannot be reached. Reduced motion skips the travel and the boot. The cartridge cannot be pulled while the arcade is open.
 

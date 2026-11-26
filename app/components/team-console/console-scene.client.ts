@@ -36,6 +36,8 @@ const HEAD = '"Oswald", "Arial Narrow", sans-serif';
 const HAND = '"Permanent Marker", "Marker Felt", cursive';
 /** The resting pose: turned a little, as if held out to you. */
 const REST = { x: 0.16, y: -0.4, z: -0.05 };
+/** A touch screen has no pointer to lean toward, so the console sways more by itself. */
+const TOUCH = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
 
 type Ease = (t: number) => number;
 interface Channel { value: number; from: number; to: number; start: number; span: number; ease: Ease }
@@ -198,7 +200,7 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
     dims = consoleDims({ w: W, h: H });
     rest = heroScale(dims, 0.86);
     centre = heroCentre(dims);
-    const { body, bodyCentre, depth, grip } = dims;
+    const { body, bodyCentre, depth, unit } = dims;
     const front = -2;
 
     // ── Body: one pillow of matte plastic ────────────────────────────────
@@ -222,26 +224,40 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
       return /^rgb\(/.test(colour) ? colour : "#3537dc";
     })();
     const scale = Math.min(2, 1400 / W);
+    const tall = dims.upright;
     const attract = (lit: boolean) => paint(W * scale, H * scale, (context, w, h) => {
       context.fillStyle = "#0c0d13"; context.fillRect(0, 0, w, h);
       context.fillStyle = "rgba(255,255,255,0.035)";
       for (let y = 0; y < h; y += 6) context.fillRect(0, y, w, 2);
       context.textAlign = "center"; context.textBaseline = "middle";
       context.fillStyle = hex(INK.yellow);
-      context.font = `400 ${h * 0.24}px ${SHOUT}`;
-      context.fillText("INSERT CART", w / 2, h * 0.44);
+      const verb = TOUCH ? "TAP" : "CLICK";
+      // A tall screen stacks the words; type is sized to whichever side is short.
+      const u = tall ? Math.min(w * 0.9, h * 0.72) : h;
+      if (tall) {
+        context.font = `400 ${u * 0.36}px ${SHOUT}`;
+        context.fillText("INSERT", w / 2, h * 0.36, w * 0.9);
+        context.fillText("CART", w / 2, h * 0.36 + u * 0.36);
+      } else {
+        context.font = `400 ${u * 0.24}px ${SHOUT}`;
+        context.fillText("INSERT CART", w / 2, h * 0.44);
+      }
       if (lit) {
         context.fillStyle = hex(INK.paper);
-        context.font = `600 ${h * 0.052}px ${HEAD}`;
-        spaced(context, "CLICK TO PLAY COMMUNITY CLASH", w / 2, h * 0.68, h * 0.012);
+        context.font = `600 ${u * (tall ? 0.07 : 0.052)}px ${HEAD}`;
+        if (tall) {
+          spaced(context, `${verb} TO PLAY`, w / 2, h * 0.36 + u * 0.68, u * 0.016);
+          spaced(context, "COMMUNITY CLASH", w / 2, h * 0.36 + u * 0.79, u * 0.016);
+        } else spaced(context, `${verb} TO PLAY COMMUNITY CLASH`, w / 2, h * 0.68, u * 0.012);
       }
+      const small = tall ? u * 0.062 : u * 0.04, inset = tall ? w * 0.06 : w * 0.04, line = tall ? h * 0.05 : h * 0.08;
       context.textAlign = "left";
       context.fillStyle = hex(INK.teal);
-      context.font = `600 ${h * 0.04}px ${HEAD}`;
-      context.fillText("MLAI SLAB-1", w * 0.04, h * 0.08);
+      context.font = `600 ${small}px ${HEAD}`;
+      context.fillText("MLAI SLAB-1", inset, line);
       context.textAlign = "right";
       context.fillStyle = hex(INK.red);
-      context.fillText("NO CART", w * 0.96, h * 0.08);
+      context.fillText("NO CART", w - inset, line);
     });
     textures = {
       on: attract(true),
@@ -250,11 +266,12 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
         context.fillStyle = panelBlue; context.fillRect(0, 0, w, h);
         context.textAlign = "center"; context.textBaseline = "middle";
         context.fillStyle = hex(INK.yellow);
-        context.font = `400 ${h * 0.34}px ${SHOUT}`;
+        const u = tall ? Math.min(w * 0.9, h * 0.72) : h;
+        context.font = `400 ${u * (tall ? 0.44 : 0.34)}px ${SHOUT}`;
         context.fillText("MLAI", w / 2, h * 0.44);
         context.fillStyle = "#ffffff";
-        context.font = `600 ${h * 0.06}px ${HEAD}`;
-        spaced(context, "COMMUNITY CLASH", w / 2, h * 0.7, h * 0.02);
+        context.font = `600 ${u * (tall ? 0.075 : 0.06)}px ${HEAD}`;
+        spaced(context, "COMMUNITY CLASH", w / 2, tall ? h * 0.44 + u * 0.36 : h * 0.7, u * 0.02);
       }),
     };
     showing = cart === "out" || cart === "inserting" ? "attract" : "boot";
@@ -307,18 +324,18 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
     }
 
     // Two small pills under the screen and a speaker in the right grip.
-    const pill = keep(new RoundedBoxGeometry(grip * 0.17, grip * 0.05, rise * 0.5, 4, grip * 0.024));
+    const pill = keep(new RoundedBoxGeometry(unit * 0.17, unit * 0.05, rise * 0.5, 4, unit * 0.024));
     for (const offset of [-0.12, 0.12]) {
       const mesh = new THREE.Mesh(pill, keyMaterial);
-      mesh.position.set(W * 0.5 - grip * 0.35 + offset * grip, -H / 2 - dims.chin * 0.52, front + rise * 0.2);
+      mesh.position.set(dims.pills.x + offset * unit, dims.pills.y, front + rise * 0.2);
       mesh.rotation.z = 0.42;
       rig.add(mesh);
     }
-    const hole = keep(new THREE.CircleGeometry(grip * 0.017, 16));
+    const hole = keep(new THREE.CircleGeometry(unit * 0.017, 16));
     const holeMaterial = keep(new THREE.MeshBasicMaterial({ color: 0x2a2822, toneMapped: false }));
     for (let row = 0; row < 3; row++) for (let column = 0; column < 4; column++) {
       const dot = new THREE.Mesh(hole, holeMaterial);
-      dot.position.set(W / 2 + grip * (0.36 + column * 0.075), -H / 2 - dims.chin * 0.1 + row * grip * 0.075, front + 0.3);
+      dot.position.set(dims.speaker.x + column * unit * 0.075, dims.speaker.y + row * unit * 0.075, front + 0.3);
       rig.add(dot);
     }
 
@@ -328,11 +345,10 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
       context.font = `600 ${h * 0.4}px ${HEAD}`;
       spaced(context, "MLAI SLAB-1 · 15 FIGHTERS · NO BATTERIES", h * 0.2, h * 0.52, h * 0.06, "left");
     });
-    const stampWidth = Math.min(W * 0.62, 620);
-    rig.add(decal(stamp, stampWidth, stampWidth * (96 / 1280), -W / 2 + stampWidth / 2 + dims.bezel * 2.4, -H / 2 - dims.chin * 0.56, front + 0.3));
+    rig.add(decal(stamp, dims.stamp.w, dims.stamp.w * (96 / 1280), dims.stamp.x, dims.stamp.y, front + 0.3));
     lampMaterial = keep(new THREE.MeshBasicMaterial({ color: INK.teal, toneMapped: false }));
-    const lamp = new THREE.Mesh(keep(new THREE.CircleGeometry(Math.max(4, H * 0.011), 20)), lampMaterial);
-    lamp.position.set(-W / 2 + dims.bezel * 1.2, -H / 2 - dims.chin * 0.56, front + 0.3);
+    const lamp = new THREE.Mesh(keep(new THREE.CircleGeometry(Math.max(4, dims.bezel * 0.28), 20)), lampMaterial);
+    lamp.position.set(dims.lamp.x, dims.lamp.y, front + 0.3);
     rig.add(lamp);
 
     const sticker = paint(256, 256, (context, w, h) => {
@@ -345,8 +361,7 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
       context.font = `400 ${h * 0.09}px ${HAND}`;
       context.fillText("for everyone", w / 2, h * 0.74);
     });
-    const stickerSize = grip * 0.36;
-    rig.add(decal(sticker, stickerSize, stickerSize, -W / 2 - grip * 0.52, -H / 2 + H * 0.1, front + 0.35, 0.22));
+    rig.add(decal(sticker, dims.sticker.size, dims.sticker.size, dims.sticker.x, dims.sticker.y, front + 0.35, 0.22));
     const tape = paint(512, 80, (context, w, h) => {
       context.fillStyle = "rgba(233,223,192,0.94)";
       context.beginPath();
@@ -356,8 +371,7 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
       context.font = `400 ${h * 0.4}px ${HAND}`;
       context.fillText("PROPERTY OF THE COMMUNITY", w / 2, h * 0.54);
     });
-    const tapeWidth = Math.min(grip * 1.25, 330);
-    rig.add(decal(tape, tapeWidth, tapeWidth * (80 / 512), W / 2 + grip * 0.42, H / 2 + dims.top * 0.34, front + 0.35, -0.07));
+    rig.add(decal(tape, dims.tape.w, dims.tape.w * (80 / 512), dims.tape.x, dims.tape.y, front + 0.35, -0.07));
 
     // ── Cartridge and its slot ───────────────────────────────────────────
     const slot = new THREE.Mesh(keep(new RoundedBoxGeometry(dims.cart.w * 1.08, depth * 0.2, dims.cart.t * 1.5, 3, dims.cart.t * 0.3)), keep(new THREE.MeshBasicMaterial({ color: INK.slot, toneMapped: false })));
@@ -476,9 +490,12 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
     pointer.yaw += (pointer.x * 0.3 - pointer.yaw) * 0.08;
     pointer.pitch += (pointer.y * 0.2 - pointer.pitch) * 0.08;
     const drift = Math.sin(now / 1400);
+    const sway = TOUCH ? 0.16 : 0.03;
+    // The upright console is narrow: turned as far as the wide one it would hide its face.
+    const lean = dims.upright ? 0.7 : 1;
     turn.set(
       (REST.x + pointer.pitch + drift * 0.02) * loose,
-      (REST.y + pointer.yaw + Math.sin(now / 2100) * 0.03) * loose,
+      (REST.y * lean + pointer.yaw + Math.sin(now / 2100) * sway) * loose,
       REST.z * loose,
       "YXZ",
     );
@@ -487,7 +504,7 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
     offset.set(centre.x, centre.y, 0).multiplyScalar(scale).applyQuaternion(spin);
     rig.quaternion.copy(spin);
     rig.scale.setScalar(scale);
-    rig.position.set((-offset.x - dims.screen.w * 0.035) * loose, (-offset.y + drift * 6 - bump.value * 7) * loose, 0);
+    rig.position.set((-offset.x - (dims.upright ? 0 : dims.screen.w * 0.035)) * loose, (-offset.y + drift * 6 - bump.value * 7) * loose, 0);
 
     if (cartridge) {
       const hover = lift.value;
@@ -529,6 +546,8 @@ export function createConsoleScene(host: HTMLElement, parts: Parts, options: Opt
 
   // ── Wiring ──────────────────────────────────────────────────────────
   const onMove = (event: PointerEvent) => {
+    // A finger is not a pointer to lean toward: it would leave the console skewed after every scroll.
+    if (event.pointerType === "touch") return;
     const box = parts.screen.getBoundingClientRect();
     pointer.x = clamp((event.clientX - (box.left + box.width / 2)) / (window.innerWidth / 2), -1, 1);
     pointer.y = clamp((event.clientY - (box.top + box.height / 2)) / (window.innerHeight / 2), -1, 1);

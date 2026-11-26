@@ -68,11 +68,9 @@ describe("team console cartridge", () => {
     expect(cartAnnouncement("ejecting")).toBe("");
   });
 
-  test("the 3D console needs a wide screen, a mouse and no motion or data limits", () => {
-    const yes = { wide: true, finePointer: true, reducedMotion: false, saveData: false };
+  test("the 3D console is for every screen without motion or data limits", () => {
+    const yes = { reducedMotion: false, saveData: false };
     expect(canUse3D(yes)).toBe(true);
-    expect(canUse3D({ ...yes, wide: false })).toBe(false);
-    expect(canUse3D({ ...yes, finePointer: false })).toBe(false);
     expect(canUse3D({ ...yes, reducedMotion: true })).toBe(false);
     expect(canUse3D({ ...yes, saveData: true })).toBe(false);
   });
