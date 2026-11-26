@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, type ComponentType, type MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType, type MouseEvent } from "react";
 import type { ArcadeShellProps } from "./team-arcade/ArcadeShell";
+import TeamConsole from "./team-console/TeamConsole";
+import { cartReducer, type CartEvent, type CartState } from "./team-console/cartridge";
 
 // Team member data
 const people = [
@@ -191,8 +193,19 @@ export default function Team() {
     setSelectedIndex((prev) => (prev === people.length - 1 ? 0 : prev + 1));
   };
 
+  // The console's cartridge. Out: the screen is off and nothing can start.
+  const [cart, setCart] = useState<CartState>("seated");
+  const cartContext = useRef({ arcadeOpen, reducedMotion });
+  cartContext.current = { arcadeOpen, reducedMotion };
+  const onCart = useCallback((event: CartEvent) => setCart(state => cartReducer(state, event, cartContext.current)), []);
+  // The console's big key presses whichever Start button is showing, so the launcher bookkeeping stays in one place.
+  const pressStart = () => [...(section.current?.querySelectorAll<HTMLButtonElement>(".fighter-press-start, .fighter-mobile-press-start") ?? [])]
+    .find(button => button.getClientRects().length > 0)?.click();
+  const pickRandom = () => setSelectedIndex(prev => (prev + 1 + Math.floor(Math.random() * (people.length - 1))) % people.length);
+
   return (
     <section ref={section} className="fighter-select-wrapper">
+      <TeamConsole cart={cart} onCart={onCart} interactive={arcadeEnabled} arcadeOpen={arcadeOpen} onPrev={handlePrev} onNext={handleNext} onA={pressStart} onB={pickRandom}>
       <div className="fighter-select-container">
         {/* Pixel World Map Background */}
         <div className="fighter-select-bg" />
@@ -374,6 +387,7 @@ export default function Team() {
           </div>
         </div>
       </div>
+      </TeamConsole>
 
       {/* One client-only host shared by both responsive Start buttons. */}
       {arcadeOpen && Arcade && <Arcade initialPlayer={selectedPerson.fighterId} onClose={closeArcade} />}
@@ -395,15 +409,16 @@ export default function Team() {
           .fighter-select-box, .fighter-nav-arrow { transition: none !important; }
         }
 
+        /* Poster look: the arcade cabinet is a bill on the wall. The game
+           itself keeps its pixel art and stays level. */
         .fighter-select-wrapper {
           width: 100%;
-          background-color: var(--brutalist-beige);
-          padding: 0.5rem;
+          padding: 0.875rem 0.875rem 1.25rem;
         }
 
         @media (min-width: 1024px) {
           .fighter-select-wrapper {
-            padding: 0.75rem;
+            padding: 1rem 1.75rem 1.75rem 1.5rem;
           }
         }
 
@@ -413,13 +428,13 @@ export default function Team() {
           min-height: 400px;
           background-color: #3537dc;
           overflow: hidden;
-          border-radius: 1.5rem;
+          border: 0.1875rem solid #1a1a1a;
+          box-shadow: 0.5rem 0.5rem 0 #fefc22;
           padding: 16px;
         }
 
         @media (min-width: 640px) {
           .fighter-select-container {
-            border-radius: 2rem;
             padding: 20px;
           }
         }
@@ -427,7 +442,6 @@ export default function Team() {
         @media (min-width: 1024px) {
           .fighter-select-container {
             min-height: 500px;
-            border-radius: 2.5rem;
             padding: 24px 32px;
           }
         }

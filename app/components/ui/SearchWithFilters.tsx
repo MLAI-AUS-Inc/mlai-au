@@ -85,8 +85,6 @@ export default function SearchWithFilters({
                                     style={{
                                         backgroundColor: filter.color,
                                         color: filter.textColor,
-                                        borderColor: "transparent",
-                                        opacity: isActive ? 1 : 0.7,
                                     }}
                                     aria-pressed={isActive}
                                 >

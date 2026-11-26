@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { FIGHTERS, FIGHTER_IDS, type FighterId } from "../app/games/team-arcade/roster";
 import { ARENA_ASSET } from "../app/games/team-arcade/arena";
+import { seatCartridge } from "./team-console-helpers";
 
 const sheetPaths = new Set<string>(FIGHTER_IDS.map((id) => FIGHTERS[id].sheet));
 const sheetRequests = (requests: string[]) =>
@@ -14,6 +15,7 @@ async function home(page: Page) {
   // current build's SSR document rather than a previous local build's HTML.
   await page.goto("/?arcade-check=browser", { waitUntil: "domcontentloaded" });
   await page.locator(".fighter-select-wrapper").scrollIntoViewIfNeeded();
+  await seatCartridge(page);
   await page
     .locator(".fighter-select-wrapper")
     .getByRole("button", { name: "Select Sam Donegan", exact: true })

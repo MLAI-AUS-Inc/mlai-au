@@ -89,7 +89,7 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
     const paginatedSummaries = filteredSummaries.slice(start, start + PAGE_SIZE);
 
     return (
-        <main className="min-h-screen bg-[var(--brutalist-beige)]" data-cf-slot="directory-container">
+        <main className="mp-page mp-wall mp-library min-h-screen" data-cf-slot="directory-container">
             {/* Hero Section */}
             <HeroSection
                 title={PAGE_TITLE}
@@ -107,10 +107,10 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
             </HeroSection>
 
             {/* Featured Articles & Calendar Section */}
-            <div className="max-w-6xl mx-auto px-4 lg:px-6">
+            <div className="max-w-6xl mx-auto px-5 lg:px-8">
                 {/* Featured Articles Grid */}
                 <section data-cf-slot="featured-articles">
-                  <CardGrid columns={{ sm: 2, lg: 4 }} gap={4} className="mt-8">
+                  <CardGrid columns={{ sm: 2, lg: 4 }} gap={6} className="mt-8">
                     {featured.map((article, index) => (
                         <FeaturedArticleCard
                             key={article.slug}
@@ -150,11 +150,11 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
                               paginationSlot="pagination"
                             />
                         ) : (
-                            <div className="text-center py-12">
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-4">
+                            <div className="mp-card mp-card--level text-center py-12 px-6">
+                                <h2 className="mp-shout text-4xl mb-4">
                                     No articles found
                                 </h2>
-                                <p className="text-zinc-500">
+                                <p className="mp-type">
                                     No articles match "{searchQuery}". Try a different search term.
                                 </p>
                             </div>

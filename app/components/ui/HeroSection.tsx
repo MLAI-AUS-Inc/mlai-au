@@ -30,15 +30,19 @@ export default function HeroSection({
     }
 
     return (
-        <div className="p-2 lg:p-3">
-            <section className={`${variantClasses[variant]} ${className}`.trim()}>
+        <div className="mp-sec mp-library-hero">
+            <section
+                className={`${variantClasses[variant]} mp-bill mp-bill--a3 ${className}`.trim()}
+                data-mp-ink={variant === "yellow" ? "yellow" : "orange"}
+                data-mp-tape="duct"
+            >
                 <div className="max-w-6xl mx-auto">
                     <div className="max-w-4xl">
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-zinc-900 tracking-tight" data-cf-slot={headingSlot}>
+                        <h1 className="mp-title mp-library-title" data-cf-slot={headingSlot}>
                             {title}
                         </h1>
                         {description && (
-                            <p className="mt-4 text-base text-zinc-700" data-cf-slot={descriptionSlot}>
+                            <p className="mp-library-intro" data-cf-slot={descriptionSlot}>
                                 {description}
                             </p>
                         )}

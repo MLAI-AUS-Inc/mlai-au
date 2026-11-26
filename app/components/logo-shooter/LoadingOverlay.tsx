@@ -19,7 +19,7 @@ export function LoadingOverlay({ loaded, total }: LoadingOverlayProps) {
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className="mt-4 text-white text-sm font-mono">
+      <p className="mp-type mt-4 text-white text-sm">
         Loading sponsors... {loaded}/{total}
       </p>
     </div>

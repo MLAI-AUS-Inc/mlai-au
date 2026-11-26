@@ -129,21 +129,21 @@ function Pagination({
 
     return (
         <nav
-            className='flex items-center justify-between border-t border-zinc-200 pt-6'
+            className='mp-pages flex items-center justify-between pt-6'
             aria-label='Pagination'
          data-cf-slot={slot}>
             <div className='flex w-0 flex-1'>
                 {currentPage === 1 ? (
-                    <span className='inline-flex items-center gap-2 text-sm font-medium text-zinc-300'>
+                    <span className='mp-pages-step' aria-disabled='true'>
                         <ArrowLongLeftIcon aria-hidden='true' className='h-5 w-5' />
                         Previous
                     </span>
                 ) : (
                     <Link
                         to={buildArticlesHref(basePath, hash, prevPage)}
-                        className='inline-flex items-center gap-2 text-sm font-medium text-zinc-500 transition hover:text-zinc-900'
+                        className='mp-pages-step'
                     >
-                        <ArrowLongLeftIcon aria-hidden='true' className='h-5 w-5 text-zinc-400' />
+                        <ArrowLongLeftIcon aria-hidden='true' className='h-5 w-5' />
                         Previous
                     </Link>
                 )}
@@ -151,7 +151,7 @@ function Pagination({
             <div className='hidden md:flex md:items-center md:gap-2'>
                 {pageItems.map((item, index) =>
                     item === 'ellipsis' ? (
-                        <span key={`ellipsis-${index}`} className='px-2 text-sm text-zinc-400'>
+                        <span key={`ellipsis-${index}`} className='mp-type px-2 text-sm'>
                             …
                         </span>
                     ) : (
@@ -159,12 +159,7 @@ function Pagination({
                             key={`page-${item}`}
                             to={buildArticlesHref(basePath, hash, item)}
                             aria-current={item === currentPage ? 'page' : undefined}
-                            className={clsx(
-                                'inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition',
-                                item === currentPage
-                                    ? 'bg-indigo-50 text-indigo-600'
-                                    : 'text-zinc-500 hover:text-zinc-900'
-                            )}
+                            className='mp-pages-num'
                         >
                             {item}
                         </Link>
@@ -173,17 +168,17 @@ function Pagination({
             </div>
             <div className='flex w-0 flex-1 justify-end'>
                 {currentPage === totalPages ? (
-                    <span className='inline-flex items-center gap-2 text-sm font-medium text-zinc-300'>
+                    <span className='mp-pages-step' aria-disabled='true'>
                         Next
                         <ArrowLongRightIcon aria-hidden='true' className='h-5 w-5' />
                     </span>
                 ) : (
                     <Link
                         to={buildArticlesHref(basePath, hash, nextPage)}
-                        className='inline-flex items-center gap-2 text-sm font-medium text-zinc-500 transition hover:text-zinc-900'
+                        className='mp-pages-step'
                     >
                         Next
-                        <ArrowLongRightIcon aria-hidden='true' className='h-5 w-5 text-zinc-400' />
+                        <ArrowLongRightIcon aria-hidden='true' className='h-5 w-5' />
                     </Link>
                 )}
             </div>
@@ -326,38 +321,38 @@ export default function ArticleCalendarSection({
         <section id={id} className='scroll-mt-24' data-cf-slot={sectionSlot}>
             <div className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
                 <div>
-                    <h2 className='text-2xl font-semibold tracking-tight text-zinc-900'>{listHeading}</h2>
+                    <h2 className='mp-title mp-list-title'><span className='mp-strip'>{listHeading}</span></h2>
                     {!selectedDate && listRange ? (
-                        <p className='mt-1 text-sm text-zinc-500'>
+                        <p className='mp-type mt-3 text-sm text-[var(--mp-paper)]'>
                             Showing {listRange.start.toLocaleString('en-AU')} – {listRange.end.toLocaleString('en-AU')} of {articles.length.toLocaleString('en-AU')} articles
                         </p>
                     ) : null}
                     {selectedDate ? (
-                        <p className='mt-1 text-sm text-zinc-500'>{articlesByDate.get(selectedDate)?.length ?? 0} article(s) on this date</p>
+                        <p className='mp-type mt-3 text-sm text-[var(--mp-paper)]'>{articlesByDate.get(selectedDate)?.length ?? 0} article(s) on this date</p>
                     ) : null}
                 </div>
                 {selectedDate ? (
                     <button
                         type='button'
                         onClick={clearSelectedDate}
-                        className='inline-flex items-center justify-center rounded-full border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900'
+                        className='mp-btn mp-btn--paper'
                     >
                         Clear date filter
                     </button>
                 ) : null}
             </div>
 
-            <div className='mt-8 rounded-3xl border border-zinc-200 bg-white/70 p-6 shadow-sm sm:p-8'>
+            <div className='mp-ledger mt-8 p-5 sm:p-8' data-mp-tape='2'>
                 <div className='grid gap-10 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]'>
                     <div>
                         <div className='flex items-center justify-between'>
-                            <h3 className='text-sm font-semibold text-zinc-900'>{visibleMonthLabel}</h3>
+                            <h3 className='mp-head text-lg'>{visibleMonthLabel}</h3>
                             <div className='flex items-center gap-2'>
                                 <button
                                     type='button'
                                     onClick={() => canGoPrev && setVisibleMonth(addMonths(visibleMonth, -1))}
                                     disabled={!canGoPrev}
-                                    className='inline-flex items-center rounded-full p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40'
+                                    className='mp-cal-step'
                                 >
                                     <span className='sr-only'>Previous month</span>
                                     <ChevronLeftIcon aria-hidden='true' className='h-5 w-5' />
@@ -366,7 +361,7 @@ export default function ArticleCalendarSection({
                                     type='button'
                                     onClick={() => canGoNext && setVisibleMonth(addMonths(visibleMonth, 1))}
                                     disabled={!canGoNext}
-                                    className='inline-flex items-center rounded-full p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40'
+                                    className='mp-cal-step'
                                 >
                                     <span className='sr-only'>Next month</span>
                                     <ChevronRightIcon aria-hidden='true' className='h-5 w-5' />
@@ -374,7 +369,7 @@ export default function ArticleCalendarSection({
                             </div>
                         </div>
 
-                        <div className='mt-6 grid grid-cols-7 text-center text-xs uppercase tracking-wide text-zinc-400'>
+                        <div className='mp-type mp-cal-week mt-6 grid grid-cols-7 text-center text-xs uppercase'>
                             {weekdayLabels.map((label) => (
                                 <div key={label}>{label}</div>
                             ))}
@@ -396,14 +391,10 @@ export default function ArticleCalendarSection({
                                             onClick={() => handleSelectDay(day)}
                                             disabled={!day.hasArticles}
                                             className={clsx(
-                                                'mx-auto flex size-9 items-center justify-center rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500',
-                                                day.hasArticles
-                                                    ? 'cursor-pointer hover:bg-zinc-100'
-                                                    : 'cursor-default text-zinc-400',
-                                                !day.isCurrentMonth && !isSelected && 'text-zinc-300',
-                                                !isSelected && day.hasArticles && 'text-zinc-900',
-                                                day.isToday && !isSelected && 'font-semibold text-indigo-600',
-                                                isSelected && 'bg-[#1028E0] font-semibold text-white hover:bg-[#1028E0]'
+                                                'mp-cal-day mx-auto flex size-9 items-center justify-center',
+                                                day.hasArticles && 'mp-cal-day--has',
+                                                !day.isCurrentMonth && !isSelected && 'mp-cal-day--out',
+                                                day.isToday && !isSelected && 'mp-cal-day--today'
                                             )}
                                         >
                                             <span>{day.label}</span>
@@ -412,7 +403,7 @@ export default function ArticleCalendarSection({
                                             ) : null}
                                         </button>
                                         {day.hasArticles ? (
-                                            <div className={clsx('mx-auto mt-1 h-1 w-1 rounded-full', isSelected ? 'bg-[#1028E0]' : 'bg-indigo-300')} />
+                                            <div className='mp-cal-pip mx-auto mt-1' />
                                         ) : null}
                                     </div>
                                 )
@@ -422,38 +413,38 @@ export default function ArticleCalendarSection({
 
                     <div className='flex flex-col gap-6'>
                         {showEmptyState ? (
-                            <div className='rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 p-6 text-center text-zinc-500' data-cf-slot={emptyStateSlot}>
+                            <div className='mp-empty p-6 text-center' data-cf-slot={emptyStateSlot}>
                                 <p className='font-medium'>
                                     {selectedDate ? `No articles published on ${formatDate(selectedDate)}.` : 'No articles available yet.'}
                                 </p>
                                 {!selectedDate ? <p className='mt-2 text-sm'>Check back soon for new writing.</p> : null}
                             </div>
                         ) : (
-                            <ul role='list' className='list-none space-y-4'>
+                            <ul role='list' className='mp-rows list-none'>
                                 {listArticles.map((article) => (
                                     <li key={article.slug} data-cf-slot={articleCardSlot}>
                                         <Link
                                             to={`/articles/${article.slug}`}
-                                            className='group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500'
+                                            className='mp-row group block'
                                          data-cf-slot={articleLinkSlot}>
                                             <time
                                                 dateTime={article.date}
-                                                className='text-xs font-medium uppercase tracking-wide text-zinc-400'
+                                                className='mp-row-date'
                                             >
                                                 {formatDate(article.date)}
                                             </time>
                                             <div className='mt-2 flex items-start justify-between gap-4'>
-                                                <h3 className='text-lg font-semibold text-zinc-900 transition group-hover:text-[#1028E0]'>
+                                                <h3 className='mp-row-title'>
                                                     {article.title}
                                                 </h3>
-                                                <span className='hidden size-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-50 text-[#1028E0] transition group-hover:bg-[#1028E0] group-hover:text-white sm:flex'>
+                                                <span className='mp-row-go hidden size-10 flex-shrink-0 items-center justify-center sm:flex'>
                                                     <ChevronRightIcon aria-hidden='true' className='h-5 w-5' />
                                                 </span>
                                             </div>
-                                            <p className='mt-2 text-sm leading-6 text-zinc-600'>
+                                            <p className='mp-row-desc'>
                                                 {article.description}
                                             </p>
-                                            <span className='mt-4 inline-flex items-center text-sm font-medium text-[#1028E0]'>
+                                            <span className='mp-row-more'>
                                                 Read article
                                                 <ChevronRightIcon aria-hidden='true' className='ml-1.5 h-4 w-4' />
                                             </span>

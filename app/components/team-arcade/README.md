@@ -61,3 +61,27 @@ bun run test:arcade:browser
 The dedicated browser suite runs the production Worker preview and covers Chromium desktop, a Chromium phone viewport with actual multi-touch protocol events, and WebKit desktop/phone contexts. Mobile journeys cover portrait gating, seven phone/tablet sizes, rotation during combat and loading, explicit resume, touch-target visibility, unclipped arenas and input cancellation. It checks lazy network requests, the one-roster selection sequence and edits, all roster choices, mirrors, pixel typography and intro animations, reduced motion, jumping past the CPU, human and CPU damage, a real complete match, pause/resume, results/rematch, asset retry, cancelled loading and 20 start/exit cycles. The article suite excludes these JavaScript-dependent journeys; CI installs both browsers and runs each suite with its own configuration. Install the matching Playwright Chromium and WebKit browsers before first use. Browser captures remain in `.local/`. Emulated phone and WebKit tests do not replace testing on physical phones.
 
 Local Worker homepage caching uses the `local` build revision. For repeated preview rebuilds, use a query such as `/?arcade-check=browser` to fetch a fresh SSR document. Deployment builds receive their source revision through the existing Workers CI configuration.
+
+## The console (MLAI SLAB-1)
+
+The team select is the screen of a wide handheld console, `app/components/team-console/`. It is an original MLAI design: a smooth, rounded, matte plastic body with a cross pad, two round buttons and a purple cartridge, carrying MLAI's inks, tape and stickers. It copies no real device and no other site's model.
+
+There are two consoles, chosen by the motion preference.
+
+**The 3D console** runs on every screen, phones included, with no reduced-motion or Save-Data preference. `consoleDims` picks its shape from the panel: a wide panel gets a wide handheld with a grip either side, a tall one (a phone) gets an upright handheld with the cross and buttons on a deck under the screen. On a touch screen it sways by itself, having no pointer to lean toward. It also needs the arcade to be enabled and a hardware renderer: a software renderer (SwiftShader, llvmpipe) is declined, unless `localStorage.setItem("mlai-console-3d", "force")` is set, which the forced-3D browser test uses. `TeamConsole.tsx` lazily imports `console-scene.client.ts` when the section nears the viewport; that module is the only one that touches three.js. In this layout the team panel takes the full width of the section and the flat console is not drawn.
+
+- The scene is measured in CSS pixels with the screen at the origin, and the camera is placed so a pixel at z = 0 is a pixel on the page. At scale 1 with no rotation the console's screen covers the panel exactly (`console-layout.ts`).
+- Cartridge out: the canvas shows the whole console floating over the page, leaning toward the pointer, its screen reading INSERT CART. The panel is `inert` and hidden. The cartridge button covers the console, so a click or Enter anywhere on it inserts the cartridge.
+- Cartridge in: the cartridge drops, the screen boots, and the rig moves from its resting pose to the identity, which reads as the camera diving into the screen. The canvas then fades out and the real HTML panel underneath takes over. Every control on the panel is an ordinary button throughout.
+- Seated: an EJECT tab sits above the panel. Ejecting plays the same move backwards.
+- The first time the scene is ready it pulls its own cartridge once (`ATTRACT`), so visitors meet the console first. It skips this if anyone has already clicked, typed or hovered in the panel, and the status region announces that the cartridge is out.
+
+Where the 3D console is eligible but cannot run (no hardware renderer, WebGL failure), the full-width panel stays and the cartridge is a simple tab above it, with the flat NO CART screen.
+
+**The flat console** (styles in `app/styles/poster/console.css`) is server-rendered and stays with reduced motion: a paper slab around the panel with a cartridge button, a NO CART screen and an INSERT CART button. Reduced motion and Save-Data never download three.js.
+
+Both are driven by the pure reducer in `cartridge.ts`: seated, ejecting, out, inserting, booting, seated. The cartridge is a real button ("Eject cartridge" / "Insert cartridge"). With the cartridge out PRESS START cannot be reached. Reduced motion skips the travel and the boot. The cartridge cannot be pulled while the arcade is open.
+
+Opening the arcade disposes the scene so the game owns the only WebGL context. The scene is rebuilt 2.5 seconds after the arcade closes, so a quick rematch never builds it; building takes over a second of main-thread time on a software renderer. If WebGL fails or the context is lost, the cartridge is put back (`RESET`) and the plain panel stays for the rest of the page view. The console requests no images: labels and screens are painted to canvas textures with the page's fonts, and the lighting is three.js's built-in room environment.
+
+Unit tests: `tests/team-console-cartridge.test.ts`, `tests/team-console-layout.test.ts`. Browser tests: `e2e/team-arcade-console.pw.ts`, run with the arcade suite. The arcade specs call `seatCartridge` (`e2e/team-console-helpers.ts`) before using the team select, because the 3D console starts with its cartridge out.

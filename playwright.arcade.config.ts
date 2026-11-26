@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: ["team-arcade.pw.ts", "team-arcade-mobile.pw.ts"],
+  testMatch: ["team-arcade.pw.ts", "team-arcade-mobile.pw.ts", "team-arcade-console.pw.ts"],
   fullyParallel: false,
   workers: 1,
   timeout: 90_000,
@@ -46,7 +46,7 @@ export default defineConfig({
     },
     {
       name: "webkit-mobile",
-      testMatch: "team-arcade-mobile.pw.ts",
+      testMatch: ["team-arcade-mobile.pw.ts", "team-arcade-console.pw.ts"],
       use: {
         browserName: "webkit",
         viewport: { width: 390, height: 844 },

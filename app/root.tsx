@@ -57,7 +57,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@200..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@200..700&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Special+Elite&display=swap",
   },
   {
     // Roboto — used by the Vibe Raising user flow body/subheading text.

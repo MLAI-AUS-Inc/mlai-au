@@ -91,33 +91,22 @@ export default function SectionMarkers() {
     if (!isHomePage) return null;
 
     return (
-        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-30 hidden lg:flex flex-col gap-2 pr-3">
+        <div className="mp-shell mp-ticks fixed right-0 top-1/2 -translate-y-1/2 z-30 hidden lg:flex flex-col">
             {sectionMarkers.map((marker) => {
                 const isActive = activeSection === marker.sectionId;
                 return (
                     <button
                         key={marker.sectionId}
                         onClick={() => handleMarkerClick(marker.sectionId)}
-                        className={`group relative flex items-center justify-end transition-all duration-300 ease-out`}
+                        className="mp-tick group"
                         aria-label={`Go to ${marker.name} section`}
+                        aria-current={isActive ? "true" : undefined}
+                        style={{ "--mp-item": marker.color } as React.CSSProperties}
                     >
                         {/* Label - shows on hover */}
-                        <span
-                            className={`absolute right-full mr-2 px-2 py-1 text-xs font-medium rounded-md whitespace-nowrap
-                opacity-0 group-hover:opacity-100 transition-opacity duration-200
-                bg-[var(--brutalist-border)] text-white`}
-                        >
-                            {marker.name}
-                        </span>
-
+                        <span className="mp-tick-label">{marker.name}</span>
                         {/* Marker bar */}
-                        <div
-                            className={`rounded-full transition-all duration-300 ease-out ${isActive
-                                ? "w-2 h-8"
-                                : "w-1.5 h-4 opacity-50 group-hover:opacity-100 group-hover:h-6"
-                                }`}
-                            style={{ backgroundColor: marker.color }}
-                        />
+                        <span className="mp-tick-bar" />
                     </button>
                 );
             })}

@@ -9,21 +9,9 @@ interface SectionDividerProps {
  */
 export default function SectionDivider({ color, label }: SectionDividerProps) {
     return (
-        <div className="w-full flex justify-end pr-3 lg:pr-6 py-2">
-            <div className="flex items-center gap-2">
-                {label && (
-                    <span
-                        className="text-xs font-medium uppercase tracking-wider opacity-60"
-                        style={{ color }}
-                    >
-                        {label}
-                    </span>
-                )}
-                <div
-                    className="w-12 lg:w-20 h-1 rounded-full"
-                    style={{ backgroundColor: color }}
-                />
-            </div>
+        <div className="mp-divider" style={{ "--mp-item": color } as React.CSSProperties}>
+            {label && <span className="mp-divider-label">{label}</span>}
+            <span className="mp-divider-line" aria-hidden="true" />
         </div>
     );
 }

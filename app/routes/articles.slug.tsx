@@ -307,6 +307,12 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
     return (
         <ArticleReadTime.Provider value={readAt}>
         <ArticleHydrationScope key={article.slug}>
+        {/* Poster look: the article is one long sheet pasted on the wall.
+            The sheet stays level and clean; the poster lives around it. */}
+        <div className="mp-page mp-wall mp-article-wall">
+        <div className="mp-sheet mp-article" data-mp-ink="orange">
+        <i className="mp-tp mp-tp--tl" aria-hidden="true" />
+        <i className="mp-tp mp-tp--tr" aria-hidden="true" />
         <ArticleLayout
             article={article}
             breadcrumbItems={useCustomHeader ? undefined : breadcrumbs}
@@ -328,6 +334,8 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
                 </div>
             </div>
         </ArticleLayout>
+        </div>
+        </div>
         </ArticleHydrationScope>
         </ArticleReadTime.Provider>
     );

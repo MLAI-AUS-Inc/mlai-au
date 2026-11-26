@@ -55,6 +55,14 @@ const navigation = [
   },
 ];
 
+// Ink colour for the lettering on each label: dark on the pale inks, and
+// the black label is keylined so it shows on the black rail.
+function itemTone(color: string) {
+  if (color === "#fefc22" || color === "#00ffd7") return "dark";
+  if (color === "#1a1a1a") return "ink";
+  return "light";
+}
+
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable) return true;
@@ -164,39 +172,34 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-3 left-3 z-50">
+      <div className="mp-shell lg:hidden fixed top-3 left-3 z-50">
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-xl p-3 bg-[var(--brutalist-beige)] border-2 border-[var(--brutalist-border)] shadow-md min-w-[48px] min-h-[48px]"
+          className="mp-menu-btn"
           onClick={() => setMobileMenuOpen(true)}
         >
           <span className="sr-only">Open main menu</span>
-          <Bars3Icon className="h-6 w-6 text-[var(--brutalist-border)]" aria-hidden="true" />
+          <Bars3Icon className="h-6 w-6" aria-hidden="true" />
         </button>
       </div>
 
       {/* Desktop sidebar - 220px width */}
-      <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-screen w-[220px] flex-col bg-[var(--brutalist-beige)] p-4 gap-2">
-        {/* Logo container - Mint background */}
-        <a
-          href="/"
-          className="block w-full aspect-[2/1] rounded-xl bg-[var(--brutalist-mint)] hover:scale-[1.02] transition-transform duration-200 relative group flex items-end justify-center mb-4 overflow-hidden"
-        >
-          {/* Kangaroo image - larger and aligned to bottom, overlapping top */}
+      <aside
+        className="mp-shell mp-rail hidden lg:flex fixed left-0 top-0 z-40 h-screen w-[220px] flex-col"
+        data-mp-ground="black"
+      >
+        {/* Logo: the MLAI kangaroo mark, stuck on like a sticker */}
+        <a href="/" className="mp-rail-logo group">
           <img
-            className="h-[110%] w-auto object-contain object-bottom transition-transform duration-500 group-hover:scale-110 -mt-[40%]"
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Roo_MLAI.png?alt=media&token=10e962dd-6636-4dcc-9b49-9de4c62ebc82"
             alt="MLAI Kangaroo logo"
           />
         </a>
 
         {/* Navigation items */}
-        <nav className="grid min-h-0 flex-1 grid-rows-7 gap-2">
+        <nav className="mp-rail-nav grid min-h-0 flex-1 grid-rows-7">
           {navigation.map((item, index) => {
             const active = isItemActive(index);
-            const isYellow = item.color === "#fefc22";
-            const isMint = item.color === "#00ffd7";
-            const useDarkText = isYellow || isMint;
 
             return (
               <a
@@ -204,22 +207,13 @@ export default function Sidebar() {
                 href={item.href}
                 aria-current={active ? "true" : undefined}
                 aria-keyshortcuts={item.number}
-                className={`flex h-full min-h-0 flex-col justify-between rounded-xl px-3 py-1.5 ${
-                  active ? "shadow-[inset_0_0_0_3px_var(--brutalist-border)]" : ""
-                }`}
-                style={{ backgroundColor: item.color }}
+                className="mp-rail-item"
+                data-mp-tone={itemTone(item.color)}
+                style={{ "--mp-item": item.color } as React.CSSProperties}
                 onClick={(e) => handleNavClick(e, item)}
               >
-                <span
-                  className={`block text-lg font-normal leading-none ${useDarkText ? "text-black" : "text-white"}`}
-                >
-                  {item.number}
-                </span>
-                <span
-                  className={`block whitespace-nowrap text-xl font-normal leading-none ${useDarkText ? "text-black" : "text-white"}`}
-                >
-                  {item.name}
-                </span>
+                <span className="mp-rail-num">{item.number}</span>
+                <span className="mp-rail-name">{item.name}</span>
               </a>
             );
           })}
@@ -232,56 +226,45 @@ export default function Sidebar() {
         onClose={setMobileMenuOpen}
         className="lg:hidden"
       >
-        {/* 80% Transparent overlay - click to close */}
-        <div className="fixed inset-0 z-50 bg-black/20" onClick={() => setMobileMenuOpen(false)} />
-        <Dialog.Panel className="fixed inset-y-0 left-0 z-50 w-full max-w-xs overflow-y-auto bg-[var(--brutalist-beige)] px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <a href="/" className="block w-16 h-16 rounded-lg bg-[var(--brutalist-mint)] overflow-hidden p-1 flex items-center justify-center">
+        {/* Overlay - click to close */}
+        <div className="fixed inset-0 z-50 bg-black/60" onClick={() => setMobileMenuOpen(false)} />
+        <Dialog.Panel
+          className="mp-shell mp-rail mp-rail--drawer fixed inset-y-0 left-0 z-50 w-full max-w-xs overflow-y-auto"
+          data-mp-ground="black"
+        >
+          <div className="flex items-center justify-between mb-5">
+            <a href="/" className="mp-rail-logo mp-rail-logo--sm">
               <img
-                className="h-full w-auto object-contain"
                 src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Roo_MLAI.png?alt=media&token=10e962dd-6636-4dcc-9b49-9de4c62ebc82"
                 alt="MLAI logo"
               />
             </a>
             <button
               type="button"
-              className="rounded-lg p-2 border-2 border-[var(--brutalist-border)]"
+              className="mp-menu-btn"
               onClick={() => setMobileMenuOpen(false)}
             >
               <span className="sr-only">Close menu</span>
               <XMarkIcon className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          <nav className="flex flex-col gap-2">
-            {navigation.map((item) => {
-              const isYellow = item.color === "#fefc22";
-              const isMint = item.color === "#00ffd7";
-              const useDarkText = isYellow || isMint;
-
-              return (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="relative flex items-center rounded-lg px-4 min-h-[52px]"
-                  style={{ backgroundColor: item.color }}
-                  onClick={(e) => {
-                    setMobileMenuOpen(false);
-                    handleNavClick(e, item);
-                  }}
-                >
-                  <span
-                    className={`text-xs font-normal mr-3 ${useDarkText ? "text-black" : "text-white"}`}
-                  >
-                    {item.number}
-                  </span>
-                  <span
-                    className={`text-base font-normal ${useDarkText ? "text-black" : "text-white"}`}
-                  >
-                    {item.name}
-                  </span>
-                </a>
-              );
-            })}
+          <nav className="mp-rail-nav flex flex-col">
+            {navigation.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="mp-rail-item mp-rail-item--row"
+                data-mp-tone={itemTone(item.color)}
+                style={{ "--mp-item": item.color } as React.CSSProperties}
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  handleNavClick(e, item);
+                }}
+              >
+                <span className="mp-rail-num">{item.number}</span>
+                <span className="mp-rail-name">{item.name}</span>
+              </a>
+            ))}
           </nav>
         </Dialog.Panel>
       </Dialog>

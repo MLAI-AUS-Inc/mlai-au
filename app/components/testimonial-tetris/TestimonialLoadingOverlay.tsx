@@ -39,7 +39,7 @@ export function TestimonialLoadingOverlay({
       </div>
 
       {/* Loading text */}
-      <p className="mt-4 text-white text-sm font-mono">{message}</p>
+      <p className="mp-type mt-4 text-white text-sm">{message}</p>
     </div>
   );
 }

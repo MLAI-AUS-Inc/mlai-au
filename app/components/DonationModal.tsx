@@ -103,7 +103,7 @@ export default function DonationModal() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[var(--brutalist-orange)] px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-[#ff6b3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black sm:gap-3 sm:px-6 sm:py-3 sm:text-base"
+        className="mp-btn mp-btn--go"
       >
         <svg
           aria-hidden="true"
@@ -148,18 +148,18 @@ export default function DonationModal() {
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
-                <Dialog.Panel className="relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl border border-black bg-[var(--brutalist-beige)] p-5 text-left shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8">
+                <Dialog.Panel className="mp-page mp-dialog relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto p-5 text-left sm:max-h-[calc(100dvh-3rem)] sm:p-8">
                   <button
                     ref={closeButtonRef}
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full border border-black bg-white text-2xl leading-none transition-colors hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                    className="mp-dialog-close absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center text-2xl leading-none"
                   >
                     <span className="sr-only">Close donation modal</span>
                     <span aria-hidden="true">&times;</span>
                   </button>
 
-                  <Dialog.Title className="pr-14 text-3xl font-bold tracking-tight text-black sm:text-4xl">
+                  <Dialog.Title className="mp-shout pr-14 text-4xl text-black sm:text-5xl">
                     Support MLAI
                   </Dialog.Title>
                   <Dialog.Description className="mt-3 max-w-md text-base leading-6 text-gray-700">
@@ -167,7 +167,7 @@ export default function DonationModal() {
                     helping us connect builders and run accessible events.
                   </Dialog.Description>
 
-                  <div className="mt-6 min-h-40 rounded-2xl bg-white p-3 sm:p-5">
+                  <div className="mp-scrap mt-6 min-h-40 p-3 sm:p-5">
                     {!isConfigured ? (
                       <div className="flex min-h-32 flex-col items-center justify-center text-center">
                         <p className="font-semibold text-black">
