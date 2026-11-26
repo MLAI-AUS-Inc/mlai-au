@@ -1,0 +1,249 @@
+/* MLAI SLAB-1: the handheld console around the team select.
+   This file draws the flat console. On a wide screen with a mouse a three.js
+   canvas draws the same console in 3D on top and the flat body is hidden.
+   The team panel is the console's screen and is never moved by script. */
+
+.team-console {
+  --tc-grip: 0px;
+  --tc-deck: 2.75rem;
+  --tc-chin: 2.5rem;
+  --tc-headroom: 2.75rem;
+  --tc-cut: 1.125rem;
+  --tc-cart-w: clamp(8.5rem, 34%, 12rem);
+  --tc-cart-x: 72%;
+  --tc-shown: 1.375rem;
+  --tc-rise: calc(var(--tc-headroom) - 0.75rem);
+  position: relative;
+  padding: var(--tc-headroom) 0.625rem 0.625rem 0;
+}
+@media (min-width: 640px) {
+  .team-console { --tc-deck: 3rem; --tc-chin: 3rem; --tc-cart-w: clamp(10.5rem, 26%, 13rem); }
+}
+@media (min-width: 1024px) {
+  .team-console {
+    --tc-grip: 4.5rem; --tc-deck: 3.25rem; --tc-chin: 3.75rem; --tc-headroom: 6.5rem; --tc-cut: 1.375rem;
+    --tc-cart-w: clamp(10.625rem, 19%, 16.25rem); --tc-cart-x: 68%; --tc-shown: 1.625rem;
+  }
+  /* The screen is narrower than the page here, so the panel gives back some padding. */
+  .team-console .team-console-screen .fighter-select-container { padding: 20px 18px; }
+}
+@media (min-width: 1280px) {
+  .team-console { --tc-grip: 6.5rem; --tc-headroom: 7.25rem; --tc-cut: 1.625rem; }
+}
+@media (min-width: 1440px) {
+  .team-console { --tc-grip: 8.5rem; --tc-deck: 3.5rem; --tc-chin: 4rem; --tc-headroom: 8rem; --tc-cut: 1.875rem; }
+}
+@media (min-width: 1700px) {
+  .team-console { --tc-grip: 11rem; }
+}
+
+.team-console-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--tc-grip) minmax(0, 1fr) var(--tc-grip);
+  grid-template-rows: var(--tc-deck) auto var(--tc-chin);
+}
+
+/* ── The flat body ─────────────────────────────────────────────────── */
+
+.team-console-body { position: absolute; inset: 0; pointer-events: none; }
+.team-console-body > i { position: absolute; display: block; }
+.team-console-drop, .team-console-ink, .team-console-slab {
+  clip-path: polygon(
+    calc(var(--tc-cut) * 1.6) 0, calc(100% - var(--tc-cut)) 0, 100% var(--tc-cut),
+    100% calc(100% - var(--tc-cut)), calc(100% - var(--tc-cut)) 100%, var(--tc-cut) 100%,
+    0 calc(100% - var(--tc-cut)), 0 calc(var(--tc-cut) * 1.6)
+  );
+}
+.team-console-drop { inset: 0.5rem -0.5rem -0.5rem 0.5rem; background: var(--mp-yellow); }
+.team-console-ink { inset: -0.1875rem; background: var(--mp-ink); }
+.team-console-slab {
+  inset: 0;
+  background-color: var(--mp-paper);
+  background-image: var(--mp-tex-paper);
+  background-size: 22rem;
+}
+.team-console-stamp {
+  left: calc(var(--tc-grip) + 1.75rem); right: calc(var(--tc-grip) + 0.5rem); bottom: 0; height: calc(var(--tc-chin) - 0.75rem);
+  display: flex !important; align-items: center;
+  font: 400 0.6875rem/1 var(--mp-font-head); font-style: normal; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--mp-ink); white-space: nowrap; overflow: hidden;
+}
+.team-console-lamp {
+  left: calc(var(--tc-grip) + 0.5rem); bottom: calc((var(--tc-chin) - 0.75rem) / 2 - 0.3125rem);
+  width: 0.625rem; height: 0.625rem; background: var(--mp-teal); border: 0.125rem solid var(--mp-ink);
+}
+.team-console[data-screen="off"] .team-console-lamp { background: var(--mp-red); }
+.team-console-tape {
+  left: -0.75rem; top: 0.5rem; padding: 0.3rem 0.9rem 0.25rem;
+  background: #e9dfc0; color: var(--mp-ink); clip-path: var(--mp-rip);
+  font: 400 0.6875rem/1 var(--mp-font-hand); font-style: normal; white-space: nowrap;
+  transform: rotate(-4deg); transform-origin: left center;
+}
+.team-console-scrawl {
+  top: 0; height: calc(var(--tc-deck) - 0.75rem); right: calc(100% - var(--tc-cart-x) + var(--tc-cart-w) / 2 + 1rem);
+  display: flex !important; align-items: center;
+  font: 400 0.75rem/1 var(--mp-font-hand); font-style: normal; color: var(--mp-ink); white-space: nowrap;
+  transform: rotate(2deg);
+}
+@media (max-width: 639px) { .team-console-scrawl, .team-console-tape { display: none !important; } }
+
+/* ── Cartridge: a real button over the slot ────────────────────────── */
+
+.team-console-cart {
+  position: absolute; z-index: 4; container-type: inline-size;
+  left: calc(var(--tc-cart-x) - var(--tc-cart-w) / 2 - 0.5rem);
+  top: calc(var(--tc-headroom) * -1);
+  width: calc(var(--tc-cart-w) + 1rem);
+  height: calc(var(--tc-headroom) + var(--tc-deck));
+  min-height: 2.75rem;
+  padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.team-console-cart[aria-disabled="true"] { cursor: default; }
+.team-console-cart:focus-visible { outline: 0.1875rem solid var(--mp-teal); outline-offset: -0.1875rem; box-shadow: inset 0 0 0 0.375rem var(--mp-ink); }
+.team-console-cart-art {
+  position: absolute; left: 0.5rem; right: 0.5rem;
+  top: calc(var(--tc-headroom) - var(--tc-shown));
+  height: calc(var(--tc-cart-w) * 0.62);
+  background: var(--mp-purple); border: 0.1875rem solid var(--mp-ink); border-bottom: 0;
+  transition: top 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.team-console-cart-art::before {
+  content: ""; position: absolute; left: 12%; right: 12%; top: 0.3125rem; height: 0.625rem;
+  background: repeating-linear-gradient(90deg, var(--mp-ink) 0 0.1875rem, transparent 0.1875rem 0.625rem);
+}
+.team-console-cart-art::after {
+  content: "COMMUNITY CLASH"; position: absolute; left: 10%; right: 10%; top: 1.25rem; bottom: 12%;
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 0.25rem;
+  background: var(--mp-yellow); border: 0.125rem solid var(--mp-ink); color: var(--mp-ink);
+  font: 400 0.8125rem/1 var(--mp-font-shout); letter-spacing: 0.04em; white-space: nowrap; overflow: hidden;
+}
+.team-console[data-cart="ejecting"] .team-console-cart-art,
+.team-console[data-cart="out"] .team-console-cart-art { top: calc(var(--tc-headroom) - var(--tc-rise)); }
+/* The rise is a share of the cartridge's own width; cqw keeps the percentage out of a vertical property. */
+@media (min-width: 1024px) {
+  .team-console[data-cart="ejecting"] .team-console-cart-art,
+  .team-console[data-cart="out"] .team-console-cart-art {
+    top: calc(var(--tc-headroom) - min(calc((100cqw - 1rem) * 0.446), calc(var(--tc-headroom) - 0.875rem)));
+  }
+}
+.team-console[data-cart="inserting"] .team-console-cart-art { transition: top 460ms cubic-bezier(0.55, 0, 1, 0.45); }
+/* The mouth of the slot hides the part of the cartridge inside the body. */
+.team-console-cart::after {
+  content: ""; position: absolute; left: 0; right: 0; top: var(--tc-headroom); bottom: 0;
+  background: var(--mp-paper); border-top: 0.25rem solid var(--mp-ink);
+}
+.team-console-cart-tab {
+  position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; height: var(--tc-deck);
+  display: flex; align-items: center; justify-content: center;
+  font: 700 0.75rem/1 var(--mp-font-head); letter-spacing: 0.12em; text-transform: uppercase; color: var(--mp-ink);
+}
+.team-console-cart:hover:not([aria-disabled="true"]) .team-console-cart-tab { color: var(--mp-orange); }
+
+/* ── Keys in the grips (pointer extras; the screen has the real buttons) ─ */
+
+.team-console-grip { position: relative; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.125rem; }
+@media (min-width: 1024px) { .team-console-grip { display: flex; grid-row: 1 / -1; } }
+.team-console-grip--l { grid-column: 1; }
+.team-console-grip--r { grid-column: 3; }
+.team-console-key {
+  position: relative; z-index: 4; display: grid; place-items: center;
+  width: min(calc(var(--tc-grip) - 1.75rem), 4.5rem); aspect-ratio: 1;
+  background: var(--mp-ink); color: var(--mp-yellow); border: 0.1875rem solid var(--mp-ink);
+  box-shadow: 0.1875rem 0.1875rem 0 color-mix(in srgb, var(--mp-ink) 55%, transparent);
+  font: 400 1.125rem/1 var(--mp-font-shout); cursor: pointer; user-select: none;
+  transition: transform 80ms steps(2, end), box-shadow 80ms steps(2, end);
+}
+.team-console-key:active { transform: translate(0.1875rem, 0.1875rem); box-shadow: none; }
+.team-console-key[data-control="a"] { width: min(calc(var(--tc-grip) - 2.5rem), 4.75rem); background: var(--mp-orange); color: var(--mp-ink); transform: rotate(calc(var(--mp-tilt) * 3deg)); }
+.team-console-key[data-control="b"] { background: var(--mp-teal); color: var(--mp-ink); width: min(calc(var(--tc-grip) - 3rem), 3.5rem); transform: rotate(calc(var(--mp-tilt) * -4deg)); }
+.team-console-key[data-control="a"]:active, .team-console-key[data-control="b"]:active { transform: translate(0.1875rem, 0.1875rem); }
+
+/* ── Screen ────────────────────────────────────────────────────────── */
+
+.team-console-screen { position: relative; grid-column: 2; grid-row: 2; min-width: 0; background: var(--mp-ink-deep); }
+.team-console .team-console-screen .fighter-select-container { box-shadow: none; border: 0.1875rem solid var(--mp-ink); }
+.team-console-live[inert] { visibility: hidden; }
+.team-console-off, .team-console-boot {
+  position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem;
+  background: #111 var(--mp-tex-xerox-soft) center / 22rem; color: var(--mp-paper); border: 0.1875rem solid var(--mp-ink); text-align: center;
+}
+.team-console-off p {
+  margin: 0; padding: 0.35rem 0.9rem; border: 0.25rem solid var(--mp-red); color: var(--mp-red);
+  font: 400 clamp(2rem, 6vw, 4rem)/1 var(--mp-font-shout); letter-spacing: 0.06em; transform: rotate(calc(var(--mp-tilt) * -4deg));
+}
+.team-console-off small { font: 400 0.8125rem/1.3 var(--mp-font-type); color: var(--mp-text-soft, #cfc8b8); color: #cfc8b8; }
+.team-console-insert {
+  min-height: 2.75rem; padding: 0.6rem 1.25rem; background: var(--mp-yellow); color: var(--mp-ink);
+  border: 0.1875rem solid var(--mp-ink); box-shadow: 0.25rem 0.25rem 0 var(--mp-paper);
+  font: 700 1rem/1 var(--mp-font-head); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+  transform: rotate(calc(var(--mp-tilt) * 1.5deg));
+}
+.team-console-insert:focus-visible { outline: 0.1875rem solid var(--mp-teal); outline-offset: 0.25rem; }
+.team-console-insert:active { transform: translate(0.25rem, 0.25rem); box-shadow: none; }
+.team-console-boot { gap: 0.5rem; }
+.team-console-boot b {
+  font: 400 clamp(3rem, 11vw, 7.5rem)/0.9 var(--mp-font-shout); color: var(--mp-yellow); letter-spacing: 0.02em;
+  animation: tc-boot-wipe 420ms steps(6, end) both;
+}
+.team-console-boot span {
+  font: 700 clamp(0.875rem, 2.4vw, 1.5rem)/1 var(--mp-font-head); letter-spacing: 0.22em; text-transform: uppercase;
+  animation: tc-boot-pop 1ms steps(1, end) 480ms both;
+}
+@keyframes tc-boot-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes tc-boot-pop { from { visibility: hidden; } to { visibility: visible; } }
+
+.team-console-status { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ── 3D mode: the canvas draws the console; the flat art steps aside ── */
+
+.team-console-canvas { position: absolute; z-index: 3; pointer-events: none; display: block; }
+.team-console[data-console="3d"] .team-console-body,
+.team-console[data-console="3d"] .team-console-cart-art,
+.team-console[data-console="3d"] .team-console-cart::after,
+.team-console[data-console="3d"] .team-console-cart-tab { opacity: 0; }
+.team-console[data-console="3d"] .team-console-key { opacity: 0; box-shadow: none; transition: none; }
+.team-console[data-console="3d"] .team-console-screen { background: none; }
+/* With the cartridge out the 3D console tilts in the hand and draws its own dark
+   screen; the flat overlay stays for keyboard and screen readers but is not shown. */
+.team-console[data-console="3d"] .team-console-off { opacity: 0; pointer-events: none; }
+.team-console[data-console="3d"] .team-console-off:focus-within { opacity: 1; pointer-events: auto; z-index: 5; }
+.team-console[data-console="3d"]:not([data-cart="seated"]):not([data-cart="booting"]) .team-console-key,
+.team-console[data-console="3d"]:not([data-cart="seated"]):not([data-cart="booting"]) .team-console-cart { pointer-events: none; }
+.team-console[data-console="3d"][data-cart="out"] { cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  .team-console-cart-art, .team-console-key { transition: none !important; }
+  .team-console-boot b, .team-console-boot span { animation: none; }
+}
+@media (forced-colors: active) {
+  .team-console-drop, .team-console-ink, .team-console-slab { clip-path: none; }
+  .team-console-slab { border: 2px solid CanvasText; }
+}
+
+/* ── The panel inside the console's screen (desktop layout) ────────────
+   The screen is narrower than the page, so the roster tiles and the fighter
+   step down a size and the three columns share the room by need. */
+@media (min-width: 1024px) {
+  .team-console .team-console-screen .fighter-desktop-layout { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; margin-top: 12px; }
+  .team-console .team-console-screen .fighter-select-box { width: 60px; height: 60px; }
+  .team-console .team-console-screen .fighter-preview-center { min-width: 0; min-height: 0; }
+  .team-console .team-console-screen .fighter-preview-image { height: 250px; max-width: 100%; object-fit: contain; }
+  .team-console .team-console-screen .fighter-select-container { min-height: 0; }
+  .team-console .team-console-screen .fighter-player-box { padding: 14px; }
+}
+@media (min-width: 1280px) {
+  .team-console .team-console-screen .fighter-select-box { width: 72px; height: 72px; }
+  .team-console .team-console-screen .fighter-preview-image { height: 310px; }
+  .team-console .team-console-screen .fighter-player-box { padding: 18px; }
+}
+@media (min-width: 1440px) {
+  .team-console .team-console-screen .fighter-desktop-layout { gap: 20px; }
+  .team-console .team-console-screen .fighter-select-box { width: 80px; height: 80px; }
+  .team-console .team-console-screen .fighter-preview-image { height: 350px; }
+}
+@media (min-width: 1700px) {
+  .team-console .team-console-screen .fighter-select-box { width: 92px; height: 92px; }
+  .team-console .team-console-screen .fighter-preview-image { height: 400px; }
+}

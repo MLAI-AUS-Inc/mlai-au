@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, type ComponentType, type MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType, type MouseEvent } from "react";
 import type { ArcadeShellProps } from "./team-arcade/ArcadeShell";
+import TeamConsole from "./team-console/TeamConsole";
+import { cartReducer, type CartEvent, type CartState } from "./team-console/cartridge";
 
 // Team member data
 const people = [
@@ -191,8 +193,19 @@ export default function Team() {
     setSelectedIndex((prev) => (prev === people.length - 1 ? 0 : prev + 1));
   };
 
+  // The console's cartridge. Out: the screen is off and nothing can start.
+  const [cart, setCart] = useState<CartState>("seated");
+  const cartContext = useRef({ arcadeOpen, reducedMotion });
+  cartContext.current = { arcadeOpen, reducedMotion };
+  const onCart = useCallback((event: CartEvent) => setCart(state => cartReducer(state, event, cartContext.current)), []);
+  // The console's big key presses whichever Start button is showing, so the launcher bookkeeping stays in one place.
+  const pressStart = () => [...(section.current?.querySelectorAll<HTMLButtonElement>(".fighter-press-start, .fighter-mobile-press-start") ?? [])]
+    .find(button => button.getClientRects().length > 0)?.click();
+  const pickRandom = () => setSelectedIndex(prev => (prev + 1 + Math.floor(Math.random() * (people.length - 1))) % people.length);
+
   return (
     <section ref={section} className="fighter-select-wrapper">
+      <TeamConsole cart={cart} onCart={onCart} interactive={arcadeEnabled} arcadeOpen={arcadeOpen} onPrev={handlePrev} onNext={handleNext} onA={pressStart} onB={pickRandom}>
       <div className="fighter-select-container">
         {/* Pixel World Map Background */}
         <div className="fighter-select-bg" />
@@ -374,6 +387,7 @@ export default function Team() {
           </div>
         </div>
       </div>
+      </TeamConsole>
 
       {/* One client-only host shared by both responsive Start buttons. */}
       {arcadeOpen && Arcade && <Arcade initialPlayer={selectedPerson.fighterId} onClose={closeArcade} />}

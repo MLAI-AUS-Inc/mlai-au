@@ -11,6 +11,7 @@
 @import "./styles/poster/shell.css";
 @import "./styles/poster/home.css";
 @import "./styles/poster/articles.css";
+@import "./styles/poster/console.css";
 
 .healthhack-app {
   --hh-bg: #0d061c;
