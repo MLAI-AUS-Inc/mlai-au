@@ -35,6 +35,7 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
   const screen = useRef<HTMLDivElement>(null);
   const scene = useRef<ConsoleScene | null>(null);
   const failed = useRef(false);
+  const reopened = useRef(false);
   const cartButton = useRef<HTMLButtonElement>(null);
   const [mode, setMode] = useState<"flat" | "3d">("flat");
   const [ready, setReady] = useState(false);
@@ -89,6 +90,7 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
 
   // Mount the scene. It is disposed while the arcade is open so the game owns the only WebGL context.
   useEffect(() => {
+    if (arcadeOpen) reopened.current = true;
     if (!eligible || !near || arcadeOpen || failed.current) return;
     let cancelled = false;
     let created: ConsoleScene | null = null;
@@ -97,7 +99,10 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
       created?.dispose(); created = null; scene.current = null;
       if (!cancelled) { setMode("flat"); setReady(true); }
     };
-    import("./console-scene.client").then(module => {
+    // After the arcade closes, wait a moment: a quick rematch should not build and tear down a scene.
+    const delay = reopened.current ? 800 : 0;
+    reopened.current = false;
+    const timer = window.setTimeout(() => import("./console-scene.client").then(module => {
       if (cancelled || !host.current || !slab.current || !screen.current) return;
       created = module.createConsoleScene(host.current, { slab: slab.current, screen: screen.current }, {
         interactive,
@@ -106,9 +111,10 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
         onLost: giveUp,
       });
       scene.current = created;
-    }).catch(giveUp);
+    }).catch(giveUp), delay);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
       created?.dispose(); created = null; scene.current = null;
       setMode("flat");
     };
