@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CART_TIMINGS, canUse3D, cartAnnouncement, cartBusy, cartLabel, screenMode, type CartEvent, type CartState } from "./cartridge";
-import type { ConsoleControl, ConsoleScene } from "./console-scene.client";
+import type { ConsoleScene } from "./console-scene.client";
 
 export interface TeamConsoleProps {
   /** The team select panel: the console's screen. */
@@ -18,25 +18,42 @@ export interface TeamConsoleProps {
   onB(): void;
 }
 
-const KEYS: { control: ConsoleControl; glyph: string; side: "l" | "r" }[] = [
+type Control = "prev" | "next" | "a" | "b";
+const KEYS: { control: Control; glyph: string; side: "l" | "r" }[] = [
   { control: "prev", glyph: "◀", side: "l" },
   { control: "next", glyph: "▶", side: "l" },
   { control: "a", glyph: "A", side: "r" },
   { control: "b", glyph: "B", side: "r" },
 ];
 
-/** MLAI SLAB-1. Server-rendered as a flat console around the team panel. On a wide
- *  screen with a mouse it lazily mounts a three.js scene that draws the same console
- *  in 3D on a canvas above; the panel itself is never moved, so every control on the
- *  screen stays an ordinary, accessible button. */
+/** A switch for testing the 3D console on a machine without a graphics card:
+ *  `localStorage.setItem("mlai-console-3d", "force")`. */
+function force3D(): boolean {
+  try { return window.localStorage.getItem("mlai-console-3d") === "force"; } catch { return false; }
+}
+
+/** MLAI SLAB-1, the console the team select is played on.
+ *
+ *  Server-rendered flat. On a wide screen with a mouse it lazily mounts a three.js scene:
+ *  with the cartridge out you see the whole console floating over the page; put the
+ *  cartridge in and the camera dives into its screen until the screen is the team panel.
+ *  The panel is ordinary HTML throughout, so every control on it stays a real button.
+ *  Touch screens, small screens and reduced motion keep the flat console. */
 export default function TeamConsole({ children, cart, onCart, interactive, arcadeOpen, onPrev, onNext, onA, onB }: TeamConsoleProps) {
   const host = useRef<HTMLDivElement>(null);
-  const slab = useRef<HTMLElement>(null);
   const screen = useRef<HTMLDivElement>(null);
+  const cartButton = useRef<HTMLButtonElement>(null);
   const scene = useRef<ConsoleScene | null>(null);
   const failed = useRef(false);
   const reopened = useRef(false);
-  const cartButton = useRef<HTMLButtonElement>(null);
+  /** The console shows itself off once per page, the first time it is ready. */
+  const attracted = useRef(false);
+  /** Someone has clicked or typed in the panel: do not take it away from them. */
+  const used = useRef(false);
+  /** The cartridge is out because the console pulled it, not the visitor. */
+  const autoPulled = useRef(false);
+  const previousCart = useRef(cart);
+  const [arrived, setArrived] = useState(false);
   const [mode, setMode] = useState<"flat" | "3d">("flat");
   const [ready, setReady] = useState(false);
   const [eligible, setEligible] = useState(false);
@@ -57,25 +74,38 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
   // Announce a settled change, never the initial state.
   useEffect(() => {
     const message = cartAnnouncement(cart);
-    if (message && settled.current !== cart) { settled.current = cart; setStatus(message); }
+    if (!message || settled.current === cart) return;
+    settled.current = cart;
+    setStatus(message);
   }, [cart]);
 
-  // Who gets the 3D console: wide screen, mouse, no motion or data limits.
+  // Who gets the 3D console: wide screen, mouse, no motion or data limits, and a game to play.
   useEffect(() => {
     const wide = window.matchMedia("(min-width: 1024px)");
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       const saveData = Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
-      const ok = canUse3D({ wide: wide.matches, finePointer: fine.matches, reducedMotion: reduced.matches, saveData });
+      const ok = interactive && canUse3D({ wide: wide.matches, finePointer: fine.matches, reducedMotion: reduced.matches, saveData });
       setEligible(ok);
-      if (!ok) setReady(true);
+      if (ok) return;
+      setReady(true);
+      // The 3D console is gone (narrow window, reduced motion): a cartridge it pulled goes back in.
+      if (autoPulled.current) { autoPulled.current = false; onCart("RESET"); }
     };
     update();
     const queries = [wide, fine, reduced];
     queries.forEach(query => query.addEventListener("change", update));
     return () => queries.forEach(query => query.removeEventListener("change", update));
-  }, []);
+  }, [interactive, onCart]);
+
+  // The flash of screen light plays only when the camera really arrives.
+  useEffect(() => {
+    const from = previousCart.current;
+    previousCart.current = cart;
+    setArrived(from === "booting" && cart === "seated" && mode === "3d");
+    if (cart === "seated") autoPulled.current = false;
+  }, [cart, mode]);
 
   // Only fetch three.js once the console is close to the viewport.
   useEffect(() => {
@@ -83,31 +113,45 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
     if (!("IntersectionObserver" in window)) { setNear(true); return; }
     const observer = new IntersectionObserver(entries => {
       if (entries.some(entry => entry.isIntersecting)) { setNear(true); observer.disconnect(); }
-    }, { rootMargin: "300px" });
+    }, { rootMargin: "600px" });
     observer.observe(host.current);
     return () => observer.disconnect();
   }, [eligible, near]);
 
   // Mount the scene. It is disposed while the arcade is open so the game owns the only WebGL context.
   useEffect(() => {
-    if (arcadeOpen) reopened.current = true;
+    if (arcadeOpen) { reopened.current = true; used.current = true; }
     if (!eligible || !near || arcadeOpen || failed.current) return;
     let cancelled = false;
     let created: ConsoleScene | null = null;
     const giveUp = () => {
       failed.current = true;
       created?.dispose(); created = null; scene.current = null;
-      if (!cancelled) { setMode("flat"); setReady(true); }
+      setReady(true);
+      if (cancelled) return;
+      // Without the 3D console there is nothing to put the cartridge back into: seat it.
+      autoPulled.current = false;
+      setMode("flat"); onCart("RESET");
     };
     // After the arcade closes, wait a moment: a quick rematch should not build and tear down a scene.
     const delay = reopened.current ? 2500 : 0;
     reopened.current = false;
     const timer = window.setTimeout(() => import("./console-scene.client").then(module => {
-      if (cancelled || !host.current || !slab.current || !screen.current) return;
-      created = module.createConsoleScene(host.current, { slab: slab.current, screen: screen.current }, {
-        interactive,
+      if (cancelled || !host.current || !screen.current) return;
+      created = module.createConsoleScene(host.current, { screen: screen.current }, {
         cart: cartRef.current,
-        onFirstFrame: () => { if (!cancelled) { setMode("3d"); setReady(true); } },
+        allowSoftware: force3D(),
+        onFirstFrame: () => {
+          if (cancelled) return;
+          setMode("3d"); setReady(true);
+          if (attracted.current) return;
+          attracted.current = true;
+          // Leave the panel alone if someone is already using it.
+          const panel = screen.current;
+          if (cartRef.current !== "seated" || used.current || !panel || panel.matches(":hover") || panel.contains(document.activeElement)) return;
+          autoPulled.current = true;
+          onCart("ATTRACT");
+        },
         onLost: giveUp,
       });
       scene.current = created;
@@ -118,20 +162,13 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
       created?.dispose(); created = null; scene.current = null;
       setMode("flat");
     };
-  }, [eligible, near, arcadeOpen, interactive]);
+  }, [eligible, near, arcadeOpen, onCart]);
 
   useEffect(() => { scene.current?.setCart(cart); }, [cart, mode]);
 
   const shown = screenMode(cart);
   const busy = cartBusy(cart);
-  const press = (control: ConsoleControl) => scene.current?.press(control);
-  const act: Record<ConsoleControl, () => void> = { prev: onPrev, next: onNext, a: onA, b: onB };
-  // With the cartridge out the 3D console is tilted in the hand: a click anywhere on it puts the cartridge back.
-  const hostClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (mode !== "3d" || cart !== "out" || !interactive) return;
-    if ((event.target as HTMLElement).closest("button, a")) return;
-    onCart("INSERT");
-  };
+  const act: Record<Control, () => void> = { prev: onPrev, next: onNext, a: onA, b: onB };
 
   return (
     <div
@@ -141,13 +178,13 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
       data-console-ready={ready ? "true" : undefined}
       data-cart={cart}
       data-screen={shown}
-      onClick={hostClick}
+      data-arrived={arrived ? "true" : undefined}
     >
       <div className="team-console-shell">
         <div className="team-console-body" aria-hidden="true">
           <i className="team-console-drop" />
           <i className="team-console-ink" />
-          <i className="team-console-slab" ref={slab} />
+          <i className="team-console-slab" />
           <i className="team-console-tape">PROPERTY OF THE COMMUNITY</i>
           <i className="team-console-lamp" />
           <i className="team-console-stamp">MLAI SLAB-1 · 15 FIGHTERS · NO BATTERIES</i>
@@ -161,7 +198,7 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
           aria-label={cartLabel(cart)}
           aria-disabled={busy || arcadeOpen ? "true" : undefined}
           aria-describedby="team-console-cart-hint"
-          onClick={event => { event.stopPropagation(); if (!busy) onCart("TOGGLE"); }}
+          onClick={event => { event.stopPropagation(); used.current = true; if (!busy) onCart("TOGGLE"); }}
         >
           <span className="team-console-cart-art" aria-hidden="true" />
           <span className="team-console-cart-tab" aria-hidden="true">{cartLabel(cart) === "Insert cartridge" ? "INSERT ▼" : "EJECT ▲"}</span>
@@ -174,14 +211,13 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
                 key={key.control}
                 className="team-console-key"
                 data-control={key.control}
-                onPointerDown={() => press(key.control)}
                 onClick={() => { if (shown === "live") act[key.control](); }}
               >{key.glyph}</span>
             ))}
           </div>
         ))}
 
-        <div className="team-console-screen" ref={screen}>
+        <div className="team-console-screen" ref={screen} onPointerDownCapture={() => { used.current = true; }} onKeyDownCapture={() => { used.current = true; }}>
           <div className="team-console-live" inert={shown !== "live"}>{children}</div>
           {shown === "off" && <div className="team-console-off">
             <p aria-hidden="true">NO CART</p>
@@ -195,7 +231,7 @@ export default function TeamConsole({ children, cart, onCart, interactive, arcad
         </div>
       </div>
       <p className="team-console-status" role="status">{status}</p>
-      <span id="team-console-cart-hint" hidden>Take the game cartridge out, or put it back in to play.</span>
+      <span id="team-console-cart-hint" hidden>Take the game cartridge out to see the console, or put it back in to see the team and play.</span>
     </div>
   );
 }

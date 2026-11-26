@@ -1,69 +1,76 @@
 import { describe, expect, test } from "bun:test";
-import { contains, layoutConsole, octagon, offAxisFrustum, project, toScene, type Rect } from "../app/components/team-console/console-layout";
+import { consoleDims, easeInQuart, easeOutBack, easeOutCubic, heroCentre, heroScale, zoomScale } from "../app/components/team-console/console-layout";
 
-const canvas = { left: 0, top: 0, width: 1400, height: 900 };
-const body: Rect = toScene({ left: 72, top: 200, width: 1240, height: 620 }, canvas);
-const screen: Rect = toScene({ left: 208, top: 256, width: 968, height: 500 }, canvas);
+const SCREENS = [{ w: 960, h: 520 }, { w: 1180, h: 560 }, { w: 1500, h: 640 }, { w: 1040, h: 900 }];
 
 describe("team console layout", () => {
-  test("page rectangles become centred, y-up scene rectangles", () => {
-    expect(toScene({ left: 0, top: 0, width: 1400, height: 900 }, canvas)).toEqual({ x: -700, y: -450, w: 1400, h: 900 });
-    expect(body).toEqual({ x: -628, y: -370, w: 1240, h: 620 });
-  });
-
-  test("grips, chin and deck fill the body around the screen", () => {
-    const plan = layoutConsole(body, screen, 128);
-    expect(plan.leftGrip.w).toBe(136);
-    expect(plan.rightGrip.w).toBe(136);
-    expect(plan.chin.h + plan.deck.h + screen.h).toBe(body.h);
-    expect(contains(plan.bezel, screen)).toBe(true);
-    expect(contains(body, plan.bezel)).toBe(true);
-  });
-
-  test("the cartridge sits over the slot, shows a lip when seated and rises inside the headroom", () => {
-    for (const width of [760, 1000, 1240, 1700]) {
-      const wide = { ...body, w: width };
-      const plan = layoutConsole(wide, { ...screen, w: width - 272 }, 128);
-      const top = wide.y + wide.h;
-      const seatedTop = plan.cart.seatedY + plan.cart.h / 2, outTop = plan.cart.outY + plan.cart.h / 2;
-      expect(seatedTop - top).toBe(26);
-      expect(outTop).toBeGreaterThan(seatedTop);
-      expect(outTop - top).toBeLessThanOrEqual(128 - 14);
-      expect(plan.cart.x - plan.cart.w / 2).toBeGreaterThan(wide.x);
-      expect(plan.cart.x + plan.cart.w / 2).toBeLessThan(wide.x + wide.w);
-      expect(plan.slot.w).toBe(plan.cart.w + 16);
+  test("the body wraps the screen with grips, a top edge and a taller chin", () => {
+    for (const screen of SCREENS) {
+      const dims = consoleDims(screen);
+      expect(dims.body.w).toBeCloseTo(screen.w + dims.grip * 2);
+      expect(dims.body.h).toBeCloseTo(screen.h + dims.top + dims.chin);
+      expect(dims.chin).toBeGreaterThan(dims.top);
+      // The screen sits above the middle of the body.
+      expect(dims.bodyCentre.y).toBeLessThan(0);
+      expect(dims.radius).toBeLessThanOrEqual(dims.body.h / 2);
     }
   });
 
-  test("a cut-corner outline has eight points inside its rectangle, and cuts are capped", () => {
-    const points = octagon(body, [40, 20, 20, 20]);
-    expect(points).toHaveLength(8);
-    for (const point of points) {
-      expect(point.x).toBeGreaterThanOrEqual(body.x); expect(point.x).toBeLessThanOrEqual(body.x + body.w);
-      expect(point.y).toBeGreaterThanOrEqual(body.y); expect(point.y).toBeLessThanOrEqual(body.y + body.h);
+  test("the controls sit inside their grips, clear of the screen and the edge", () => {
+    for (const screen of SCREENS) {
+      const dims = consoleDims(screen);
+      const edge = dims.body.w / 2;
+      expect(-dims.dpad.x - dims.dpad.dish).toBeGreaterThan(screen.w / 2);
+      expect(-dims.dpad.x + dims.dpad.dish).toBeLessThan(edge);
+      for (const key of [dims.a, dims.b]) {
+        expect(key.x - key.r).toBeGreaterThan(screen.w / 2);
+        expect(key.x + key.r).toBeLessThan(edge);
+      }
+      // A and B do not overlap.
+      expect(Math.hypot(dims.a.x - dims.b.x, dims.a.y - dims.b.y)).toBeGreaterThan(dims.a.r + dims.b.r);
     }
-    const tiny = octagon({ x: 0, y: 0, w: 10, h: 10 }, [99, 99, 99, 99]);
-    expect(Math.max(...tiny.map(point => point.x))).toBe(10);
   });
 
-  test("the front face stays on the same pixels wherever the eye is; depth shows parallax", () => {
-    const distance = 1300;
-    const corner = { x: body.x, y: body.y + body.h, z: 0 };
-    for (const eye of [{ x: 0, y: 0 }, { x: -400, y: 600 }, { x: 520, y: -80 }]) {
-      const landed = project(corner, eye, distance);
-      expect(landed.x).toBeCloseTo(corner.x, 6);
-      expect(landed.y).toBeCloseTo(corner.y, 6);
+  test("the cartridge is seated mostly inside the body and hovers clear of it when out", () => {
+    for (const screen of SCREENS) {
+      const dims = consoleDims(screen);
+      const top = screen.h / 2 + dims.top;
+      expect(dims.cart.seatedY - dims.cart.h / 2).toBeLessThan(top);
+      expect(dims.cart.seatedY + dims.cart.h / 2).toBeGreaterThan(top);
+      expect(dims.cart.outY - dims.cart.h / 2).toBeGreaterThan(top);
+      expect(Math.abs(dims.cart.x) + dims.cart.w / 2).toBeLessThan(screen.w / 2);
+      expect(dims.cart.t).toBeLessThan(dims.depth);
     }
-    // With the eye above the body the back top edge shows above the front edge: the top face is visible.
-    const above = { x: 0, y: body.y + body.h + 600 };
-    expect(project({ ...corner, z: -80 }, above, distance).y).toBeGreaterThan(corner.y);
   });
 
-  test("the frustum is the window seen from the eye, scaled to the near plane", () => {
-    const frustum = offAxisFrustum({ x: 100, y: -50 }, { w: 1400, h: 900 }, 1000, 250, 4000);
-    expect(frustum).toEqual({ left: -200, right: 150, top: 125, bottom: -100, near: 250, far: 4000 });
-    const centred = offAxisFrustum({ x: 0, y: 0 }, { w: 1400, h: 900 }, 1000);
-    expect(centred.left).toBe(-centred.right);
-    expect(centred.top).toBe(-centred.bottom);
+  test("at rest the whole console, cartridge included, fits inside the panel's box", () => {
+    for (const screen of SCREENS) {
+      const dims = consoleDims(screen);
+      const scale = heroScale(dims, 0.9);
+      const centre = heroCentre(dims);
+      const top = (dims.cart.outY + dims.cart.h / 2 - centre.y) * scale;
+      const bottom = (dims.bodyCentre.y - dims.body.h / 2 - centre.y) * scale;
+      expect(scale).toBeGreaterThan(0.2);
+      expect(scale).toBeLessThan(1);
+      expect(dims.body.w * scale).toBeLessThanOrEqual(screen.w * 0.9 + 0.001);
+      expect(top).toBeLessThanOrEqual(screen.h * 0.45 + 0.001);
+      expect(bottom).toBeCloseTo(-top);
+    }
+  });
+
+  test("the zoom ends with the screen at exactly the panel's size", () => {
+    expect(zoomScale(0.42, 0)).toBeCloseTo(0.42);
+    expect(zoomScale(0.42, 1)).toBeCloseTo(1);
+    expect(zoomScale(0.42, 0.5)).toBeCloseTo(Math.sqrt(0.42));
+    expect(zoomScale(0.42, 2)).toBeCloseTo(1);
+  });
+
+  test("easings start at 0 and end at 1; the dive starts slowly", () => {
+    for (const ease of [easeOutCubic, easeInQuart, easeOutBack]) {
+      expect(ease(0)).toBeCloseTo(0);
+      expect(ease(1)).toBeCloseTo(1);
+    }
+    expect(easeInQuart(0.5)).toBeLessThan(0.1);
+    expect(easeOutBack(0.7)).toBeGreaterThan(1);
   });
 });

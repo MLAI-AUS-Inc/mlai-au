@@ -1,7 +1,9 @@
 /** The cartridge state machine for the team console. Pure: no DOM, no timers. */
 
 export type CartState = "seated" | "ejecting" | "out" | "inserting" | "booting";
-export type CartEvent = "EJECT" | "INSERT" | "TOGGLE" | "TIMER";
+/** ATTRACT is the 3D console pulling its own cartridge once, to show itself off.
+ *  RESET puts the cartridge straight back, for when the 3D console is lost. */
+export type CartEvent = "EJECT" | "INSERT" | "TOGGLE" | "TIMER" | "ATTRACT" | "RESET";
 
 export interface CartContext {
   /** The arcade dialog (or its loading screen) is open. */
@@ -13,13 +15,15 @@ export interface CartContext {
 /** How long each moving state lasts before a TIMER event ends it. */
 export const CART_TIMINGS: Record<CartState, number> = {
   seated: 0,
-  ejecting: 380,
+  ejecting: 900,
   out: 0,
-  inserting: 460,
-  booting: 900,
+  inserting: 520,
+  booting: 1050,
 };
 
 export function cartReducer(state: CartState, event: CartEvent, context: CartContext): CartState {
+  if (event === "RESET") return "seated";
+  if (event === "ATTRACT") return state === "seated" && !context.arcadeOpen && !context.reducedMotion ? "ejecting" : state;
   if (event === "TOGGLE") {
     if (state === "seated") event = "EJECT";
     else if (state === "out") event = "INSERT";
@@ -57,7 +61,7 @@ export const cartLabel = (state: CartState) =>
 
 /** Announcement for the status region once a state settles; empty while moving. */
 export function cartAnnouncement(state: CartState): string {
-  if (state === "out") return "Cartridge out. Insert it to play.";
+  if (state === "out") return "Cartridge out. Insert it to see the team and play.";
   if (state === "seated") return "Cartridge in. Community Clash is ready.";
   return "";
 }

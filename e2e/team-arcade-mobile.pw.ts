@@ -1,10 +1,12 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { seatCartridge } from "./team-console-helpers";
 
 const combatAsset = (url: string) => /runtime\.client|phaser|\/games\/team-arcade\/v[12]\/|mlai-office\.webp/.test(url);
 async function open(page: Page) {
   await page.goto("/?arcade-check=mobile", { waitUntil: "domcontentloaded" });
   const team = page.locator(".fighter-select-wrapper");
   await team.scrollIntoViewIfNeeded();
+  await seatCartridge(page);
   await team.getByRole("button", { name: "Select Sam Donegan", exact: true }).filter({ visible: true }).click();
   await team.getByRole("button", { name: "PRESS START", exact: true }).filter({ visible: true }).click();
   await expect(page.locator(".arcade-selection")).toBeVisible();

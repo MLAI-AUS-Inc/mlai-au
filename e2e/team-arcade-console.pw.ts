@@ -1,14 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
+import { seatCartridge } from "./team-console-helpers";
 
 // The console around the team select: cartridge, screen states and fallbacks.
-// Never assert the 3D mode itself: it depends on the machine's WebGL.
+// Never assert the 3D mode itself: it depends on the machine's WebGL. Where it does run,
+// the console starts with its cartridge out, and `ready` puts it back in.
 const ARCADE_ASSET = /runtime\.client|phaser|\/games\/team-arcade\//;
 
 async function ready(page: Page) {
   await page.goto("/?arcade-check=console", { waitUntil: "domcontentloaded" });
   const team = page.locator(".fighter-select-wrapper");
   await team.scrollIntoViewIfNeeded();
-  await expect(page.locator(".team-console")).toHaveAttribute("data-console-ready", "true", { timeout: 30_000 });
+  await seatCartridge(page);
   return team;
 }
 const start = (page: Page) => page.locator(".fighter-select-wrapper").getByRole("button", { name: "PRESS START", exact: true }).filter({ visible: true });
@@ -90,5 +92,48 @@ test("phones get the flat console with a thumb-sized cartridge button", async ({
   await page.getByRole("button", { name: "INSERT CART", exact: true }).click();
   await expect(console_).toHaveAttribute("data-cart", "seated", { timeout: 10_000 });
   await expect(start(page)).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test("the 3D console shows itself with the cartridge out and lands on the team select when it goes in", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "One WebGL engine is enough for the 3D console.");
+  test.slow();
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(String(error)));
+  // The check machines draw WebGL in software, where the 3D console normally steps aside.
+  await page.addInitScript(() => {
+    // Embedded frames without storage run this too.
+    try { window.localStorage.setItem("mlai-console-3d", "force"); } catch { /* not the page under test */ }
+  });
+  await page.goto("/?arcade-check=console-3d", { waitUntil: "domcontentloaded" });
+  await page.locator(".fighter-select-wrapper").scrollIntoViewIfNeeded();
+  const console_ = page.locator(".team-console");
+  await expect(console_).toHaveAttribute("data-console-ready", "true", { timeout: 30_000 });
+  // Skip only where the browser has no WebGL at all; a scene that fails to build must fail the test.
+  const hasWebGL = await page.evaluate(() => Boolean(document.createElement("canvas").getContext("webgl2")));
+  test.skip(!hasWebGL, "No WebGL on this machine.");
+  await expect(console_).toHaveAttribute("data-console", "3d");
+
+  // It pulls its own cartridge once: the console is shown and the team select is out of reach.
+  await expect(console_).toHaveAttribute("data-cart", "out", { timeout: 15_000 });
+  await expect(page.locator(".team-console-canvas")).toHaveCount(1);
+  await expect(start(page)).toHaveCount(0);
+  // The team select has left the page for now, so say so.
+  await expect(page.getByRole("status").filter({ hasText: "Cartridge out" })).toHaveCount(1);
+
+  // The whole console is the insert button.
+  const insert = page.getByRole("button", { name: "Insert cartridge", exact: true });
+  const [button, screen] = await Promise.all([insert.boundingBox(), page.locator(".team-console-screen").boundingBox()]);
+  expect(button && screen && Math.abs(button.width - screen.width) < 2 && Math.abs(button.height - screen.height) < 2).toBe(true);
+  await insert.click();
+  await expect(console_).toHaveAttribute("data-cart", "seated", { timeout: 15_000 });
+  await expect(start(page)).toHaveCount(1);
+  await expect(page.locator(".team-console-canvas")).toHaveCSS("opacity", "0");
+  await expect(page.getByRole("status").filter({ hasText: "Cartridge in" })).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Eject cartridge", exact: true }).click();
+  await expect(console_).toHaveAttribute("data-cart", "out", { timeout: 15_000 });
+  await expect(page.getByRole("status").filter({ hasText: "Cartridge out" })).toHaveCount(1);
+  await expect(page.locator(".team-console-canvas")).toHaveCSS("opacity", "1");
   expect(errors).toEqual([]);
 });

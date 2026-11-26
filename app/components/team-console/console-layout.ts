@@ -1,96 +1,83 @@
-/** Pure geometry for the team console: no three.js, no DOM. Units are CSS pixels,
- *  with the origin at the centre of the canvas and y pointing up. */
+/** Pure geometry for the team console: no three.js, no DOM.
+ *  Units are CSS pixels. The origin is the centre of the console's screen, y points up,
+ *  and the screen lies in the plane z = 0. At scale 1 with no rotation the screen is
+ *  exactly the size of the team panel, which is how the camera "fills the screen". */
 
-export interface Rect { x: number; y: number; w: number; h: number }
+export interface Size { w: number; h: number }
 export interface Point { x: number; y: number }
 
-/** A DOM rectangle (left/top/width/height in page pixels) in canvas-centred, y-up space. */
-export function toScene(rect: { left: number; top: number; width: number; height: number }, canvas: { left: number; top: number; width: number; height: number }): Rect {
-  return {
-    x: rect.left - canvas.left - canvas.width / 2,
-    y: canvas.height / 2 - (rect.top - canvas.top) - rect.height,
-    w: rect.width,
-    h: rect.height,
-  };
-}
-
-export const grow = (rect: Rect, by: number): Rect => ({ x: rect.x - by, y: rect.y - by, w: rect.w + by * 2, h: rect.h + by * 2 });
-export const centre = (rect: Rect): Point => ({ x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 });
-export const contains = (outer: Rect, inner: Rect, slack = 0) =>
-  inner.x >= outer.x - slack && inner.y >= outer.y - slack &&
-  inner.x + inner.w <= outer.x + outer.w + slack && inner.y + inner.h <= outer.y + outer.h + slack;
-
-/** A rectangle with its corners cut at 45 degrees. `cuts` is [top-left, top-right, bottom-right, bottom-left].
- *  Points run counter-clockwise from the bottom-left cut. */
-export function octagon(rect: Rect, cuts: [number, number, number, number]): Point[] {
-  const limit = Math.min(rect.w, rect.h) / 2;
-  const [tl, tr, br, bl] = cuts.map(cut => Math.max(0, Math.min(cut, limit)));
-  const left = rect.x, right = rect.x + rect.w, bottom = rect.y, top = rect.y + rect.h;
-  return [
-    { x: left + bl, y: bottom }, { x: right - br, y: bottom },
-    { x: right, y: bottom + br }, { x: right, y: top - tr },
-    { x: right - tr, y: top }, { x: left + tl, y: top },
-    { x: left, y: top - tl }, { x: left, y: bottom + bl },
-  ];
-}
-
-export interface Frustum { left: number; right: number; top: number; bottom: number; near: number; far: number }
-
-/** An off-axis frustum for an eye at (eye.x, eye.y, distance) looking down -z at a window of
- *  `size` centred on the origin in the plane z = 0. Whatever the eye position, a point on that
- *  plane lands on the same pixel, so the console's front face stays registered with the page
- *  while its depth shows parallax. */
-export function offAxisFrustum(eye: Point, size: { w: number; h: number }, distance: number, near = distance * 0.25, far = distance * 4): Frustum {
-  const scale = near / distance;
-  return {
-    left: (-size.w / 2 - eye.x) * scale,
-    right: (size.w / 2 - eye.x) * scale,
-    top: (size.h / 2 - eye.y) * scale,
-    bottom: (-size.h / 2 - eye.y) * scale,
-    near, far,
-  };
-}
-
-/** Where a scene point lands in canvas pixels (origin centre, y up) for that eye. */
-export function project(point: { x: number; y: number; z: number }, eye: Point, distance: number): Point {
-  const t = distance / (distance - point.z);
-  return { x: eye.x + (point.x - eye.x) * t, y: eye.y + (point.y - eye.y) * t };
-}
-
-export interface ConsoleLayout {
-  body: Rect;
-  screen: Rect;
-  bezel: Rect;
+export interface ConsoleDims {
+  screen: Size;
+  /** Width of the grip on each side of the screen. */
+  grip: number;
+  /** Plastic above and below the screen. */
+  top: number;
+  chin: number;
+  body: Size;
+  /** Centre of the body relative to the centre of the screen. */
+  bodyCentre: Point;
   depth: number;
-  cuts: [number, number, number, number];
-  leftGrip: Rect;
-  rightGrip: Rect;
-  chin: Rect;
-  deck: Rect;
+  radius: number;
+  /** How far the dark glass reaches past the screen. */
+  bezel: number;
+  dpad: { x: number; y: number; arm: number; width: number; dish: number };
+  a: { x: number; y: number; r: number };
+  b: { x: number; y: number; r: number };
   cart: { w: number; h: number; t: number; x: number; seatedY: number; outY: number };
-  slot: Rect;
 }
 
-/** Derive every part's place from the two rectangles the page lays out: the console body and its screen. */
-export function layoutConsole(body: Rect, screen: Rect, headroom: number): ConsoleLayout {
-  const gripW = Math.max(0, screen.x - body.x);
-  const depth = Math.round(Math.max(56, Math.min(96, body.w * 0.07)));
-  const cut = Math.round(Math.max(16, Math.min(34, body.w * 0.024)));
-  const top = body.y + body.h;
-  const cartW = Math.round(Math.max(170, Math.min(260, body.w * 0.19)));
-  const cartH = Math.round(cartW * 0.62);
-  const cartX = Math.round(body.x + body.w * 0.68);
-  const shown = 26;
-  const rise = Math.max(shown, Math.min(cartH * 0.72, headroom - 14));
+export const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
+
+/** The console that fits around a screen of this size: a wide handheld with roomy grips. */
+export function consoleDims(screen: Size): ConsoleDims {
+  const { w, h } = screen;
+  const grip = clamp(w * 0.36, h * 0.46, h * 0.85);
+  const top = h * 0.16;
+  const chin = h * 0.2;
+  const body = { w: w + grip * 2, h: h + top + chin };
+  const bodyCentre = { x: 0, y: (top - chin) / 2 };
+  const depth = h * 0.15;
+  const gripX = w / 2 + grip / 2;
+  const cartW = clamp(w * 0.3, 150, 340);
+  const cartH = cartW * 0.6;
+  const bodyTop = h / 2 + top;
   return {
-    body, screen, depth,
-    bezel: grow(screen, 14),
-    cuts: [Math.round(cut * 1.6), cut, cut, cut],
-    leftGrip: { x: body.x, y: body.y, w: gripW, h: body.h },
-    rightGrip: { x: screen.x + screen.w, y: body.y, w: Math.max(0, body.x + body.w - screen.x - screen.w), h: body.h },
-    chin: { x: screen.x, y: body.y, w: screen.w, h: Math.max(0, screen.y - body.y) },
-    deck: { x: screen.x, y: screen.y + screen.h, w: screen.w, h: Math.max(0, top - screen.y - screen.h) },
-    cart: { w: cartW, h: cartH, t: Math.round(depth * 0.3), x: cartX, seatedY: top + shown - cartH / 2, outY: top + rise - cartH / 2 },
-    slot: { x: cartX - cartW / 2 - 8, y: top - 2, w: cartW + 16, h: 4 },
+    screen, grip, top, chin, body, bodyCentre, depth,
+    radius: Math.min(body.h * 0.24, grip * 0.7),
+    bezel: h * 0.04,
+    dpad: { x: -gripX, y: bodyCentre.y + h * 0.05, arm: grip * 0.52, width: grip * 0.17, dish: grip * 0.34 },
+    a: { x: gripX + grip * 0.15, y: bodyCentre.y + h * 0.12, r: grip * 0.14 },
+    b: { x: gripX - grip * 0.15, y: bodyCentre.y - h * 0.03, r: grip * 0.12 },
+    cart: {
+      w: cartW, h: cartH, t: depth * 0.42, x: w * 0.2,
+      seatedY: bodyTop - cartH * 0.36,
+      outY: bodyTop + cartH * 0.5 + h * 0.1,
+    },
   };
 }
+
+/** The scale at which the whole console, cartridge hovering above it, sits inside the panel's box. */
+export function heroScale(dims: ConsoleDims, fill = 0.9): number {
+  const tall = dims.cart.outY + dims.cart.h / 2 - (dims.bodyCentre.y - dims.body.h / 2);
+  return Math.min((dims.screen.w * fill) / dims.body.w, (dims.screen.h * fill) / tall);
+}
+
+/** Where the console's vertical middle is at rest, cartridge included, relative to the screen centre. */
+export function heroCentre(dims: ConsoleDims): Point {
+  const bottom = dims.bodyCentre.y - dims.body.h / 2;
+  const topEdge = dims.cart.outY + dims.cart.h / 2;
+  return { x: 0, y: (bottom + topEdge) / 2 };
+}
+
+/** Scale between the resting console (t = 0) and the screen filling the panel (t = 1).
+ *  Geometric, so the zoom reads as a steady push in. */
+export const zoomScale = (rest: number, t: number) => rest * Math.pow(1 / rest, clamp(t, 0, 1));
+
+export const easeOutCubic = (t: number) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+export const easeInCubic = (t: number) => Math.pow(clamp(t, 0, 1), 3);
+/** Slow start, then a sudden rush: the camera diving into the screen. */
+export const easeInQuart = (t: number) => Math.pow(clamp(t, 0, 1), 4);
+export const easeOutBack = (t: number) => {
+  const c = 1.70158, x = clamp(t, 0, 1) - 1;
+  return 1 + (c + 1) * x * x * x + c * x * x;
+};

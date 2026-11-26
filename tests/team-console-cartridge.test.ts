@@ -30,6 +30,16 @@ describe("team console cartridge", () => {
     expect(cartReducer("out", "TIMER", idle)).toBe("out");
   });
 
+  test("the console pulls its own cartridge once to show itself, and can always be reset", () => {
+    expect(cartReducer("seated", "ATTRACT", idle)).toBe("ejecting");
+    expect(cartReducer("seated", "ATTRACT", { arcadeOpen: true, reducedMotion: false })).toBe("seated");
+    expect(cartReducer("seated", "ATTRACT", { arcadeOpen: false, reducedMotion: true })).toBe("seated");
+    for (const state of STATES) {
+      if (state !== "seated") expect(cartReducer(state, "ATTRACT", idle)).toBe(state);
+      expect(cartReducer(state, "RESET", idle)).toBe("seated");
+    }
+  });
+
   test("the cartridge cannot be pulled while the arcade is open", () => {
     expect(cartReducer("seated", "EJECT", { arcadeOpen: true, reducedMotion: false })).toBe("seated");
     expect(cartReducer("seated", "TOGGLE", { arcadeOpen: true, reducedMotion: true })).toBe("seated");
