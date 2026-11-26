@@ -41,7 +41,6 @@
   font-size: 1.3125rem;
   line-height: 1.12;
   letter-spacing: 0.02em;
-  text-transform: uppercase;
   color: var(--mp-paper);
 }
 @media (min-width: 640px) {
@@ -201,7 +200,6 @@
   font-size: 1.3125rem;
   line-height: 1.15;
   letter-spacing: 0.015em;
-  text-transform: uppercase;
   color: var(--mp-ink);
 }
 .mp-row:hover .mp-row-title {
@@ -313,7 +311,6 @@ a.mp-pages-step:hover { background: var(--mp-yellow); }
   font-size: clamp(2rem, 4.6vw, 4rem);
   line-height: 1.02;
   letter-spacing: 0.005em;
-  text-transform: uppercase;
   text-wrap: balance;
 }
 .mp-article [data-cf-component-id="title"] > span[class*="underline"] {
